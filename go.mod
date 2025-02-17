@@ -1,6 +1,6 @@
 module github.com/a-novel/authentication
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/a-novel-kit/configurator v1.3.0
