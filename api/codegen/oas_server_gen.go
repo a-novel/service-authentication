@@ -88,7 +88,7 @@ type Handler interface {
 	//
 	// PUT /short-code/update-email
 	RequestEmailUpdate(ctx context.Context, req *RequestEmailUpdateForm) (RequestEmailUpdateRes, error)
-	// RequestPasswordUpdate implements requestPasswordUpdate operation.
+	// RequestPasswordReset implements requestPasswordReset operation.
 	//
 	// Create a new short code for updating the password of an user. This short code is sent to the new
 	// address.
@@ -102,7 +102,7 @@ type Handler interface {
 	// valid.
 	//
 	// PUT /short-code/update-password
-	RequestPasswordUpdate(ctx context.Context, req *RequestPasswordUpdateForm) (RequestPasswordUpdateRes, error)
+	RequestPasswordReset(ctx context.Context, req *RequestPasswordResetForm) (RequestPasswordResetRes, error)
 	// RequestRegistration implements requestRegistration operation.
 	//
 	// To prevent spam in our user database, registration must be done through a link sent by e-mail, so

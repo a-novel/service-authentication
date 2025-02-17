@@ -1487,28 +1487,28 @@ func (s *RequestEmailUpdateForm) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *RequestPasswordUpdateForm) Encode(e *jx.Encoder) {
+func (s *RequestPasswordResetForm) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *RequestPasswordUpdateForm) encodeFields(e *jx.Encoder) {
+func (s *RequestPasswordResetForm) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("email")
 		s.Email.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfRequestPasswordUpdateForm = [1]string{
+var jsonFieldsNameOfRequestPasswordResetForm = [1]string{
 	0: "email",
 }
 
-// Decode decodes RequestPasswordUpdateForm from json.
-func (s *RequestPasswordUpdateForm) Decode(d *jx.Decoder) error {
+// Decode decodes RequestPasswordResetForm from json.
+func (s *RequestPasswordResetForm) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode RequestPasswordUpdateForm to nil")
+		return errors.New("invalid: unable to decode RequestPasswordResetForm to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -1529,7 +1529,7 @@ func (s *RequestPasswordUpdateForm) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode RequestPasswordUpdateForm")
+		return errors.Wrap(err, "decode RequestPasswordResetForm")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -1546,8 +1546,8 @@ func (s *RequestPasswordUpdateForm) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfRequestPasswordUpdateForm) {
-					name = jsonFieldsNameOfRequestPasswordUpdateForm[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfRequestPasswordResetForm) {
+					name = jsonFieldsNameOfRequestPasswordResetForm[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -1568,14 +1568,14 @@ func (s *RequestPasswordUpdateForm) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *RequestPasswordUpdateForm) MarshalJSON() ([]byte, error) {
+func (s *RequestPasswordResetForm) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *RequestPasswordUpdateForm) UnmarshalJSON(data []byte) error {
+func (s *RequestPasswordResetForm) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1684,8 +1684,8 @@ func (s *ResetPasswordForm) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *ResetPasswordForm) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("email")
-		s.Email.Encode(e)
+		e.FieldStart("userID")
+		s.UserID.Encode(e)
 	}
 	{
 		e.FieldStart("password")
@@ -1698,7 +1698,7 @@ func (s *ResetPasswordForm) encodeFields(e *jx.Encoder) {
 }
 
 var jsonFieldsNameOfResetPasswordForm = [3]string{
-	0: "email",
+	0: "userID",
 	1: "password",
 	2: "shortCode",
 }
@@ -1712,15 +1712,15 @@ func (s *ResetPasswordForm) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "email":
+		case "userID":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				if err := s.Email.Decode(d); err != nil {
+				if err := s.UserID.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"email\"")
+				return errors.Wrap(err, "decode field \"userID\"")
 			}
 		case "password":
 			requiredBitSet[0] |= 1 << 1

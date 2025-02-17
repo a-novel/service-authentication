@@ -14,7 +14,7 @@ import (
 func (api *API) CheckSession(ctx context.Context) (codegen.CheckSessionRes, error) {
 	// Extract the claims from the context. This should never fail, as this handler is only triggered after a
 	// successful authentication.
-	claims, err := context.ExtractValue[*models.AccessTokenClaims](ctx, claimsAPIKey{})
+	claims, err := context.ExtractValue[*models.AccessTokenClaims](ctx, ClaimsAPIKey{})
 	if err != nil {
 		return nil, fmt.Errorf("extract claims: %w", err)
 	}

@@ -966,11 +966,11 @@ func decodeRequestEmailUpdateResponse(resp *http.Response) (res RequestEmailUpda
 	return res, errors.Wrap(defRes, "error")
 }
 
-func decodeRequestPasswordUpdateResponse(resp *http.Response) (res RequestPasswordUpdateRes, _ error) {
+func decodeRequestPasswordResetResponse(resp *http.Response) (res RequestPasswordResetRes, _ error) {
 	switch resp.StatusCode {
 	case 204:
 		// Code 204.
-		return &RequestPasswordUpdateNoContent{}, nil
+		return &RequestPasswordResetNoContent{}, nil
 	case 404:
 		// Code 404.
 		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))

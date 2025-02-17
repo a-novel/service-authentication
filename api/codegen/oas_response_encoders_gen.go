@@ -294,9 +294,9 @@ func encodeRequestEmailUpdateResponse(response RequestEmailUpdateRes, w http.Res
 	}
 }
 
-func encodeRequestPasswordUpdateResponse(response RequestPasswordUpdateRes, w http.ResponseWriter, span trace.Span) error {
+func encodeRequestPasswordResetResponse(response RequestPasswordResetRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *RequestPasswordUpdateNoContent:
+	case *RequestPasswordResetNoContent:
 		w.WriteHeader(204)
 		span.SetStatus(codes.Ok, http.StatusText(204))
 

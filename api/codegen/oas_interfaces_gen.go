@@ -37,8 +37,8 @@ type RequestEmailUpdateRes interface {
 	requestEmailUpdateRes()
 }
 
-type RequestPasswordUpdateRes interface {
-	requestPasswordUpdateRes()
+type RequestPasswordResetRes interface {
+	requestPasswordResetRes()
 }
 
 type RequestRegistrationRes interface {

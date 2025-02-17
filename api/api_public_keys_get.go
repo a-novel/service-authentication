@@ -7,11 +7,16 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/a-novel-kit/context"
+	"github.com/a-novel-kit/jwt/jwa"
 
 	"github.com/a-novel/authentication/api/codegen"
 	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/internal/services"
 )
+
+type SelectKeyService interface {
+	SelectKey(ctx context.Context, request services.SelectKeyRequest) (*jwa.JWK, error)
+}
 
 func (api *API) GetPublicKey(ctx context.Context, params codegen.GetPublicKeyParams) (codegen.GetPublicKeyRes, error) {
 	key, err := api.SelectKeyService.SelectKey(ctx, services.SelectKeyRequest{

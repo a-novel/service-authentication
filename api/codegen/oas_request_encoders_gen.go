@@ -53,8 +53,8 @@ func encodeRequestEmailUpdateRequest(
 	return nil
 }
 
-func encodeRequestPasswordUpdateRequest(
-	req *RequestPasswordUpdateForm,
+func encodeRequestPasswordResetRequest(
+	req *RequestPasswordResetForm,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

@@ -713,11 +713,11 @@ func (s *NotFoundError) SetError(val string) {
 	s.Error = val
 }
 
-func (*NotFoundError) createSessionRes()         {}
-func (*NotFoundError) emailExistsRes()           {}
-func (*NotFoundError) getPublicKeyRes()          {}
-func (*NotFoundError) requestPasswordUpdateRes() {}
-func (*NotFoundError) updateEmailRes()           {}
+func (*NotFoundError) createSessionRes()        {}
+func (*NotFoundError) emailExistsRes()          {}
+func (*NotFoundError) getPublicKeyRes()         {}
+func (*NotFoundError) requestPasswordResetRes() {}
+func (*NotFoundError) updateEmailRes()          {}
 
 // NewOptKID returns new OptKID with value set to v.
 func NewOptKID(v KID) OptKID {
@@ -965,26 +965,26 @@ type RequestEmailUpdateNoContent struct{}
 func (*RequestEmailUpdateNoContent) requestEmailUpdateRes() {}
 
 // Create a new password update link.
-// Ref: #/components/schemas/RequestPasswordUpdateForm
-type RequestPasswordUpdateForm struct {
+// Ref: #/components/schemas/RequestPasswordResetForm
+type RequestPasswordResetForm struct {
 	// The email of the user. This email must match a user in the database.
 	Email Email `json:"email"`
 }
 
 // GetEmail returns the value of Email.
-func (s *RequestPasswordUpdateForm) GetEmail() Email {
+func (s *RequestPasswordResetForm) GetEmail() Email {
 	return s.Email
 }
 
 // SetEmail sets the value of Email.
-func (s *RequestPasswordUpdateForm) SetEmail(val Email) {
+func (s *RequestPasswordResetForm) SetEmail(val Email) {
 	s.Email = val
 }
 
-// RequestPasswordUpdateNoContent is response for RequestPasswordUpdate operation.
-type RequestPasswordUpdateNoContent struct{}
+// RequestPasswordResetNoContent is response for RequestPasswordReset operation.
+type RequestPasswordResetNoContent struct{}
 
-func (*RequestPasswordUpdateNoContent) requestPasswordUpdateRes() {}
+func (*RequestPasswordResetNoContent) requestPasswordResetRes() {}
 
 // Create a new registration link.
 // Ref: #/components/schemas/RequestRegistrationForm
@@ -1016,15 +1016,17 @@ func (*RequestRegistrationNoContent) requestRegistrationRes() {}
 // Data used to reset the password of a user.
 // Ref: #/components/schemas/ResetPasswordForm
 type ResetPasswordForm struct {
-	Email Email `json:"email"`
+	// The ID of the user that requested a password reset is sent in the reset link of the reset password
+	// email.
+	UserID UserID `json:"userID"`
 	// The new password of the user.
 	Password  Password  `json:"password"`
 	ShortCode ShortCode `json:"shortCode"`
 }
 
-// GetEmail returns the value of Email.
-func (s *ResetPasswordForm) GetEmail() Email {
-	return s.Email
+// GetUserID returns the value of UserID.
+func (s *ResetPasswordForm) GetUserID() UserID {
+	return s.UserID
 }
 
 // GetPassword returns the value of Password.
@@ -1037,9 +1039,9 @@ func (s *ResetPasswordForm) GetShortCode() ShortCode {
 	return s.ShortCode
 }
 
-// SetEmail sets the value of Email.
-func (s *ResetPasswordForm) SetEmail(val Email) {
-	s.Email = val
+// SetUserID sets the value of UserID.
+func (s *ResetPasswordForm) SetUserID(val UserID) {
+	s.UserID = val
 }
 
 // SetPassword sets the value of Password.

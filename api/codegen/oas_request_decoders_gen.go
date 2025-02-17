@@ -228,8 +228,8 @@ func (s *Server) decodeRequestEmailUpdateRequest(r *http.Request) (
 	}
 }
 
-func (s *Server) decodeRequestPasswordUpdateRequest(r *http.Request) (
-	req *RequestPasswordUpdateForm,
+func (s *Server) decodeRequestPasswordResetRequest(r *http.Request) (
+	req *RequestPasswordResetForm,
 	close func() error,
 	rerr error,
 ) {
@@ -268,7 +268,7 @@ func (s *Server) decodeRequestPasswordUpdateRequest(r *http.Request) (
 
 		d := jx.DecodeBytes(buf)
 
-		var request RequestPasswordUpdateForm
+		var request RequestPasswordResetForm
 		if err := func() error {
 			if err := request.Decode(d); err != nil {
 				return err

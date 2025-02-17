@@ -7,7 +7,12 @@ import (
 
 	"github.com/a-novel/authentication/api/codegen"
 	"github.com/a-novel/authentication/internal/services"
+	"github.com/a-novel/authentication/models"
 )
+
+type RequestEmailUpdateService interface {
+	RequestEmailUpdate(ctx context.Context, request services.RequestEmailUpdateRequest) (*models.ShortCode, error)
+}
 
 func (api *API) RequestEmailUpdate(
 	ctx context.Context, req *codegen.RequestEmailUpdateForm,

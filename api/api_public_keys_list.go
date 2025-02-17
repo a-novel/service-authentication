@@ -6,11 +6,16 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/context"
+	"github.com/a-novel-kit/jwt/jwa"
 
 	"github.com/a-novel/authentication/api/codegen"
 	"github.com/a-novel/authentication/internal/services"
 	"github.com/a-novel/authentication/models"
 )
+
+type SearchKeysService interface {
+	SearchKeys(ctx context.Context, request services.SearchKeysRequest) ([]*jwa.JWK, error)
+}
 
 func (api *API) ListPublicKeys(
 	ctx context.Context, params codegen.ListPublicKeysParams,
