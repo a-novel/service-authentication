@@ -11,7 +11,7 @@ jobs:
       contents: write
     uses: a-novel-kit/workflows/.github/workflows/auto-release.yaml@master
 
-  prod-api-build:
+  api-build:
     needs: [ release ]
     runs-on: ubuntu-latest
     services:
@@ -41,11 +41,12 @@ jobs:
       - uses: a-novel-kit/workflows/build/docker-rest-api@master
         with:
           file: api.Dockerfile
-          app: api/prod
+          image_name: ${{ github.repository }}/api
+          image_tags: ${{ github.ref_name }},prod
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
 
-  prod-rotate-keys-build:
+  rotate-keys-build:
     needs: [ release ]
     runs-on: ubuntu-latest
     services:
@@ -75,6 +76,7 @@ jobs:
       - uses: a-novel-kit/workflows/build/docker-job@master
         with:
           file: rotatekeys.Dockerfile
-          app: rotate_keys/prod
+          image_name: ${{ github.repository }}/jobs/rotatekeys
+          image_tags: ${{ github.ref_name }},prod
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
