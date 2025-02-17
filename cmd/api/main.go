@@ -159,7 +159,8 @@ func main() {
 	}
 
 	apiPermissions := map[codegen.OperationName][]models.Permission{
-		codegen.PingOperation: {},
+		codegen.PingOperation:        {},
+		codegen.HealthcheckOperation: {},
 
 		codegen.CheckSessionOperation:      {},
 		codegen.CreateSessionOperation:     {},

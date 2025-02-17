@@ -72,6 +72,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/UnexpectedError'
 
+  /healthcheck:
+    get:
+      security: [ ]
+      tags:
+        - health
+      summary: Check the health of the service.
+      description: |
+        Returns a detailed report of the health of the service, including every dependency.
+      operationId: healthcheck
+      responses:
+        '200':
+          description: The service is running.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '418':
+          description: This route is not expected to fail under normal circumstances.
+        default:
+          description: API is not available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+
   /session:
     get:
       tags:
@@ -508,6 +534,39 @@ components:
       bearerFormat: JWT
   # ======================================================= SCHEMAS ======================================================
   schemas:
+    DependencyStatus:
+      type: string
+      description: The status of a dependency.
+      example: ok
+      enum:
+        - up
+        - down
+        - unknown
+    Dependency:
+      type: object
+      required:
+        - name
+        - status
+        - error
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+          description: The name of the dependency.
+          example: database
+        status:
+          $ref: '#/components/schemas/DependencyStatus'
+    Health:
+      type: object
+      required:
+        - postgres
+        - sendgrid
+      properties:
+        postgres:
+          $ref: '#/components/schemas/Dependency'
+        sendgrid:
+          $ref: '#/components/schemas/Dependency'
+
     Token:
       type: object
       required:

@@ -357,6 +357,105 @@ type CreateAnonSessionIMATeapot struct{}
 
 func (*CreateAnonSessionIMATeapot) createAnonSessionRes() {}
 
+// Ref: #/components/schemas/Dependency
+type Dependency struct {
+	// The name of the dependency.
+	Name            string           `json:"name"`
+	Status          DependencyStatus `json:"status"`
+	AdditionalProps DependencyAdditional
+}
+
+// GetName returns the value of Name.
+func (s *Dependency) GetName() string {
+	return s.Name
+}
+
+// GetStatus returns the value of Status.
+func (s *Dependency) GetStatus() DependencyStatus {
+	return s.Status
+}
+
+// GetAdditionalProps returns the value of AdditionalProps.
+func (s *Dependency) GetAdditionalProps() DependencyAdditional {
+	return s.AdditionalProps
+}
+
+// SetName sets the value of Name.
+func (s *Dependency) SetName(val string) {
+	s.Name = val
+}
+
+// SetStatus sets the value of Status.
+func (s *Dependency) SetStatus(val DependencyStatus) {
+	s.Status = val
+}
+
+// SetAdditionalProps sets the value of AdditionalProps.
+func (s *Dependency) SetAdditionalProps(val DependencyAdditional) {
+	s.AdditionalProps = val
+}
+
+type DependencyAdditional map[string]jx.Raw
+
+func (s *DependencyAdditional) init() DependencyAdditional {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// The status of a dependency.
+// Ref: #/components/schemas/DependencyStatus
+type DependencyStatus string
+
+const (
+	DependencyStatusUp      DependencyStatus = "up"
+	DependencyStatusDown    DependencyStatus = "down"
+	DependencyStatusUnknown DependencyStatus = "unknown"
+)
+
+// AllValues returns all DependencyStatus values.
+func (DependencyStatus) AllValues() []DependencyStatus {
+	return []DependencyStatus{
+		DependencyStatusUp,
+		DependencyStatusDown,
+		DependencyStatusUnknown,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DependencyStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case DependencyStatusUp:
+		return []byte(s), nil
+	case DependencyStatusDown:
+		return []byte(s), nil
+	case DependencyStatusUnknown:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DependencyStatus) UnmarshalText(data []byte) error {
+	switch DependencyStatus(data) {
+	case DependencyStatusUp:
+		*s = DependencyStatusUp
+		return nil
+	case DependencyStatusDown:
+		*s = DependencyStatusDown
+		return nil
+	case DependencyStatusUnknown:
+		*s = DependencyStatusUnknown
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type Email string
 
 // EmailExistsNoContent is response for EmailExists operation.
@@ -386,6 +485,39 @@ func (*ForbiddenError) registerRes()       {}
 func (*ForbiddenError) resetPasswordRes()  {}
 func (*ForbiddenError) updateEmailRes()    {}
 func (*ForbiddenError) updatePasswordRes() {}
+
+// Ref: #/components/schemas/Health
+type Health struct {
+	Postgres Dependency `json:"postgres"`
+	Sendgrid Dependency `json:"sendgrid"`
+}
+
+// GetPostgres returns the value of Postgres.
+func (s *Health) GetPostgres() Dependency {
+	return s.Postgres
+}
+
+// GetSendgrid returns the value of Sendgrid.
+func (s *Health) GetSendgrid() Dependency {
+	return s.Sendgrid
+}
+
+// SetPostgres sets the value of Postgres.
+func (s *Health) SetPostgres(val Dependency) {
+	s.Postgres = val
+}
+
+// SetSendgrid sets the value of Sendgrid.
+func (s *Health) SetSendgrid(val Dependency) {
+	s.Sendgrid = val
+}
+
+func (*Health) healthcheckRes() {}
+
+// HealthcheckIMATeapot is response for Healthcheck operation.
+type HealthcheckIMATeapot struct{}
+
+func (*HealthcheckIMATeapot) healthcheckRes() {}
 
 // Ref: #/components/schemas/JWK
 type JWK struct {

@@ -70,6 +70,15 @@ func (UnimplementedHandler) GetPublicKey(ctx context.Context, params GetPublicKe
 	return r, ht.ErrNotImplemented
 }
 
+// Healthcheck implements healthcheck operation.
+//
+// Returns a detailed report of the health of the service, including every dependency.
+//
+// GET /healthcheck
+func (UnimplementedHandler) Healthcheck(ctx context.Context) (r HealthcheckRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListPublicKeys implements listPublicKeys operation.
 //
 // Get all public keys from the service that match a given usage.
