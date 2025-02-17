@@ -4,6 +4,8 @@ on: [ push ]
 
 jobs:
   lint-docs:
+    permissions:
+      contents: read
     uses: a-novel-kit/workflows/.github/workflows/lint-open-api.yaml@master
 
   docs:
@@ -16,10 +18,14 @@ jobs:
       id-token: write
 
   lint:
+    permissions:
+      contents: read
     uses: a-novel-kit/workflows/.github/workflows/lint-go.yaml@master
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:17-alpine

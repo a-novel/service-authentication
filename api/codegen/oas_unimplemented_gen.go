@@ -122,7 +122,7 @@ func (UnimplementedHandler) RequestEmailUpdate(ctx context.Context, req *Request
 	return r, ht.ErrNotImplemented
 }
 
-// RequestPasswordUpdate implements requestPasswordUpdate operation.
+// RequestPasswordReset implements requestPasswordReset operation.
 //
 // Create a new short code for updating the password of an user. This short code is sent to the new
 // address.
@@ -136,7 +136,7 @@ func (UnimplementedHandler) RequestEmailUpdate(ctx context.Context, req *Request
 // valid.
 //
 // PUT /short-code/update-password
-func (UnimplementedHandler) RequestPasswordUpdate(ctx context.Context, req *RequestPasswordUpdateForm) (r RequestPasswordUpdateRes, _ error) {
+func (UnimplementedHandler) RequestPasswordReset(ctx context.Context, req *RequestPasswordResetForm) (r RequestPasswordResetRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

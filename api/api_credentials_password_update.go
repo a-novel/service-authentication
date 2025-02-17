@@ -11,6 +11,10 @@ import (
 	"github.com/a-novel/authentication/internal/services"
 )
 
+type UpdatePasswordService interface {
+	UpdatePassword(ctx context.Context, request services.UpdatePasswordRequest) error
+}
+
 func (api *API) UpdatePassword(
 	ctx context.Context, req *codegen.UpdatePasswordForm) (codegen.UpdatePasswordRes, error,
 ) {

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/authentication/api/codegen"
@@ -12,15 +14,10 @@ import (
 )
 
 func (api *API) ResetPassword(ctx context.Context, req *codegen.ResetPasswordForm) (codegen.ResetPasswordRes, error) {
-	userID, err := RequireUserID(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("reset password: %w", err)
-	}
-
-	err = api.UpdatePasswordService.UpdatePassword(ctx, services.UpdatePasswordRequest{
+	err := api.UpdatePasswordService.UpdatePassword(ctx, services.UpdatePasswordRequest{
 		Password:  string(req.Password),
 		ShortCode: string(req.ShortCode),
-		UserID:    userID,
+		UserID:    uuid.UUID(req.UserID),
 	})
 
 	switch {

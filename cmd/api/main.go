@@ -168,9 +168,9 @@ func main() {
 		codegen.GetPublicKeyOperation:   {"jwk:read"},
 		codegen.ListPublicKeysOperation: {"jwk:read"},
 
-		codegen.RequestRegistrationOperation:   {"register:request"},
-		codegen.RequestEmailUpdateOperation:    {"email:update:request"},
-		codegen.RequestPasswordUpdateOperation: {"password:reset:request"},
+		codegen.RequestRegistrationOperation:  {"register:request"},
+		codegen.RequestEmailUpdateOperation:   {"email:update:request"},
+		codegen.RequestPasswordResetOperation: {"password:reset:request"},
 
 		codegen.RegisterOperation:       {"register"},
 		codegen.EmailExistsOperation:    {"email:exists"},

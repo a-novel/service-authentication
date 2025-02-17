@@ -46,7 +46,7 @@ func (security *SecurityAPI) HandleBearerAuth(
 	// List the permissions required by the current operation.
 	requiredPermissions, ok := security.RequiredPermissions[operationName]
 	if !ok {
-		return context.WithValue(ctx, claimsAPIKey{}, claims), nil
+		return context.WithValue(ctx, ClaimsAPIKey{}, claims), nil
 	}
 
 	// Retrieve all the permissions granted to the user, based on its roles.
@@ -74,7 +74,7 @@ func (security *SecurityAPI) HandleBearerAuth(
 		return nil, models.ErrUnauthorized
 	}
 
-	return context.WithValue(ctx, claimsAPIKey{}, claims), nil
+	return context.WithValue(ctx, ClaimsAPIKey{}, claims), nil
 }
 
 func NewSecurity(
@@ -104,10 +104,10 @@ func NewSecurity(
 	}, nil
 }
 
-type claimsAPIKey struct{}
+type ClaimsAPIKey struct{}
 
 func GetSecurityClaims(ctx context.Context) (*models.AccessTokenClaims, error) {
-	claims, err := context.ExtractValue[*models.AccessTokenClaims](ctx, claimsAPIKey{})
+	claims, err := context.ExtractValue[*models.AccessTokenClaims](ctx, ClaimsAPIKey{})
 	if err != nil {
 		return nil, fmt.Errorf("(GetSecurityClaims) extract claims: %w", err)
 	}

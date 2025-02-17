@@ -12,6 +12,10 @@ import (
 	"github.com/a-novel/authentication/internal/services"
 )
 
+type LoginService interface {
+	Login(ctx context.Context, request services.LoginRequest) (string, error)
+}
+
 func (api *API) CreateSession(ctx context.Context, req *codegen.LoginForm) (codegen.CreateSessionRes, error) {
 	accessToken, err := api.LoginService.Login(ctx, services.LoginRequest{
 		Email:    string(req.Email),

@@ -7,7 +7,12 @@ import (
 
 	"github.com/a-novel/authentication/api/codegen"
 	"github.com/a-novel/authentication/internal/services"
+	"github.com/a-novel/authentication/models"
 )
+
+type RequestRegisterService interface {
+	RequestRegister(ctx context.Context, request services.RequestRegisterRequest) (*models.ShortCode, error)
+}
 
 func (api *API) RequestRegistration(
 	ctx context.Context, req *codegen.RequestRegistrationForm,

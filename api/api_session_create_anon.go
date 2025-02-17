@@ -8,6 +8,10 @@ import (
 	"github.com/a-novel/authentication/api/codegen"
 )
 
+type LoginAnonService interface {
+	LoginAnon(ctx context.Context) (string, error)
+}
+
 func (api *API) CreateAnonSession(ctx context.Context) (codegen.CreateAnonSessionRes, error) {
 	accessToken, err := api.LoginAnonService.LoginAnon(ctx)
 	if err != nil {

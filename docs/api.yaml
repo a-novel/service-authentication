@@ -307,9 +307,9 @@ paths:
         allow users who forgot their password to reset it.
         
         If multiple password update links are requested for the same email, only the last one will be valid.
-      operationId: requestPasswordUpdate
+      operationId: requestPasswordReset
       requestBody:
-        $ref: '#/components/requestBodies/RequestPasswordUpdateForm'
+        $ref: '#/components/requestBodies/RequestPasswordResetForm'
       responses:
         '204':
           description: The short code has been sent successfully.
@@ -578,7 +578,7 @@ components:
           $ref: '#/components/schemas/Email'
           description: |
             The bew email of the new user. This email must be available at the time of validation.
-    RequestPasswordUpdateForm:
+    RequestPasswordResetForm:
       type: object
       description: Create a new password update link.
       required:
@@ -640,12 +640,14 @@ components:
       type: object
       description: Data used to reset the password of a user.
       required:
-        - email
+        - userID
         - password
         - shortCode
       properties:
-        email:
-          $ref: '#/components/schemas/Email'
+        userID:
+          $ref: '#/components/schemas/UserID'
+          description: |
+            The ID of the user that requested a password reset is sent in the reset link of the reset password email.
         password:
           $ref: '#/components/schemas/Password'
           description: The new password of the user.
@@ -845,12 +847,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RequestEmailUpdateForm'
-    RequestPasswordUpdateForm:
+    RequestPasswordResetForm:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/RequestPasswordUpdateForm'
+            $ref: '#/components/schemas/RequestPasswordResetForm'
 
     RegisterForm:
       required: true

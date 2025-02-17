@@ -1622,7 +1622,7 @@ func (s *Server) handleRequestEmailUpdateRequest(args [0]string, argsEscaped boo
 	}
 }
 
-// handleRequestPasswordUpdateRequest handles requestPasswordUpdate operation.
+// handleRequestPasswordResetRequest handles requestPasswordReset operation.
 //
 // Create a new short code for updating the password of an user. This short code is sent to the new
 // address.
@@ -1636,17 +1636,17 @@ func (s *Server) handleRequestEmailUpdateRequest(args [0]string, argsEscaped boo
 // valid.
 //
 // PUT /short-code/update-password
-func (s *Server) handleRequestPasswordUpdateRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleRequestPasswordResetRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("requestPasswordUpdate"),
+		otelogen.OperationID("requestPasswordReset"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
 		semconv.HTTPRouteKey.String("/short-code/update-password"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), RequestPasswordUpdateOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), RequestPasswordResetOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -1701,15 +1701,15 @@ func (s *Server) handleRequestPasswordUpdateRequest(args [0]string, argsEscaped 
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: RequestPasswordUpdateOperation,
-			ID:   "requestPasswordUpdate",
+			Name: RequestPasswordResetOperation,
+			ID:   "requestPasswordReset",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, RequestPasswordUpdateOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, RequestPasswordResetOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -1751,7 +1751,7 @@ func (s *Server) handleRequestPasswordUpdateRequest(args [0]string, argsEscaped 
 			return
 		}
 	}
-	request, close, err := s.decodeRequestPasswordUpdateRequest(r)
+	request, close, err := s.decodeRequestPasswordResetRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -1767,22 +1767,22 @@ func (s *Server) handleRequestPasswordUpdateRequest(args [0]string, argsEscaped 
 		}
 	}()
 
-	var response RequestPasswordUpdateRes
+	var response RequestPasswordResetRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    RequestPasswordUpdateOperation,
+			OperationName:    RequestPasswordResetOperation,
 			OperationSummary: "Set a new short code for user password change.",
-			OperationID:      "requestPasswordUpdate",
+			OperationID:      "requestPasswordReset",
 			Body:             request,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
 
 		type (
-			Request  = *RequestPasswordUpdateForm
+			Request  = *RequestPasswordResetForm
 			Params   = struct{}
-			Response = RequestPasswordUpdateRes
+			Response = RequestPasswordResetRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1793,12 +1793,12 @@ func (s *Server) handleRequestPasswordUpdateRequest(args [0]string, argsEscaped 
 			mreq,
 			nil,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.RequestPasswordUpdate(ctx, request)
+				response, err = s.h.RequestPasswordReset(ctx, request)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.RequestPasswordUpdate(ctx, request)
+		response, err = s.h.RequestPasswordReset(ctx, request)
 	}
 	if err != nil {
 		if errRes, ok := errors.Into[*UnexpectedErrorStatusCode](err); ok {
@@ -1817,7 +1817,7 @@ func (s *Server) handleRequestPasswordUpdateRequest(args [0]string, argsEscaped 
 		return
 	}
 
-	if err := encodeRequestPasswordUpdateResponse(response, w, span); err != nil {
+	if err := encodeRequestPasswordResetResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)

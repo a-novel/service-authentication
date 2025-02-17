@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/ogen-go/ogen/ogenerrors"
@@ -15,28 +14,33 @@ import (
 	"github.com/a-novel-kit/jwt/jwa"
 
 	"github.com/a-novel/authentication/api/codegen"
-	"github.com/a-novel/authentication/internal/services"
 )
 
 type API struct {
-	LoginService      *services.LoginService
-	LoginAnonService  *services.LoginAnonService
-	SelectKeyService  *services.SelectKeyService
-	SearchKeysService *services.SearchKeysService
+	LoginService     LoginService
+	LoginAnonService LoginAnonService
 
-	RequestRegisterService      *services.RequestRegisterService
-	RequestEmailUpdateService   *services.RequestEmailUpdateService
-	RequestPasswordResetService *services.RequestPasswordResetService
+	SelectKeyService  SelectKeyService
+	SearchKeysService SearchKeysService
 
-	RegisterService       *services.RegisterService
-	EmailExistsService    *services.EmailExistsService
-	UpdateEmailService    *services.UpdateEmailService
-	UpdatePasswordService *services.UpdatePasswordService
+	RequestEmailUpdateService   RequestEmailUpdateService
+	RequestPasswordResetService RequestPasswordResetService
+	RequestRegisterService      RequestRegisterService
+
+	RegisterService       RegisterService
+	EmailExistsService    EmailExistsService
+	UpdateEmailService    UpdateEmailService
+	UpdatePasswordService UpdatePasswordService
 
 	codegen.UnimplementedHandler
 }
 
 func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErrorStatusCode {
+	// no-op
+	if err == nil {
+		return nil
+	}
+
 	// Return a different error if authentication failed. Also do not log error (we will still have the API log from
 	// the default middleware if needed).
 	var securityError *ogenerrors.SecurityError
@@ -55,10 +59,6 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 		StatusCode: http.StatusInternalServerError,
 		Response:   codegen.UnexpectedError{Error: "internal server error"},
 	}
-}
-
-func (api *API) Ping(_ context.Context) (codegen.PingRes, error) {
-	return &codegen.PingOK{Data: strings.NewReader("pong")}, nil
 }
 
 func (api *API) jwkToModel(src *jwa.JWK) (*codegen.JWK, error) {

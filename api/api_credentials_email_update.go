@@ -13,6 +13,10 @@ import (
 	"github.com/a-novel/authentication/internal/services"
 )
 
+type UpdateEmailService interface {
+	UpdateEmail(ctx context.Context, request services.UpdateEmailRequest) (*services.UpdateEmailResponse, error)
+}
+
 func (api *API) UpdateEmail(ctx context.Context, req *codegen.UpdateEmailForm) (codegen.UpdateEmailRes, error) {
 	res, err := api.UpdateEmailService.UpdateEmail(ctx, services.UpdateEmailRequest{
 		UserID:    uuid.UUID(req.UserID.Value),

@@ -9,8 +9,7 @@ packages:
       dir: internal/services/mocks
   github.com/a-novel/authentication/api:
     config:
-      include-regex: '^(SecurityAPISource)$'
-      include-auto-generated: false
+      all: true
       recursive: false
       outpkg: apimocks
       dir: api/mocks

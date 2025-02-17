@@ -110,7 +110,7 @@ type Invoker interface {
 	//
 	// PUT /short-code/update-email
 	RequestEmailUpdate(ctx context.Context, request *RequestEmailUpdateForm) (RequestEmailUpdateRes, error)
-	// RequestPasswordUpdate invokes requestPasswordUpdate operation.
+	// RequestPasswordReset invokes requestPasswordReset operation.
 	//
 	// Create a new short code for updating the password of an user. This short code is sent to the new
 	// address.
@@ -124,7 +124,7 @@ type Invoker interface {
 	// valid.
 	//
 	// PUT /short-code/update-password
-	RequestPasswordUpdate(ctx context.Context, request *RequestPasswordUpdateForm) (RequestPasswordUpdateRes, error)
+	RequestPasswordReset(ctx context.Context, request *RequestPasswordResetForm) (RequestPasswordResetRes, error)
 	// RequestRegistration invokes requestRegistration operation.
 	//
 	// To prevent spam in our user database, registration must be done through a link sent by e-mail, so
@@ -1163,7 +1163,7 @@ func (c *Client) sendRequestEmailUpdate(ctx context.Context, request *RequestEma
 	return result, nil
 }
 
-// RequestPasswordUpdate invokes requestPasswordUpdate operation.
+// RequestPasswordReset invokes requestPasswordReset operation.
 //
 // Create a new short code for updating the password of an user. This short code is sent to the new
 // address.
@@ -1177,14 +1177,14 @@ func (c *Client) sendRequestEmailUpdate(ctx context.Context, request *RequestEma
 // valid.
 //
 // PUT /short-code/update-password
-func (c *Client) RequestPasswordUpdate(ctx context.Context, request *RequestPasswordUpdateForm) (RequestPasswordUpdateRes, error) {
-	res, err := c.sendRequestPasswordUpdate(ctx, request)
+func (c *Client) RequestPasswordReset(ctx context.Context, request *RequestPasswordResetForm) (RequestPasswordResetRes, error) {
+	res, err := c.sendRequestPasswordReset(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendRequestPasswordUpdate(ctx context.Context, request *RequestPasswordUpdateForm) (res RequestPasswordUpdateRes, err error) {
+func (c *Client) sendRequestPasswordReset(ctx context.Context, request *RequestPasswordResetForm) (res RequestPasswordResetRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("requestPasswordUpdate"),
+		otelogen.OperationID("requestPasswordReset"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
 		semconv.HTTPRouteKey.String("/short-code/update-password"),
 	}
@@ -1201,7 +1201,7 @@ func (c *Client) sendRequestPasswordUpdate(ctx context.Context, request *Request
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, RequestPasswordUpdateOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, RequestPasswordResetOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -1227,7 +1227,7 @@ func (c *Client) sendRequestPasswordUpdate(ctx context.Context, request *Request
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeRequestPasswordUpdateRequest(request, r); err != nil {
+	if err := encodeRequestPasswordResetRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
 
@@ -1236,7 +1236,7 @@ func (c *Client) sendRequestPasswordUpdate(ctx context.Context, request *Request
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, RequestPasswordUpdateOperation, r); {
+			switch err := c.securityBearerAuth(ctx, RequestPasswordResetOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -1272,7 +1272,7 @@ func (c *Client) sendRequestPasswordUpdate(ctx context.Context, request *Request
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeRequestPasswordUpdateResponse(resp)
+	result, err := decodeRequestPasswordResetResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

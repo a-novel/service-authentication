@@ -377,7 +377,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								// Leaf node.
 								switch r.Method {
 								case "PUT":
-									s.handleRequestPasswordUpdateRequest([0]string{}, elemIsEscaped, w, r)
+									s.handleRequestPasswordResetRequest([0]string{}, elemIsEscaped, w, r)
 								default:
 									s.notAllowed(w, r, "PUT")
 								}
@@ -863,9 +863,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								// Leaf node.
 								switch method {
 								case "PUT":
-									r.name = RequestPasswordUpdateOperation
+									r.name = RequestPasswordResetOperation
 									r.summary = "Set a new short code for user password change."
-									r.operationID = "requestPasswordUpdate"
+									r.operationID = "requestPasswordReset"
 									r.pathPattern = "/short-code/update-password"
 									r.args = args
 									r.count = 0
