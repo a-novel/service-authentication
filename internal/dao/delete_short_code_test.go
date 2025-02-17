@@ -1,0 +1,186 @@
+package dao_test
+
+import (
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/samber/lo"
+	"github.com/stretchr/testify/require"
+
+	pgctx "github.com/a-novel-kit/context/pgbun"
+
+	"github.com/a-novel/authentication/internal/dao"
+	"github.com/a-novel/authentication/models"
+)
+
+func TestDeleteShortCode(t *testing.T) {
+	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
+	now := time.Now().UTC().Round(time.Second)
+	hourLater := time.Now().Add(time.Hour).UTC().Round(time.Second)
+
+	testCases := []struct {
+		name string
+
+		data     dao.DeleteShortCodeData
+		fixtures []*dao.ShortCodeEntity
+
+		expect    *dao.ShortCodeEntity
+		expectErr error
+	}{
+		{
+			name: "Success",
+
+			data: dao.DeleteShortCodeData{
+				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Now:     now,
+				Comment: "foo",
+			},
+
+			fixtures: []*dao.ShortCodeEntity{
+				{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Usage:     models.ShortCodeUsage("test"),
+					Target:    "test-target-1",
+					CreatedAt: hourAgo,
+					ExpiresAt: hourLater,
+				},
+				{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Usage:     models.ShortCodeUsage("test"),
+					Target:    "test-target-2",
+					CreatedAt: hourAgo,
+					ExpiresAt: hourLater,
+				},
+			},
+
+			expect: &dao.ShortCodeEntity{
+				ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Usage:          models.ShortCodeUsage("test"),
+				Target:         "test-target-2",
+				CreatedAt:      hourAgo,
+				ExpiresAt:      hourLater,
+				DeletedAt:      &now,
+				DeletedComment: lo.ToPtr("foo"),
+			},
+		},
+		{
+			name: "NotFound",
+
+			data: dao.DeleteShortCodeData{
+				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Now:     now,
+				Comment: "foo",
+			},
+
+			fixtures: []*dao.ShortCodeEntity{
+				{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Usage:     models.ShortCodeUsage("test"),
+					Target:    "test-target-1",
+					CreatedAt: hourAgo,
+					ExpiresAt: hourLater,
+				},
+			},
+
+			expectErr: dao.ErrShortCodeNotFound,
+		},
+		{
+			name: "AlreadyExpiredWorks",
+
+			data: dao.DeleteShortCodeData{
+				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Now:     now,
+				Comment: "foo",
+			},
+
+			fixtures: []*dao.ShortCodeEntity{
+				{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Usage:     models.ShortCodeUsage("test"),
+					Target:    "test-target-1",
+					CreatedAt: hourAgo,
+					ExpiresAt: hourLater,
+				},
+				{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Usage:     models.ShortCodeUsage("test"),
+					Target:    "test-target-2",
+					CreatedAt: hourAgo,
+					ExpiresAt: hourAgo,
+				},
+			},
+
+			expect: &dao.ShortCodeEntity{
+				ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Usage:          models.ShortCodeUsage("test"),
+				Target:         "test-target-2",
+				CreatedAt:      hourAgo,
+				ExpiresAt:      hourAgo,
+				DeletedAt:      &now,
+				DeletedComment: lo.ToPtr("foo"),
+			},
+		},
+		{
+			name: "CanDeleteMultipleTimes",
+
+			data: dao.DeleteShortCodeData{
+				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Now:     now,
+				Comment: "foo",
+			},
+
+			fixtures: []*dao.ShortCodeEntity{
+				{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Usage:     models.ShortCodeUsage("test"),
+					Target:    "test-target-1",
+					CreatedAt: hourAgo,
+					ExpiresAt: hourLater,
+				},
+				{
+					ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Usage:          models.ShortCodeUsage("test"),
+					Target:         "test-target-2",
+					CreatedAt:      hourAgo,
+					ExpiresAt:      hourLater,
+					DeletedAt:      lo.ToPtr(now.Add(-30 * time.Minute)),
+					DeletedComment: lo.ToPtr("bar"),
+				},
+			},
+
+			expect: &dao.ShortCodeEntity{
+				ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Usage:          models.ShortCodeUsage("test"),
+				Target:         "test-target-2",
+				CreatedAt:      hourAgo,
+				ExpiresAt:      hourLater,
+				DeletedAt:      &now,
+				DeletedComment: lo.ToPtr("foo"),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			selectShortCode := dao.NewDeleteShortCodeRepository()
+
+			tx, commit, err := pgctx.NewContextTX(ctx, nil)
+			require.NoError(t, err)
+
+			defer func() { _ = commit(false) }()
+
+			db, err := pgctx.Context(tx)
+			require.NoError(t, err)
+
+			for _, fixture := range testCase.fixtures {
+				_, err = db.NewInsert().Model(fixture).Exec(tx)
+				require.NoError(t, err)
+			}
+
+			key, err := selectShortCode.DeleteShortCode(tx, testCase.data)
+			require.ErrorIs(t, err, testCase.expectErr)
+			require.Equal(t, testCase.expect, key)
+		})
+	}
+}

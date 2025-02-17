@@ -1,0 +1,80 @@
+package services
+
+import (
+	"fmt"
+
+	"github.com/a-novel-kit/context"
+
+	"github.com/a-novel/authentication/internal/dao"
+	"github.com/a-novel/authentication/internal/lib"
+	"github.com/a-novel/authentication/models"
+)
+
+// LoginSource is the source used to perform the LoginService.Login action.
+//
+// You may build one using the NewLoginServiceSource function.
+type LoginSource interface {
+	SelectCredentialsByEmail(ctx context.Context, email string) (*dao.CredentialsEntity, error)
+	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
+}
+
+// LoginRequest is the request sent by the client to log in.
+type LoginRequest struct {
+	// Email of the user trying to log in.
+	Email string
+	// Password of the user trying to log in.
+	Password string
+}
+
+// LoginService is the service used to perform the LoginService.Login action.
+//
+// You may create one using the NewLoginService function.
+type LoginService struct {
+	source LoginSource
+}
+
+// Login a user.
+//
+// On success, a new access token is returned, so the user can access protected resources.
+//
+// You may also create an anonymous session using the LoginAnonService.
+func (service *LoginService) Login(ctx context.Context, request LoginRequest) (string, error) {
+	// Retrieve credentials.
+	credentials, err := service.source.SelectCredentialsByEmail(ctx, request.Email)
+	if err != nil {
+		return "", fmt.Errorf("(LoginService.Login) select credentials by email: %w", err)
+	}
+
+	// Validate password.
+	if err := lib.CompareScrypt(request.Password, credentials.Password); err != nil {
+		return "", fmt.Errorf("(LoginService.Login) compare password: %w", err)
+	}
+
+	// Generate a new authentication token.
+	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
+		UserID: &credentials.ID,
+		Roles:  []models.Role{models.RoleUser},
+	})
+	if err != nil {
+		return "", fmt.Errorf("(LoginService.Login) issue accessToken: %w", err)
+	}
+
+	return accessToken, nil
+}
+
+func NewLoginServiceSource(
+	selectCredentialsByEmailDAO *dao.SelectCredentialsByEmailRepository,
+	issueTokenService *IssueTokenService,
+) LoginSource {
+	return &struct {
+		*dao.SelectCredentialsByEmailRepository
+		*IssueTokenService
+	}{
+		SelectCredentialsByEmailRepository: selectCredentialsByEmailDAO,
+		IssueTokenService:                  issueTokenService,
+	}
+}
+
+func NewLoginService(source LoginSource) *LoginService {
+	return &LoginService{source: source}
+}

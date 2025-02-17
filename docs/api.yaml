@@ -1,0 +1,894 @@
+# https://github.com/OAI/OpenAPI-Specification
+openapi: 3.0.4
+servers:
+  - url: http://127.0.0.1:4001/v1
+
+info:
+  title: A-Novel Authentication API.
+  description: |
+    The A-Novel authentication API, for internal use by A-Novel services.
+  contact:
+    name: A-Novel
+    email: support@agoradesecrivains.com
+  license:
+    name: GNU AGPLv3
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
+  version: 1.0.0
+
+security:
+  - bearerAuth: [ ]
+
+# ======================================================================================================================
+# Tags
+# ======================================================================================================================
+
+tags:
+  - name: health
+    description: Routes used to check the health of the service.
+  - name: session
+    description: |
+      Session management. Those routes are the entrypoint for all authenticated endpoints, and the only ones that can
+      be accessed without specific permissions.
+  - name: jwk
+    description: Routes exposing the public keys used for JSON Web Algorithms.
+  - name: shortCode
+    description: |
+      A short-code represents a temporary password used to grant a one-time access to a specific resource.
+      Once a resource is accessed using a short code, the short code is expired.
+      Every short-code also has a limited lifespan. Once expired, it cannot be used anymore.
+  - name: credentials
+    description: |
+      Credentials are used to prove a user identity. Using those credentials, a user can request a token with higher
+      privileges.
+
+# ======================================================================================================================
+# Paths
+# ======================================================================================================================
+
+paths:
+  /ping:
+    get:
+      security: [ ]
+      tags:
+        - health
+      summary: Check the status of the service.
+      description: |
+        Check the status of the service. If the service is running, a successful response is returned.
+      operationId: ping
+      responses:
+        '200':
+          description: The service is running.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: pong
+        '418':
+          description: This route is not expected to fail under normal circumstances.
+        default:
+          description: API is not available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /session:
+    get:
+      tags:
+        - session
+      summary: Check the status of a session.
+      description: |
+        Takes an empty request with authorization headers, and check the validity of those headers. If the headers can
+        be used to access any protected resource, the session is considered valid and the decoded claims are returned
+        as a success response. Otherwise, an error will be sent, explaining why the session is invalid.
+      operationId: checkSession
+      responses:
+        '200':
+          description: The session is valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claims'
+        '403':
+          description: |
+            The authorization header is correctly set, but verification failed. The token is correct, but likely
+            invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+    put:
+      security: [ ]
+      tags:
+        - session
+        - credentials
+      summary: Create a new session.
+      description: |
+        Create a new session, using a set of credentials. The provided credentials will be used to validate the 
+        identity of the caller. Once the credentials have been verified, a token is issued. The access rights it grants
+        may depend on the profile of the user.
+      operationId: createSession
+      requestBody:
+        $ref: '#/components/requestBodies/LoginForm'
+      responses:
+        '200':
+          description: The session has been created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '403':
+          description: The provided credentials match a user, but authentication failed due to incorrect information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+        '404':
+          description: The provided credentials do not match any user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /session/anon:
+    put:
+      security: [ ]
+      tags:
+        - session
+      summary: Create a new anonymous session.
+      description: |
+        Create a new anonymous session. An anonymous session is delivered without constraint, and grants basic access
+        to apis with low protection.
+      operationId: createAnonSession
+      responses:
+        '200':
+          description: The session has been created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '418':
+          description: This route is not expected to fail under normal circumstances.
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /public-keys:
+    get:
+      tags:
+        - jwk
+      summary: Get the public keys used for JSON Web Algorithms.
+      description: |
+        Get a public key from its usage.
+      parameters:
+        - $ref: '#/components/parameters/KID'
+      operationId: getPublicKey
+      responses:
+        '200':
+          description: The public key have been retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWK'
+        '404':
+          description: The provided key usage does not match any key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /public-keys/list:
+    get:
+      tags:
+        - jwk
+      summary: List all public keys used for JSON Web Algorithms.
+      description: |
+        Get all public keys from the service that match a given usage.
+      parameters:
+        - name: usage
+          in: query
+          description: The intended usage of the keys.
+          required: true
+          schema:
+            $ref: '#/components/schemas/KeyUsage'
+      operationId: listPublicKeys
+      responses:
+        '200':
+          description: The public keys were retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JWK'
+        '418':
+          description: This route is not expected to fail under normal circumstances.
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /short-code/register:
+    put:
+      tags:
+        - shortCode
+      summary: Set a new short code for user registration.
+      description: |
+        To prevent spam in our user database, registration must be done through a link sent by e-mail, so we can
+        ensure this address is valid.
+        When a user registers, the short code it received must be sent along with the registration payload. The email
+        of the payload MUST match the email the short code was sent to, and is used to retrieve the short code.
+        
+        NOTE that this request does not verify the availability of an email. You may check this beforehand, using
+        the `Email Exists` endpoint.
+        
+        If multiple registration links are requested for the same email, only the last one will be valid.
+      operationId: requestRegistration
+      requestBody:
+        $ref: '#/components/requestBodies/RequestRegistrationForm'
+      responses:
+        '204':
+          description: The short code has been sent successfully.
+        '418':
+          description: This route is not expected to fail under normal circumstances.
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /short-code/update-email:
+    put:
+      tags:
+        - shortCode
+      summary: Set a new short code for user email change.
+      description: |
+        Create a new short code for updating the email of an user. This short code is sent to the new address.
+        If the user clicks on it, it should take it to a page that will forward the short code back to this API.
+        Once done, the email associated to the user will be updated automatically.
+        
+        This route requires to be called by an authenticated user. Anonymous sessions cannot trigger an email
+        update request.
+        
+        NOTE that this request does not verify the availability of an email. You may check this beforehand, using
+        the `Email Exists` endpoint.
+        
+        If multiple email update links are requested for the same email, only the last one will be valid.
+      operationId: requestEmailUpdate
+      requestBody:
+        $ref: '#/components/requestBodies/RequestEmailUpdateForm'
+      responses:
+        '204':
+          description: The short code has been sent successfully.
+        '418':
+          description: This route is not expected to fail under normal circumstances.
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /short-code/update-password:
+    put:
+      tags:
+        - shortCode
+      summary: Set a new short code for user password change.
+      description: |
+        Create a new short code for updating the password of an user. This short code is sent to the new address.
+        If the user clicks on it, it should take it to a page that will forward the short code back to this API.
+        Once done, the password of the user is updated.
+        
+        This route does not require authentication (although it requires at least an anonymous session). This
+        allow users who forgot their password to reset it.
+        
+        If multiple password update links are requested for the same email, only the last one will be valid.
+      operationId: requestPasswordUpdate
+      requestBody:
+        $ref: '#/components/requestBodies/RequestPasswordUpdateForm'
+      responses:
+        '204':
+          description: The short code has been sent successfully.
+        '404':
+          description: The provided email does not match any user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /credentials:
+    put:
+      tags:
+        - credentials
+      summary: Create a new user.
+      description: |
+        Create a new user. The form must contain a short code, that was sent through a registration link at the user
+        desired email.
+        
+        On success, a valid access token is returned, that can be used to access higher-privilege routes.
+      operationId: register
+      requestBody:
+        $ref: '#/components/requestBodies/RegisterForm'
+      responses:
+        '200':
+          description: The user has been created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '403':
+          description: The short code is not valid, either wrong or it does not exist at all for this email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+        '410':
+          description: The provided email is already in use.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /credentials/email:
+    get:
+      tags:
+        - credentials
+      summary: Check the availability of an email.
+      description: |
+        Returns an empty, successful response if the email is already associated to an user. Otherwise, it fails
+        with a not found (404) error status.
+      operationId: emailExists
+      parameters:
+        - $ref: '#/components/parameters/Email'
+      responses:
+        '204':
+          description: The email is associated to an user.
+        '404':
+          description: The provided email is not associated to any user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+    patch:
+      tags:
+        - credentials
+      summary: Update the email of an user.
+      description: |
+        Update the email of an user. This route requires a valid short code, that was sent to the new email.
+        If the short code is valid, the email of the user is updated with the email address the short code was
+        sent to.
+      operationId: updateEmail
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateEmailForm'
+      responses:
+        '200':
+          description: The email has been updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - email
+                properties:
+                  email:
+                    $ref: '#/components/schemas/Email'
+                    description: The new email of the user.
+        '403':
+          description: The short code is not valid, either wrong or it does not exist at all for this user ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+        '404':
+          description: The provided user ID does not match any user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '410':
+          description: The provided email is already in use.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /credentials/password:
+    patch:
+      tags:
+        - credentials
+      summary: Update the password of an user.
+      description: |
+        Update the password of an user. This route requires the original password of the user, to double check
+        the identity of the caller.
+      operationId: updatePassword
+      requestBody:
+        $ref: '#/components/requestBodies/UpdatePasswordForm'
+      responses:
+        '204':
+          description: The password has been updated successfully.
+        '403':
+          description: The provided current password does not match the actual password of the user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /credentials/password/reset:
+    patch:
+      tags:
+        - credentials
+      summary: Reset the password of an user.
+      description: |
+        Reset the password of an user. This route allows an unauthenticated session to update the password of a user.
+        To prevent security issues, this route requires a short code that was sent to the email of the user that
+        requested the password reset.
+      operationId: resetPassword
+      requestBody:
+        $ref: '#/components/requestBodies/ResetPasswordForm'
+      responses:
+        '204':
+          description: The password has been updated successfully.
+        '403':
+          description: The short code is not valid, either wrong or it does not exist at all for this user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+# ======================================================================================================================
+# Components
+# ======================================================================================================================
+
+components:
+  # ================================================== SECURITY SCHEMAS ==================================================
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  # ======================================================= SCHEMAS ======================================================
+  schemas:
+    Token:
+      type: object
+      required:
+        - accessToken
+      properties:
+        accessToken:
+          type: string
+          description: |
+            The token used to authenticate the session. This token can be passed as a header to http requests on
+            protected routes.
+          example: |
+            eyJhbGciOiJFZERTQSIsImtpZCI6ImNhYWE0YzQzLWVkYTYtNDMxMy1hNTQyLWM5ZDFkOTEwODAzYyJ9.eyJhdWQiOiJhbm92ZWwtY2xpZ
+            W50IiwiZXhwIjoxNzM5NTk2NzU1LCJpYXQiOjE3Mzk1MTAzNTUsImlzcyI6ImFub3ZlbC1hdXRoZW50aWNhdGlvbiIsImp0aSI6IjI5NDcx
+            YzAxLTVhZTEtNGIwMS1iNzI5LWUxNzQ4ODUzOGUxNSIsIm5iZiI6MTczOTUxMDM1NSwicm9sZXMiOlsiYXV0aDphbm9uIl0sInN1YiI6InV
+            zZXItYWNjZXNzIn0.Bx5iCWhT31WktGbwYTKq-M-oaNfPvpcRxQk4YO4dYij-FXlVNmuechkIfARNJeX9FTfRL00PXvA2_kvfjC2rCQ
+    Claims:
+      type: object
+      required:
+        - roles
+      properties:
+        userID:
+          type: string
+          nullable: true
+          format: uuid
+          description: The unique identifier of the user. Can be null if the session is anonymous.
+          example: 29f71c01-5ae1-4b01-b729-e17488538e15
+        roles:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Role'
+          description: The roles granted by the token.
+          example: [ "auth:anon" ]
+
+    LoginForm:
+      type: object
+      description: |
+        Data used to authenticate a user. It usually includes some private information only known to the user
+        (password, secret question, etc), that is checked against some protected data on the server. If this
+        information is correct, the user is authenticated and granted a special token.
+      required:
+        - email
+        - password
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          $ref: '#/components/schemas/Password'
+    RequestRegistrationForm:
+      type: object
+      description: Create a new registration link.
+      required:
+        - email
+        - password
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+          description: |
+            The email of the new user. This email must be available at the time of registration.
+    RequestEmailUpdateForm:
+      type: object
+      description: Create a new email update link.
+      required:
+        - email
+        - password
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+          description: |
+            The bew email of the new user. This email must be available at the time of validation.
+    RequestPasswordUpdateForm:
+      type: object
+      description: Create a new password update link.
+      required:
+        - email
+        - password
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+          description: |
+            The email of the user. This email must match a user in the database.
+    RegisterForm:
+      type: object
+      description: Data used to create a user.
+      required:
+        - email
+        - password
+        - shortCode
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+          description: |
+            The email of the new user. This email must be available, and also match the one that received
+            the short code / registration link.
+        password:
+          $ref: '#/components/schemas/Password'
+        shortCode:
+          $ref: '#/components/schemas/ShortCode'
+    UpdateEmailForm:
+      type: object
+      description: Data used to update the email of a user.
+      required:
+        - email
+        - shortCode
+      properties:
+        userID:
+          $ref: '#/components/schemas/UserID'
+          description: |
+            The id of the user that requested the email update. This ID is usually sent along the short code
+            in the email update link.
+        shortCode:
+          $ref: '#/components/schemas/ShortCode'
+    UpdatePasswordForm:
+      type: object
+      description: Data used to update the password of a user.
+      required:
+        - email
+        - password
+        - currentPassword
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          $ref: '#/components/schemas/Password'
+          description: The new password of the user.
+        currentPassword:
+          $ref: '#/components/schemas/Password'
+          description: The current password of the user, used for further verification of the caller identity.
+    ResetPasswordForm:
+      type: object
+      description: Data used to reset the password of a user.
+      required:
+        - email
+        - password
+        - shortCode
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          $ref: '#/components/schemas/Password'
+          description: The new password of the user.
+        shortCode:
+          $ref: '#/components/schemas/ShortCode'
+
+    KeyUsage:
+      type: string
+      description: The intended usage of the key.
+      example: auth
+      enum:
+        - auth
+        - refresh
+    JWK:
+      type: object
+      required:
+        - kty
+        - use
+        - key_ops
+        - alg
+      additionalProperties: true
+      properties:
+        kty:
+          $ref: '#/components/schemas/KTY'
+        use:
+          $ref: '#/components/schemas/Use'
+        key_ops:
+          type: array
+          example: [ "sign", "verify" ]
+          items:
+            $ref: '#/components/schemas/KeyOp'
+        alg:
+          $ref: '#/components/schemas/Alg'
+        kid:
+          $ref: '#/components/schemas/KID'
+
+    # ======================================================== TYPES =======================================================
+    Role:
+      type: string
+      description: A role grants a set of permissions to a session. A session may have multiple roles.
+      example: auth:anon
+    KTY:
+      type: string
+      description: The type of the key embedded in the JWK.
+      example: OKP
+      enum:
+        - oct
+        - RSA
+        - EC
+        - OKP
+    Use:
+      type: string
+      description: The intended use of the public key.
+      example: sig
+      enum:
+        - sig
+        - enc
+    KeyOp:
+      type: string
+      description: The operation that can be performed using the key.
+      example: sign
+      enum:
+        - sign
+        - verify
+        - encrypt
+        - decrypt
+        - wrapKey
+        - unwrapKey
+        - deriveKey
+        - deriveBits
+    Alg:
+      type: string
+      description: The algorithm this key can be used for.
+      example: EdDSA
+      enum:
+        - HS256
+        - HS384
+        - HS512
+        - RS256
+        - RS384
+        - RS512
+        - ES256
+        - ES384
+        - ES512
+        - PS256
+        - PS384
+        - PS512
+        - EdDSA
+        - RSA-OAEP
+        - RSA-OAEP-256
+        - A128KW
+        - A192KW
+        - A256KW
+        - dir
+        - ECDH-ES
+        - ECDH-ES+A128KW
+        - ECDH-ES+A192KW
+        - ECDH-ES+A256KW
+        - A128GCMKW
+        - A192GCMKW
+        - A256GCMKW
+        - PBES2-HS256+A128KW
+        - PBES2-HS384+A192KW
+        - PBES2-HS512+A256KW
+        # Enc values.
+        - A128CBC-HS256
+        - A192CBC-HS384
+        - A256CBC-HS512
+        - A128GCM
+        - A192GCM
+        - A256GCM
+    KID:
+      type: string
+      description: The unique identifier of the key, conveyed through its KID field.
+      example: 29f71c01-5ae1-4b01-b729-e17488538e15
+      format: uuid
+
+    Email:
+      type: string
+      format: email
+      description: The email of the user.
+      example: user@provider.com
+      minLength: 3
+      maxLength: 64
+    Password:
+      type: string
+      description: The password of the user.
+      example: "123456"
+      minLength: 2
+      maxLength: 512
+    ShortCode:
+      type: string
+      description: |
+        A clear code sent to the user for one-time access on a specific action / resource. This code is URL safe.
+      example: abcdef123456
+      minLength: 1
+      maxLength: 32
+    UserID:
+      type: string
+      format: uuid
+      description: The unique identifier of the user.
+      example: 29f71c01-5ae1-4b01-b729-e17488538e15
+    # ======================================================= ERRORS =======================================================
+    ForbiddenError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: The error message.
+          example: Authentication failed due to incorrect information.
+    NotFoundError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: The error message.
+          example: The provided credentials do not match any user.W
+    UnexpectedError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: The error message.
+          example: An unexpected error occurred while processing the request.
+    ConflictError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: The error message.
+          example: The provided email is already in use.
+  # =================================================== REQUEST BODIES ===================================================
+  requestBodies:
+    LoginForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginForm'
+    RequestRegistrationForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RequestRegistrationForm'
+    RequestEmailUpdateForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RequestEmailUpdateForm'
+    RequestPasswordUpdateForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RequestPasswordUpdateForm'
+
+    RegisterForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RegisterForm'
+    UpdateEmailForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateEmailForm'
+    UpdatePasswordForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdatePasswordForm'
+    ResetPasswordForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResetPasswordForm'
+  # ================================================== QUERY PARAMETERS ==================================================
+  parameters:
+    KID:
+      name: kid
+      in: query
+      description: The unique identifier of the key, conveyed through its KID field.
+      required: true
+      example: 29f71c01-5ae1-4b01-b729-e17488538e15
+      schema:
+        $ref: '#/components/schemas/KID'
+    Email:
+      name: email
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/Email'

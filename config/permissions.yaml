@@ -1,0 +1,16 @@
+roles:
+  "auth:anon":
+    permissions:
+      - "jwk:read"
+      - "register:request"
+      - "password:reset:request"
+      - "email:exists"
+      - "register"
+      - "email:update"
+      - "password:reset"
+  "auth:user":
+    inherits:
+      - "auth:anon"
+    permissions:
+      - "email:update:request"
+      - "password:update"

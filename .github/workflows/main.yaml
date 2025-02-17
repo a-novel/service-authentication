@@ -1,0 +1,112 @@
+name: main
+
+on: [ push ]
+
+jobs:
+  lint-docs:
+    uses: a-novel-kit/workflows/.github/workflows/lint-open-api.yaml@master
+
+  docs:
+    needs: [ lint-docs ]
+    uses: a-novel-kit/workflows/.github/workflows/deploy-pages-static.yaml@master
+    if: github.ref == 'refs/heads/master' && success()
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+  lint:
+    uses: a-novel-kit/workflows/.github/workflows/lint-go.yaml@master
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_USER: test
+          POSTGRES_DB: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      DSN: postgres://test:test@localhost:5432/test?sslmode=disable
+      MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
+      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+    steps:
+      - uses: a-novel-kit/workflows/test/go@master
+        with:
+          codecov_token: ${{ secrets.CODECOV_TOKEN }}
+
+  staging-api-build:
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      DSN: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+      MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
+      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+    steps:
+      - uses: a-novel-kit/workflows/build/docker-rest-api@master
+        with:
+          file: api.Dockerfile
+          app: api/staging
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
+
+  staging-rotate-keys-build:
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      DSN: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+      MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
+      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+    steps:
+      - uses: a-novel-kit/workflows/build/docker-job@master
+        with:
+          file: rotatekeys.Dockerfile
+          app: rotate_keys/staging
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"

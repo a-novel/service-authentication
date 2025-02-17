@@ -1,0 +1,12 @@
+usages:
+  auth:
+    ttl: 24h
+    issuer: "anovel-authentication"
+    audience: "anovel-client"
+    subject: "user-access"
+    leeway: 5m
+  refresh:
+    ttl: 168h
+    issuer: "anovel-authentication"
+    audience: "anovel-client"
+    subject: "user-refresh"

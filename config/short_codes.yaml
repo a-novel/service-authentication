@@ -1,0 +1,11 @@
+size: 12
+usages:
+  requestRegister:
+    ttl: 48h
+    sendgridID: d-d76055486b7546078ba6668b678fbc60
+  validateMail:
+    ttl: 48h
+    sendgridID: d-06e4d68e78a4478ebbf8bb4d819138e2
+  resetPassword:
+    ttl: 2h
+    sendgridID: d-4b3d0a1488c34550833f2e3117e440da

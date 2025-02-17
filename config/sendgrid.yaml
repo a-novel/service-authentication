@@ -1,0 +1,4 @@
+apiKey: ${SENDGRID_API_KEY}
+sender:
+  name: Agora des Écrivains
+  mail: noreply@agoradesecrivains.com

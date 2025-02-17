@@ -1,0 +1,12 @@
+usages:
+  # Auth tokens have a medium lifecycle. They are kept for some times to make it more convenient to the user.
+  auth:
+    ttl: 168h # 7 days
+    rotation: 24h
+  # Refresh tokens have a long lifecycle, and allow less active users to keep their session alive.
+  refresh:
+    ttl: 720h # 30 days
+    rotation: 168h # 7 days
+source:
+  cache:
+    duration: 30m

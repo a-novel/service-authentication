@@ -1,0 +1,98 @@
+package api
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
+	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/rs/zerolog"
+	"github.com/samber/lo"
+
+	"github.com/a-novel-kit/jwt/jwa"
+
+	"github.com/a-novel/authentication/api/codegen"
+	"github.com/a-novel/authentication/internal/services"
+)
+
+type API struct {
+	LoginService      *services.LoginService
+	LoginAnonService  *services.LoginAnonService
+	SelectKeyService  *services.SelectKeyService
+	SearchKeysService *services.SearchKeysService
+
+	RequestRegisterService      *services.RequestRegisterService
+	RequestEmailUpdateService   *services.RequestEmailUpdateService
+	RequestPasswordResetService *services.RequestPasswordResetService
+
+	RegisterService       *services.RegisterService
+	EmailExistsService    *services.EmailExistsService
+	UpdateEmailService    *services.UpdateEmailService
+	UpdatePasswordService *services.UpdatePasswordService
+
+	codegen.UnimplementedHandler
+}
+
+func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErrorStatusCode {
+	// Return a different error if authentication failed. Also do not log error (we will still have the API log from
+	// the default middleware if needed).
+	var securityError *ogenerrors.SecurityError
+	if ok := errors.As(err, &securityError); ok {
+		return &codegen.UnexpectedErrorStatusCode{
+			StatusCode: http.StatusForbidden,
+			Response:   codegen.UnexpectedError{Error: "Forbidden"},
+		}
+	}
+
+	// Unhandled, unexpected error occurred.
+	logger := zerolog.Ctx(ctx)
+	logger.Error().Err(err).Msg("internal")
+
+	return &codegen.UnexpectedErrorStatusCode{
+		StatusCode: http.StatusInternalServerError,
+		Response:   codegen.UnexpectedError{Error: "internal server error"},
+	}
+}
+
+func (api *API) Ping(_ context.Context) (codegen.PingRes, error) {
+	return &codegen.PingOK{Data: strings.NewReader("pong")}, nil
+}
+
+func (api *API) jwkToModel(src *jwa.JWK) (*codegen.JWK, error) {
+	rawPayload := new(codegen.JWKAdditional)
+	if err := rawPayload.UnmarshalJSON(src.Payload); err != nil {
+		return nil, fmt.Errorf("unmarshal payload: %w", err)
+	}
+
+	kid, err := uuid.Parse(src.KID)
+	if err != nil {
+		return nil, fmt.Errorf("parse kid: %w", err)
+	}
+
+	return &codegen.JWK{
+		Kty:             codegen.KTY(src.KTY),
+		Use:             codegen.Use(src.Use),
+		KeyOps:          lo.Map(src.KeyOps, func(item jwa.KeyOp, _ int) codegen.KeyOp { return codegen.KeyOp(item) }),
+		Alg:             codegen.Alg(src.Alg),
+		Kid:             codegen.OptKID{Value: codegen.KID(kid), Set: true},
+		AdditionalProps: *rawPayload,
+	}, nil
+}
+
+func (api *API) jwksToModels(src ...*jwa.JWK) ([]codegen.JWK, error) {
+	output := make([]codegen.JWK, len(src))
+
+	for i, jwk := range src {
+		model, err := api.jwkToModel(jwk)
+		if err != nil {
+			return nil, fmt.Errorf("convert jwk to model: %w", err)
+		}
+
+		output[i] = *model
+	}
+
+	return output, nil
+}
