@@ -50,6 +50,12 @@ type Handler interface {
 	//
 	// GET /public-keys
 	GetPublicKey(ctx context.Context, params GetPublicKeyParams) (GetPublicKeyRes, error)
+	// Healthcheck implements healthcheck operation.
+	//
+	// Returns a detailed report of the health of the service, including every dependency.
+	//
+	// GET /healthcheck
+	Healthcheck(ctx context.Context) (HealthcheckRes, error)
 	// ListPublicKeys implements listPublicKeys operation.
 	//
 	// Get all public keys from the service that match a given usage.
