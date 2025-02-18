@@ -51,13 +51,14 @@ func NewAuthenticateService(authVerifySource *jwk.Source[ed25519.PublicKey]) *Au
 	verifier := jws.NewSourcedED25519Verifier(authVerifySource)
 
 	deserializer := jwp.NewClaimsChecker(&jwp.ClaimsCheckerConfig{
-		Target: &jwt.TargetConfig{
-			Issuer:   config.Tokens.Usages[models.KeyUsageAuth].Issuer,
-			Audience: config.Tokens.Usages[models.KeyUsageAuth].Audience,
-			Subject:  config.Tokens.Usages[models.KeyUsageAuth].Subject,
+		Checks: []jwp.ClaimsCheck{
+			jwp.NewClaimsCheckTarget(jwt.TargetConfig{
+				Issuer:   config.Tokens.Usages[models.KeyUsageAuth].Issuer,
+				Audience: config.Tokens.Usages[models.KeyUsageAuth].Audience,
+				Subject:  config.Tokens.Usages[models.KeyUsageAuth].Subject,
+			}),
+			jwp.NewClaimsCheckTimestamp(config.Tokens.Usages[models.KeyUsageAuth].Leeway, true),
 		},
-		Leeway:            config.Tokens.Usages[models.KeyUsageAuth].Leeway,
-		RequireExpiration: true,
 	})
 
 	return &AuthenticateService{

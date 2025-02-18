@@ -75,7 +75,16 @@ func main() {
 
 	authSignSource := services.NewAuthPrivateKeysProvider(searchKeysService)
 	authVerifySource := services.NewAuthPublicKeysProvider(searchKeysService)
+	refreshSignSource := services.NewRefreshPrivateKeysProvider(searchKeysService)
+	refreshVerifySource := services.NewRefreshPublicKeysProvider(searchKeysService)
+
 	issueTokenService := services.NewIssueTokenService(authSignSource)
+	issueRefreshTokenService := services.NewIssueRefreshTokenService(refreshSignSource)
+	consumeRefreshTokenService := services.NewConsumeRefreshTokenService(
+		issueTokenService,
+		authVerifySource,
+		refreshVerifySource,
+	)
 	createShortCodeService := services.NewCreateShortCodeService(insertShortCodeDAO)
 	consumeShortCodeService := services.NewConsumeShortCodeService(
 		services.NewConsumeShortCodeSource(selectShortCodeDAO, deleteShortCodeDAO),
@@ -142,8 +151,10 @@ func main() {
 	// RUN -------------------------------------------------------------------------------------------------------------
 
 	handler := &api.API{
-		LoginService:     loginService,
-		LoginAnonService: loginAnonService,
+		LoginService:               loginService,
+		LoginAnonService:           loginAnonService,
+		ConsumeRefreshTokenService: consumeRefreshTokenService,
+		IssueRefreshTokenService:   issueRefreshTokenService,
 
 		SelectKeyService:  selectKeyService,
 		SearchKeysService: searchKeysService,
@@ -162,9 +173,11 @@ func main() {
 		codegen.PingOperation:        {},
 		codegen.HealthcheckOperation: {},
 
-		codegen.CheckSessionOperation:      {},
-		codegen.CreateSessionOperation:     {},
-		codegen.CreateAnonSessionOperation: {},
+		codegen.CheckSessionOperation:       {},
+		codegen.CreateSessionOperation:      {},
+		codegen.CreateAnonSessionOperation:  {},
+		codegen.RefreshSessionOperation:     {},
+		codegen.CreateRefreshTokenOperation: {},
 
 		codegen.GetPublicKeyOperation:   {"jwk:read"},
 		codegen.ListPublicKeysOperation: {"jwk:read"},

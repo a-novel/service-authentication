@@ -296,24 +296,62 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 					switch elem[0] {
-					case '/': // Prefix: "/anon"
+					case '/': // Prefix: "/"
 						origElem := elem
-						if l := len("/anon"); len(elem) >= l && elem[0:l] == "/anon" {
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "PUT":
-								s.handleCreateAnonSessionRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "PUT")
+							break
+						}
+						switch elem[0] {
+						case 'a': // Prefix: "anon"
+							origElem := elem
+							if l := len("anon"); len(elem) >= l && elem[0:l] == "anon" {
+								elem = elem[l:]
+							} else {
+								break
 							}
 
-							return
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "PUT":
+									s.handleCreateAnonSessionRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "PUT")
+								}
+
+								return
+							}
+
+							elem = origElem
+						case 'r': // Prefix: "refresh"
+							origElem := elem
+							if l := len("refresh"); len(elem) >= l && elem[0:l] == "refresh" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "PATCH":
+									s.handleRefreshSessionRequest([0]string{}, elemIsEscaped, w, r)
+								case "PUT":
+									s.handleCreateRefreshTokenRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "PATCH,PUT")
+								}
+
+								return
+							}
+
+							elem = origElem
 						}
 
 						elem = origElem
@@ -795,28 +833,76 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						}
 					}
 					switch elem[0] {
-					case '/': // Prefix: "/anon"
+					case '/': // Prefix: "/"
 						origElem := elem
-						if l := len("/anon"); len(elem) >= l && elem[0:l] == "/anon" {
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "PUT":
-								r.name = CreateAnonSessionOperation
-								r.summary = "Create a new anonymous session."
-								r.operationID = "createAnonSession"
-								r.pathPattern = "/session/anon"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
+							break
+						}
+						switch elem[0] {
+						case 'a': // Prefix: "anon"
+							origElem := elem
+							if l := len("anon"); len(elem) >= l && elem[0:l] == "anon" {
+								elem = elem[l:]
+							} else {
+								break
 							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "PUT":
+									r.name = CreateAnonSessionOperation
+									r.summary = "Create a new anonymous session."
+									r.operationID = "createAnonSession"
+									r.pathPattern = "/session/anon"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+							elem = origElem
+						case 'r': // Prefix: "refresh"
+							origElem := elem
+							if l := len("refresh"); len(elem) >= l && elem[0:l] == "refresh" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "PATCH":
+									r.name = RefreshSessionOperation
+									r.summary = "Refresh access token."
+									r.operationID = "refreshSession"
+									r.pathPattern = "/session/refresh"
+									r.args = args
+									r.count = 0
+									return r, true
+								case "PUT":
+									r.name = CreateRefreshTokenOperation
+									r.summary = "Issue a new refresh token."
+									r.operationID = "createRefreshToken"
+									r.pathPattern = "/session/refresh"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+							elem = origElem
 						}
 
 						elem = origElem

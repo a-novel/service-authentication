@@ -16,24 +16,6 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
-func mustIssueToken(
-	t *testing.T, key *jwk.Key[ed25519.PrivateKey], request services.IssueTokenRequest,
-) string {
-	t.Helper()
-
-	source := jwk.NewED25519PrivateSource(jwk.SourceConfig{
-		Fetch: func(_ context.Context) ([]*jwa.JWK, error) {
-			return []*jwa.JWK{key.JWK}, nil
-		},
-	})
-
-	issuer := services.NewIssueTokenService(source)
-	token, err := issuer.IssueToken(t.Context(), request)
-	require.NoError(t, err)
-
-	return token
-}
-
 func TestAuthenticate(t *testing.T) {
 	t.Parallel()
 

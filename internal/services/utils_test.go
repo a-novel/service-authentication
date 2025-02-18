@@ -9,9 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/context"
+	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel-kit/jwt/jwk"
 
 	"github.com/a-novel/authentication/internal/lib"
+	"github.com/a-novel/authentication/internal/services"
 )
 
 func mustEncryptValue(ctx context.Context, t *testing.T, data any) []byte {
@@ -77,4 +79,40 @@ func checkEmailBody(t *testing.T, raw []byte, expect map[string]any) {
 	require.Len(t, body.Personalizations, 1)
 
 	require.Equal(t, expect, body.Personalizations[0].DynamicTemplateData, string(raw))
+}
+
+func mustIssueToken(
+	t *testing.T, key *jwk.Key[ed25519.PrivateKey], request services.IssueTokenRequest,
+) string {
+	t.Helper()
+
+	source := jwk.NewED25519PrivateSource(jwk.SourceConfig{
+		Fetch: func(_ context.Context) ([]*jwa.JWK, error) {
+			return []*jwa.JWK{key.JWK}, nil
+		},
+	})
+
+	issuer := services.NewIssueTokenService(source)
+	token, err := issuer.IssueToken(t.Context(), request)
+	require.NoError(t, err)
+
+	return token
+}
+
+func mustIssueRefreshToken(
+	t *testing.T, key *jwk.Key[ed25519.PrivateKey], request services.IssueRefreshTokenRequest,
+) string {
+	t.Helper()
+
+	source := jwk.NewED25519PrivateSource(jwk.SourceConfig{
+		Fetch: func(_ context.Context) ([]*jwa.JWK, error) {
+			return []*jwa.JWK{key.JWK}, nil
+		},
+	})
+
+	issuer := services.NewIssueRefreshTokenService(source)
+	token, err := issuer.IssueRefreshToken(t.Context(), request)
+	require.NoError(t, err)
+
+	return token
 }
