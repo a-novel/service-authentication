@@ -16,8 +16,6 @@ This is a quickstart document to test the project locally.
 
 You can find the API documentation on the [repository github page](https://a-novel.github.io/authentication/).
 
-Want to contribute? Check the [contribution guidelines](CONTRIBUTING.md).
-
 # Run locally
 
 ## Pre-requisites
