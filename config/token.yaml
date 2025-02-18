@@ -10,3 +10,4 @@ usages:
     issuer: "anovel-authentication"
     audience: "anovel-client"
     subject: "user-refresh"
+    leeway: 5m
