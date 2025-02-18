@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/a-novel-kit/configurator v1.3.0
 	github.com/a-novel-kit/context v1.1.2
-	github.com/a-novel-kit/context/pgbun v0.0.0-20250217085445-4444c2dda40e
+	github.com/a-novel-kit/context/pgbun v0.0.0-20250218100019-f43efd501fff
 	github.com/a-novel-kit/jwt v1.0.1
 	github.com/a-novel-kit/middlewares/zerolog v0.0.0-20250217085829-68c076bc6d4a
 	github.com/go-chi/chi/v5 v5.2.1
@@ -19,8 +19,8 @@ require (
 	github.com/samber/lo v1.49.1
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/stretchr/testify v1.10.0
-	github.com/uptrace/bun v1.2.9
-	github.com/uptrace/bun/driver/pgdriver v1.2.9
+	github.com/uptrace/bun v1.2.10
+	github.com/uptrace/bun/driver/pgdriver v1.2.10
 	go.opentelemetry.io/otel v1.34.0
 	go.opentelemetry.io/otel/metric v1.34.0
 	go.opentelemetry.io/otel/trace v1.34.0
@@ -45,7 +45,7 @@ require (
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
-	github.com/uptrace/bun/dialect/pgdialect v1.2.9 // indirect
+	github.com/uptrace/bun/dialect/pgdialect v1.2.10 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
