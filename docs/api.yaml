@@ -97,7 +97,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/UnexpectedError'
 
-
   /session:
     get:
       tags:
@@ -187,6 +186,75 @@ paths:
                 $ref: '#/components/schemas/Token'
         '418':
           description: This route is not expected to fail under normal circumstances.
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+
+  /session/refresh:
+    patch:
+      security: [ ]
+      tags:
+        - session
+      summary: Refresh access token.
+      description: |
+        Takes a refresh token, and use it to issue a new access token.
+      operationId: refreshSession
+      parameters:
+        - $ref: '#/components/parameters/RefreshToken'
+        - $ref: '#/components/parameters/AccessToken'
+      responses:
+        '200':
+          description: The session is valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '403':
+          description: |
+            The authorization header is correctly set, but verification failed. The token is correct, but likely
+            invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+        '422':
+          description: The provided access token is not a refresh token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnprocessableEntityError'
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnexpectedError'
+    put:
+      tags:
+        - session
+      summary: Issue a new refresh token.
+      description: |
+        Issue a new refresh token. The access token used for this request must not be anonymous, and must come from
+        direct login (not a refresh token).
+      operationId: createRefreshToken
+      responses:
+        '200':
+          description: The session is valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshToken'
+        '403':
+          description: |
+            The authorization header is correctly set, but verification failed. The token is correct, but likely
+            invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -582,6 +650,20 @@ components:
             W50IiwiZXhwIjoxNzM5NTk2NzU1LCJpYXQiOjE3Mzk1MTAzNTUsImlzcyI6ImFub3ZlbC1hdXRoZW50aWNhdGlvbiIsImp0aSI6IjI5NDcx
             YzAxLTVhZTEtNGIwMS1iNzI5LWUxNzQ4ODUzOGUxNSIsIm5iZiI6MTczOTUxMDM1NSwicm9sZXMiOlsiYXV0aDphbm9uIl0sInN1YiI6InV
             zZXItYWNjZXNzIn0.Bx5iCWhT31WktGbwYTKq-M-oaNfPvpcRxQk4YO4dYij-FXlVNmuechkIfARNJeX9FTfRL00PXvA2_kvfjC2rCQ
+    RefreshToken:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: |
+            The token used to refresh the session.
+          example: |
+            eyJhbGciOiJFZERTQSIsImtpZCI6ImNhYWE0YzQzLWVkYTYtNDMxMy1hNTQyLWM5ZDFkOTEwODAzYyJ9.eyJhdWQiOiJhbm92ZWwtY2xpZ
+            W50IiwiZXhwIjoxNzM5NTk2NzU1LCJpYXQiOjE3Mzk1MTAzNTUsImlzcyI6ImFub3ZlbC1hdXRoZW50aWNhdGlvbiIsImp0aSI6IjI5NDcx
+            YzAxLTVhZTEtNGIwMS1iNzI5LWUxNzQ4ODUzOGUxNSIsIm5iZiI6MTczOTUxMDM1NSwicm9sZXMiOlsiYXV0aDphbm9uIl0sInN1YiI6InV
+            zZXItYWNjZXNzIn0.Bx5iCWhT31WktGbwYTKq-M-oaNfPvpcRxQk4YO4dYij-FXlVNmuechkIfARNJeX9FTfRL00PXvA2_kvfjC2rCQ
     Claims:
       type: object
       required:
@@ -886,6 +968,15 @@ components:
           type: string
           description: The error message.
           example: The provided email is already in use.
+    UnprocessableEntityError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: The error message.
+          example: The provided access token is not a refresh token.
   # =================================================== REQUEST BODIES ===================================================
   requestBodies:
     LoginForm:
@@ -953,3 +1044,17 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Email'
+    AccessToken:
+      name: access_token
+      in: query
+      required: true
+      schema:
+        type: string
+        description: The token used to authenticate the session.
+    RefreshToken:
+      name: refresh_token
+      in: query
+      required: true
+      schema:
+        type: string
+        description: The refresh token, used to issue a new access token.

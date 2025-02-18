@@ -37,6 +37,17 @@ func (UnimplementedHandler) CreateAnonSession(ctx context.Context) (r CreateAnon
 	return r, ht.ErrNotImplemented
 }
 
+// CreateRefreshToken implements createRefreshToken operation.
+//
+// Issue a new refresh token. The access token used for this request must not be anonymous, and must
+// come from
+// direct login (not a refresh token).
+//
+// PUT /session/refresh
+func (UnimplementedHandler) CreateRefreshToken(ctx context.Context) (r CreateRefreshTokenRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateSession implements createSession operation.
 //
 // Create a new session, using a set of credentials. The provided credentials will be used to
@@ -94,6 +105,15 @@ func (UnimplementedHandler) ListPublicKeys(ctx context.Context, params ListPubli
 //
 // GET /ping
 func (UnimplementedHandler) Ping(ctx context.Context) (r PingRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// RefreshSession implements refreshSession operation.
+//
+// Takes a refresh token, and use it to issue a new access token.
+//
+// PATCH /session/refresh
+func (UnimplementedHandler) RefreshSession(ctx context.Context, params RefreshSessionParams) (r RefreshSessionRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

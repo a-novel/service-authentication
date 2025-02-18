@@ -216,3 +216,104 @@ func decodeListPublicKeysParams(args [0]string, argsEscaped bool, r *http.Reques
 	}
 	return params, nil
 }
+
+// RefreshSessionParams is parameters of refreshSession operation.
+type RefreshSessionParams struct {
+	RefreshToken string
+	AccessToken  string
+}
+
+func unpackRefreshSessionParams(packed middleware.Parameters) (params RefreshSessionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "refresh_token",
+			In:   "query",
+		}
+		params.RefreshToken = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "access_token",
+			In:   "query",
+		}
+		params.AccessToken = packed[key].(string)
+	}
+	return params
+}
+
+func decodeRefreshSessionParams(args [0]string, argsEscaped bool, r *http.Request) (params RefreshSessionParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: refresh_token.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "refresh_token",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.RefreshToken = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "refresh_token",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: access_token.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "access_token",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.AccessToken = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "access_token",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}

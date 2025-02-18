@@ -18,7 +18,7 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
-func TestIssueToken(t *testing.T) {
+func TestIssueRefreshToken(t *testing.T) {
 	t.Parallel()
 
 	privateKeys, publicKeys := generateAuthTokenKeySet(t, 1)
@@ -31,51 +31,51 @@ func TestIssueToken(t *testing.T) {
 		name string
 
 		publicKey *jwk.Key[ed25519.PublicKey]
-		request   services.IssueTokenRequest
+		request   services.IssueRefreshTokenRequest
 
-		expect models.AccessTokenClaims
+		expect    models.RefreshTokenClaims
+		expectErr error
 	}{
 		{
 			name: "Success",
 
 			publicKey: publicKeys[0],
-			request: services.IssueTokenRequest{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Roles:  []models.Role{models.RoleUser},
+			request: services.IssueRefreshTokenRequest{
+				Claims: &models.AccessTokenClaims{
+					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:  []models.Role{models.RoleUser},
+				},
 			},
 
-			expect: models.AccessTokenClaims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Roles:  []models.Role{models.RoleUser},
+			expect: models.RefreshTokenClaims{
+				UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
 		},
 		{
 			name: "AnonymousToken",
 
 			publicKey: publicKeys[0],
-			request: services.IssueTokenRequest{
-				Roles: []models.Role{models.RoleAnon},
+			request: services.IssueRefreshTokenRequest{
+				Claims: &models.AccessTokenClaims{
+					Roles: []models.Role{models.RoleAnon},
+				},
 			},
 
-			expect: models.AccessTokenClaims{
-				Roles: []models.Role{models.RoleAnon},
-			},
+			expectErr: services.ErrRefreshTokenWithAnonSession,
 		},
 		{
-			name: "RefreshTokenID",
+			name: "RefreshRefreshToken",
 
 			publicKey: publicKeys[0],
-			request: services.IssueTokenRequest{
-				UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Roles:          []models.Role{models.RoleUser},
-				RefreshTokenID: lo.ToPtr("00000000-0000-0000-0000-000000000002"),
+			request: services.IssueRefreshTokenRequest{
+				Claims: &models.AccessTokenClaims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []models.Role{models.RoleUser},
+					RefreshTokenID: lo.ToPtr("00000000-0000-0000-0000-000000000002"),
+				},
 			},
 
-			expect: models.AccessTokenClaims{
-				UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Roles:          []models.Role{models.RoleUser},
-				RefreshTokenID: lo.ToPtr("00000000-0000-0000-0000-000000000002"),
-			},
+			expectErr: services.ErrRefreshRefreshToken,
 		},
 	}
 
@@ -89,22 +89,22 @@ func TestIssueToken(t *testing.T) {
 				},
 			})
 
-			service := services.NewIssueTokenService(source)
+			service := services.NewIssueRefreshTokenService(source)
 
-			data, err := service.IssueToken(t.Context(), testCase.request)
-			require.NoError(t, err)
+			data, err := service.IssueRefreshToken(t.Context(), testCase.request)
+			require.ErrorIs(t, err, testCase.expectErr)
 
-			t.Run("AccessToken", func(t *testing.T) {
+			if err == nil {
 				verifier := jws.NewED25519Verifier(testCase.publicKey.Key())
 				recipient := jwt.NewRecipient(jwt.RecipientConfig{
 					Plugins: []jwt.RecipientPlugin{verifier},
 				})
 
-				var claims models.AccessTokenClaims
+				var claims models.RefreshTokenClaims
 
 				require.NoError(t, recipient.Consume(t.Context(), data, &claims))
 				require.Equal(t, testCase.expect, claims)
-			})
+			}
 		})
 	}
 }

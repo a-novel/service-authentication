@@ -22,6 +22,8 @@ type IssueTokenRequest struct {
 	// Roles of the user that issued the request. Those are retrieved from services, and will serve to control
 	// access to specific resources.
 	Roles []models.Role
+	// Set this value to the refresh token used to issue the new access token, if any.
+	RefreshTokenID *string
 }
 
 // IssueTokenService is the service used to perform the IssueTokenService.IssueToken action.
@@ -38,8 +40,9 @@ func (service *IssueTokenService) IssueToken(
 	ctx context.Context, request IssueTokenRequest,
 ) (string, error) {
 	customClaims := models.AccessTokenClaims{
-		UserID: request.UserID,
-		Roles:  request.Roles,
+		UserID:         request.UserID,
+		Roles:          request.Roles,
+		RefreshTokenID: request.RefreshTokenID,
 	}
 
 	claims, err := jwt.NewBasicClaims(customClaims, service.claimsConfig)

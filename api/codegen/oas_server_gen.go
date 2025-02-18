@@ -26,6 +26,14 @@ type Handler interface {
 	//
 	// PUT /session/anon
 	CreateAnonSession(ctx context.Context) (CreateAnonSessionRes, error)
+	// CreateRefreshToken implements createRefreshToken operation.
+	//
+	// Issue a new refresh token. The access token used for this request must not be anonymous, and must
+	// come from
+	// direct login (not a refresh token).
+	//
+	// PUT /session/refresh
+	CreateRefreshToken(ctx context.Context) (CreateRefreshTokenRes, error)
 	// CreateSession implements createSession operation.
 	//
 	// Create a new session, using a set of credentials. The provided credentials will be used to
@@ -68,6 +76,12 @@ type Handler interface {
 	//
 	// GET /ping
 	Ping(ctx context.Context) (PingRes, error)
+	// RefreshSession implements refreshSession operation.
+	//
+	// Takes a refresh token, and use it to issue a new access token.
+	//
+	// PATCH /session/refresh
+	RefreshSession(ctx context.Context, params RefreshSessionParams) (RefreshSessionRes, error)
 	// Register implements register operation.
 	//
 	// Create a new user. The form must contain a short code, that was sent through a registration link

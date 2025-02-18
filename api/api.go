@@ -17,8 +17,10 @@ import (
 )
 
 type API struct {
-	LoginService     LoginService
-	LoginAnonService LoginAnonService
+	LoginService               LoginService
+	LoginAnonService           LoginAnonService
+	ConsumeRefreshTokenService ConsumeRefreshTokenService
+	IssueRefreshTokenService   IssueRefreshTokenService
 
 	SelectKeyService  SelectKeyService
 	SearchKeysService SearchKeysService

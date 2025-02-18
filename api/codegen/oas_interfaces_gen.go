@@ -9,6 +9,10 @@ type CreateAnonSessionRes interface {
 	createAnonSessionRes()
 }
 
+type CreateRefreshTokenRes interface {
+	createRefreshTokenRes()
+}
+
 type CreateSessionRes interface {
 	createSessionRes()
 }
@@ -31,6 +35,10 @@ type ListPublicKeysRes interface {
 
 type PingRes interface {
 	pingRes()
+}
+
+type RefreshSessionRes interface {
+	refreshSessionRes()
 }
 
 type RegisterRes interface {

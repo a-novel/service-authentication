@@ -479,12 +479,14 @@ func (s *ForbiddenError) SetError(val string) {
 	s.Error = val
 }
 
-func (*ForbiddenError) checkSessionRes()   {}
-func (*ForbiddenError) createSessionRes()  {}
-func (*ForbiddenError) registerRes()       {}
-func (*ForbiddenError) resetPasswordRes()  {}
-func (*ForbiddenError) updateEmailRes()    {}
-func (*ForbiddenError) updatePasswordRes() {}
+func (*ForbiddenError) checkSessionRes()       {}
+func (*ForbiddenError) createRefreshTokenRes() {}
+func (*ForbiddenError) createSessionRes()      {}
+func (*ForbiddenError) refreshSessionRes()     {}
+func (*ForbiddenError) registerRes()           {}
+func (*ForbiddenError) resetPasswordRes()      {}
+func (*ForbiddenError) updateEmailRes()        {}
+func (*ForbiddenError) updatePasswordRes()     {}
 
 // Ref: #/components/schemas/Health
 type Health struct {
@@ -1029,6 +1031,24 @@ func (s PingOK) Read(p []byte) (n int, err error) {
 
 func (*PingOK) pingRes() {}
 
+// Ref: #/components/schemas/RefreshToken
+type RefreshToken struct {
+	// The token used to refresh the session.
+	RefreshToken string `json:"refreshToken"`
+}
+
+// GetRefreshToken returns the value of RefreshToken.
+func (s *RefreshToken) GetRefreshToken() string {
+	return s.RefreshToken
+}
+
+// SetRefreshToken sets the value of RefreshToken.
+func (s *RefreshToken) SetRefreshToken(val string) {
+	s.RefreshToken = val
+}
+
+func (*RefreshToken) createRefreshTokenRes() {}
+
 // Data used to create a user.
 // Ref: #/components/schemas/RegisterForm
 type RegisterForm struct {
@@ -1215,6 +1235,7 @@ func (s *Token) SetAccessToken(val string) {
 
 func (*Token) createAnonSessionRes() {}
 func (*Token) createSessionRes()     {}
+func (*Token) refreshSessionRes()    {}
 func (*Token) registerRes()          {}
 
 // Ref: #/components/schemas/UnexpectedError
@@ -1258,6 +1279,24 @@ func (s *UnexpectedErrorStatusCode) SetStatusCode(val int) {
 func (s *UnexpectedErrorStatusCode) SetResponse(val UnexpectedError) {
 	s.Response = val
 }
+
+// Ref: #/components/schemas/UnprocessableEntityError
+type UnprocessableEntityError struct {
+	// The error message.
+	Error string `json:"error"`
+}
+
+// GetError returns the value of Error.
+func (s *UnprocessableEntityError) GetError() string {
+	return s.Error
+}
+
+// SetError sets the value of Error.
+func (s *UnprocessableEntityError) SetError(val string) {
+	s.Error = val
+}
+
+func (*UnprocessableEntityError) refreshSessionRes() {}
 
 // Data used to update the email of a user.
 // Ref: #/components/schemas/UpdateEmailForm
