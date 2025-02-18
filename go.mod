@@ -19,7 +19,7 @@ require (
 	github.com/samber/lo v1.49.1
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/stretchr/testify v1.10.0
-	github.com/uptrace/bun v1.2.9
+	github.com/uptrace/bun v1.2.10
 	github.com/uptrace/bun/driver/pgdriver v1.2.9
 	go.opentelemetry.io/otel v1.34.0
 	go.opentelemetry.io/otel/metric v1.34.0
