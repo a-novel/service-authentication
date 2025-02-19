@@ -3,20 +3,6 @@ name: main
 on: [ push ]
 
 jobs:
-  lint-docs:
-    permissions:
-      contents: read
-    uses: a-novel-kit/workflows/.github/workflows/lint-open-api.yaml@master
-
-  docs:
-    needs: [ lint-docs ]
-    uses: a-novel-kit/workflows/.github/workflows/deploy-pages-static.yaml@master
-    if: github.ref == 'refs/heads/master' && success()
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
   lint:
     permissions:
       contents: read
@@ -48,6 +34,27 @@ jobs:
       - uses: a-novel-kit/workflows/test/go@master
         with:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
+
+  sonar:
+    runs-on: ubuntu-latest
+    needs: [ test, lint ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Disabling shallow clones is recommended for improving the relevancy of reporting
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: go-coverage
+          path: coverage.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: go-lint
+          path: golangci-lint-report.xml
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   api-build:
     needs: [ test ]
@@ -118,3 +125,17 @@ jobs:
           image_tags: ${{ github.ref_name }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
+
+  lint-docs:
+    permissions:
+      contents: read
+    uses: a-novel-kit/workflows/.github/workflows/lint-open-api.yaml@master
+
+  docs:
+    needs: [ lint-docs ]
+    uses: a-novel-kit/workflows/.github/workflows/deploy-pages-static.yaml@master
+    if: github.ref == 'refs/heads/master' && success()
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
