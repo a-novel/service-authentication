@@ -48,8 +48,8 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 	var securityError *ogenerrors.SecurityError
 	if ok := errors.As(err, &securityError); ok {
 		return &codegen.UnexpectedErrorStatusCode{
-			StatusCode: http.StatusForbidden,
-			Response:   codegen.UnexpectedError{Error: "Forbidden"},
+			StatusCode: http.StatusUnauthorized,
+			Response:   codegen.UnexpectedError{Error: "Unauthorized"},
 		}
 	}
 
