@@ -35,8 +35,8 @@ func TestNewError(t *testing.T) {
 			},
 
 			expect: &codegen.UnexpectedErrorStatusCode{
-				StatusCode: http.StatusForbidden,
-				Response:   codegen.UnexpectedError{Error: "Forbidden"},
+				StatusCode: http.StatusUnauthorized,
+				Response:   codegen.UnexpectedError{Error: "Unauthorized"},
 			},
 		},
 		{
