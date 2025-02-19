@@ -2,13 +2,16 @@
 
 Authentication service for A-Novel apps.
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/a-novel/authentication/main.yaml)
-[![codecov](https://codecov.io/gh/a-novel/authentication/graph/badge.svg?token=cnSwTJ2q4n)](https://codecov.io/gh/a-novel/authentication)
-[![Go Report Card](https://goreportcard.com/badge/github.com/a-novel/authentication)](https://goreportcard.com/report/github.com/a-novel/authentication)
+[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/agora_ecrivains)](https://twitter.com/agora_ecrivains)
+[![Discord](https://img.shields.io/discord/1315240114691248138?logo=discord)](https://discord.gg/D7rqySm8)
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/a-novel/authentication)
 ![GitHub repo file or directory count](https://img.shields.io/github/directory-file-count/a-novel/authentication)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/a-novel/authentication)
+
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/a-novel/authentication/main.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/a-novel/authentication)](https://goreportcard.com/report/github.com/a-novel/authentication)
+[![codecov](https://codecov.io/gh/a-novel/authentication/graph/badge.svg?token=cnSwTJ2q4n)](https://codecov.io/gh/a-novel/authentication)
 
 ![Coverage graph](https://codecov.io/gh/a-novel/authentication/graphs/sunburst.svg?token=cnSwTJ2q4n)
 
