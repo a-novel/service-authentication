@@ -1,9 +1,9 @@
 ![Authentication Service](./docs/assets/service%20authentication%20banner.png)
 
-Authentication service for A-Novel apps.
-
 [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/agora_ecrivains)](https://twitter.com/agora_ecrivains)
 [![Discord](https://img.shields.io/discord/1315240114691248138?logo=discord)](https://discord.gg/D7rqySm8)
+
+<hr />
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/a-novel/authentication)
 ![GitHub repo file or directory count](https://img.shields.io/github/directory-file-count/a-novel/authentication)
@@ -14,6 +14,8 @@ Authentication service for A-Novel apps.
 [![codecov](https://codecov.io/gh/a-novel/authentication/graph/badge.svg?token=cnSwTJ2q4n)](https://codecov.io/gh/a-novel/authentication)
 
 ![Coverage graph](https://codecov.io/gh/a-novel/authentication/graphs/sunburst.svg?token=cnSwTJ2q4n)
+
+<hr />
 
 This is a quickstart document to test the project locally.
 
