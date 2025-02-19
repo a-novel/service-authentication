@@ -1,4 +1,4 @@
-# Authentication service
+![Authentication Service](./docs/assets/service%20authentication%20banner.png)
 
 Authentication service for A-Novel apps.
 
