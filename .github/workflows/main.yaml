@@ -1,6 +1,11 @@
 name: main
 
-on: [ push ]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   lint:
@@ -45,6 +50,9 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
+          name: go-test
+      - uses: actions/download-artifact@v4
+        with:
           name: go-coverage
       - uses: actions/download-artifact@v4
         with:
@@ -52,6 +60,9 @@ jobs:
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
         env:
+          SONAR_TEST_REPORT_PATH: test-report.json
+          SONAR_COVERAGE_REPORT_PATH: coverage.txt
+          SONAR_LINT_REPORT_PATH: golangci-lint-report.xml
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   api-build:
