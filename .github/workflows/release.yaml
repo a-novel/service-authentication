@@ -7,9 +7,11 @@ on:
 
 jobs:
   release:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    uses: a-novel-kit/workflows/.github/workflows/auto-release.yaml@master
+    steps:
+      - uses: a-novel-kit/workflows/publish-actions/auto-release@master
 
   api-build:
     needs: [ release ]
@@ -38,7 +40,7 @@ jobs:
       MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
-      - uses: a-novel-kit/workflows/build/docker-rest-api@master
+      - uses: a-novel-kit/workflows/build-actions/docker-rest-api@master
         with:
           file: api.Dockerfile
           image_name: ${{ github.repository }}/api
@@ -73,7 +75,7 @@ jobs:
       MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
-      - uses: a-novel-kit/workflows/build/docker-job@master
+      - uses: a-novel-kit/workflows/build-actions/docker-job@master
         with:
           file: rotatekeys.Dockerfile
           image_name: ${{ github.repository }}/jobs/rotatekeys

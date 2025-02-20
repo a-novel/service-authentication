@@ -40,14 +40,7 @@ mkdir $GOCOVERTMPDIR
 #       eg:
 #         github.com/org/repo -> .
 #         github.com/org/repo/submodule -> ./submodule
-go run ${TEST_TOOL_PKG} --format pkgname -- \
-  -cover -covermode=atomic -v -p 1 -count=1 \
-  $(for mod in $(go list -m); do go list ${mod//$(go list .)/.}/...; done  | grep -v /mocks | grep -v codegen) \
-  -args -test.gocoverdir=$GOCOVERTMPDIR
-
-# Collect test coverage.
-go tool covdata textfmt -i="$GOCOVERTMPDIR" -o=cover.out
-go tool cover -html=cover.out -o=cover.html
+go test -p 1 -race -coverprofile=coverage.txt -json ./...
 
 # Normal execution: containers are shut down.
 podman kube down ${KUBE_FILE}

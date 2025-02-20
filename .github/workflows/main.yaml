@@ -1,13 +1,13 @@
 name: main
 
-on: [ push ]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
-  lint:
-    permissions:
-      contents: read
-    uses: a-novel-kit/workflows/.github/workflows/lint-go.yaml@master
-
   test:
     runs-on: ubuntu-latest
     permissions:
@@ -31,28 +31,55 @@ jobs:
       MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
-      - uses: a-novel-kit/workflows/test/go@master
+      - uses: a-novel-kit/workflows/go-actions/test-go@master
+
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/go-actions/lint-go@master
+
+  lint-open-api:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/open-api-actions/lint-open-api@master
+
+  publish-open-api:
+    runs-on: ubuntu-latest
+    needs: [ lint-open-api ]
+    if: github.ref == 'refs/heads/master' && success()
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+    steps:
+      - id: deployment
+        uses: a-novel-kit/workflows/github-pages-actions/publish-static@master
+
+  report-codecov:
+    runs-on: ubuntu-latest
+    needs: [ test, lint, lint-open-api ]
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/go-actions/codecov-go@master
         with:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
-  sonar:
+  report-grc:
     runs-on: ubuntu-latest
-    needs: [ test, lint ]
+    needs: [ test, lint, lint-open-api ]
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-        with:
-          # Disabling shallow clones is recommended for improving the relevancy of reporting
-          fetch-depth: 0
-      - uses: actions/download-artifact@v4
-        with:
-          name: go-coverage
-      - uses: actions/download-artifact@v4
-        with:
-          name: go-lint
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - uses: a-novel-kit/workflows/go-actions/go-report-card@master
+        if: github.ref == 'refs/heads/master' && success()
 
   api-build:
     needs: [ test ]
@@ -81,11 +108,11 @@ jobs:
       MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
-      - uses: a-novel-kit/workflows/build/docker-rest-api@master
+      - uses: a-novel-kit/workflows/build-actions/docker-rest-api@master
         with:
           file: api.Dockerfile
           image_name: ${{ github.repository }}/api
-          image_tags: ${{ github.ref_name }}
+          image_tags: ${{ github.head_ref || github.ref_name }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
 
@@ -116,24 +143,10 @@ jobs:
       MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
-      - uses: a-novel-kit/workflows/build/docker-job@master
+      - uses: a-novel-kit/workflows/build-actions/docker-job@master
         with:
           file: rotatekeys.Dockerfile
           image_name: ${{ github.repository }}/jobs/rotatekeys
-          image_tags: ${{ github.ref_name }}
+          image_tags: ${{ github.head_ref || github.ref_name }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
-
-  lint-docs:
-    permissions:
-      contents: read
-    uses: a-novel-kit/workflows/.github/workflows/lint-open-api.yaml@master
-
-  docs:
-    needs: [ lint-docs ]
-    uses: a-novel-kit/workflows/.github/workflows/deploy-pages-static.yaml@master
-    if: github.ref == 'refs/heads/master' && success()
-    permissions:
-      contents: read
-      pages: write
-      id-token: write

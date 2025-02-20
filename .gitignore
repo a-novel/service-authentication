@@ -1,6 +1,5 @@
 .idea
 
-cover.out
-cover.html
+coverage.txt
 
 .envrc
