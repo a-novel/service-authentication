@@ -9,6 +9,7 @@ on:
 
 jobs:
   test:
+    needs: [ generated ]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,7 +34,34 @@ jobs:
     steps:
       - uses: a-novel-kit/workflows/go-actions/test-go@master
 
+  generated:
+    needs: [ ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
+      - name: mockery
+        shell: bash
+        run: make mocks
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
+        id: mockery-changes
+      - name: Check mockery diff
+        if: steps.mockery-changes.outputs.diff == '1'
+        run: echo "mockery definitions are not up-to-date, please run 'make mocks' and commit the changes" && exit 1
+      - name: go generate
+        shell: bash
+        run: go generate ./...
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
+        id: generate-changes
+      - name: Check go generate diff
+        if: steps.generate-changes.outputs.diff == '1'
+        run: echo "go generate changes are not up-to-date, please run 'go generate ./...' and commit the changes" && exit 1
+
   lint:
+    needs: [ generated ]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,6 +69,7 @@ jobs:
       - uses: a-novel-kit/workflows/go-actions/lint-go@master
 
   lint-open-api:
+    needs: [  ]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -74,6 +103,7 @@ jobs:
 
   report-grc:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && success()
     needs: [ test, lint, lint-open-api ]
     permissions:
       contents: read
