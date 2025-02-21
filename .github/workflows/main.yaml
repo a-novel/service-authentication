@@ -103,6 +103,7 @@ jobs:
 
   report-grc:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && success()
     needs: [ test, lint, lint-open-api ]
     permissions:
       contents: read
