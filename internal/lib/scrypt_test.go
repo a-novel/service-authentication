@@ -53,8 +53,8 @@ func TestScrypt(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := lib.CompareScrypt(testCase.password, testCase.encrypted)
-			require.ErrorIs(t, testCase.expectErr, err)
+			err = lib.CompareScrypt(testCase.password, testCase.encrypted)
+			require.ErrorIs(t, err, testCase.expectErr)
 		})
 	}
 }

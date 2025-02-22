@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -14,6 +15,12 @@ import (
 	"github.com/a-novel/authentication/config"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrIssueTokenService = errors.New("IssueTokenService.IssueToken")
+
+func NewErrIssueTokenService(err error) error {
+	return errors.Join(err, ErrIssueTokenService)
+}
 
 // IssueTokenRequest is the input used to perform the IssueTokenService.IssueToken action.
 type IssueTokenRequest struct {
@@ -47,12 +54,12 @@ func (service *IssueTokenService) IssueToken(
 
 	claims, err := jwt.NewBasicClaims(customClaims, service.claimsConfig)
 	if err != nil {
-		return "", fmt.Errorf("(IssueTokenService.IssueToken) create claims: %w", err)
+		return "", NewErrIssueTokenService(fmt.Errorf("create claims: %w", err))
 	}
 
 	accessToken, err := service.producer.Issue(ctx, claims, nil)
 	if err != nil {
-		return "", fmt.Errorf("(IssueTokenService.IssueToken) issue token: %w", err)
+		return "", NewErrIssueTokenService(fmt.Errorf("issue token: %w", err))
 	}
 
 	return accessToken, nil

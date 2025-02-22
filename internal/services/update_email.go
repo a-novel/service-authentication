@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,6 +14,12 @@ import (
 	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrUpdateEmailService = errors.New("UpdateEmailService.UpdateEmail")
+
+func NewErrUpdateEmailService(err error) error {
+	return errors.Join(err, ErrUpdateEmailService)
+}
 
 type UpdateEmailSource interface {
 	UpdateCredentialsEmail(
@@ -41,7 +48,7 @@ func (service *UpdateEmailService) UpdateEmail(
 	// transaction.
 	ctxTx, commit, err := pgctx.NewContextTX(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("(UpdateEmailService.UpdateEmail) create transaction: %w", err)
+		return nil, NewErrUpdateEmailService(fmt.Errorf("create transaction: %w", err))
 	}
 
 	defer func() { _ = commit(false) }()
@@ -53,12 +60,12 @@ func (service *UpdateEmailService) UpdateEmail(
 		Code:   request.ShortCode,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("(UpdateEmailService.UpdateEmail) consume short code: %w", err)
+		return nil, NewErrUpdateEmailService(fmt.Errorf("consume short code: %w", err))
 	}
 
 	var newEmail string
 	if err = json.Unmarshal(shortCode.Data, &newEmail); err != nil {
-		return nil, fmt.Errorf("(UpdateEmailService.UpdateEmail) unmarshal short code data: %w", err)
+		return nil, NewErrUpdateEmailService(fmt.Errorf("unmarshal short code data: %w", err))
 	}
 
 	// Update email.
@@ -67,12 +74,12 @@ func (service *UpdateEmailService) UpdateEmail(
 		Now:   time.Now(),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("(UpdateEmailService.UpdateEmail) update email: %w", err)
+		return nil, NewErrUpdateEmailService(fmt.Errorf("update email: %w", err))
 	}
 
 	// Commit transaction.
 	if err = commit(true); err != nil {
-		return nil, fmt.Errorf("(UpdateEmailService.UpdateEmail) commit transaction: %w", err)
+		return nil, NewErrUpdateEmailService(fmt.Errorf("commit transaction: %w", err))
 	}
 
 	return &UpdateEmailResponse{

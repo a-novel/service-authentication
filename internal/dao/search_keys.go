@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/rs/zerolog"
@@ -10,6 +11,12 @@ import (
 
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrSearchKeysRepository = errors.New("SearchKeysRepository.SearchKeys")
+
+func NewErrSearchKeysRepository(err error) error {
+	return errors.Join(err, ErrSearchKeysRepository)
+}
 
 // KeysMaxBatchSize is a security used to limit the number of keys retrieved by a search operation.
 //
@@ -36,7 +43,7 @@ func (repository *SearchKeysRepository) SearchKeys(ctx context.Context, usage mo
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(SearchKeysRepository.SearchKeys) get postgres client: %w", err)
+		return nil, NewErrSearchKeysRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	var entities []*KeyEntity
@@ -51,13 +58,15 @@ func (repository *SearchKeysRepository) SearchKeys(ctx context.Context, usage mo
 		Limit(KeysMaxBatchSize + 1).
 		Scan(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(SearchKeysRepository.SearchKeys) list keys: %w", err)
+		return nil, NewErrSearchKeysRepository(fmt.Errorf("list keys: %w", err))
 	}
 
 	// Log an error when too many keys are found. This indicates a potential misconfiguration.
 	if len(entities) > KeysMaxBatchSize {
 		logger := zerolog.Ctx(ctx)
-		logger.Error().Msgf("more than %d keys found for usage %s", KeysMaxBatchSize, usage)
+		logger.Error().
+			Err(ErrSearchKeysRepository).
+			Msgf("more than %d keys found for usage %s", KeysMaxBatchSize, usage)
 
 		// Truncate the list to the maximum allowed size.
 		entities = entities[:KeysMaxBatchSize]

@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,12 @@ import (
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
+
+var ErrUpdateCredentialsPasswordRepository = errors.New("UpdateCredentialsPasswordRepository.UpdateCredentialsPassword")
+
+func NewErrUpdateCredentialsPasswordRepository(err error) error {
+	return errors.Join(err, ErrUpdateCredentialsPasswordRepository)
+}
 
 // UpdateCredentialsPasswordData is the input used to perform the
 // UpdateCredentialsPasswordRepository.UpdateCredentialsPassword action.
@@ -38,9 +45,7 @@ func (repository *UpdateCredentialsPasswordRepository) UpdateCredentialsPassword
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"(UpdateCredentialsPasswordRepository.UpdateCredentialsPassword) get postgres client: %w", err,
-		)
+		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	entity := &CredentialsEntity{
@@ -52,23 +57,17 @@ func (repository *UpdateCredentialsPasswordRepository) UpdateCredentialsPassword
 	// Execute query.
 	res, err := tx.NewUpdate().Model(entity).WherePK().Column("password", "updated_at").Returning("*").Exec(ctx)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"(UpdateCredentialsPasswordRepository.UpdateCredentialsPassword) update credentials: %w", err,
-		)
+		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("update credentials: %w", err))
 	}
 
 	// Make sure the credentials were updated.
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return nil, fmt.Errorf(
-			"(UpdateCredentialsPasswordRepository.UpdateCredentialsPassword) get rows affected: %w", err,
-		)
+		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("get rows affected: %w", err))
 	}
 
 	if rowsAffected == 0 {
-		return nil, fmt.Errorf(
-			"(UpdateCredentialsPasswordRepository.UpdateCredentialsPassword) %w", ErrCredentialsNotFound,
-		)
+		return nil, NewErrUpdateCredentialsPasswordRepository(ErrCredentialsNotFound)
 	}
 
 	return entity, nil

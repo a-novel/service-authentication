@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-faster/errors"
 	"github.com/google/uuid"
 
 	"github.com/a-novel-kit/context"
@@ -14,6 +15,12 @@ import (
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrCreateShortCodeService = errors.New("CreateShortCodeService.CreateShortCode")
+
+func NewErrCreateShortCodeService(err error) error {
+	return errors.Join(err, ErrCreateShortCodeService)
+}
 
 // CreateShortCodeSource is the source used to perform the CreateShortCodeService.CreateShortCode action.
 type CreateShortCodeSource interface {
@@ -56,13 +63,13 @@ func (service *CreateShortCodeService) CreateShortCode(
 	// Generate a new random code.
 	plainCode, err := lib.NewRandomURLString(config.ShortCodes.Size)
 	if err != nil {
-		return nil, fmt.Errorf("(CreateShortCodeService.CreateShortCode) generate short code: %w", err)
+		return nil, NewErrCreateShortCodeService(fmt.Errorf("generate short code: %w", err))
 	}
 
 	// Encrypt the short code in the database.
 	encrypted, err := lib.GenerateScrypt(plainCode, lib.ScryptParamsDefault)
 	if err != nil {
-		return nil, fmt.Errorf("(CreateShortCodeService.CreateShortCode) encrypt short code: %w", err)
+		return nil, NewErrCreateShortCodeService(fmt.Errorf("encrypt short code: %w", err))
 	}
 
 	// Serialize the data associated with the short code before storing it.
@@ -72,7 +79,7 @@ func (service *CreateShortCodeService) CreateShortCode(
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("(CreateShortCodeService.CreateShortCode) serialize data: %w", err)
+		return nil, NewErrCreateShortCodeService(fmt.Errorf("serialize data: %w", err))
 	}
 
 	now := time.Now()
@@ -89,7 +96,7 @@ func (service *CreateShortCodeService) CreateShortCode(
 		Override:  request.Override,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("(CreateShortCodeService.CreateShortCode) insert short code: %w", err)
+		return nil, NewErrCreateShortCodeService(fmt.Errorf("insert short code: %w", err))
 	}
 
 	return &models.ShortCode{

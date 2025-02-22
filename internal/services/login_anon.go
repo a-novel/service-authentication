@@ -1,12 +1,19 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrLoginAnonService = errors.New("LoginAnonService.LoginAnon")
+
+func NewErrLoginAnonService(err error) error {
+	return errors.Join(err, ErrLoginAnonService)
+}
 
 // LoginAnonSource is the source used to perform the LoginAnonService.LoginAnon action.
 type LoginAnonSource interface {
@@ -28,7 +35,7 @@ func (service *LoginAnonService) LoginAnon(ctx context.Context) (string, error) 
 		Roles: []models.Role{models.RoleAnon},
 	})
 	if err != nil {
-		return "", fmt.Errorf("(LoginAnonService.LoginAnon) issue accessToken: %w", err)
+		return "", NewErrLoginAnonService(fmt.Errorf("issue accessToken: %w", err))
 	}
 
 	return accessToken, nil

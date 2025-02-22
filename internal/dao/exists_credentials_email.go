@@ -1,11 +1,18 @@
 package dao
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
+
+var ErrExistsCredentialsEmailRepository = errors.New("ExistsCredentialsEmailRepository.ExistsCredentialsEmail")
+
+func NewErrExistsCredentialsEmailRepository(err error) error {
+	return errors.Join(err, ErrExistsCredentialsEmailRepository)
+}
 
 // ExistsCredentialsEmailRepository is the repository used to perform the
 // ExistsCredentialsEmailRepository.ExistsCredentialsEmail action.
@@ -22,15 +29,13 @@ func (repository *ExistsCredentialsEmailRepository) ExistsCredentialsEmail(
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return false, fmt.Errorf(
-			"(ExistsCredentialsEmailRepository.ExistsCredentialsEmail) get postgres client: %w", err,
-		)
+		return false, NewErrExistsCredentialsEmailRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	// Execute query.
 	exists, err := tx.NewSelect().Model((*CredentialsEntity)(nil)).Where("email = ?", email).Exists(ctx)
 	if err != nil {
-		return false, fmt.Errorf("(ExistsCredentialsEmailRepository.ExistsCredentialsEmail) check database: %w", err)
+		return false, NewErrExistsCredentialsEmailRepository(fmt.Errorf("check database: %w", err))
 	}
 
 	return exists, nil

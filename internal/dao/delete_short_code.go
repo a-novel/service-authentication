@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,12 @@ import (
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
+
+var ErrDeleteShortCodeRepository = errors.New("DeleteShortCodeRepository.DeleteShortCode")
+
+func NewErrDeleteShortCodeRepository(err error) error {
+	return errors.Join(err, ErrDeleteShortCodeRepository)
+}
 
 const (
 	// DeleteCommentOverrideWithNewerKey is the default deletion comment set when a newer version of an active short
@@ -60,7 +67,7 @@ func (repository *DeleteShortCodeRepository) DeleteShortCode(
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(DeleteShortCodeRepository.DeleteShortCode) get postgres client: %w", err)
+		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	entity := &ShortCodeEntity{
@@ -77,18 +84,18 @@ func (repository *DeleteShortCodeRepository) DeleteShortCode(
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(DeleteShortCodeRepository.DeleteShortCode) delete short code: %w", err)
+		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("delete short code: %w", err))
 	}
 
 	// Ensure something has been deleted.
 	// This operation should never fail, as we use a driver that supports it.
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return nil, fmt.Errorf("(DeleteShortCodeRepository.DeleteShortCode) get rows affected: %w", err)
+		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("get rows affected: %w", err))
 	}
 
 	if rowsAffected == 0 {
-		return nil, fmt.Errorf("(DeleteShortCodeRepository.DeleteShortCode) delete key: %w", ErrShortCodeNotFound)
+		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("delete key: %w", ErrShortCodeNotFound))
 	}
 
 	return entity, nil

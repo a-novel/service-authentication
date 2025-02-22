@@ -9,6 +9,12 @@ import (
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 
+var ErrSelectCredentialsByEmailRepository = errors.New("SelectCredentialsByEmailRepository.SelectCredentialsByEmail")
+
+func NewErrSelectCredentialsByEmailRepository(err error) error {
+	return errors.Join(err, ErrSelectCredentialsByEmailRepository)
+}
+
 // SelectCredentialsByEmailRepository is the repository used to perform the
 // SelectCredentialsByEmailRepository.SelectCredentialsByEmail action.
 //
@@ -27,9 +33,7 @@ func (repository *SelectCredentialsByEmailRepository) SelectCredentialsByEmail(
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"(SelectCredentialsByEmailRepository.SelectCredentialsByEmail) get postgres client: %w", err,
-		)
+		return nil, NewErrSelectCredentialsByEmailRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	var entity CredentialsEntity
@@ -38,13 +42,10 @@ func (repository *SelectCredentialsByEmailRepository) SelectCredentialsByEmail(
 	if err = tx.NewSelect().Model(&entity).Where("email = ?", email).Scan(ctx); err != nil {
 		// Parse not found error as a managed error.
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf(
-				"(SelectCredentialsByEmailRepository.SelectCredentialsByEmail) select credentials: %w",
-				ErrCredentialsNotFound,
-			)
+			return nil, NewErrSelectCredentialsByEmailRepository(ErrCredentialsNotFound)
 		}
 
-		return nil, fmt.Errorf("(SelectCredentialsByEmailRepository.SelectCredentialsByEmail) select key: %w", err)
+		return nil, NewErrSelectCredentialsByEmailRepository(fmt.Errorf("select key: %w", err))
 	}
 
 	return &entity, nil

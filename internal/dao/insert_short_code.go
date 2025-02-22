@@ -15,6 +15,12 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
+var ErrInsertShortCodeRepository = errors.New("InsertShortCodeRepository.InsertShortCode")
+
+func NewErrInsertShortCodeRepository(err error) error {
+	return errors.Join(err, ErrInsertShortCodeRepository)
+}
+
 // InsertShortCodeData is the input used to perform the InsertShortCodeRepository.InsertShortCode action.
 type InsertShortCodeData struct {
 	// ID of the short code. It must be unique (random).
@@ -61,14 +67,14 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 	// Retrieve a connection to postgres from the context.
 	db, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(InsertShortCodeRepository.InsertShortCode) get postgres client: %w", err)
+		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	// Since we may be performing 2 operations depending on the parameters, create a new transaction to prevent any
 	// data corruption.
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("(InsertShortCodeRepository.InsertShortCode) start transaction: %w", err)
+		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("start transaction: %w", err))
 	}
 	// Make sure to roll back the transaction if an error occurs.
 	defer func() { _ = tx.Rollback() }()
@@ -96,7 +102,7 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("(InsertShortCodeRepository.InsertShortCode) discard old short codes: %w", err)
+			return nil, NewErrInsertShortCodeRepository(fmt.Errorf("discard old short codes: %w", err))
 		}
 	}
 
@@ -116,18 +122,15 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 	if err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return nil, errors.Join(
-				fmt.Errorf("(InsertShortCodeRepository.InsertShortCode): %w", err),
-				ErrShortCodeAlreadyExists,
-			)
+			return nil, errors.Join(err, ErrShortCodeAlreadyExists)
 		}
 
-		return nil, fmt.Errorf("(InsertShortCodeRepository.InsertShortCode) insert short code: %w", err)
+		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("insert short code: %w", err))
 	}
 
 	// Commit the transaction.
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("(InsertShortCodeRepository.InsertShortCode) commit transaction: %w", err)
+		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("commit transaction: %w", err))
 	}
 
 	return newEntity, nil

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -13,6 +14,12 @@ import (
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrRequestEmailUpdateService = errors.New("RequestEmailUpdateService.RequestEmailUpdate")
+
+func NewErrRequestEmailUpdateService(err error) error {
+	return errors.Join(err, ErrRequestEmailUpdateService)
+}
 
 // RequestEmailUpdateSource is the source used to perform the RequestEmailUpdateService.RequestEmailUpdate action.
 type RequestEmailUpdateSource interface {
@@ -89,7 +96,7 @@ func (service *RequestEmailUpdateService) RequestEmailUpdate(
 		Override: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("(RequestEmailUpdateService.RequestEmailUpdate) create short code: %w", err)
+		return nil, NewErrRequestEmailUpdateService(fmt.Errorf("create short code: %w", err))
 	}
 
 	// Sends the short code by mail, once the request is done (context terminated).

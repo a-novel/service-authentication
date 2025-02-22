@@ -16,6 +16,12 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
+var ErrAuthenticateService = errors.New("AuthenticateService.Authenticate")
+
+func NewErrAuthenticateService(err error) error {
+	return errors.Join(err, ErrAuthenticateService)
+}
+
 // AuthenticateService is the service used to perform the AuthenticateService.Authenticate action.
 //
 // You may create one using the NewAuthenticateService function.
@@ -32,16 +38,16 @@ func (service *AuthenticateService) Authenticate(
 ) (*models.AccessTokenClaims, error) {
 	// Don't bother trying to authenticate if the token is empty.
 	if accessToken == "" {
-		return nil, fmt.Errorf("(SecurityAPISource.Authenticate) token is empty: %w", models.ErrUnauthorized)
+		return nil, NewErrAuthenticateService(fmt.Errorf("token is empty: %w", models.ErrUnauthorized))
 	}
 
 	var claims models.AccessTokenClaims
 	if err := service.recipient.Consume(ctx, accessToken, &claims); err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) {
-			return nil, fmt.Errorf("(SecurityAPISource.Authenticate) consume token: %w", models.ErrUnauthorized)
+			return nil, NewErrAuthenticateService(fmt.Errorf("consume token: %w", models.ErrUnauthorized))
 		}
 
-		return nil, fmt.Errorf("(SecurityAPISource.Authenticate) consume token: %w", err)
+		return nil, NewErrAuthenticateService(fmt.Errorf("consume token: %w", err))
 	}
 
 	return &claims, nil

@@ -21,7 +21,13 @@ var (
 		"only access token issued from a direct login can be used to generate a refresh token",
 	)
 	ErrRefreshTokenWithAnonSession = errors.New("anonymous sessions cannot issue a refresh token")
+
+	ErrIssueRefreshTokenService = errors.New("IssueRefreshTokenService.IssueRefreshToken")
 )
+
+func NewErrIssueRefreshTokenService(err error) error {
+	return errors.Join(err, ErrIssueRefreshTokenService)
+}
 
 type IssueRefreshTokenRequest struct {
 	Claims *models.AccessTokenClaims
@@ -36,11 +42,11 @@ func (service *IssueRefreshTokenService) IssueRefreshToken(
 	ctx context.Context, request IssueRefreshTokenRequest,
 ) (string, error) {
 	if request.Claims.RefreshTokenID != nil {
-		return "", fmt.Errorf("(IssueRefreshTokenService.IssueRefreshToken) %w", ErrRefreshRefreshToken)
+		return "", NewErrIssueRefreshTokenService(ErrRefreshRefreshToken)
 	}
 
 	if request.Claims.UserID == nil {
-		return "", fmt.Errorf("(IssueRefreshTokenService.IssueRefreshToken) %w", ErrRefreshTokenWithAnonSession)
+		return "", NewErrIssueRefreshTokenService(ErrRefreshTokenWithAnonSession)
 	}
 
 	customClaims := models.RefreshTokenClaims{
@@ -49,12 +55,12 @@ func (service *IssueRefreshTokenService) IssueRefreshToken(
 
 	claims, err := jwt.NewBasicClaims(customClaims, service.claimsConfig)
 	if err != nil {
-		return "", fmt.Errorf("(IssueRefreshTokenService.IssueRefreshToken) create claims: %w", err)
+		return "", NewErrIssueRefreshTokenService(fmt.Errorf("create claims: %w", err))
 	}
 
 	refreshToken, err := service.producer.Issue(ctx, claims, nil)
 	if err != nil {
-		return "", fmt.Errorf("(IssueRefreshTokenService.IssueRefreshToken) issue token: %w", err)
+		return "", NewErrIssueRefreshTokenService(fmt.Errorf("issue token: %w", err))
 	}
 
 	return refreshToken, nil

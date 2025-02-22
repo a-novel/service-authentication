@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/a-novel-kit/context"
@@ -9,6 +10,12 @@ import (
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrLoginService = errors.New("LoginService.Login")
+
+func NewErrLoginService(err error) error {
+	return errors.Join(err, ErrLoginService)
+}
 
 // LoginSource is the source used to perform the LoginService.Login action.
 //
@@ -42,12 +49,12 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 	// Retrieve credentials.
 	credentials, err := service.source.SelectCredentialsByEmail(ctx, request.Email)
 	if err != nil {
-		return "", fmt.Errorf("(LoginService.Login) select credentials by email: %w", err)
+		return "", NewErrLoginService(fmt.Errorf("select credentials by email: %w", err))
 	}
 
 	// Validate password.
-	if err := lib.CompareScrypt(request.Password, credentials.Password); err != nil {
-		return "", fmt.Errorf("(LoginService.Login) compare password: %w", err)
+	if err = lib.CompareScrypt(request.Password, credentials.Password); err != nil {
+		return "", NewErrLoginService(fmt.Errorf("compare password: %w", err))
 	}
 
 	// Generate a new authentication token.
@@ -56,7 +63,7 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 		Roles:  []models.Role{models.RoleUser},
 	})
 	if err != nil {
-		return "", fmt.Errorf("(LoginService.Login) issue accessToken: %w", err)
+		return "", NewErrLoginService(fmt.Errorf("issue accessToken: %w", err))
 	}
 
 	return accessToken, nil

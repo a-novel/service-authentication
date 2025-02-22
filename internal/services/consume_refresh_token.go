@@ -20,7 +20,13 @@ import (
 var (
 	ErrMismatchRefreshClaims                = errors.New("refresh token and access token do not match")
 	ErrTokenIssuedWithDifferentRefreshToken = errors.New("access token was not issued with the provided refresh token")
+
+	ErrConsumeRefreshTokenService = errors.New("ConsumeRefreshTokenService.ConsumeRefreshToken")
 )
+
+func NewErrConsumeRefreshTokenService(err error) error {
+	return errors.Join(err, ErrConsumeRefreshTokenService)
+}
 
 type ConsumeRefreshTokenSource interface {
 	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
@@ -44,57 +50,42 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	ctx context.Context, request ConsumeRefreshTokenRequest,
 ) (string, error) {
 	if request.AccessToken == "" {
-		return "", fmt.Errorf(
-			"(ConsumeRefreshTokenService.ConsumeRefreshToken) %w: access token is empty",
-			models.ErrUnauthorized,
-		)
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("%w: access token is empty", models.ErrUnauthorized))
 	}
 
 	if request.RefreshToken == "" {
-		return "", fmt.Errorf(
-			"(ConsumeRefreshTokenService.ConsumeRefreshToken) %w: refresh token is empty",
-			models.ErrUnauthorized,
-		)
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("%w: refresh token is empty", models.ErrUnauthorized))
 	}
 
 	var accessTokenClaims models.AccessTokenClaims
 	if err := service.accessTokenRecipient.Consume(ctx, request.AccessToken, &accessTokenClaims); err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) {
-			return "", fmt.Errorf(
-				"(ConsumeRefreshTokenService.ConsumeRefreshToken) consume access token: %w",
-				models.ErrUnauthorized,
-			)
+			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume access token: %w", models.ErrUnauthorized))
 		}
 
-		return "", fmt.Errorf("(ConsumeRefreshTokenService.ConsumeRefreshToken) consume access token: %w", err)
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume access token: %w", err))
 	}
 
 	var refreshTokenClaims models.RefreshTokenClaims
 	if err := service.refreshTokenRecipient.Consume(ctx, request.RefreshToken, &refreshTokenClaims); err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) {
-			return "", fmt.Errorf(
-				"(ConsumeRefreshTokenService.ConsumeRefreshToken) consume refresh token: %w",
-				models.ErrUnauthorized,
-			)
+			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume refresh token: %w", models.ErrUnauthorized))
 		}
 
-		return "", fmt.Errorf("(ConsumeRefreshTokenService.ConsumeRefreshToken) consume refresh token: %w", err)
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume refresh token: %w", err))
 	}
 
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
-		return "", fmt.Errorf(
-			"(ConsumeRefreshTokenService.ConsumeRefreshToken) %w (accessToken.userID: %s, refreshToken.userID: %s)",
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf(
+			"%w (accessToken.userID: %s, refreshToken.userID: %s)",
 			ErrMismatchRefreshClaims,
 			lo.FromPtr(accessTokenClaims.UserID),
 			refreshTokenClaims.UserID,
-		)
+		))
 	}
 
 	if accessTokenClaims.RefreshTokenID != nil && *accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
-		return "", fmt.Errorf(
-			"(ConsumeRefreshTokenService.ConsumeRefreshToken) %w",
-			ErrTokenIssuedWithDifferentRefreshToken,
-		)
+		return "", NewErrConsumeRefreshTokenService(ErrTokenIssuedWithDifferentRefreshToken)
 	}
 
 	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
@@ -103,7 +94,7 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		RefreshTokenID: &refreshTokenClaims.Jti,
 	})
 	if err != nil {
-		return "", fmt.Errorf("(ConsumeRefreshTokenService.ConsumeRefreshToken) issue accessToken: %w", err)
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("issue accessToken: %w", err))
 	}
 
 	return accessToken, nil
