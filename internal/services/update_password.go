@@ -15,7 +15,15 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
-var ErrMissingShortCodeAndCurrentPassword = errors.New("missing short code and current password")
+var (
+	ErrMissingShortCodeAndCurrentPassword = errors.New("missing short code and current password")
+
+	ErrUpdatePasswordService = errors.New("UpdatePasswordService.UpdatePassword")
+)
+
+func NewErrUpdatePasswordService(err error) error {
+	return errors.Join(err, ErrUpdatePasswordService)
+}
 
 type UpdatePasswordSource interface {
 	UpdateCredentialsPassword(
@@ -40,14 +48,14 @@ func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, reques
 	// Encrypt the new password.
 	encryptedPassword, err := lib.GenerateScrypt(request.Password, lib.ScryptParamsDefault)
 	if err != nil {
-		return fmt.Errorf("(UpdatePasswordService.UpdatePassword) encrypt password: %w", err)
+		return NewErrUpdatePasswordService(fmt.Errorf("encrypt password: %w", err))
 	}
 
 	// Password update can fail after the short code is consumed. To prevent this, we wrap the operation in a single
 	// transaction.
 	ctxTx, commit, err := pgctx.NewContextTX(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("(UpdatePasswordService.UpdatePassword) create transaction: %w", err)
+		return NewErrUpdatePasswordService(fmt.Errorf("create transaction: %w", err))
 	}
 
 	defer func() { _ = commit(false) }()
@@ -63,17 +71,17 @@ func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, reques
 			Code:   request.ShortCode,
 		})
 		if err != nil {
-			return fmt.Errorf("(UpdatePasswordService.UpdatePassword) consume short code: %w", err)
+			return NewErrUpdatePasswordService(fmt.Errorf("consume short code: %w", err))
 		}
 	case request.CurrentPassword != "":
 		credentials, err := service.source.SelectCredentials(ctxTx, request.UserID)
 		if err != nil {
-			return fmt.Errorf("(UpdatePasswordService.UpdatePassword) select credentials: %w", err)
+			return NewErrUpdatePasswordService(fmt.Errorf("select credentials: %w", err))
 		}
 
 		// Check if the current password is correct.
 		if err = lib.CompareScrypt(request.CurrentPassword, credentials.Password); err != nil {
-			return fmt.Errorf("(UpdatePasswordService.UpdatePassword) compare current password: %w", err)
+			return NewErrUpdatePasswordService(fmt.Errorf("compare current password: %w", err))
 		}
 	default:
 		return ErrMissingShortCodeAndCurrentPassword
@@ -85,12 +93,12 @@ func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, reques
 		Now:      time.Now(),
 	})
 	if err != nil {
-		return fmt.Errorf("(UpdatePasswordService.UpdatePassword) update password: %w", err)
+		return NewErrUpdatePasswordService(fmt.Errorf("update password: %w", err))
 	}
 
 	// Commit transaction.
 	if err = commit(true); err != nil {
-		return fmt.Errorf("(UpdatePasswordService.UpdatePassword) commit transaction: %w", err)
+		return NewErrUpdatePasswordService(fmt.Errorf("commit transaction: %w", err))
 	}
 
 	return nil

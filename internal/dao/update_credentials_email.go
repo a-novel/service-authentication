@@ -12,6 +12,12 @@ import (
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 
+var ErrUpdateCredentialsEmailRepository = errors.New("UpdateCredentialsEmailRepository.UpdateCredentialsEmail")
+
+func NewErrUpdateCredentialsEmailRepository(err error) error {
+	return errors.Join(err, ErrUpdateCredentialsEmailRepository)
+}
+
 // UpdateCredentialsEmailData is the input used to perform the
 // UpdateCredentialsEmailRepository.UpdateCredentialsEmail action.
 type UpdateCredentialsEmailData struct {
@@ -44,9 +50,7 @@ func (repository *UpdateCredentialsEmailRepository) UpdateCredentialsEmail(
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"(UpdateCredentialsEmailRepository.UpdateCredentialsEmail) get postgres client: %w", err,
-		)
+		return nil, NewErrUpdateCredentialsEmailRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	entity := &CredentialsEntity{
@@ -60,28 +64,20 @@ func (repository *UpdateCredentialsEmailRepository) UpdateCredentialsEmail(
 	if err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return nil, fmt.Errorf(
-				"(UpdateCredentialsEmailRepository.UpdateCredentialsEmail): %w", ErrCredentialsAlreadyExists,
-			)
+			return nil, NewErrUpdateCredentialsEmailRepository(errors.Join(err, ErrCredentialsAlreadyExists))
 		}
 
-		return nil, fmt.Errorf(
-			"(UpdateCredentialsEmailRepository.UpdateCredentialsEmail) update credentials: %w", err,
-		)
+		return nil, NewErrUpdateCredentialsEmailRepository(fmt.Errorf("update credentials: %w", err))
 	}
 
 	// Make sure the credentials were updated.
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return nil, fmt.Errorf(
-			"(UpdateCredentialsEmailRepository.UpdateCredentialsEmail) get rows affected: %w", err,
-		)
+		return nil, NewErrUpdateCredentialsEmailRepository(fmt.Errorf("get rows affected: %w", err))
 	}
 
 	if rowsAffected == 0 {
-		return nil, fmt.Errorf(
-			"(UpdateCredentialsEmailRepository.UpdateCredentialsEmail) %w", ErrCredentialsNotFound,
-		)
+		return nil, NewErrUpdateCredentialsEmailRepository(ErrCredentialsNotFound)
 	}
 
 	return entity, nil

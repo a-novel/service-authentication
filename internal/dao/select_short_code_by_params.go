@@ -11,6 +11,12 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
+var ErrSelectShortCodeByParamsRepository = errors.New("SelectShortCodeByParamsRepository.SelectShortCodeByParams")
+
+func NewErrSelectShortCodeByParamsRepository(err error) error {
+	return errors.Join(err, ErrSelectShortCodeByParamsRepository)
+}
+
 // SelectShortCodeByParamsData is the input used to perform the
 // SelectShortCodeByParamsRepository.SelectShortCodeByParams action.
 type SelectShortCodeByParamsData struct {
@@ -38,7 +44,7 @@ func (repository *SelectShortCodeByParamsRepository) SelectShortCodeByParams(
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(SelectShortCodeByParamsRepository.SelectShortCodeByParams) get transaction: %w", err)
+		return nil, NewErrSelectShortCodeByParamsRepository(fmt.Errorf("get transaction: %w", err))
 	}
 
 	var entity ShortCodeEntity
@@ -51,13 +57,10 @@ func (repository *SelectShortCodeByParamsRepository) SelectShortCodeByParams(
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf(
-				"(SelectShortCodeByParamsRepository.SelectShortCodeByParams) %w",
-				ErrShortCodeNotFound,
-			)
+			return nil, NewErrSelectShortCodeByParamsRepository(ErrShortCodeNotFound)
 		}
 
-		return nil, fmt.Errorf("(SelectShortCodeByParamsRepository.SelectShortCodeByParams) select short code: %w", err)
+		return nil, NewErrSelectShortCodeByParamsRepository(fmt.Errorf("select short code: %w", err))
 	}
 
 	return &entity, nil

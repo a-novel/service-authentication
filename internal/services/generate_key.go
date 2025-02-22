@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,6 +20,19 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
+var (
+	ErrED25519KeyGenerator = errors.New("ED25519KeyGenerator")
+	ErrGenerateKeyService  = errors.New("GenerateKeyService.GenerateKey")
+)
+
+func NewErrED25519KeyGenerator(err error) error {
+	return errors.Join(err, ErrED25519KeyGenerator)
+}
+
+func NewErrGenerateKeyService(err error) error {
+	return errors.Join(err, ErrGenerateKeyService)
+}
+
 // KeyGenerator generates a new JSON Web Key private/public pair. It is a key-type agnostic wrapper around the
 // JWT library generators.
 type KeyGenerator func() (privateKey, publicKey *jwa.JWK, err error)
@@ -26,7 +40,7 @@ type KeyGenerator func() (privateKey, publicKey *jwa.JWK, err error)
 func ED25519KeyGenerator() (*jwa.JWK, *jwa.JWK, error) {
 	private, public, err := jwk.GenerateED25519()
 	if err != nil {
-		return nil, nil, fmt.Errorf("(ED25519KeyGenerator) generate keypair: %w", err)
+		return nil, nil, NewErrED25519KeyGenerator(fmt.Errorf("generate keypair: %w", err))
 	}
 
 	return private.JWK, public.JWK, nil
@@ -65,7 +79,7 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 	// return without generating a new key.
 	keys, err := service.source.SearchKeys(ctx, usage)
 	if err != nil {
-		return nil, fmt.Errorf("(GenerateKeyService.GenerateKey) list keys: %w", err)
+		return nil, NewErrGenerateKeyService(fmt.Errorf("list keys: %w", err))
 	}
 
 	var lastCreated time.Time
@@ -81,13 +95,13 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 	// Generate a new key pair.
 	privateKey, publicKey, err := generateKeysConfig[usage].Generator()
 	if err != nil {
-		return nil, fmt.Errorf("(GenerateKeyService.GenerateKey) generate key pair: %w", err)
+		return nil, NewErrGenerateKeyService(fmt.Errorf("generate key pair: %w", err))
 	}
 
 	// Encrypt the private key using the master key, so it is protected against database dumping.
 	privateKeyEncrypted, err := lib.EncryptMasterKey(ctx, privateKey)
 	if err != nil {
-		return nil, fmt.Errorf("(GenerateKeyService.GenerateKey) encrypt private key: %w", err)
+		return nil, NewErrGenerateKeyService(fmt.Errorf("encrypt private key: %w", err))
 	}
 
 	// Encode values to base64 before saving them.
@@ -96,7 +110,7 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 	// Extract the KID from the private key. Both public and private key should share the same KID.
 	kid, err := uuid.Parse(privateKey.KID)
 	if err != nil {
-		return nil, fmt.Errorf("(GenerateKeyService.GenerateKey) parse KID: %w", err)
+		return nil, NewErrGenerateKeyService(fmt.Errorf("parse KID: %w", err))
 	}
 
 	var publicKeyEncoded *string
@@ -105,7 +119,7 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 		// Serialize the public key.
 		publicKeySerialized, err := json.Marshal(publicKey)
 		if err != nil {
-			return nil, fmt.Errorf("(GenerateKeyService.GenerateKey) serialize public key: %w", err)
+			return nil, NewErrGenerateKeyService(fmt.Errorf("serialize public key: %w", err))
 		}
 
 		publicKeyEncoded = lo.ToPtr(base64.RawURLEncoding.EncodeToString(publicKeySerialized))
@@ -122,7 +136,7 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 	}
 
 	if _, err = service.source.InsertKey(ctx, insertData); err != nil {
-		return nil, fmt.Errorf("(GenerateKeyService.GenerateKey) insert key: %w", err)
+		return nil, NewErrGenerateKeyService(fmt.Errorf("insert key: %w", err))
 	}
 
 	return &kid, nil

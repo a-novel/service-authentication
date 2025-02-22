@@ -3,8 +3,16 @@ package services
 import (
 	"fmt"
 
+	"github.com/go-faster/errors"
+
 	"github.com/a-novel-kit/context"
 )
+
+var ErrEmailExistsService = errors.New("EmailExistsService.EmailExists")
+
+func NewErrEmailExistsService(err error) error {
+	return errors.Join(err, ErrEmailExistsService)
+}
 
 type EmailExistsSource interface {
 	ExistsCredentialsEmail(ctx context.Context, email string) (bool, error)
@@ -21,7 +29,7 @@ type EmailExistsService struct {
 func (service *EmailExistsService) EmailExists(ctx context.Context, request EmailExistsRequest) (bool, error) {
 	exists, err := service.source.ExistsCredentialsEmail(ctx, request.Email)
 	if err != nil {
-		return false, fmt.Errorf("(EmailExistsService.EmailExists) check email existence: %w", err)
+		return false, NewErrEmailExistsService(fmt.Errorf("check email existence: %w", err))
 	}
 
 	return exists, nil

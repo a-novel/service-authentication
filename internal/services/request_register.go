@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -13,6 +14,12 @@ import (
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrRequestRegisterService = errors.New("RequestRegisterService.RequestRegister")
+
+func NewErrRequestRegisterService(err error) error {
+	return errors.Join(err, ErrRequestRegisterService)
+}
 
 // RequestRegisterSource is the source used to perform the RequestRegisterService.RequestRegister action.
 type RequestRegisterSource interface {
@@ -89,7 +96,7 @@ func (service *RequestRegisterService) RequestRegister(
 		Override: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("(RequestRegisterService.RequestRegister) create short code: %w", err)
+		return nil, NewErrRequestRegisterService(fmt.Errorf("create short code: %w", err))
 	}
 
 	// Sends the short code by mail, once the request is done (context terminated).

@@ -11,6 +11,12 @@ import (
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 
+var ErrSelectCredentialsRepository = errors.New("SelectCredentialsRepository.SelectCredentials")
+
+func NewErrSelectCredentialsRepository(err error) error {
+	return errors.Join(err, ErrSelectCredentialsRepository)
+}
+
 // SelectCredentialsRepository is the repository used to perform the SelectCredentialsRepository.SelectCredentials
 // action.
 //
@@ -29,7 +35,7 @@ func (repository *SelectCredentialsRepository) SelectCredentials(
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(SelectCredentialsRepository.SelectCredentials) get postgres client: %w", err)
+		return nil, NewErrSelectCredentialsRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	var entity CredentialsEntity
@@ -38,10 +44,10 @@ func (repository *SelectCredentialsRepository) SelectCredentials(
 	if err = tx.NewSelect().Model(&entity).Where("id = ?", id).Scan(ctx); err != nil {
 		// Parse not found error as a managed error.
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("(SelectCredentialsRepository.SelectCredentials): %w", ErrCredentialsNotFound)
+			return nil, NewErrSelectCredentialsRepository(ErrCredentialsNotFound)
 		}
 
-		return nil, fmt.Errorf("(SelectCredentialsRepository.SelectCredentials) select key: %w", err)
+		return nil, NewErrSelectCredentialsRepository(fmt.Errorf("select key: %w", err))
 	}
 
 	return &entity, nil

@@ -17,7 +17,23 @@ var (
 	ErrInvalidHash         = errors.New("the encoded hash is in an invalid format")
 	ErrIncompatibleVersion = errors.New("the encoded hash is using an incompatible version of Argon2")
 	ErrInvalidPassword     = errors.New("the password is invalid")
+
+	ErrGenerateScrypt = errors.New("GenerateScrypt")
+	ErrCompareScrypt  = errors.New("CompareScrypt")
+	ErrDecodeHash     = errors.New("decodeHash")
 )
+
+func NewErrGenerateScrypt(err error) error {
+	return errors.Join(err, ErrGenerateScrypt)
+}
+
+func NewErrCompareScrypt(err error) error {
+	return errors.Join(err, ErrCompareScrypt)
+}
+
+func NewErrDecodeHash(err error) error {
+	return errors.Join(err, ErrDecodeHash)
+}
 
 const (
 	scryptHashLen = 6
@@ -53,7 +69,7 @@ func GenerateScrypt(password string, params ScryptParams) (string, error) {
 	// Generate a cryptographically secure random salt.
 	salt := make([]byte, params.SaltLength)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
-		return "", fmt.Errorf("generate salt: %w", err)
+		return "", NewErrGenerateScrypt(fmt.Errorf("generate salt: %w", err))
 	}
 
 	// Pass the plaintext password, salt and parameters to the argon2.IDKey
@@ -94,7 +110,7 @@ func CompareScrypt(password, encodedHash string) error {
 	// hash.
 	params, salt, hash, err := decodeHash(encodedHash)
 	if err != nil {
-		return err
+		return NewErrCompareScrypt(err)
 	}
 
 	// Derive the key from the other password using the same parameters.
@@ -114,7 +130,7 @@ func CompareScrypt(password, encodedHash string) error {
 		return nil
 	}
 
-	return ErrInvalidPassword
+	return NewErrCompareScrypt(ErrInvalidPassword)
 }
 
 func decodeHash(encodedHash string) (*ScryptParams, []byte, []byte, error) {
@@ -127,35 +143,35 @@ func decodeHash(encodedHash string) (*ScryptParams, []byte, []byte, error) {
 
 	_, err := fmt.Sscanf(values[2], "v=%d", &version)
 	if err != nil {
-		return nil, nil, nil, errors.Join(ErrInvalidHash, fmt.Errorf("parse version: %w", err))
+		return nil, nil, nil, NewErrDecodeHash(errors.Join(ErrInvalidHash, fmt.Errorf("parse version: %w", err)))
 	}
 
 	if version != argon2.Version {
-		return nil, nil, nil, ErrIncompatibleVersion
+		return nil, nil, nil, NewErrDecodeHash(ErrIncompatibleVersion)
 	}
 
 	params := &ScryptParams{}
 
 	_, err = fmt.Sscanf(values[3], "m=%d,t=%d,p=%d", &params.Memory, &params.Iterations, &params.Parallelism)
 	if err != nil {
-		return nil, nil, nil, errors.Join(ErrInvalidHash, fmt.Errorf("parse parameters: %w", err))
+		return nil, nil, nil, NewErrDecodeHash(errors.Join(ErrInvalidHash, fmt.Errorf("parse parameters: %w", err)))
 	}
 
 	salt, err := base64.RawStdEncoding.Strict().DecodeString(values[4])
 	if err != nil {
-		return nil, nil, nil, errors.Join(ErrInvalidHash, fmt.Errorf("decode salt: %w", err))
+		return nil, nil, nil, NewErrDecodeHash(errors.Join(ErrInvalidHash, fmt.Errorf("decode salt: %w", err)))
 	}
 
 	params.SaltLength = uint(len(salt))
 
 	hash, err := base64.RawStdEncoding.Strict().DecodeString(values[5])
 	if err != nil {
-		return nil, nil, nil, errors.Join(ErrInvalidHash, fmt.Errorf("decode hash: %w", err))
+		return nil, nil, nil, NewErrDecodeHash(errors.Join(ErrInvalidHash, fmt.Errorf("decode hash: %w", err)))
 	}
 
 	rawHashLength := len(hash)
 	if rawHashLength > math.MaxUint32 {
-		return nil, nil, nil, fmt.Errorf("%w: hash length: %d", ErrInvalidHash, rawHashLength)
+		return nil, nil, nil, NewErrDecodeHash(fmt.Errorf("%w: hash length: %d", ErrInvalidHash, rawHashLength))
 	}
 
 	params.KeyLength = uint32(rawHashLength)

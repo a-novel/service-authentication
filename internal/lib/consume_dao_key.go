@@ -3,6 +3,7 @@ package lib
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/samber/lo"
@@ -13,6 +14,12 @@ import (
 	"github.com/a-novel/authentication/internal/dao"
 )
 
+var ErrConsumeDAOKey = errors.New("ConsumeDAOKey")
+
+func NewErrConsumeDAOKey(err error) error {
+	return errors.Join(err, ErrConsumeDAOKey)
+}
+
 // ConsumeDAOKey converts a key from DAO entity to aJWK object.
 func ConsumeDAOKey(ctx context.Context, key *dao.KeyEntity, private bool) (*jwa.JWK, error) {
 	decoded, err := base64.RawURLEncoding.DecodeString(
@@ -21,7 +28,7 @@ func ConsumeDAOKey(ctx context.Context, key *dao.KeyEntity, private bool) (*jwa.
 		lo.Ternary(private || key.PublicKey == nil, key.PrivateKey, lo.FromPtr(key.PublicKey)),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("(ConsumeDAOKey) decode key: %w", err)
+		return nil, NewErrConsumeDAOKey(fmt.Errorf("decode key: %w", err))
 	}
 
 	var deserialized *jwa.JWK
@@ -33,7 +40,7 @@ func ConsumeDAOKey(ctx context.Context, key *dao.KeyEntity, private bool) (*jwa.
 		func() error { return json.Unmarshal(decoded, &deserialized) },
 	)
 	if err != nil {
-		return nil, fmt.Errorf("(ConsumeDAOKey) deserialize key: %w", err)
+		return nil, NewErrConsumeDAOKey(fmt.Errorf("deserialize key: %w", err))
 	}
 
 	return deserialized, nil

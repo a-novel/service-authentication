@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,12 @@ import (
 
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrInsertKeyRepository = errors.New("InsertKeyRepository.InsertKey")
+
+func NewErrInsertKeyRepository(err error) error {
+	return errors.Join(err, ErrInsertKeyRepository)
+}
 
 // InsertKeyData is the input used to perform the InsertKeyRepository.InsertKey action.
 type InsertKeyData struct {
@@ -50,7 +57,7 @@ func (repository *InsertKeyRepository) InsertKey(ctx context.Context, data Inser
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(InsertKeyRepository.InsertKey) get postgres client: %w", err)
+		return nil, NewErrInsertKeyRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	entity := &KeyEntity{
@@ -66,7 +73,7 @@ func (repository *InsertKeyRepository) InsertKey(ctx context.Context, data Inser
 	if _, err = tx.NewInsert().Model(entity).Exec(ctx); err != nil {
 		// Don't check for collision errors: this is useless, as randomly generated UUIDs have a negligible chance of
 		// colliding.
-		return nil, fmt.Errorf("(InsertKeyRepository.InsertKey) insert entity: %w", err)
+		return nil, NewErrInsertKeyRepository(fmt.Errorf("insert entity: %w", err))
 	}
 
 	return entity, nil

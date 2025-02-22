@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -11,6 +12,12 @@ import (
 	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/internal/lib"
 )
+
+var ErrSelectKeyService = errors.New("SelectKeyService.SelectKey")
+
+func NewErrSelectKeyService(err error) error {
+	return errors.Join(err, ErrSelectKeyService)
+}
 
 // SelectKeySource is the source used to perform the SelectKeyService.SelectKey action.
 type SelectKeySource interface {
@@ -35,12 +42,12 @@ type SelectKeyService struct {
 func (service *SelectKeyService) SelectKey(ctx context.Context, request SelectKeyRequest) (*jwa.JWK, error) {
 	key, err := service.source.SelectKey(ctx, request.ID)
 	if err != nil {
-		return nil, fmt.Errorf("(SelectKeyService.SelectKey) select key: %w", err)
+		return nil, NewErrSelectKeyService(fmt.Errorf("select key: %w", err))
 	}
 
 	deserialized, err := lib.ConsumeDAOKey(ctx, key, request.Private)
 	if err != nil {
-		return nil, fmt.Errorf("(SelectKeyService.SelectKey) consume DAO key (kid %s): %w", key.ID, err)
+		return nil, NewErrSelectKeyService(fmt.Errorf("consume DAO key (kid %s): %w", key.ID, err))
 	}
 
 	return deserialized, nil

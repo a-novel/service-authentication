@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,12 @@ import (
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
+
+var ErrDeleteKeyRepository = errors.New("DeleteKeyRepository.DeleteKey")
+
+func NewErrDeleteKeyRepository(err error) error {
+	return errors.Join(err, ErrDeleteKeyRepository)
+}
 
 // DeleteKeyData is the input used to perform the DeleteKeyRepository.DeleteKey action.
 type DeleteKeyData struct {
@@ -44,7 +51,7 @@ func (repository *DeleteKeyRepository) DeleteKey(ctx context.Context, data Delet
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(DeleteKeyRepository.DeleteKey) get postgres client: %w", err)
+		return nil, NewErrDeleteKeyRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	entity := &KeyEntity{
@@ -61,18 +68,18 @@ func (repository *DeleteKeyRepository) DeleteKey(ctx context.Context, data Delet
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(DeleteKeyRepository.DeleteKey) delete key: %w", err)
+		return nil, NewErrDeleteKeyRepository(fmt.Errorf("delete key: %w", err))
 	}
 
 	// Ensure something has been deleted.
 	// This operation should never fail, as we use a driver that supports it.
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return nil, fmt.Errorf("(DeleteKeyRepository.DeleteKey) delete key: %w", err)
+		return nil, NewErrDeleteKeyRepository(fmt.Errorf("delete key: %w", err))
 	}
 
 	if rowsAffected == 0 {
-		return nil, fmt.Errorf("(DeleteKeyRepository.DeleteKey) delete key: %w", ErrKeyNotFound)
+		return nil, NewErrDeleteKeyRepository(fmt.Errorf("delete key: %w", ErrKeyNotFound))
 	}
 
 	return entity, nil

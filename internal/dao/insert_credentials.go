@@ -12,6 +12,12 @@ import (
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 
+var ErrInsertCredentialsRepository = errors.New("InsertCredentialsRepository.InsertCredentials")
+
+func NewErrInsertCredentialsRepository(err error) error {
+	return errors.Join(err, ErrInsertCredentialsRepository)
+}
+
 // InsertCredentialsData is the input used to perform the InsertCredentialsRepository.InsertCredentials action.
 type InsertCredentialsData struct {
 	// ID of the credentials. It must be unique (random).
@@ -56,7 +62,7 @@ func (repository *InsertCredentialsRepository) InsertCredentials(
 	// Retrieve a connection to postgres from the context.
 	tx, err := pgctx.Context(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("(InsertCredentialsRepository.InsertCredentials) get postgres client: %w", err)
+		return nil, NewErrInsertCredentialsRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	entity := &CredentialsEntity{
@@ -71,10 +77,10 @@ func (repository *InsertCredentialsRepository) InsertCredentials(
 	if _, err = tx.NewInsert().Model(entity).Exec(ctx); err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return nil, fmt.Errorf("(InsertCredentialsRepository.InsertCredentials): %w", ErrCredentialsAlreadyExists)
+			return nil, NewErrInsertCredentialsRepository(errors.Join(err, ErrCredentialsAlreadyExists))
 		}
 
-		return nil, fmt.Errorf("(InsertCredentialsRepository.InsertCredentials) insert credentials: %w", err)
+		return nil, NewErrInsertCredentialsRepository(fmt.Errorf("insert credentials: %w", err))
 	}
 
 	return entity, nil

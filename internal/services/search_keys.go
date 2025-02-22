@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/a-novel-kit/context"
@@ -10,6 +11,12 @@ import (
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrSearchKeysService = errors.New("SearchKeysService.SearchKeys")
+
+func NewErrSearchKeysService(err error) error {
+	return errors.Join(err, ErrSearchKeysService)
+}
 
 // SearchKeysSource is the source used to perform the SearchKeysService.SearchKeys action.
 type SearchKeysSource interface {
@@ -36,7 +43,7 @@ type SearchKeysService struct {
 func (service *SearchKeysService) SearchKeys(ctx context.Context, request SearchKeysRequest) ([]*jwa.JWK, error) {
 	keys, err := service.source.SearchKeys(ctx, request.Usage)
 	if err != nil {
-		return nil, fmt.Errorf("(SearchKeysService.SearchKeys) search keys: %w", err)
+		return nil, NewErrSearchKeysService(fmt.Errorf("search keys: %w", err))
 	}
 
 	deserialized := make([]*jwa.JWK, len(keys))
@@ -44,7 +51,7 @@ func (service *SearchKeysService) SearchKeys(ctx context.Context, request Search
 	for i, key := range keys {
 		deserialized[i], err = lib.ConsumeDAOKey(ctx, key, request.Private)
 		if err != nil {
-			return nil, fmt.Errorf("(SearchKeysService.SearchKeys) consume DAO key (kid %s): %w", key.ID, err)
+			return nil, NewErrSearchKeysService(fmt.Errorf("consume DAO key (kid %s): %w", key.ID, err))
 		}
 	}
 

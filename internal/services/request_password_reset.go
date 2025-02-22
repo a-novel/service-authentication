@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -14,6 +15,12 @@ import (
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrRequestPasswordResetService = errors.New("RequestPasswordResetService.RequestPasswordReset")
+
+func NewErrRequestPasswordResetService(err error) error {
+	return errors.Join(err, ErrRequestPasswordResetService)
+}
 
 // RequestPasswordResetSource is the source used to perform the RequestPasswordResetService.RequestPasswordReset
 // action.
@@ -88,7 +95,7 @@ func (service *RequestPasswordResetService) RequestPasswordReset(
 ) (*models.ShortCode, error) {
 	credentials, err := service.source.SelectCredentialsByEmail(ctx, request.Email)
 	if err != nil {
-		return nil, fmt.Errorf("(RequestPasswordResetService.RequestPasswordReset) check email existence: %w", err)
+		return nil, NewErrRequestPasswordResetService(fmt.Errorf("check email existence: %w", err))
 	}
 
 	// Create a new short code.
@@ -99,7 +106,7 @@ func (service *RequestPasswordResetService) RequestPasswordReset(
 		Override: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("(RequestPasswordResetService.RequestPasswordReset) create short code: %w", err)
+		return nil, NewErrRequestPasswordResetService(fmt.Errorf("create short code: %w", err))
 	}
 
 	// Sends the short code by mail, once the request is done (context terminated).

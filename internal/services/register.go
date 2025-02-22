@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,6 +14,12 @@ import (
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
+
+var ErrRegisterService = errors.New("RegisterService.Register")
+
+func NewErrRegisterService(err error) error {
+	return errors.Join(err, ErrRegisterService)
+}
 
 type RegisterSource interface {
 	InsertCredentials(ctx context.Context, data dao.InsertCredentialsData) (*dao.CredentialsEntity, error)
@@ -34,14 +41,14 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	// Encrypt the password.
 	encryptedPassword, err := lib.GenerateScrypt(request.Password, lib.ScryptParamsDefault)
 	if err != nil {
-		return "", fmt.Errorf("(RegisterService.Register) encrypt password: %w", err)
+		return "", NewErrRegisterService(fmt.Errorf("encrypt password: %w", err))
 	}
 
 	// Registration can fail after the short code is consumed. To prevent this, we wrap the operation in a single
 	// transaction.
 	ctxTx, commit, err := pgctx.NewContextTX(ctx, nil)
 	if err != nil {
-		return "", fmt.Errorf("(RegisterService.Register) create transaction: %w", err)
+		return "", NewErrRegisterService(fmt.Errorf("create transaction: %w", err))
 	}
 
 	defer func() { _ = commit(false) }()
@@ -53,7 +60,7 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 		Code:   request.ShortCode,
 	})
 	if err != nil {
-		return "", fmt.Errorf("(RegisterService.Register) consume short code: %w", err)
+		return "", NewErrRegisterService(fmt.Errorf("consume short code: %w", err))
 	}
 
 	// Insert credentials.
@@ -64,12 +71,12 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 		Now:      time.Now(),
 	})
 	if err != nil {
-		return "", fmt.Errorf("(RegisterService.Register) insert credentials: %w", err)
+		return "", NewErrRegisterService(fmt.Errorf("insert credentials: %w", err))
 	}
 
 	// Commit transaction.
 	if err = commit(true); err != nil {
-		return "", fmt.Errorf("(RegisterService.Register) commit transaction: %w", err)
+		return "", NewErrRegisterService(fmt.Errorf("commit transaction: %w", err))
 	}
 
 	// Generate a new authentication token.
@@ -78,7 +85,7 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 		Roles:  []models.Role{models.RoleUser},
 	})
 	if err != nil {
-		return "", fmt.Errorf("(RegisterService.Register) issue accessToken: %w", err)
+		return "", NewErrRegisterService(fmt.Errorf("issue accessToken: %w", err))
 	}
 
 	return accessToken, nil

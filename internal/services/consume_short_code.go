@@ -12,7 +12,15 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
-var ErrInvalidShortCode = errors.New("invalid short code")
+var (
+	ErrInvalidShortCode = errors.New("invalid short code")
+
+	ErrConsumeShortCodeService = errors.New("ConsumeShortCodeService.ConsumeShortCode")
+)
+
+func NewErrConsumeShortCodeService(err error) error {
+	return errors.Join(err, ErrConsumeShortCodeService)
+}
 
 // ConsumeShortCodeSource is the source used to perform the ConsumeShortCodeService.ConsumeShortCode action.
 //
@@ -54,15 +62,15 @@ func (service *ConsumeShortCodeService) ConsumeShortCode(
 		Usage:  request.Usage,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("(ConsumeShortCodeService.ConsumeShortCode) retrieve short code: %w", err)
+		return nil, NewErrConsumeShortCodeService(fmt.Errorf("retrieve short code: %w", err))
 	}
 
 	// Compare the encrypted code with the plain code of the request.
 	if err = lib.CompareScrypt(request.Code, entity.Code); err != nil {
-		return nil, errors.Join(
-			fmt.Errorf("(ConsumeShortCodeService.ConsumeShortCode) compare short code: %w", err),
+		return nil, NewErrConsumeShortCodeService(errors.Join(
+			fmt.Errorf("compare short code: %w", err),
 			ErrInvalidShortCode,
-		)
+		))
 	}
 
 	// Delete the short code from the database. It has been consumed.
@@ -72,7 +80,7 @@ func (service *ConsumeShortCodeService) ConsumeShortCode(
 		Comment: dao.DeleteCommentConsumed,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("(ConsumeShortCodeService.ConsumeShortCode) delete short code: %w", err)
+		return nil, NewErrConsumeShortCodeService(fmt.Errorf("delete short code: %w", err))
 	}
 
 	return &models.ShortCode{
