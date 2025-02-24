@@ -160,11 +160,12 @@ func TestRequestPasswordReset(t *testing.T) {
 
 				var jsonLog map[string]any
 
-				require.NoError(t, json.Unmarshal(<-outC, &jsonLog))
+				out := <-outC
+				require.NoError(t, json.Unmarshal(out, &jsonLog))
 
 				level, ok := jsonLog["level"]
 				require.True(t, ok)
-				require.Equal(t, "info", level)
+				require.Equal(t, "info", level, string(out))
 
 				mailBody, ok := jsonLog["mail"]
 				require.True(t, ok)
