@@ -11,3 +11,10 @@ updates:
           - "github.com/uptrace/bun"
           - "github.com/uptrace/bun/*"
           - "github.com/a-novel-kit/context/pgbun"
+  - package-ecosystem: "github-actions"
+    rebase-strategy: auto
+    open-pull-requests-limit: 25
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every week
+      interval: "weekly"

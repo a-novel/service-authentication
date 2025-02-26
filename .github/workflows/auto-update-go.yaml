@@ -1,0 +1,22 @@
+name: go auto-update
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: a-novel-kit/workflows/go-actions/update-go-version@master
+        with:
+          pull_request: ${{ github.event.pull_request.html_url }}
+          pat: ${{ secrets.ACTION_PAT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}

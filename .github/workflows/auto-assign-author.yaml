@@ -1,0 +1,17 @@
+name: auto-assign author
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  assign-author:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/auto-assign-author@master
+        with:
+          pull_request: ${{ github.event.pull_request.number }}
+          author: ${{ github.event.pull_request.user.login }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
