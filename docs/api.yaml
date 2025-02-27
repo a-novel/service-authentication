@@ -16,7 +16,7 @@ info:
   version: 1.0.0
 
 security:
-  - bearerAuth: [ ]
+  - bearerAuth: []
 
 # ======================================================================================================================
 # Tags
@@ -48,7 +48,7 @@ tags:
 paths:
   /ping:
     get:
-      security: [ ]
+      security: []
       tags:
         - health
       summary: Check the status of the service.
@@ -56,25 +56,25 @@ paths:
         Check the status of the service. If the service is running, a successful response is returned.
       operationId: ping
       responses:
-        '200':
+        "200":
           description: The service is running.
           content:
             text/plain:
               schema:
                 type: string
                 example: pong
-        '418':
+        "418":
           description: This route is not expected to fail under normal circumstances.
         default:
           description: API is not available.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /healthcheck:
     get:
-      security: [ ]
+      security: []
       tags:
         - health
       summary: Check the health of the service.
@@ -82,20 +82,20 @@ paths:
         Returns a detailed report of the health of the service, including every dependency.
       operationId: healthcheck
       responses:
-        '200':
+        "200":
           description: The service is running.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Health'
-        '418':
+                $ref: "#/components/schemas/Health"
+        "418":
           description: This route is not expected to fail under normal circumstances.
         default:
           description: API is not available.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /session:
     get:
@@ -108,28 +108,28 @@ paths:
         as a success response. Otherwise, an error will be sent, explaining why the session is invalid.
       operationId: checkSession
       responses:
-        '200':
+        "200":
           description: The session is valid.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Claims'
-        '403':
+                $ref: "#/components/schemas/Claims"
+        "403":
           description: |
             The authorization header is correctly set, but verification failed. The token is correct, but likely
             invalid.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ForbiddenError'
+                $ref: "#/components/schemas/ForbiddenError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
     put:
-      security: [ ]
+      security: []
       tags:
         - session
         - credentials
@@ -140,36 +140,36 @@ paths:
         may depend on the profile of the user.
       operationId: createSession
       requestBody:
-        $ref: '#/components/requestBodies/LoginForm'
+        $ref: "#/components/requestBodies/LoginForm"
       responses:
-        '200':
+        "200":
           description: The session has been created successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Token'
-        '403':
+                $ref: "#/components/schemas/Token"
+        "403":
           description: The provided credentials match a user, but authentication failed due to incorrect information.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ForbiddenError'
-        '404':
+                $ref: "#/components/schemas/ForbiddenError"
+        "404":
           description: The provided credentials do not match any user.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: "#/components/schemas/NotFoundError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /session/anon:
     put:
-      security: [ ]
+      security: []
       tags:
         - session
       summary: Create a new anonymous session.
@@ -178,24 +178,24 @@ paths:
         to apis with low protection.
       operationId: createAnonSession
       responses:
-        '200':
+        "200":
           description: The session has been created successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Token'
-        '418':
+                $ref: "#/components/schemas/Token"
+        "418":
           description: This route is not expected to fail under normal circumstances.
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /session/refresh:
     patch:
-      security: [ ]
+      security: []
       tags:
         - session
       summary: Refresh access token.
@@ -203,35 +203,35 @@ paths:
         Takes a refresh token, and use it to issue a new access token.
       operationId: refreshSession
       parameters:
-        - $ref: '#/components/parameters/RefreshToken'
-        - $ref: '#/components/parameters/AccessToken'
+        - $ref: "#/components/parameters/RefreshToken"
+        - $ref: "#/components/parameters/AccessToken"
       responses:
-        '200':
+        "200":
           description: The session is valid.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Token'
-        '403':
+                $ref: "#/components/schemas/Token"
+        "403":
           description: |
             The authorization header is correctly set, but verification failed. The token is correct, but likely
             invalid.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ForbiddenError'
-        '422':
+                $ref: "#/components/schemas/ForbiddenError"
+        "422":
           description: The provided access token is not a refresh token.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnprocessableEntityError'
+                $ref: "#/components/schemas/UnprocessableEntityError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
     put:
       tags:
         - session
@@ -241,26 +241,26 @@ paths:
         direct login (not a refresh token).
       operationId: createRefreshToken
       responses:
-        '200':
+        "200":
           description: The session is valid.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RefreshToken'
-        '403':
+                $ref: "#/components/schemas/RefreshToken"
+        "403":
           description: |
             The authorization header is correctly set, but verification failed. The token is correct, but likely
             invalid.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ForbiddenError'
+                $ref: "#/components/schemas/ForbiddenError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /public-keys:
     get:
@@ -270,27 +270,27 @@ paths:
       description: |
         Get a public key from its usage.
       parameters:
-        - $ref: '#/components/parameters/KID'
+        - $ref: "#/components/parameters/KID"
       operationId: getPublicKey
       responses:
-        '200':
+        "200":
           description: The public key have been retrieved successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JWK'
-        '404':
+                $ref: "#/components/schemas/JWK"
+        "404":
           description: The provided key usage does not match any key.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: "#/components/schemas/NotFoundError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /public-keys/list:
     get:
@@ -305,25 +305,25 @@ paths:
           description: The intended usage of the keys.
           required: true
           schema:
-            $ref: '#/components/schemas/KeyUsage'
+            $ref: "#/components/schemas/KeyUsage"
       operationId: listPublicKeys
       responses:
-        '200':
+        "200":
           description: The public keys were retrieved successfully.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/JWK'
-        '418':
+                  $ref: "#/components/schemas/JWK"
+        "418":
           description: This route is not expected to fail under normal circumstances.
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /short-code/register:
     put:
@@ -335,25 +335,25 @@ paths:
         ensure this address is valid.
         When a user registers, the short code it received must be sent along with the registration payload. The email
         of the payload MUST match the email the short code was sent to, and is used to retrieve the short code.
-        
+
         NOTE that this request does not verify the availability of an email. You may check this beforehand, using
         the `Email Exists` endpoint.
-        
+
         If multiple registration links are requested for the same email, only the last one will be valid.
       operationId: requestRegistration
       requestBody:
-        $ref: '#/components/requestBodies/RequestRegistrationForm'
+        $ref: "#/components/requestBodies/RequestRegistrationForm"
       responses:
-        '204':
+        "204":
           description: The short code has been sent successfully.
-        '418':
+        "418":
           description: This route is not expected to fail under normal circumstances.
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /short-code/update-email:
     put:
@@ -364,28 +364,28 @@ paths:
         Create a new short code for updating the email of an user. This short code is sent to the new address.
         If the user clicks on it, it should take it to a page that will forward the short code back to this API.
         Once done, the email associated to the user will be updated automatically.
-        
+
         This route requires to be called by an authenticated user. Anonymous sessions cannot trigger an email
         update request.
-        
+
         NOTE that this request does not verify the availability of an email. You may check this beforehand, using
         the `Email Exists` endpoint.
-        
+
         If multiple email update links are requested for the same email, only the last one will be valid.
       operationId: requestEmailUpdate
       requestBody:
-        $ref: '#/components/requestBodies/RequestEmailUpdateForm'
+        $ref: "#/components/requestBodies/RequestEmailUpdateForm"
       responses:
-        '204':
+        "204":
           description: The short code has been sent successfully.
-        '418':
+        "418":
           description: This route is not expected to fail under normal circumstances.
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /short-code/update-password:
     put:
@@ -396,29 +396,29 @@ paths:
         Create a new short code for updating the password of an user. This short code is sent to the new address.
         If the user clicks on it, it should take it to a page that will forward the short code back to this API.
         Once done, the password of the user is updated.
-        
+
         This route does not require authentication (although it requires at least an anonymous session). This
         allow users who forgot their password to reset it.
-        
+
         If multiple password update links are requested for the same email, only the last one will be valid.
       operationId: requestPasswordReset
       requestBody:
-        $ref: '#/components/requestBodies/RequestPasswordResetForm'
+        $ref: "#/components/requestBodies/RequestPasswordResetForm"
       responses:
-        '204':
+        "204":
           description: The short code has been sent successfully.
-        '404':
+        "404":
           description: The provided email does not match any user.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: "#/components/schemas/NotFoundError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /credentials:
     put:
@@ -428,36 +428,36 @@ paths:
       description: |
         Create a new user. The form must contain a short code, that was sent through a registration link at the user
         desired email.
-        
+
         On success, a valid access token is returned, that can be used to access higher-privilege routes.
       operationId: register
       requestBody:
-        $ref: '#/components/requestBodies/RegisterForm'
+        $ref: "#/components/requestBodies/RegisterForm"
       responses:
-        '200':
+        "200":
           description: The user has been created successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Token'
-        '403':
+                $ref: "#/components/schemas/Token"
+        "403":
           description: The short code is not valid, either wrong or it does not exist at all for this email.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ForbiddenError'
-        '410':
+                $ref: "#/components/schemas/ForbiddenError"
+        "410":
           description: The provided email is already in use.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConflictError'
+                $ref: "#/components/schemas/ConflictError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /credentials/email:
     get:
@@ -469,22 +469,22 @@ paths:
         with a not found (404) error status.
       operationId: emailExists
       parameters:
-        - $ref: '#/components/parameters/Email'
+        - $ref: "#/components/parameters/Email"
       responses:
-        '204':
+        "204":
           description: The email is associated to an user.
-        '404':
+        "404":
           description: The provided email is not associated to any user.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: "#/components/schemas/NotFoundError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
     patch:
       tags:
         - credentials
@@ -495,9 +495,9 @@ paths:
         sent to.
       operationId: updateEmail
       requestBody:
-        $ref: '#/components/requestBodies/UpdateEmailForm'
+        $ref: "#/components/requestBodies/UpdateEmailForm"
       responses:
-        '200':
+        "200":
           description: The email has been updated successfully.
           content:
             application/json:
@@ -507,32 +507,32 @@ paths:
                   - email
                 properties:
                   email:
-                    $ref: '#/components/schemas/Email'
+                    $ref: "#/components/schemas/Email"
                     description: The new email of the user.
-        '403':
+        "403":
           description: The short code is not valid, either wrong or it does not exist at all for this user ID.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ForbiddenError'
-        '404':
+                $ref: "#/components/schemas/ForbiddenError"
+        "404":
           description: The provided user ID does not match any user.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
-        '410':
+                $ref: "#/components/schemas/NotFoundError"
+        "410":
           description: The provided email is already in use.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConflictError'
+                $ref: "#/components/schemas/ConflictError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /credentials/password:
     patch:
@@ -544,22 +544,22 @@ paths:
         the identity of the caller.
       operationId: updatePassword
       requestBody:
-        $ref: '#/components/requestBodies/UpdatePasswordForm'
+        $ref: "#/components/requestBodies/UpdatePasswordForm"
       responses:
-        '204':
+        "204":
           description: The password has been updated successfully.
-        '403':
+        "403":
           description: The provided current password does not match the actual password of the user.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ForbiddenError'
+                $ref: "#/components/schemas/ForbiddenError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
   /credentials/password/reset:
     patch:
@@ -572,22 +572,22 @@ paths:
         requested the password reset.
       operationId: resetPassword
       requestBody:
-        $ref: '#/components/requestBodies/ResetPasswordForm'
+        $ref: "#/components/requestBodies/ResetPasswordForm"
       responses:
-        '204':
+        "204":
           description: The password has been updated successfully.
-        '403':
+        "403":
           description: The short code is not valid, either wrong or it does not exist at all for this user.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ForbiddenError'
+                $ref: "#/components/schemas/ForbiddenError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnexpectedError'
+                $ref: "#/components/schemas/UnexpectedError"
 
 # ======================================================================================================================
 # Components
@@ -623,7 +623,7 @@ components:
           description: The name of the dependency.
           example: database
         status:
-          $ref: '#/components/schemas/DependencyStatus'
+          $ref: "#/components/schemas/DependencyStatus"
     Health:
       type: object
       required:
@@ -631,9 +631,9 @@ components:
         - sendgrid
       properties:
         postgres:
-          $ref: '#/components/schemas/Dependency'
+          $ref: "#/components/schemas/Dependency"
         sendgrid:
-          $ref: '#/components/schemas/Dependency'
+          $ref: "#/components/schemas/Dependency"
 
     Token:
       type: object
@@ -679,9 +679,9 @@ components:
           type: array
           minItems: 1
           items:
-            $ref: '#/components/schemas/Role'
+            $ref: "#/components/schemas/Role"
           description: The roles granted by the token.
-          example: [ "auth:anon" ]
+          example: ["auth:anon"]
 
     LoginForm:
       type: object
@@ -694,9 +694,9 @@ components:
         - password
       properties:
         email:
-          $ref: '#/components/schemas/Email'
+          $ref: "#/components/schemas/Email"
         password:
-          $ref: '#/components/schemas/Password'
+          $ref: "#/components/schemas/Password"
     RequestRegistrationForm:
       type: object
       description: Create a new registration link.
@@ -705,7 +705,7 @@ components:
         - password
       properties:
         email:
-          $ref: '#/components/schemas/Email'
+          $ref: "#/components/schemas/Email"
           description: |
             The email of the new user. This email must be available at the time of registration.
     RequestEmailUpdateForm:
@@ -716,7 +716,7 @@ components:
         - password
       properties:
         email:
-          $ref: '#/components/schemas/Email'
+          $ref: "#/components/schemas/Email"
           description: |
             The bew email of the new user. This email must be available at the time of validation.
     RequestPasswordResetForm:
@@ -727,7 +727,7 @@ components:
         - password
       properties:
         email:
-          $ref: '#/components/schemas/Email'
+          $ref: "#/components/schemas/Email"
           description: |
             The email of the user. This email must match a user in the database.
     RegisterForm:
@@ -739,14 +739,14 @@ components:
         - shortCode
       properties:
         email:
-          $ref: '#/components/schemas/Email'
+          $ref: "#/components/schemas/Email"
           description: |
             The email of the new user. This email must be available, and also match the one that received
             the short code / registration link.
         password:
-          $ref: '#/components/schemas/Password'
+          $ref: "#/components/schemas/Password"
         shortCode:
-          $ref: '#/components/schemas/ShortCode'
+          $ref: "#/components/schemas/ShortCode"
     UpdateEmailForm:
       type: object
       description: Data used to update the email of a user.
@@ -755,12 +755,12 @@ components:
         - shortCode
       properties:
         userID:
-          $ref: '#/components/schemas/UserID'
+          $ref: "#/components/schemas/UserID"
           description: |
             The id of the user that requested the email update. This ID is usually sent along the short code
             in the email update link.
         shortCode:
-          $ref: '#/components/schemas/ShortCode'
+          $ref: "#/components/schemas/ShortCode"
     UpdatePasswordForm:
       type: object
       description: Data used to update the password of a user.
@@ -770,12 +770,12 @@ components:
         - currentPassword
       properties:
         email:
-          $ref: '#/components/schemas/Email'
+          $ref: "#/components/schemas/Email"
         password:
-          $ref: '#/components/schemas/Password'
+          $ref: "#/components/schemas/Password"
           description: The new password of the user.
         currentPassword:
-          $ref: '#/components/schemas/Password'
+          $ref: "#/components/schemas/Password"
           description: The current password of the user, used for further verification of the caller identity.
     ResetPasswordForm:
       type: object
@@ -786,14 +786,14 @@ components:
         - shortCode
       properties:
         userID:
-          $ref: '#/components/schemas/UserID'
+          $ref: "#/components/schemas/UserID"
           description: |
             The ID of the user that requested a password reset is sent in the reset link of the reset password email.
         password:
-          $ref: '#/components/schemas/Password'
+          $ref: "#/components/schemas/Password"
           description: The new password of the user.
         shortCode:
-          $ref: '#/components/schemas/ShortCode'
+          $ref: "#/components/schemas/ShortCode"
 
     KeyUsage:
       type: string
@@ -812,18 +812,18 @@ components:
       additionalProperties: true
       properties:
         kty:
-          $ref: '#/components/schemas/KTY'
+          $ref: "#/components/schemas/KTY"
         use:
-          $ref: '#/components/schemas/Use'
+          $ref: "#/components/schemas/Use"
         key_ops:
           type: array
-          example: [ "sign", "verify" ]
+          example: ["sign", "verify"]
           items:
-            $ref: '#/components/schemas/KeyOp'
+            $ref: "#/components/schemas/KeyOp"
         alg:
-          $ref: '#/components/schemas/Alg'
+          $ref: "#/components/schemas/Alg"
         kid:
-          $ref: '#/components/schemas/KID'
+          $ref: "#/components/schemas/KID"
 
     # ======================================================== TYPES =======================================================
     Role:
@@ -984,50 +984,50 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/LoginForm'
+            $ref: "#/components/schemas/LoginForm"
     RequestRegistrationForm:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/RequestRegistrationForm'
+            $ref: "#/components/schemas/RequestRegistrationForm"
     RequestEmailUpdateForm:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/RequestEmailUpdateForm'
+            $ref: "#/components/schemas/RequestEmailUpdateForm"
     RequestPasswordResetForm:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/RequestPasswordResetForm'
+            $ref: "#/components/schemas/RequestPasswordResetForm"
 
     RegisterForm:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/RegisterForm'
+            $ref: "#/components/schemas/RegisterForm"
     UpdateEmailForm:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UpdateEmailForm'
+            $ref: "#/components/schemas/UpdateEmailForm"
     UpdatePasswordForm:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UpdatePasswordForm'
+            $ref: "#/components/schemas/UpdatePasswordForm"
     ResetPasswordForm:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ResetPasswordForm'
+            $ref: "#/components/schemas/ResetPasswordForm"
   # ================================================== QUERY PARAMETERS ==================================================
   parameters:
     KID:
@@ -1037,13 +1037,13 @@ components:
       required: true
       example: 29f71c01-5ae1-4b01-b729-e17488538e15
       schema:
-        $ref: '#/components/schemas/KID'
+        $ref: "#/components/schemas/KID"
     Email:
       name: email
       in: query
       required: true
       schema:
-        $ref: '#/components/schemas/Email'
+        $ref: "#/components/schemas/Email"
     AccessToken:
       name: access_token
       in: query
