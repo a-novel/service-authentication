@@ -18,6 +18,8 @@ CREATE TABLE keys
     deleted_comment TEXT
 );
 
+CREATE INDEX keys_usage_idx ON keys (usage);
+
 CREATE VIEW active_keys AS
 (
 SELECT *

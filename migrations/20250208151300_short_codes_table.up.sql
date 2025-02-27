@@ -22,6 +22,8 @@ CREATE TABLE short_codes
     deleted_comment TEXT
 );
 
+CREATE INDEX short_codes_target_usage_idx ON short_codes (target, usage);
+
 CREATE VIEW active_short_codes AS
 (
 SELECT *
