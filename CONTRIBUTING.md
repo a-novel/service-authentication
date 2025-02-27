@@ -17,7 +17,9 @@ Also take time to understand our frameworks:
 
 - [Golang](https://go.dev/doc/install)
 - [Podman](https://podman.io/docs/installation)
-- [Node.js (npm)](https://nodejs.org/en/download)
+- [Node.js](https://nodejs.org/en/download/)
+- [Python](https://www.python.org/downloads/)
+  - Install [pipx](https://pipx.pypa.io/stable/installation/) to install command-line tools.
 - Make
 
   ```bash

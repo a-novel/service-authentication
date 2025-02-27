@@ -29,6 +29,9 @@ Want to contribute? Check the [contribution guidelines](CONTRIBUTING.md).
 
 - [Golang](https://go.dev/doc/install)
 - [Podman](https://podman.io/docs/installation)
+- [Node.js](https://nodejs.org/en/download/)
+- [Python](https://www.python.org/downloads/)
+  - Install [pipx](https://pipx.pypa.io/stable/installation/) to install command-line tools.
 - Make
 
   ```bash
@@ -57,6 +60,12 @@ source .envrc
 
 > You may use tools such as [direnv](https://direnv.net/), otherwise you'll need to source the env file on each new
 > terminal session.
+
+Install the external dependencies:
+
+```bash
+make install
+```
 
 ## Generate keys
 
