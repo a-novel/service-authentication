@@ -6,6 +6,7 @@ test:
 lint:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run
 	npx prettier . --check
+	sqlfluff lint
 
 # Generate mocked interfaces for Go tests.
 mocks:
@@ -17,6 +18,7 @@ format:
 	go mod tidy
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run --fix
 	npx prettier . --write
+	sqlfluff fix
 
 # Lint OpenAPI specs.
 openapi-lint:
@@ -33,5 +35,8 @@ rotate_keys:
 # Run the API
 api:
 	bash -c "set -m; bash '$(CURDIR)/scripts/run.sh'"
+
+install:
+	pipx install sqlfluff
 
 .PHONY: api

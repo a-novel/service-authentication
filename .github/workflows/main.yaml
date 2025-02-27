@@ -68,8 +68,14 @@ jobs:
     steps:
       - uses: a-novel-kit/workflows/go-actions/lint-go@master
 
+  lint-postgresql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/postgres-actions/lint-postgres@master
+
   lint-open-api:
-    needs: []
     runs-on: ubuntu-latest
     permissions:
       contents: read
