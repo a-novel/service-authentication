@@ -30,13 +30,15 @@ Want to contribute? Check the [contribution guidelines](CONTRIBUTING.md).
 - [Golang](https://go.dev/doc/install)
 - [Podman](https://podman.io/docs/installation)
 - Make
+
   ```bash
   # Debian / Ubuntu
   sudo apt-get install build-essential
-  
+
   # macOS
   brew install make
   ```
+
   For Windows, you can use [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm)
 
 ## Setup environment

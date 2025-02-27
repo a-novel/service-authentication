@@ -16,5 +16,4 @@ updates:
     open-pull-requests-limit: 25
     directory: "/"
     schedule:
-      # Check for updates to GitHub Actions every week
-      interval: "weekly"
+      interval: daily

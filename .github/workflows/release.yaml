@@ -16,7 +16,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   api-build:
-    needs: [ release ]
+    needs: [release]
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -39,7 +39,7 @@ jobs:
       id-token: write
     env:
       DSN: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
-      MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
+      MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-rest-api@master
@@ -51,7 +51,7 @@ jobs:
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
 
   rotate-keys-build:
-    needs: [ release ]
+    needs: [release]
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -74,7 +74,7 @@ jobs:
       id-token: write
     env:
       DSN: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
-      MASTER_KEY: 'fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
+      MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-job@master

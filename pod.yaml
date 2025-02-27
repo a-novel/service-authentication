@@ -28,7 +28,7 @@ spec:
       ports:
         - containerPort: 5432
           hostPort: 5001
-      resources: { }
+      resources: {}
       securityContext:
         capabilities:
           drop:
@@ -45,4 +45,4 @@ spec:
     - name: c72e2660cc61435ce08b2201b9f0f110dd152fc33d28638c67fdc48a414405a4-pvc
       persistentVolumeClaim:
         claimName: c72e2660cc61435ce08b2201b9f0f110dd152fc33d28638c67fdc48a414405a4
-status: { }
+status: {}

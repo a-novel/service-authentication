@@ -2,7 +2,7 @@ Welcome to the A-Novel project !
 
 # Basics
 
-- Learn Go: https://go.dev/tour/ 
+- Learn Go: https://go.dev/tour/
 - Learn PostgreSQL: https://www.postgresql.org/docs/current/tutorial.html
 - Learn OpenAPI: https://learn.openapis.org/
 
@@ -19,13 +19,15 @@ Also take time to understand our frameworks:
 - [Podman](https://podman.io/docs/installation)
 - [Node.js (npm)](https://nodejs.org/en/download)
 - Make
+
   ```bash
   # Debian / Ubuntu
   sudo apt-get install build-essential
-  
+
   # macOS
   brew install make
   ```
+
   For Windows, you can use [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm)
 
 # Scripts
@@ -58,22 +60,22 @@ make openapi-generate
 The A-Novel authentication service is a REST API, built with OpenAPI and using a layered architecture (similar but not
 exactly like the Clean Architecture).
 
-> An arrow on the graph indicates the dependency flow. `A -> B` means that  `A` may import / depend on `B`, but not the
+> An arrow on the graph indicates the dependency flow. `A -> B` means that `A` may import / depend on `B`, but not the
 > other way around. This is important to prevent circular dependencies.
 
 ```text
-               ┌──────────────────────────────┐                                      
-               │ SCRIPTS                      │                                      
-               │                              ◄── External User                      
-               │ Bash scripts for local tasks │                                      
-               └─────────────────┬────────────┘         │                            
-                                 │                      │                            
-                                 │               ┌──────▼──────┐                     
-                                 │               │ CMD         │                     
-                                 └───────────────►             │                     
-                                                 │ Executables │                     
-                                                 └──────┬──────┘                     
-                                                        │                            
+               ┌──────────────────────────────┐
+               │ SCRIPTS                      │
+               │                              ◄── External User
+               │ Bash scripts for local tasks │
+               └─────────────────┬────────────┘         │
+                                 │                      │
+                                 │               ┌──────▼──────┐
+                                 │               │ CMD         │
+                                 └───────────────►             │
+                                                 │ Executables │
+                                                 └──────┬──────┘
+                                                        │
                     ┌───────────────────────────────────┼───────────────────────────┐
 ┌────────────────┐  │                          ┌────────▼─────────┐                 │
 │ DOCS           │  │                          │ API              │                 │
@@ -98,12 +100,12 @@ exactly like the Clean Architecture).
                     │                      │ Internal tools │                       │
                     │                      └────────────────┘                       │
                     └──────┬─────────────────────┬────────────────────────┬─────────┘
-                           │                     │                        │          
-     ┌─────────────────────▼──────┐ ┌────────────▼────────┐   ┌───────────▼────────┐ 
-     │ MIGRATIONS                 │ │ CONFIG              │   │ MODELS             │ 
-     │                            │ │                     ├───►                    │ 
-     │ PostgreSQL migration files │ │ Configuration files │   │ Shared definitions │ 
-     └────────────────────────────┘ └─────────────────────┘   └────────────────────┘ 
+                           │                     │                        │
+     ┌─────────────────────▼──────┐ ┌────────────▼────────┐   ┌───────────▼────────┐
+     │ MIGRATIONS                 │ │ CONFIG              │   │ MODELS             │
+     │                            │ │                     ├───►                    │
+     │ PostgreSQL migration files │ │ Configuration files │   │ Shared definitions │
+     └────────────────────────────┘ └─────────────────────┘   └────────────────────┘
 ```
 
 ## Entry points

@@ -5,6 +5,7 @@ test:
 # Check code quality.
 lint:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run
+	npx prettier . --check
 
 # Generate mocked interfaces for Go tests.
 mocks:
@@ -15,6 +16,7 @@ mocks:
 format:
 	go mod tidy
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run --fix
+	npx prettier . --write
 
 # Lint OpenAPI specs.
 openapi-lint:
