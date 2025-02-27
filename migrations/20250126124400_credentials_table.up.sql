@@ -8,3 +8,5 @@ CREATE TABLE credentials
     created_at TIMESTAMP(0) WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP(0) WITH TIME ZONE NOT NULL
 );
+
+CREATE INDEX credentials_email_idx ON credentials (email);
