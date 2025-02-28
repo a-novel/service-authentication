@@ -19,8 +19,8 @@ type UpdateEmailService interface {
 
 func (api *API) UpdateEmail(ctx context.Context, req *codegen.UpdateEmailForm) (codegen.UpdateEmailRes, error) {
 	res, err := api.UpdateEmailService.UpdateEmail(ctx, services.UpdateEmailRequest{
-		UserID:    uuid.UUID(req.UserID.Value),
-		ShortCode: string(req.ShortCode),
+		UserID:    uuid.UUID(req.GetUserID()),
+		ShortCode: string(req.GetShortCode()),
 	})
 
 	switch {

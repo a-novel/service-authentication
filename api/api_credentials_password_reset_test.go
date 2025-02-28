@@ -59,7 +59,7 @@ func TestResetPassword(t *testing.T) {
 				err: lib.ErrInvalidPassword,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid user password"},
+			expect: &codegen.ForbiddenError{Error: "invalid short code"},
 		},
 		{
 			name: "Error",

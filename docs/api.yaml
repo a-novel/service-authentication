@@ -751,7 +751,7 @@ components:
       type: object
       description: Data used to update the email of a user.
       required:
-        - email
+        - userID
         - shortCode
       properties:
         userID:

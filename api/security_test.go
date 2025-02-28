@@ -156,7 +156,7 @@ func TestBearerAuth(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			source := apimocks.NewMockSecurityAPISource(t)
+			source := apimocks.NewMockSecurityHandlerService(t)
 
 			if testCase.authenticateData != nil {
 				source.

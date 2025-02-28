@@ -18,8 +18,8 @@ type LoginService interface {
 
 func (api *API) CreateSession(ctx context.Context, req *codegen.LoginForm) (codegen.CreateSessionRes, error) {
 	accessToken, err := api.LoginService.Login(ctx, services.LoginRequest{
-		Email:    string(req.Email),
-		Password: string(req.Password),
+		Email:    string(req.GetEmail()),
+		Password: string(req.GetPassword()),
 	})
 
 	switch {

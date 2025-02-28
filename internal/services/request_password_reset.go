@@ -51,16 +51,9 @@ func (service *RequestPasswordResetService) Wait() {
 }
 
 func (service *RequestPasswordResetService) sendMail(
-	parent context.Context, email string, userID uuid.UUID, shortCode *models.ShortCode,
+	ctx context.Context, email string, userID uuid.UUID, shortCode *models.ShortCode,
 ) {
 	defer service.wg.Done()
-
-	// Create a non-cancelable context from parent, so this method is still able to use the context after the parent
-	// cancellation.
-	ctx := context.WithoutCancel(parent)
-
-	// Wait for parent context to be done.
-	<-parent.Done()
 
 	// Send the mail.
 	from := mail.NewEmail(config.Sendgrid.Sender.Name, config.Sendgrid.Sender.Mail)
@@ -111,7 +104,7 @@ func (service *RequestPasswordResetService) RequestPasswordReset(
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
-	go service.sendMail(ctx, request.Email, credentials.ID, shortCode)
+	go service.sendMail(context.WithoutCancel(ctx), request.Email, credentials.ID, shortCode)
 
 	return shortCode, nil
 }

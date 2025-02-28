@@ -17,9 +17,9 @@ type RegisterService interface {
 
 func (api *API) Register(ctx context.Context, req *codegen.RegisterForm) (codegen.RegisterRes, error) {
 	accessToken, err := api.RegisterService.Register(ctx, services.RegisterRequest{
-		Email:     string(req.Email),
-		Password:  string(req.Password),
-		ShortCode: string(req.ShortCode),
+		Email:     string(req.GetEmail()),
+		Password:  string(req.GetPassword()),
+		ShortCode: string(req.GetShortCode()),
 	})
 
 	switch {

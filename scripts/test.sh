@@ -17,7 +17,7 @@ podman play kube ${KUBE_FILE}
 
 export DSN="postgres://test:test@localhost:5432/test?sslmode=disable"
 
-go run ${TEST_TOOL_PKG} --format pkgname -- -p 1 -cover ./...
+go run ${TEST_TOOL_PKG} --format pkgname -- -p 1 -cover $(go list ./... | grep -v /mocks | grep -v /codegen)
 
 # Normal execution: containers are shut down.
 podman kube down ${KUBE_FILE}

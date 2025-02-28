@@ -17,26 +17,26 @@ import (
 
 var ErrMissingUserID = errors.New("claims do not contain user ID")
 
-type SecurityAPISource interface {
+type SecurityHandlerService interface {
 	Authenticate(ctx context.Context, accessToken string) (*models.AccessTokenClaims, error)
 }
 
-type SecurityAPI struct {
+type SecurityHandler struct {
 	// Permissions required by each operation.
 	RequiredPermissions map[codegen.OperationName][]models.Permission
 	// Permissions granted by each role.
 	GrantedPermissions map[models.Role][]models.Permission
 
-	SecurityAPISource SecurityAPISource
+	SecurityHandlerService SecurityHandlerService
 }
 
-func (security *SecurityAPI) HandleBearerAuth(
+func (security *SecurityHandler) HandleBearerAuth(
 	ctx context.Context, operationName codegen.OperationName, auth codegen.BearerAuth,
 ) (context.Context, error) {
 	logger := zerolog.Ctx(ctx)
 
 	// Get the claims from the token. This will also perform the necessary checks to ensure the token is valid.
-	claims, err := security.SecurityAPISource.Authenticate(ctx, auth.Token)
+	claims, err := security.SecurityHandlerService.Authenticate(ctx, auth.Token)
 	if err != nil {
 		logger.Warn().Err(err).Msg("authenticate user")
 
@@ -80,8 +80,8 @@ func (security *SecurityAPI) HandleBearerAuth(
 func NewSecurity(
 	required map[codegen.OperationName][]models.Permission,
 	granted models.PermissionsConfig,
-	service SecurityAPISource,
-) (*SecurityAPI, error) {
+	service SecurityHandlerService,
+) (*SecurityHandler, error) {
 	resolveGranted, err := configurator.ResolveDependants[models.Role, models.Permission](
 		lo.MapEntries(
 			granted.Roles,
@@ -97,10 +97,10 @@ func NewSecurity(
 		return nil, fmt.Errorf("(NewSecurity) resolve granted permissions: %w", err)
 	}
 
-	return &SecurityAPI{
-		RequiredPermissions: required,
-		GrantedPermissions:  resolveGranted,
-		SecurityAPISource:   service,
+	return &SecurityHandler{
+		RequiredPermissions:    required,
+		GrantedPermissions:     resolveGranted,
+		SecurityHandlerService: service,
 	}, nil
 }
 

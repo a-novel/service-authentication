@@ -1534,39 +1534,6 @@ func (s *OptNilUUID) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes UserID as json.
-func (o OptUserID) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	o.Value.Encode(e)
-}
-
-// Decode decodes UserID from json.
-func (o *OptUserID) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptUserID to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptUserID) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptUserID) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes Password as json.
 func (s Password) Encode(e *jx.Encoder) {
 	unwrapped := string(s)
@@ -2611,10 +2578,8 @@ func (s *UpdateEmailForm) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *UpdateEmailForm) encodeFields(e *jx.Encoder) {
 	{
-		if s.UserID.Set {
-			e.FieldStart("userID")
-			s.UserID.Encode(e)
-		}
+		e.FieldStart("userID")
+		s.UserID.Encode(e)
 	}
 	{
 		e.FieldStart("shortCode")
@@ -2637,8 +2602,8 @@ func (s *UpdateEmailForm) Decode(d *jx.Decoder) error {
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
 		case "userID":
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.UserID.Reset()
 				if err := s.UserID.Decode(d); err != nil {
 					return err
 				}
@@ -2666,7 +2631,7 @@ func (s *UpdateEmailForm) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000010,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

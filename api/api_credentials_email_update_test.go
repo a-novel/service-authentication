@@ -39,10 +39,7 @@ func TestUpdateEmail(t *testing.T) {
 			name: "Success",
 
 			req: &codegen.UpdateEmailForm{
-				UserID: codegen.OptUserID{
-					Value: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Set:   true,
-				},
+				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -58,10 +55,7 @@ func TestUpdateEmail(t *testing.T) {
 			name: "UserNotFound",
 
 			req: &codegen.UpdateEmailForm{
-				UserID: codegen.OptUserID{
-					Value: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Set:   true,
-				},
+				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -75,10 +69,7 @@ func TestUpdateEmail(t *testing.T) {
 			name: "ShortCodeNotFound",
 
 			req: &codegen.UpdateEmailForm{
-				UserID: codegen.OptUserID{
-					Value: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Set:   true,
-				},
+				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -92,10 +83,7 @@ func TestUpdateEmail(t *testing.T) {
 			name: "InvalidShortCode",
 
 			req: &codegen.UpdateEmailForm{
-				UserID: codegen.OptUserID{
-					Value: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Set:   true,
-				},
+				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -109,10 +97,7 @@ func TestUpdateEmail(t *testing.T) {
 			name: "EmailAlreadyTaken",
 
 			req: &codegen.UpdateEmailForm{
-				UserID: codegen.OptUserID{
-					Value: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Set:   true,
-				},
+				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -126,10 +111,7 @@ func TestUpdateEmail(t *testing.T) {
 			name: "Error",
 
 			req: &codegen.UpdateEmailForm{
-				UserID: codegen.OptUserID{
-					Value: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Set:   true,
-				},
+				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
