@@ -8,19 +8,68 @@
   <body class="scalar-app">
     <!-- Need a Custom Header? Check out this example: https://codepen.io/scalarorg/pen/VwOXqam -->
     <!-- Note: We’re using our public proxy to avoid CORS issues. You can remove the `data-proxy-url` attribute if you don’t need it. -->
-    <script id="api-reference" data-url="./api.yaml"></script>
-
-    <script>
-      const configuration = {
-        theme: "kepler",
-        defaultOpenAllTags: true,
-        favicon: "./favicon.png",
-      };
-
-      document.getElementById("api-reference").dataset.configuration =
-        JSON.stringify(configuration);
+    <script id="api-reference" type="application/json">
+      {
+        "openapi": "3.1.0",
+        "info": {
+          "title": "",
+          "version": "1.0.0"
+        },
+        "paths": {}
+      }
     </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+    <script async setup type="module">
+      import yaml from "https://cdn.jsdelivr.net/npm/yaml/+esm";
+
+      const REPOSITORY = "a-novel/authentication";
+      const FILENAME = "api.yaml";
+      const LOCALHOSTS = ["localhost", "127.0.0.1"];
+
+      const render = async (location) => {
+        let version = new URLSearchParams(location.search).get("version");
+        console.log(`rendering version ${version}`);
+
+        let filePath = `./${FILENAME}`;
+        if (version) {
+          filePath = `https://raw.githubusercontent.com/${REPOSITORY}/refs/tags/${version}/docs/${FILENAME}`;
+        }
+        // On localhost, use the local file.
+        if (LOCALHOSTS.includes(window.location.hostname)) {
+          filePath = `./${FILENAME}`;
+          version = "local";
+        }
+
+        const fileResponse = await fetch(filePath);
+        const fileText = await fileResponse.text();
+
+        const fileData = yaml.parse(fileText);
+        fileData.info.version = version || "master";
+
+        const configuration = {
+          theme: "kepler",
+          defaultOpenAllTags: true,
+          favicon: "./favicon.png",
+        };
+
+        document.getElementById("api-reference").dataset.configuration =
+          JSON.stringify(configuration);
+        document.getElementById("api-reference").innerHTML =
+          JSON.stringify(fileData);
+
+        // Force a refresh of scalar.
+        document.getElementById("scalar-script").remove();
+        const script = document.createElement("script");
+        script.id = "scalar-script";
+        script.src =
+          "https://cdn.jsdelivr.net/npm/@scalar/api-reference/dist/browser/standalone.min.js";
+        document.body.appendChild(script);
+      };
+
+      window.addEventListener("popstate", () => render(window.location));
+      render(window.location);
+    </script>
+
+    <script id="scalar-script"></script>
   </body>
 </html>
