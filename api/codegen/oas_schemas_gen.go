@@ -962,52 +962,6 @@ func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
 	return d
 }
 
-// NewOptUserID returns new OptUserID with value set to v.
-func NewOptUserID(v UserID) OptUserID {
-	return OptUserID{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptUserID is optional UserID.
-type OptUserID struct {
-	Value UserID
-	Set   bool
-}
-
-// IsSet returns true if OptUserID was set.
-func (o OptUserID) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptUserID) Reset() {
-	var v UserID
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptUserID) SetTo(v UserID) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptUserID) Get() (v UserID, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptUserID) Or(d UserID) UserID {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 type Password string
 
 // PingIMATeapot is response for Ping operation.
@@ -1303,12 +1257,12 @@ func (*UnprocessableEntityError) refreshSessionRes() {}
 type UpdateEmailForm struct {
 	// The id of the user that requested the email update. This ID is usually sent along the short code
 	// in the email update link.
-	UserID    OptUserID `json:"userID"`
+	UserID    UserID    `json:"userID"`
 	ShortCode ShortCode `json:"shortCode"`
 }
 
 // GetUserID returns the value of UserID.
-func (s *UpdateEmailForm) GetUserID() OptUserID {
+func (s *UpdateEmailForm) GetUserID() UserID {
 	return s.UserID
 }
 
@@ -1318,7 +1272,7 @@ func (s *UpdateEmailForm) GetShortCode() ShortCode {
 }
 
 // SetUserID sets the value of UserID.
-func (s *UpdateEmailForm) SetUserID(val OptUserID) {
+func (s *UpdateEmailForm) SetUserID(val UserID) {
 	s.UserID = val
 }
 

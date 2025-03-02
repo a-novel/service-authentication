@@ -23,7 +23,7 @@ func (api *API) RequestEmailUpdate(
 	}
 
 	_, err = api.RequestEmailUpdateService.RequestEmailUpdate(ctx, services.RequestEmailUpdateRequest{
-		Email: string(req.Email),
+		Email: string(req.GetEmail()),
 		ID:    userID,
 	})
 	if err != nil {

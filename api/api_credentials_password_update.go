@@ -24,8 +24,8 @@ func (api *API) UpdatePassword(
 	}
 
 	err = api.UpdatePasswordService.UpdatePassword(ctx, services.UpdatePasswordRequest{
-		Password:        string(req.Password),
-		CurrentPassword: string(req.CurrentPassword),
+		Password:        string(req.GetPassword()),
+		CurrentPassword: string(req.GetCurrentPassword()),
 		UserID:          userID,
 	})
 

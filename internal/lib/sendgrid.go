@@ -1,11 +1,11 @@
 package lib
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
+	"github.com/sendgrid/rest"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
@@ -15,6 +15,7 @@ import (
 )
 
 func SendMail(ctx context.Context, message *mail.SGMailV3) {
+	logger := zerolog.Ctx(ctx)
 	client := sendgrid.NewSendClient(config.Sendgrid.APIKey)
 
 	message.MailSettings = &mail.MailSettings{
@@ -23,9 +24,13 @@ func SendMail(ctx context.Context, message *mail.SGMailV3) {
 	}
 
 	var (
-		recipents []string
-		bccs      []string
-		ccs       []string
+		recipents           []string
+		bccs                []string
+		ccs                 []string
+		dynamicTemplateData = make(map[string]interface{})
+
+		response *rest.Response
+		err      error
 	)
 
 	for _, personnalization := range message.Personalizations {
@@ -40,13 +45,14 @@ func SendMail(ctx context.Context, message *mail.SGMailV3) {
 		for _, cc := range personnalization.CC {
 			ccs = append(ccs, cc.Address)
 		}
+
+		for key, value := range personnalization.DynamicTemplateData {
+			dynamicTemplateData[key] = value
+		}
 	}
 
 	// If sandbox mode is enabled, sendgrid will just parse the template, without actually sending the email.
-	response, err := client.SendWithContext(ctx, message)
-	logger := zerolog.Ctx(ctx)
-
-	log.Println("SendMail")
+	response, err = client.SendWithContext(ctx, message)
 
 	if err != nil {
 		logger.Error().
@@ -64,7 +70,9 @@ func SendMail(ctx context.Context, message *mail.SGMailV3) {
 
 		// Only log the mail body if the sandbox mode is activated.
 		if config.Sendgrid.Sandbox {
-			event = event.Str("mail", string(mail.GetRequestBody(message)))
+			event = event.
+				Str("mail", string(mail.GetRequestBody(message))).
+				Interface("dynamicTemplateData", dynamicTemplateData)
 		}
 
 		event.

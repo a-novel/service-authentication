@@ -46,16 +46,9 @@ func (service *RequestRegisterService) Wait() {
 }
 
 func (service *RequestRegisterService) sendMail(
-	parent context.Context, request RequestRegisterRequest, shortCode *models.ShortCode,
+	ctx context.Context, request RequestRegisterRequest, shortCode *models.ShortCode,
 ) {
 	defer service.wg.Done()
-
-	// Create a non-cancelable context from parent, so this method is still able to use the context after the parent
-	// cancellation.
-	ctx := context.WithoutCancel(parent)
-
-	// Wait for parent context to be done.
-	<-parent.Done()
 
 	// Send the mail.
 	from := mail.NewEmail(config.Sendgrid.Sender.Name, config.Sendgrid.Sender.Mail)
@@ -101,7 +94,7 @@ func (service *RequestRegisterService) RequestRegister(
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
-	go service.sendMail(ctx, request, shortCode)
+	go service.sendMail(context.WithoutCancel(ctx), request, shortCode)
 
 	return shortCode, nil
 }

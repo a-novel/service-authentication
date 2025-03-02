@@ -43,10 +43,14 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 		return nil
 	}
 
+	logger := zerolog.Ctx(ctx)
+
 	// Return a different error if authentication failed. Also do not log error (we will still have the API log from
 	// the default middleware if needed).
 	var securityError *ogenerrors.SecurityError
 	if ok := errors.As(err, &securityError); ok {
+		logger.Warn().Err(err).Msg("authentication failed")
+
 		return &codegen.UnexpectedErrorStatusCode{
 			StatusCode: http.StatusUnauthorized,
 			Response:   codegen.UnexpectedError{Error: "Unauthorized"},
@@ -54,8 +58,7 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 	}
 
 	// Unhandled, unexpected error occurred.
-	logger := zerolog.Ctx(ctx)
-	logger.Error().Err(err).Msg("internal")
+	logger.Error().Err(err).Msg("internal error")
 
 	return &codegen.UnexpectedErrorStatusCode{
 		StatusCode: http.StatusInternalServerError,

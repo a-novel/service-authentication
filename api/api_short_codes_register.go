@@ -18,7 +18,7 @@ func (api *API) RequestRegistration(
 	ctx context.Context, req *codegen.RequestRegistrationForm,
 ) (codegen.RequestRegistrationRes, error) {
 	_, err := api.RequestRegisterService.RequestRegister(ctx, services.RequestRegisterRequest{
-		Email: string(req.Email),
+		Email: string(req.GetEmail()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("request register: %w", err)

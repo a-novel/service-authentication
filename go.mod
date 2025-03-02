@@ -3,11 +3,11 @@ module github.com/a-novel/authentication
 go 1.24.0
 
 require (
-	github.com/a-novel-kit/configurator v1.3.0
+	github.com/a-novel-kit/configurator v1.4.1
 	github.com/a-novel-kit/context v1.1.3
-	github.com/a-novel-kit/context/pgbun v0.0.0-20250220123030-fc4cc5aee6e1
+	github.com/a-novel-kit/context/pgbun v0.0.0-20250227125132-c566b99a508a
 	github.com/a-novel-kit/jwt v1.1.0
-	github.com/a-novel-kit/middlewares/zerolog v0.0.0-20250217085829-68c076bc6d4a
+	github.com/a-novel-kit/middlewares/zerolog v0.0.0-20250228012215-696c0c0802b6
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/cors v1.2.1
 	github.com/go-faster/errors v0.7.1
@@ -17,6 +17,7 @@ require (
 	github.com/ogen-go/ogen v1.10.0
 	github.com/rs/zerolog v1.33.0
 	github.com/samber/lo v1.49.1
+	github.com/sendgrid/rest v2.6.9+incompatible
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/stretchr/testify v1.10.0
 	github.com/uptrace/bun v1.2.10
@@ -42,7 +43,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
-	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/uptrace/bun/dialect/pgdialect v1.2.10 // indirect
@@ -50,7 +50,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa // indirect
+	golang.org/x/exp v0.0.0-20250228200357-dead58393ab7 // indirect
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
