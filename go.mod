@@ -20,8 +20,8 @@ require (
 	github.com/sendgrid/rest v2.6.9+incompatible
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/stretchr/testify v1.10.0
-	github.com/uptrace/bun v1.2.10
-	github.com/uptrace/bun/driver/pgdriver v1.2.10
+	github.com/uptrace/bun v1.2.11
+	github.com/uptrace/bun/driver/pgdriver v1.2.11
 	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/metric v1.35.0
 	go.opentelemetry.io/otel/trace v1.35.0
