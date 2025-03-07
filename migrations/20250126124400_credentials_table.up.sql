@@ -8,5 +8,3 @@ CREATE TABLE credentials
   created_at timestamp (0) with time zone NOT NULL,
   updated_at timestamp (0) with time zone NOT NULL
 );
-
-CREATE INDEX credentials_email_idx ON credentials (email);

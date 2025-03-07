@@ -84,6 +84,7 @@ func TestGenerateKeys(t *testing.T) {
 		searchKeyData *searchKeyData
 		insertKeyData *insertKeyData
 
+		expectKID *uuid.UUID
 		expectErr error
 	}{
 		{
@@ -94,7 +95,7 @@ func TestGenerateKeys(t *testing.T) {
 			searchKeyData: &searchKeyData{
 				resp: []*dao.KeyEntity{
 					{
-						ID:         uuid.New(),
+						ID:         uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 						PrivateKey: "cHJpdmF0ZS1rZXktMQ",
 						PublicKey:  lo.ToPtr("cHVibGljLWtleS0x"),
 						Usage:      models.KeyUsageAuth,
@@ -102,7 +103,7 @@ func TestGenerateKeys(t *testing.T) {
 						ExpiresAt:  time.Now().Add(time.Hour),
 					},
 					{
-						ID:         uuid.New(),
+						ID:         uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 						PrivateKey: "cHJpdmF0ZS1rZXktMQ",
 						PublicKey:  lo.ToPtr("cHVibGljLWtleS0x"),
 						Usage:      models.KeyUsageAuth,
@@ -124,7 +125,7 @@ func TestGenerateKeys(t *testing.T) {
 			searchKeyData: &searchKeyData{
 				resp: []*dao.KeyEntity{
 					{
-						ID:         uuid.New(),
+						ID:         uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 						PrivateKey: "cHJpdmF0ZS1rZXktMQ",
 						PublicKey:  lo.ToPtr("cHVibGljLWtleS0x"),
 						Usage:      models.KeyUsageRefresh,
@@ -132,7 +133,7 @@ func TestGenerateKeys(t *testing.T) {
 						ExpiresAt:  time.Now().Add(time.Hour),
 					},
 					{
-						ID:         uuid.New(),
+						ID:         uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 						PrivateKey: "cHJpdmF0ZS1rZXktMQ",
 						PublicKey:  lo.ToPtr("cHVibGljLWtleS0x"),
 						Usage:      models.KeyUsageRefresh,
@@ -166,7 +167,7 @@ func TestGenerateKeys(t *testing.T) {
 			searchKeyData: &searchKeyData{
 				resp: []*dao.KeyEntity{
 					{
-						ID:         uuid.New(),
+						ID:         uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 						PrivateKey: "cHJpdmF0ZS1rZXktMQ",
 						PublicKey:  lo.ToPtr("cHVibGljLWtleS0x"),
 						Usage:      models.KeyUsageAuth,
@@ -174,7 +175,7 @@ func TestGenerateKeys(t *testing.T) {
 						ExpiresAt:  time.Now().Add(time.Hour),
 					},
 					{
-						ID:         uuid.New(),
+						ID:         uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 						PrivateKey: "cHJpdmF0ZS1rZXktMQ",
 						PublicKey:  lo.ToPtr("cHVibGljLWtleS0x"),
 						Usage:      models.KeyUsageAuth,
@@ -212,7 +213,7 @@ func TestGenerateKeys(t *testing.T) {
 			searchKeyData: &searchKeyData{
 				resp: []*dao.KeyEntity{
 					{
-						ID:         uuid.New(),
+						ID:         uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 						PrivateKey: "cHJpdmF0ZS1rZXktMQ",
 						PublicKey:  lo.ToPtr("cHVibGljLWtleS0x"),
 						Usage:      models.KeyUsageAuth,
@@ -220,7 +221,7 @@ func TestGenerateKeys(t *testing.T) {
 						ExpiresAt:  time.Now().Add(time.Hour),
 					},
 					{
-						ID:         uuid.New(),
+						ID:         uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 						PrivateKey: "cHJpdmF0ZS1rZXktMQ",
 						PublicKey:  lo.ToPtr("cHVibGljLWtleS0x"),
 						Usage:      models.KeyUsageAuth,
@@ -229,6 +230,8 @@ func TestGenerateKeys(t *testing.T) {
 					},
 				},
 			},
+
+			expectKID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 		},
 	}
 
@@ -244,7 +247,7 @@ func TestGenerateKeys(t *testing.T) {
 					Return(testCase.searchKeyData.resp, testCase.searchKeyData.err)
 			}
 
-			var expectKID *uuid.UUID
+			expectKID := testCase.expectKID
 
 			checkInsertData := func(data dao.InsertKeyData) bool {
 				// Check for the KID to be present, and assign it to the expectKID variable.

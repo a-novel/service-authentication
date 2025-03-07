@@ -63,6 +63,7 @@ func (repository *DeleteKeyRepository) DeleteKey(ctx context.Context, data Delet
 	// Execute query.
 	res, err := tx.NewUpdate().
 		Model(entity).
+		ModelTableExpr("active_keys").
 		Where("id = ?", data.ID).
 		Column("deleted_at", "deleted_comment"). // Only update the deletion-related fields.
 		Returning("*").

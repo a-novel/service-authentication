@@ -1,4 +1,19 @@
+# App.
 export PORT=4001
 export ENV="local"
-export MASTER_KEY='fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
+export APP_NAME="authentication"
+
+# Postgres.
+export POSTGRES_USER="postgres"
+export POSTGRES_PASSWORD="postgres"
+export POSTGRES_DB="authentication"
+export POSTGRES_PORT=5001
+export POSTGRES_HOST="0.0.0.0"
+
+# Secrets.
 export SENDGRID_API_KEY="[SECRET]"
+export MASTER_KEY='fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
+
+# Other.
+export PODMAN_IGNORE_CGROUPSV1_WARNING="true"
+export PODMAN_COMPOSE_PROVIDER="podman-compose"

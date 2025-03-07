@@ -79,6 +79,7 @@ func (repository *DeleteShortCodeRepository) DeleteShortCode(
 	// Execute query.
 	res, err := tx.NewUpdate().
 		Model(entity).
+		ModelTableExpr("active_short_codes").
 		Where("id = ?", data.ID).
 		Column("deleted_at", "deleted_comment"). // Only update the deletion fields.
 		Returning("*").

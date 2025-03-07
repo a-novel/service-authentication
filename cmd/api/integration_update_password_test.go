@@ -24,7 +24,8 @@ func TestUpdatePasswordAPI(t *testing.T) {
 
 	newPassword := getRandomString()
 
-	t.Run("UpdatePassword/WrongPassword", func(t *testing.T) {
+	t.Log("UpdatePassword/WrongPassword")
+	{
 		rawRes, err := client.UpdatePassword(t.Context(), &codegen.UpdatePasswordForm{
 			Email:           codegen.Email(user.email),
 			Password:        codegen.Password(newPassword),
@@ -33,9 +34,10 @@ func TestUpdatePasswordAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.ForbiddenError{}, rawRes)
-	})
+	}
 
-	t.Run("UpdatePassword", func(t *testing.T) {
+	t.Log("UpdatePassword")
+	{
 		rawRes, err := client.UpdatePassword(t.Context(), &codegen.UpdatePasswordForm{
 			Email:           codegen.Email(user.email),
 			Password:        codegen.Password(newPassword),
@@ -44,9 +46,10 @@ func TestUpdatePasswordAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.UpdatePasswordNoContent{}, rawRes)
-	})
+	}
 
-	t.Run("LoginWithOldPasswordKO", func(t *testing.T) {
+	t.Log("LoginWithOldPasswordKO")
+	{
 		res, err := client.CreateSession(t.Context(), &codegen.LoginForm{
 			Email:    codegen.Email(user.email),
 			Password: codegen.Password(user.password),
@@ -54,9 +57,10 @@ func TestUpdatePasswordAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.ForbiddenError{}, res)
-	})
+	}
 
-	t.Run("LoginWithNewPasswordOK", func(t *testing.T) {
+	t.Log("LoginWithNewPasswordOK")
+	{
 		res, err := client.CreateSession(t.Context(), &codegen.LoginForm{
 			Email:    codegen.Email(user.email),
 			Password: codegen.Password(newPassword),
@@ -68,5 +72,5 @@ func TestUpdatePasswordAPI(t *testing.T) {
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()
-	})
+	}
 }

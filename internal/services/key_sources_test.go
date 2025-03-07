@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/context"
-	pgctx "github.com/a-novel-kit/context/pgbun"
 	"github.com/a-novel-kit/jwt/jwk"
 
 	"github.com/a-novel/authentication/internal/dao"
@@ -22,11 +22,6 @@ func testKeySource[Priv, Pub any](
 ) {
 	t.Helper()
 
-	txCtx, commit, err := pgctx.NewContextTX(ctx, nil)
-	require.NoError(t, err)
-
-	defer func() { _ = commit(false) }()
-
 	searchKeysDAO := dao.NewSearchKeysRepository()
 	insertKeyDAO := dao.NewInsertKeyRepository()
 	selectKeyDAO := dao.NewSelectKeyRepository()
@@ -34,17 +29,18 @@ func testKeySource[Priv, Pub any](
 	generator := services.NewGenerateKeyService(services.NewGenerateKeySource(searchKeysDAO, insertKeyDAO))
 	selectKey := services.NewSelectKeyService(selectKeyDAO)
 
-	kid, err := generator.GenerateKey(txCtx, usage)
+	kid, err := generator.GenerateKey(ctx, usage)
+	require.NoError(t, err)
+	require.NotNil(t, kid)
+
+	privateKey, err := selectKey.SelectKey(ctx, services.SelectKeyRequest{ID: lo.FromPtr(kid), Private: true})
+	require.NoError(t, err)
+	publicKey, err := selectKey.SelectKey(ctx, services.SelectKeyRequest{ID: lo.FromPtr(kid)})
 	require.NoError(t, err)
 
-	privateKey, err := selectKey.SelectKey(txCtx, services.SelectKeyRequest{ID: *kid, Private: true})
+	privateKeySourced, err := privateSource.Get(ctx, privateKey.KID)
 	require.NoError(t, err)
-	publicKey, err := selectKey.SelectKey(txCtx, services.SelectKeyRequest{ID: *kid})
-	require.NoError(t, err)
-
-	privateKeySourced, err := privateSource.Get(txCtx, privateKey.KID)
-	require.NoError(t, err)
-	publicKeySourced, err := publicSource.Get(txCtx, publicKey.KID)
+	publicKeySourced, err := publicSource.Get(ctx, publicKey.KID)
 	require.NoError(t, err)
 
 	privateKeyJSON, err := json.Marshal(privateKeySourced)
@@ -61,14 +57,18 @@ func testKeySource[Priv, Pub any](
 	require.JSONEq(t, string(publicKeyJSON), string(publicKeySourcedJSON))
 }
 
-func TestKeySources(t *testing.T) { //nolint:paralleltest
+func TestKeySources(t *testing.T) {
+	t.Parallel()
+
 	searchKeysDAO := dao.NewSearchKeysRepository()
 	searchKeys := services.NewSearchKeysService(searchKeysDAO)
 
 	ctx, err := lib.NewAgoraContext(t.Context())
 	require.NoError(t, err)
 
-	t.Run("AuthKeySource", func(t *testing.T) { //nolint:paralleltest
+	t.Run("AuthKeySource", func(t *testing.T) {
+		t.Parallel()
+
 		testKeySource(
 			ctx, t, models.KeyUsageAuth,
 			services.NewAuthPrivateKeysProvider(searchKeys),
@@ -76,7 +76,9 @@ func TestKeySources(t *testing.T) { //nolint:paralleltest
 		)
 	})
 
-	t.Run("RefreshKeySource", func(t *testing.T) { //nolint:paralleltest
+	t.Run("RefreshKeySource", func(t *testing.T) {
+		t.Parallel()
+
 		testKeySource(
 			ctx, t, models.KeyUsageRefresh,
 			services.NewRefreshPrivateKeysProvider(searchKeys),

@@ -16,7 +16,8 @@ func authAnon(t *testing.T, client *codegen.Client) string {
 
 	var token string
 
-	t.Run("Authenticate/Anon", func(t *testing.T) {
+	t.Log("Authenticate/Anon")
+	{
 		rawRes, err := client.CreateAnonSession(t.Context())
 		require.NoError(t, err)
 
@@ -25,7 +26,7 @@ func authAnon(t *testing.T, client *codegen.Client) string {
 		require.NotEmpty(t, res.GetAccessToken())
 
 		token = res.GetAccessToken()
-	})
+	}
 
 	return token
 }
@@ -46,14 +47,15 @@ func TestAnonAuthAPI(t *testing.T) {
 	client, securityClient, err := getServerClient()
 	require.NoError(t, err)
 
-	t.Run("CheckSession/Unauthenticated", func(t *testing.T) {
+	t.Log("CheckSession/Unauthenticated")
+	{
 		_, err = client.CheckSession(t.Context())
 
 		var ogenError *codegen.UnexpectedErrorStatusCode
 
 		require.ErrorAs(t, err, &ogenError)
 		require.Equal(t, http.StatusUnauthorized, ogenError.StatusCode)
-	})
+	}
 
 	token := authAnon(t, client)
 	securityClient.SetToken(token)

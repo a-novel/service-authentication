@@ -33,7 +33,8 @@ func TestUpdateEmailAPI(t *testing.T) {
 
 	newEmail := getRandomString() + "@example.com"
 
-	t.Run("RequestEmailUpdate", func(t *testing.T) {
+	t.Log("RequestEmailUpdate")
+	{
 		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, newEmail), 10*time.Second)
 
 		rawRes, err := client.RequestEmailUpdate(t.Context(), &codegen.RequestEmailUpdateForm{
@@ -50,12 +51,13 @@ func TestUpdateEmailAPI(t *testing.T) {
 		shortCode, err = extractShortCode(log)
 		require.NoError(t, err)
 		require.NotEmpty(t, shortCode)
-	})
+	}
 
 	// Following operations are expected to be performed anonymously.
 	securityClient.SetToken(anonToken)
 
-	t.Run("UpdateEmail/WrongUserID", func(t *testing.T) {
+	t.Log("UpdateEmail/WrongUserID")
+	{
 		rawRes, err := client.UpdateEmail(t.Context(), &codegen.UpdateEmailForm{
 			ShortCode: codegen.ShortCode(shortCode),
 			UserID:    codegen.UserID(uuid.New()),
@@ -63,9 +65,10 @@ func TestUpdateEmailAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.ForbiddenError{}, rawRes)
-	})
+	}
 
-	t.Run("UpdateEmail", func(t *testing.T) {
+	t.Log("UpdateEmail")
+	{
 		rawRes, err := client.UpdateEmail(t.Context(), &codegen.UpdateEmailForm{
 			ShortCode: codegen.ShortCode(shortCode),
 			UserID:    codegen.UserID(userID.Value),
@@ -77,9 +80,10 @@ func TestUpdateEmailAPI(t *testing.T) {
 
 		require.NotEmpty(t, res.GetEmail())
 		require.Equal(t, codegen.Email(newEmail), res.GetEmail())
-	})
+	}
 
-	t.Run("LoginWithOldEmailKO", func(t *testing.T) {
+	t.Log("LoginWithOldEmailKO")
+	{
 		res, err := client.CreateSession(t.Context(), &codegen.LoginForm{
 			Email:    codegen.Email(user.email),
 			Password: codegen.Password(user.password),
@@ -87,9 +91,10 @@ func TestUpdateEmailAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.NotFoundError{}, res)
-	})
+	}
 
-	t.Run("LoginWithNewEmailOK", func(t *testing.T) {
+	t.Log("LoginWithNewEmailOK")
+	{
 		res, err := client.CreateSession(t.Context(), &codegen.LoginForm{
 			Email:    codegen.Email(newEmail),
 			Password: codegen.Password(user.password),
@@ -101,5 +106,5 @@ func TestUpdateEmailAPI(t *testing.T) {
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()
-	})
+	}
 }

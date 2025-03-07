@@ -15,20 +15,51 @@ jobs:
       contents: read
     services:
       postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_PASSWORD: test
-          POSTGRES_USER: test
-          POSTGRES_DB: test
+        image: docker.io/library/postgres:17
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+      postgres-integration:
+        image: docker.io/library/postgres:17
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+      pg-bouncer:
+        image: docker.io/bitnami/pgbouncer:latest
         ports:
-          - 5432:5432
+          - "6432:6432"
+        env:
+          PGBOUNCER_PORT: 6432
+          POSTGRESQL_PORT: 5432
+          POSTGRESQL_HOST: postgres
+          POSTGRESQL_PASSWORD: postgres
+          POSTGRESQL_USER: postgres
+          POSTGRESQL_DATABASE: postgres
+          PGBOUNCER_DATABASE: postgres
+          PGBOUNCER_USERLIST: '"postgres" "postgres"'
+          PGBOUNCER_DSN_0: "pg0=host=postgres port=5432 dbname=postgres"
+          PGBOUNCER_DSN_1: "pg1=host=postgres-integration port=5432 dbname=postgres"
     env:
-      DSN: postgres://test:test@localhost:5432/test?sslmode=disable
+      DAO_DSN: postgres://postgres:postgres@localhost:6432/pg0?sslmode=disable
+      DSN: postgres://postgres:postgres@localhost:6432/pg1?sslmode=disable
       MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
       PORT: 8080
@@ -128,27 +159,39 @@ jobs:
   api-build:
     needs: [test]
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
+    services:
+      postgres:
+        image: postgres:17-alpine
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+
+      pg-bouncer:
+        image: docker.io/bitnami/pgbouncer:latest
+        ports:
+          - "6432:6432"
+        env:
+          PGBOUNCER_PORT: 6432
+          POSTGRESQL_PORT: 5432
+          POSTGRESQL_HOST: postgres
+          POSTGRESQL_PASSWORD: postgres
+          POSTGRESQL_USER: postgres
+          POSTGRESQL_DATABASE: postgres
+          PGBOUNCER_DATABASE: postgres
+          PGBOUNCER_USERLIST: '"postgres" "postgres"'
     env:
-      DSN: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+      DSN: postgres://postgres:postgres@localhost:6432/postgres?sslmode=disable
       MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
@@ -163,27 +206,39 @@ jobs:
   rotate-keys-build:
     needs: [test]
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
+    services:
+      postgres:
+        image: postgres:17-alpine
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+
+      pg-bouncer:
+        image: docker.io/bitnami/pgbouncer:latest
+        ports:
+          - "6432:6432"
+        env:
+          PGBOUNCER_PORT: 6432
+          POSTGRESQL_PORT: 5432
+          POSTGRESQL_HOST: postgres
+          POSTGRESQL_PASSWORD: postgres
+          POSTGRESQL_USER: postgres
+          POSTGRESQL_DATABASE: postgres
+          PGBOUNCER_DATABASE: postgres
+          PGBOUNCER_USERLIST: '"postgres" "postgres"'
     env:
-      DSN: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+      DSN: postgres://postgres:postgres@localhost:6432/postgres?sslmode=disable
       MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:

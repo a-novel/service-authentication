@@ -77,7 +77,8 @@ func createUser(t *testing.T, client *codegen.Client) *userData {
 
 	var shortCode, token string
 
-	t.Run("RequestRegistration", func(t *testing.T) {
+	t.Log("RequestRegistration")
+	{
 		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, email), 10*time.Second)
 
 		_, err := client.RequestRegistration(t.Context(), &codegen.RequestRegistrationForm{
@@ -92,9 +93,10 @@ func createUser(t *testing.T, client *codegen.Client) *userData {
 		shortCode, err = extractShortCode(log)
 		require.NoError(t, err)
 		require.NotEmpty(t, shortCode)
-	})
+	}
 
-	t.Run("CreateUser", func(t *testing.T) {
+	t.Log("CreateUser")
+	{
 		rawRes, err := client.Register(t.Context(), &codegen.RegisterForm{
 			Email:     codegen.Email(email),
 			Password:  codegen.Password(password),
@@ -107,7 +109,7 @@ func createUser(t *testing.T, client *codegen.Client) *userData {
 		require.NotEmpty(t, res.GetAccessToken())
 
 		token = res.GetAccessToken()
-	})
+	}
 
 	return &userData{
 		email:    email,
@@ -132,7 +134,8 @@ func TestUserLifecycle(t *testing.T) {
 	claims := checkSession(t, client)
 	userID := claims.GetUserID()
 
-	t.Run("Login/WrongPassword", func(t *testing.T) {
+	t.Log("Login/WrongPassword")
+	{
 		res, err := client.CreateSession(t.Context(), &codegen.LoginForm{
 			Email:    codegen.Email(user.email),
 			Password: "fakepassword",
@@ -140,9 +143,10 @@ func TestUserLifecycle(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.ForbiddenError{}, res)
-	})
+	}
 
-	t.Run("Login", func(t *testing.T) {
+	t.Log("Login")
+	{
 		res, err := client.CreateSession(t.Context(), &codegen.LoginForm{
 			Email:    codegen.Email(user.email),
 			Password: codegen.Password(user.password),
@@ -154,7 +158,7 @@ func TestUserLifecycle(t *testing.T) {
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()
-	})
+	}
 
 	securityClient.SetToken(user.token)
 

@@ -1,6 +1,7 @@
 package dao_test
 
 import (
+	"database/sql"
 	"testing"
 	"time"
 
@@ -86,7 +87,7 @@ func TestDeleteShortCode(t *testing.T) {
 			expectErr: dao.ErrShortCodeNotFound,
 		},
 		{
-			name: "AlreadyExpiredWorks",
+			name: "AlreadyExpired",
 
 			data: dao.DeleteShortCodeData{
 				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -111,18 +112,10 @@ func TestDeleteShortCode(t *testing.T) {
 				},
 			},
 
-			expect: &dao.ShortCodeEntity{
-				ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Usage:          models.ShortCodeUsage("test"),
-				Target:         "test-target-2",
-				CreatedAt:      hourAgo,
-				ExpiresAt:      hourAgo,
-				DeletedAt:      &now,
-				DeletedComment: lo.ToPtr("foo"),
-			},
+			expectErr: dao.ErrShortCodeNotFound,
 		},
 		{
-			name: "CanDeleteMultipleTimes",
+			name: "DeleteMultipleTimes",
 
 			data: dao.DeleteShortCodeData{
 				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -149,36 +142,30 @@ func TestDeleteShortCode(t *testing.T) {
 				},
 			},
 
-			expect: &dao.ShortCodeEntity{
-				ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Usage:          models.ShortCodeUsage("test"),
-				Target:         "test-target-2",
-				CreatedAt:      hourAgo,
-				ExpiresAt:      hourLater,
-				DeletedAt:      &now,
-				DeletedComment: lo.ToPtr("foo"),
-			},
+			expectErr: dao.ErrShortCodeNotFound,
 		},
 	}
 
+	repository := dao.NewDeleteShortCodeRepository()
+
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			selectShortCode := dao.NewDeleteShortCodeRepository()
-
-			tx, commit, err := pgctx.NewContextTX(ctx, nil)
+			tx, commit, err := pgctx.NewContextTX(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 			require.NoError(t, err)
 
-			defer func() { _ = commit(false) }()
+			t.Cleanup(func() {
+				_ = commit(false)
+			})
 
 			db, err := pgctx.Context(tx)
 			require.NoError(t, err)
 
-			for _, fixture := range testCase.fixtures {
-				_, err = db.NewInsert().Model(fixture).Exec(tx)
+			if len(testCase.fixtures) > 0 {
+				_, err = db.NewInsert().Model(&testCase.fixtures).Exec(tx)
 				require.NoError(t, err)
 			}
 
-			key, err := selectShortCode.DeleteShortCode(tx, testCase.data)
+			key, err := repository.DeleteShortCode(tx, testCase.data)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, key)
 		})

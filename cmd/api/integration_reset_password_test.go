@@ -36,7 +36,8 @@ func TestResetPasswordAPI(t *testing.T) {
 
 	var shortCode string
 
-	t.Run("RequestPasswordReset", func(t *testing.T) {
+	t.Log("RequestPasswordReset")
+	{
 		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, user.email), 10*time.Second)
 
 		rawRes, err := client.RequestPasswordReset(t.Context(), &codegen.RequestPasswordResetForm{
@@ -53,9 +54,10 @@ func TestResetPasswordAPI(t *testing.T) {
 		shortCode, err = extractShortCode(log)
 		require.NoError(t, err)
 		require.NotEmpty(t, shortCode)
-	})
+	}
 
-	t.Run("ResetPassword/WrongUserID", func(t *testing.T) {
+	t.Log("ResetPassword/WrongUserID")
+	{
 		rawRes, err := client.ResetPassword(t.Context(), &codegen.ResetPasswordForm{
 			ShortCode: codegen.ShortCode(shortCode),
 			Password:  codegen.Password(newPassword),
@@ -64,9 +66,10 @@ func TestResetPasswordAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.ForbiddenError{}, rawRes)
-	})
+	}
 
-	t.Run("ResetPassword", func(t *testing.T) {
+	t.Log("ResetPassword")
+	{
 		rawRes, err := client.ResetPassword(t.Context(), &codegen.ResetPasswordForm{
 			ShortCode: codegen.ShortCode(shortCode),
 			Password:  codegen.Password(newPassword),
@@ -75,9 +78,10 @@ func TestResetPasswordAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.ResetPasswordNoContent{}, rawRes)
-	})
+	}
 
-	t.Run("LoginWithOldPasswordKO", func(t *testing.T) {
+	t.Log("LoginWithOldPasswordKO")
+	{
 		res, err := client.CreateSession(t.Context(), &codegen.LoginForm{
 			Email:    codegen.Email(user.email),
 			Password: codegen.Password(user.password),
@@ -85,9 +89,10 @@ func TestResetPasswordAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, &codegen.ForbiddenError{}, res)
-	})
+	}
 
-	t.Run("LoginWithNewPasswordOK", func(t *testing.T) {
+	t.Log("LoginWithNewPasswordOK")
+	{
 		res, err := client.CreateSession(t.Context(), &codegen.LoginForm{
 			Email:    codegen.Email(user.email),
 			Password: codegen.Password(newPassword),
@@ -99,5 +104,5 @@ func TestResetPasswordAPI(t *testing.T) {
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()
-	})
+	}
 }

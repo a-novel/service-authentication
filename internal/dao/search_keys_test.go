@@ -1,6 +1,7 @@
 package dao_test
 
 import (
+	"database/sql"
 	"testing"
 	"time"
 
@@ -149,24 +150,26 @@ func TestSearchKeys(t *testing.T) {
 		},
 	}
 
+	repository := dao.NewSearchKeysRepository()
+
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			selectKey := dao.NewSearchKeysRepository()
-
-			tx, commit, err := pgctx.NewContextTX(ctx, nil)
+			tx, commit, err := pgctx.NewContextTX(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 			require.NoError(t, err)
 
-			defer func() { _ = commit(false) }()
+			t.Cleanup(func() {
+				_ = commit(false)
+			})
 
 			db, err := pgctx.Context(tx)
 			require.NoError(t, err)
 
-			for _, fixture := range testCase.fixtures {
-				_, err = db.NewInsert().Model(fixture).Exec(tx)
+			if len(testCase.fixtures) > 0 {
+				_, err = db.NewInsert().Model(&testCase.fixtures).Exec(tx)
 				require.NoError(t, err)
 			}
 
-			key, err := selectKey.SearchKeys(tx, testCase.usage)
+			key, err := repository.SearchKeys(tx, testCase.usage)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, key)
 		})

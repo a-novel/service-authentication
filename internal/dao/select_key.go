@@ -37,7 +37,7 @@ func (repository *SelectKeyRepository) SelectKey(ctx context.Context, id uuid.UU
 	var entity KeyEntity
 
 	// Execute query.
-	if err = tx.NewSelect().Model(&entity).Where("id = ?", id).Scan(ctx); err != nil {
+	if err = tx.NewSelect().Model(&entity).Where("id = ?", id).Order("id DESC").Scan(ctx); err != nil {
 		// Parse not found error as a managed error.
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, NewErrSelectKeyRepository(ErrKeyNotFound)

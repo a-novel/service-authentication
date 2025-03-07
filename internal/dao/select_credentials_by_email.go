@@ -39,7 +39,7 @@ func (repository *SelectCredentialsByEmailRepository) SelectCredentialsByEmail(
 	var entity CredentialsEntity
 
 	// Execute query.
-	if err = tx.NewSelect().Model(&entity).Where("email = ?", email).Scan(ctx); err != nil {
+	if err = tx.NewSelect().Model(&entity).Where("email = ?", email).Order("email DESC").Scan(ctx); err != nil {
 		// Parse not found error as a managed error.
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, NewErrSelectCredentialsByEmailRepository(ErrCredentialsNotFound)

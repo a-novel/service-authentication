@@ -1,6 +1,10 @@
 package dao_test
 
 import (
+	"os"
+
+	"github.com/uptrace/bun/driver/pgdriver"
+
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
@@ -12,8 +16,11 @@ var ctx context.Context
 func init() {
 	var err error
 
-	// Share a global context, so the client is shared between tests and this prevents deadlocks.
-	ctx, err = pgctx.NewContext(context.Background(), &migrations.Migrations)
+	ctx, err = pgctx.NewContextWithOptions(
+		context.Background(),
+		&migrations.Migrations,
+		pgdriver.WithDSN(os.Getenv("DAO_DSN")),
+	)
 	if err != nil {
 		panic(err)
 	}
