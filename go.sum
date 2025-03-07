@@ -1,7 +1,7 @@
 github.com/a-novel-kit/configurator v1.4.1 h1:7OgpXk1fA2DVVYWkoUP3fm8qp4QdDUFvWMQlNC6J1QA=
 github.com/a-novel-kit/configurator v1.4.1/go.mod h1:2HuvXzhXerctwhmifBwu4MZkEPkFJAHd0BBd1zyTBZU=
-github.com/a-novel-kit/context v1.1.3 h1:6gaRUDT5B4yjnEzT2RkBbVhtSxJHP9WX7z29yoSDTe0=
-github.com/a-novel-kit/context v1.1.3/go.mod h1:2TzsYe/qbQogB4lH/1v9n0Jf/YQ0K3usm9SepY7IIp0=
+github.com/a-novel-kit/context v1.1.4 h1:mu0kIz+M2GffrIM6JZ9vH3c8pWXaEGduxtVeNXSJnHg=
+github.com/a-novel-kit/context v1.1.4/go.mod h1:YJ7k5wlr7pdKpWxF5nXQnXDP0Zq3pwqOZxpwSOqrIi4=
 github.com/a-novel-kit/context/pgbun v0.0.0-20250227125132-c566b99a508a h1:oNj4kZyeDD6U8E+hiJ8qxDEied0CpTnUxz7eCW0ZJKM=
 github.com/a-novel-kit/context/pgbun v0.0.0-20250227125132-c566b99a508a/go.mod h1:l/aUfXcuvoOI9VRJ96BksIr9CDJLECDSKZigHt0ijag=
 github.com/a-novel-kit/jwt v1.1.0 h1:HEbmsVXXm3pBH1O4zgqZ6P9avy7czUX4VabhBA41nwU=
