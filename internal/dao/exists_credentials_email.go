@@ -33,7 +33,11 @@ func (repository *ExistsCredentialsEmailRepository) ExistsCredentialsEmail(
 	}
 
 	// Execute query.
-	exists, err := tx.NewSelect().Model((*CredentialsEntity)(nil)).Where("email = ?", email).Exists(ctx)
+	exists, err := tx.NewSelect().
+		Model((*CredentialsEntity)(nil)).
+		Where("email = ?", email).
+		Order("email DESC").
+		Exists(ctx)
 	if err != nil {
 		return false, NewErrExistsCredentialsEmailRepository(fmt.Errorf("check database: %w", err))
 	}

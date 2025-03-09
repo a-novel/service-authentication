@@ -12,7 +12,6 @@ import (
 	"github.com/a-novel-kit/configurator/chans"
 	"github.com/a-novel-kit/configurator/utilstest"
 	"github.com/a-novel-kit/context"
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/authentication/api/apiclient"
 	"github.com/a-novel/authentication/api/codegen"
@@ -57,39 +56,6 @@ func getRandomString() string {
 	return string(b)
 }
 
-func _createIntegrationDB() {
-	ctx, err := pgctx.NewContext(context.Background(), nil)
-	if err != nil {
-		panic(err)
-	}
-
-	db, err := pgctx.Context(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = db.NewRaw("CREATE DATABASE integrations_test OWNER test;").Exec(ctx)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func _updateDSN() func() {
-	ogDSN := os.Getenv(pgctx.PostgresDSNEnv)
-
-	err := os.Setenv(pgctx.PostgresDSNEnv, "postgres://test:test@localhost:5432/integrations_test?sslmode=disable")
-	if err != nil {
-		panic(err)
-	}
-
-	return func() {
-		err = os.Setenv(pgctx.PostgresDSNEnv, ogDSN)
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
 func _patchSTD() {
 	patchedStd, _, err := utilstest.MonkeyPatchStderr()
 	if err != nil {
@@ -127,14 +93,9 @@ func _runKeysRotation() {
 
 // Create a separate database to run integration tests.
 func init() {
-	_createIntegrationDB()
-
-	cleanupDSN := _updateDSN()
-	defer cleanupDSN()
+	_patchSTD()
 
 	_runKeysRotation()
-
-	_patchSTD()
 
 	go func() {
 		main()

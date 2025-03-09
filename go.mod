@@ -4,8 +4,8 @@ go 1.24.1
 
 require (
 	github.com/a-novel-kit/configurator v1.4.1
-	github.com/a-novel-kit/context v1.1.5
-	github.com/a-novel-kit/context/pgbun v1.1.5
+	github.com/a-novel-kit/context v1.1.6
+	github.com/a-novel-kit/context/pgbun v1.1.6
 	github.com/a-novel-kit/jwt v1.1.0
 	github.com/a-novel-kit/middlewares/zerolog v1.0.3
 	github.com/go-chi/chi/v5 v5.2.1
@@ -31,7 +31,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dlclark/regexp2 v1.11.5 // indirect
+	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-faster/yaml v0.4.6 // indirect
@@ -50,8 +50,8 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090 // indirect
+	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect

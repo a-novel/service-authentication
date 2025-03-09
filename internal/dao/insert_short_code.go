@@ -1,13 +1,13 @@
 package dao
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"github.com/uptrace/bun/driver/pgdriver"
 
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
@@ -72,7 +72,7 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 
 	// Since we may be performing 2 operations depending on the parameters, create a new transaction to prevent any
 	// data corruption.
-	tx, err := db.BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 	if err != nil {
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("start transaction: %w", err))
 	}
@@ -95,6 +95,7 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 		// Discard any conflicting short codes before starting.
 		_, err = tx.NewUpdate().
 			Model(oldEntity).
+			ModelTableExpr("active_short_codes").
 			Column("deleted_at", "deleted_comment").
 			Where("target = ?", data.Target).
 			Where("usage = ?", data.Usage).
@@ -103,6 +104,19 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 			Exec(ctx)
 		if err != nil {
 			return nil, NewErrInsertShortCodeRepository(fmt.Errorf("discard old short codes: %w", err))
+		}
+	} else {
+		exists, err := tx.NewSelect().
+			Model((*ShortCodeEntity)(nil)).
+			Where("target = ?", data.Target).
+			Where("usage = ?", data.Usage).
+			Exists(ctx)
+		if err != nil {
+			return nil, NewErrInsertShortCodeRepository(fmt.Errorf("check short code existence: %w", err))
+		}
+
+		if exists {
+			return nil, NewErrInsertShortCodeRepository(ErrShortCodeAlreadyExists)
 		}
 	}
 
@@ -120,16 +134,11 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 	// Execute query.
 	_, err = tx.NewInsert().Model(newEntity).Returning("*").Exec(ctx)
 	if err != nil {
-		var pgErr pgdriver.Error
-		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return nil, errors.Join(err, ErrShortCodeAlreadyExists)
-		}
-
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("insert short code: %w", err))
 	}
 
 	// Commit the transaction.
-	if err := tx.Commit(); err != nil {
+	if err = tx.Commit(); err != nil {
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("commit transaction: %w", err))
 	}
 

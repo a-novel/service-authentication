@@ -89,7 +89,7 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 
 	// Last key was created within the rotation interval. No need to generate a new key.
 	if time.Since(lastCreated) < generateKeysConfig[usage].Config.Rotation {
-		return nil, nil
+		return &keys[0].ID, nil
 	}
 
 	// Generate a new key pair.

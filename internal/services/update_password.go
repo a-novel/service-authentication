@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -53,7 +54,10 @@ func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, reques
 
 	// Password update can fail after the short code is consumed. To prevent this, we wrap the operation in a single
 	// transaction.
-	ctxTx, commit, err := pgctx.NewContextTX(ctx, nil)
+	ctxTx, commit, err := pgctx.NewContextTX(ctx, &sql.TxOptions{
+		Isolation: sql.LevelRepeatableRead,
+		ReadOnly:  false,
+	})
 	if err != nil {
 		return NewErrUpdatePasswordService(fmt.Errorf("create transaction: %w", err))
 	}

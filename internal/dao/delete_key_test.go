@@ -1,6 +1,7 @@
 package dao_test
 
 import (
+	"database/sql"
 	"testing"
 	"time"
 
@@ -90,7 +91,7 @@ func TestDeleteKey(t *testing.T) {
 			expectErr: dao.ErrKeyNotFound,
 		},
 		{
-			name: "AlreadyExpiredWorks",
+			name: "AlreadyExpired",
 
 			data: dao.DeleteKeyData{
 				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -117,19 +118,10 @@ func TestDeleteKey(t *testing.T) {
 				},
 			},
 
-			expect: &dao.KeyEntity{
-				ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				PrivateKey:     "cHJpdmF0ZS1rZXktMg",
-				PublicKey:      lo.ToPtr("cHVibGljLWtleS0y"),
-				Usage:          models.KeyUsageAuth,
-				CreatedAt:      hourAgo,
-				ExpiresAt:      hourAgo,
-				DeletedAt:      &now,
-				DeletedComment: lo.ToPtr("foo"),
-			},
+			expectErr: dao.ErrKeyNotFound,
 		},
 		{
-			name: "CanDeleteMultipleTimes",
+			name: "DeleteMultipleTimes",
 
 			data: dao.DeleteKeyData{
 				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -158,37 +150,30 @@ func TestDeleteKey(t *testing.T) {
 				},
 			},
 
-			expect: &dao.KeyEntity{
-				ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				PrivateKey:     "cHJpdmF0ZS1rZXktMg",
-				PublicKey:      lo.ToPtr("cHVibGljLWtleS0y"),
-				Usage:          models.KeyUsageAuth,
-				CreatedAt:      hourAgo,
-				ExpiresAt:      hourLater,
-				DeletedAt:      &now,
-				DeletedComment: lo.ToPtr("foo"),
-			},
+			expectErr: dao.ErrKeyNotFound,
 		},
 	}
 
+	repository := dao.NewDeleteKeyRepository()
+
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			selectKey := dao.NewDeleteKeyRepository()
-
-			tx, commit, err := pgctx.NewContextTX(ctx, nil)
+			tx, commit, err := pgctx.NewContextTX(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 			require.NoError(t, err)
 
-			defer func() { _ = commit(false) }()
+			t.Cleanup(func() {
+				_ = commit(false)
+			})
 
 			db, err := pgctx.Context(tx)
 			require.NoError(t, err)
 
-			for _, fixture := range testCase.fixtures {
-				_, err = db.NewInsert().Model(fixture).Exec(tx)
+			if len(testCase.fixtures) > 0 {
+				_, err = db.NewInsert().Model(&testCase.fixtures).Exec(tx)
 				require.NoError(t, err)
 			}
 
-			key, err := selectKey.DeleteKey(tx, testCase.data)
+			key, err := repository.DeleteKey(tx, testCase.data)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, key)
 		})

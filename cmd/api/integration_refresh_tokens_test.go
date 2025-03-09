@@ -22,17 +22,19 @@ func TestRefreshTokensAPI(t *testing.T) {
 		token := authAnon(t, client)
 		securityClient.SetToken(token)
 
-		t.Run("CheckSession/Authenticated", func(t *testing.T) {
+		t.Log("CheckSession/Authenticated")
+		{
 			_, err = client.CheckSession(t.Context())
 			require.NoError(t, err)
-		})
+		}
 
-		t.Run("GenerateRefreshToken/NoAnon", func(t *testing.T) {
+		t.Log("GenerateRefreshToken/NoAnon")
+		{
 			rawRes, err := client.CreateRefreshToken(t.Context())
 			require.NoError(t, err)
 
 			require.IsType(t, &codegen.ForbiddenError{}, rawRes)
-		})
+		}
 	})
 
 	t.Run("User", func(t *testing.T) {
@@ -52,7 +54,8 @@ func TestRefreshTokensAPI(t *testing.T) {
 
 		var refreshToken string
 
-		t.Run("GenerateRefreshToken", func(t *testing.T) {
+		t.Log("GenerateRefreshToken")
+		{
 			rawRes, err := client.CreateRefreshToken(t.Context())
 			require.NoError(t, err)
 
@@ -61,9 +64,10 @@ func TestRefreshTokensAPI(t *testing.T) {
 
 			refreshToken = res.GetRefreshToken()
 			require.NotEmpty(t, refreshToken)
-		})
+		}
 
-		t.Run("RefreshToken", func(t *testing.T) {
+		t.Log("RefreshToken")
+		{
 			rawRes, err := client.RefreshSession(t.Context(), codegen.RefreshSessionParams{
 				RefreshToken: refreshToken,
 				AccessToken:  securityClient.GetToken(),
@@ -76,17 +80,18 @@ func TestRefreshTokensAPI(t *testing.T) {
 			require.NotEqual(t, refreshToken, res.GetAccessToken())
 
 			securityClient.SetToken(res.GetAccessToken())
-		})
+		}
 
 		// Claims are carried through the refresh operation.
 		claims = checkSession(t, client)
 		require.Equal(t, userID, claims.GetUserID())
 
-		t.Run("GenerateRefreshToken/NotTwice", func(t *testing.T) {
+		t.Log("GenerateRefreshToken/NotTwice")
+		{
 			rawRes, err := client.CreateRefreshToken(t.Context())
 			require.NoError(t, err)
 
 			require.IsType(t, &codegen.ForbiddenError{}, rawRes)
-		})
+		}
 	})
 }

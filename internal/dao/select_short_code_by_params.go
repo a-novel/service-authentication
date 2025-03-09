@@ -54,6 +54,7 @@ func (repository *SelectShortCodeByParamsRepository) SelectShortCodeByParams(
 		Model(&entity).
 		Where("target = ?", data.Target).
 		Where("usage = ?", data.Usage).
+		Order("id DESC").
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
