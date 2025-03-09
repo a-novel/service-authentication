@@ -16,6 +16,8 @@ import (
 )
 
 func TestDeleteShortCode(t *testing.T) {
+	t.Parallel()
+
 	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
 	now := time.Now().UTC().Round(time.Second)
 	hourLater := time.Now().Add(time.Hour).UTC().Round(time.Second)
@@ -150,6 +152,8 @@ func TestDeleteShortCode(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
 			tx, commit, err := pgctx.NewContextTX(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 			require.NoError(t, err)
 

@@ -14,6 +14,8 @@ import (
 )
 
 func TestUpdateCredentialsEmail(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 
@@ -97,6 +99,8 @@ func TestUpdateCredentialsEmail(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
 			tx, commit, err := pgctx.NewContextTX(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 			require.NoError(t, err)
 
