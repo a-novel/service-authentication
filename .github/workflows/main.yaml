@@ -73,8 +73,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          fetch-depth: "1"
+          go-version: stable
       - name: mockery
         shell: bash
         run: make mocks
