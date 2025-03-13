@@ -11,7 +11,6 @@ import (
 	"github.com/ogen-go/ogen/middleware"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/uri"
-	"github.com/ogen-go/ogen/validate"
 )
 
 // EmailExistsParams is parameters of emailExists operation.
@@ -73,7 +72,7 @@ func decodeEmailExistsParams(args [0]string, argsEscaped bool, r *http.Request) 
 				return err
 			}
 		} else {
-			return validate.ErrFieldRequired
+			return err
 		}
 		return nil
 	}(); err != nil {
@@ -138,7 +137,7 @@ func decodeGetPublicKeyParams(args [0]string, argsEscaped bool, r *http.Request)
 				return err
 			}
 		} else {
-			return validate.ErrFieldRequired
+			return err
 		}
 		return nil
 	}(); err != nil {
@@ -204,7 +203,7 @@ func decodeListPublicKeysParams(args [0]string, argsEscaped bool, r *http.Reques
 				return err
 			}
 		} else {
-			return validate.ErrFieldRequired
+			return err
 		}
 		return nil
 	}(); err != nil {
@@ -269,7 +268,7 @@ func decodeRefreshSessionParams(args [0]string, argsEscaped bool, r *http.Reques
 				return err
 			}
 		} else {
-			return validate.ErrFieldRequired
+			return err
 		}
 		return nil
 	}(); err != nil {
@@ -305,7 +304,7 @@ func decodeRefreshSessionParams(args [0]string, argsEscaped bool, r *http.Reques
 				return err
 			}
 		} else {
-			return validate.ErrFieldRequired
+			return err
 		}
 		return nil
 	}(); err != nil {

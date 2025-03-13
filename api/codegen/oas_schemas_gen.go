@@ -932,10 +932,10 @@ func (o *OptNilUUID) SetTo(v uuid.UUID) {
 	o.Value = v
 }
 
-// IsSet returns true if value is Null.
+// IsNull returns true if value is Null.
 func (o OptNilUUID) IsNull() bool { return o.Null }
 
-// SetNull sets value to null.
+// SetToNull sets value to null.
 func (o *OptNilUUID) SetToNull() {
 	o.Set = true
 	o.Null = true
