@@ -6,8 +6,8 @@ github.com/a-novel-kit/context/pgbun v1.1.6 h1:dXPjkjSBIFK6g0jFHQViw9e62kZ/yT5mm
 github.com/a-novel-kit/context/pgbun v1.1.6/go.mod h1:ylvAfhXjbVhzZv1baOW1yD7Qcbs5nzkJFJJeguilYFE=
 github.com/a-novel-kit/jwt v1.1.0 h1:HEbmsVXXm3pBH1O4zgqZ6P9avy7czUX4VabhBA41nwU=
 github.com/a-novel-kit/jwt v1.1.0/go.mod h1:lAl9PImCHnxEyWGZXXhNrof/+cmsZuRzcDfkyZobf4c=
-github.com/a-novel-kit/middlewares/zerolog v1.0.3 h1:UtknyptmwAY8VJXNB/HZ9SQTxMKwjxLim2lJnR+Z7hI=
-github.com/a-novel-kit/middlewares/zerolog v1.0.3/go.mod h1:uxHLo0LlHbEQmSLUJ7AXGm0CJmHr8bx8ddFCt7iJWJY=
+github.com/a-novel-kit/middlewares/zerolog v1.1.0 h1:iKuV5Y5EftaluUxE3bL7FtV+6s7VZMutztaHQr87Hvw=
+github.com/a-novel-kit/middlewares/zerolog v1.1.0/go.mod h1:BS+MPXFx/ty+wJJO0IIolZ5OaAz8PJT8OlOdPNSRjbg=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
