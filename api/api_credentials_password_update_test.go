@@ -107,8 +107,8 @@ func TestEmailUpdate(t *testing.T) {
 			source := apimocks.NewMockUpdatePasswordService(t)
 
 			if testCase.updatePasswordData != nil {
-				source.
-					On("UpdatePassword", ctx, mock.AnythingOfType("services.UpdatePasswordRequest")).
+				source.EXPECT().
+					UpdatePassword(ctx, mock.AnythingOfType("services.UpdatePasswordRequest")).
 					Return(testCase.updatePasswordData.err)
 			}
 

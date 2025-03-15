@@ -91,8 +91,8 @@ func TestRequestEmailUpdate(t *testing.T) {
 			source := servicesmocks.NewMockRequestEmailUpdateSource(t)
 
 			if testCase.createShortCodeData != nil {
-				source.
-					On("CreateShortCode", ctx, services.CreateShortCodeRequest{
+				source.EXPECT().
+					CreateShortCode(ctx, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageValidateMail,
 						Target:   testCase.request.ID.String(),
 						TTL:      config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL,

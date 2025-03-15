@@ -174,8 +174,8 @@ func TestConsumeShortCode(t *testing.T) {
 			source := servicesmocks.NewMockConsumeShortCodeSource(t)
 
 			if testCase.selectShortCodeData != nil {
-				source.
-					On("SelectShortCodeByParams", t.Context(), dao.SelectShortCodeByParamsData{
+				source.EXPECT().
+					SelectShortCodeByParams(t.Context(), dao.SelectShortCodeByParamsData{
 						Target: testCase.request.Target,
 						Usage:  testCase.request.Usage,
 					}).
@@ -183,8 +183,8 @@ func TestConsumeShortCode(t *testing.T) {
 			}
 
 			if testCase.deleteShortCodeData != nil {
-				source.
-					On("DeleteShortCode", t.Context(), mock.AnythingOfType("dao.DeleteShortCodeData")).
+				source.EXPECT().
+					DeleteShortCode(t.Context(), mock.AnythingOfType("dao.DeleteShortCodeData")).
 					Return(nil, testCase.deleteShortCodeData.err)
 			}
 

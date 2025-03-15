@@ -87,8 +87,8 @@ func TestRequestEmailUpdate(t *testing.T) {
 			source := apimocks.NewMockRequestEmailUpdateService(t)
 
 			if testCase.requestEmailUpdateData != nil {
-				source.
-					On("RequestEmailUpdate", ctx, mock.AnythingOfType("services.RequestEmailUpdateRequest")).
+				source.EXPECT().
+					RequestEmailUpdate(ctx, mock.AnythingOfType("services.RequestEmailUpdateRequest")).
 					Return(nil, testCase.requestEmailUpdateData.err)
 			}
 

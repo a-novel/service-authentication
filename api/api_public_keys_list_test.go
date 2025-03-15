@@ -133,8 +133,8 @@ func TestListPublicKeys(t *testing.T) {
 			source := apimocks.NewMockSearchKeysService(t)
 
 			if testCase.listKeysData != nil {
-				source.
-					On("SearchKeys", t.Context(), mock.AnythingOfType("services.SearchKeysRequest")).
+				source.EXPECT().
+					SearchKeys(t.Context(), mock.AnythingOfType("services.SearchKeysRequest")).
 					Return(testCase.listKeysData.res, testCase.listKeysData.err)
 			}
 

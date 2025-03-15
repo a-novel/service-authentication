@@ -121,8 +121,8 @@ func TestRequestPasswordReset(t *testing.T) {
 			source := servicesmocks.NewMockRequestPasswordResetSource(t)
 
 			if testCase.createShortCodeData != nil {
-				source.
-					On("CreateShortCode", ctx, services.CreateShortCodeRequest{
+				source.EXPECT().
+					CreateShortCode(ctx, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageResetPassword,
 						Target:   testCase.selectCredentialsData.resp.ID.String(),
 						TTL:      config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL,
@@ -132,8 +132,8 @@ func TestRequestPasswordReset(t *testing.T) {
 			}
 
 			if testCase.selectCredentialsData != nil {
-				source.
-					On("SelectCredentialsByEmail", ctx, testCase.request.Email).
+				source.EXPECT().
+					SelectCredentialsByEmail(ctx, testCase.request.Email).
 					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
 			}
 

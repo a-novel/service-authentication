@@ -242,8 +242,8 @@ func TestGenerateKeys(t *testing.T) {
 			source := servicesmocks.NewMockGenerateKeySource(t)
 
 			if testCase.searchKeyData != nil {
-				source.
-					On("SearchKeys", ctx, testCase.usage).
+				source.EXPECT().
+					SearchKeys(ctx, testCase.usage).
 					Return(testCase.searchKeyData.resp, testCase.searchKeyData.err)
 			}
 
@@ -293,8 +293,8 @@ func TestGenerateKeys(t *testing.T) {
 			}
 
 			if testCase.insertKeyData != nil {
-				source.
-					On("InsertKey", ctx, mock.MatchedBy(checkInsertData)).
+				source.EXPECT().
+					InsertKey(ctx, mock.MatchedBy(checkInsertData)).
 					Return(testCase.insertKeyData.resp, testCase.insertKeyData.err)
 			}
 

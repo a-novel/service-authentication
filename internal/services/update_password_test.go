@@ -175,8 +175,8 @@ func TestUpdatePassword(t *testing.T) {
 			source := servicesmocks.NewMockUpdatePasswordSource(t)
 
 			if testCase.consumeShortCodeData != nil {
-				source.
-					On("ConsumeShortCode", mock.Anything, services.ConsumeShortCodeRequest{
+				source.EXPECT().
+					ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
 						Usage:  models.ShortCodeUsageResetPassword,
 						Target: testCase.request.UserID.String(),
 						Code:   testCase.request.ShortCode,
@@ -185,15 +185,14 @@ func TestUpdatePassword(t *testing.T) {
 			}
 
 			if testCase.selectCredentialsData != nil {
-				source.
-					On("SelectCredentials", mock.Anything, testCase.request.UserID).
+				source.EXPECT().
+					SelectCredentials(mock.Anything, testCase.request.UserID).
 					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
 			}
 
 			if testCase.updateCredentialsPasswordData != nil {
-				source.
-					On(
-						"UpdateCredentialsPassword",
+				source.EXPECT().
+					UpdateCredentialsPassword(
 						mock.Anything, testCase.request.UserID,
 						mock.AnythingOfType("dao.UpdateCredentialsPasswordData"),
 					).

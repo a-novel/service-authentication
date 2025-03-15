@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel-kit/context"
+
 	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/internal/services"
@@ -83,10 +85,10 @@ func TestCreateShortCode(t *testing.T) {
 			var encryptedShortCode string
 
 			if testCase.insertShortCodeData != nil {
-				source.
-					On("InsertShortCode", t.Context(), mock.AnythingOfType("dao.InsertShortCodeData")).
-					Run(func(args mock.Arguments) {
-						encryptedShortCode = args.Get(1).(dao.InsertShortCodeData).Code
+				source.EXPECT().
+					InsertShortCode(t.Context(), mock.AnythingOfType("dao.InsertShortCodeData")).
+					Run(func(_ context.Context, data dao.InsertShortCodeData) {
+						encryptedShortCode = data.Code
 					}).
 					Return(testCase.insertShortCodeData.resp, testCase.insertShortCodeData.err)
 			}

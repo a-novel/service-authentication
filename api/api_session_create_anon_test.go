@@ -56,8 +56,8 @@ func TestCreateAnonSession(t *testing.T) {
 			source := apimocks.NewMockLoginAnonService(t)
 
 			if testCase.loginData != nil {
-				source.
-					On("LoginAnon", t.Context()).
+				source.EXPECT().
+					LoginAnon(t.Context()).
 					Return(testCase.loginData.resp, testCase.loginData.err)
 			}
 

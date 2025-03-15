@@ -159,8 +159,8 @@ func TestBearerAuth(t *testing.T) {
 			source := apimocks.NewMockSecurityHandlerService(t)
 
 			if testCase.authenticateData != nil {
-				source.
-					On("Authenticate", t.Context(), testCase.auth.Token).
+				source.EXPECT().
+					Authenticate(t.Context(), testCase.auth.Token).
 					Return(testCase.authenticateData.resp, testCase.authenticateData.err)
 			}
 
