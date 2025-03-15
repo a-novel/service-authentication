@@ -64,8 +64,8 @@ func TestRequestPasswordReset(t *testing.T) {
 			source := apimocks.NewMockRequestPasswordResetService(t)
 
 			if testCase.requestPasswordResetData != nil {
-				source.
-					On("RequestPasswordReset", t.Context(), mock.AnythingOfType("services.RequestPasswordResetRequest")).
+				source.EXPECT().
+					RequestPasswordReset(t.Context(), mock.AnythingOfType("services.RequestPasswordResetRequest")).
 					Return(nil, testCase.requestPasswordResetData.err)
 			}
 

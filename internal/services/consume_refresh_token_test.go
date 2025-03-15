@@ -207,8 +207,8 @@ func TestConsumeRefreshToken(t *testing.T) {
 			})
 
 			if testCase.issueTokenData != nil {
-				source.
-					On("IssueToken", t.Context(), mock.AnythingOfType("IssueTokenRequest")).
+				source.EXPECT().
+					IssueToken(t.Context(), mock.AnythingOfType("IssueTokenRequest")).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
 			}
 

@@ -81,8 +81,8 @@ func TestCreateRefreshToken(t *testing.T) {
 			source := apimocks.NewMockIssueRefreshTokenService(t)
 
 			if testCase.issueRefreshTokenData != nil {
-				source.
-					On("IssueRefreshToken", ctx, mock.AnythingOfType("services.IssueRefreshTokenRequest")).
+				source.EXPECT().
+					IssueRefreshToken(ctx, mock.AnythingOfType("services.IssueRefreshTokenRequest")).
 					Return(testCase.issueRefreshTokenData.resp, testCase.issueRefreshTokenData.err)
 			}
 

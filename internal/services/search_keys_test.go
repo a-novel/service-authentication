@@ -295,7 +295,8 @@ func TestSearchKeys(t *testing.T) {
 			source := servicesmocks.NewMockSearchKeysSource(t)
 
 			if testCase.searchKeyData != nil {
-				source.On("SearchKeys", ctx, testCase.request.Usage).
+				source.EXPECT().
+					SearchKeys(ctx, testCase.request.Usage).
 					Return(testCase.searchKeyData.resp, testCase.searchKeyData.err)
 			}
 

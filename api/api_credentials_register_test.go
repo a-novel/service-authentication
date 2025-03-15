@@ -118,8 +118,8 @@ func TestRegister(t *testing.T) {
 			source := apimocks.NewMockRegisterService(t)
 
 			if testCase.registerData != nil {
-				source.
-					On("Register", t.Context(), mock.AnythingOfType("services.RegisterRequest")).
+				source.EXPECT().
+					Register(t.Context(), mock.AnythingOfType("services.RegisterRequest")).
 					Return(testCase.registerData.resp, testCase.registerData.err)
 			}
 

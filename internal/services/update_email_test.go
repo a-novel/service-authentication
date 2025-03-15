@@ -108,14 +108,14 @@ func TestUpdateEmail(t *testing.T) { //nolint:paralleltest
 			source := servicesmocks.NewMockUpdateEmailSource(t)
 
 			if testCase.consumeShortCodeData != nil {
-				source.
-					On("ConsumeShortCode", mock.Anything, mock.Anything).
+				source.EXPECT().
+					ConsumeShortCode(mock.Anything, mock.Anything).
 					Return(testCase.consumeShortCodeData.resp, testCase.consumeShortCodeData.err)
 			}
 
 			if testCase.updateCredentialsEmailData != nil {
-				source.
-					On("UpdateCredentialsEmail", mock.Anything, testCase.request.UserID, mock.Anything).
+				source.EXPECT().
+					UpdateCredentialsEmail(mock.Anything, testCase.request.UserID, mock.Anything).
 					Return(testCase.updateCredentialsEmailData.resp, testCase.updateCredentialsEmailData.err)
 			}
 

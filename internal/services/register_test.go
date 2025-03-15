@@ -143,8 +143,8 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 			source := servicesmocks.NewMockRegisterSource(t)
 
 			if testCase.consumeShortCodeData != nil {
-				source.
-					On("ConsumeShortCode", mock.Anything, services.ConsumeShortCodeRequest{
+				source.EXPECT().
+					ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
 						Usage:  models.ShortCodeUsageRequestRegister,
 						Target: testCase.request.Email,
 						Code:   testCase.request.ShortCode,
@@ -153,8 +153,8 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 			}
 
 			if testCase.createCredentialsData != nil {
-				source.
-					On("InsertCredentials", mock.Anything, mock.MatchedBy(func(data dao.InsertCredentialsData) bool {
+				source.EXPECT().
+					InsertCredentials(mock.Anything, mock.MatchedBy(func(data dao.InsertCredentialsData) bool {
 						if data.Email != testCase.request.Email {
 							return false
 						}
@@ -180,8 +180,8 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 			}
 
 			if testCase.issueTokenData != nil {
-				source.
-					On("IssueToken", mock.Anything, services.IssueTokenRequest{
+				source.EXPECT().
+					IssueToken(mock.Anything, services.IssueTokenRequest{
 						UserID: &testCase.createCredentialsData.resp.ID,
 						Roles:  []models.Role{models.RoleUser},
 					}).

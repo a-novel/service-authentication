@@ -90,8 +90,8 @@ func TestRequestRegister(t *testing.T) {
 			source := servicesmocks.NewMockRequestRegisterSource(t)
 
 			if testCase.createShortCodeData != nil {
-				source.
-					On("CreateShortCode", ctx, services.CreateShortCodeRequest{
+				source.EXPECT().
+					CreateShortCode(ctx, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageRequestRegister,
 						Target:   testCase.request.Email,
 						TTL:      config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL,

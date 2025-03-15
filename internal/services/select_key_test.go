@@ -190,7 +190,8 @@ func TestSelectKey(t *testing.T) {
 			source := servicesmocks.NewMockSelectKeySource(t)
 
 			if testCase.selectKeyData != nil {
-				source.On("SelectKey", ctx, testCase.request.ID).
+				source.EXPECT().
+					SelectKey(ctx, testCase.request.ID).
 					Return(testCase.selectKeyData.resp, testCase.selectKeyData.err)
 			}
 

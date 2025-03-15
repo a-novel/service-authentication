@@ -116,14 +116,14 @@ func TestLogin(t *testing.T) {
 			source := servicesmocks.NewMockLoginSource(t)
 
 			if testCase.selectCredentialsData != nil {
-				source.
-					On("SelectCredentialsByEmail", ctx, testCase.request.Email).
+				source.EXPECT().
+					SelectCredentialsByEmail(ctx, testCase.request.Email).
 					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
 			}
 
 			if testCase.issueTokenData != nil {
-				source.
-					On("IssueToken", ctx, services.IssueTokenRequest{
+				source.EXPECT().
+					IssueToken(ctx, services.IssueTokenRequest{
 						UserID: &testCase.selectCredentialsData.resp.ID,
 						Roles:  []models.Role{models.RoleUser},
 					}).

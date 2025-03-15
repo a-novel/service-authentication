@@ -99,8 +99,8 @@ func TestCreateSession(t *testing.T) {
 			source := apimocks.NewMockLoginService(t)
 
 			if testCase.loginData != nil {
-				source.
-					On("Login", t.Context(), mock.AnythingOfType("LoginRequest")).
+				source.EXPECT().
+					Login(t.Context(), mock.AnythingOfType("LoginRequest")).
 					Return(testCase.loginData.resp, testCase.loginData.err)
 			}
 

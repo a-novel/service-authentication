@@ -113,8 +113,8 @@ func TestRefreshSession(t *testing.T) {
 			source := apimocks.NewMockConsumeRefreshTokenService(t)
 
 			if testCase.consumeRefreshTokenData != nil {
-				source.
-					On("ConsumeRefreshToken", t.Context(), mock.AnythingOfType("services.ConsumeRefreshTokenRequest")).
+				source.EXPECT().
+					ConsumeRefreshToken(t.Context(), mock.AnythingOfType("services.ConsumeRefreshTokenRequest")).
 					Return(testCase.consumeRefreshTokenData.resp, testCase.consumeRefreshTokenData.err)
 			}
 

@@ -106,8 +106,8 @@ func TestGetPublicKey(t *testing.T) {
 			source := apimocks.NewMockSelectKeyService(t)
 
 			if testCase.selectKeyData != nil {
-				source.
-					On("SelectKey", t.Context(), mock.AnythingOfType("services.SelectKeyRequest")).
+				source.EXPECT().
+					SelectKey(t.Context(), mock.AnythingOfType("services.SelectKeyRequest")).
 					Return(testCase.selectKeyData.res, testCase.selectKeyData.err)
 			}
 

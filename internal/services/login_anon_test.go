@@ -58,8 +58,8 @@ func TestLoginAnon(t *testing.T) {
 			source := servicesmocks.NewMockLoginAnonSource(t)
 
 			if testCase.issueTokenData != nil {
-				source.
-					On("IssueToken", ctx, services.IssueTokenRequest{
+				source.EXPECT().
+					IssueToken(ctx, services.IssueTokenRequest{
 						Roles: []models.Role{models.RoleAnon},
 					}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)

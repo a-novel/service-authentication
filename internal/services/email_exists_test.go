@@ -65,8 +65,8 @@ func TestEmailExists(t *testing.T) {
 			source := servicesmocks.NewMockEmailExistsSource(t)
 
 			if testCase.emailExistsData != nil {
-				source.
-					On("ExistsCredentialsEmail", t.Context(), testCase.request.Email).
+				source.EXPECT().
+					ExistsCredentialsEmail(t.Context(), testCase.request.Email).
 					Return(testCase.emailExistsData.resp, testCase.emailExistsData.err)
 			}
 

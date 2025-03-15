@@ -94,8 +94,8 @@ func TestEmailExists(t *testing.T) {
 			source := apimocks.NewMockEmailExistsService(t)
 
 			if testCase.emailExistsData != nil {
-				source.
-					On("EmailExists", t.Context(), mock.AnythingOfType("services.EmailExistsRequest")).
+				source.EXPECT().
+					EmailExists(t.Context(), mock.AnythingOfType("services.EmailExistsRequest")).
 					Return(testCase.emailExistsData.resp, testCase.emailExistsData.err)
 			}
 
