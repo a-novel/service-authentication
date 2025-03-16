@@ -56,7 +56,7 @@ jobs:
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-rest-api@master
         with:
-          file: api.Dockerfile
+          file: build/api.Dockerfile
           image_name: ${{ github.repository }}/api
           image_tags: ${{ github.ref_name }},prod
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -103,7 +103,7 @@ jobs:
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-job@master
         with:
-          file: rotatekeys.Dockerfile
+          file: build/rotatekeys.Dockerfile
           image_name: ${{ github.repository }}/jobs/rotatekeys
           image_tags: ${{ github.ref_name }},prod
           github_token: ${{ secrets.GITHUB_TOKEN }}
