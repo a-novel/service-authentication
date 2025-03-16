@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_NAME="${APP_NAME}-test"
-PODMAN_FILE="podman-compose.test.yaml"
+PODMAN_FILE="$PWD/build/podman-compose.test.yaml"
 PODMAN_VOLUME="=${APP_NAME}_postgres-test-data"
 PODMAN_INTEGRATION_VOLUME="=${APP_NAME}_postgres-integration-test-data"
 TEST_TOOL_PKG="gotest.tools/gotestsum@latest"

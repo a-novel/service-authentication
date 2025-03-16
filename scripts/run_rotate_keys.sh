@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PODMAN_FILE="podman-compose.yaml"
+PODMAN_FILE="$PWD/build/podman-compose.yaml"
 
 # Ensure containers are properly shut down when the program exits abnormally.
 int_handler()
