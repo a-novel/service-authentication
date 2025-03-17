@@ -1,5 +1,6 @@
 # https://github.com/OAI/OpenAPI-Specification
-openapi: 3.0.4
+# https://github.com/OAI/OpenAPI-Specification/releases
+openapi: 3.1.1
 servers:
   - url: http://127.0.0.1:4001/v1
 
@@ -671,7 +672,6 @@ components:
       properties:
         userID:
           type: string
-          nullable: true
           format: uuid
           description: The unique identifier of the user. Can be null if the session is anonymous.
           example: 29f71c01-5ae1-4b01-b729-e17488538e15

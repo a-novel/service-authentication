@@ -1484,35 +1484,19 @@ func (s *OptKID) UnmarshalJSON(data []byte) error {
 }
 
 // Encode encodes uuid.UUID as json.
-func (o OptNilUUID) Encode(e *jx.Encoder) {
+func (o OptUUID) Encode(e *jx.Encoder) {
 	if !o.Set {
-		return
-	}
-	if o.Null {
-		e.Null()
 		return
 	}
 	json.EncodeUUID(e, o.Value)
 }
 
 // Decode decodes uuid.UUID from json.
-func (o *OptNilUUID) Decode(d *jx.Decoder) error {
+func (o *OptUUID) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptNilUUID to nil")
-	}
-	if d.Next() == jx.Null {
-		if err := d.Null(); err != nil {
-			return err
-		}
-
-		var v uuid.UUID
-		o.Value = v
-		o.Set = true
-		o.Null = true
-		return nil
+		return errors.New("invalid: unable to decode OptUUID to nil")
 	}
 	o.Set = true
-	o.Null = false
 	v, err := json.DecodeUUID(d)
 	if err != nil {
 		return err
@@ -1522,14 +1506,14 @@ func (o *OptNilUUID) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptNilUUID) MarshalJSON() ([]byte, error) {
+func (s OptUUID) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptNilUUID) UnmarshalJSON(data []byte) error {
+func (s *OptUUID) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

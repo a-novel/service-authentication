@@ -20,7 +20,7 @@ func (api *API) CheckSession(ctx context.Context) (codegen.CheckSessionRes, erro
 	}
 
 	return &codegen.Claims{
-		UserID: codegen.OptNilUUID{Value: lo.FromPtr(claims.UserID), Set: claims.UserID != nil, Null: claims.UserID == nil},
+		UserID: codegen.OptUUID{Value: lo.FromPtr(claims.UserID), Set: claims.UserID != nil},
 		Roles: lo.Map(claims.Roles, func(item models.Role, _ int) codegen.Role {
 			return codegen.Role(item)
 		}),
