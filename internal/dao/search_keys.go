@@ -8,6 +8,7 @@ import (
 
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
+	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/authentication/models"
 )
@@ -67,6 +68,10 @@ func (repository *SearchKeysRepository) SearchKeys(ctx context.Context, usage mo
 		logger.Error().
 			Err(ErrSearchKeysRepository).
 			Msgf("more than %d keys found for usage %s", KeysMaxBatchSize, usage)
+
+		sentryctx.CaptureException(ctx, fmt.Errorf(
+			"%w: more than %d keys found for usage %s", ErrSearchKeysRepository, KeysMaxBatchSize, usage,
+		))
 
 		// Truncate the list to the maximum allowed size.
 		entities = entities[:KeysMaxBatchSize]

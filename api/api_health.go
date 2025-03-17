@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
+	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/authentication/api/codegen"
 	"github.com/a-novel/authentication/config"
@@ -25,6 +27,7 @@ func (api *API) reportPostgres(ctx context.Context) codegen.Dependency {
 	pg, err := pgctx.Context(ctx)
 	if err != nil {
 		logger.Error().Err(err).Msg("retrieve context")
+		sentryctx.CaptureException(ctx, err)
 
 		return codegen.Dependency{
 			Name:   "postgres",
@@ -35,6 +38,7 @@ func (api *API) reportPostgres(ctx context.Context) codegen.Dependency {
 	pgdb, ok := pg.(*bun.DB)
 	if !ok {
 		logger.Error().Msgf("invalid context type: %T", pg)
+		sentryctx.CaptureMessage(ctx, fmt.Sprintf("invalid context type: %T", pg))
 
 		return codegen.Dependency{
 			Name:   "postgres",
@@ -45,6 +49,7 @@ func (api *API) reportPostgres(ctx context.Context) codegen.Dependency {
 	err = pgdb.Ping()
 	if err != nil {
 		logger.Error().Err(err).Msg("ping postgres")
+		sentryctx.CaptureException(ctx, err)
 
 		return codegen.Dependency{
 			Name:   "postgres",
@@ -67,6 +72,7 @@ func (api *API) reportSendgrid(ctx context.Context) codegen.Dependency {
 	response, err := sendgrid.API(request)
 	if err != nil {
 		logger.Error().Err(err).Msg("ping sendgrid")
+		sentryctx.CaptureException(ctx, err)
 
 		return codegen.Dependency{
 			Name:   "sendgrid",
@@ -78,6 +84,12 @@ func (api *API) reportSendgrid(ctx context.Context) codegen.Dependency {
 		logger.Error().
 			Str("body", response.Body).
 			Msgf("unexpected status code from sendgrid API: %d", response.StatusCode)
+
+		sentryctx.CaptureMessage(ctx, fmt.Sprintf(
+			"unexpected status code from sendgrid API: %d\n%s",
+			response.StatusCode,
+			response.Body,
+		))
 
 		return codegen.Dependency{
 			Name:   "sendgrid",

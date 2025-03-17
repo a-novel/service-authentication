@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/getsentry/sentry-go"
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -147,6 +149,27 @@ func main() {
 		},
 		MaxAge: config.API.Cors.MaxAge,
 	}))
+
+	if config.Sentry.DSN != "" {
+		sentryOptions := sentry.ClientOptions{
+			Dsn: config.Sentry.DSN,
+			BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+				if req, ok := hint.Context.Value(sentry.RequestContextKey).(*http.Request); ok {
+					// Add IP Address to user information.
+					event.User.IPAddress = req.RemoteAddr
+				}
+
+				return event
+			},
+		}
+
+		if err = sentry.Init(sentryOptions); err != nil {
+			logger.Fatal().Err(err).Msg("initialize sentry")
+		}
+
+		sentryHandler := sentryhttp.New(sentryhttp.Options{})
+		router.Use(sentryHandler.Handle)
+	}
 
 	// RUN -------------------------------------------------------------------------------------------------------------
 
