@@ -306,13 +306,13 @@ func (s *BearerAuth) SetToken(val string) {
 // Ref: #/components/schemas/Claims
 type Claims struct {
 	// The unique identifier of the user. Can be null if the session is anonymous.
-	UserID OptNilUUID `json:"userID"`
+	UserID OptUUID `json:"userID"`
 	// The roles granted by the token.
 	Roles []Role `json:"roles"`
 }
 
 // GetUserID returns the value of UserID.
-func (s *Claims) GetUserID() OptNilUUID {
+func (s *Claims) GetUserID() OptUUID {
 	return s.UserID
 }
 
@@ -322,7 +322,7 @@ func (s *Claims) GetRoles() []Role {
 }
 
 // SetUserID sets the value of UserID.
-func (s *Claims) SetUserID(val OptNilUUID) {
+func (s *Claims) SetUserID(val OptUUID) {
 	s.UserID = val
 }
 
@@ -899,55 +899,38 @@ func (o OptKID) Or(d KID) KID {
 	return d
 }
 
-// NewOptNilUUID returns new OptNilUUID with value set to v.
-func NewOptNilUUID(v uuid.UUID) OptNilUUID {
-	return OptNilUUID{
+// NewOptUUID returns new OptUUID with value set to v.
+func NewOptUUID(v uuid.UUID) OptUUID {
+	return OptUUID{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptNilUUID is optional nullable uuid.UUID.
-type OptNilUUID struct {
+// OptUUID is optional uuid.UUID.
+type OptUUID struct {
 	Value uuid.UUID
 	Set   bool
-	Null  bool
 }
 
-// IsSet returns true if OptNilUUID was set.
-func (o OptNilUUID) IsSet() bool { return o.Set }
+// IsSet returns true if OptUUID was set.
+func (o OptUUID) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptNilUUID) Reset() {
+func (o *OptUUID) Reset() {
 	var v uuid.UUID
 	o.Value = v
 	o.Set = false
-	o.Null = false
 }
 
 // SetTo sets value to v.
-func (o *OptNilUUID) SetTo(v uuid.UUID) {
+func (o *OptUUID) SetTo(v uuid.UUID) {
 	o.Set = true
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o OptNilUUID) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *OptNilUUID) SetToNull() {
-	o.Set = true
-	o.Null = true
-	var v uuid.UUID
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
-	if o.Null {
-		return v, false
-	}
+func (o OptUUID) Get() (v uuid.UUID, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -955,7 +938,7 @@ func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
+func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
 	if v, ok := o.Get(); ok {
 		return v
 	}
