@@ -4,10 +4,12 @@ go 1.24.1
 
 require (
 	github.com/a-novel-kit/configurator v1.4.1
-	github.com/a-novel-kit/context v1.1.6
+	github.com/a-novel-kit/context v1.2.0
 	github.com/a-novel-kit/context/pgbun v1.1.6
+	github.com/a-novel-kit/context/sentry v1.2.0
 	github.com/a-novel-kit/jwt v1.1.0
 	github.com/a-novel-kit/middlewares/zerolog v1.1.0
+	github.com/getsentry/sentry-go v0.31.1
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/cors v1.2.1
 	github.com/go-faster/errors v0.7.1

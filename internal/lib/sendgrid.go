@@ -1,8 +1,11 @@
 package lib
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"github.com/sendgrid/rest"
@@ -10,6 +13,7 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	"github.com/a-novel-kit/context"
+	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/authentication/config"
 )
@@ -51,18 +55,37 @@ func SendMail(ctx context.Context, message *mail.SGMailV3) {
 		}
 	}
 
-	// If sandbox mode is enabled, sendgrid will just parse the template, without actually sending the email.
-	response, err = client.SendWithContext(ctx, message)
+	sentryctx.AddBreadcrumb(ctx, &sentry.Breadcrumb{
+		Category: "mailing",
+		Message:  "send mail",
+		Data: map[string]any{
+			"templateID": message.TemplateID,
+			"from":       message.From.Address,
+			"to":         recipents,
+			"bccs":       bccs,
+			"ccs":        ccs,
+		},
+		Level:     sentry.LevelInfo,
+		Timestamp: time.Now(),
+	}, nil)
 
-	if err != nil {
-		logger.Error().
-			Err(err).
+	logger = lo.ToPtr(
+		logger.With().
 			Str("templateID", message.TemplateID).
 			Str("from", message.From.Address).
 			Strs("to", recipents).
 			Strs("bccs", bccs).
 			Strs("ccs", ccs).
-			Msg("send transactional email")
+			Logger(),
+	)
+
+	// If sandbox mode is enabled, sendgrid will just parse the template, without actually sending the email.
+	response, err = client.SendWithContext(ctx, message)
+
+	if err != nil {
+		logger.Error().Err(err).Msg("send transactional email")
+
+		sentryctx.CaptureException(ctx, err)
 	} else {
 		event := lo.Ternary(
 			response.StatusCode >= http.StatusBadRequest, logger.Error(), logger.Info(), //nolint:zerologlint
@@ -75,14 +98,14 @@ func SendMail(ctx context.Context, message *mail.SGMailV3) {
 				Interface("dynamicTemplateData", dynamicTemplateData)
 		}
 
-		event.
-			Str("templateID", message.TemplateID).
-			Str("from", message.From.Address).
-			Strs("to", recipents).
-			Strs("bccs", bccs).
-			Strs("ccs", ccs).
-			Str("response", response.Body).
-			Int("status", response.StatusCode).
-			Msg("send transactional email")
+		if response.StatusCode >= http.StatusBadRequest {
+			sentryctx.CaptureMessage(ctx, fmt.Sprintf(
+				"send transactional email: unexpected status code %d\n%s",
+				response.StatusCode,
+				response.Body,
+			))
+		}
+
+		event.Str("response", response.Body).Int("status", response.StatusCode).Msg("send transactional email")
 	}
 }

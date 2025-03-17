@@ -3,13 +3,16 @@ package api
 import (
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/configurator"
 	"github.com/a-novel-kit/context"
+	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/authentication/api/codegen"
 	"github.com/a-novel/authentication/models"
@@ -38,10 +41,14 @@ func (security *SecurityHandler) HandleBearerAuth(
 	// Get the claims from the token. This will also perform the necessary checks to ensure the token is valid.
 	claims, err := security.SecurityHandlerService.Authenticate(ctx, auth.Token)
 	if err != nil {
-		logger.Warn().Err(err).Msg("authenticate user")
-
 		return nil, fmt.Errorf("authenticate user: %w", err)
 	}
+
+	sentryctx.ConfigureScope(ctx, func(scope *sentry.Scope) {
+		scope.SetUser(sentry.User{
+			ID: lo.FromPtr(claims.UserID).String(),
+		})
+	})
 
 	// List the permissions required by the current operation.
 	requiredPermissions, ok := security.RequiredPermissions[operationName]
@@ -60,6 +67,17 @@ func (security *SecurityHandler) HandleBearerAuth(
 
 	// Check the intersection between the 2 sets of permissions.
 	matchedPermissions := lo.Intersect(requiredPermissions, grantedPermissions)
+
+	sentryctx.AddBreadcrumb(ctx, &sentry.Breadcrumb{
+		Category: "permissions",
+		Message:  "check permissions",
+		Data: map[string]any{
+			"required_permissions": requiredPermissions,
+			"claims_permissions":   grantedPermissions,
+		},
+		Level:     sentry.LevelInfo,
+		Timestamp: time.Now(),
+	}, nil)
 
 	// If every required permission matched, then the intersection with the claims permissions
 	// is the same length as the required permissions.

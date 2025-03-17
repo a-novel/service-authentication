@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
+	sentryctx "github.com/a-novel-kit/context/sentry"
 	"github.com/a-novel-kit/jwt/jwa"
 
 	"github.com/a-novel/authentication/api/codegen"
@@ -59,6 +60,7 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 
 	// Unhandled, unexpected error occurred.
 	logger.Error().Err(err).Msg("internal error")
+	sentryctx.CaptureException(ctx, err)
 
 	return &codegen.UnexpectedErrorStatusCode{
 		StatusCode: http.StatusInternalServerError,
