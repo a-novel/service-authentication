@@ -2,8 +2,8 @@ github.com/a-novel-kit/configurator v1.4.1 h1:7OgpXk1fA2DVVYWkoUP3fm8qp4QdDUFvWM
 github.com/a-novel-kit/configurator v1.4.1/go.mod h1:2HuvXzhXerctwhmifBwu4MZkEPkFJAHd0BBd1zyTBZU=
 github.com/a-novel-kit/context v1.2.0 h1:F+iXj3lCklHd5TlaqfUjzVBmOV8DhFBnAvC6tvANs28=
 github.com/a-novel-kit/context v1.2.0/go.mod h1:vGQBM6AXYJ8Sc5m7YfFZXbHp1aV1516zW/DtQ88h/y0=
-github.com/a-novel-kit/context/pgbun v1.1.6 h1:dXPjkjSBIFK6g0jFHQViw9e62kZ/yT5mmB7jKZxQ15Q=
-github.com/a-novel-kit/context/pgbun v1.1.6/go.mod h1:ylvAfhXjbVhzZv1baOW1yD7Qcbs5nzkJFJJeguilYFE=
+github.com/a-novel-kit/context/pgbun v1.2.0 h1:sHgXrjvKNVoFnQ54VtaoUVDPx0RwzhK6sk8o/aUXzYQ=
+github.com/a-novel-kit/context/pgbun v1.2.0/go.mod h1:osfUtUzr3Hf4PQ83xPZbbwcIvX4lVAzHm6KHT0P71os=
 github.com/a-novel-kit/context/sentry v1.2.0 h1:INs6sjuBErucTnssupakSL4EwcJQCGQmQ4yxHalPnsI=
 github.com/a-novel-kit/context/sentry v1.2.0/go.mod h1:YVU5xWZjTd/QWcf26csgsgANlZtJjXs/Xu4etEtqI2A=
 github.com/a-novel-kit/jwt v1.1.0 h1:HEbmsVXXm3pBH1O4zgqZ6P9avy7czUX4VabhBA41nwU=
