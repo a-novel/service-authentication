@@ -9,6 +9,10 @@ const (
 	RoleAnon Role = "auth:anon"
 	// RoleUser represents a regular user.
 	RoleUser Role = "auth:user"
+	// RoleAdmin represents an administrator.
+	RoleAdmin Role = "auth:admin"
+	// RoleSuperAdmin represents a super administrator.
+	RoleSuperAdmin Role = "auth:super_admin"
 )
 
 var KnownRoles = []Role{
