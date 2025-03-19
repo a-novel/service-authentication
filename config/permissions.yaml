@@ -14,3 +14,11 @@ roles:
     permissions:
       - "email:update:request"
       - "password:update"
+  "auth:admin":
+    inherits:
+      - "auth:user"
+    permissions: []
+  "auth:super_admin":
+    inherits:
+      - "auth:admin"
+    permissions: []
