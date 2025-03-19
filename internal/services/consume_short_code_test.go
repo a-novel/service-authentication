@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -184,7 +185,11 @@ func TestConsumeShortCode(t *testing.T) {
 
 			if testCase.deleteShortCodeData != nil {
 				source.EXPECT().
-					DeleteShortCode(t.Context(), mock.AnythingOfType("dao.DeleteShortCodeData")).
+					DeleteShortCode(t.Context(), mock.MatchedBy(func(data dao.DeleteShortCodeData) bool {
+						return assert.Equal(t, testCase.selectShortCodeData.resp.ID, data.ID) &&
+							assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+							assert.Equal(t, dao.DeleteCommentConsumed, data.Comment)
+					})).
 					Return(nil, testCase.deleteShortCodeData.err)
 			}
 

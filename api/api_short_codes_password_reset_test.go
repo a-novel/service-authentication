@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/authentication/api"
 	"github.com/a-novel/authentication/api/codegen"
 	apimocks "github.com/a-novel/authentication/api/mocks"
+	"github.com/a-novel/authentication/internal/services"
 )
 
 func TestRequestPasswordReset(t *testing.T) {
@@ -24,7 +24,7 @@ func TestRequestPasswordReset(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		req *codegen.RequestPasswordResetForm
+		form *codegen.RequestPasswordResetForm
 
 		requestPasswordResetData *requestPasswordResetData
 
@@ -34,7 +34,7 @@ func TestRequestPasswordReset(t *testing.T) {
 		{
 			name: "Success",
 
-			req: &codegen.RequestPasswordResetForm{
+			form: &codegen.RequestPasswordResetForm{
 				Email: "user@provider.com",
 			},
 
@@ -45,7 +45,7 @@ func TestRequestPasswordReset(t *testing.T) {
 		{
 			name: "RequestPasswordResetError",
 
-			req: &codegen.RequestPasswordResetForm{
+			form: &codegen.RequestPasswordResetForm{
 				Email: "user@provider.com",
 			},
 
@@ -65,13 +65,15 @@ func TestRequestPasswordReset(t *testing.T) {
 
 			if testCase.requestPasswordResetData != nil {
 				source.EXPECT().
-					RequestPasswordReset(t.Context(), mock.AnythingOfType("services.RequestPasswordResetRequest")).
+					RequestPasswordReset(t.Context(), services.RequestPasswordResetRequest{
+						Email: string(testCase.form.GetEmail()),
+					}).
 					Return(nil, testCase.requestPasswordResetData.err)
 			}
 
 			handler := api.API{RequestPasswordResetService: source}
 
-			res, err := handler.RequestPasswordReset(t.Context(), testCase.req)
+			res, err := handler.RequestPasswordReset(t.Context(), testCase.form)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 

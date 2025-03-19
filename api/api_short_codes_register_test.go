@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/authentication/api"
 	"github.com/a-novel/authentication/api/codegen"
 	apimocks "github.com/a-novel/authentication/api/mocks"
+	"github.com/a-novel/authentication/internal/services"
 )
 
 func TestRequestRegistration(t *testing.T) {
@@ -24,7 +24,7 @@ func TestRequestRegistration(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		req *codegen.RequestRegistrationForm
+		form *codegen.RequestRegistrationForm
 
 		requestRegistrationData *requestRegistrationData
 
@@ -34,7 +34,7 @@ func TestRequestRegistration(t *testing.T) {
 		{
 			name: "Success",
 
-			req: &codegen.RequestRegistrationForm{
+			form: &codegen.RequestRegistrationForm{
 				Email: "user@provider.com",
 			},
 
@@ -45,7 +45,7 @@ func TestRequestRegistration(t *testing.T) {
 		{
 			name: "RequestRegistrationError",
 
-			req: &codegen.RequestRegistrationForm{
+			form: &codegen.RequestRegistrationForm{
 				Email: "user@provider.com",
 			},
 
@@ -65,13 +65,15 @@ func TestRequestRegistration(t *testing.T) {
 
 			if testCase.requestRegistrationData != nil {
 				source.EXPECT().
-					RequestRegister(t.Context(), mock.AnythingOfType("services.RequestRegisterRequest")).
+					RequestRegister(t.Context(), services.RequestRegisterRequest{
+						Email: string(testCase.form.GetEmail()),
+					}).
 					Return(nil, testCase.requestRegistrationData.err)
 			}
 
 			handler := api.API{RequestRegisterService: source}
 
-			res, err := handler.RequestRegistration(t.Context(), testCase.req)
+			res, err := handler.RequestRegistration(t.Context(), testCase.form)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 

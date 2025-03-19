@@ -1,10 +1,13 @@
 package services_test
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -109,13 +112,28 @@ func TestUpdateEmail(t *testing.T) { //nolint:paralleltest
 
 			if testCase.consumeShortCodeData != nil {
 				source.EXPECT().
-					ConsumeShortCode(mock.Anything, mock.Anything).
+					ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
+						Usage:  models.ShortCodeUsageValidateMail,
+						Target: testCase.request.UserID.String(),
+						Code:   testCase.request.ShortCode,
+					}).
 					Return(testCase.consumeShortCodeData.resp, testCase.consumeShortCodeData.err)
 			}
 
 			if testCase.updateCredentialsEmailData != nil {
 				source.EXPECT().
-					UpdateCredentialsEmail(mock.Anything, testCase.request.UserID, mock.Anything).
+					UpdateCredentialsEmail(
+						mock.Anything,
+						testCase.request.UserID,
+						mock.MatchedBy(func(data dao.UpdateCredentialsEmailData) bool {
+							var newEmail string
+							err = json.Unmarshal(testCase.consumeShortCodeData.resp.Data, &newEmail)
+
+							return assert.NoError(t, err) &&
+								assert.Equal(t, newEmail, data.Email) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Second)
+						}),
+					).
 					Return(testCase.updateCredentialsEmailData.resp, testCase.updateCredentialsEmailData.err)
 			}
 

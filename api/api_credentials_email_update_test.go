@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/authentication/api"
@@ -28,7 +27,7 @@ func TestUpdateEmail(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		req *codegen.UpdateEmailForm
+		form *codegen.UpdateEmailForm
 
 		updateEmailData *updateEmailData
 
@@ -38,7 +37,7 @@ func TestUpdateEmail(t *testing.T) {
 		{
 			name: "Success",
 
-			req: &codegen.UpdateEmailForm{
+			form: &codegen.UpdateEmailForm{
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
@@ -54,7 +53,7 @@ func TestUpdateEmail(t *testing.T) {
 		{
 			name: "UserNotFound",
 
-			req: &codegen.UpdateEmailForm{
+			form: &codegen.UpdateEmailForm{
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
@@ -68,7 +67,7 @@ func TestUpdateEmail(t *testing.T) {
 		{
 			name: "ShortCodeNotFound",
 
-			req: &codegen.UpdateEmailForm{
+			form: &codegen.UpdateEmailForm{
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
@@ -82,7 +81,7 @@ func TestUpdateEmail(t *testing.T) {
 		{
 			name: "InvalidShortCode",
 
-			req: &codegen.UpdateEmailForm{
+			form: &codegen.UpdateEmailForm{
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
@@ -96,7 +95,7 @@ func TestUpdateEmail(t *testing.T) {
 		{
 			name: "EmailAlreadyTaken",
 
-			req: &codegen.UpdateEmailForm{
+			form: &codegen.UpdateEmailForm{
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
@@ -110,7 +109,7 @@ func TestUpdateEmail(t *testing.T) {
 		{
 			name: "Error",
 
-			req: &codegen.UpdateEmailForm{
+			form: &codegen.UpdateEmailForm{
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
@@ -131,13 +130,16 @@ func TestUpdateEmail(t *testing.T) {
 
 			if testCase.updateEmailData != nil {
 				source.EXPECT().
-					UpdateEmail(t.Context(), mock.AnythingOfType("services.UpdateEmailRequest")).
+					UpdateEmail(t.Context(), services.UpdateEmailRequest{
+						UserID:    uuid.UUID(testCase.form.GetUserID()),
+						ShortCode: string(testCase.form.GetShortCode()),
+					}).
 					Return(testCase.updateEmailData.resp, testCase.updateEmailData.err)
 			}
 
 			handler := api.API{UpdateEmailService: source}
 
-			res, err := handler.UpdateEmail(t.Context(), testCase.req)
+			res, err := handler.UpdateEmail(t.Context(), testCase.form)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 

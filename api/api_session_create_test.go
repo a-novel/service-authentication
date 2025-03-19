@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/authentication/api"
@@ -12,6 +11,7 @@ import (
 	apimocks "github.com/a-novel/authentication/api/mocks"
 	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/internal/lib"
+	"github.com/a-novel/authentication/internal/services"
 )
 
 func TestCreateSession(t *testing.T) {
@@ -27,7 +27,7 @@ func TestCreateSession(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		req *codegen.LoginForm
+		form *codegen.LoginForm
 
 		loginData *loginData
 
@@ -37,7 +37,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name: "Success",
 
-			req: &codegen.LoginForm{
+			form: &codegen.LoginForm{
 				Email:    "user@provider.com",
 				Password: "secret",
 			},
@@ -51,7 +51,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name: "UserNotFound",
 
-			req: &codegen.LoginForm{
+			form: &codegen.LoginForm{
 				Email:    "user@provider.com",
 				Password: "secret",
 			},
@@ -65,7 +65,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name: "InvalidPassword",
 
-			req: &codegen.LoginForm{
+			form: &codegen.LoginForm{
 				Email:    "user@provider.com",
 				Password: "secret",
 			},
@@ -79,7 +79,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name: "Error",
 
-			req: &codegen.LoginForm{
+			form: &codegen.LoginForm{
 				Email:    "user@provider.com",
 				Password: "secret",
 			},
@@ -100,13 +100,16 @@ func TestCreateSession(t *testing.T) {
 
 			if testCase.loginData != nil {
 				source.EXPECT().
-					Login(t.Context(), mock.AnythingOfType("LoginRequest")).
+					Login(t.Context(), services.LoginRequest{
+						Email:    string(testCase.form.GetEmail()),
+						Password: string(testCase.form.GetPassword()),
+					}).
 					Return(testCase.loginData.resp, testCase.loginData.err)
 			}
 
 			handler := api.API{LoginService: source}
 
-			res, err := handler.CreateSession(t.Context(), testCase.req)
+			res, err := handler.CreateSession(t.Context(), testCase.form)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 

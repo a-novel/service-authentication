@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/context"
@@ -14,6 +13,7 @@ import (
 	"github.com/a-novel/authentication/api"
 	"github.com/a-novel/authentication/api/codegen"
 	apimocks "github.com/a-novel/authentication/api/mocks"
+	"github.com/a-novel/authentication/internal/services"
 	"github.com/a-novel/authentication/models"
 )
 
@@ -30,7 +30,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 		name string
 
 		userID *uuid.UUID
-		req    *codegen.RequestEmailUpdateForm
+		form   *codegen.RequestEmailUpdateForm
 
 		requestEmailUpdateData *requestEmailUpdateData
 
@@ -42,7 +42,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 
 			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 
-			req: &codegen.RequestEmailUpdateForm{
+			form: &codegen.RequestEmailUpdateForm{
 				Email: "user@provider.com",
 			},
 
@@ -53,7 +53,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 		{
 			name: "NoUser",
 
-			req: &codegen.RequestEmailUpdateForm{
+			form: &codegen.RequestEmailUpdateForm{
 				Email: "user@provider.com",
 			},
 
@@ -64,7 +64,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 
 			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 
-			req: &codegen.RequestEmailUpdateForm{
+			form: &codegen.RequestEmailUpdateForm{
 				Email: "user@provider.com",
 			},
 
@@ -88,13 +88,16 @@ func TestRequestEmailUpdate(t *testing.T) {
 
 			if testCase.requestEmailUpdateData != nil {
 				source.EXPECT().
-					RequestEmailUpdate(ctx, mock.AnythingOfType("services.RequestEmailUpdateRequest")).
+					RequestEmailUpdate(ctx, services.RequestEmailUpdateRequest{
+						Email: string(testCase.form.GetEmail()),
+						ID:    lo.FromPtr(testCase.userID),
+					}).
 					Return(nil, testCase.requestEmailUpdateData.err)
 			}
 
 			handler := api.API{RequestEmailUpdateService: source}
 
-			res, err := handler.RequestEmailUpdate(ctx, testCase.req)
+			res, err := handler.RequestEmailUpdate(ctx, testCase.form)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 

@@ -1,11 +1,13 @@
 package services_test
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -86,11 +88,27 @@ func TestCreateShortCode(t *testing.T) {
 
 			if testCase.insertShortCodeData != nil {
 				source.EXPECT().
-					InsertShortCode(t.Context(), mock.AnythingOfType("dao.InsertShortCodeData")).
-					Run(func(_ context.Context, data dao.InsertShortCodeData) {
+					InsertShortCode(t.Context(), mock.MatchedBy(func(data dao.InsertShortCodeData) bool {
+						now := time.Now()
+
+						var dataMap map[string]string
+						err := json.Unmarshal(data.Data, &dataMap)
+
+						return assert.NoError(t, err) &&
+							assert.NotEqual(t, uuid.Nil, data.ID) &&
+							assert.NotEmpty(t, data.Code) &&
+							assert.Equal(t, testCase.request.Usage, data.Usage) &&
+							assert.Equal(t, testCase.request.Target, data.Target) &&
+							assert.Equal(t, testCase.request.Data, dataMap) &&
+							assert.WithinDuration(t, now, data.Now, time.Second) &&
+							assert.WithinDuration(t, now.Add(testCase.request.TTL), data.ExpiresAt, time.Second) &&
+							assert.Equal(t, testCase.request.Override, data.Override)
+					})).
+					RunAndReturn(func(_ context.Context, data dao.InsertShortCodeData) (*dao.ShortCodeEntity, error) {
 						encryptedShortCode = data.Code
-					}).
-					Return(testCase.insertShortCodeData.resp, testCase.insertShortCodeData.err)
+
+						return testCase.insertShortCodeData.resp, testCase.insertShortCodeData.err
+					})
 			}
 
 			service := services.NewCreateShortCodeService(source)

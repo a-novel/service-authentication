@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/authentication/api"
@@ -27,7 +26,7 @@ func TestRegister(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		req *codegen.RegisterForm
+		form *codegen.RegisterForm
 
 		registerData *registerData
 
@@ -37,7 +36,7 @@ func TestRegister(t *testing.T) {
 		{
 			name: "Success",
 
-			req: &codegen.RegisterForm{
+			form: &codegen.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -52,7 +51,7 @@ func TestRegister(t *testing.T) {
 		{
 			name: "EmailAlreadyExists",
 
-			req: &codegen.RegisterForm{
+			form: &codegen.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -67,7 +66,7 @@ func TestRegister(t *testing.T) {
 		{
 			name: "ShortCodeNotFound",
 
-			req: &codegen.RegisterForm{
+			form: &codegen.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -82,7 +81,7 @@ func TestRegister(t *testing.T) {
 		{
 			name: "InvalidShortCode",
 
-			req: &codegen.RegisterForm{
+			form: &codegen.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -97,7 +96,7 @@ func TestRegister(t *testing.T) {
 		{
 			name: "Error",
 
-			req: &codegen.RegisterForm{
+			form: &codegen.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -119,13 +118,17 @@ func TestRegister(t *testing.T) {
 
 			if testCase.registerData != nil {
 				source.EXPECT().
-					Register(t.Context(), mock.AnythingOfType("services.RegisterRequest")).
+					Register(t.Context(), services.RegisterRequest{
+						Email:     string(testCase.form.GetEmail()),
+						Password:  string(testCase.form.GetPassword()),
+						ShortCode: string(testCase.form.GetShortCode()),
+					}).
 					Return(testCase.registerData.resp, testCase.registerData.err)
 			}
 
 			handler := api.API{RegisterService: source}
 
-			res, err := handler.Register(t.Context(), testCase.req)
+			res, err := handler.Register(t.Context(), testCase.form)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 
