@@ -1,7 +1,7 @@
 ![Authentication Service](./docs/assets/service%20authentication%20banner.png)
 
 [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/agora_ecrivains)](https://twitter.com/agora_ecrivains)
-[![Discord](https://img.shields.io/discord/1315240114691248138?logo=discord)](https://discord.gg/D7rqySm8)
+[![Discord](https://img.shields.io/discord/1315240114691248138?logo=discord)](https://discord.gg/rp4Qr8cA)
 
 <hr />
 
