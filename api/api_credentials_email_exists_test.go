@@ -4,13 +4,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/authentication/api"
 	"github.com/a-novel/authentication/api/codegen"
 	apimocks "github.com/a-novel/authentication/api/mocks"
 	"github.com/a-novel/authentication/internal/dao"
+	"github.com/a-novel/authentication/internal/services"
 )
 
 func TestEmailExists(t *testing.T) {
@@ -95,7 +95,9 @@ func TestEmailExists(t *testing.T) {
 
 			if testCase.emailExistsData != nil {
 				source.EXPECT().
-					EmailExists(t.Context(), mock.AnythingOfType("services.EmailExistsRequest")).
+					EmailExists(t.Context(), services.EmailExistsRequest{
+						Email: string(testCase.params.Email),
+					}).
 					Return(testCase.emailExistsData.resp, testCase.emailExistsData.err)
 			}
 

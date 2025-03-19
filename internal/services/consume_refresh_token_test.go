@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ed25519"
 
@@ -208,7 +207,11 @@ func TestConsumeRefreshToken(t *testing.T) {
 
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
-					IssueToken(t.Context(), mock.AnythingOfType("IssueTokenRequest")).
+					IssueToken(t.Context(), services.IssueTokenRequest{
+						UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+						Roles:          []models.Role{"foo", "bar"},
+						RefreshTokenID: &refreshPayload.Jti,
+					}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
 			}
 

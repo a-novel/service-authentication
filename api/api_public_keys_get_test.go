@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-faster/jx"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/jwt/jwa"
@@ -15,6 +14,7 @@ import (
 	"github.com/a-novel/authentication/api/codegen"
 	apimocks "github.com/a-novel/authentication/api/mocks"
 	"github.com/a-novel/authentication/internal/dao"
+	"github.com/a-novel/authentication/internal/services"
 )
 
 func TestGetPublicKey(t *testing.T) {
@@ -107,7 +107,10 @@ func TestGetPublicKey(t *testing.T) {
 
 			if testCase.selectKeyData != nil {
 				source.EXPECT().
-					SelectKey(t.Context(), mock.AnythingOfType("services.SelectKeyRequest")).
+					SelectKey(t.Context(), services.SelectKeyRequest{
+						ID:      uuid.UUID(testCase.params.Kid),
+						Private: false,
+					}).
 					Return(testCase.selectKeyData.res, testCase.selectKeyData.err)
 			}
 

@@ -3,8 +3,10 @@ package services_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -194,7 +196,10 @@ func TestUpdatePassword(t *testing.T) {
 				source.EXPECT().
 					UpdateCredentialsPassword(
 						mock.Anything, testCase.request.UserID,
-						mock.AnythingOfType("dao.UpdateCredentialsPasswordData"),
+						mock.MatchedBy(func(data dao.UpdateCredentialsPasswordData) bool {
+							return assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Second)
+						}),
 					).
 					Return(testCase.updateCredentialsPasswordData.resp, testCase.updateCredentialsPasswordData.err)
 			}

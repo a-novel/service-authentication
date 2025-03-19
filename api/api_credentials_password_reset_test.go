@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/authentication/api"
 	"github.com/a-novel/authentication/api/codegen"
 	apimocks "github.com/a-novel/authentication/api/mocks"
 	"github.com/a-novel/authentication/internal/lib"
+	"github.com/a-novel/authentication/internal/services"
 )
 
 func TestResetPassword(t *testing.T) {
@@ -26,7 +26,7 @@ func TestResetPassword(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		req *codegen.ResetPasswordForm
+		form *codegen.ResetPasswordForm
 
 		updatePasswordData *updatePasswordData
 
@@ -36,7 +36,7 @@ func TestResetPassword(t *testing.T) {
 		{
 			name: "Success",
 
-			req: &codegen.ResetPasswordForm{
+			form: &codegen.ResetPasswordForm{
 				Password:  "secret",
 				ShortCode: "foobarqux",
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
@@ -49,7 +49,7 @@ func TestResetPassword(t *testing.T) {
 		{
 			name: "ErrInvalidPassword",
 
-			req: &codegen.ResetPasswordForm{
+			form: &codegen.ResetPasswordForm{
 				Password:  "secret",
 				ShortCode: "foobarqux",
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
@@ -64,7 +64,7 @@ func TestResetPassword(t *testing.T) {
 		{
 			name: "Error",
 
-			req: &codegen.ResetPasswordForm{
+			form: &codegen.ResetPasswordForm{
 				Password:  "secret",
 				ShortCode: "foobarqux",
 				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
@@ -86,13 +86,17 @@ func TestResetPassword(t *testing.T) {
 
 			if testCase.updatePasswordData != nil {
 				source.EXPECT().
-					UpdatePassword(t.Context(), mock.AnythingOfType("services.UpdatePasswordRequest")).
+					UpdatePassword(t.Context(), services.UpdatePasswordRequest{
+						Password:  string(testCase.form.GetPassword()),
+						ShortCode: string(testCase.form.GetShortCode()),
+						UserID:    uuid.UUID(testCase.form.GetUserID()),
+					}).
 					Return(testCase.updatePasswordData.err)
 			}
 
 			handler := api.API{UpdatePasswordService: source}
 
-			res, err := handler.ResetPassword(t.Context(), testCase.req)
+			res, err := handler.ResetPassword(t.Context(), testCase.form)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 

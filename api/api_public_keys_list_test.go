@@ -7,7 +7,6 @@ import (
 	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/jwt/jwa"
@@ -15,6 +14,8 @@ import (
 	"github.com/a-novel/authentication/api"
 	"github.com/a-novel/authentication/api/codegen"
 	apimocks "github.com/a-novel/authentication/api/mocks"
+	"github.com/a-novel/authentication/internal/services"
+	"github.com/a-novel/authentication/models"
 )
 
 func TestListPublicKeys(t *testing.T) {
@@ -134,7 +135,10 @@ func TestListPublicKeys(t *testing.T) {
 
 			if testCase.listKeysData != nil {
 				source.EXPECT().
-					SearchKeys(t.Context(), mock.AnythingOfType("services.SearchKeysRequest")).
+					SearchKeys(t.Context(), services.SearchKeysRequest{
+						Usage:   models.KeyUsage(testCase.params.Usage),
+						Private: false,
+					}).
 					Return(testCase.listKeysData.res, testCase.listKeysData.err)
 			}
 

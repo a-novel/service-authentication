@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/context"
@@ -82,7 +81,7 @@ func TestCreateRefreshToken(t *testing.T) {
 
 			if testCase.issueRefreshTokenData != nil {
 				source.EXPECT().
-					IssueRefreshToken(ctx, mock.AnythingOfType("services.IssueRefreshTokenRequest")).
+					IssueRefreshToken(ctx, services.IssueRefreshTokenRequest{Claims: &models.AccessTokenClaims{}}).
 					Return(testCase.issueRefreshTokenData.resp, testCase.issueRefreshTokenData.err)
 			}
 

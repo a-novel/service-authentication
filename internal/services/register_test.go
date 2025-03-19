@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -155,26 +156,10 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 			if testCase.createCredentialsData != nil {
 				source.EXPECT().
 					InsertCredentials(mock.Anything, mock.MatchedBy(func(data dao.InsertCredentialsData) bool {
-						if data.Email != testCase.request.Email {
-							return false
-						}
-
-						if data.ID == uuid.Nil {
-							return false
-						}
-
-						if data.Now.IsZero() {
-							return false
-						}
-
-						err := lib.CompareScrypt(testCase.request.Password, data.Password)
-						if err != nil {
-							t.Error(err)
-
-							return false
-						}
-
-						return true
+						return assert.Equal(t, testCase.request.Email, data.Email) &&
+							assert.NotEqual(t, uuid.Nil, data.ID) &&
+							assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+							assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password))
 					})).
 					Return(testCase.createCredentialsData.resp, testCase.createCredentialsData.err)
 			}
