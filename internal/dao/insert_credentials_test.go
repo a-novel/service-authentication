@@ -11,6 +11,7 @@ import (
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/authentication/internal/dao"
+	"github.com/a-novel/authentication/models"
 )
 
 func TestInsertCredentials(t *testing.T) {
@@ -40,6 +41,7 @@ func TestInsertCredentials(t *testing.T) {
 				Password:  "password-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+				Role:      models.CredentialsRoleUser,
 			},
 		},
 		{
@@ -56,6 +58,7 @@ func TestInsertCredentials(t *testing.T) {
 				Email:     "user@provider.com",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+				Role:      models.CredentialsRoleUser,
 			},
 		},
 		{
@@ -68,6 +71,7 @@ func TestInsertCredentials(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					Role:      models.CredentialsRoleUser,
 				},
 			},
 

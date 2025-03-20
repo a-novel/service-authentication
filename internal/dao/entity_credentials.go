@@ -6,6 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
+
+	"github.com/a-novel/authentication/models"
 )
 
 var (
@@ -35,6 +37,8 @@ type CredentialsEntity struct {
 	// While technically valid, shadow users accounts cannot be used to create sessions, as this process requires a
 	// password.
 	Password string `bun:"password"`
+
+	Role models.CredentialsRole `bun:"role"`
 
 	// Time at which the credentials were created.
 	CreatedAt time.Time `bun:"created_at"`

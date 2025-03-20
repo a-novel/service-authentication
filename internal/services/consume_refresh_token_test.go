@@ -3,6 +3,7 @@ package services_test
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ import (
 	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel-kit/jwt/jwk"
 
+	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/internal/services"
 	servicesmocks "github.com/a-novel/authentication/internal/services/mocks"
 	"github.com/a-novel/authentication/models"
@@ -22,6 +24,8 @@ import (
 
 func TestConsumeRefreshToken(t *testing.T) {
 	t.Parallel()
+
+	errFoo := errors.New("foo")
 
 	privateRefreshKeys, publicRefreshKeys := generateAuthTokenKeySet(t, 3)
 
@@ -46,10 +50,15 @@ func TestConsumeRefreshToken(t *testing.T) {
 		err  error
 	}
 
+	type selectCredentialsData struct {
+		resp *dao.CredentialsEntity
+		err  error
+	}
+
 	sampleRefreshToken := mustIssueRefreshToken(t, privateRefreshKeys[0], services.IssueRefreshTokenRequest{
 		Claims: &models.AccessTokenClaims{
 			UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			Roles:  []models.Role{"foo", "bar"},
+			Roles:  []models.Role{models.RoleUser},
 		},
 	})
 
@@ -68,7 +77,8 @@ func TestConsumeRefreshToken(t *testing.T) {
 
 		request services.ConsumeRefreshTokenRequest
 
-		issueTokenData *issueTokenData
+		issueTokenData        *issueTokenData
+		selectCredentialsData *selectCredentialsData
 
 		expect    string
 		expectErr error
@@ -80,8 +90,15 @@ func TestConsumeRefreshToken(t *testing.T) {
 				RefreshToken: sampleRefreshToken,
 				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []models.Role{"foo", "bar"},
+					Roles:  []models.Role{models.RoleUser},
 				}),
+			},
+
+			selectCredentialsData: &selectCredentialsData{
+				resp: &dao.CredentialsEntity{
+					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Role: models.CredentialsRoleAdmin,
+				},
 			},
 
 			issueTokenData: &issueTokenData{
@@ -97,9 +114,16 @@ func TestConsumeRefreshToken(t *testing.T) {
 				RefreshToken: sampleRefreshToken,
 				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []models.Role{"foo", "bar"},
+					Roles:          []models.Role{models.RoleUser},
 					RefreshTokenID: &refreshPayload.Jti,
 				}),
+			},
+
+			selectCredentialsData: &selectCredentialsData{
+				resp: &dao.CredentialsEntity{
+					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Role: models.CredentialsRoleAdmin,
+				},
 			},
 
 			issueTokenData: &issueTokenData{
@@ -109,13 +133,56 @@ func TestConsumeRefreshToken(t *testing.T) {
 			expect: "access_token",
 		},
 		{
+			name: "IssueTokenError",
+
+			request: services.ConsumeRefreshTokenRequest{
+				RefreshToken: sampleRefreshToken,
+				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []models.Role{models.RoleUser},
+					RefreshTokenID: &refreshPayload.Jti,
+				}),
+			},
+
+			selectCredentialsData: &selectCredentialsData{
+				resp: &dao.CredentialsEntity{
+					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Role: models.CredentialsRoleAdmin,
+				},
+			},
+
+			issueTokenData: &issueTokenData{
+				err: errFoo,
+			},
+
+			expectErr: errFoo,
+		},
+		{
+			name: "SelectCredentialsError",
+
+			request: services.ConsumeRefreshTokenRequest{
+				RefreshToken: sampleRefreshToken,
+				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []models.Role{models.RoleUser},
+					RefreshTokenID: &refreshPayload.Jti,
+				}),
+			},
+
+			selectCredentialsData: &selectCredentialsData{
+				err: errFoo,
+			},
+
+			expectErr: errFoo,
+		},
+		{
 			name: "IssuedByAnotherRefreshToken",
 
 			request: services.ConsumeRefreshTokenRequest{
 				RefreshToken: sampleRefreshToken,
 				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []models.Role{"foo", "bar"},
+					Roles:          []models.Role{models.RoleUser},
 					RefreshTokenID: lo.ToPtr("00000000-0000-0000-0000-000000000001"),
 				}),
 			},
@@ -129,7 +196,7 @@ func TestConsumeRefreshToken(t *testing.T) {
 				RefreshToken: sampleRefreshToken,
 				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000002")),
-					Roles:          []models.Role{"foo", "bar"},
+					Roles:          []models.Role{models.RoleUser},
 					RefreshTokenID: &refreshPayload.Jti,
 				}),
 			},
@@ -151,7 +218,7 @@ func TestConsumeRefreshToken(t *testing.T) {
 			request: services.ConsumeRefreshTokenRequest{
 				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []models.Role{"foo", "bar"},
+					Roles:  []models.Role{models.RoleUser},
 				}),
 			},
 
@@ -164,7 +231,7 @@ func TestConsumeRefreshToken(t *testing.T) {
 				RefreshToken: sampleRefreshToken,
 				AccessToken: mustIssueToken(t, fakePrivateAccessKey, services.IssueTokenRequest{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []models.Role{"foo", "bar"},
+					Roles:  []models.Role{models.RoleUser},
 				}),
 			},
 
@@ -177,12 +244,12 @@ func TestConsumeRefreshToken(t *testing.T) {
 				RefreshToken: mustIssueRefreshToken(t, fakePrivateRefreshKey, services.IssueRefreshTokenRequest{
 					Claims: &models.AccessTokenClaims{
 						UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-						Roles:  []models.Role{"foo", "bar"},
+						Roles:  []models.Role{models.RoleUser},
 					},
 				}),
 				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []models.Role{"foo", "bar"},
+					Roles:  []models.Role{models.RoleUser},
 				}),
 			},
 
@@ -205,11 +272,22 @@ func TestConsumeRefreshToken(t *testing.T) {
 				Fetch: func(_ context.Context) ([]*jwa.JWK, error) { return publicRefreshKeysJSON, nil },
 			})
 
+			if testCase.selectCredentialsData != nil {
+				source.EXPECT().
+					SelectCredentials(t.Context(), uuid.MustParse("00000000-0000-0000-0000-000000000001")).
+					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
+			}
+
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
 					IssueToken(t.Context(), services.IssueTokenRequest{
-						UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-						Roles:          []models.Role{"foo", "bar"},
+						UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+						Roles: []models.Role{
+							lo.Switch[models.CredentialsRole, models.Role](testCase.selectCredentialsData.resp.Role).
+								Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+								Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+								Default(models.RoleUser),
+						},
 						RefreshTokenID: &refreshPayload.Jti,
 					}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)

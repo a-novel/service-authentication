@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/samber/lo"
+
 	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/authentication/internal/dao"
@@ -60,7 +62,12 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 	// Generate a new authentication token.
 	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
 		UserID: &credentials.ID,
-		Roles:  []models.Role{models.RoleUser},
+		Roles: []models.Role{
+			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
+				Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+				Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+				Default(models.RoleUser),
+		},
 	})
 	if err != nil {
 		return "", NewErrLoginService(fmt.Errorf("issue accessToken: %w", err))

@@ -42,6 +42,10 @@ tags:
       Credentials are used to prove a user identity. Using those credentials, a user can request a token with higher
       privileges.
 
+  - name: users
+    description: |
+      Users are the entities that can authenticate to the service. They can have different roles, and access different
+      resources.
 # ======================================================================================================================
 # Paths
 # ======================================================================================================================
@@ -562,6 +566,49 @@ paths:
               schema:
                 $ref: "#/components/schemas/UnexpectedError"
 
+  /credentials/role:
+    patch:
+      tags:
+        - credentials
+      summary: Update the role of an user.
+      description: |
+        Update the role of an user. This route requires the original password of the user, to double check
+        the identity of the caller.
+      operationId: updateRole
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateRoleForm"
+      responses:
+        "200":
+          description: The role has been updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "403":
+          description: User lacks the authorizations for the operation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
+        "404":
+          description: The target user ID does not match any user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+        "422":
+          description: The provided role is not valid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnprocessableEntityError"
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnexpectedError"
+
   /credentials/password/reset:
     patch:
       tags:
@@ -583,6 +630,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ForbiddenError"
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnexpectedError"
+
+  /users:
+    get:
+      tags:
+        - users
+      summary: List all users.
+      description: |
+        List users in the database.
+      operationId: listUsers
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/CredentialsRoles"
+      responses:
+        "200":
+          description: The users have been retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "418":
+          description: This route is not expected to fail under normal circumstances.
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -794,6 +871,36 @@ components:
           description: The new password of the user.
         shortCode:
           $ref: "#/components/schemas/ShortCode"
+    UpdateRoleForm:
+      type: object
+      description: |
+        Data used to update the role of a user. The user requesting the update must follow some
+        specific rules.
+
+          - A user cannot upgrade other users to a role higher than its own.
+          - A user can only downgrade other users to a role lower than its own.
+
+        For example, the following operations are permitted:
+
+          - ✅ A (super_admin) upgrades B (admin) to super_admin.
+          - ✅ A (admin) upgrades B (user) to admin.
+          - ✅ A (super_admin) downgrades B (admin) to user.
+
+        But the following operations are not:
+
+          - ❌ A (admin) upgrades B (user) to super_admin.
+          - ❌ A (admin) downgrades B (admin) to user.
+      required:
+        - userID
+        - role
+      properties:
+        userID:
+          $ref: "#/components/schemas/UserID"
+          description: |
+            The id of the user who's role is to be updated.
+        role:
+          $ref: "#/components/schemas/CredentialsRole"
+          description: The new role of the user.
 
     KeyUsage:
       type: string
@@ -830,6 +937,10 @@ components:
       type: string
       description: A role grants a set of permissions to a session. A session may have multiple roles.
       example: auth:anon
+    CredentialsRole:
+      type: string
+      description: A role specifically assigned to a user.
+      enum: ["user", "admin", "super_admin"]
     KTY:
       type: string
       description: The type of the key embedded in the JWK.
@@ -931,6 +1042,33 @@ components:
       format: uuid
       description: The unique identifier of the user.
       example: 29f71c01-5ae1-4b01-b729-e17488538e15
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: "#/components/schemas/UserID"
+          description: The unique identifier of the user.
+        email:
+          $ref: "#/components/schemas/Email"
+          description: The email of the user.
+        role:
+          $ref: "#/components/schemas/CredentialsRole"
+          description: The role of the user.
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the user was created.
+        updatedAt:
+          type: string
+          format: date-time
+          description: The date and time the user was last updated.
     # ======================================================= ERRORS =======================================================
     ForbiddenError:
       type: object
@@ -1028,6 +1166,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ResetPasswordForm"
+    UpdateRoleForm:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateRoleForm"
   # ================================================== QUERY PARAMETERS ==================================================
   parameters:
     KID:
@@ -1045,16 +1189,44 @@ components:
       schema:
         $ref: "#/components/schemas/Email"
     AccessToken:
-      name: access_token
+      name: accessToken
       in: query
       required: true
       schema:
         type: string
         description: The token used to authenticate the session.
     RefreshToken:
-      name: refresh_token
+      name: refreshToken
       in: query
       required: true
       schema:
         type: string
         description: The refresh token, used to issue a new access token.
+    Limit:
+      name: limit
+      in: query
+      description: The maximum number of items to return.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 100
+    Offset:
+      name: offset
+      in: query
+      description: The number of items to skip before starting to collect the result set.
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    CredentialsRoles:
+      name: roles
+      in: query
+      description: The roles to filter the users by.
+      required: false
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/CredentialsRole"

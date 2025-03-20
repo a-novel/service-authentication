@@ -33,6 +33,10 @@ type ListPublicKeysRes interface {
 	listPublicKeysRes()
 }
 
+type ListUsersRes interface {
+	listUsersRes()
+}
+
 type PingRes interface {
 	pingRes()
 }
@@ -67,4 +71,8 @@ type UpdateEmailRes interface {
 
 type UpdatePasswordRes interface {
 	updatePasswordRes()
+}
+
+type UpdateRoleRes interface {
+	updateRoleRes()
 }

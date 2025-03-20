@@ -14,13 +14,14 @@ import (
 	"github.com/a-novel/authentication/models"
 )
 
-func TestSelectCredentials(t *testing.T) {
+func TestUpdateCredentialsRole(t *testing.T) {
 	testCases := []struct {
 		name string
 
 		fixtures []*dao.CredentialsEntity
 
-		id uuid.UUID
+		userID     uuid.UUID
+		updateData dao.UpdateCredentialsRoleData
 
 		expect    *dao.CredentialsEntity
 		expectErr error
@@ -34,12 +35,17 @@ func TestSelectCredentials(t *testing.T) {
 					Email:     "user@provider.com",
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					Role:      models.CredentialsRoleUser,
 				},
 			},
 
-			id: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+			userID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+
+			updateData: dao.UpdateCredentialsRoleData{
+				Role: models.CredentialsRoleAdmin,
+				Now:  time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+			},
 
 			expect: &dao.CredentialsEntity{
 				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -47,19 +53,24 @@ func TestSelectCredentials(t *testing.T) {
 				Password:  "password-2-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      models.CredentialsRoleUser,
+				Role:      models.CredentialsRoleAdmin,
 			},
 		},
 		{
 			name: "Error/NotFound",
 
-			id: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+			userID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+
+			updateData: dao.UpdateCredentialsRoleData{
+				Role: models.CredentialsRoleAdmin,
+				Now:  time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+			},
 
 			expectErr: dao.ErrCredentialsNotFound,
 		},
 	}
 
-	repository := dao.NewSelectCredentialsRepository()
+	repository := dao.NewUpdateCredentialsRoleRepository()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -78,9 +89,9 @@ func TestSelectCredentials(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			key, err := repository.SelectCredentials(tx, testCase.id)
+			credentials, err := repository.UpdateCredentialsRole(tx, testCase.userID, testCase.updateData)
 			require.ErrorIs(t, err, testCase.expectErr)
-			require.Equal(t, testCase.expect, key)
+			require.Equal(t, testCase.expect, credentials)
 		})
 	}
 }

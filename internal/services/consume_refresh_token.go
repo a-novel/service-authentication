@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"golang.org/x/crypto/ed25519"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/authentication/config"
+	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/models"
 )
 
@@ -29,6 +31,7 @@ func NewErrConsumeRefreshTokenService(err error) error {
 }
 
 type ConsumeRefreshTokenSource interface {
+	SelectCredentials(ctx context.Context, id uuid.UUID) (*dao.CredentialsEntity, error)
 	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
 }
 
@@ -88,6 +91,21 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		return "", NewErrConsumeRefreshTokenService(ErrTokenIssuedWithDifferentRefreshToken)
 	}
 
+	// Retrieve updated credentials.
+	if accessTokenClaims.UserID != nil {
+		credentials, err := service.source.SelectCredentials(ctx, lo.FromPtr(accessTokenClaims.UserID))
+		if err != nil {
+			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("select credentials: %w", err))
+		}
+
+		accessTokenClaims.Roles = []models.Role{
+			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
+				Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+				Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+				Default(models.RoleUser),
+		}
+	}
+
 	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
 		UserID:         accessTokenClaims.UserID,
 		Roles:          accessTokenClaims.Roles,
@@ -98,6 +116,19 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	}
 
 	return accessToken, nil
+}
+
+func NewNewConsumeRefreshTokenServiceSource(
+	selectCredentialsDAO *dao.SelectCredentialsRepository,
+	issueTokenService *IssueTokenService,
+) ConsumeRefreshTokenSource {
+	return &struct {
+		*dao.SelectCredentialsRepository
+		*IssueTokenService
+	}{
+		SelectCredentialsRepository: selectCredentialsDAO,
+		IssueTokenService:           issueTokenService,
+	}
 }
 
 func NewConsumeRefreshTokenService(
