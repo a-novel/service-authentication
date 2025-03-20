@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,7 +23,7 @@ func TestUpdatePasswordAPI(t *testing.T) {
 	user := createUser(t, client)
 	securityClient.SetToken(user.token)
 
-	newPassword := getRandomString()
+	newPassword := rand.Text()
 
 	t.Log("UpdatePassword/WrongPassword")
 	{

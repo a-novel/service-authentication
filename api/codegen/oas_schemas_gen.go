@@ -310,6 +310,8 @@ type Claims struct {
 	UserID OptUUID `json:"userID"`
 	// The roles granted by the token.
 	Roles []Role `json:"roles"`
+	// The unique identifier of the refresh token. Can be null if the session is anonymous.
+	RefreshTokenID OptString `json:"refreshTokenID"`
 }
 
 // GetUserID returns the value of UserID.
@@ -322,6 +324,11 @@ func (s *Claims) GetRoles() []Role {
 	return s.Roles
 }
 
+// GetRefreshTokenID returns the value of RefreshTokenID.
+func (s *Claims) GetRefreshTokenID() OptString {
+	return s.RefreshTokenID
+}
+
 // SetUserID sets the value of UserID.
 func (s *Claims) SetUserID(val OptUUID) {
 	s.UserID = val
@@ -330,6 +337,11 @@ func (s *Claims) SetUserID(val OptUUID) {
 // SetRoles sets the value of Roles.
 func (s *Claims) SetRoles(val []Role) {
 	s.Roles = val
+}
+
+// SetRefreshTokenID sets the value of RefreshTokenID.
+func (s *Claims) SetRefreshTokenID(val OptString) {
+	s.RefreshTokenID = val
 }
 
 func (*Claims) checkSessionRes() {}
@@ -1001,6 +1013,52 @@ func (o OptKID) Get() (v KID, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptKID) Or(d KID) KID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptString returns new OptString with value set to v.
+func NewOptString(v string) OptString {
+	return OptString{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptString is optional string.
+type OptString struct {
+	Value string
+	Set   bool
+}
+
+// IsSet returns true if OptString was set.
+func (o OptString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptString) Reset() {
+	var v string
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptString) SetTo(v string) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptString) Get() (v string, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptString) Or(d string) string {
 	if v, ok := o.Get(); ok {
 		return v
 	}

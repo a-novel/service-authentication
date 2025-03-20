@@ -759,6 +759,10 @@ components:
             $ref: "#/components/schemas/Role"
           description: The roles granted by the token.
           example: ["auth:anon"]
+        refreshTokenID:
+          type: string
+          description: The unique identifier of the refresh token. Can be null if the session is anonymous.
+          example: 29f71c01-5ae1-4b01-b729-e17488538e15
 
     LoginForm:
       type: object

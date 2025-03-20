@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"testing"
 	"time"
 
@@ -32,7 +33,7 @@ func TestResetPasswordAPI(t *testing.T) {
 	// Revert the session to anonymous.
 	securityClient.SetToken(anonToken)
 
-	newPassword := getRandomString()
+	newPassword := rand.Text()
 
 	var shortCode string
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -71,9 +72,9 @@ type userData struct {
 func createUser(t *testing.T, client *codegen.Client) *userData {
 	t.Helper()
 
-	user := getRandomString()
+	user := rand.Text()
 	email := user + "@example.com"
-	password := getRandomString()
+	password := rand.Text()
 
 	var shortCode, token string
 
