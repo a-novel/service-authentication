@@ -19,3 +19,32 @@ var KnownRoles = []Role{
 	RoleAnon,
 	RoleUser,
 }
+
+type CredentialsRole string
+
+const (
+	CredentialsRoleUser       CredentialsRole = "user"
+	CredentialsRoleAdmin      CredentialsRole = "admin"
+	CredentialsRoleSuperAdmin CredentialsRole = "super_admin"
+)
+
+type CredentialRoleImportance int
+
+const (
+	CredentialRoleImportanceUnknown    CredentialRoleImportance = 0
+	CredentialRoleImportanceUser       CredentialRoleImportance = 1
+	CredentialRoleImportanceAdmin      CredentialRoleImportance = 2
+	CredentialRoleImportanceSuperAdmin CredentialRoleImportance = 3
+)
+
+var KnownCredentialsRoles = []CredentialsRole{
+	CredentialsRoleUser,
+	CredentialsRoleAdmin,
+	CredentialsRoleSuperAdmin,
+}
+
+var KnownCredentialsRolesWithImportance = map[CredentialsRole]CredentialRoleImportance{
+	CredentialsRoleUser:       CredentialRoleImportanceUser,
+	CredentialsRoleAdmin:      CredentialRoleImportanceAdmin,
+	CredentialsRoleSuperAdmin: CredentialRoleImportanceSuperAdmin,
+}

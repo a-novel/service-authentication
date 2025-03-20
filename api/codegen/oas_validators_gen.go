@@ -118,6 +118,19 @@ func (s *Claims) Validate() error {
 	return nil
 }
 
+func (s CredentialsRole) Validate() error {
+	switch s {
+	case "user":
+		return nil
+	case "admin":
+		return nil
+	case "super_admin":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *Dependency) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -328,6 +341,31 @@ func (s KeyUsage) Validate() error {
 
 func (s ListPublicKeysOKApplicationJSON) Validate() error {
 	alias := ([]JWK)(s)
+	if alias == nil {
+		return errors.New("nil is invalid value")
+	}
+	var failures []validate.FieldError
+	for i, elem := range alias {
+		if err := func() error {
+			if err := elem.Validate(); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			failures = append(failures, validate.FieldError{
+				Name:  fmt.Sprintf("[%d]", i),
+				Error: err,
+			})
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ListUsersOKApplicationJSON) Validate() error {
+	alias := ([]User)(s)
 	if alias == nil {
 		return errors.New("nil is invalid value")
 	}
@@ -656,6 +694,29 @@ func (s *UpdatePasswordForm) Validate() error {
 	return nil
 }
 
+func (s *UpdateRoleForm) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Role.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "role",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s Use) Validate() error {
 	switch s {
 	case "sig":
@@ -665,4 +726,38 @@ func (s Use) Validate() error {
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
+}
+
+func (s *User) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Email.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "email",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Role.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "role",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
 }

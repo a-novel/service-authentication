@@ -70,6 +70,12 @@ type Handler interface {
 	//
 	// GET /public-keys/list
 	ListPublicKeys(ctx context.Context, params ListPublicKeysParams) (ListPublicKeysRes, error)
+	// ListUsers implements listUsers operation.
+	//
+	// List users in the database.
+	//
+	// GET /users
+	ListUsers(ctx context.Context, params ListUsersParams) (ListUsersRes, error)
 	// Ping implements ping operation.
 	//
 	// Check the status of the service. If the service is running, a successful response is returned.
@@ -167,6 +173,13 @@ type Handler interface {
 	//
 	// PATCH /credentials/password
 	UpdatePassword(ctx context.Context, req *UpdatePasswordForm) (UpdatePasswordRes, error)
+	// UpdateRole implements updateRole operation.
+	//
+	// Update the role of an user. This route requires the original password of the user, to double check
+	// the identity of the caller.
+	//
+	// PATCH /credentials/role
+	UpdateRole(ctx context.Context, req *UpdateRoleForm) (UpdateRoleRes, error)
 	// NewError creates *UnexpectedErrorStatusCode from error returned by handler.
 	//
 	// Used for common default response.

@@ -66,6 +66,7 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					Role:      models.CredentialsRoleUser,
 				},
 			},
 
@@ -125,6 +126,7 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					Role:      models.CredentialsRoleUser,
 				},
 			},
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/authentication/internal/dao"
@@ -53,6 +54,64 @@ func TestLogin(t *testing.T) {
 				resp: &dao.CredentialsEntity{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordScrypted,
+					Role:     models.CredentialsRoleUser,
+				},
+			},
+
+			issueTokenData: &issueTokenData{
+				resp: "access-token",
+			},
+
+			expect: "access-token",
+		},
+		{
+			name: "Success/RoleUser",
+
+			request: services.LoginRequest{Email: "user@provider.com", Password: passwordRaw},
+
+			selectCredentialsData: &selectCredentialsData{
+				resp: &dao.CredentialsEntity{
+					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password: passwordScrypted,
+					Role:     models.CredentialsRoleUser,
+				},
+			},
+
+			issueTokenData: &issueTokenData{
+				resp: "access-token",
+			},
+
+			expect: "access-token",
+		},
+		{
+			name: "Success/RoleAdmin",
+
+			request: services.LoginRequest{Email: "user@provider.com", Password: passwordRaw},
+
+			selectCredentialsData: &selectCredentialsData{
+				resp: &dao.CredentialsEntity{
+					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password: passwordScrypted,
+					Role:     models.CredentialsRoleAdmin,
+				},
+			},
+
+			issueTokenData: &issueTokenData{
+				resp: "access-token",
+			},
+
+			expect: "access-token",
+		},
+		{
+			name: "Success/RoleSuperAdmin",
+
+			request: services.LoginRequest{Email: "user@provider.com", Password: passwordRaw},
+
+			selectCredentialsData: &selectCredentialsData{
+				resp: &dao.CredentialsEntity{
+					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password: passwordScrypted,
+					Role:     models.CredentialsRoleSuperAdmin,
 				},
 			},
 
@@ -71,6 +130,7 @@ func TestLogin(t *testing.T) {
 				resp: &dao.CredentialsEntity{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordScrypted,
+					Role:     models.CredentialsRoleUser,
 				},
 			},
 
@@ -85,6 +145,7 @@ func TestLogin(t *testing.T) {
 				resp: &dao.CredentialsEntity{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordScrypted,
+					Role:     models.CredentialsRoleUser,
 				},
 			},
 
@@ -125,7 +186,12 @@ func TestLogin(t *testing.T) {
 				source.EXPECT().
 					IssueToken(ctx, services.IssueTokenRequest{
 						UserID: &testCase.selectCredentialsData.resp.ID,
-						Roles:  []models.Role{models.RoleUser},
+						Roles: []models.Role{
+							lo.Switch[models.CredentialsRole, models.Role](testCase.selectCredentialsData.resp.Role).
+								Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+								Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+								Default(models.RoleUser),
+						},
 					}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
 			}

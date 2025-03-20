@@ -92,6 +92,12 @@ type Invoker interface {
 	//
 	// GET /public-keys/list
 	ListPublicKeys(ctx context.Context, params ListPublicKeysParams) (ListPublicKeysRes, error)
+	// ListUsers invokes listUsers operation.
+	//
+	// List users in the database.
+	//
+	// GET /users
+	ListUsers(ctx context.Context, params ListUsersParams) (ListUsersRes, error)
 	// Ping invokes ping operation.
 	//
 	// Check the status of the service. If the service is running, a successful response is returned.
@@ -189,6 +195,13 @@ type Invoker interface {
 	//
 	// PATCH /credentials/password
 	UpdatePassword(ctx context.Context, request *UpdatePasswordForm) (UpdatePasswordRes, error)
+	// UpdateRole invokes updateRole operation.
+	//
+	// Update the role of an user. This route requires the original password of the user, to double check
+	// the identity of the caller.
+	//
+	// PATCH /credentials/role
+	UpdateRole(ctx context.Context, request *UpdateRoleForm) (UpdateRoleRes, error)
 }
 
 // Client implements OAS client.
@@ -1058,6 +1071,175 @@ func (c *Client) sendListPublicKeys(ctx context.Context, params ListPublicKeysPa
 	return result, nil
 }
 
+// ListUsers invokes listUsers operation.
+//
+// List users in the database.
+//
+// GET /users
+func (c *Client) ListUsers(ctx context.Context, params ListUsersParams) (ListUsersRes, error) {
+	res, err := c.sendListUsers(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListUsers(ctx context.Context, params ListUsersParams) (res ListUsersRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listUsers"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/users"),
+	}
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListUsersOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/users"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "limit" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Limit.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "offset" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Offset.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "roles" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "roles",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if params.Roles != nil {
+				return e.EncodeArray(func(e uri.Encoder) error {
+					for i, item := range params.Roles {
+						if err := func() error {
+							return e.EncodeValue(conv.StringToString(string(item)))
+						}(); err != nil {
+							return errors.Wrapf(err, "[%d]", i)
+						}
+					}
+					return nil
+				})
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ListUsersOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListUsersResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // Ping invokes ping operation.
 //
 // Check the status of the service. If the service is running, a successful response is returned.
@@ -1183,9 +1365,9 @@ func (c *Client) sendRefreshSession(ctx context.Context, params RefreshSessionPa
 	stage = "EncodeQueryParams"
 	q := uri.NewQueryEncoder()
 	{
-		// Encode "refresh_token" parameter.
+		// Encode "refreshToken" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "refresh_token",
+			Name:    "refreshToken",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
@@ -1197,9 +1379,9 @@ func (c *Client) sendRefreshSession(ctx context.Context, params RefreshSessionPa
 		}
 	}
 	{
-		// Encode "access_token" parameter.
+		// Encode "accessToken" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "access_token",
+			Name:    "accessToken",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
@@ -2032,6 +2214,115 @@ func (c *Client) sendUpdatePassword(ctx context.Context, request *UpdatePassword
 
 	stage = "DecodeResponse"
 	result, err := decodeUpdatePasswordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// UpdateRole invokes updateRole operation.
+//
+// Update the role of an user. This route requires the original password of the user, to double check
+// the identity of the caller.
+//
+// PATCH /credentials/role
+func (c *Client) UpdateRole(ctx context.Context, request *UpdateRoleForm) (UpdateRoleRes, error) {
+	res, err := c.sendUpdateRole(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendUpdateRole(ctx context.Context, request *UpdateRoleForm) (res UpdateRoleRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("updateRole"),
+		semconv.HTTPRequestMethodKey.String("PATCH"),
+		semconv.HTTPRouteKey.String("/credentials/role"),
+	}
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, UpdateRoleOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/credentials/role"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PATCH", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeUpdateRoleRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, UpdateRoleOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeUpdateRoleResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

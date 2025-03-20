@@ -99,6 +99,15 @@ func (UnimplementedHandler) ListPublicKeys(ctx context.Context, params ListPubli
 	return r, ht.ErrNotImplemented
 }
 
+// ListUsers implements listUsers operation.
+//
+// List users in the database.
+//
+// GET /users
+func (UnimplementedHandler) ListUsers(ctx context.Context, params ListUsersParams) (r ListUsersRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // Ping implements ping operation.
 //
 // Check the status of the service. If the service is running, a successful response is returned.
@@ -226,6 +235,16 @@ func (UnimplementedHandler) UpdateEmail(ctx context.Context, req *UpdateEmailFor
 //
 // PATCH /credentials/password
 func (UnimplementedHandler) UpdatePassword(ctx context.Context, req *UpdatePasswordForm) (r UpdatePasswordRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateRole implements updateRole operation.
+//
+// Update the role of an user. This route requires the original password of the user, to double check
+// the identity of the caller.
+//
+// PATCH /credentials/role
+func (UnimplementedHandler) UpdateRole(ctx context.Context, req *UpdateRoleForm) (r UpdateRoleRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

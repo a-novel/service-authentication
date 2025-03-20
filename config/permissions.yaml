@@ -8,6 +8,7 @@ roles:
       - "register"
       - "email:update"
       - "password:reset"
+      - "users:list"
   "auth:user":
     inherits:
       - "auth:anon"
@@ -21,4 +22,5 @@ roles:
   "auth:super_admin":
     inherits:
       - "auth:admin"
-    permissions: []
+    permissions:
+      - "role:update"

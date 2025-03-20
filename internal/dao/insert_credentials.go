@@ -10,6 +10,8 @@ import (
 
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
+
+	"github.com/a-novel/authentication/models"
 )
 
 var ErrInsertCredentialsRepository = errors.New("InsertCredentialsRepository.InsertCredentials")
@@ -71,6 +73,7 @@ func (repository *InsertCredentialsRepository) InsertCredentials(
 		Password:  data.Password,
 		CreatedAt: data.Now,
 		UpdatedAt: data.Now,
+		Role:      models.CredentialsRoleUser,
 	}
 
 	// Execute query.

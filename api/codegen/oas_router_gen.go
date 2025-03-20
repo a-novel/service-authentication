@@ -154,6 +154,26 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 						}
 
+					case 'r': // Prefix: "role"
+
+						if l := len("role"); len(elem) >= l && elem[0:l] == "role" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "PATCH":
+								s.handleUpdateRoleRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "PATCH")
+							}
+
+							return
+						}
+
 					}
 
 				}
@@ -434,6 +454,26 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				}
 
+			case 'u': // Prefix: "users"
+
+				if l := len("users"); len(elem) >= l && elem[0:l] == "users" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleListUsersRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+
 			}
 
 		}
@@ -642,6 +682,30 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								}
 							}
 
+						}
+
+					case 'r': // Prefix: "role"
+
+						if l := len("role"); len(elem) >= l && elem[0:l] == "role" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "PATCH":
+								r.name = UpdateRoleOperation
+								r.summary = "Update the role of an user."
+								r.operationID = "updateRole"
+								r.pathPattern = "/credentials/role"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
 						}
 
 					}
@@ -974,6 +1038,30 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 					}
 
+				}
+
+			case 'u': // Prefix: "users"
+
+				if l := len("users"); len(elem) >= l && elem[0:l] == "users" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = ListUsersOperation
+						r.summary = "List all users."
+						r.operationID = "listUsers"
+						r.pathPattern = "/users"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 
 			}

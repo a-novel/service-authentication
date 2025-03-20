@@ -5,6 +5,7 @@ package codegen
 import (
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
@@ -357,6 +358,56 @@ type CreateAnonSessionIMATeapot struct{}
 
 func (*CreateAnonSessionIMATeapot) createAnonSessionRes() {}
 
+// A role specifically assigned to a user.
+// Ref: #/components/schemas/CredentialsRole
+type CredentialsRole string
+
+const (
+	CredentialsRoleUser       CredentialsRole = "user"
+	CredentialsRoleAdmin      CredentialsRole = "admin"
+	CredentialsRoleSuperAdmin CredentialsRole = "super_admin"
+)
+
+// AllValues returns all CredentialsRole values.
+func (CredentialsRole) AllValues() []CredentialsRole {
+	return []CredentialsRole{
+		CredentialsRoleUser,
+		CredentialsRoleAdmin,
+		CredentialsRoleSuperAdmin,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CredentialsRole) MarshalText() ([]byte, error) {
+	switch s {
+	case CredentialsRoleUser:
+		return []byte(s), nil
+	case CredentialsRoleAdmin:
+		return []byte(s), nil
+	case CredentialsRoleSuperAdmin:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CredentialsRole) UnmarshalText(data []byte) error {
+	switch CredentialsRole(data) {
+	case CredentialsRoleUser:
+		*s = CredentialsRoleUser
+		return nil
+	case CredentialsRoleAdmin:
+		*s = CredentialsRoleAdmin
+		return nil
+	case CredentialsRoleSuperAdmin:
+		*s = CredentialsRoleSuperAdmin
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/Dependency
 type Dependency struct {
 	// The name of the dependency.
@@ -487,6 +538,7 @@ func (*ForbiddenError) registerRes()           {}
 func (*ForbiddenError) resetPasswordRes()      {}
 func (*ForbiddenError) updateEmailRes()        {}
 func (*ForbiddenError) updatePasswordRes()     {}
+func (*ForbiddenError) updateRoleRes()         {}
 
 // Ref: #/components/schemas/Health
 type Health struct {
@@ -800,6 +852,15 @@ type ListPublicKeysOKApplicationJSON []JWK
 
 func (*ListPublicKeysOKApplicationJSON) listPublicKeysRes() {}
 
+// ListUsersIMATeapot is response for ListUsers operation.
+type ListUsersIMATeapot struct{}
+
+func (*ListUsersIMATeapot) listUsersRes() {}
+
+type ListUsersOKApplicationJSON []User
+
+func (*ListUsersOKApplicationJSON) listUsersRes() {}
+
 // Data used to authenticate a user. It usually includes some private information only known to the
 // user
 // (password, secret question, etc), that is checked against some protected data on the server. If
@@ -852,6 +913,53 @@ func (*NotFoundError) emailExistsRes()          {}
 func (*NotFoundError) getPublicKeyRes()         {}
 func (*NotFoundError) requestPasswordResetRes() {}
 func (*NotFoundError) updateEmailRes()          {}
+func (*NotFoundError) updateRoleRes()           {}
+
+// NewOptInt returns new OptInt with value set to v.
+func NewOptInt(v int) OptInt {
+	return OptInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt is optional int.
+type OptInt struct {
+	Value int
+	Set   bool
+}
+
+// IsSet returns true if OptInt was set.
+func (o OptInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt) SetTo(v int) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt) Get() (v int, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
 
 // NewOptKID returns new OptKID with value set to v.
 func NewOptKID(v KID) OptKID {
@@ -1234,6 +1342,7 @@ func (s *UnprocessableEntityError) SetError(val string) {
 }
 
 func (*UnprocessableEntityError) refreshSessionRes() {}
+func (*UnprocessableEntityError) updateRoleRes()     {}
 
 // Data used to update the email of a user.
 // Ref: #/components/schemas/UpdateEmailForm
@@ -1326,6 +1435,45 @@ type UpdatePasswordNoContent struct{}
 
 func (*UpdatePasswordNoContent) updatePasswordRes() {}
 
+// Data used to update the role of a user. The user requesting the update must follow some
+// specific rules.
+// - A user cannot upgrade other users to a role higher than its own.
+// - A user can only downgrade other users to a role lower than its own.
+// For example, the following operations are permitted:
+// - ✅ A (super_admin) upgrades B (admin) to super_admin.
+// - ✅ A (admin) upgrades B (user) to admin.
+// - ✅ A (super_admin) downgrades B (admin) to user.
+// But the following operations are not:
+// - ❌ A (admin) upgrades B (user) to super_admin.
+// - ❌ A (admin) downgrades B (admin) to user.
+// Ref: #/components/schemas/UpdateRoleForm
+type UpdateRoleForm struct {
+	// The id of the user who's role is to be updated.
+	UserID UserID `json:"userID"`
+	// The new role of the user.
+	Role CredentialsRole `json:"role"`
+}
+
+// GetUserID returns the value of UserID.
+func (s *UpdateRoleForm) GetUserID() UserID {
+	return s.UserID
+}
+
+// GetRole returns the value of Role.
+func (s *UpdateRoleForm) GetRole() CredentialsRole {
+	return s.Role
+}
+
+// SetUserID sets the value of UserID.
+func (s *UpdateRoleForm) SetUserID(val UserID) {
+	s.UserID = val
+}
+
+// SetRole sets the value of Role.
+func (s *UpdateRoleForm) SetRole(val CredentialsRole) {
+	s.Role = val
+}
+
 // The intended use of the public key.
 // Ref: #/components/schemas/Use
 type Use string
@@ -1368,5 +1516,71 @@ func (s *Use) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// Ref: #/components/schemas/User
+type User struct {
+	// The unique identifier of the user.
+	ID UserID `json:"id"`
+	// The email of the user.
+	Email Email `json:"email"`
+	// The role of the user.
+	Role CredentialsRole `json:"role"`
+	// The date and time the user was created.
+	CreatedAt time.Time `json:"createdAt"`
+	// The date and time the user was last updated.
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *User) GetID() UserID {
+	return s.ID
+}
+
+// GetEmail returns the value of Email.
+func (s *User) GetEmail() Email {
+	return s.Email
+}
+
+// GetRole returns the value of Role.
+func (s *User) GetRole() CredentialsRole {
+	return s.Role
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *User) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *User) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *User) SetID(val UserID) {
+	s.ID = val
+}
+
+// SetEmail sets the value of Email.
+func (s *User) SetEmail(val Email) {
+	s.Email = val
+}
+
+// SetRole sets the value of Role.
+func (s *User) SetRole(val CredentialsRole) {
+	s.Role = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *User) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *User) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+func (*User) updateRoleRes() {}
 
 type UserID uuid.UUID

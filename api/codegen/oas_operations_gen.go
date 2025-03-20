@@ -14,6 +14,7 @@ const (
 	GetPublicKeyOperation         OperationName = "GetPublicKey"
 	HealthcheckOperation          OperationName = "Healthcheck"
 	ListPublicKeysOperation       OperationName = "ListPublicKeys"
+	ListUsersOperation            OperationName = "ListUsers"
 	PingOperation                 OperationName = "Ping"
 	RefreshSessionOperation       OperationName = "RefreshSession"
 	RegisterOperation             OperationName = "Register"
@@ -23,4 +24,5 @@ const (
 	ResetPasswordOperation        OperationName = "ResetPassword"
 	UpdateEmailOperation          OperationName = "UpdateEmail"
 	UpdatePasswordOperation       OperationName = "UpdatePassword"
+	UpdateRoleOperation           OperationName = "UpdateRole"
 )

@@ -11,6 +11,7 @@ import (
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/authentication/internal/dao"
+	"github.com/a-novel/authentication/models"
 )
 
 func TestUpdateCredentialsEmail(t *testing.T) {
@@ -35,6 +36,7 @@ func TestUpdateCredentialsEmail(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					Role:      models.CredentialsRoleUser,
 				},
 			},
 
@@ -50,6 +52,7 @@ func TestUpdateCredentialsEmail(t *testing.T) {
 				Password:  "password-2-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				Role:      models.CredentialsRoleUser,
 			},
 		},
 		{
@@ -73,6 +76,7 @@ func TestUpdateCredentialsEmail(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 2, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 2, 1, 0, 0, 0, 0, time.UTC),
+					Role:      models.CredentialsRoleUser,
 				},
 				{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -80,6 +84,7 @@ func TestUpdateCredentialsEmail(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					Role:      models.CredentialsRoleUser,
 				},
 			},
 

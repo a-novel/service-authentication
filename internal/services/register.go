@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
@@ -86,7 +87,12 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	// Generate a new authentication token.
 	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
 		UserID: &credentials.ID,
-		Roles:  []models.Role{models.RoleUser},
+		Roles: []models.Role{
+			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
+				Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+				Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+				Default(models.RoleUser),
+		},
 	})
 	if err != nil {
 		return "", NewErrRegisterService(fmt.Errorf("issue accessToken: %w", err))

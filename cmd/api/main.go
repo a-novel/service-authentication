@@ -69,6 +69,9 @@ func main() {
 	insertCredentialsDAO := dao.NewInsertCredentialsRepository()
 	updateEmailDAO := dao.NewUpdateCredentialsEmailRepository()
 	updatePasswordDAO := dao.NewUpdateCredentialsPasswordRepository()
+	updateRoleDAO := dao.NewUpdateCredentialsRoleRepository()
+
+	listUsersDAO := dao.NewListUsersRepository()
 
 	// SERVICES --------------------------------------------------------------------------------------------------------
 
@@ -83,7 +86,10 @@ func main() {
 	issueTokenService := services.NewIssueTokenService(authSignSource)
 	issueRefreshTokenService := services.NewIssueRefreshTokenService(refreshSignSource)
 	consumeRefreshTokenService := services.NewConsumeRefreshTokenService(
-		issueTokenService,
+		services.NewNewConsumeRefreshTokenServiceSource(
+			selectCredentialsDAO,
+			issueTokenService,
+		),
 		authVerifySource,
 		refreshVerifySource,
 	)
@@ -109,6 +115,11 @@ func main() {
 	updatePasswordService := services.NewUpdatePasswordService(services.NewUpdatePasswordSource(
 		selectCredentialsDAO, updatePasswordDAO, consumeShortCodeService,
 	))
+	updateRoleService := services.NewUpdateRoleService(services.NewUpdateRoleServiceSource(
+		updateRoleDAO, selectCredentialsDAO,
+	))
+
+	listUsersService := services.NewListUsersService(listUsersDAO)
 
 	requestRegisterService := services.NewRequestRegisterService(createShortCodeService)
 	defer requestRegisterService.Wait()
@@ -190,6 +201,9 @@ func main() {
 		EmailExistsService:    emailExistsService,
 		UpdateEmailService:    updateEmailService,
 		UpdatePasswordService: updatePasswordService,
+		UpdateRoleService:     updateRoleService,
+
+		ListUsersService: listUsersService,
 	}
 
 	apiPermissions := map[codegen.OperationName][]models.Permission{
@@ -213,8 +227,11 @@ func main() {
 		codegen.EmailExistsOperation:    {"email:exists"},
 		codegen.UpdateEmailOperation:    {"email:update"},
 		codegen.UpdatePasswordOperation: {"password:update"},
+		codegen.UpdateRoleOperation:     {"role:update"},
 
 		codegen.ResetPasswordOperation: {"password:reset"},
+
+		codegen.ListUsersOperation: {"users:list"},
 	}
 
 	securityHandler, err := api.NewSecurity(apiPermissions, config.Permissions, authenticateService)
