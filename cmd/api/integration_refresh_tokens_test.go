@@ -11,11 +11,7 @@ import (
 // STORY: The user can update its token, and the new token is valid.
 
 func TestRefreshTokensAPI(t *testing.T) {
-	t.Parallel()
-
 	t.Run("Anon", func(t *testing.T) {
-		t.Parallel()
-
 		client, securityClient, err := getServerClient()
 		require.NoError(t, err)
 
@@ -38,8 +34,6 @@ func TestRefreshTokensAPI(t *testing.T) {
 	})
 
 	t.Run("User", func(t *testing.T) {
-		t.Parallel()
-
 		client, securityClient, err := getServerClient()
 		require.NoError(t, err)
 

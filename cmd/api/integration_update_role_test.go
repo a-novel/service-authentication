@@ -14,8 +14,6 @@ import (
 )
 
 func TestUpdateRole(t *testing.T) {
-	t.Parallel()
-
 	client, securityClient, err := getServerClient()
 	require.NoError(t, err)
 

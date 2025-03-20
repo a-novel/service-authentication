@@ -16,8 +16,6 @@ import (
 // STORY: The user can update its email.
 
 func TestUpdateEmailAPI(t *testing.T) {
-	t.Parallel()
-
 	client, securityClient, err := getServerClient()
 	require.NoError(t, err)
 

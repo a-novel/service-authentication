@@ -51,3 +51,7 @@ issues:
       linters:
         - tparallel
         - paralleltest
+    - path: cmd/api/(.+)_test.go
+      linters:
+        - tparallel
+        - paralleltest
