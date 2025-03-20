@@ -6,8 +6,8 @@ github.com/a-novel-kit/context/pgbun v1.2.0 h1:sHgXrjvKNVoFnQ54VtaoUVDPx0RwzhK6s
 github.com/a-novel-kit/context/pgbun v1.2.0/go.mod h1:osfUtUzr3Hf4PQ83xPZbbwcIvX4lVAzHm6KHT0P71os=
 github.com/a-novel-kit/context/sentry v1.2.0 h1:INs6sjuBErucTnssupakSL4EwcJQCGQmQ4yxHalPnsI=
 github.com/a-novel-kit/context/sentry v1.2.0/go.mod h1:YVU5xWZjTd/QWcf26csgsgANlZtJjXs/Xu4etEtqI2A=
-github.com/a-novel-kit/jwt v1.1.0 h1:HEbmsVXXm3pBH1O4zgqZ6P9avy7czUX4VabhBA41nwU=
-github.com/a-novel-kit/jwt v1.1.0/go.mod h1:lAl9PImCHnxEyWGZXXhNrof/+cmsZuRzcDfkyZobf4c=
+github.com/a-novel-kit/jwt v1.1.1 h1:Q09oO2evB3BnzhOtPFITKlK+ZTKx/aBkk7JUkOzfYWo=
+github.com/a-novel-kit/jwt v1.1.1/go.mod h1:XB9ubSIpU/P3pCyuxEeEerpJ/UgPB7KT9FkN7QlzpRg=
 github.com/a-novel-kit/middlewares/zerolog v1.1.0 h1:iKuV5Y5EftaluUxE3bL7FtV+6s7VZMutztaHQr87Hvw=
 github.com/a-novel-kit/middlewares/zerolog v1.1.0/go.mod h1:BS+MPXFx/ty+wJJO0IIolZ5OaAz8PJT8OlOdPNSRjbg=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
