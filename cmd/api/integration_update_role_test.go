@@ -8,13 +8,14 @@ import (
 
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
+	"github.com/a-novel/authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/authentication/api/codegen"
 	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/models"
 )
 
 func TestUpdateRole(t *testing.T) {
-	client, securityClient, err := getServerClient()
+	client, securityClient, err := testapiclient.GetServerClient()
 	require.NoError(t, err)
 
 	anonToken := authAnon(t, client)

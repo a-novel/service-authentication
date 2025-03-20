@@ -12,6 +12,7 @@ import (
 
 	"github.com/a-novel-kit/configurator/utilstest"
 
+	"github.com/a-novel/authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/authentication/api/codegen"
 )
 
@@ -121,7 +122,7 @@ func createUser(t *testing.T, client *codegen.Client) *userData {
 }
 
 func TestUserLifecycle(t *testing.T) {
-	client, securityClient, err := getServerClient()
+	client, securityClient, err := testapiclient.GetServerClient()
 	require.NoError(t, err)
 
 	token := authAnon(t, client)

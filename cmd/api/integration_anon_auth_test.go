@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/authentication/api/codegen"
 )
 
@@ -42,7 +43,7 @@ func checkSession(t *testing.T, client *codegen.Client) *codegen.Claims {
 }
 
 func TestAnonAuthAPI(t *testing.T) {
-	client, securityClient, err := getServerClient()
+	client, securityClient, err := testapiclient.GetServerClient()
 	require.NoError(t, err)
 
 	t.Log("CheckSession/Unauthenticated")

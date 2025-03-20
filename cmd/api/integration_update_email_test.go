@@ -10,13 +10,14 @@ import (
 
 	"github.com/a-novel-kit/configurator/utilstest"
 
+	"github.com/a-novel/authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/authentication/api/codegen"
 )
 
 // STORY: The user can update its email.
 
 func TestUpdateEmailAPI(t *testing.T) {
-	client, securityClient, err := getServerClient()
+	client, securityClient, err := testapiclient.GetServerClient()
 	require.NoError(t, err)
 
 	anonToken := authAnon(t, client)
