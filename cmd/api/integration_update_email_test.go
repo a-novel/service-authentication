@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"testing"
 	"time"
 
@@ -31,7 +32,7 @@ func TestUpdateEmailAPI(t *testing.T) {
 
 	var shortCode string
 
-	newEmail := getRandomString() + "@example.com"
+	newEmail := rand.Text() + "@example.com"
 
 	t.Log("RequestEmailUpdate")
 	{

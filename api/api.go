@@ -13,6 +13,16 @@ import (
 	"github.com/a-novel/authentication/api/codegen"
 )
 
+var ErrUnauthorized = &codegen.UnexpectedErrorStatusCode{
+	StatusCode: http.StatusUnauthorized,
+	Response:   codegen.UnexpectedError{Error: "Unauthorized"},
+}
+
+var ErrInternalServerError = &codegen.UnexpectedErrorStatusCode{
+	StatusCode: http.StatusInternalServerError,
+	Response:   codegen.UnexpectedError{Error: "internal server error"},
+}
+
 type API struct {
 	LoginService               LoginService
 	LoginAnonService           LoginAnonService
@@ -51,18 +61,12 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 	if ok := errors.As(err, &securityError); ok {
 		logger.Warn().Err(err).Msg("authentication failed")
 
-		return &codegen.UnexpectedErrorStatusCode{
-			StatusCode: http.StatusUnauthorized,
-			Response:   codegen.UnexpectedError{Error: "Unauthorized"},
-		}
+		return ErrUnauthorized
 	}
 
 	// Unhandled, unexpected error occurred.
 	logger.Error().Err(err).Msg("internal error")
 	sentryctx.CaptureException(ctx, err)
 
-	return &codegen.UnexpectedErrorStatusCode{
-		StatusCode: http.StatusInternalServerError,
-		Response:   codegen.UnexpectedError{Error: "internal server error"},
-	}
+	return ErrInternalServerError
 }

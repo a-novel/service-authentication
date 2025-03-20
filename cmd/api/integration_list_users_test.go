@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"testing"
 	"time"
 
@@ -28,21 +29,21 @@ func TestListUsers(t *testing.T) {
 	fixtures := []*dao.CredentialsEntity{
 		{
 			ID:        uuid.New(),
-			Email:     getRandomString() + "@email.com",
+			Email:     rand.Text() + "@email.com",
 			Role:      models.CredentialsRoleUser,
 			CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 			UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			ID:        uuid.New(),
-			Email:     getRandomString() + "@email.com",
+			Email:     rand.Text() + "@email.com",
 			Role:      models.CredentialsRoleAdmin,
 			CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 			UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			ID:        uuid.New(),
-			Email:     getRandomString() + "@email.com",
+			Email:     rand.Text() + "@email.com",
 			Role:      models.CredentialsRoleUser,
 			CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 			UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),

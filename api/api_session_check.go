@@ -24,5 +24,6 @@ func (api *API) CheckSession(ctx context.Context) (codegen.CheckSessionRes, erro
 		Roles: lo.Map(claims.Roles, func(item models.Role, _ int) codegen.Role {
 			return codegen.Role(item)
 		}),
+		RefreshTokenID: codegen.OptString{Value: lo.FromPtr(claims.RefreshTokenID), Set: claims.RefreshTokenID != nil},
 	}, nil
 }
