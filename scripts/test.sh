@@ -2,16 +2,12 @@
 
 APP_NAME="${APP_NAME}-test"
 PODMAN_FILE="$PWD/build/podman-compose.test.yaml"
-PODMAN_VOLUME="=${APP_NAME}_postgres-test-data"
-PODMAN_INTEGRATION_VOLUME="=${APP_NAME}_postgres-integration-test-data"
 TEST_TOOL_PKG="gotest.tools/gotestsum@latest"
 
 # Ensure containers are properly shut down when the program exits abnormally.
 int_handler()
 {
-    podman compose -p "${APP_NAME}" -f "${PODMAN_FILE}" down
-    podman volume rm "${PODMAN_VOLUME}" -f
-    podman volume rm "${PODMAN_INTEGRATION_VOLUME}" -f
+    podman compose -p "${APP_NAME}" -f "${PODMAN_FILE}" down --volume
 }
 trap int_handler INT
 
@@ -27,6 +23,4 @@ export DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${
 go run ${TEST_TOOL_PKG} --format pkgname -- -count=1 -cover $(go list ./... | grep -v /mocks | grep -v /codegen)
 
 # Normal execution: containers are shut down.
-podman compose -p "${APP_NAME}" -f "${PODMAN_FILE}" down
-podman volume rm "${PODMAN_VOLUME}" -f
-podman volume rm "${PODMAN_INTEGRATION_VOLUME}" -f
+podman compose -p "${APP_NAME}" -f "${PODMAN_FILE}" down --volume
