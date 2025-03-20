@@ -10,13 +10,14 @@ import (
 
 	"github.com/a-novel-kit/configurator/utilstest"
 
+	"github.com/a-novel/authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/authentication/api/codegen"
 )
 
 // STORY: user forgot its password and wants to reset it.
 
 func TestResetPasswordAPI(t *testing.T) {
-	client, securityClient, err := getServerClient()
+	client, securityClient, err := testapiclient.GetServerClient()
 	require.NoError(t, err)
 
 	anonToken := authAnon(t, client)

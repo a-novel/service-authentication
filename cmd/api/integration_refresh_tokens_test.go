@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/authentication/api/codegen"
 )
 
@@ -12,7 +13,7 @@ import (
 
 func TestRefreshTokensAPI(t *testing.T) {
 	t.Run("Anon", func(t *testing.T) {
-		client, securityClient, err := getServerClient()
+		client, securityClient, err := testapiclient.GetServerClient()
 		require.NoError(t, err)
 
 		token := authAnon(t, client)
@@ -34,7 +35,7 @@ func TestRefreshTokensAPI(t *testing.T) {
 	})
 
 	t.Run("User", func(t *testing.T) {
-		client, securityClient, err := getServerClient()
+		client, securityClient, err := testapiclient.GetServerClient()
 		require.NoError(t, err)
 
 		token := authAnon(t, client)

@@ -4,12 +4,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/a-novel/authentication/api/apiclient/testapiclient"
 )
 
 // STORY: The user can call health apis, and they return a 200 status code.
 
 func TestHealthAPI(t *testing.T) {
-	client, _, err := getServerClient()
+	client, _, err := testapiclient.GetServerClient()
 	require.NoError(t, err)
 
 	_, err = client.Ping(t.Context())
