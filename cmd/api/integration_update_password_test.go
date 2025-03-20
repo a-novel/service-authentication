@@ -12,8 +12,6 @@ import (
 // STORY: The user can update its password.
 
 func TestUpdatePasswordAPI(t *testing.T) {
-	t.Parallel()
-
 	client, securityClient, err := getServerClient()
 	require.NoError(t, err)
 

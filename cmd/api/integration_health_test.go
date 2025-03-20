@@ -9,8 +9,6 @@ import (
 // STORY: The user can call health apis, and they return a 200 status code.
 
 func TestHealthAPI(t *testing.T) {
-	t.Parallel()
-
 	client, _, err := getServerClient()
 	require.NoError(t, err)
 

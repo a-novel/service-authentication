@@ -121,8 +121,6 @@ func createUser(t *testing.T, client *codegen.Client) *userData {
 }
 
 func TestUserLifecycle(t *testing.T) {
-	t.Parallel()
-
 	client, securityClient, err := getServerClient()
 	require.NoError(t, err)
 

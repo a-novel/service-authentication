@@ -16,8 +16,6 @@ import (
 // STORY: user forgot its password and wants to reset it.
 
 func TestResetPasswordAPI(t *testing.T) {
-	t.Parallel()
-
 	client, securityClient, err := getServerClient()
 	require.NoError(t, err)
 

@@ -52,7 +52,7 @@ func (api *API) CredentialsRoleToModel(role codegen.CredentialsRole) models.Cred
 	return lo.Switch[codegen.CredentialsRole, models.CredentialsRole](role).
 		Case(codegen.CredentialsRoleUser, models.CredentialsRoleUser).
 		Case(codegen.CredentialsRoleAdmin, models.CredentialsRoleAdmin).
-		Case(codegen.CredentialsRoleUser, models.CredentialsRoleUser).
+		Case(codegen.CredentialsRoleSuperAdmin, models.CredentialsRoleSuperAdmin).
 		Default("")
 }
 
@@ -60,6 +60,6 @@ func (api *API) CredentialsRoleFromModel(role models.CredentialsRole) codegen.Cr
 	return lo.Switch[models.CredentialsRole, codegen.CredentialsRole](role).
 		Case(models.CredentialsRoleUser, codegen.CredentialsRoleUser).
 		Case(models.CredentialsRoleAdmin, codegen.CredentialsRoleAdmin).
-		Case(models.CredentialsRoleUser, codegen.CredentialsRoleUser).
+		Case(models.CredentialsRoleSuperAdmin, codegen.CredentialsRoleSuperAdmin).
 		Default("")
 }

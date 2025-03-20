@@ -42,8 +42,6 @@ func checkSession(t *testing.T, client *codegen.Client) *codegen.Claims {
 }
 
 func TestAnonAuthAPI(t *testing.T) {
-	t.Parallel()
-
 	client, securityClient, err := getServerClient()
 	require.NoError(t, err)
 
