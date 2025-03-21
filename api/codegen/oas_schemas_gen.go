@@ -1451,16 +1451,10 @@ func (*UpdateEmailOK) updateEmailRes() {}
 // Data used to update the password of a user.
 // Ref: #/components/schemas/UpdatePasswordForm
 type UpdatePasswordForm struct {
-	Email Email `json:"email"`
 	// The new password of the user.
 	Password Password `json:"password"`
 	// The current password of the user, used for further verification of the caller identity.
 	CurrentPassword Password `json:"currentPassword"`
-}
-
-// GetEmail returns the value of Email.
-func (s *UpdatePasswordForm) GetEmail() Email {
-	return s.Email
 }
 
 // GetPassword returns the value of Password.
@@ -1471,11 +1465,6 @@ func (s *UpdatePasswordForm) GetPassword() Password {
 // GetCurrentPassword returns the value of CurrentPassword.
 func (s *UpdatePasswordForm) GetCurrentPassword() Password {
 	return s.CurrentPassword
-}
-
-// SetEmail sets the value of Email.
-func (s *UpdatePasswordForm) SetEmail(val Email) {
-	s.Email = val
 }
 
 // SetPassword sets the value of Password.

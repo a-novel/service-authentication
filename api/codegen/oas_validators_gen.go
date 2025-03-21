@@ -656,17 +656,6 @@ func (s *UpdatePasswordForm) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.Email.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "email",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if err := s.Password.Validate(); err != nil {
 			return err
 		}

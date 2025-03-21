@@ -846,12 +846,9 @@ components:
       type: object
       description: Data used to update the password of a user.
       required:
-        - email
         - password
         - currentPassword
       properties:
-        email:
-          $ref: "#/components/schemas/Email"
         password:
           $ref: "#/components/schemas/Password"
           description: The new password of the user.
