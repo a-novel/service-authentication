@@ -27,7 +27,6 @@ func TestUpdatePasswordAPI(t *testing.T) {
 	t.Log("UpdatePassword/WrongPassword")
 	{
 		rawRes, err := client.UpdatePassword(t.Context(), &codegen.UpdatePasswordForm{
-			Email:           codegen.Email(user.email),
 			Password:        codegen.Password(newPassword),
 			CurrentPassword: "fakepassword",
 		})
@@ -39,7 +38,6 @@ func TestUpdatePasswordAPI(t *testing.T) {
 	t.Log("UpdatePassword")
 	{
 		rawRes, err := client.UpdatePassword(t.Context(), &codegen.UpdatePasswordForm{
-			Email:           codegen.Email(user.email),
 			Password:        codegen.Password(newPassword),
 			CurrentPassword: codegen.Password(user.password),
 		})

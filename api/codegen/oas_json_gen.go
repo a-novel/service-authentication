@@ -2909,10 +2909,6 @@ func (s *UpdatePasswordForm) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *UpdatePasswordForm) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("email")
-		s.Email.Encode(e)
-	}
-	{
 		e.FieldStart("password")
 		s.Password.Encode(e)
 	}
@@ -2922,10 +2918,9 @@ func (s *UpdatePasswordForm) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUpdatePasswordForm = [3]string{
-	0: "email",
-	1: "password",
-	2: "currentPassword",
+var jsonFieldsNameOfUpdatePasswordForm = [2]string{
+	0: "password",
+	1: "currentPassword",
 }
 
 // Decode decodes UpdatePasswordForm from json.
@@ -2937,18 +2932,8 @@ func (s *UpdatePasswordForm) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "email":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.Email.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"email\"")
-			}
 		case "password":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				if err := s.Password.Decode(d); err != nil {
 					return err
@@ -2958,7 +2943,7 @@ func (s *UpdatePasswordForm) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"password\"")
 			}
 		case "currentPassword":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.CurrentPassword.Decode(d); err != nil {
 					return err
@@ -2977,7 +2962,7 @@ func (s *UpdatePasswordForm) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
