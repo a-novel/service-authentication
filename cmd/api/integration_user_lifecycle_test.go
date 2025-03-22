@@ -52,7 +52,7 @@ func captureEmailLog(t *testing.T, email string) utilstest.LogCaptureFN {
 func extractShortCode(log string) (string, error) {
 	var out struct {
 		DynamicTemplateData struct {
-			ShortCode string `json:"shortCode"`
+			ShortCode string `json:"ShortCode"`
 		} `json:"dynamicTemplateData"`
 	}
 

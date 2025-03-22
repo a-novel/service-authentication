@@ -51,6 +51,20 @@ func TestRequestEmailUpdate(t *testing.T) {
 			expect: &codegen.RequestEmailUpdateNoContent{},
 		},
 		{
+			name: "Success/Lang",
+
+			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+
+			form: &codegen.RequestEmailUpdateForm{
+				Email: "user@provider.com",
+				Lang:  codegen.OptLang{Value: codegen.LangFr, Set: true},
+			},
+
+			requestEmailUpdateData: &requestEmailUpdateData{},
+
+			expect: &codegen.RequestEmailUpdateNoContent{},
+		},
+		{
 			name: "NoUser",
 
 			form: &codegen.RequestEmailUpdateForm{
@@ -90,6 +104,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 				source.EXPECT().
 					RequestEmailUpdate(ctx, services.RequestEmailUpdateRequest{
 						Email: string(testCase.form.GetEmail()),
+						Lang:  models.Lang(testCase.form.GetLang().Value),
 						ID:    lo.FromPtr(testCase.userID),
 					}).
 					Return(nil, testCase.requestEmailUpdateData.err)

@@ -555,7 +555,6 @@ func (*ForbiddenError) updateRoleRes()         {}
 // Ref: #/components/schemas/Health
 type Health struct {
 	Postgres Dependency `json:"postgres"`
-	Sendgrid Dependency `json:"sendgrid"`
 }
 
 // GetPostgres returns the value of Postgres.
@@ -563,19 +562,9 @@ func (s *Health) GetPostgres() Dependency {
 	return s.Postgres
 }
 
-// GetSendgrid returns the value of Sendgrid.
-func (s *Health) GetSendgrid() Dependency {
-	return s.Sendgrid
-}
-
 // SetPostgres sets the value of Postgres.
 func (s *Health) SetPostgres(val Dependency) {
 	s.Postgres = val
-}
-
-// SetSendgrid sets the value of Sendgrid.
-func (s *Health) SetSendgrid(val Dependency) {
-	s.Sendgrid = val
 }
 
 func (*Health) healthcheckRes() {}
@@ -855,6 +844,49 @@ func (s *KeyUsage) UnmarshalText(data []byte) error {
 	}
 }
 
+// The language of the user.
+// Ref: #/components/schemas/Lang
+type Lang string
+
+const (
+	LangEn Lang = "en"
+	LangFr Lang = "fr"
+)
+
+// AllValues returns all Lang values.
+func (Lang) AllValues() []Lang {
+	return []Lang{
+		LangEn,
+		LangFr,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s Lang) MarshalText() ([]byte, error) {
+	switch s {
+	case LangEn:
+		return []byte(s), nil
+	case LangFr:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *Lang) UnmarshalText(data []byte) error {
+	switch Lang(data) {
+	case LangEn:
+		*s = LangEn
+		return nil
+	case LangFr:
+		*s = LangFr
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // ListPublicKeysIMATeapot is response for ListPublicKeys operation.
 type ListPublicKeysIMATeapot struct{}
 
@@ -1013,6 +1045,52 @@ func (o OptKID) Get() (v KID, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptKID) Or(d KID) KID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptLang returns new OptLang with value set to v.
+func NewOptLang(v Lang) OptLang {
+	return OptLang{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptLang is optional Lang.
+type OptLang struct {
+	Value Lang
+	Set   bool
+}
+
+// IsSet returns true if OptLang was set.
+func (o OptLang) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptLang) Reset() {
+	var v Lang
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptLang) SetTo(v Lang) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptLang) Get() (v Lang, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptLang) Or(d Lang) Lang {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1196,7 +1274,8 @@ func (s *RegisterForm) SetShortCode(val ShortCode) {
 // Ref: #/components/schemas/RequestEmailUpdateForm
 type RequestEmailUpdateForm struct {
 	// The bew email of the new user. This email must be available at the time of validation.
-	Email Email `json:"email"`
+	Email Email   `json:"email"`
+	Lang  OptLang `json:"lang"`
 }
 
 // GetEmail returns the value of Email.
@@ -1204,9 +1283,19 @@ func (s *RequestEmailUpdateForm) GetEmail() Email {
 	return s.Email
 }
 
+// GetLang returns the value of Lang.
+func (s *RequestEmailUpdateForm) GetLang() OptLang {
+	return s.Lang
+}
+
 // SetEmail sets the value of Email.
 func (s *RequestEmailUpdateForm) SetEmail(val Email) {
 	s.Email = val
+}
+
+// SetLang sets the value of Lang.
+func (s *RequestEmailUpdateForm) SetLang(val OptLang) {
+	s.Lang = val
 }
 
 // RequestEmailUpdateIMATeapot is response for RequestEmailUpdate operation.
@@ -1223,7 +1312,8 @@ func (*RequestEmailUpdateNoContent) requestEmailUpdateRes() {}
 // Ref: #/components/schemas/RequestPasswordResetForm
 type RequestPasswordResetForm struct {
 	// The email of the user. This email must match a user in the database.
-	Email Email `json:"email"`
+	Email Email   `json:"email"`
+	Lang  OptLang `json:"lang"`
 }
 
 // GetEmail returns the value of Email.
@@ -1231,9 +1321,19 @@ func (s *RequestPasswordResetForm) GetEmail() Email {
 	return s.Email
 }
 
+// GetLang returns the value of Lang.
+func (s *RequestPasswordResetForm) GetLang() OptLang {
+	return s.Lang
+}
+
 // SetEmail sets the value of Email.
 func (s *RequestPasswordResetForm) SetEmail(val Email) {
 	s.Email = val
+}
+
+// SetLang sets the value of Lang.
+func (s *RequestPasswordResetForm) SetLang(val OptLang) {
+	s.Lang = val
 }
 
 // RequestPasswordResetNoContent is response for RequestPasswordReset operation.
@@ -1245,7 +1345,8 @@ func (*RequestPasswordResetNoContent) requestPasswordResetRes() {}
 // Ref: #/components/schemas/RequestRegistrationForm
 type RequestRegistrationForm struct {
 	// The email of the new user. This email must be available at the time of registration.
-	Email Email `json:"email"`
+	Email Email   `json:"email"`
+	Lang  OptLang `json:"lang"`
 }
 
 // GetEmail returns the value of Email.
@@ -1253,9 +1354,19 @@ func (s *RequestRegistrationForm) GetEmail() Email {
 	return s.Email
 }
 
+// GetLang returns the value of Lang.
+func (s *RequestRegistrationForm) GetLang() OptLang {
+	return s.Lang
+}
+
 // SetEmail sets the value of Email.
 func (s *RequestRegistrationForm) SetEmail(val Email) {
 	s.Email = val
+}
+
+// SetLang sets the value of Lang.
+func (s *RequestRegistrationForm) SetLang(val OptLang) {
+	s.Lang = val
 }
 
 // RequestRegistrationIMATeapot is response for RequestRegistration operation.

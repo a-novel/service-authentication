@@ -52,7 +52,6 @@ jobs:
     env:
       DSN: postgres://postgres:postgres@localhost:6432/postgres?sslmode=disable
       MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
-      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-rest-api@master
         with:
@@ -60,7 +59,7 @@ jobs:
           image_name: ${{ github.repository }}/api
           image_tags: ${{ github.ref_name }},prod
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
+          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"
 
   rotate-keys-build:
     needs: [release]
@@ -99,7 +98,6 @@ jobs:
     env:
       DSN: postgres://postgres:postgres@localhost:6432/postgres?sslmode=disable
       MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
-      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-job@master
         with:
@@ -107,4 +105,4 @@ jobs:
           image_name: ${{ github.repository }}/jobs/rotatekeys
           image_tags: ${{ github.ref_name }},prod
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
+          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"

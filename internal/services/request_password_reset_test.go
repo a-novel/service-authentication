@@ -158,23 +158,21 @@ func TestRequestPasswordReset(t *testing.T) {
 				service.Wait()
 				require.NoError(t, w.Close())
 
-				var jsonLog map[string]any
+				var jsonLog struct {
+					Level               string         `json:"level"`
+					DynamicTemplateData map[string]any `json:"dynamicTemplateData"`
+				}
 
 				out := <-outC
 				require.NoError(t, json.Unmarshal(out, &jsonLog))
 
-				level, ok := jsonLog["level"]
-				require.True(t, ok)
-				require.Equal(t, "info", level, string(out))
-
-				mailBody, ok := jsonLog["mail"]
-				require.True(t, ok)
-
-				checkEmailBody(t, []byte(mailBody.(string)), map[string]any{
-					"duration":  config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
-					"shortCode": testCase.createShortCodeData.resp.PlainCode,
-					"target":    testCase.selectCredentialsData.resp.ID.String(),
-				})
+				require.Equal(t, "info", jsonLog.Level, string(out))
+				require.Equal(t, map[string]any{
+					"ShortCode": testCase.createShortCodeData.resp.PlainCode,
+					"Target":    testCase.selectCredentialsData.resp.ID.String(),
+					"URL":       config.SMTP.URLs.UpdatePassword,
+					"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
+				}, jsonLog.DynamicTemplateData)
 			}
 
 			source.AssertExpectations(t)

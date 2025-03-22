@@ -6,11 +6,11 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/authentication/config"
+	"github.com/a-novel/authentication/config/mails"
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
@@ -32,6 +32,8 @@ type RequestEmailUpdateRequest struct {
 	ID uuid.UUID
 	// New email of the account. This email will receive a link to confirm the email update.
 	Email string
+	// Language of the account.
+	Lang models.Lang
 }
 
 // RequestEmailUpdateService is the service used to perform the RequestEmailUpdateService.RequestEmailUpdate action.
@@ -52,25 +54,12 @@ func (service *RequestEmailUpdateService) sendMail(
 ) {
 	defer service.wg.Done()
 
-	// Send the mail.
-	from := mail.NewEmail(config.Sendgrid.Sender.Name, config.Sendgrid.Sender.Mail)
-	recipient := mail.NewEmail("", request.Email)
-
-	message := mail.NewV3Mail()
-	personalization := mail.NewPersonalization()
-
-	personalization.AddTos(recipient)
-	personalization.SetDynamicTemplateData(
-		"duration", config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
-	)
-	personalization.SetDynamicTemplateData("shortCode", shortCode.PlainCode)
-	personalization.SetDynamicTemplateData("target", request.ID.String())
-
-	message.SetFrom(from)
-	message.SetTemplateID(config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].SendgridID)
-	message.AddPersonalizations(personalization)
-
-	lib.SendMail(ctx, message)
+	lib.SMTP(ctx, mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
+		"ShortCode": shortCode.PlainCode,
+		"Target":    request.ID.String(),
+		"URL":       config.SMTP.URLs.UpdateEmail,
+		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
+	})
 }
 
 // RequestEmailUpdate requests an email update for a specific account.

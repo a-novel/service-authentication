@@ -10,6 +10,7 @@ import (
 	"github.com/a-novel/authentication/api/codegen"
 	apimocks "github.com/a-novel/authentication/api/mocks"
 	"github.com/a-novel/authentication/internal/services"
+	"github.com/a-novel/authentication/models"
 )
 
 func TestRequestPasswordReset(t *testing.T) {
@@ -43,6 +44,18 @@ func TestRequestPasswordReset(t *testing.T) {
 			expect: &codegen.RequestPasswordResetNoContent{},
 		},
 		{
+			name: "Success/Lang",
+
+			form: &codegen.RequestPasswordResetForm{
+				Email: "user@provider.com",
+				Lang:  codegen.OptLang{Value: codegen.LangFr, Set: true},
+			},
+
+			requestPasswordResetData: &requestPasswordResetData{},
+
+			expect: &codegen.RequestPasswordResetNoContent{},
+		},
+		{
 			name: "RequestPasswordResetError",
 
 			form: &codegen.RequestPasswordResetForm{
@@ -67,6 +80,7 @@ func TestRequestPasswordReset(t *testing.T) {
 				source.EXPECT().
 					RequestPasswordReset(t.Context(), services.RequestPasswordResetRequest{
 						Email: string(testCase.form.GetEmail()),
+						Lang:  models.Lang(testCase.form.GetLang().Value),
 					}).
 					Return(nil, testCase.requestPasswordResetData.err)
 			}

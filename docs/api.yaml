@@ -706,11 +706,8 @@ components:
       type: object
       required:
         - postgres
-        - sendgrid
       properties:
         postgres:
-          $ref: "#/components/schemas/Dependency"
-        sendgrid:
           $ref: "#/components/schemas/Dependency"
 
     Token:
@@ -763,6 +760,13 @@ components:
           type: string
           description: The unique identifier of the refresh token. Can be null if the session is anonymous.
           example: 29f71c01-5ae1-4b01-b729-e17488538e15
+    Lang:
+      type: string
+      description: The language of the user.
+      example: en
+      enum:
+        - en
+        - fr
 
     LoginForm:
       type: object
@@ -783,34 +787,37 @@ components:
       description: Create a new registration link.
       required:
         - email
-        - password
       properties:
         email:
           $ref: "#/components/schemas/Email"
           description: |
             The email of the new user. This email must be available at the time of registration.
+        lang:
+          $ref: "#/components/schemas/Lang"
     RequestEmailUpdateForm:
       type: object
       description: Create a new email update link.
       required:
         - email
-        - password
       properties:
         email:
           $ref: "#/components/schemas/Email"
           description: |
             The bew email of the new user. This email must be available at the time of validation.
+        lang:
+          $ref: "#/components/schemas/Lang"
     RequestPasswordResetForm:
       type: object
       description: Create a new password update link.
       required:
         - email
-        - password
       properties:
         email:
           $ref: "#/components/schemas/Email"
           description: |
             The email of the user. This email must match a user in the database.
+        lang:
+          $ref: "#/components/schemas/Lang"
     RegisterForm:
       type: object
       description: Data used to create a user.

@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
-
 	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/authentication/config"
+	"github.com/a-novel/authentication/config/mails"
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
 )
@@ -30,6 +29,8 @@ type RequestRegisterSource interface {
 type RequestRegisterRequest struct {
 	// Email of the user trying to register. This email will receive a link that can be used to register.
 	Email string
+	// Language of the account.
+	Lang models.Lang
 }
 
 // RequestRegisterService is the service used to perform the RequestRegisterService.RequestRegister action.
@@ -50,25 +51,12 @@ func (service *RequestRegisterService) sendMail(
 ) {
 	defer service.wg.Done()
 
-	// Send the mail.
-	from := mail.NewEmail(config.Sendgrid.Sender.Name, config.Sendgrid.Sender.Mail)
-	recipient := mail.NewEmail("", request.Email)
-
-	message := mail.NewV3Mail()
-	personalization := mail.NewPersonalization()
-
-	personalization.AddTos(recipient)
-	personalization.SetDynamicTemplateData(
-		"duration", config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
-	)
-	personalization.SetDynamicTemplateData("shortCode", shortCode.PlainCode)
-	personalization.SetDynamicTemplateData("target", base64.RawURLEncoding.EncodeToString([]byte(request.Email)))
-
-	message.SetFrom(from)
-	message.SetTemplateID(config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].SendgridID)
-	message.AddPersonalizations(personalization)
-
-	lib.SendMail(ctx, message)
+	lib.SMTP(ctx, mails.Mails.Register, request.Lang, []string{request.Email}, map[string]any{
+		"ShortCode": shortCode.PlainCode,
+		"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+		"URL":       config.SMTP.URLs.Register,
+		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
+	})
 }
 
 // RequestRegister sends a short code to the user's email, allowing them to register.

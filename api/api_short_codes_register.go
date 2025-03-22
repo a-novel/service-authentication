@@ -19,6 +19,7 @@ func (api *API) RequestRegistration(
 ) (codegen.RequestRegistrationRes, error) {
 	_, err := api.RequestRegisterService.RequestRegister(ctx, services.RequestRegisterRequest{
 		Email: string(req.GetEmail()),
+		Lang:  models.Lang(req.GetLang().Value),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("request register: %w", err)

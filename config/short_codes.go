@@ -13,8 +13,7 @@ import (
 var shortCodeFile []byte
 
 type ShortCodeUsageConfig struct {
-	TTL        time.Duration `yaml:"ttl"`
-	SendgridID string        `yaml:"sendgridID"`
+	TTL time.Duration `yaml:"ttl"`
 }
 
 type ShortCodesType struct {
