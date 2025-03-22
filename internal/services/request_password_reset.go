@@ -6,11 +6,11 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/authentication/config"
+	"github.com/a-novel/authentication/config/mails"
 	"github.com/a-novel/authentication/internal/dao"
 	"github.com/a-novel/authentication/internal/lib"
 	"github.com/a-novel/authentication/models"
@@ -34,6 +34,8 @@ type RequestPasswordResetSource interface {
 type RequestPasswordResetRequest struct {
 	// Email of the user trying to reset its password.
 	Email string
+	// Language of the account.
+	Lang models.Lang
 }
 
 // RequestPasswordResetService is the service used to perform the RequestPasswordResetService.RequestPasswordReset
@@ -51,29 +53,16 @@ func (service *RequestPasswordResetService) Wait() {
 }
 
 func (service *RequestPasswordResetService) sendMail(
-	ctx context.Context, email string, userID uuid.UUID, shortCode *models.ShortCode,
+	ctx context.Context, request RequestPasswordResetRequest, userID uuid.UUID, shortCode *models.ShortCode,
 ) {
 	defer service.wg.Done()
 
-	// Send the mail.
-	from := mail.NewEmail(config.Sendgrid.Sender.Name, config.Sendgrid.Sender.Mail)
-	recipient := mail.NewEmail("", email)
-
-	message := mail.NewV3Mail()
-	personalization := mail.NewPersonalization()
-
-	personalization.AddTos(recipient)
-	personalization.SetDynamicTemplateData(
-		"duration", config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
-	)
-	personalization.SetDynamicTemplateData("shortCode", shortCode.PlainCode)
-	personalization.SetDynamicTemplateData("target", userID.String())
-
-	message.SetFrom(from)
-	message.SetTemplateID(config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].SendgridID)
-	message.AddPersonalizations(personalization)
-
-	lib.SendMail(ctx, message)
+	lib.SMTP(ctx, mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
+		"ShortCode": shortCode.PlainCode,
+		"Target":    userID.String(),
+		"URL":       config.SMTP.URLs.UpdatePassword,
+		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
+	})
 }
 
 // RequestPasswordReset sends a short code to the user's email, allowing them to register.
@@ -104,7 +93,7 @@ func (service *RequestPasswordResetService) RequestPasswordReset(
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
-	go service.sendMail(context.WithoutCancel(ctx), request.Email, credentials.ID, shortCode)
+	go service.sendMail(context.WithoutCancel(ctx), request, credentials.ID, shortCode)
 
 	return shortCode, nil
 }

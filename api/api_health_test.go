@@ -33,9 +33,5 @@ func TestHealthcheck(t *testing.T) {
 			Name:   "postgres",
 			Status: codegen.DependencyStatusUp,
 		},
-		Sendgrid: codegen.Dependency{
-			Name:   "sendgrid",
-			Status: codegen.DependencyStatusUp,
-		},
 	}, res)
 }

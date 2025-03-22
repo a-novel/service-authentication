@@ -1,0 +1,10 @@
+sender:
+  name: Agora des Écrivains
+  email: noreply@agoradesecrivains.com
+  password: ${SMTP_PASSWORD}
+  domain: smtp-relay.gmail.com
+addr: smtp-relay.gmail.com:587
+urls:
+  updateEmail: https://auth.agoradesecrivains.fr/mail-action/update-email
+  updatePassword: https://auth.agoradesecrivains.fr/mail-action/update-password
+  register: https://auth.agoradesecrivains.fr/mail-action/register

@@ -19,8 +19,6 @@ require (
 	github.com/ogen-go/ogen v1.10.1
 	github.com/rs/zerolog v1.33.0
 	github.com/samber/lo v1.49.1
-	github.com/sendgrid/rest v2.6.9+incompatible
-	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/stretchr/testify v1.10.0
 	github.com/uptrace/bun v1.2.11
 	github.com/uptrace/bun/driver/pgdriver v1.2.11

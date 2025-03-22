@@ -28,6 +28,16 @@ openapi-lint:
 openapi-generate:
 	go generate ./...
 
+mjml-lint:
+	for i in `find ./config/mails -name "*.mjml" -type f`; do \
+		npx mjml --validate $$i; \
+	done
+
+mjml-generate:
+	for i in `find ./config/mails -name "*.mjml" -type f`; do \
+		npx mjml $$i -o $${i%.*}.html; \
+	done
+
 # Execute the keys rotation job locally.
 rotate_keys:
 	bash -c "set -m; bash '$(CURDIR)/scripts/run_rotate_keys.sh'"

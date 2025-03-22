@@ -8,8 +8,100 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  generated-go:
+    needs: []
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: go generate
+        shell: bash
+        run: go generate ./...
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
+        id: changes
+      - name: Check go generate diff
+        if: steps.changes.outputs.diff == '1'
+        run: echo "go generate changes are not up-to-date, please run 'go generate ./...' and commit the changes" && exit 1
+
+  generated-mockery:
+    needs: []
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: mockery
+        shell: bash
+        run: make mocks
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
+        id: changes
+      - name: Check mockery diff
+        if: steps.changes.outputs.diff == '1'
+        run: echo "mockery definitions are not up-to-date, please run 'make mocks' and commit the changes" && exit 1
+
+  generated-mjml:
+    needs: []
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: mockery
+        shell: bash
+        run: make mjml-generate
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
+        id: changes
+      - name: Check mockery diff
+        if: steps.changes.outputs.diff == '1'
+        run: echo "mjml definitions are not up-to-date, please run 'make mjml-generate' and commit the changes" && exit 1
+
+  lint-go:
+    needs:
+      - generated-go
+      - generated-mockery
+      - generated-mjml
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/go-actions/lint-go@master
+
+  lint-postgresql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/postgres-actions/lint-postgres@master
+
+  lint-open-api:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/open-api-actions/lint-open-api@master
+
+  lint-prettier:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/node-actions/prettier@master
+
   test:
-    needs: [generated]
+    needs:
+      - generated-go
+      - generated-mockery
+      - generated-mjml
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -61,66 +153,9 @@ jobs:
       DAO_DSN: postgres://postgres:postgres@localhost:6432/pg0?sslmode=disable
       DSN: postgres://postgres:postgres@localhost:6432/pg1?sslmode=disable
       MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
-      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
       PORT: 8080
     steps:
       - uses: a-novel-kit/workflows/go-actions/test-go@master
-
-  generated:
-    needs: []
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: stable
-      - name: mockery
-        shell: bash
-        run: make mocks
-      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
-        id: mockery-changes
-      - name: Check mockery diff
-        if: steps.mockery-changes.outputs.diff == '1'
-        run: echo "mockery definitions are not up-to-date, please run 'make mocks' and commit the changes" && exit 1
-      - name: go generate
-        shell: bash
-        run: go generate ./...
-      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
-        id: generate-changes
-      - name: Check go generate diff
-        if: steps.generate-changes.outputs.diff == '1'
-        run: echo "go generate changes are not up-to-date, please run 'go generate ./...' and commit the changes" && exit 1
-
-  lint-go:
-    needs: [generated]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: a-novel-kit/workflows/go-actions/lint-go@master
-
-  lint-postgresql:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: a-novel-kit/workflows/postgres-actions/lint-postgres@master
-
-  lint-open-api:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: a-novel-kit/workflows/open-api-actions/lint-open-api@master
-
-  lint-prettier:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: a-novel-kit/workflows/node-actions/prettier@master
 
   publish-open-api:
     runs-on: ubuntu-latest
@@ -194,7 +229,6 @@ jobs:
     env:
       DSN: postgres://postgres:postgres@localhost:6432/postgres?sslmode=disable
       MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
-      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-rest-api@master
         with:
@@ -202,7 +236,7 @@ jobs:
           image_name: ${{ github.repository }}/api
           image_tags: ${{ github.head_ref || github.ref_name }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
+          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"
 
   rotate-keys-build:
     needs: [test]
@@ -241,7 +275,6 @@ jobs:
     env:
       DSN: postgres://postgres:postgres@localhost:6432/postgres?sslmode=disable
       MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
-      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-job@master
         with:
@@ -249,4 +282,4 @@ jobs:
           image_name: ${{ github.repository }}/jobs/rotatekeys
           image_tags: ${{ github.head_ref || github.ref_name }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}" -e SENDGRID_API_KEY="${SENDGRID_API_KEY}"
+          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"

@@ -121,23 +121,21 @@ func TestRequestRegister(t *testing.T) {
 				service.Wait()
 				require.NoError(t, w.Close())
 
-				var jsonLog map[string]any
+				var jsonLog struct {
+					Level               string         `json:"level"`
+					DynamicTemplateData map[string]any `json:"dynamicTemplateData"`
+				}
 
 				out := <-outC
 				require.NoError(t, json.Unmarshal(out, &jsonLog))
 
-				level, ok := jsonLog["level"]
-				require.True(t, ok)
-				require.Equal(t, "info", level, string(out))
-
-				mailBody, ok := jsonLog["mail"]
-				require.True(t, ok)
-
-				checkEmailBody(t, []byte(mailBody.(string)), map[string]any{
-					"duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
-					"shortCode": testCase.createShortCodeData.resp.PlainCode,
-					"target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
-				})
+				require.Equal(t, "info", jsonLog.Level, string(out))
+				require.Equal(t, map[string]any{
+					"ShortCode": testCase.createShortCodeData.resp.PlainCode,
+					"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
+					"URL":       config.SMTP.URLs.Register,
+					"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
+				}, jsonLog.DynamicTemplateData)
 			}
 
 			source.AssertExpectations(t)

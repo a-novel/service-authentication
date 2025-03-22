@@ -24,6 +24,7 @@ func (api *API) RequestEmailUpdate(
 
 	_, err = api.RequestEmailUpdateService.RequestEmailUpdate(ctx, services.RequestEmailUpdateRequest{
 		Email: string(req.GetEmail()),
+		Lang:  models.Lang(req.GetLang().Value),
 		ID:    userID,
 	})
 	if err != nil {

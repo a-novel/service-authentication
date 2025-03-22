@@ -63,24 +63,6 @@ func generateAuthTokenKeySet(t *testing.T, size int) ([]*jwk.Key[ed25519.Private
 	return privateKeys, publicKeys
 }
 
-func checkEmailBody(t *testing.T, raw []byte, expect map[string]any) {
-	t.Helper()
-
-	type mailBody struct {
-		Personalizations []struct {
-			DynamicTemplateData map[string]any `json:"dynamic_template_data"`
-		} `json:"personalizations"`
-	}
-
-	var body mailBody
-
-	require.NoError(t, json.Unmarshal(raw, &body))
-
-	require.Len(t, body.Personalizations, 1)
-
-	require.Equal(t, expect, body.Personalizations[0].DynamicTemplateData, string(raw))
-}
-
 func mustIssueToken(
 	t *testing.T, key *jwk.Key[ed25519.PrivateKey], request services.IssueTokenRequest,
 ) string {

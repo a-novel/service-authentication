@@ -777,15 +777,10 @@ func (s *Health) encodeFields(e *jx.Encoder) {
 		e.FieldStart("postgres")
 		s.Postgres.Encode(e)
 	}
-	{
-		e.FieldStart("sendgrid")
-		s.Sendgrid.Encode(e)
-	}
 }
 
-var jsonFieldsNameOfHealth = [2]string{
+var jsonFieldsNameOfHealth = [1]string{
 	0: "postgres",
-	1: "sendgrid",
 }
 
 // Decode decodes Health from json.
@@ -807,16 +802,6 @@ func (s *Health) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"postgres\"")
 			}
-		case "sendgrid":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				if err := s.Sendgrid.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"sendgrid\"")
-			}
 		default:
 			return d.Skip()
 		}
@@ -827,7 +812,7 @@ func (s *Health) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -1254,6 +1239,46 @@ func (s *KeyOp) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes Lang as json.
+func (s Lang) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes Lang from json.
+func (s *Lang) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Lang to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch Lang(v) {
+	case LangEn:
+		*s = LangEn
+	case LangFr:
+		*s = LangFr
+	default:
+		*s = Lang(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s Lang) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Lang) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes ListPublicKeysOKApplicationJSON as json.
 func (s ListPublicKeysOKApplicationJSON) Encode(e *jx.Encoder) {
 	unwrapped := []JWK(s)
@@ -1588,6 +1613,39 @@ func (s OptKID) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptKID) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Lang as json.
+func (o OptLang) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes Lang from json.
+func (o *OptLang) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptLang to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptLang) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptLang) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1935,10 +1993,17 @@ func (s *RequestEmailUpdateForm) encodeFields(e *jx.Encoder) {
 		e.FieldStart("email")
 		s.Email.Encode(e)
 	}
+	{
+		if s.Lang.Set {
+			e.FieldStart("lang")
+			s.Lang.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfRequestEmailUpdateForm = [1]string{
+var jsonFieldsNameOfRequestEmailUpdateForm = [2]string{
 	0: "email",
+	1: "lang",
 }
 
 // Decode decodes RequestEmailUpdateForm from json.
@@ -1959,6 +2024,16 @@ func (s *RequestEmailUpdateForm) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "lang":
+			if err := func() error {
+				s.Lang.Reset()
+				if err := s.Lang.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"lang\"")
 			}
 		default:
 			return d.Skip()
@@ -2029,10 +2104,17 @@ func (s *RequestPasswordResetForm) encodeFields(e *jx.Encoder) {
 		e.FieldStart("email")
 		s.Email.Encode(e)
 	}
+	{
+		if s.Lang.Set {
+			e.FieldStart("lang")
+			s.Lang.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfRequestPasswordResetForm = [1]string{
+var jsonFieldsNameOfRequestPasswordResetForm = [2]string{
 	0: "email",
+	1: "lang",
 }
 
 // Decode decodes RequestPasswordResetForm from json.
@@ -2053,6 +2135,16 @@ func (s *RequestPasswordResetForm) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "lang":
+			if err := func() error {
+				s.Lang.Reset()
+				if err := s.Lang.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"lang\"")
 			}
 		default:
 			return d.Skip()
@@ -2123,10 +2215,17 @@ func (s *RequestRegistrationForm) encodeFields(e *jx.Encoder) {
 		e.FieldStart("email")
 		s.Email.Encode(e)
 	}
+	{
+		if s.Lang.Set {
+			e.FieldStart("lang")
+			s.Lang.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfRequestRegistrationForm = [1]string{
+var jsonFieldsNameOfRequestRegistrationForm = [2]string{
 	0: "email",
+	1: "lang",
 }
 
 // Decode decodes RequestRegistrationForm from json.
@@ -2147,6 +2246,16 @@ func (s *RequestRegistrationForm) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "lang":
+			if err := func() error {
+				s.Lang.Reset()
+				if err := s.Lang.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"lang\"")
 			}
 		default:
 			return d.Skip()

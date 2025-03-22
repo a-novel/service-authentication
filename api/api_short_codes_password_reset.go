@@ -19,6 +19,7 @@ func (api *API) RequestPasswordReset(
 ) (codegen.RequestPasswordResetRes, error) {
 	_, err := api.RequestPasswordResetService.RequestPasswordReset(ctx, services.RequestPasswordResetRequest{
 		Email: string(req.GetEmail()),
+		Lang:  models.Lang(req.GetLang().Value),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("request password reset: %w", err)
