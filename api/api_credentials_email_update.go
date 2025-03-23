@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/context"
 
@@ -34,5 +35,5 @@ func (api *API) UpdateEmail(ctx context.Context, req *codegen.UpdateEmailForm) (
 		return nil, fmt.Errorf("update email: %w", err)
 	}
 
-	return &codegen.UpdateEmailOK{Email: codegen.Email(res.NewEmail)}, nil
+	return lo.ToPtr(codegen.Email(res.NewEmail)), nil
 }

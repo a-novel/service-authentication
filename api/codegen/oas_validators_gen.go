@@ -680,29 +680,6 @@ func (s *UpdateEmailForm) Validate() error {
 	return nil
 }
 
-func (s *UpdateEmailOK) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Email.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "email",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
 func (s *UpdatePasswordForm) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer

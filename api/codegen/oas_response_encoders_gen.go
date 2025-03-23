@@ -498,7 +498,7 @@ func encodeResetPasswordResponse(response ResetPasswordRes, w http.ResponseWrite
 
 func encodeUpdateEmailResponse(response UpdateEmailRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *UpdateEmailOK:
+	case *Email:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(200)
 		span.SetStatus(codes.Ok, http.StatusText(200))

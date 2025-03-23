@@ -15,11 +15,6 @@ const (
 	RoleSuperAdmin Role = "auth:super_admin"
 )
 
-var KnownRoles = []Role{
-	RoleAnon,
-	RoleUser,
-}
-
 type CredentialsRole string
 
 const (
@@ -36,12 +31,6 @@ const (
 	CredentialRoleImportanceAdmin      CredentialRoleImportance = 2
 	CredentialRoleImportanceSuperAdmin CredentialRoleImportance = 3
 )
-
-var KnownCredentialsRoles = []CredentialsRole{
-	CredentialsRoleUser,
-	CredentialsRoleAdmin,
-	CredentialsRoleSuperAdmin,
-}
 
 var KnownCredentialsRolesWithImportance = map[CredentialsRole]CredentialRoleImportance{
 	CredentialsRoleUser:       CredentialRoleImportanceUser,

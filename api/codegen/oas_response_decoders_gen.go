@@ -1669,7 +1669,7 @@ func decodeUpdateEmailResponse(resp *http.Response) (res UpdateEmailRes, _ error
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response UpdateEmailOK
+			var response Email
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
