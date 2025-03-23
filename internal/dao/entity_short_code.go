@@ -15,7 +15,7 @@ var (
 	ErrShortCodeNotFound      = errors.New("short code not found")
 )
 
-// ShortCodeEntity represents a temporary password used to grant a one-time access to a specific resource.
+// ShortCodeEntity represents a temporary password used to grant one-time access to a specific resource.
 // Once a resource is accessed using a short code, the short code MUST be expired.
 //
 // Only ONE version of a short code is allowed to exist for a given target and usage at a given time. This does not

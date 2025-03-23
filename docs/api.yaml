@@ -67,7 +67,6 @@ paths:
             text/plain:
               schema:
                 type: string
-                example: pong
         "418":
           description: This route is not expected to fail under normal circumstances.
         default:
@@ -507,13 +506,8 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - email
-                properties:
-                  email:
-                    $ref: "#/components/schemas/Email"
-                    description: The new email of the user.
+                $ref: "#/components/schemas/Email"
+                description: The new email of the user.
         "403":
           description: The short code is not valid, either wrong or it does not exist at all for this user ID.
           content:
@@ -1187,7 +1181,6 @@ components:
       in: query
       description: The unique identifier of the key, conveyed through its KID field.
       required: true
-      example: 29f71c01-5ae1-4b01-b729-e17488538e15
       schema:
         $ref: "#/components/schemas/KID"
     Email:
