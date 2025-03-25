@@ -57,18 +57,14 @@ func testKeySource[Priv, Pub any](
 	require.JSONEq(t, string(publicKeyJSON), string(publicKeySourcedJSON))
 }
 
-func TestKeySources(t *testing.T) {
-	t.Parallel()
-
+func TestKeySources(t *testing.T) { //nolint:paralleltest
 	searchKeysDAO := dao.NewSearchKeysRepository()
 	searchKeys := services.NewSearchKeysService(searchKeysDAO)
 
 	ctx, err := lib.NewAgoraContext(t.Context())
 	require.NoError(t, err)
 
-	t.Run("AuthKeySource", func(t *testing.T) {
-		t.Parallel()
-
+	t.Run("AuthKeySource", func(t *testing.T) { //nolint:paralleltest
 		testKeySource(
 			ctx, t, models.KeyUsageAuth,
 			services.NewAuthPrivateKeysProvider(searchKeys),
@@ -76,9 +72,7 @@ func TestKeySources(t *testing.T) {
 		)
 	})
 
-	t.Run("RefreshKeySource", func(t *testing.T) {
-		t.Parallel()
-
+	t.Run("RefreshKeySource", func(t *testing.T) { //nolint:paralleltest
 		testKeySource(
 			ctx, t, models.KeyUsageRefresh,
 			services.NewRefreshPrivateKeysProvider(searchKeys),
