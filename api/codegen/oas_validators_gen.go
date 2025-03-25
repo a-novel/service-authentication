@@ -172,7 +172,7 @@ func (s Email) Validate() error {
 	if err := (validate.String{
 		MinLength:    3,
 		MinLengthSet: true,
-		MaxLength:    64,
+		MaxLength:    128,
 		MaxLengthSet: true,
 		Email:        true,
 		Hostname:     false,
@@ -428,7 +428,7 @@ func (s Password) Validate() error {
 	if err := (validate.String{
 		MinLength:    2,
 		MinLengthSet: true,
-		MaxLength:    512,
+		MaxLength:    1024,
 		MaxLengthSet: true,
 		Email:        false,
 		Hostname:     false,

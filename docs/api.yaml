@@ -1025,13 +1025,13 @@ components:
       description: The email of the user.
       example: user@provider.com
       minLength: 3
-      maxLength: 64
+      maxLength: 128
     Password:
       type: string
       description: The password of the user.
       example: "123456"
       minLength: 2
-      maxLength: 512
+      maxLength: 1024
     ShortCode:
       type: string
       description: |
