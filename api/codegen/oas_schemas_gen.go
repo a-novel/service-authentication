@@ -889,19 +889,9 @@ func (s *Lang) UnmarshalText(data []byte) error {
 	}
 }
 
-// ListPublicKeysIMATeapot is response for ListPublicKeys operation.
-type ListPublicKeysIMATeapot struct{}
-
-func (*ListPublicKeysIMATeapot) listPublicKeysRes() {}
-
 type ListPublicKeysOKApplicationJSON []JWK
 
 func (*ListPublicKeysOKApplicationJSON) listPublicKeysRes() {}
-
-// ListUsersIMATeapot is response for ListUsers operation.
-type ListUsersIMATeapot struct{}
-
-func (*ListUsersIMATeapot) listUsersRes() {}
 
 type ListUsersOKApplicationJSON []User
 
@@ -1300,11 +1290,6 @@ func (s *RequestEmailUpdateForm) SetLang(val OptLang) {
 	s.Lang = val
 }
 
-// RequestEmailUpdateIMATeapot is response for RequestEmailUpdate operation.
-type RequestEmailUpdateIMATeapot struct{}
-
-func (*RequestEmailUpdateIMATeapot) requestEmailUpdateRes() {}
-
 // RequestEmailUpdateNoContent is response for RequestEmailUpdate operation.
 type RequestEmailUpdateNoContent struct{}
 
@@ -1453,6 +1438,34 @@ func (*Token) createAnonSessionRes() {}
 func (*Token) createSessionRes()     {}
 func (*Token) refreshSessionRes()    {}
 func (*Token) registerRes()          {}
+
+// Ref: #/components/schemas/UnauthorizedError
+type UnauthorizedError struct {
+	// The error message.
+	Error string `json:"error"`
+}
+
+// GetError returns the value of Error.
+func (s *UnauthorizedError) GetError() string {
+	return s.Error
+}
+
+// SetError sets the value of Error.
+func (s *UnauthorizedError) SetError(val string) {
+	s.Error = val
+}
+
+func (*UnauthorizedError) getPublicKeyRes()         {}
+func (*UnauthorizedError) listPublicKeysRes()       {}
+func (*UnauthorizedError) listUsersRes()            {}
+func (*UnauthorizedError) registerRes()             {}
+func (*UnauthorizedError) requestEmailUpdateRes()   {}
+func (*UnauthorizedError) requestPasswordResetRes() {}
+func (*UnauthorizedError) requestRegistrationRes()  {}
+func (*UnauthorizedError) resetPasswordRes()        {}
+func (*UnauthorizedError) updateEmailRes()          {}
+func (*UnauthorizedError) updatePasswordRes()       {}
+func (*UnauthorizedError) updateRoleRes()           {}
 
 // Ref: #/components/schemas/UnexpectedError
 type UnexpectedError struct {
