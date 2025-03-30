@@ -32,7 +32,6 @@ func SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos
 
 	if config.SMTP.Sandbox {
 		logger.Info().
-			Str("mail", messageParsed).
 			Strs("to", tos).
 			Interface("dynamicTemplateData", data).
 			Msg("send transactional email")

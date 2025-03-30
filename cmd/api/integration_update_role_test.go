@@ -33,12 +33,15 @@ func TestUpdateRole(t *testing.T) {
 
 	t.Log("NotEnoughPrivileges")
 	{
-		_, err = client.UpdateRole(t.Context(), &codegen.UpdateRoleForm{
+		rawRes, err := client.UpdateRole(t.Context(), &codegen.UpdateRoleForm{
 			UserID: codegen.UserID(user1Claims.GetUserID().Value),
 			Role:   codegen.CredentialsRoleAdmin,
 		})
 
-		require.Error(t, err)
+		require.NoError(t, err)
+
+		_, ok := rawRes.(*codegen.UnauthorizedError)
+		require.True(t, ok)
 	}
 
 	// Elevate user2 to super_admin.

@@ -14,7 +14,7 @@ info:
   license:
     name: GNU AGPLv3
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
-  version: 1.0.0
+  version: 0.0.0
 
 security:
   - bearerAuth: []
@@ -120,8 +120,8 @@ paths:
                 $ref: "#/components/schemas/Claims"
         "403":
           description: |
-            The authorization header is correctly set, but verification failed. The token is correct, but likely
-            invalid.
+            The authorization header is correctly set, but verification failed. The token is properly parsed, but its
+            signature might be tampered or expired.
           content:
             application/json:
               schema:
@@ -218,8 +218,8 @@ paths:
                 $ref: "#/components/schemas/Token"
         "403":
           description: |
-            The authorization header is correctly set, but verification failed. The token is correct, but likely
-            invalid.
+            The authorization header is correctly set, but verification failed. The token is properly parsed, but its
+            signature might be tampered or expired.
           content:
             application/json:
               schema:
@@ -253,8 +253,8 @@ paths:
                 $ref: "#/components/schemas/RefreshToken"
         "403":
           description: |
-            The authorization header is correctly set, but verification failed. The token is correct, but likely
-            invalid.
+            The authorization header is correctly set, but verification failed. The token is properly parsed, but its
+            signature might be tampered or expired.
           content:
             application/json:
               schema:
@@ -270,6 +270,9 @@ paths:
     get:
       tags:
         - jwk
+      security:
+        - bearerAuth:
+            - "jwk:read"
       summary: Get the public keys used for JSON Web Algorithms.
       description: |
         Get a public key from its usage.
@@ -283,6 +286,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JWK"
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         "404":
           description: The provided key usage does not match any key.
           content:
@@ -300,6 +309,9 @@ paths:
     get:
       tags:
         - jwk
+      security:
+        - bearerAuth:
+            - "jwk:read"
       summary: List all public keys used for JSON Web Algorithms.
       description: |
         Get all public keys from the service that match a given usage.
@@ -320,8 +332,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/JWK"
-        "418":
-          description: This route is not expected to fail under normal circumstances.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -333,6 +349,9 @@ paths:
     put:
       tags:
         - shortCode
+      security:
+        - bearerAuth:
+            - "register:request"
       summary: Set a new short code for user registration.
       description: |
         To prevent spam in our user database, registration must be done through a link sent by e-mail, so we can
@@ -350,6 +369,12 @@ paths:
       responses:
         "204":
           description: The short code has been sent successfully.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         "418":
           description: This route is not expected to fail under normal circumstances.
         default:
@@ -363,6 +388,9 @@ paths:
     put:
       tags:
         - shortCode
+      security:
+        - bearerAuth:
+            - "email:update:request"
       summary: Set a new short code for user email change.
       description: |
         Create a new short code for updating the email of an user. This short code is sent to the new address.
@@ -382,8 +410,12 @@ paths:
       responses:
         "204":
           description: The short code has been sent successfully.
-        "418":
-          description: This route is not expected to fail under normal circumstances.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -395,6 +427,9 @@ paths:
     put:
       tags:
         - shortCode
+      security:
+        - bearerAuth:
+            - "password:reset:request"
       summary: Set a new short code for user password change.
       description: |
         Create a new short code for updating the password of an user. This short code is sent to the new address.
@@ -411,6 +446,12 @@ paths:
       responses:
         "204":
           description: The short code has been sent successfully.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         "404":
           description: The provided email does not match any user.
           content:
@@ -428,6 +469,9 @@ paths:
     put:
       tags:
         - credentials
+      security:
+        - bearerAuth:
+            - "register"
       summary: Create a new user.
       description: |
         Create a new user. The form must contain a short code, that was sent through a registration link at the user
@@ -444,6 +488,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Token"
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         "403":
           description: The short code is not valid, either wrong or it does not exist at all for this email.
           content:
@@ -467,6 +517,9 @@ paths:
     get:
       tags:
         - credentials
+      security:
+        - bearerAuth:
+            - "email:exists"
       summary: Check the availability of an email.
       description: |
         Returns an empty, successful response if the email is already associated to an user. Otherwise, it fails
@@ -492,6 +545,9 @@ paths:
     patch:
       tags:
         - credentials
+      security:
+        - bearerAuth:
+            - "email:update"
       summary: Update the email of an user.
       description: |
         Update the email of an user. This route requires a valid short code, that was sent to the new email.
@@ -508,6 +564,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Email"
                 description: The new email of the user.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         "403":
           description: The short code is not valid, either wrong or it does not exist at all for this user ID.
           content:
@@ -537,6 +599,9 @@ paths:
     patch:
       tags:
         - credentials
+      security:
+        - bearerAuth:
+            - "password:update"
       summary: Update the password of an user.
       description: |
         Update the password of an user. This route requires the original password of the user, to double check
@@ -547,6 +612,12 @@ paths:
       responses:
         "204":
           description: The password has been updated successfully.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         "403":
           description: The provided current password does not match the actual password of the user.
           content:
@@ -564,6 +635,9 @@ paths:
     patch:
       tags:
         - credentials
+      security:
+        - bearerAuth:
+            - "role:update"
       summary: Update the role of an user.
       description: |
         Update the role of an user. This route requires the original password of the user, to double check
@@ -578,6 +652,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         "403":
           description: User lacks the authorizations for the operation.
           content:
@@ -607,6 +687,9 @@ paths:
     patch:
       tags:
         - credentials
+      security:
+        - bearerAuth:
+            - "password:reset"
       summary: Reset the password of an user.
       description: |
         Reset the password of an user. This route allows an unauthenticated session to update the password of a user.
@@ -618,6 +701,12 @@ paths:
       responses:
         "204":
           description: The password has been updated successfully.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         "403":
           description: The short code is not valid, either wrong or it does not exist at all for this user.
           content:
@@ -635,6 +724,9 @@ paths:
     get:
       tags:
         - users
+      security:
+        - bearerAuth:
+            - "users:list"
       summary: List all users.
       description: |
         List users in the database.
@@ -652,8 +744,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/User"
-        "418":
-          description: This route is not expected to fail under normal circumstances.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -666,13 +762,13 @@ paths:
 # ======================================================================================================================
 
 components:
-  # ================================================== SECURITY SCHEMAS ==================================================
+  # ================================================== SECURITY SCHEMAS ================================================
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
-  # ======================================================= SCHEMAS ======================================================
+      bearerFormat: jwt
+  # ======================================================= SCHEMAS ====================================================
   schemas:
     DependencyStatus:
       type: string
@@ -1072,6 +1168,15 @@ components:
           format: date-time
           description: The date and time the user was last updated.
     # ======================================================= ERRORS =======================================================
+    UnauthorizedError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: The error message.
+          example: The provided access token is not valid.
     ForbiddenError:
       type: object
       required:
@@ -1117,7 +1222,7 @@ components:
           type: string
           description: The error message.
           example: The provided access token is not a refresh token.
-  # =================================================== REQUEST BODIES ===================================================
+  # =================================================== REQUEST BODIES =================================================
   requestBodies:
     LoginForm:
       required: true
@@ -1174,7 +1279,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/UpdateRoleForm"
-  # ================================================== QUERY PARAMETERS ==================================================
+  # ================================================== QUERY PARAMETERS ================================================
   parameters:
     KID:
       name: kid
