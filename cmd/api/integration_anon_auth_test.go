@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -48,12 +47,12 @@ func TestAnonAuthAPI(t *testing.T) {
 
 	t.Log("CheckSession/Unauthenticated")
 	{
-		_, err = client.CheckSession(t.Context())
+		rawResp, err := client.CheckSession(t.Context())
 
-		var ogenError *codegen.UnexpectedErrorStatusCode
+		require.NoError(t, err)
 
-		require.ErrorAs(t, err, &ogenError)
-		require.Equal(t, http.StatusUnauthorized, ogenError.StatusCode)
+		_, ok := rawResp.(*codegen.UnauthorizedError)
+		require.True(t, ok)
 	}
 
 	token := authAnon(t, client)

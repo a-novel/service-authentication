@@ -29,10 +29,10 @@ func encodeCheckSessionResponse(response CheckSessionRes, w http.ResponseWriter,
 
 		return nil
 
-	case *ForbiddenError:
+	case *UnauthorizedError:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(403)
-		span.SetStatus(codes.Error, http.StatusText(403))
+		w.WriteHeader(401)
+		span.SetStatus(codes.Error, http.StatusText(401))
 
 		e := new(jx.Encoder)
 		response.Encode(e)

@@ -34,7 +34,12 @@ func (security *SecurityHandlerService) Authenticate(
 
 	rawClaims, err := client.CheckSession(ctx)
 	if err != nil {
-		return nil, errors.Join(err, ErrCheckSession)
+		return nil, fmt.Errorf("check session: %w", err)
+	}
+
+	unauthorizedError, ok := rawClaims.(*codegen.UnauthorizedError)
+	if ok {
+		return nil, fmt.Errorf("%w: %s", ErrCheckSession, unauthorizedError.GetError())
 	}
 
 	claims, ok := rawClaims.(*codegen.Claims)

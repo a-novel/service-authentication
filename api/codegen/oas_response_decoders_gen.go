@@ -61,8 +61,8 @@ func decodeCheckSessionResponse(resp *http.Response) (res CheckSessionRes, _ err
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
-	case 403:
-		// Code 403.
+	case 401:
+		// Code 401.
 		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 		if err != nil {
 			return res, errors.Wrap(err, "parse media type")
@@ -75,7 +75,7 @@ func decodeCheckSessionResponse(resp *http.Response) (res CheckSessionRes, _ err
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response ForbiddenError
+			var response UnauthorizedError
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
