@@ -544,7 +544,6 @@ func (s *ForbiddenError) SetError(val string) {
 	s.Error = val
 }
 
-func (*ForbiddenError) checkSessionRes()       {}
 func (*ForbiddenError) createRefreshTokenRes() {}
 func (*ForbiddenError) createSessionRes()      {}
 func (*ForbiddenError) refreshSessionRes()     {}
@@ -1455,6 +1454,7 @@ func (s *UnauthorizedError) SetError(val string) {
 	s.Error = val
 }
 
+func (*UnauthorizedError) checkSessionRes()         {}
 func (*UnauthorizedError) getPublicKeyRes()         {}
 func (*UnauthorizedError) listPublicKeysRes()       {}
 func (*UnauthorizedError) listUsersRes()            {}

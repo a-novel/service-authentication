@@ -118,14 +118,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Claims"
-        "403":
+        "401":
           description: |
             The authorization header is correctly set, but verification failed. The token is properly parsed, but its
             signature might be tampered or expired.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ForbiddenError"
+                $ref: "#/components/schemas/UnauthorizedError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
