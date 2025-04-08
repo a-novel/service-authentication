@@ -178,7 +178,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/go-actions/codecov-go@master
+      - uses: a-novel-kit/workflows/generic-actions/codecov@master
         with:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
