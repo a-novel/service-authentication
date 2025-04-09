@@ -8,8 +8,8 @@ github.com/a-novel-kit/context/sentry v1.2.0 h1:INs6sjuBErucTnssupakSL4EwcJQCGQm
 github.com/a-novel-kit/context/sentry v1.2.0/go.mod h1:YVU5xWZjTd/QWcf26csgsgANlZtJjXs/Xu4etEtqI2A=
 github.com/a-novel-kit/jwt v1.1.1 h1:Q09oO2evB3BnzhOtPFITKlK+ZTKx/aBkk7JUkOzfYWo=
 github.com/a-novel-kit/jwt v1.1.1/go.mod h1:XB9ubSIpU/P3pCyuxEeEerpJ/UgPB7KT9FkN7QlzpRg=
-github.com/a-novel-kit/middlewares/zerolog v1.1.0 h1:iKuV5Y5EftaluUxE3bL7FtV+6s7VZMutztaHQr87Hvw=
-github.com/a-novel-kit/middlewares/zerolog v1.1.0/go.mod h1:BS+MPXFx/ty+wJJO0IIolZ5OaAz8PJT8OlOdPNSRjbg=
+github.com/a-novel-kit/middlewares/zerolog v1.1.1 h1:x+zfnnsqp+mk0tuJHvX9f0rQ/L2fnsQWlWehvsb77Jw=
+github.com/a-novel-kit/middlewares/zerolog v1.1.1/go.mod h1:cJiVqHha7sPjpirZSw4aISg8bfulGdmmsqPcFVvCX9A=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
