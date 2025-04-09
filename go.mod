@@ -6,7 +6,7 @@ require (
 	github.com/a-novel-kit/configurator v1.4.1
 	github.com/a-novel-kit/context v1.2.1
 	github.com/a-novel-kit/context/pgbun v1.2.0
-	github.com/a-novel-kit/context/sentry v1.2.0
+	github.com/a-novel-kit/context/sentry v1.2.1
 	github.com/a-novel-kit/jwt v1.1.2
 	github.com/a-novel-kit/middlewares/zerolog v1.1.1
 	github.com/getsentry/sentry-go v0.31.1
