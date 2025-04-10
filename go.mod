@@ -3,7 +3,7 @@ module github.com/a-novel/authentication
 go 1.24.2
 
 require (
-	github.com/a-novel-kit/configurator v1.4.1
+	github.com/a-novel-kit/configurator v1.4.2
 	github.com/a-novel-kit/context v1.2.1
 	github.com/a-novel-kit/context/pgbun v1.2.1
 	github.com/a-novel-kit/context/sentry v1.2.1
