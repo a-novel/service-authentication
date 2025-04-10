@@ -1,5 +1,5 @@
-github.com/a-novel-kit/configurator v1.4.1 h1:7OgpXk1fA2DVVYWkoUP3fm8qp4QdDUFvWMQlNC6J1QA=
-github.com/a-novel-kit/configurator v1.4.1/go.mod h1:2HuvXzhXerctwhmifBwu4MZkEPkFJAHd0BBd1zyTBZU=
+github.com/a-novel-kit/configurator v1.4.2 h1:2WcovE9Gj11uaHs8q3Oosc5o32a2MalK/BI6zP/DiYU=
+github.com/a-novel-kit/configurator v1.4.2/go.mod h1:je07LdinxSbJxG3NybdhNJTQ2BiRG7SZVOSXuX7Y1m8=
 github.com/a-novel-kit/context v1.2.1 h1:90vypkMGmZZu8uIhmX1wyscb/0Xeld/DsG/XX7KpSqg=
 github.com/a-novel-kit/context v1.2.1/go.mod h1:EvrSJEkjoajUmOwY7BuoUR9c0PG9heyzo30wMHmFAn0=
 github.com/a-novel-kit/context/pgbun v1.2.1 h1:6a3/xdjUtKQNbiuzEYEjRjaC0Uz41f34LLnWEZo6nos=
