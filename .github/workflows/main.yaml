@@ -3,13 +3,9 @@ name: main
 on:
   push:
     branches:
-      - master
-  pull_request:
-    types: [opened, synchronize, reopened]
 
 jobs:
   generated-go:
-    needs: []
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,7 +24,6 @@ jobs:
         run: echo "go generate changes are not up-to-date, please run 'go generate ./...' and commit the changes" && exit 1
 
   generated-mockery:
-    needs: []
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -47,7 +42,6 @@ jobs:
         run: echo "mockery definitions are not up-to-date, please run 'make mocks' and commit the changes" && exit 1
 
   generated-mjml:
-    needs: []
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -234,7 +228,6 @@ jobs:
         with:
           file: build/api.Dockerfile
           image_name: ${{ github.repository }}/api
-          image_tags: ${{ github.head_ref || github.ref_name }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"
 
@@ -280,6 +273,5 @@ jobs:
         with:
           file: build/rotatekeys.Dockerfile
           image_name: ${{ github.repository }}/jobs/rotatekeys
-          image_tags: ${{ github.head_ref || github.ref_name }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"
