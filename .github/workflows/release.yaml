@@ -57,7 +57,6 @@ jobs:
         with:
           file: build/api.Dockerfile
           image_name: ${{ github.repository }}/api
-          image_tags: ${{ github.ref_name }},prod
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"
 
@@ -103,6 +102,5 @@ jobs:
         with:
           file: build/rotatekeys.Dockerfile
           image_name: ${{ github.repository }}/jobs/rotatekeys
-          image_tags: ${{ github.ref_name }},prod
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"
