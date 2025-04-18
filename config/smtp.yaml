@@ -5,6 +5,6 @@ sender:
   domain: smtp-relay.gmail.com
 addr: smtp-relay.gmail.com:587
 urls:
-  updateEmail: https://auth.agoradesecrivains.fr/mail-action/update-email
-  updatePassword: https://auth.agoradesecrivains.fr/mail-action/update-password
-  register: https://auth.agoradesecrivains.fr/mail-action/register
+  updateEmail: ${AUTH_PLATFORM_URL_UPDATE_EMAIL}
+  updatePassword: ${AUTH_PLATFORM_URL_UPDATE_PASSWORD}
+  register: ${AUTH_PLATFORM_URL_REGISTER}
