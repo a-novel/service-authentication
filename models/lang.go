@@ -7,6 +7,6 @@ func (l Lang) String() string {
 }
 
 const (
-	LangFR Lang = "FR"
-	LangEN Lang = "EN"
+	LangFR Lang = "fr"
+	LangEN Lang = "en"
 )
