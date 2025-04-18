@@ -3,6 +3,10 @@ export PORT=4001
 export ENV="local"
 export APP_NAME="authentication"
 
+export AUTH_PLATFORM_URL_UPDATE_EMAIL="http://localhost:4001/update-email"
+export AUTH_PLATFORM_URL_UPDATE_PASSWORD="http://localhost:4001/update-password"
+export AUTH_PLATFORM_URL_REGISTER="http://localhost:4001/register"
+
 # Postgres.
 export POSTGRES_USER="postgres"
 export POSTGRES_PASSWORD="postgres"

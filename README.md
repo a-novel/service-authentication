@@ -23,6 +23,82 @@ You can find the API documentation on the [repository GitHub page](https://a-nov
 
 Want to contribute? Check the [contribution guidelines](CONTRIBUTING.md).
 
+# Use in a project
+
+You can import this application as a docker image. Below is an example using
+[podman compose](https://docs.podman.io/en/latest/markdown/podman-compose.1.html).
+
+```yaml
+services:
+  postgres-authentication:
+    image: docker.io/library/postgres:17
+    networks:
+      - api
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: authentication
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data/
+
+  # Runs the secret key rotation on every launch.
+  # Keys are smartly rotated, meaning new keys are generated only when necessary
+  # (eg: keys missing or last generated version is too old).
+  # The container will exit by itself when the job is done.
+  authentication-rotate-keys-job:
+    image: ghcr.io/a-novel/authentication/jobs/rotatekeys:v0
+    depends_on:
+      - postgres-authentication
+    environment:
+      PORT: 4001
+      ENV: local
+      APP_NAME: authentication-service-rotate-keys-job
+      DSN: postgres://postgres:postgres@postgres-authentication:5432/authentication?sslmode=disable
+      # Dummy key used only for local environment. Consider using a secure, private key in production.
+      # Note it MUST match the one used in the authentication service.
+      MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
+    networks:
+      - api
+
+  authentication-service:
+    image: ghcr.io/a-novel/authentication/api:v0
+    depends_on:
+      - postgres-authentication
+    ports:
+      - "4001:4001"
+    environment:
+      PORT: 4001
+      ENV: local
+      APP_NAME: authentication-service
+      DSN: postgres://postgres:postgres@postgres-authentication:5432/authentication?sslmode=disable
+      # Dummy key used only for local environment. Consider using a secure, private key in production.
+      # Note it MUST match the one used in the authentication keys rotation job.
+      MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      AUTH_PLATFORM_URL_UPDATE_EMAIL: http://localhost:4001/update-email
+      AUTH_PLATFORM_URL_UPDATE_PASSWORD: http://localhost:4001/update-password
+      AUTH_PLATFORM_URL_REGISTER: http://localhost:4001/register
+    networks:
+      - api
+
+networks:
+  api: {}
+
+volumes:
+  postgres-auth-data:
+```
+
+Available tags includes:
+
+- `latest`: latest versioned image
+- `vx`: versioned images, pointing to a specific version. Partial versions are supported. When provided, the
+  latest subversion is used.\
+  examples: `v0`, `v0.1`, `v0.1.2`
+- `branch`: get the latest version pushed to a branch. Any valid branch name can be used.\
+  examples: `master`, `fix/something`
+
 # Run locally
 
 ## Pre-requisites
