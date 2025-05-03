@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/config"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestKeys(t *testing.T) {

@@ -12,7 +12,7 @@ import (
 	"github.com/a-novel-kit/configurator/utilstest"
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
 )
 
 var logs *chans.MultiChan[string]

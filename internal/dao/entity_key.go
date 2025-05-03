@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/models"
 )
 
 var ErrKeyNotFound = errors.New("key not found")

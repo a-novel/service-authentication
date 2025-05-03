@@ -16,10 +16,10 @@ import (
 
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/config"
-	"github.com/a-novel/authentication/internal/services"
-	servicesmocks "github.com/a-novel/authentication/internal/services/mocks"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/internal/services"
+	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestRequestRegister(t *testing.T) {

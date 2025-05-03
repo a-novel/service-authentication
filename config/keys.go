@@ -6,7 +6,7 @@ import (
 
 	"github.com/a-novel-kit/configurator"
 
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/models"
 )
 
 //go:embed keys.yaml

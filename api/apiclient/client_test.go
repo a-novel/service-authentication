@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/api/apiclient"
-	"github.com/a-novel/authentication/api/codegen"
+	"github.com/a-novel/service-authentication/api/apiclient"
+	"github.com/a-novel/service-authentication/api/codegen"
 )
 
 func TestSecuritySource(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/internal/lib"
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 func TestMasterKeyContext(t *testing.T) {

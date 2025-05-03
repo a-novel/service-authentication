@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
 )
 
 // STORY: The user can call health apis, and they return a 200 status code.

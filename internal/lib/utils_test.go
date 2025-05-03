@@ -7,7 +7,7 @@ import (
 
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/internal/lib"
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 func mustEncryptValue(ctx context.Context, t *testing.T, data any) []byte {

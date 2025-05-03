@@ -11,7 +11,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'a-novel/authentication'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'a-novel/service-authentication'
     steps:
       - uses: a-novel-kit/workflows/node-actions/prettier-dependabot@master
         with:

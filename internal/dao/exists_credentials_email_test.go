@@ -10,8 +10,8 @@ import (
 
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
-	"github.com/a-novel/authentication/internal/dao"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/internal/dao"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestExistsCredentialsEmail(t *testing.T) {

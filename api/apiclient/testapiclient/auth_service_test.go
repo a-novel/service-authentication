@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/api/apiclient/testapiclient"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestAuthServer(t *testing.T) {

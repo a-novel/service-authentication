@@ -7,8 +7,8 @@ import (
 	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel-kit/jwt/jwk"
 
-	"github.com/a-novel/authentication/config"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/models"
 )
 
 // KeysProviderSource is the interface for jwk.Source providers to source keys from the database.

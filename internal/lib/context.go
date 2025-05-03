@@ -7,7 +7,7 @@ import (
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
-	"github.com/a-novel/authentication/migrations"
+	"github.com/a-novel/service-authentication/migrations"
 )
 
 var ErrNewAgoraContext = errors.New("NewAgoraContext")

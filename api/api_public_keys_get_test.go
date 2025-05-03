@@ -10,11 +10,11 @@ import (
 
 	"github.com/a-novel-kit/jwt/jwa"
 
-	"github.com/a-novel/authentication/api"
-	"github.com/a-novel/authentication/api/codegen"
-	apimocks "github.com/a-novel/authentication/api/mocks"
-	"github.com/a-novel/authentication/internal/dao"
-	"github.com/a-novel/authentication/internal/services"
+	"github.com/a-novel/service-authentication/api"
+	"github.com/a-novel/service-authentication/api/codegen"
+	apimocks "github.com/a-novel/service-authentication/api/mocks"
+	"github.com/a-novel/service-authentication/internal/dao"
+	"github.com/a-novel/service-authentication/internal/services"
 )
 
 func TestGetPublicKey(t *testing.T) {

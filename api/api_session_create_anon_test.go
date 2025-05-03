@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/api"
-	"github.com/a-novel/authentication/api/codegen"
-	apimocks "github.com/a-novel/authentication/api/mocks"
+	"github.com/a-novel/service-authentication/api"
+	"github.com/a-novel/service-authentication/api/codegen"
+	apimocks "github.com/a-novel/service-authentication/api/mocks"
 )
 
 func TestCreateAnonSession(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 
 	"github.com/a-novel-kit/jwt/jwa"
 
-	"github.com/a-novel/authentication/api/codegen"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func (api *API) jwkToModel(src *jwa.JWK) (*codegen.JWK, error) {

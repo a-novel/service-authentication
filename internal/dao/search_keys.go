@@ -10,7 +10,7 @@ import (
 	pgctx "github.com/a-novel-kit/context/pgbun"
 	sentryctx "github.com/a-novel-kit/context/sentry"
 
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/models"
 )
 
 var ErrSearchKeysRepository = errors.New("SearchKeysRepository.SearchKeys")

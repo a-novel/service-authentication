@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/internal/services"
-	servicesmocks "github.com/a-novel/authentication/internal/services/mocks"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/internal/services"
+	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestLoginAnon(t *testing.T) {
