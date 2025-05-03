@@ -7,8 +7,8 @@ import (
 
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/api/codegen"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func (api *API) CheckSession(ctx context.Context) (codegen.CheckSessionRes, error) {

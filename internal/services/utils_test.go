@@ -12,8 +12,8 @@ import (
 	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel-kit/jwt/jwk"
 
-	"github.com/a-novel/authentication/internal/lib"
-	"github.com/a-novel/authentication/internal/services"
+	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/service-authentication/internal/services"
 )
 
 func mustEncryptValue(ctx context.Context, t *testing.T, data any) []byte {

@@ -10,10 +10,10 @@ import (
 	"github.com/a-novel-kit/context"
 	"github.com/a-novel-kit/jwt/jwk"
 
-	"github.com/a-novel/authentication/internal/dao"
-	"github.com/a-novel/authentication/internal/lib"
-	"github.com/a-novel/authentication/internal/services"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/internal/dao"
+	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func testKeySource[Priv, Pub any](

@@ -10,12 +10,12 @@ import (
 
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/api"
-	"github.com/a-novel/authentication/api/codegen"
-	apimocks "github.com/a-novel/authentication/api/mocks"
-	"github.com/a-novel/authentication/internal/lib"
-	"github.com/a-novel/authentication/internal/services"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/api"
+	"github.com/a-novel/service-authentication/api/codegen"
+	apimocks "github.com/a-novel/service-authentication/api/mocks"
+	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestEmailUpdate(t *testing.T) {

@@ -10,9 +10,9 @@ import (
 	"github.com/a-novel-kit/context"
 	sentryctx "github.com/a-novel-kit/context/sentry"
 
-	"github.com/a-novel/authentication/config"
-	"github.com/a-novel/authentication/config/mails"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/config/mails"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any) {

@@ -5,15 +5,15 @@
 
 <hr />
 
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/a-novel/authentication)
-![GitHub repo file or directory count](https://img.shields.io/github/directory-file-count/a-novel/authentication)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/a-novel/authentication)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/a-novel/service-authentication)
+![GitHub repo file or directory count](https://img.shields.io/github/directory-file-count/a-novel/service-authentication)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/a-novel/service-authentication)
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/a-novel/authentication/main.yaml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/a-novel/authentication)](https://goreportcard.com/report/github.com/a-novel/authentication)
-[![codecov](https://codecov.io/gh/a-novel/authentication/graph/badge.svg?token=cnSwTJ2q4n)](https://codecov.io/gh/a-novel/authentication)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/a-novel/service-authentication/main.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/a-novel/service-authentication)](https://goreportcard.com/report/github.com/a-novel/service-authentication)
+[![codecov](https://codecov.io/gh/a-novel/service-authentication/graph/badge.svg?token=cnSwTJ2q4n)](https://codecov.io/gh/a-novel/service-authentication)
 
-![Coverage graph](https://codecov.io/gh/a-novel/authentication/graphs/sunburst.svg?token=cnSwTJ2q4n)
+![Coverage graph](https://codecov.io/gh/a-novel/service-authentication/graphs/sunburst.svg?token=cnSwTJ2q4n)
 
 <hr />
 
@@ -48,7 +48,7 @@ services:
   # (eg: keys missing or last generated version is too old).
   # The container will exit by itself when the job is done.
   authentication-rotate-keys-job:
-    image: ghcr.io/a-novel/authentication/jobs/rotatekeys:v0
+    image: ghcr.io/a-novel/service-authentication/jobs/rotatekeys:v0
     depends_on:
       - postgres-authentication
     environment:
@@ -63,7 +63,7 @@ services:
       - api
 
   authentication-service:
-    image: ghcr.io/a-novel/authentication/api:v0
+    image: ghcr.io/a-novel/service-authentication/api:v0
     depends_on:
       - postgres-authentication
     ports:

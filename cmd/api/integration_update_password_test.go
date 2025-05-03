@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/api/apiclient/testapiclient"
-	"github.com/a-novel/authentication/api/codegen"
+	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/api/codegen"
 )
 
 // STORY: The user can update its password.

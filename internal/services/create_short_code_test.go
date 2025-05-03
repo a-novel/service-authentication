@@ -13,10 +13,10 @@ import (
 
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/internal/dao"
-	"github.com/a-novel/authentication/internal/lib"
-	"github.com/a-novel/authentication/internal/services"
-	servicesmocks "github.com/a-novel/authentication/internal/services/mocks"
+	"github.com/a-novel/service-authentication/internal/dao"
+	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/service-authentication/internal/services"
+	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 )
 
 func TestCreateShortCode(t *testing.T) {

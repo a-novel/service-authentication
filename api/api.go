@@ -10,7 +10,7 @@ import (
 
 	sentryctx "github.com/a-novel-kit/context/sentry"
 
-	"github.com/a-novel/authentication/api/codegen"
+	"github.com/a-novel/service-authentication/api/codegen"
 )
 
 var ErrUnauthorized = &codegen.UnexpectedErrorStatusCode{

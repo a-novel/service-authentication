@@ -4,10 +4,10 @@ package servicesmocks
 
 import (
 	context "github.com/a-novel-kit/context"
-	dao "github.com/a-novel/authentication/internal/dao"
+	dao "github.com/a-novel/service-authentication/internal/dao"
 	mock "github.com/stretchr/testify/mock"
 
-	services "github.com/a-novel/authentication/internal/services"
+	services "github.com/a-novel/service-authentication/internal/services"
 
 	uuid "github.com/google/uuid"
 )

@@ -1,4 +1,4 @@
-module github.com/a-novel/authentication
+module github.com/a-novel/service-authentication
 
 go 1.24.2
 

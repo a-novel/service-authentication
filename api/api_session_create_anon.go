@@ -5,7 +5,7 @@ import (
 
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/api/codegen"
+	"github.com/a-novel/service-authentication/api/codegen"
 )
 
 type LoginAnonService interface {

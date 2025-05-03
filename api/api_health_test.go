@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/authentication/api"
-	"github.com/a-novel/authentication/api/codegen"
-	"github.com/a-novel/authentication/internal/lib"
+	"github.com/a-novel/service-authentication/api"
+	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 func TestPing(t *testing.T) {

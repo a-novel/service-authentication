@@ -9,10 +9,10 @@ import (
 
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/config"
-	"github.com/a-novel/authentication/config/mails"
-	"github.com/a-novel/authentication/internal/lib"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/config/mails"
+	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/service-authentication/models"
 )
 
 var ErrRequestEmailUpdateService = errors.New("RequestEmailUpdateService.RequestEmailUpdate")

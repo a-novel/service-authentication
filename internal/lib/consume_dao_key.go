@@ -11,7 +11,7 @@ import (
 	"github.com/a-novel-kit/context"
 	"github.com/a-novel-kit/jwt/jwa"
 
-	"github.com/a-novel/authentication/internal/dao"
+	"github.com/a-novel/service-authentication/internal/dao"
 )
 
 var ErrConsumeDAOKey = errors.New("ConsumeDAOKey")

@@ -1,13 +1,13 @@
 resolve-type-alias: false
 issue-845-fix: true
 packages:
-  github.com/a-novel/authentication/internal/services:
+  github.com/a-novel/service-authentication/internal/services:
     config:
       all: true
       recursive: true
       outpkg: servicesmocks
       dir: internal/services/mocks
-  github.com/a-novel/authentication/api:
+  github.com/a-novel/service-authentication/api:
     config:
       all: true
       recursive: false

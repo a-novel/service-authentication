@@ -6,7 +6,7 @@ import (
 
 	"github.com/a-novel-kit/context"
 
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/models"
 )
 
 var ErrLoginAnonService = errors.New("LoginAnonService.LoginAnon")

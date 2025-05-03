@@ -11,7 +11,7 @@ import (
 	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/models"
 )
 
 var ErrInsertCredentialsRepository = errors.New("InsertCredentialsRepository.InsertCredentials")

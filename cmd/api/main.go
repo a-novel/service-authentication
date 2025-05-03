@@ -16,13 +16,13 @@ import (
 	"github.com/a-novel-kit/context"
 	zeromiddleware "github.com/a-novel-kit/middlewares/zerolog"
 
-	"github.com/a-novel/authentication/api"
-	"github.com/a-novel/authentication/api/codegen"
-	"github.com/a-novel/authentication/config"
-	"github.com/a-novel/authentication/internal/dao"
-	"github.com/a-novel/authentication/internal/lib"
-	"github.com/a-novel/authentication/internal/services"
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/api"
+	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/internal/dao"
+	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/a-novel/authentication/models"
+	"github.com/a-novel/service-authentication/models"
 )
 
 var (
