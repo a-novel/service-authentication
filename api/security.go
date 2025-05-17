@@ -18,7 +18,11 @@ import (
 	"github.com/a-novel/service-authentication/models"
 )
 
-var ErrMissingUserID = errors.New("claims do not contain user ID")
+var (
+	ErrMissingUserID  = errors.New("claims do not contain user ID")
+	ErrPermission     = errors.New("user does not have the required permissions")
+	ErrAuthentication = errors.New("authentication failed")
+)
 
 type SecurityHandlerService interface {
 	Authenticate(ctx context.Context, accessToken string) (*models.AccessTokenClaims, error)
@@ -41,7 +45,7 @@ func (security *SecurityHandler) HandleBearerAuth(
 	// Get the claims from the token. This will also perform the necessary checks to ensure the token is valid.
 	claims, err := security.SecurityHandlerService.Authenticate(ctx, auth.Token)
 	if err != nil {
-		return nil, fmt.Errorf("authenticate user: %w", err)
+		return nil, errors.Join(err, ErrAuthentication)
 	}
 
 	sentryctx.ConfigureScope(ctx, func(scope *sentry.Scope) {
@@ -89,7 +93,7 @@ func (security *SecurityHandler) HandleBearerAuth(
 			Any("claims_permissions", grantedPermissions).
 			Msg("check permissions")
 
-		return nil, models.ErrUnauthorized
+		return nil, ErrPermission
 	}
 
 	return context.WithValue(ctx, ClaimsAPIKey{}, claims), nil

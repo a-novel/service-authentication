@@ -122,7 +122,7 @@ func TestBearerAuth(t *testing.T) {
 				Token: "access-token",
 			},
 
-			expectErr: models.ErrUnauthorized,
+			expectErr: api.ErrPermission,
 		},
 		{
 			name: "AuthenticateError",
@@ -148,7 +148,7 @@ func TestBearerAuth(t *testing.T) {
 				Token: "access-token",
 			},
 
-			expectErr: errFoo,
+			expectErr: api.ErrAuthentication,
 		},
 	}
 
