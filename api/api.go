@@ -18,6 +18,11 @@ var ErrUnauthorized = &codegen.UnexpectedErrorStatusCode{
 	Response:   codegen.UnexpectedError{Error: "Unauthorized"},
 }
 
+var ErrForbidden = &codegen.UnexpectedErrorStatusCode{
+	StatusCode: http.StatusForbidden,
+	Response:   codegen.UnexpectedError{Error: "Forbidden"},
+}
+
 var ErrInternalServerError = &codegen.UnexpectedErrorStatusCode{
 	StatusCode: http.StatusInternalServerError,
 	Response:   codegen.UnexpectedError{Error: "internal server error"},
@@ -61,7 +66,14 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 	if ok := errors.As(err, &securityError); ok {
 		logger.Warn().Err(err).Msg("authentication failed")
 
-		return ErrUnauthorized
+		switch {
+		case errors.Is(err, ErrAuthentication):
+			return ErrUnauthorized
+		case errors.Is(err, ErrPermission):
+			return ErrForbidden
+		default:
+			return ErrUnauthorized
+		}
 	}
 
 	// Unhandled, unexpected error occurred.
