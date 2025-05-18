@@ -58,6 +58,12 @@ type Handler interface {
 	//
 	// GET /public-keys
 	GetPublicKey(ctx context.Context, params GetPublicKeyParams) (GetPublicKeyRes, error)
+	// GetUser implements getUser operation.
+	//
+	// Get a user from the database.
+	//
+	// GET /user
+	GetUser(ctx context.Context, params GetUserParams) (GetUserRes, error)
 	// Healthcheck implements healthcheck operation.
 	//
 	// Returns a detailed report of the health of the service, including every dependency.

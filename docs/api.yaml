@@ -659,7 +659,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/UnauthorizedError"
         "403":
-          description: User lacks the authorizations for the operation.
+          description: Access denied.
           content:
             application/json:
               schema:
@@ -750,6 +750,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnauthorizedError"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
+        default:
+          description: An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnexpectedError"
+
+  /user:
+    get:
+      tags:
+        - users
+      security:
+        - bearerAuth:
+            - "user:get"
+      summary: List all users.
+      description: |
+        Get a user from the database.
+      operationId: getUser
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      responses:
+        "200":
+          description: The users have been retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
+        "404":
+          description: The provided user ID does not match any user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -1336,3 +1387,10 @@ components:
         type: array
         items:
           $ref: "#/components/schemas/CredentialsRole"
+    UserID:
+      name: userID
+      in: query
+      description: The unique identifier of the user.
+      required: true
+      schema:
+        $ref: "#/components/schemas/UserID"

@@ -9,6 +9,7 @@ roles:
       - "email:update"
       - "password:reset"
       - "users:list"
+      - "user:get"
   "auth:user":
     inherits:
       - "auth:anon"

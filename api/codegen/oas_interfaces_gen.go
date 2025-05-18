@@ -25,6 +25,10 @@ type GetPublicKeyRes interface {
 	getPublicKeyRes()
 }
 
+type GetUserRes interface {
+	getUserRes()
+}
+
 type HealthcheckRes interface {
 	healthcheckRes()
 }

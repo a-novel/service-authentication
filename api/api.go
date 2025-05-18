@@ -48,6 +48,7 @@ type API struct {
 	UpdateRoleService     UpdateRoleService
 
 	ListUsersService ListUsersService
+	GetUserService   GetUserService
 
 	codegen.UnimplementedHandler
 }
