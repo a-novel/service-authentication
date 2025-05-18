@@ -1209,7 +1209,7 @@ func (s *Server) handleGetUserRequest(args [0]string, argsEscaped bool, w http.R
 		mreq := middleware.Request{
 			Context:          ctx,
 			OperationName:    GetUserOperation,
-			OperationSummary: "List all users.",
+			OperationSummary: "Get a user.",
 			OperationID:      "getUser",
 			Body:             nil,
 			Params: middleware.Parameters{
