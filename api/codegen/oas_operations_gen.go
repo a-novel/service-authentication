@@ -12,6 +12,7 @@ const (
 	CreateSessionOperation        OperationName = "CreateSession"
 	EmailExistsOperation          OperationName = "EmailExists"
 	GetPublicKeyOperation         OperationName = "GetPublicKey"
+	GetUserOperation              OperationName = "GetUser"
 	HealthcheckOperation          OperationName = "Healthcheck"
 	ListPublicKeysOperation       OperationName = "ListPublicKeys"
 	ListUsersOperation            OperationName = "ListUsers"

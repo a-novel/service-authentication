@@ -81,6 +81,15 @@ func (UnimplementedHandler) GetPublicKey(ctx context.Context, params GetPublicKe
 	return r, ht.ErrNotImplemented
 }
 
+// GetUser implements getUser operation.
+//
+// Get a user from the database.
+//
+// GET /user
+func (UnimplementedHandler) GetUser(ctx context.Context, params GetUserParams) (r GetUserRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // Healthcheck implements healthcheck operation.
 //
 // Returns a detailed report of the health of the service, including every dependency.

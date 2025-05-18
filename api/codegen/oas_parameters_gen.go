@@ -153,6 +153,71 @@ func decodeGetPublicKeyParams(args [0]string, argsEscaped bool, r *http.Request)
 	return params, nil
 }
 
+// GetUserParams is parameters of getUser operation.
+type GetUserParams struct {
+	// The unique identifier of the user.
+	UserID UserID
+}
+
+func unpackGetUserParams(packed middleware.Parameters) (params GetUserParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "userID",
+			In:   "query",
+		}
+		params.UserID = packed[key].(UserID)
+	}
+	return params
+}
+
+func decodeGetUserParams(args [0]string, argsEscaped bool, r *http.Request) (params GetUserParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: userID.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "userID",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotUserIDVal uuid.UUID
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToUUID(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotUserIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.UserID = UserID(paramsDotUserIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "userID",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ListPublicKeysParams is parameters of listPublicKeys operation.
 type ListPublicKeysParams struct {
 	// The intended usage of the keys.

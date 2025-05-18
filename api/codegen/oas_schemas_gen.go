@@ -546,6 +546,8 @@ func (s *ForbiddenError) SetError(val string) {
 
 func (*ForbiddenError) createRefreshTokenRes() {}
 func (*ForbiddenError) createSessionRes()      {}
+func (*ForbiddenError) getUserRes()            {}
+func (*ForbiddenError) listUsersRes()          {}
 func (*ForbiddenError) refreshSessionRes()     {}
 func (*ForbiddenError) registerRes()           {}
 func (*ForbiddenError) resetPasswordRes()      {}
@@ -946,6 +948,7 @@ func (s *NotFoundError) SetError(val string) {
 func (*NotFoundError) createSessionRes()        {}
 func (*NotFoundError) emailExistsRes()          {}
 func (*NotFoundError) getPublicKeyRes()         {}
+func (*NotFoundError) getUserRes()              {}
 func (*NotFoundError) requestPasswordResetRes() {}
 func (*NotFoundError) updateEmailRes()          {}
 func (*NotFoundError) updateRoleRes()           {}
@@ -1456,6 +1459,7 @@ func (s *UnauthorizedError) SetError(val string) {
 
 func (*UnauthorizedError) checkSessionRes()         {}
 func (*UnauthorizedError) getPublicKeyRes()         {}
+func (*UnauthorizedError) getUserRes()              {}
 func (*UnauthorizedError) listPublicKeysRes()       {}
 func (*UnauthorizedError) listUsersRes()            {}
 func (*UnauthorizedError) registerRes()             {}
@@ -1737,6 +1741,7 @@ func (s *User) SetUpdatedAt(val time.Time) {
 	s.UpdatedAt = val
 }
 
+func (*User) getUserRes()    {}
 func (*User) updateRoleRes() {}
 
 type UserID uuid.UUID
