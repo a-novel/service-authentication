@@ -11,7 +11,7 @@ lint:
 # Generate mocked interfaces for Go tests.
 mocks:
 	rm -rf `find . -type d -name mocks`
-	go run github.com/vektra/mockery/v2@v2.53.1
+	go run github.com/vektra/mockery/v3@v3.2.5
 
 # Reformat code so it passes the code style lint checks.
 format:

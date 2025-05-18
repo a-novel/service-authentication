@@ -11,7 +11,6 @@ Also take time to understand our frameworks:
 - [Ogen](https://github.com/ogen-go/ogen): generate openAPI definitions for go
 - [bun](https://bun.uptrace.dev/): PostgreSQL ORM for go.
 - [JWT](https://a-novel-kit.github.io/jwt/): our go internal implementation of the RFC standard.
-- [Mockery](https://github.com/vektra/mockery): mocking tool for go.
 
 ## Tools
 
