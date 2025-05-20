@@ -29,8 +29,6 @@ type SecurityHandlerService interface {
 }
 
 type SecurityHandler struct {
-	// Permissions required by each operation.
-	RequiredPermissions map[codegen.OperationName][]models.Permission
 	// Permissions granted by each role.
 	GrantedPermissions map[models.Role][]models.Permission
 
@@ -40,7 +38,10 @@ type SecurityHandler struct {
 func (security *SecurityHandler) HandleBearerAuth(
 	ctx context.Context, operationName codegen.OperationName, auth codegen.BearerAuth,
 ) (context.Context, error) {
-	logger := zerolog.Ctx(ctx)
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("operation", operationName).
+		Logger()
 
 	// Get the claims from the token. This will also perform the necessary checks to ensure the token is valid.
 	claims, err := security.SecurityHandlerService.Authenticate(ctx, auth.Token)
@@ -54,53 +55,46 @@ func (security *SecurityHandler) HandleBearerAuth(
 		})
 	})
 
-	// List the permissions required by the current operation.
-	requiredPermissions, ok := security.RequiredPermissions[operationName]
-	if !ok {
-		return context.WithValue(ctx, ClaimsAPIKey{}, claims), nil
-	}
-
 	// Retrieve all the permissions granted to the user, based on its roles.
-	var grantedPermissions []models.Permission
+	grantedPermissions := make(map[models.Permission]struct{})
 
 	for _, role := range claims.Roles {
 		if rolePermissions, ok := security.GrantedPermissions[role]; ok {
-			grantedPermissions = append(grantedPermissions, rolePermissions...)
+			for _, permission := range rolePermissions {
+				grantedPermissions[permission] = struct{}{}
+			}
 		}
 	}
-
-	// Check the intersection between the 2 sets of permissions.
-	matchedPermissions := lo.Intersect(requiredPermissions, grantedPermissions)
 
 	sentryctx.AddBreadcrumb(ctx, &sentry.Breadcrumb{
 		Category: "permissions",
 		Message:  "check permissions",
 		Data: map[string]any{
-			"required_permissions": requiredPermissions,
+			"required_permissions": auth.Roles,
 			"claims_permissions":   grantedPermissions,
 		},
 		Level:     sentry.LevelInfo,
 		Timestamp: time.Now(),
 	}, nil)
 
-	// If every required permission matched, then the intersection with the claims permissions
-	// is the same length as the required permissions.
-	if len(matchedPermissions) != len(requiredPermissions) {
-		logger.
-			Warn().
-			Err(models.ErrUnauthorized).
-			Any("required_permissions", requiredPermissions).
-			Any("claims_permissions", grantedPermissions).
-			Msg("check permissions")
+	// Check if the user has the required permissions for the operation.
+	for _, permission := range auth.Roles {
+		if _, ok := grantedPermissions[models.Permission(permission)]; !ok {
+			logger.
+				Warn().
+				Err(models.ErrUnauthorized).
+				Any("required_permissions", auth.Roles).
+				Any("claims_permissions", grantedPermissions).
+				Msg("check permissions")
 
-		return nil, ErrPermission
+			return nil, ErrPermission
+		}
 	}
 
 	return context.WithValue(ctx, ClaimsAPIKey{}, claims), nil
 }
 
 func NewSecurity(
-	required map[codegen.OperationName][]models.Permission,
 	granted models.PermissionsConfig,
 	service SecurityHandlerService,
 ) (*SecurityHandler, error) {
@@ -120,7 +114,6 @@ func NewSecurity(
 	}
 
 	return &SecurityHandler{
-		RequiredPermissions:    required,
 		GrantedPermissions:     resolveGranted,
 		SecurityHandlerService: service,
 	}, nil

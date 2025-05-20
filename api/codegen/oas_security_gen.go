@@ -33,6 +33,50 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 	return "", false
 }
 
+var operationRolesBearerAuth = map[string][]string{
+	CheckSessionOperation:       []string{},
+	CreateRefreshTokenOperation: []string{},
+	EmailExistsOperation: []string{
+		"email:exists",
+	},
+	GetPublicKeyOperation: []string{
+		"jwk:read",
+	},
+	GetUserOperation: []string{
+		"user:get",
+	},
+	ListPublicKeysOperation: []string{
+		"jwk:read",
+	},
+	ListUsersOperation: []string{
+		"users:list",
+	},
+	RegisterOperation: []string{
+		"register",
+	},
+	RequestEmailUpdateOperation: []string{
+		"email:update:request",
+	},
+	RequestPasswordResetOperation: []string{
+		"password:reset:request",
+	},
+	RequestRegistrationOperation: []string{
+		"register:request",
+	},
+	ResetPasswordOperation: []string{
+		"password:reset",
+	},
+	UpdateEmailOperation: []string{
+		"email:update",
+	},
+	UpdatePasswordOperation: []string{
+		"password:update",
+	},
+	UpdateRoleOperation: []string{
+		"role:update",
+	},
+}
+
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
 	var t BearerAuth
 	token, ok := findAuthorization(req.Header, "Bearer")
@@ -40,6 +84,7 @@ func (s *Server) securityBearerAuth(ctx context.Context, operationName Operation
 		return ctx, false, nil
 	}
 	t.Token = token
+	t.Roles = operationRolesBearerAuth[operationName]
 	rctx, err := s.sec.HandleBearerAuth(ctx, operationName, t)
 	if errors.Is(err, ogenerrors.ErrSkipServerSecurity) {
 		return nil, false, nil

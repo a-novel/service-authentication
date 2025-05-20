@@ -22,7 +22,6 @@ import (
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
-	"github.com/a-novel/service-authentication/models"
 )
 
 const (
@@ -206,35 +205,7 @@ func main() {
 		ListUsersService: listUsersService,
 	}
 
-	apiPermissions := map[codegen.OperationName][]models.Permission{
-		codegen.PingOperation:        {},
-		codegen.HealthcheckOperation: {},
-
-		codegen.CheckSessionOperation:       {},
-		codegen.CreateSessionOperation:      {},
-		codegen.CreateAnonSessionOperation:  {},
-		codegen.RefreshSessionOperation:     {},
-		codegen.CreateRefreshTokenOperation: {},
-
-		codegen.GetPublicKeyOperation:   {"jwk:read"},
-		codegen.ListPublicKeysOperation: {"jwk:read"},
-
-		codegen.RequestRegistrationOperation:  {"register:request"},
-		codegen.RequestEmailUpdateOperation:   {"email:update:request"},
-		codegen.RequestPasswordResetOperation: {"password:reset:request"},
-
-		codegen.RegisterOperation:       {"register"},
-		codegen.EmailExistsOperation:    {"email:exists"},
-		codegen.UpdateEmailOperation:    {"email:update"},
-		codegen.UpdatePasswordOperation: {"password:update"},
-		codegen.UpdateRoleOperation:     {"role:update"},
-
-		codegen.ResetPasswordOperation: {"password:reset"},
-
-		codegen.ListUsersOperation: {"users:list"},
-	}
-
-	securityHandler, err := api.NewSecurity(apiPermissions, config.Permissions, authenticateService)
+	securityHandler, err := api.NewSecurity(config.Permissions, authenticateService)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("initialize security handler")
 	}

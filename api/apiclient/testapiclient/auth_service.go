@@ -53,7 +53,6 @@ func Authenticate(ctx context.Context, accessToken string) (*models.AccessTokenC
 
 func InitAuthServer() {
 	securityHandler, err := api.NewSecurity(
-		map[codegen.OperationName][]models.Permission{},
 		config.Permissions,
 		authServiceInstance,
 	)

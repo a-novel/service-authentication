@@ -34,8 +34,7 @@ func TestSecurityHandlerService(t *testing.T) {
 
 		authenticateData *authenticateData
 
-		granted  models.PermissionsConfig
-		required map[codegen.OperationName][]models.Permission
+		granted models.PermissionsConfig
 
 		expect    *models.AccessTokenClaims
 		expectErr error
@@ -52,8 +51,7 @@ func TestSecurityHandlerService(t *testing.T) {
 				},
 			},
 
-			granted:  models.PermissionsConfig{},
-			required: map[codegen.OperationName][]models.Permission{},
+			granted: models.PermissionsConfig{},
 
 			expect: &models.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
@@ -71,8 +69,7 @@ func TestSecurityHandlerService(t *testing.T) {
 				},
 			},
 
-			granted:  models.PermissionsConfig{},
-			required: map[codegen.OperationName][]models.Permission{},
+			granted: models.PermissionsConfig{},
 
 			expect: &models.AccessTokenClaims{
 				Roles: []models.Role{"role:1"},
@@ -90,8 +87,7 @@ func TestSecurityHandlerService(t *testing.T) {
 				},
 			},
 
-			granted:  models.PermissionsConfig{},
-			required: map[codegen.OperationName][]models.Permission{},
+			granted: models.PermissionsConfig{},
 
 			expect: &models.AccessTokenClaims{
 				Roles:          []models.Role{"role:1"},
@@ -124,7 +120,6 @@ func TestSecurityHandlerService(t *testing.T) {
 			}
 
 			securityHandler, err := api.NewSecurity(
-				testCase.required,
 				testCase.granted,
 				source,
 			)
