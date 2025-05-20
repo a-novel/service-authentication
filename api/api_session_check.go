@@ -1,11 +1,10 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/samber/lo"
-
-	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/service-authentication/api/codegen"
 	"github.com/a-novel/service-authentication/models"
@@ -14,9 +13,9 @@ import (
 func (api *API) CheckSession(ctx context.Context) (codegen.CheckSessionRes, error) {
 	// Extract the claims from the context. This should never fail, as this handler is only triggered after a
 	// successful authentication.
-	claims, err := context.ExtractValue[*models.AccessTokenClaims](ctx, ClaimsAPIKey{})
+	claims, err := GetSecurityClaims(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("extract claims: %w", err)
+		return nil, fmt.Errorf("get claims: %w", err)
 	}
 
 	return &codegen.Claims{

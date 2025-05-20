@@ -1,10 +1,9 @@
 package testapiclient
 
 import (
+	"context"
 	"fmt"
 	"time"
-
-	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/service-authentication/api/apiclient"
 	"github.com/a-novel/service-authentication/api/codegen"

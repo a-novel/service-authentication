@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/rs/zerolog"
 
-	"github.com/a-novel-kit/context"
 	zeromiddleware "github.com/a-novel-kit/middlewares/zerolog"
 
 	"github.com/a-novel/service-authentication/api"

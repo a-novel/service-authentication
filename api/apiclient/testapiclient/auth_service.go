@@ -1,6 +1,7 @@
 package testapiclient
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,8 +10,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-
-	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/service-authentication/api"
 	"github.com/a-novel/service-authentication/api/apiclient"

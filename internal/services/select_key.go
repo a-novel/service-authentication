@@ -1,12 +1,12 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 
-	"github.com/a-novel-kit/context"
 	"github.com/a-novel-kit/jwt/jwa"
 
 	"github.com/a-novel/service-authentication/internal/dao"

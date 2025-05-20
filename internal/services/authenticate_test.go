@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"crypto/ed25519"
 	"testing"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/context"
 	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel-kit/jwt/jwk"
 

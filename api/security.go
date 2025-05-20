@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/configurator"
-	"github.com/a-novel-kit/context"
 	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/service-authentication/api/codegen"
@@ -22,6 +22,7 @@ var (
 	ErrMissingUserID  = errors.New("claims do not contain user ID")
 	ErrPermission     = errors.New("user does not have the required permissions")
 	ErrAuthentication = errors.New("authentication failed")
+	ErrInvalidClaims  = errors.New("invalid claims")
 )
 
 type SecurityHandlerService interface {
@@ -122,9 +123,13 @@ func NewSecurity(
 type ClaimsAPIKey struct{}
 
 func GetSecurityClaims(ctx context.Context) (*models.AccessTokenClaims, error) {
-	claims, err := context.ExtractValue[*models.AccessTokenClaims](ctx, ClaimsAPIKey{})
-	if err != nil {
-		return nil, fmt.Errorf("(GetSecurityClaims) extract claims: %w", err)
+	claims, ok := ctx.Value(ClaimsAPIKey{}).(*models.AccessTokenClaims)
+	if !ok {
+		return nil, fmt.Errorf(
+			"(GetSecurityClaims) extract claims: %w: got type %T, expected %T",
+			ErrInvalidClaims,
+			ctx.Value(ClaimsAPIKey{}), &models.AccessTokenClaims{},
+		)
 	}
 
 	return claims, nil

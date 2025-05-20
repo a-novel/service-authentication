@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -12,8 +13,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
-
-	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/internal/dao"

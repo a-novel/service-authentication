@@ -1,12 +1,11 @@
 package lib
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
-
-	"github.com/a-novel-kit/context"
 )
 
 type masterKeyContext struct{}
@@ -15,7 +14,10 @@ const (
 	MasterKeyEnv = "MASTER_KEY"
 )
 
-var ErrNoMasterKey = errors.New("missing master key")
+var (
+	ErrInvalidMasterKey = errors.New("invalid master key")
+	ErrNoMasterKey      = errors.New("missing master key")
+)
 
 func NewMasterKeyContext(ctx context.Context) (context.Context, error) {
 	masterKeyRaw := os.Getenv(MasterKeyEnv)
@@ -36,5 +38,15 @@ func NewMasterKeyContext(ctx context.Context) (context.Context, error) {
 }
 
 func MasterKeyContext(ctx context.Context) ([32]byte, error) {
-	return context.ExtractValue[[32]byte](ctx, masterKeyContext{})
+	masterKey, ok := ctx.Value(masterKeyContext{}).([32]byte)
+
+	if !ok {
+		return [32]byte{}, fmt.Errorf(
+			"(MasterKeyContext) extract master key: %w: got type %T, expected %T",
+			ErrInvalidMasterKey,
+			ctx.Value(masterKeyContext{}), [32]byte{},
+		)
+	}
+
+	return masterKey, nil
 }

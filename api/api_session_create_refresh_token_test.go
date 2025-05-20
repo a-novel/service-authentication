@@ -1,12 +1,11 @@
 package api_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/service-authentication/api"
 	"github.com/a-novel/service-authentication/api/codegen"

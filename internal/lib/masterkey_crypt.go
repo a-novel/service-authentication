@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
@@ -8,8 +9,6 @@ import (
 	"io"
 
 	"golang.org/x/crypto/nacl/secretbox"
-
-	"github.com/a-novel-kit/context"
 )
 
 var (
