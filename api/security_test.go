@@ -27,8 +27,7 @@ func TestBearerAuth(t *testing.T) {
 
 		authenticateData *authenticateData
 
-		granted  models.PermissionsConfig
-		required map[codegen.OperationName][]models.Permission
+		granted models.PermissionsConfig
 
 		operationName codegen.OperationName
 		auth          codegen.BearerAuth
@@ -52,14 +51,11 @@ func TestBearerAuth(t *testing.T) {
 					},
 				},
 			},
-			required: map[codegen.OperationName][]models.Permission{
-				"operation:1": {"perm:1"},
-				"operation:2": {"perm:2"},
-			},
 
 			operationName: "operation:1",
 			auth: codegen.BearerAuth{
 				Token: "access-token",
+				Roles: []string{"perm:1"},
 			},
 
 			expectErr:    nil,
@@ -80,11 +76,6 @@ func TestBearerAuth(t *testing.T) {
 						Permissions: []models.Permission{"perm:1", "perm:3"},
 					},
 				},
-			},
-			required: map[codegen.OperationName][]models.Permission{
-				"operation:1": {"perm:1"},
-				"operation:2": {"perm:2"},
-				"operation:3": {},
 			},
 
 			operationName: "operation:3",
@@ -111,15 +102,11 @@ func TestBearerAuth(t *testing.T) {
 					},
 				},
 			},
-			required: map[codegen.OperationName][]models.Permission{
-				"operation:1": {"perm:1"},
-				"operation:2": {"perm:2"},
-				"operation:3": {},
-			},
 
 			operationName: "operation:2",
 			auth: codegen.BearerAuth{
 				Token: "access-token",
+				Roles: []string{"perm:2"},
 			},
 
 			expectErr: api.ErrPermission,
@@ -138,14 +125,11 @@ func TestBearerAuth(t *testing.T) {
 					},
 				},
 			},
-			required: map[codegen.OperationName][]models.Permission{
-				"operation:1": {"perm:1"},
-				"operation:2": {"perm:2"},
-			},
 
 			operationName: "operation:1",
 			auth: codegen.BearerAuth{
 				Token: "access-token",
+				Roles: []string{"perm:1"},
 			},
 
 			expectErr: api.ErrAuthentication,
@@ -165,7 +149,6 @@ func TestBearerAuth(t *testing.T) {
 			}
 
 			security, err := api.NewSecurity(
-				testCase.required,
 				testCase.granted,
 				source,
 			)

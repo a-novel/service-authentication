@@ -292,6 +292,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnauthorizedError"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
         "404":
           description: The provided key usage does not match any key.
           content:
@@ -338,6 +344,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnauthorizedError"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -375,6 +387,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnauthorizedError"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
         "418":
           description: This route is not expected to fail under normal circumstances.
         default:
@@ -416,6 +434,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnauthorizedError"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -452,6 +476,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnauthorizedError"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
         "404":
           description: The provided email does not match any user.
           content:
@@ -530,6 +560,18 @@ paths:
       responses:
         "204":
           description: The email is associated to an user.
+        "401":
+          description: Authentication failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
         "404":
           description: The provided email is not associated to any user.
           content:

@@ -292,6 +292,7 @@ func (s *Alg) UnmarshalText(data []byte) error {
 
 type BearerAuth struct {
 	Token string
+	Roles []string
 }
 
 // GetToken returns the value of Token.
@@ -299,9 +300,19 @@ func (s *BearerAuth) GetToken() string {
 	return s.Token
 }
 
+// GetRoles returns the value of Roles.
+func (s *BearerAuth) GetRoles() []string {
+	return s.Roles
+}
+
 // SetToken sets the value of Token.
 func (s *BearerAuth) SetToken(val string) {
 	s.Token = val
+}
+
+// SetRoles sets the value of Roles.
+func (s *BearerAuth) SetRoles(val []string) {
+	s.Roles = val
 }
 
 // Ref: #/components/schemas/Claims
@@ -544,16 +555,22 @@ func (s *ForbiddenError) SetError(val string) {
 	s.Error = val
 }
 
-func (*ForbiddenError) createRefreshTokenRes() {}
-func (*ForbiddenError) createSessionRes()      {}
-func (*ForbiddenError) getUserRes()            {}
-func (*ForbiddenError) listUsersRes()          {}
-func (*ForbiddenError) refreshSessionRes()     {}
-func (*ForbiddenError) registerRes()           {}
-func (*ForbiddenError) resetPasswordRes()      {}
-func (*ForbiddenError) updateEmailRes()        {}
-func (*ForbiddenError) updatePasswordRes()     {}
-func (*ForbiddenError) updateRoleRes()         {}
+func (*ForbiddenError) createRefreshTokenRes()   {}
+func (*ForbiddenError) createSessionRes()        {}
+func (*ForbiddenError) emailExistsRes()          {}
+func (*ForbiddenError) getPublicKeyRes()         {}
+func (*ForbiddenError) getUserRes()              {}
+func (*ForbiddenError) listPublicKeysRes()       {}
+func (*ForbiddenError) listUsersRes()            {}
+func (*ForbiddenError) refreshSessionRes()       {}
+func (*ForbiddenError) registerRes()             {}
+func (*ForbiddenError) requestEmailUpdateRes()   {}
+func (*ForbiddenError) requestPasswordResetRes() {}
+func (*ForbiddenError) requestRegistrationRes()  {}
+func (*ForbiddenError) resetPasswordRes()        {}
+func (*ForbiddenError) updateEmailRes()          {}
+func (*ForbiddenError) updatePasswordRes()       {}
+func (*ForbiddenError) updateRoleRes()           {}
 
 // Ref: #/components/schemas/Health
 type Health struct {
@@ -1458,6 +1475,7 @@ func (s *UnauthorizedError) SetError(val string) {
 }
 
 func (*UnauthorizedError) checkSessionRes()         {}
+func (*UnauthorizedError) emailExistsRes()          {}
 func (*UnauthorizedError) getPublicKeyRes()         {}
 func (*UnauthorizedError) getUserRes()              {}
 func (*UnauthorizedError) listPublicKeysRes()       {}
