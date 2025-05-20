@@ -1,11 +1,10 @@
 package lib_test
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"testing"
-
-	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/service-authentication/internal/lib"
 )

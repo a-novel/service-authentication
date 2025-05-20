@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
@@ -8,7 +9,6 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog"
 
-	"github.com/a-novel-kit/context"
 	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/service-authentication/config"

@@ -1,12 +1,12 @@
 package dao
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/uptrace/bun"
 
-	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/models"

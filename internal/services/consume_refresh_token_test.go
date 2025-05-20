@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ed25519"
 
-	"github.com/a-novel-kit/context"
 	"github.com/a-novel-kit/jwt"
 	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel-kit/jwt/jwk"

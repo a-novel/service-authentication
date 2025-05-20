@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/context"
 	"github.com/a-novel-kit/jwt/jwa"
 
 	"github.com/a-novel/service-authentication/internal/dao"

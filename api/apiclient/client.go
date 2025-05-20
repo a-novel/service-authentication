@@ -1,7 +1,7 @@
 package apiclient
 
 import (
-	"github.com/a-novel-kit/context"
+	"context"
 
 	"github.com/a-novel/service-authentication/api/codegen"
 )

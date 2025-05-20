@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -8,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun/driver/pgdriver"
 
-	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 

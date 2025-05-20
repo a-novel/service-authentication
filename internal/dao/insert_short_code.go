@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 
-	"github.com/a-novel-kit/context"
 	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/models"

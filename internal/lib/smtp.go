@@ -1,13 +1,13 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"net/smtp"
 	"text/template"
 
 	"github.com/rs/zerolog"
 
-	"github.com/a-novel-kit/context"
 	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/service-authentication/config"

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/samber/lo"
 	"golang.org/x/crypto/ed25519"
 
-	"github.com/a-novel-kit/context"
 	"github.com/a-novel-kit/jwt"
 	"github.com/a-novel-kit/jwt/jwk"
 	"github.com/a-novel-kit/jwt/jwp"

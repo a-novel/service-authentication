@@ -1,11 +1,10 @@
 package services
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-faster/errors"
-
-	"github.com/a-novel-kit/context"
 )
 
 var ErrEmailExistsService = errors.New("EmailExistsService.EmailExists")

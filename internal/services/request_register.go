@@ -1,12 +1,11 @@
 package services
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"sync"
-
-	"github.com/a-novel-kit/context"
 
 	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/config/mails"
