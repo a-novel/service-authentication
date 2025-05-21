@@ -4,7 +4,7 @@ test:
 
 # Check code quality.
 lint:
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6 run
 	npx prettier . --check
 	sqlfluff lint
 
@@ -16,7 +16,7 @@ mocks:
 # Reformat code so it passes the code style lint checks.
 format:
 	go mod tidy
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run --fix
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6 run --fix
 	npx prettier . --write
 	sqlfluff fix
 

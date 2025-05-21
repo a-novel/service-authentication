@@ -32,6 +32,8 @@ func authAnon(t *testing.T, client *codegen.Client) string {
 }
 
 func checkSession(t *testing.T, client *codegen.Client) *codegen.Claims {
+	t.Helper()
+
 	rawRes, err := client.CheckSession(t.Context())
 	require.NoError(t, err)
 
