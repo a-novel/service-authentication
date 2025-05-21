@@ -1,57 +1,60 @@
+version: "2"
+
+formatters:
+  settings:
+    gci:
+      sections:
+        - standard # Standard section: captures all standard packages.
+        - default # Default section: contains all imports that could not be matched to another section type.
+        - prefix(github.com/a-novel-kit)
+        - prefix(github.com/a-novel)
+        - prefix(github.com/a-novel/service-authentication)
+
 linters:
-  enable-all: true
+  default: all
   disable:
     - depguard
-    - tenv
     - dupl
-    - varnamelen
-    - goimports
-    - nilnil
-    - ireturn
-    - gochecknoglobals
-    - funlen
     - exhaustruct
-    - cyclop
+    - varnamelen
+    - revive
+    - ireturn
     - gochecknoinits
-    - thelper
-    - godox
+    - gochecknoglobals
     - iface
+    - funlen
+    - funcorder
+    - cyclop
 
-linters-settings:
-  gci:
-    sections:
-      - standard # Standard section: captures all standard packages.
-      - default # Default section: contains all imports that could not be matched to another section type.
-      - prefix(github.com/a-novel-kit)
-      - prefix(github.com/a-novel)
-      - prefix(github.com/a-novel/service-authentication)
-    skip-generated: true
-  gosec:
-    excludes:
-      - G115
-  tagliatelle:
-    case:
-      rules:
-        json: goCamel
-        yaml: goCamel
+  settings:
+    gosec:
+      excludes:
+        - G115
+    tagliatelle:
+      case:
+        rules:
+          json: goCamel
+          yaml: goCamel
 
-issues:
-  exclude-dirs:
-    - mocks
-  exclude-rules:
-    - path: (.+)_test.go
-      linters:
-        - err113
-        - forcetypeassert
-        - maintidx
-        - gocognit
-        - tagliatelle
-    # DAO behaves poorly in parallel testing, mainly because each test is done concurrently using its own transaction.
-    - path: dao/(.+)_test.go
-      linters:
-        - tparallel
-        - paralleltest
-    - path: cmd/api/(.+)_test.go
-      linters:
-        - tparallel
-        - paralleltest
+  exclusions:
+    paths:
+      - mocks
+    rules:
+      - path: (.+)_test.go
+        linters:
+          - err113
+          - forcetypeassert
+          - maintidx
+          - gocognit
+          - tagliatelle
+          - cyclop
+          - gosec
+      # DAO behaves poorly in parallel testing, mainly because each test is done concurrently using its own transaction.
+      - path: dao/(.+)_test.go
+        linters:
+          - tparallel
+          - paralleltest
+      - path: cmd/api/(.+)_test.go
+        linters:
+          - tparallel
+          - paralleltest
