@@ -1,11 +1,11 @@
 github.com/a-novel-kit/configurator v1.4.2 h1:2WcovE9Gj11uaHs8q3Oosc5o32a2MalK/BI6zP/DiYU=
 github.com/a-novel-kit/configurator v1.4.2/go.mod h1:je07LdinxSbJxG3NybdhNJTQ2BiRG7SZVOSXuX7Y1m8=
-github.com/a-novel-kit/context/pgbun v1.3.0 h1:Q+HZKxona8FXBZF13N7ms+uUY8IbPLG1TF6r316q4xo=
-github.com/a-novel-kit/context/pgbun v1.3.0/go.mod h1:ViNhjM3QEdebAB5kYNgrfYQCHsJvw6WEWEjS8u/tNhw=
-github.com/a-novel-kit/context/sentry v1.3.0 h1:g0VyeZiGvBuAxHhBDEj4PSQ7ZY0Q+HM2LJcw1sXTOKY=
-github.com/a-novel-kit/context/sentry v1.3.0/go.mod h1:BlxnAIc3c/41N7xpMGzh554qe5Jls0cNzsHLhQeaock=
+github.com/a-novel-kit/context/pgbun v1.4.0 h1:1a+8wFT9R8ibl5M9GPoklXMKByYCDqlr7w4La4eqmbQ=
+github.com/a-novel-kit/context/pgbun v1.4.0/go.mod h1:ViNhjM3QEdebAB5kYNgrfYQCHsJvw6WEWEjS8u/tNhw=
 github.com/a-novel-kit/jwt v1.1.3 h1:L17/J6rEYUgs69xba0uZwm+ZZIpLoPAITDN5fx3pMtw=
 github.com/a-novel-kit/jwt v1.1.3/go.mod h1:Nj5JPWxEiguWf42R06PdeCw8pDIqNLPz9cB7ZqCn5wg=
+github.com/a-novel-kit/middlewares/sentry v1.2.0 h1:4NOtOz9S9Ec3FFLg+SU02S6ASy9Nh+U0w8DqTP1jfR0=
+github.com/a-novel-kit/middlewares/sentry v1.2.0/go.mod h1:bTwsyDAO71pu0ENQWEh/o1dlqo/I1yR8ksyhkS1Tz/k=
 github.com/a-novel-kit/middlewares/zerolog v1.2.0 h1:SOeRNKuIYIlTSnKc2gWrUWy16osyeUzGPr3Z1NozDKs=
 github.com/a-novel-kit/middlewares/zerolog v1.2.0/go.mod h1:uG0o+923oLkWfq0Th3gtNakqnm4Y3cEHn8r53k9m0Hw=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=

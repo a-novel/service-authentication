@@ -3,12 +3,11 @@ package lib
 import (
 	"context"
 	"fmt"
+	sentrymiddleware "github.com/a-novel-kit/middlewares/sentry"
 	"net/smtp"
 	"text/template"
 
 	"github.com/rs/zerolog"
-
-	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/config/mails"
@@ -25,7 +24,7 @@ func SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos
 	messageParsed, err := mails.ParseMailTemplate(message, lang, data)
 	if err != nil {
 		logger.Error().Err(err).Msg("parse transactional email")
-		sentryctx.CaptureException(ctx, fmt.Errorf("parse transactional email: %w", err))
+		sentrymiddleware.CaptureError(ctx, fmt.Errorf("parse transactional email: %w", err))
 
 		return
 	}
@@ -53,7 +52,7 @@ func SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("send transactional email")
-		sentryctx.CaptureException(ctx, fmt.Errorf("send transactional email: %w", err))
+		sentrymiddleware.CaptureError(ctx, fmt.Errorf("send transactional email: %w", err))
 
 		return
 	}

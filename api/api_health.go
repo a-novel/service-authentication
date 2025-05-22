@@ -3,13 +3,12 @@ package api
 import (
 	"context"
 	"fmt"
+	sentrymiddleware "github.com/a-novel-kit/middlewares/sentry"
 	"strings"
 
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 
 	pgctx "github.com/a-novel-kit/context/pgbun"
-	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/service-authentication/api/codegen"
 )
@@ -19,12 +18,9 @@ func (api *API) Ping(_ context.Context) (codegen.PingRes, error) {
 }
 
 func (api *API) reportPostgres(ctx context.Context) codegen.Dependency {
-	logger := zerolog.Ctx(ctx)
-
 	pg, err := pgctx.Context(ctx)
 	if err != nil {
-		logger.Error().Err(err).Msg("retrieve context")
-		sentryctx.CaptureException(ctx, err)
+		sentrymiddleware.CaptureError(ctx, fmt.Errorf("retrieve postgres context: %w", err))
 
 		return codegen.Dependency{
 			Name:   "postgres",
@@ -34,8 +30,7 @@ func (api *API) reportPostgres(ctx context.Context) codegen.Dependency {
 
 	pgdb, ok := pg.(*bun.DB)
 	if !ok {
-		logger.Error().Msgf("invalid context type: %T", pg)
-		sentryctx.CaptureMessage(ctx, fmt.Sprintf("invalid context type: %T", pg))
+		sentrymiddleware.CaptureError(ctx, fmt.Errorf("retrieve postgres context: invalid type %T", pg))
 
 		return codegen.Dependency{
 			Name:   "postgres",
@@ -45,8 +40,7 @@ func (api *API) reportPostgres(ctx context.Context) codegen.Dependency {
 
 	err = pgdb.Ping()
 	if err != nil {
-		logger.Error().Err(err).Msg("ping postgres")
-		sentryctx.CaptureException(ctx, err)
+		sentrymiddleware.CaptureError(ctx, fmt.Errorf("ping postgres: %w", err))
 
 		return codegen.Dependency{
 			Name:   "postgres",

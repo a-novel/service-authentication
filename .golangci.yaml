@@ -25,6 +25,7 @@ linters:
     - funlen
     - funcorder
     - cyclop
+    - err113
 
   settings:
     gosec:
@@ -42,7 +43,6 @@ linters:
     rules:
       - path: (.+)_test.go
         linters:
-          - err113
           - forcetypeassert
           - maintidx
           - gocognit

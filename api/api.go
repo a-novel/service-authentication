@@ -3,14 +3,12 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/a-novel-kit/middlewares/sentry"
 	"net/http"
 
+	"github.com/a-novel/service-authentication/api/codegen"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/rs/zerolog"
-
-	sentryctx "github.com/a-novel-kit/context/sentry"
-
-	"github.com/a-novel/service-authentication/api/codegen"
 )
 
 var ErrUnauthorized = &codegen.UnexpectedErrorStatusCode{
@@ -78,8 +76,7 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 	}
 
 	// Unhandled, unexpected error occurred.
-	logger.Error().Err(err).Msg("internal error")
-	sentryctx.CaptureException(ctx, err)
+	sentrymiddleware.CaptureError(ctx, err)
 
 	return ErrInternalServerError
 }
