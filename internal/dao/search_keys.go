@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	sentrymiddleware "github.com/a-novel-kit/middlewares/sentry"
 
 	"github.com/rs/zerolog"
 
 	pgctx "github.com/a-novel-kit/context/pgbun"
-	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -69,7 +69,7 @@ func (repository *SearchKeysRepository) SearchKeys(ctx context.Context, usage mo
 			Err(ErrSearchKeysRepository).
 			Msgf("more than %d keys found for usage %s", KeysMaxBatchSize, usage)
 
-		sentryctx.CaptureException(ctx, fmt.Errorf(
+		sentrymiddleware.CaptureError(ctx, fmt.Errorf(
 			"%w: more than %d keys found for usage %s", ErrSearchKeysRepository, KeysMaxBatchSize, usage,
 		))
 

@@ -12,7 +12,6 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/configurator"
-	sentryctx "github.com/a-novel-kit/context/sentry"
 
 	"github.com/a-novel/service-authentication/api/codegen"
 	"github.com/a-novel/service-authentication/models"
@@ -50,7 +49,12 @@ func (security *SecurityHandler) HandleBearerAuth(
 		return nil, errors.Join(err, ErrAuthentication)
 	}
 
-	sentryctx.ConfigureScope(ctx, func(scope *sentry.Scope) {
+	hub := sentry.GetHubFromContext(ctx)
+	if hub == nil {
+		hub = sentry.CurrentHub().Clone()
+	}
+
+	hub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetUser(sentry.User{
 			ID: lo.FromPtr(claims.UserID).String(),
 		})
@@ -67,7 +71,7 @@ func (security *SecurityHandler) HandleBearerAuth(
 		}
 	}
 
-	sentryctx.AddBreadcrumb(ctx, &sentry.Breadcrumb{
+	hub.AddBreadcrumb(&sentry.Breadcrumb{
 		Category: "permissions",
 		Message:  "check permissions",
 		Data: map[string]any{
