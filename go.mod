@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/a-novel-kit/configurator v1.4.2
-	github.com/a-novel-kit/context/pgbun v1.4.0
+	github.com/a-novel-kit/context/pgbun v1.4.1
 	github.com/a-novel-kit/jwt v1.1.3
 	github.com/a-novel-kit/middlewares/sentry v1.3.0
 	github.com/a-novel-kit/middlewares/zerolog v1.3.0
