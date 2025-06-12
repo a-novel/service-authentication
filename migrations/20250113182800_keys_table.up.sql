@@ -12,11 +12,11 @@ CREATE TABLE keys
   /* Group keys of similar usage */
   usage text NOT NULL,
 
-  created_at timestamp (0) with time zone NOT NULL,
+  created_at timestamp(0) with time zone NOT NULL,
   /* Sets an expiration date for the key. */
-  expires_at timestamp (0) with time zone NOT NULL,
+  expires_at timestamp(0) with time zone NOT NULL,
   /* Use this field to expire a key early, in case it was compromised. */
-  deleted_at timestamp (0) with time zone,
+  deleted_at timestamp(0) with time zone,
   /* Extra information about the deprecation of the key. */
   deleted_comment text
 );
