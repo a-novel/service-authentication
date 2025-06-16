@@ -13,14 +13,14 @@ CREATE TABLE short_codes
   /* Data that is required by the action requiring the short code. */
   data bytea,
 
-  created_at timestamp (0) with time zone NOT NULL,
+  created_at timestamp(0) with time zone NOT NULL,
   /* Sets an expiration date for the short code. */
-  expires_at timestamp (0) with time zone NOT NULL,
+  expires_at timestamp(0) with time zone NOT NULL,
   /*
       Use this field to expire a short code early, in case it
       was compromised.
     */
-  deleted_at timestamp (0) with time zone,
+  deleted_at timestamp(0) with time zone,
   /* Extra information about the deprecation of the short code. */
   deleted_comment text
 );
