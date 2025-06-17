@@ -18,9 +18,9 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/samber/lo v1.51.0
 	github.com/stretchr/testify v1.10.0
-	github.com/uptrace/bun v1.2.13
-	github.com/uptrace/bun/dialect/pgdialect v1.2.13
-	github.com/uptrace/bun/driver/pgdriver v1.2.13
+	github.com/uptrace/bun v1.2.14
+	github.com/uptrace/bun/dialect/pgdialect v1.2.14
+	github.com/uptrace/bun/driver/pgdriver v1.2.14
 	go.opentelemetry.io/otel v1.36.0
 	go.opentelemetry.io/otel/metric v1.36.0
 	go.opentelemetry.io/otel/trace v1.36.0
