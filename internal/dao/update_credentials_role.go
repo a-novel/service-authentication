@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"time"
 
 	"github.com/google/uuid"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -30,7 +29,7 @@ func (repository *UpdateCredentialsRoleRepository) UpdateCredentialsRole(
 	ctx context.Context, userID uuid.UUID, data UpdateCredentialsRoleData,
 ) (*CredentialsEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrUpdateCredentialsRoleRepository(fmt.Errorf("get postgres client: %w", err))
 	}

@@ -1,7 +1,5 @@
 github.com/a-novel-kit/configurator v1.4.2 h1:2WcovE9Gj11uaHs8q3Oosc5o32a2MalK/BI6zP/DiYU=
 github.com/a-novel-kit/configurator v1.4.2/go.mod h1:je07LdinxSbJxG3NybdhNJTQ2BiRG7SZVOSXuX7Y1m8=
-github.com/a-novel-kit/context/pgbun v1.4.2 h1:iXQo1/SAxsX1wnij8UoVFzu87zD69z214Ui8S7qrmXM=
-github.com/a-novel-kit/context/pgbun v1.4.2/go.mod h1:sNIy1vhR3KUn+PSNnmMhnBjeJIK9l52EKjUQuMFOhvc=
 github.com/a-novel-kit/jwt v1.1.3 h1:L17/J6rEYUgs69xba0uZwm+ZZIpLoPAITDN5fx3pMtw=
 github.com/a-novel-kit/jwt v1.1.3/go.mod h1:Nj5JPWxEiguWf42R06PdeCw8pDIqNLPz9cB7ZqCn5wg=
 github.com/a-novel-kit/middlewares/sentry v1.3.0 h1:7smL5Ngk+xiz57h2MFsWg1liUx+MDrsdu6Cv0Fl4ukA=

@@ -5,8 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
+	"github.com/a-novel/service-authentication/internal/lib"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -42,7 +41,7 @@ func (repository *SelectShortCodeByParamsRepository) SelectShortCodeByParams(
 	ctx context.Context, data SelectShortCodeByParamsData,
 ) (*ShortCodeEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrSelectShortCodeByParamsRepository(fmt.Errorf("get transaction: %w", err))
 	}

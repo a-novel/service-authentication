@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"time"
 
 	"github.com/google/uuid"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -55,7 +54,7 @@ type InsertKeyRepository struct{}
 // may be exposed to the application.
 func (repository *InsertKeyRepository) InsertKey(ctx context.Context, data InsertKeyData) (*KeyEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrInsertKeyRepository(fmt.Errorf("get postgres client: %w", err))
 	}

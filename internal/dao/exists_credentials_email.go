@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 var ErrExistsCredentialsEmailRepository = errors.New("ExistsCredentialsEmailRepository.ExistsCredentialsEmail")
@@ -27,7 +26,7 @@ func (repository *ExistsCredentialsEmailRepository) ExistsCredentialsEmail(
 	ctx context.Context, email string,
 ) (bool, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return false, NewErrExistsCredentialsEmailRepository(fmt.Errorf("get postgres client: %w", err))
 	}

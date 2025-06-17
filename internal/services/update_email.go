@@ -6,11 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"time"
 
 	"github.com/google/uuid"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
@@ -47,7 +46,7 @@ func (service *UpdateEmailService) UpdateEmail(
 ) (*UpdateEmailResponse, error) {
 	// Email update can fail after the short code is consumed. To prevent this, we wrap the operation in a single
 	// transaction.
-	ctxTx, commit, err := pgctx.NewContextTX(ctx, &sql.TxOptions{
+	ctxTx, commit, err := lib.PostgresContextTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
 		ReadOnly:  false,
 	})

@@ -10,7 +10,6 @@ updates:
         patterns:
           - "github.com/uptrace/bun"
           - "github.com/uptrace/bun/*"
-          - "github.com/a-novel-kit/context/pgbun"
       github.com/a-novel-kit/middlewares:
         applies-to: version-updates
         patterns:

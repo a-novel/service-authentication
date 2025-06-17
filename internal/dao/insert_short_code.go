@@ -5,12 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -65,7 +64,7 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 	ctx context.Context, data InsertShortCodeData,
 ) (*ShortCodeEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	db, err := pgctx.Context(ctx)
+	db, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("get postgres client: %w", err))
 	}

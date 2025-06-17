@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun/driver/pgdriver"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -62,7 +61,7 @@ func (repository *InsertCredentialsRepository) InsertCredentials(
 	ctx context.Context, data InsertCredentialsData,
 ) (*CredentialsEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrInsertCredentialsRepository(fmt.Errorf("get postgres client: %w", err))
 	}

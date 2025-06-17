@@ -1,4 +1,4 @@
-package lib
+package dao
 
 import (
 	"context"
@@ -6,22 +6,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/jwt/jwa"
-
-	"github.com/a-novel/service-authentication/internal/dao"
 )
 
-var ErrConsumeDAOKey = errors.New("ConsumeDAOKey")
+var ErrConsumeDAOKey = errors.New("ConsumeKey")
 
 func NewErrConsumeDAOKey(err error) error {
 	return errors.Join(err, ErrConsumeDAOKey)
 }
 
-// ConsumeDAOKey converts a key from DAO entity to aJWK object.
-func ConsumeDAOKey(ctx context.Context, key *dao.KeyEntity, private bool) (*jwa.JWK, error) {
+// ConsumeKey converts a key from DAO entity to aJWK object.
+func ConsumeKey(ctx context.Context, key *KeyEntity, private bool) (*jwa.JWK, error) {
 	decoded, err := base64.RawURLEncoding.DecodeString(
 		// In case of a symmetric key, the public member will be nil, and the private member will be returned
 		// instead.
@@ -36,7 +35,7 @@ func ConsumeDAOKey(ctx context.Context, key *dao.KeyEntity, private bool) (*jwa.
 	err = lo.TernaryF(
 		private || key.PublicKey == nil,
 		// Private keys also needs to be decrypted.
-		func() error { return DecryptMasterKey(ctx, decoded, &deserialized) },
+		func() error { return lib.DecryptMasterKey(ctx, decoded, &deserialized) },
 		func() error { return json.Unmarshal(decoded, &deserialized) },
 	)
 	if err != nil {

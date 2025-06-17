@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 
 	"github.com/uptrace/bun"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -30,7 +29,7 @@ func (repository *ListUsersRepository) ListUsers(
 	ctx context.Context, data ListUsersData,
 ) ([]*CredentialsEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrListUsersRepository(fmt.Errorf("get postgres client: %w", err))
 	}

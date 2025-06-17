@@ -10,7 +10,6 @@ import (
 	"github.com/a-novel-kit/jwt/jwa"
 
 	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 var ErrSelectKeyService = errors.New("SelectKeyService.SelectKey")
@@ -45,7 +44,7 @@ func (service *SelectKeyService) SelectKey(ctx context.Context, request SelectKe
 		return nil, NewErrSelectKeyService(fmt.Errorf("select key: %w", err))
 	}
 
-	deserialized, err := lib.ConsumeDAOKey(ctx, key, request.Private)
+	deserialized, err := dao.ConsumeKey(ctx, key, request.Private)
 	if err != nil {
 		return nil, NewErrSelectKeyService(fmt.Errorf("consume DAO key (kid %s): %w", key.ID, err))
 	}
