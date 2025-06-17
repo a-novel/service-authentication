@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -9,8 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
@@ -140,7 +139,7 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 
 	for _, testCase := range testCases { //nolint:paralleltest
 		t.Run(testCase.name, func(t *testing.T) {
-			ctx, err := pgctx.NewContext(t.Context(), nil)
+			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"))
 			require.NoError(t, err)
 
 			source := servicesmocks.NewMockRegisterSource(t)

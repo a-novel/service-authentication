@@ -2,14 +2,14 @@ package main
 
 import (
 	"crypto/rand"
+	"github.com/a-novel/service-authentication/internal/lib"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/service-authentication/api/codegen"
@@ -22,7 +22,7 @@ func TestListUsers(t *testing.T) {
 	require.NoError(t, err)
 
 	// YOLO
-	ctx, err := pgctx.NewContext(t.Context(), nil)
+	ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"))
 	require.NoError(t, err)
 
 	fixtures := []*dao.CredentialsEntity{
@@ -49,7 +49,7 @@ func TestListUsers(t *testing.T) {
 		},
 	}
 
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	require.NoError(t, err)
 
 	_, err = tx.NewInsert().Model(&fixtures).Exec(ctx)

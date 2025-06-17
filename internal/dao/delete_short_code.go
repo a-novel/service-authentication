@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"time"
 
 	"github.com/google/uuid"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 
 var ErrDeleteShortCodeRepository = errors.New("DeleteShortCodeRepository.DeleteShortCode")
@@ -65,7 +64,7 @@ func (repository *DeleteShortCodeRepository) DeleteShortCode(
 	ctx context.Context, data DeleteShortCodeData,
 ) (*ShortCodeEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("get postgres client: %w", err))
 	}

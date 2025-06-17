@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun/driver/pgdriver"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 
 var ErrUpdateCredentialsEmailRepository = errors.New("UpdateCredentialsEmailRepository.UpdateCredentialsEmail")
@@ -48,7 +47,7 @@ func (repository *UpdateCredentialsEmailRepository) UpdateCredentialsEmail(
 	ctx context.Context, userID uuid.UUID, data UpdateCredentialsEmailData,
 ) (*CredentialsEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrUpdateCredentialsEmailRepository(fmt.Errorf("get postgres client: %w", err))
 	}

@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 	sentrymiddleware "github.com/a-novel-kit/middlewares/sentry"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"strings"
 
 	"github.com/uptrace/bun"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/api/codegen"
 )
@@ -18,7 +17,7 @@ func (api *API) Ping(_ context.Context) (codegen.PingRes, error) {
 }
 
 func (api *API) reportPostgres(ctx context.Context) codegen.Dependency {
-	pg, err := pgctx.Context(ctx)
+	pg, err := lib.PostgresContext(ctx)
 	if err != nil {
 		sentrymiddleware.CaptureError(ctx, fmt.Errorf("retrieve postgres context: %w", err))
 

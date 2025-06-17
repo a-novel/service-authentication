@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 
 	"github.com/google/uuid"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 
 var ErrSelectCredentialsRepository = errors.New("SelectCredentialsRepository.SelectCredentials")
@@ -33,7 +32,7 @@ func (repository *SelectCredentialsRepository) SelectCredentials(
 	ctx context.Context, id uuid.UUID,
 ) (*CredentialsEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrSelectCredentialsRepository(fmt.Errorf("get postgres client: %w", err))
 	}

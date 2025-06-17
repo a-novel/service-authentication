@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/lib"
 
 	"github.com/google/uuid"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 )
 
 var ErrSelectKeyRepository = errors.New("SelectKeyRepository.SelectKey")
@@ -29,7 +28,7 @@ type SelectKeyRepository struct{}
 // decryption).
 func (repository *SelectKeyRepository) SelectKey(ctx context.Context, id uuid.UUID) (*KeyEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrSelectKeyRepository(fmt.Errorf("get postgres client: %w", err))
 	}

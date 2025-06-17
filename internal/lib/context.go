@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
-
-	"github.com/a-novel/service-authentication/migrations"
+	"os"
 )
 
 var ErrNewAgoraContext = errors.New("NewAgoraContext")
@@ -22,7 +19,7 @@ func NewAgoraContext(parentCTX context.Context) (context.Context, error) {
 		return nil, NewErrNewAgoraContext(fmt.Errorf("create master key context: %w", err))
 	}
 
-	ctx, err = pgctx.NewContext(ctx, &migrations.Migrations)
+	ctx, err = NewPostgresContext(ctx, os.Getenv("DSN"))
 	if err != nil {
 		return nil, NewErrNewAgoraContext(fmt.Errorf("create postgres context: %w", err))
 	}

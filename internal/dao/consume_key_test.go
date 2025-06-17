@@ -1,7 +1,8 @@
-package lib_test
+package dao_test
 
 import (
 	"encoding/json"
+	"github.com/a-novel/service-authentication/internal/dao"
 	"testing"
 
 	"github.com/google/uuid"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/a-novel-kit/jwt/jwa"
 
-	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 )
 
@@ -150,7 +150,7 @@ func TestConsumeDAOKey(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := lib.ConsumeDAOKey(ctx, testCase.key, testCase.private)
+			result, err := dao.ConsumeKey(ctx, testCase.key, testCase.private)
 			require.ErrorIs(t, err, testCase.expectErr)
 
 			// The json.RawMessage in the JWK payload causes trouble with Go comparison,

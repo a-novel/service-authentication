@@ -42,7 +42,6 @@ func main() {
 
 	logger.Info().Msg("starting application...")
 
-	// Initialize all contexts at once.
 	ctx, err := lib.NewAgoraContext(context.Background())
 	if err != nil {
 		logger.Fatal().Err(err).Msg("initialize agora context")

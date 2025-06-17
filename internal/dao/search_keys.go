@@ -5,10 +5,9 @@ import (
 	"errors"
 	"fmt"
 	sentrymiddleware "github.com/a-novel-kit/middlewares/sentry"
+	"github.com/a-novel/service-authentication/internal/lib"
 
 	"github.com/rs/zerolog"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -42,7 +41,7 @@ type SearchKeysRepository struct{}
 // a batch happens to contain more keys, an error is logged, and only the first KeysMaxBatchSize keys are returned.
 func (repository *SearchKeysRepository) SearchKeys(ctx context.Context, usage models.KeyUsage) ([]*KeyEntity, error) {
 	// Retrieve a connection to postgres from the context.
-	tx, err := pgctx.Context(ctx)
+	tx, err := lib.PostgresContext(ctx)
 	if err != nil {
 		return nil, NewErrSearchKeysRepository(fmt.Errorf("get postgres client: %w", err))
 	}

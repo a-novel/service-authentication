@@ -8,7 +8,6 @@ import (
 	"github.com/a-novel-kit/jwt/jwa"
 
 	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
 
@@ -49,7 +48,7 @@ func (service *SearchKeysService) SearchKeys(ctx context.Context, request Search
 	deserialized := make([]*jwa.JWK, len(keys))
 
 	for i, key := range keys {
-		deserialized[i], err = lib.ConsumeDAOKey(ctx, key, request.Private)
+		deserialized[i], err = dao.ConsumeKey(ctx, key, request.Private)
 		if err != nil {
 			return nil, NewErrSearchKeysService(fmt.Errorf("consume DAO key (kid %s): %w", key.ID, err))
 		}

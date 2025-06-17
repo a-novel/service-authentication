@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/a-novel/service-authentication/internal/lib"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-
-	pgctx "github.com/a-novel-kit/context/pgbun"
 
 	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/service-authentication/api/codegen"
@@ -46,7 +46,7 @@ func TestUpdateRole(t *testing.T) {
 
 	// Elevate user2 to super_admin.
 	{
-		ctx, err := pgctx.NewContext(t.Context(), nil)
+		ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"))
 		require.NoError(t, err)
 
 		updateRoleDAO := dao.NewUpdateCredentialsRoleRepository()
