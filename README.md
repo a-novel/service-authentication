@@ -52,7 +52,6 @@ services:
     depends_on:
       - postgres-authentication
     environment:
-      PORT: 4001
       ENV: local
       APP_NAME: authentication-service-rotate-keys-job
       DSN: postgres://postgres:postgres@postgres-authentication:5432/authentication?sslmode=disable
@@ -67,16 +66,23 @@ services:
     depends_on:
       - postgres-authentication
     ports:
-      - "4001:4001"
+      # Expose the service on port 4001 on the local machine.
+      - "4001:8080"
     environment:
-      PORT: 4001
+      PORT: 8080
       ENV: local
       APP_NAME: authentication-service
       DSN: postgres://postgres:postgres@postgres-authentication:5432/authentication?sslmode=disable
       # Dummy key used only for local environment. Consider using a secure, private key in production.
       # Note it MUST match the one used in the authentication keys rotation job.
       MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
-      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      # In sandbox mode, mails are logged in the server logs rather than being sent. Alternatively, you need to provide
+      # a valid SMTP server configuration.
+      SMTP_SANDBOX: true
+      # SMTP_PASSWORD: your_smtp_password
+      # SMTP_SENDER: noreply@agoradesecrivains.com
+      # SMTP_DOMAIN: smtp-relay.gmail.com
+      # SMTP_ADDRESS: smtp-relay.gmail.com:587
       AUTH_PLATFORM_URL_UPDATE_EMAIL: http://localhost:4001/update-email
       AUTH_PLATFORM_URL_UPDATE_PASSWORD: http://localhost:4001/update-password
       AUTH_PLATFORM_URL_REGISTER: http://localhost:4001/register
@@ -108,7 +114,6 @@ Available tags includes:
 - [Python](https://www.python.org/downloads/)
   - Install [pipx](https://pipx.pypa.io/stable/installation/) to install command-line tools.
 - [Podman](https://podman.io/docs/installation)
-
   - Install [podman-compose](https://github.com/containers/podman-compose)
 
     ```bash

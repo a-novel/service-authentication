@@ -14,8 +14,13 @@ export POSTGRES_DB="authentication"
 export POSTGRES_PORT=5001
 export POSTGRES_HOST="0.0.0.0"
 
-# Secrets.
+# SMTP configuration.
 export SMTP_PASSWORD="[SECRET]"
+export SMTP_SENDER="noreply@agoradesecrivains.com"
+export SMTP_DOMAIN="smtp-relay.gmail.com"
+export SMTP_ADDRESS="smtp-relay.gmail.com:587"
+
+# Secrets.
 export MASTER_KEY='fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
 
 # Other.

@@ -1,9 +1,10 @@
 sender:
   name: Agora des Écrivains
-  email: noreply@agoradesecrivains.com
+  email: ${SMTP_SENDER}
   password: ${SMTP_PASSWORD}
-  domain: smtp-relay.gmail.com
-addr: smtp-relay.gmail.com:587
+  domain: ${SMTP_DOMAIN}
+addr: S{SMTP_ADDRESS}
+sandbox: ${SMTP_SANDBOX}
 urls:
   updateEmail: ${AUTH_PLATFORM_URL_UPDATE_EMAIL}
   updatePassword: ${AUTH_PLATFORM_URL_UPDATE_PASSWORD}
