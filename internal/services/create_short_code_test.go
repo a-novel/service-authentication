@@ -87,7 +87,7 @@ func TestCreateShortCode(t *testing.T) {
 
 			if testCase.insertShortCodeData != nil {
 				source.EXPECT().
-					InsertShortCode(t.Context(), mock.MatchedBy(func(data dao.InsertShortCodeData) bool {
+					InsertShortCode(mock.Anything, mock.MatchedBy(func(data dao.InsertShortCodeData) bool {
 						now := time.Now()
 
 						var dataMap map[string]string

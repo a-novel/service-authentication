@@ -81,7 +81,7 @@ func createUser(t *testing.T, client *codegen.Client) *userData {
 
 	t.Log("RequestRegistration")
 	{
-		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, email), 10*time.Second)
+		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, email), 3*time.Second)
 
 		_, err := client.RequestRegistration(t.Context(), &codegen.RequestRegistrationForm{
 			Email: codegen.Email(email),

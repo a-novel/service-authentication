@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,9 +64,18 @@ type DeleteShortCodeRepository struct{}
 func (repository *DeleteShortCodeRepository) DeleteShortCode(
 	ctx context.Context, data DeleteShortCodeData,
 ) (*ShortCodeEntity, error) {
+	span := sentry.StartSpan(ctx, "DeleteShortCodeRepository.DeleteShortCode")
+	defer span.Finish()
+
+	span.SetData("shortCode.id", data.ID.String())
+	span.SetData("shortCode.now", data.Now.String())
+	span.SetData("shortCode.comment", data.Comment)
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
@@ -82,8 +92,10 @@ func (repository *DeleteShortCodeRepository) DeleteShortCode(
 		Where("id = ?", data.ID).
 		Column("deleted_at", "deleted_comment"). // Only update the deletion fields.
 		Returning("*").
-		Exec(ctx)
+		Exec(span.Context())
 	if err != nil {
+		span.SetData("update.error", err.Error())
+
 		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("delete short code: %w", err))
 	}
 
@@ -91,10 +103,16 @@ func (repository *DeleteShortCodeRepository) DeleteShortCode(
 	// This operation should never fail, as we use a driver that supports it.
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
+		span.SetData("rowsAffected.error", err.Error())
+
 		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("get rows affected: %w", err))
 	}
 
+	span.SetData("rowsAffected", rowsAffected)
+
 	if rowsAffected == 0 {
+		span.SetData("error", "short code not found")
+
 		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("delete key: %w", ErrShortCodeNotFound))
 	}
 

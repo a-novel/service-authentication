@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/samber/lo"
 
@@ -47,19 +48,31 @@ type LoginService struct {
 //
 // You may also create an anonymous session using the LoginAnonService.
 func (service *LoginService) Login(ctx context.Context, request LoginRequest) (string, error) {
+	span := sentry.StartSpan(ctx, "LoginService.Login")
+	defer span.Finish()
+
+	span.SetData("email", request.Email)
+
 	// Retrieve credentials.
-	credentials, err := service.source.SelectCredentialsByEmail(ctx, request.Email)
+	credentials, err := service.source.SelectCredentialsByEmail(span.Context(), request.Email)
 	if err != nil {
+		span.SetData("dao.error", err.Error())
+
 		return "", NewErrLoginService(fmt.Errorf("select credentials by email: %w", err))
 	}
 
+	span.SetData("userID", credentials.ID)
+	span.SetData("role", credentials.Role)
+
 	// Validate password.
 	if err = lib.CompareScrypt(request.Password, credentials.Password); err != nil {
+		span.SetData("password.compare.error", err.Error())
+
 		return "", NewErrLoginService(fmt.Errorf("compare password: %w", err))
 	}
 
 	// Generate a new authentication token.
-	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
+	accessToken, err := service.source.IssueToken(span.Context(), IssueTokenRequest{
 		UserID: &credentials.ID,
 		Roles: []models.Role{
 			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
@@ -69,6 +82,8 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 		},
 	})
 	if err != nil {
+		span.SetData("issueToken.error", err.Error())
+
 		return "", NewErrLoginService(fmt.Errorf("issue accessToken: %w", err))
 	}
 

@@ -3,6 +3,7 @@ package services_test
 import (
 	"encoding/json"
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
@@ -296,7 +297,7 @@ func TestSearchKeys(t *testing.T) {
 
 			if testCase.searchKeyData != nil {
 				source.EXPECT().
-					SearchKeys(ctx, testCase.request.Usage).
+					SearchKeys(mock.Anything, testCase.request.Usage).
 					Return(testCase.searchKeyData.resp, testCase.searchKeyData.err)
 			}
 

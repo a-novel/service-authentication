@@ -5,11 +5,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"sync"
+	"text/template"
 
 	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/config/mails"
-	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
 
@@ -22,6 +23,7 @@ func NewErrRequestRegisterService(err error) error {
 // RequestRegisterSource is the source used to perform the RequestRegisterService.RequestRegister action.
 type RequestRegisterSource interface {
 	CreateShortCode(ctx context.Context, request CreateShortCodeRequest) (*models.ShortCode, error)
+	SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)
 }
 
 // RequestRegisterRequest is the input used to perform the RequestRegisterService.RequestRegister action.
@@ -48,9 +50,12 @@ func (service *RequestRegisterService) Wait() {
 func (service *RequestRegisterService) sendMail(
 	ctx context.Context, request RequestRegisterRequest, shortCode *models.ShortCode,
 ) {
+	span := sentry.StartSpan(ctx, "RequestRegisterService.sendMail")
+	defer span.Finish()
+
 	defer service.wg.Done()
 
-	lib.SMTP(ctx, mails.Mails.Register, request.Lang, []string{request.Email}, map[string]any{
+	service.source.SMTP(span.Context(), mails.Mails.Register, request.Lang, []string{request.Email}, map[string]any{
 		"ShortCode": shortCode.PlainCode,
 		"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 		"URL":       config.SMTP.URLs.Register,
@@ -68,22 +73,43 @@ func (service *RequestRegisterService) sendMail(
 func (service *RequestRegisterService) RequestRegister(
 	ctx context.Context, request RequestRegisterRequest,
 ) (*models.ShortCode, error) {
+	span := sentry.StartSpan(ctx, "RequestRegisterService.RequestRegister")
+	defer span.Finish()
+
+	span.SetData("request.email", request.Email)
+	span.SetData("request.lang", request.Lang)
+
 	// Create a new short code.
-	shortCode, err := service.source.CreateShortCode(ctx, CreateShortCodeRequest{
+	shortCode, err := service.source.CreateShortCode(span.Context(), CreateShortCodeRequest{
 		Usage:    models.ShortCodeUsageRequestRegister,
 		Target:   request.Email,
 		TTL:      config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL,
 		Override: true,
 	})
 	if err != nil {
+		span.SetData("dao.createShortCode.error", err.Error())
+
 		return nil, NewErrRequestRegisterService(fmt.Errorf("create short code: %w", err))
 	}
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
-	go service.sendMail(context.WithoutCancel(ctx), request, shortCode)
+	go service.sendMail(context.WithoutCancel(span.Context()), request, shortCode)
 
 	return shortCode, nil
+}
+
+func NewRequestRegisterServiceSource(
+	createShortCode *CreateShortCodeService,
+	smtp *SMTPService,
+) RequestEmailUpdateSource {
+	return &struct {
+		*CreateShortCodeService
+		*SMTPService
+	}{
+		CreateShortCodeService: createShortCode,
+		SMTPService:            smtp,
+	}
 }
 
 func NewRequestRegisterService(source RequestRegisterSource) *RequestRegisterService {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -52,16 +53,27 @@ type ConsumeRefreshTokenService struct {
 func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	ctx context.Context, request ConsumeRefreshTokenRequest,
 ) (string, error) {
+	span := sentry.StartSpan(ctx, "ConsumeRefreshTokenService.ConsumeRefreshToken")
+	defer span.Finish()
+
 	if request.AccessToken == "" {
+		span.SetData("error", "access token is empty")
+
 		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("%w: access token is empty", models.ErrUnauthorized))
 	}
 
 	if request.RefreshToken == "" {
+		span.SetData("error", "refresh token is empty")
+
 		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("%w: refresh token is empty", models.ErrUnauthorized))
 	}
 
 	var accessTokenClaims models.AccessTokenClaims
-	if err := service.accessTokenRecipient.Consume(ctx, request.AccessToken, &accessTokenClaims); err != nil {
+
+	err := service.accessTokenRecipient.Consume(span.Context(), request.AccessToken, &accessTokenClaims)
+	if err != nil {
+		span.SetData("accessToken.consume.error", err.Error())
+
 		if errors.Is(err, jws.ErrInvalidSignature) {
 			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume access token: %w", models.ErrUnauthorized))
 		}
@@ -70,7 +82,11 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	}
 
 	var refreshTokenClaims models.RefreshTokenClaims
-	if err := service.refreshTokenRecipient.Consume(ctx, request.RefreshToken, &refreshTokenClaims); err != nil {
+
+	err = service.refreshTokenRecipient.Consume(span.Context(), request.RefreshToken, &refreshTokenClaims)
+	if err != nil {
+		span.SetData("refreshToken.consume.error", err.Error())
+
 		if errors.Is(err, jws.ErrInvalidSignature) {
 			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume refresh token: %w", models.ErrUnauthorized))
 		}
@@ -78,7 +94,12 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume refresh token: %w", err))
 	}
 
+	span.SetData("accessTokenClaims.userID", lo.FromPtr(accessTokenClaims.UserID))
+	span.SetData("refreshTokenClaims.userID", refreshTokenClaims.UserID)
+
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
+		span.SetData("error", "access token userID does not match refresh token userID")
+
 		return "", NewErrConsumeRefreshTokenService(fmt.Errorf(
 			"%w (accessToken.userID: %s, refreshToken.userID: %s)",
 			ErrMismatchRefreshClaims,
@@ -87,7 +108,12 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		))
 	}
 
+	span.SetData("accessTokenClaims.refreshTokenID", lo.FromPtr(accessTokenClaims.RefreshTokenID))
+	span.SetData("refreshTokenClaims.jti", refreshTokenClaims.Jti)
+
 	if accessTokenClaims.RefreshTokenID != nil && *accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
+		span.SetData("error", "access token was not issued with the provided refresh token")
+
 		return "", NewErrConsumeRefreshTokenService(ErrTokenIssuedWithDifferentRefreshToken)
 	}
 
@@ -95,6 +121,8 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	if accessTokenClaims.UserID != nil {
 		credentials, err := service.source.SelectCredentials(ctx, lo.FromPtr(accessTokenClaims.UserID))
 		if err != nil {
+			span.SetData("selectCredentials.error", err.Error())
+
 			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("select credentials: %w", err))
 		}
 
@@ -106,12 +134,14 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		}
 	}
 
-	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
+	accessToken, err := service.source.IssueToken(span.Context(), IssueTokenRequest{
 		UserID:         accessTokenClaims.UserID,
 		Roles:          accessTokenClaims.Roles,
 		RefreshTokenID: &refreshTokenClaims.Jti,
 	})
 	if err != nil {
+		span.SetData("issueToken.error", err.Error())
+
 		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("issue accessToken: %w", err))
 	}
 

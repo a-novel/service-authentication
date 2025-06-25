@@ -176,7 +176,7 @@ func TestConsumeShortCode(t *testing.T) {
 
 			if testCase.selectShortCodeData != nil {
 				source.EXPECT().
-					SelectShortCodeByParams(t.Context(), dao.SelectShortCodeByParamsData{
+					SelectShortCodeByParams(mock.Anything, dao.SelectShortCodeByParamsData{
 						Target: testCase.request.Target,
 						Usage:  testCase.request.Usage,
 					}).
@@ -185,7 +185,7 @@ func TestConsumeShortCode(t *testing.T) {
 
 			if testCase.deleteShortCodeData != nil {
 				source.EXPECT().
-					DeleteShortCode(t.Context(), mock.MatchedBy(func(data dao.DeleteShortCodeData) bool {
+					DeleteShortCode(mock.Anything, mock.MatchedBy(func(data dao.DeleteShortCodeData) bool {
 						return assert.Equal(t, testCase.selectShortCodeData.resp.ID, data.ID) &&
 							assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
 							assert.Equal(t, dao.DeleteCommentConsumed, data.Comment)

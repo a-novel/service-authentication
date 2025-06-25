@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 )
 
 var ErrExistsCredentialsEmailRepository = errors.New("ExistsCredentialsEmailRepository.ExistsCredentialsEmail")
@@ -25,9 +26,16 @@ type ExistsCredentialsEmailRepository struct{}
 func (repository *ExistsCredentialsEmailRepository) ExistsCredentialsEmail(
 	ctx context.Context, email string,
 ) (bool, error) {
+	span := sentry.StartSpan(ctx, "ExistsCredentialsEmailRepository.ExistsCredentialsEmail")
+	defer span.Finish()
+
+	span.SetData("email", email)
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return false, NewErrExistsCredentialsEmailRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
@@ -36,8 +44,10 @@ func (repository *ExistsCredentialsEmailRepository) ExistsCredentialsEmail(
 		Model((*CredentialsEntity)(nil)).
 		Where("email = ?", email).
 		Order("email DESC").
-		Exists(ctx)
+		Exists(span.Context())
 	if err != nil {
+		span.SetData("exists.error", err.Error())
+
 		return false, NewErrExistsCredentialsEmailRepository(fmt.Errorf("check database: %w", err))
 	}
 

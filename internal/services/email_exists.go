@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/go-faster/errors"
 )
@@ -26,10 +27,19 @@ type EmailExistsService struct {
 }
 
 func (service *EmailExistsService) EmailExists(ctx context.Context, request EmailExistsRequest) (bool, error) {
-	exists, err := service.source.ExistsCredentialsEmail(ctx, request.Email)
+	span := sentry.StartSpan(ctx, "EmailExistsService.EmailExists")
+	defer span.Finish()
+
+	span.SetData("email", request.Email)
+
+	exists, err := service.source.ExistsCredentialsEmail(span.Context(), request.Email)
 	if err != nil {
+		span.SetData("dao.error", err.Error())
+
 		return false, NewErrEmailExistsService(fmt.Errorf("check email existence: %w", err))
 	}
+
+	span.SetData("exists", exists)
 
 	return exists, nil
 }

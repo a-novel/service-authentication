@@ -6,6 +6,7 @@ package servicesmocks
 
 import (
 	"context"
+	"text/template"
 
 	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -1271,6 +1272,44 @@ func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) RunAndReturn(run fu
 	return _c
 }
 
+// SMTP provides a mock function for the type MockRequestEmailUpdateSource
+func (_mock *MockRequestEmailUpdateSource) SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any) {
+	_mock.Called(ctx, message, lang, tos, data)
+	return
+}
+
+// MockRequestEmailUpdateSource_SMTP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SMTP'
+type MockRequestEmailUpdateSource_SMTP_Call struct {
+	*mock.Call
+}
+
+// SMTP is a helper method to define mock.On call
+//   - ctx
+//   - message
+//   - lang
+//   - tos
+//   - data
+func (_e *MockRequestEmailUpdateSource_Expecter) SMTP(ctx interface{}, message interface{}, lang interface{}, tos interface{}, data interface{}) *MockRequestEmailUpdateSource_SMTP_Call {
+	return &MockRequestEmailUpdateSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
+}
+
+func (_c *MockRequestEmailUpdateSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestEmailUpdateSource_SMTP_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models.Lang), args[3].([]string), args[4].(any))
+	})
+	return _c
+}
+
+func (_c *MockRequestEmailUpdateSource_SMTP_Call) Return() *MockRequestEmailUpdateSource_SMTP_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockRequestEmailUpdateSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestEmailUpdateSource_SMTP_Call {
+	_c.Run(run)
+	return _c
+}
+
 // NewMockRequestPasswordResetSource creates a new instance of MockRequestPasswordResetSource. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockRequestPasswordResetSource(t interface {
@@ -1352,6 +1391,44 @@ func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) Return(shortCode 
 
 func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models.ShortCode, error)) *MockRequestPasswordResetSource_CreateShortCode_Call {
 	_c.Call.Return(run)
+	return _c
+}
+
+// SMTP provides a mock function for the type MockRequestPasswordResetSource
+func (_mock *MockRequestPasswordResetSource) SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any) {
+	_mock.Called(ctx, message, lang, tos, data)
+	return
+}
+
+// MockRequestPasswordResetSource_SMTP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SMTP'
+type MockRequestPasswordResetSource_SMTP_Call struct {
+	*mock.Call
+}
+
+// SMTP is a helper method to define mock.On call
+//   - ctx
+//   - message
+//   - lang
+//   - tos
+//   - data
+func (_e *MockRequestPasswordResetSource_Expecter) SMTP(ctx interface{}, message interface{}, lang interface{}, tos interface{}, data interface{}) *MockRequestPasswordResetSource_SMTP_Call {
+	return &MockRequestPasswordResetSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
+}
+
+func (_c *MockRequestPasswordResetSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestPasswordResetSource_SMTP_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models.Lang), args[3].([]string), args[4].(any))
+	})
+	return _c
+}
+
+func (_c *MockRequestPasswordResetSource_SMTP_Call) Return() *MockRequestPasswordResetSource_SMTP_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockRequestPasswordResetSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestPasswordResetSource_SMTP_Call {
+	_c.Run(run)
 	return _c
 }
 
@@ -1493,6 +1570,44 @@ func (_c *MockRequestRegisterSource_CreateShortCode_Call) Return(shortCode *mode
 
 func (_c *MockRequestRegisterSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models.ShortCode, error)) *MockRequestRegisterSource_CreateShortCode_Call {
 	_c.Call.Return(run)
+	return _c
+}
+
+// SMTP provides a mock function for the type MockRequestRegisterSource
+func (_mock *MockRequestRegisterSource) SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any) {
+	_mock.Called(ctx, message, lang, tos, data)
+	return
+}
+
+// MockRequestRegisterSource_SMTP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SMTP'
+type MockRequestRegisterSource_SMTP_Call struct {
+	*mock.Call
+}
+
+// SMTP is a helper method to define mock.On call
+//   - ctx
+//   - message
+//   - lang
+//   - tos
+//   - data
+func (_e *MockRequestRegisterSource_Expecter) SMTP(ctx interface{}, message interface{}, lang interface{}, tos interface{}, data interface{}) *MockRequestRegisterSource_SMTP_Call {
+	return &MockRequestRegisterSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
+}
+
+func (_c *MockRequestRegisterSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestRegisterSource_SMTP_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models.Lang), args[3].([]string), args[4].(any))
+	})
+	return _c
+}
+
+func (_c *MockRequestRegisterSource_SMTP_Call) Return() *MockRequestRegisterSource_SMTP_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockRequestRegisterSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestRegisterSource_SMTP_Call {
+	_c.Run(run)
 	return _c
 }
 

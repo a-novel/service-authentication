@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/samber/lo"
 
@@ -33,14 +34,25 @@ type ListUsersService struct {
 func (service *ListUsersService) ListUsers(
 	ctx context.Context, request ListUsersRequest,
 ) ([]*models.User, error) {
-	entities, err := service.source.ListUsers(ctx, dao.ListUsersData{
+	span := sentry.StartSpan(ctx, "ListUsersService.ListUsers")
+	defer span.Finish()
+
+	span.SetData("limit", request.Limit)
+	span.SetData("offset", request.Offset)
+	span.SetData("roles", request.Roles)
+
+	entities, err := service.source.ListUsers(span.Context(), dao.ListUsersData{
 		Limit:  request.Limit,
 		Offset: request.Offset,
 		Roles:  request.Roles,
 	})
 	if err != nil {
+		span.SetData("dao.error", err.Error())
+
 		return nil, NewErrListUsersService(err)
 	}
+
+	span.SetData("dao.entities.count", len(entities))
 
 	return lo.Map(entities, func(item *dao.CredentialsEntity, _ int) *models.User {
 		return &models.User{

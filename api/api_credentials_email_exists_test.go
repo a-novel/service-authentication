@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -95,7 +96,7 @@ func TestEmailExists(t *testing.T) {
 
 			if testCase.emailExistsData != nil {
 				source.EXPECT().
-					EmailExists(t.Context(), services.EmailExistsRequest{
+					EmailExists(mock.Anything, services.EmailExistsRequest{
 						Email: string(testCase.params.Email),
 					}).
 					Return(testCase.emailExistsData.resp, testCase.emailExistsData.err)

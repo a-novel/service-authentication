@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -30,10 +31,15 @@ type LoginAnonService struct {
 //
 // On success, a new access token is returned, so the user can access protected resources.
 func (service *LoginAnonService) LoginAnon(ctx context.Context) (string, error) {
-	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
+	span := sentry.StartSpan(ctx, "LoginAnonService.LoginAnon")
+	defer span.Finish()
+
+	accessToken, err := service.source.IssueToken(span.Context(), IssueTokenRequest{
 		Roles: []models.Role{models.RoleAnon},
 	})
 	if err != nil {
+		span.SetData("service.error", err.Error())
+
 		return "", NewErrLoginAnonService(fmt.Errorf("issue accessToken: %w", err))
 	}
 

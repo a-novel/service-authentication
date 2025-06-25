@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
@@ -131,7 +132,7 @@ func TestUpdateEmail(t *testing.T) {
 
 			if testCase.updateEmailData != nil {
 				source.EXPECT().
-					UpdateEmail(t.Context(), services.UpdateEmailRequest{
+					UpdateEmail(mock.Anything, services.UpdateEmailRequest{
 						UserID:    uuid.UUID(testCase.form.GetUserID()),
 						ShortCode: string(testCase.form.GetShortCode()),
 					}).

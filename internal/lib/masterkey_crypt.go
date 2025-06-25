@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"io"
 
 	"golang.org/x/crypto/nacl/secretbox"
@@ -50,8 +51,13 @@ func EncryptMasterKey(ctx context.Context, data any) ([]byte, error) {
 
 // DecryptMasterKey decrypts the input using the master key.
 func DecryptMasterKey(ctx context.Context, data []byte, output any) error {
+	span := sentry.StartSpan(ctx, "DecryptMasterKey")
+	defer span.Finish()
+
 	secret, err := MasterKeyContext(ctx)
 	if err != nil {
+		span.SetData("masterKey.error", err.Error())
+
 		return fmt.Errorf("get master key: %w", err)
 	}
 
@@ -61,10 +67,14 @@ func DecryptMasterKey(ctx context.Context, data []byte, output any) error {
 
 	decrypted, ok := secretbox.Open(nil, data[24:], &decryptNonce, &secret)
 	if !ok {
+		span.SetData("decrypt.error", "invalid secret or nonce")
+
 		return NewErrDecryptMasterKey(fmt.Errorf("decrypt data: %w", ErrInvalidSecret))
 	}
 
 	if err = json.Unmarshal(decrypted, &output); err != nil {
+		span.SetData("unmarshal.error", err.Error())
+
 		return NewErrDecryptMasterKey(fmt.Errorf("unmarshal data: %w", err))
 	}
 

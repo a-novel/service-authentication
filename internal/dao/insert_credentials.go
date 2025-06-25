@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -60,9 +61,18 @@ type InsertCredentialsRepository struct{}
 func (repository *InsertCredentialsRepository) InsertCredentials(
 	ctx context.Context, data InsertCredentialsData,
 ) (*CredentialsEntity, error) {
+	span := sentry.StartSpan(ctx, "InsertCredentialsRepository.InsertCredentials")
+	defer span.Finish()
+
+	span.SetData("credentials.id", data.ID.String())
+	span.SetData("credentials.email", data.Email)
+	span.SetData("credentials.now", data.Now.Format(time.RFC3339))
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrInsertCredentialsRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
@@ -76,7 +86,9 @@ func (repository *InsertCredentialsRepository) InsertCredentials(
 	}
 
 	// Execute query.
-	if _, err = tx.NewInsert().Model(entity).Exec(ctx); err != nil {
+	if _, err = tx.NewInsert().Model(entity).Exec(span.Context()); err != nil {
+		span.SetData("insert.error", err.Error())
+
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
 			return nil, NewErrInsertCredentialsRepository(errors.Join(err, ErrCredentialsAlreadyExists))

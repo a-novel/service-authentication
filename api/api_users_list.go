@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/samber/lo"
 
@@ -16,7 +17,14 @@ type ListUsersService interface {
 }
 
 func (api *API) ListUsers(ctx context.Context, params codegen.ListUsersParams) (codegen.ListUsersRes, error) {
-	users, err := api.ListUsersService.ListUsers(ctx, services.ListUsersRequest{
+	span := sentry.StartSpan(ctx, "API.ListUsers")
+	defer span.Finish()
+
+	span.SetData("request.limit", params.Limit.Value)
+	span.SetData("request.offset", params.Offset.Value)
+	span.SetData("request.roles", params.Roles)
+
+	users, err := api.ListUsersService.ListUsers(span.Context(), services.ListUsersRequest{
 		Limit:  params.Limit.Value,
 		Offset: params.Offset.Value,
 		Roles: lo.Map(params.Roles, func(item codegen.CredentialsRole, _ int) models.CredentialsRole {
@@ -24,6 +32,8 @@ func (api *API) ListUsers(ctx context.Context, params codegen.ListUsersParams) (
 		}),
 	})
 	if err != nil {
+		span.SetData("service.err", err.Error())
+
 		return nil, fmt.Errorf("list users: %w", err)
 	}
 
@@ -38,6 +48,8 @@ func (api *API) ListUsers(ctx context.Context, params codegen.ListUsersParams) (
 			}
 		}),
 	)
+
+	span.SetData("service.users.count", len(res))
 
 	return &res, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -56,16 +57,28 @@ type ConsumeShortCodeService struct {
 func (service *ConsumeShortCodeService) ConsumeShortCode(
 	ctx context.Context, request ConsumeShortCodeRequest,
 ) (*models.ShortCode, error) {
-	entity, err := service.source.SelectShortCodeByParams(ctx, dao.SelectShortCodeByParamsData{
+	span := sentry.StartSpan(ctx, "ConsumeShortCodeService.ConsumeShortCode")
+	defer span.Finish()
+
+	span.SetData("request.target", request.Target)
+	span.SetData("request.usage", request.Usage)
+
+	entity, err := service.source.SelectShortCodeByParams(span.Context(), dao.SelectShortCodeByParamsData{
 		Target: request.Target,
 		Usage:  request.Usage,
 	})
 	if err != nil {
+		span.SetData("dao.selectShortCode.error", err.Error())
+
 		return nil, NewErrConsumeShortCodeService(fmt.Errorf("retrieve short code: %w", err))
 	}
 
+	span.SetData("shortCode.id", entity.ID)
+
 	// Compare the encrypted code with the plain code of the request.
 	if err = lib.CompareScrypt(request.Code, entity.Code); err != nil {
+		span.SetData("scrypt.error", err.Error())
+
 		return nil, NewErrConsumeShortCodeService(errors.Join(
 			fmt.Errorf("compare short code: %w", err),
 			ErrInvalidShortCode,
@@ -73,12 +86,14 @@ func (service *ConsumeShortCodeService) ConsumeShortCode(
 	}
 
 	// Delete the short code from the database. It has been consumed.
-	_, err = service.source.DeleteShortCode(ctx, dao.DeleteShortCodeData{
+	_, err = service.source.DeleteShortCode(span.Context(), dao.DeleteShortCodeData{
 		ID:      entity.ID,
 		Now:     time.Now(),
 		Comment: dao.DeleteCommentConsumed,
 	})
 	if err != nil {
+		span.SetData("dao.deleteShortCode.error", err.Error())
+
 		return nil, NewErrConsumeShortCodeService(fmt.Errorf("delete short code: %w", err))
 	}
 

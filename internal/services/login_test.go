@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
@@ -178,13 +179,13 @@ func TestLogin(t *testing.T) {
 
 			if testCase.selectCredentialsData != nil {
 				source.EXPECT().
-					SelectCredentialsByEmail(ctx, testCase.request.Email).
+					SelectCredentialsByEmail(mock.Anything, testCase.request.Email).
 					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
 			}
 
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
-					IssueToken(ctx, services.IssueTokenRequest{
+					IssueToken(mock.Anything, services.IssueTokenRequest{
 						UserID: &testCase.selectCredentialsData.resp.ID,
 						Roles: []models.Role{
 							lo.Switch[models.CredentialsRole, models.Role](testCase.selectCredentialsData.resp.Role).

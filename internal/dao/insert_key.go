@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,9 +54,19 @@ type InsertKeyRepository struct{}
 // A given key pair is REQUIRED to have an expiration date, as it must be rotated on a regular basis. Only public keys
 // may be exposed to the application.
 func (repository *InsertKeyRepository) InsertKey(ctx context.Context, data InsertKeyData) (*KeyEntity, error) {
+	span := sentry.StartSpan(ctx, "InsertKeyRepository.InsertKey")
+	defer span.Finish()
+
+	span.SetData("key.id", data.ID.String())
+	span.SetData("key.usage", data.Usage)
+	span.SetData("key.createdAt", data.Now.String())
+	span.SetData("key.expiresAt", data.Expiration.String())
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrInsertKeyRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
@@ -69,7 +80,8 @@ func (repository *InsertKeyRepository) InsertKey(ctx context.Context, data Inser
 	}
 
 	// Execute query.
-	if _, err = tx.NewInsert().Model(entity).Exec(ctx); err != nil {
+	if _, err = tx.NewInsert().Model(entity).Exec(span.Context()); err != nil {
+		span.SetData("insert.error", err.Error())
 		// Don't check for collision errors: this is useless, as randomly generated UUIDs have a negligible chance of
 		// colliding.
 		return nil, NewErrInsertKeyRepository(fmt.Errorf("insert entity: %w", err))

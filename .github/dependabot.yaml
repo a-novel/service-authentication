@@ -15,11 +15,11 @@ updates:
         patterns:
           - "go.opentelemetry.io/otel"
           - "go.opentelemetry.io/otel/*"
-      github.com/a-novel-kit/middlewares:
+      github.com/getsentry/sentry-go:
         applies-to: version-updates
         patterns:
-          - "github.com/a-novel-kit/middlewares"
-          - "github.com/a-novel-kit/middlewares/*"
+          - "github.com/getsentry/sentry-go"
+          - "github.com/getsentry/sentry-go/*"
   - package-ecosystem: "github-actions"
     rebase-strategy: auto
     open-pull-requests-limit: 25

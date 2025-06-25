@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"golang.org/x/crypto/ed25519"
 
@@ -36,13 +37,20 @@ type AuthenticateService struct {
 func (service *AuthenticateService) Authenticate(
 	ctx context.Context, accessToken string,
 ) (*models.AccessTokenClaims, error) {
+	span := sentry.StartSpan(ctx, "AuthenticateService.Authenticate")
+	defer span.Finish()
+
 	// Don't bother trying to authenticate if the token is empty.
 	if accessToken == "" {
+		span.SetData("error", "token is empty")
+
 		return nil, NewErrAuthenticateService(fmt.Errorf("token is empty: %w", models.ErrUnauthorized))
 	}
 
 	var claims models.AccessTokenClaims
-	if err := service.recipient.Consume(ctx, accessToken, &claims); err != nil {
+	if err := service.recipient.Consume(span.Context(), accessToken, &claims); err != nil {
+		span.SetData("jwt.consume.error", err.Error())
+
 		if errors.Is(err, jws.ErrInvalidSignature) {
 			return nil, NewErrAuthenticateService(fmt.Errorf("consume token: %w", models.ErrUnauthorized))
 		}

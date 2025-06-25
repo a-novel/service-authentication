@@ -2,52 +2,48 @@ package main
 
 import (
 	"context"
-	"os"
+	"github.com/getsentry/sentry-go/attribute"
+	sentryotel "github.com/getsentry/sentry-go/otel"
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"log"
 	"time"
-
-	"github.com/getsentry/sentry-go"
-	"github.com/rs/zerolog"
 
 	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/getsentry/sentry-go"
 )
 
 const SentryFlushTimeout = 2 * time.Second
 
 func main() {
-	logger := zerolog.New(os.Stdout).With().
-		Str("app", "authentication").
-		Str("job", "rotate-keys").
-		Timestamp().
-		Logger()
+	ctx := context.Background()
 
-	if config.LoggerColor {
-		logger = logger.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	if err := sentry.Init(config.SentryClient); err != nil {
+		log.Fatalf("initialize sentry: %v", err)
 	}
+	defer sentry.Flush(SentryFlushTimeout)
 
-	ctx, err := lib.NewAgoraContext(context.Background())
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(sentryotel.NewSentrySpanProcessor()))
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(sentryotel.NewSentryPropagator())
+
+	logger := sentry.NewLogger(ctx)
+	logger.SetAttributes(
+		attribute.String("app", "agora"),
+		attribute.String("service", "authentication"),
+	)
+
+	ctx, err := lib.NewAgoraContext(ctx, config.DSN)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("initialize agora context")
+		logger.Fatalf(ctx, "initialize agora context: %v", err)
 	}
 
-	if config.Sentry.DSN != "" {
-		sentryOptions := sentry.ClientOptions{Dsn: config.Sentry.DSN}
-
-		if err = sentry.Init(sentryOptions); err != nil {
-			logger.Fatal().Err(err).Msg("initialize sentry")
-		}
-
-		defer sentry.Flush(SentryFlushTimeout)
-		ctx = sentry.SetHubOnContext(ctx, sentry.CurrentHub())
-	}
-
-	hub := sentry.GetHubFromContext(ctx)
-	if hub == nil {
-		hub = sentry.CurrentHub().Clone()
-	}
+	span := sentry.StartSpan(ctx, "Job.RotateKeys")
+	defer span.Finish()
 
 	searchKeysDAO := dao.NewSearchKeysRepository()
 	insertKeyDAO := dao.NewInsertKeyRepository()
@@ -56,39 +52,29 @@ func main() {
 		services.NewGenerateKeySource(searchKeysDAO, insertKeyDAO),
 	)
 
-	var countGeneratedKeys, countFailedKeys int
+	rotateKeyUsage := func(usage models.KeyUsage) {
+		subSpan := sentry.StartSpan(span.Context(), "GenerateNewKey")
+		defer subSpan.Finish()
 
-	for _, usage := range models.KnownKeyUsages {
-		hub.AddBreadcrumb(&sentry.Breadcrumb{
-			Message:  "generate key",
-			Category: "generate key",
-			Data:     map[string]any{"usage": usage},
-		}, nil)
+		subSpan.SetData("usage", usage)
 
-		keyID, err := generateKeysService.GenerateKey(ctx, usage)
+		keyID, err := generateKeysService.GenerateKey(subSpan.Context(), usage)
 		if err != nil {
-			logger.Error().Err(err).Str("usage", string(usage)).Msg("generate keys")
-			hub.CaptureException(err)
+			subSpan.SetData("error", err.Error())
 
-			countFailedKeys++
-
-			continue
+			return
 		}
 
 		if keyID != nil {
-			countGeneratedKeys++
+			subSpan.SetData("keyID", keyID)
 
-			logger.Info().Str("usage", string(usage)).Str("key_id", keyID.String()).Msg("key generated")
-
-			continue
+			return
 		}
 
-		logger.Info().Str("usage", string(usage)).Msg("no key generated")
+		subSpan.SetData("keyID", "nil")
 	}
 
-	logger.Info().
-		Int("total_keys", len(models.KnownKeyUsages)).
-		Int("generated_keys", countGeneratedKeys).
-		Int("failed_keys", countFailedKeys).
-		Msg("rotation done")
+	for _, usage := range models.KnownKeyUsages {
+		rotateKeyUsage(usage)
+	}
 }

@@ -26,6 +26,7 @@ linters:
     - funcorder
     - cyclop
     - err113
+    - contextcheck # Conflicts with Sentry context propagation.
 
   settings:
     gosec:

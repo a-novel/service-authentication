@@ -36,7 +36,7 @@ func TestUpdateEmailAPI(t *testing.T) {
 
 	t.Log("RequestEmailUpdate")
 	{
-		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, newEmail), 10*time.Second)
+		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, newEmail), 3*time.Second)
 
 		rawRes, err := client.RequestEmailUpdate(t.Context(), &codegen.RequestEmailUpdateForm{
 			Email: codegen.Email(newEmail),

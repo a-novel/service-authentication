@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/google/uuid"
 
@@ -31,10 +32,20 @@ type SelectUserService struct {
 func (service *SelectUserService) SelectUser(
 	ctx context.Context, request SelectUserRequest,
 ) (*models.User, error) {
-	entity, err := service.source.SelectCredentials(ctx, request.ID)
+	span := sentry.StartSpan(ctx, "SelectUserService.SelectUser")
+	defer span.Finish()
+
+	span.SetData("request.userID", request.ID.String())
+
+	entity, err := service.source.SelectCredentials(span.Context(), request.ID)
 	if err != nil {
+		span.SetData("dao.error", err.Error())
+
 		return nil, NewErrSelectUserService(err)
 	}
+
+	span.SetData("dao.entity.email", entity.Email)
+	span.SetData("dao.entity.role", entity.Role)
 
 	return &models.User{
 		ID:        entity.ID,

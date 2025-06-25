@@ -357,20 +357,20 @@ func TestUpdateRole(t *testing.T) {
 
 			if testCase.selectTargetCredentialsData != nil {
 				source.EXPECT().
-					SelectCredentials(ctx, testCase.request.TargetUserID).
+					SelectCredentials(mock.Anything, testCase.request.TargetUserID).
 					Return(testCase.selectTargetCredentialsData.resp, testCase.selectTargetCredentialsData.err)
 			}
 
 			if testCase.selectCurrentCredentialsData != nil {
 				source.EXPECT().
-					SelectCredentials(ctx, testCase.request.CurrentUserID).
+					SelectCredentials(mock.Anything, testCase.request.CurrentUserID).
 					Return(testCase.selectCurrentCredentialsData.resp, testCase.selectCurrentCredentialsData.err)
 			}
 
 			if testCase.updateRoleData != nil {
 				source.EXPECT().
 					UpdateCredentialsRole(
-						ctx,
+						mock.Anything,
 						testCase.request.TargetUserID,
 						mock.MatchedBy(func(data dao.UpdateCredentialsRoleData) bool {
 							return assert.Equal(t, testCase.request.Role, data.Role) &&

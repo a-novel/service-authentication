@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
@@ -86,7 +87,7 @@ func TestResetPassword(t *testing.T) {
 
 			if testCase.updatePasswordData != nil {
 				source.EXPECT().
-					UpdatePassword(t.Context(), services.UpdatePasswordRequest{
+					UpdatePassword(mock.Anything, services.UpdatePasswordRequest{
 						Password:  string(testCase.form.GetPassword()),
 						ShortCode: string(testCase.form.GetShortCode()),
 						UserID:    uuid.UUID(testCase.form.GetUserID()),

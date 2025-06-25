@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -59,7 +60,7 @@ func TestLoginAnon(t *testing.T) {
 
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
-					IssueToken(ctx, services.IssueTokenRequest{
+					IssueToken(mock.Anything, services.IssueTokenRequest{
 						Roles: []models.Role{models.RoleAnon},
 					}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)

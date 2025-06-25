@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -78,7 +79,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 			if testCase.requestPasswordResetData != nil {
 				source.EXPECT().
-					RequestPasswordReset(t.Context(), services.RequestPasswordResetRequest{
+					RequestPasswordReset(mock.Anything, services.RequestPasswordResetRequest{
 						Email: string(testCase.form.GetEmail()),
 						Lang:  models.Lang(testCase.form.GetLang().Value),
 					}).

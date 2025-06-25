@@ -86,6 +86,13 @@ services:
       AUTH_PLATFORM_URL_UPDATE_EMAIL: http://localhost:4001/update-email
       AUTH_PLATFORM_URL_UPDATE_PASSWORD: http://localhost:4001/update-password
       AUTH_PLATFORM_URL_REGISTER: http://localhost:4001/register
+      # Used for tracing purposes, can be omitted.
+      # SENTRY_DSN: [your_sentry_dsn]
+      # SERVER_NAME: authentication-service-prod
+      # RELEASE: v0.1.2
+      # ENV: production
+      # Set the following if you want to debug the service locally.
+      # DEBUG: true
     networks:
       - api
 

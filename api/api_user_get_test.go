@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 
@@ -83,7 +84,7 @@ func TestGetUser(t *testing.T) {
 
 			if testCase.GetUserData != nil {
 				source.EXPECT().
-					SelectUser(t.Context(), services.SelectUserRequest{
+					SelectUser(mock.Anything, services.SelectUserRequest{
 						ID: uuid.UUID(testCase.params.UserID),
 					}).
 					Return(testCase.GetUserData.resp, testCase.GetUserData.err)

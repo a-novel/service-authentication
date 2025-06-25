@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,9 +48,18 @@ type DeleteKeyRepository struct{}
 // This method also returns an error when the key is not found, so you can be sure something was deleted on success.
 // The deleted key is returned on success.
 func (repository *DeleteKeyRepository) DeleteKey(ctx context.Context, data DeleteKeyData) (*KeyEntity, error) {
+	span := sentry.StartSpan(ctx, "DeleteKeyRepository.DeleteKey")
+	defer span.Finish()
+
+	span.SetData("key.id", data.ID.String())
+	span.SetData("key.now", data.Now.String())
+	span.SetData("key.comment", data.Comment)
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrDeleteKeyRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
@@ -66,8 +76,10 @@ func (repository *DeleteKeyRepository) DeleteKey(ctx context.Context, data Delet
 		Where("id = ?", data.ID).
 		Column("deleted_at", "deleted_comment"). // Only update the deletion-related fields.
 		Returning("*").
-		Exec(ctx)
+		Exec(span.Context())
 	if err != nil {
+		span.SetData("update.error", err.Error())
+
 		return nil, NewErrDeleteKeyRepository(fmt.Errorf("delete key: %w", err))
 	}
 
@@ -75,10 +87,16 @@ func (repository *DeleteKeyRepository) DeleteKey(ctx context.Context, data Delet
 	// This operation should never fail, as we use a driver that supports it.
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
+		span.SetData("rowsAffected.error", err.Error())
+
 		return nil, NewErrDeleteKeyRepository(fmt.Errorf("delete key: %w", err))
 	}
 
+	span.SetData("rowsAffected", rowsAffected)
+
 	if rowsAffected == 0 {
+		span.SetData("error", "key not found")
+
 		return nil, NewErrDeleteKeyRepository(fmt.Errorf("delete key: %w", ErrKeyNotFound))
 	}
 

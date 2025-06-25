@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	sentrymiddleware "github.com/a-novel-kit/middlewares/sentry"
 	"github.com/a-novel/service-authentication/internal/lib"
-
-	"github.com/rs/zerolog"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -40,9 +38,16 @@ type SearchKeysRepository struct{}
 // potential overhead of the response when too much active keys coexist. This limit is set to KeysMaxBatchSize. If
 // a batch happens to contain more keys, an error is logged, and only the first KeysMaxBatchSize keys are returned.
 func (repository *SearchKeysRepository) SearchKeys(ctx context.Context, usage models.KeyUsage) ([]*KeyEntity, error) {
+	span := sentry.StartSpan(ctx, "SearchKeysRepository.SearchKeys")
+	defer span.Finish()
+
+	span.SetData("usage", usage)
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrSearchKeysRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
@@ -56,21 +61,19 @@ func (repository *SearchKeysRepository) SearchKeys(ctx context.Context, usage mo
 		// Adda +1 to the limit, so we can differentiate between limit reached (which is OK) and limit exceeded
 		// (which is not).
 		Limit(KeysMaxBatchSize + 1).
-		Scan(ctx)
+		Scan(span.Context())
 	if err != nil {
+		span.SetData("scan.error", err.Error())
+
 		return nil, NewErrSearchKeysRepository(fmt.Errorf("list keys: %w", err))
 	}
 
+	span.SetData("keys.count", len(entities))
+
 	// Log an error when too many keys are found. This indicates a potential misconfiguration.
 	if len(entities) > KeysMaxBatchSize {
-		logger := zerolog.Ctx(ctx)
-		logger.Error().
-			Err(ErrSearchKeysRepository).
-			Msgf("more than %d keys found for usage %s", KeysMaxBatchSize, usage)
-
-		sentrymiddleware.CaptureError(ctx, fmt.Errorf(
-			"%w: more than %d keys found for usage %s", ErrSearchKeysRepository, KeysMaxBatchSize, usage,
-		))
+		logger := sentry.NewLogger(span.Context())
+		logger.Errorf(ctx, "more than %d keys found for usage %s", KeysMaxBatchSize, usage)
 
 		// Truncate the list to the maximum allowed size.
 		entities = entities[:KeysMaxBatchSize]

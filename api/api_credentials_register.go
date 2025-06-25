@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/a-novel/service-authentication/api/codegen"
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -15,7 +16,12 @@ type RegisterService interface {
 }
 
 func (api *API) Register(ctx context.Context, req *codegen.RegisterForm) (codegen.RegisterRes, error) {
-	accessToken, err := api.RegisterService.Register(ctx, services.RegisterRequest{
+	span := sentry.StartSpan(ctx, "API.Register")
+	defer span.Finish()
+
+	span.SetData("request.email", req.GetEmail())
+
+	accessToken, err := api.RegisterService.Register(span.Context(), services.RegisterRequest{
 		Email:     string(req.GetEmail()),
 		Password:  string(req.GetPassword()),
 		ShortCode: string(req.GetShortCode()),
@@ -23,10 +29,16 @@ func (api *API) Register(ctx context.Context, req *codegen.RegisterForm) (codege
 
 	switch {
 	case errors.Is(err, dao.ErrCredentialsAlreadyExists):
+		span.SetData("service.err", err.Error())
+
 		return &codegen.ConflictError{Error: "email already taken"}, nil
 	case errors.Is(err, dao.ErrShortCodeNotFound), errors.Is(err, services.ErrInvalidShortCode):
+		span.SetData("service.err", err.Error())
+
 		return &codegen.ForbiddenError{Error: "invalid short code"}, nil
 	case err != nil:
+		span.SetData("service.err", err.Error())
+
 		return nil, fmt.Errorf("register user: %w", err)
 	}
 
