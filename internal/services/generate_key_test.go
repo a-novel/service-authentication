@@ -243,7 +243,7 @@ func TestGenerateKeys(t *testing.T) {
 
 			if testCase.searchKeyData != nil {
 				source.EXPECT().
-					SearchKeys(ctx, testCase.usage).
+					SearchKeys(mock.Anything, testCase.usage).
 					Return(testCase.searchKeyData.resp, testCase.searchKeyData.err)
 			}
 
@@ -294,7 +294,7 @@ func TestGenerateKeys(t *testing.T) {
 
 			if testCase.insertKeyData != nil {
 				source.EXPECT().
-					InsertKey(ctx, mock.MatchedBy(checkInsertData)).
+					InsertKey(mock.Anything, mock.MatchedBy(checkInsertData)).
 					Return(testCase.insertKeyData.resp, testCase.insertKeyData.err)
 			}
 

@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"sync"
+	"text/template"
 
 	"github.com/google/uuid"
 
 	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/config/mails"
-	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
 
@@ -23,6 +24,7 @@ func NewErrRequestEmailUpdateService(err error) error {
 // RequestEmailUpdateSource is the source used to perform the RequestEmailUpdateService.RequestEmailUpdate action.
 type RequestEmailUpdateSource interface {
 	CreateShortCode(ctx context.Context, request CreateShortCodeRequest) (*models.ShortCode, error)
+	SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)
 }
 
 // RequestEmailUpdateRequest is the input used to perform the RequestEmailUpdateService.RequestEmailUpdate action.
@@ -51,9 +53,12 @@ func (service *RequestEmailUpdateService) Wait() {
 func (service *RequestEmailUpdateService) sendMail(
 	ctx context.Context, request RequestEmailUpdateRequest, shortCode *models.ShortCode,
 ) {
+	span := sentry.StartSpan(ctx, "RequestEmailUpdateService.sendMail")
+	defer span.Finish()
+
 	defer service.wg.Done()
 
-	lib.SMTP(ctx, mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
+	service.source.SMTP(span.Context(), mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
 		"ShortCode": shortCode.PlainCode,
 		"Target":    request.ID.String(),
 		"URL":       config.SMTP.URLs.UpdateEmail,
@@ -68,8 +73,15 @@ func (service *RequestEmailUpdateService) sendMail(
 func (service *RequestEmailUpdateService) RequestEmailUpdate(
 	ctx context.Context, request RequestEmailUpdateRequest,
 ) (*models.ShortCode, error) {
+	span := sentry.StartSpan(ctx, "RequestEmailUpdateService.RequestEmailUpdate")
+	defer span.Finish()
+
+	span.SetData("request.id", request.ID.String())
+	span.SetData("request.email", request.Email)
+	span.SetData("request.lang", request.Lang)
+
 	// Create a new short code.
-	shortCode, err := service.source.CreateShortCode(ctx, CreateShortCodeRequest{
+	shortCode, err := service.source.CreateShortCode(span.Context(), CreateShortCodeRequest{
 		Usage:    models.ShortCodeUsageValidateMail,
 		Target:   request.ID.String(),
 		Data:     request.Email,
@@ -77,14 +89,29 @@ func (service *RequestEmailUpdateService) RequestEmailUpdate(
 		Override: true,
 	})
 	if err != nil {
+		span.SetData("service.createShortCode.error", err.Error())
+
 		return nil, NewErrRequestEmailUpdateService(fmt.Errorf("create short code: %w", err))
 	}
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
-	go service.sendMail(context.WithoutCancel(ctx), request, shortCode)
+	go service.sendMail(context.WithoutCancel(span.Context()), request, shortCode)
 
 	return shortCode, nil
+}
+
+func NewRequestEmailUpdateServiceSource(
+	createShortCode *CreateShortCodeService,
+	smtp *SMTPService,
+) RequestEmailUpdateSource {
+	return &struct {
+		*CreateShortCodeService
+		*SMTPService
+	}{
+		CreateShortCodeService: createShortCode,
+		SMTPService:            smtp,
+	}
 }
 
 func NewRequestEmailUpdateService(source RequestEmailUpdateSource) *RequestEmailUpdateService {

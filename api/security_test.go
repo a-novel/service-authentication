@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -144,7 +145,7 @@ func TestBearerAuth(t *testing.T) {
 
 			if testCase.authenticateData != nil {
 				source.EXPECT().
-					Authenticate(t.Context(), testCase.auth.Token).
+					Authenticate(mock.Anything, testCase.auth.Token).
 					Return(testCase.authenticateData.resp, testCase.authenticateData.err)
 			}
 

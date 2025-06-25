@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -113,7 +114,7 @@ func TestRefreshSession(t *testing.T) {
 
 			if testCase.consumeRefreshTokenData != nil {
 				source.EXPECT().
-					ConsumeRefreshToken(t.Context(), services.ConsumeRefreshTokenRequest{
+					ConsumeRefreshToken(mock.Anything, services.ConsumeRefreshTokenRequest{
 						AccessToken:  testCase.params.AccessToken,
 						RefreshToken: testCase.params.RefreshToken,
 					}).

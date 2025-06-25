@@ -3,6 +3,7 @@ package api_test
 import (
 	"context"
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
@@ -107,7 +108,7 @@ func TestEmailUpdate(t *testing.T) {
 
 			if testCase.updatePasswordData != nil {
 				source.EXPECT().
-					UpdatePassword(ctx, services.UpdatePasswordRequest{
+					UpdatePassword(mock.Anything, services.UpdatePasswordRequest{
 						Password:        string(testCase.form.GetPassword()),
 						CurrentPassword: string(testCase.form.GetCurrentPassword()),
 						UserID:          lo.FromPtr(testCase.userID),

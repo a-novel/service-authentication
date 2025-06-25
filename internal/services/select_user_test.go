@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 
@@ -84,7 +85,7 @@ func TestSelectUser(t *testing.T) {
 
 			if testCase.SelectUserData != nil {
 				source.EXPECT().
-					SelectCredentials(ctx, testCase.request.ID).
+					SelectCredentials(mock.Anything, testCase.request.ID).
 					Return(testCase.SelectUserData.resp, testCase.SelectUserData.err)
 			}
 

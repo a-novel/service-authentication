@@ -17,8 +17,6 @@ type PostgresKey struct{}
 
 var ErrInvalidPostgresContext = errors.New("invalid postgres context")
 
-const PostgresDSNEnv = "DSN"
-
 const PingTimeout = 10 * time.Second
 
 func NewPostgresContext(ctx context.Context, dsn string) (context.Context, error) {

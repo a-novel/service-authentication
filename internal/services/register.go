@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,19 +39,28 @@ type RegisterService struct {
 }
 
 func (service *RegisterService) Register(ctx context.Context, request RegisterRequest) (string, error) {
+	span := sentry.StartSpan(ctx, "RegisterService.Register")
+	defer span.Finish()
+
+	span.SetData("email", request.Email)
+
 	// Encrypt the password.
 	encryptedPassword, err := lib.GenerateScrypt(request.Password, lib.ScryptParamsDefault)
 	if err != nil {
+		span.SetData("scrypt.error", err.Error())
+
 		return "", NewErrRegisterService(fmt.Errorf("encrypt password: %w", err))
 	}
 
 	// Registration can fail after the short code is consumed. To prevent this, we wrap the operation in a single
 	// transaction.
-	ctxTx, commit, err := lib.PostgresContextTx(ctx, &sql.TxOptions{
+	ctxTx, commit, err := lib.PostgresContextTx(span.Context(), &sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
 		ReadOnly:  false,
 	})
 	if err != nil {
+		span.SetData("postgres.transaction.error", err.Error())
+
 		return "", NewErrRegisterService(fmt.Errorf("create transaction: %w", err))
 	}
 
@@ -63,6 +73,8 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 		Code:   request.ShortCode,
 	})
 	if err != nil {
+		span.SetData("consumeShortCode.error", err.Error())
+
 		return "", NewErrRegisterService(fmt.Errorf("consume short code: %w", err))
 	}
 
@@ -74,16 +86,22 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 		Now:      time.Now(),
 	})
 	if err != nil {
+		span.SetData("dao.insertCredentials.error", err.Error())
+
 		return "", NewErrRegisterService(fmt.Errorf("insert credentials: %w", err))
 	}
 
+	span.SetData("credentials.id", credentials.ID)
+
 	// Commit transaction.
 	if err = commit(true); err != nil {
+		span.SetData("postgres.commit.error", err.Error())
+
 		return "", NewErrRegisterService(fmt.Errorf("commit transaction: %w", err))
 	}
 
 	// Generate a new authentication token.
-	accessToken, err := service.source.IssueToken(ctx, IssueTokenRequest{
+	accessToken, err := service.source.IssueToken(span.Context(), IssueTokenRequest{
 		UserID: &credentials.ID,
 		Roles: []models.Role{
 			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
@@ -93,6 +111,8 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 		},
 	})
 	if err != nil {
+		span.SetData("issueToken.error", err.Error())
+
 		return "", NewErrRegisterService(fmt.Errorf("issue accessToken: %w", err))
 	}
 

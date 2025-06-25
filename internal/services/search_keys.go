@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/a-novel-kit/jwt/jwa"
 
@@ -40,18 +41,36 @@ type SearchKeysService struct {
 // SearchKeys retrieves a batch of keys from the source. All keys are serialized, and match the usage required
 // by the request.
 func (service *SearchKeysService) SearchKeys(ctx context.Context, request SearchKeysRequest) ([]*jwa.JWK, error) {
-	keys, err := service.source.SearchKeys(ctx, request.Usage)
+	span := sentry.StartSpan(ctx, "SearchKeysService.SearchKeys")
+	defer span.Finish()
+
+	span.SetData("request.usage", request.Usage)
+	span.SetData("request.private", request.Private)
+
+	keys, err := service.source.SearchKeys(span.Context(), request.Usage)
 	if err != nil {
+		span.SetData("dao.error", err.Error())
+
 		return nil, NewErrSearchKeysService(fmt.Errorf("search keys: %w", err))
 	}
+
+	span.SetData("keys.count", len(keys))
 
 	deserialized := make([]*jwa.JWK, len(keys))
 
 	for i, key := range keys {
-		deserialized[i], err = dao.ConsumeKey(ctx, key, request.Private)
+		subSpan := sentry.StartSpan(span.Context(), "deserializeKey")
+		subSpan.SetData("key.id", key.ID)
+
+		deserialized[i], err = dao.ConsumeKey(subSpan.Context(), key, request.Private)
 		if err != nil {
+			subSpan.SetData("deserializeKey.error", err.Error())
+			subSpan.Finish()
+
 			return nil, NewErrSearchKeysService(fmt.Errorf("consume DAO key (kid %s): %w", key.ID, err))
 		}
+
+		subSpan.Finish()
 	}
 
 	return deserialized, nil

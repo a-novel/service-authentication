@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -44,19 +45,28 @@ type UpdatePasswordService struct {
 }
 
 func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, request UpdatePasswordRequest) error {
+	span := sentry.StartSpan(ctx, "UpdatePasswordService.UpdatePassword")
+	defer span.Finish()
+
+	span.SetData("request.userID", request.UserID.String())
+
 	// Encrypt the new password.
 	encryptedPassword, err := lib.GenerateScrypt(request.Password, lib.ScryptParamsDefault)
 	if err != nil {
+		span.SetData("password.encrypt.error", err.Error())
+
 		return NewErrUpdatePasswordService(fmt.Errorf("encrypt password: %w", err))
 	}
 
 	// Password update can fail after the short code is consumed. To prevent this, we wrap the operation in a single
 	// transaction.
-	ctxTx, commit, err := lib.PostgresContextTx(ctx, &sql.TxOptions{
+	ctxTx, commit, err := lib.PostgresContextTx(span.Context(), &sql.TxOptions{
 		Isolation: sql.LevelRepeatableRead,
 		ReadOnly:  false,
 	})
 	if err != nil {
+		span.SetData("postgres.transaction.error", err.Error())
+
 		return NewErrUpdatePasswordService(fmt.Errorf("create transaction: %w", err))
 	}
 
@@ -73,16 +83,22 @@ func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, reques
 			Code:   request.ShortCode,
 		})
 		if err != nil {
+			span.SetData("service.consumeShortCode.error", err.Error())
+
 			return NewErrUpdatePasswordService(fmt.Errorf("consume short code: %w", err))
 		}
 	case request.CurrentPassword != "":
 		credentials, err := service.source.SelectCredentials(ctxTx, request.UserID)
 		if err != nil {
+			span.SetData("dao.selectCredentials.error", err.Error())
+
 			return NewErrUpdatePasswordService(fmt.Errorf("select credentials: %w", err))
 		}
 
 		// Check if the current password is correct.
 		if err = lib.CompareScrypt(request.CurrentPassword, credentials.Password); err != nil {
+			span.SetData("scrypt.compare.error", err.Error())
+
 			return NewErrUpdatePasswordService(fmt.Errorf("compare current password: %w", err))
 		}
 	default:
@@ -95,11 +111,15 @@ func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, reques
 		Now:      time.Now(),
 	})
 	if err != nil {
+		span.SetData("dao.updateCredentialsPassword.error", err.Error())
+
 		return NewErrUpdatePasswordService(fmt.Errorf("update password: %w", err))
 	}
 
 	// Commit transaction.
 	if err = commit(true); err != nil {
+		span.SetData("postgres.commit.error", err.Error())
+
 		return NewErrUpdatePasswordService(fmt.Errorf("commit transaction: %w", err))
 	}
 

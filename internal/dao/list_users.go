@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/uptrace/bun"
 
@@ -28,9 +29,18 @@ type ListUsersRepository struct{}
 func (repository *ListUsersRepository) ListUsers(
 	ctx context.Context, data ListUsersData,
 ) ([]*CredentialsEntity, error) {
+	span := sentry.StartSpan(ctx, "ListUsersRepository.ListUsers")
+	defer span.Finish()
+
+	span.SetData("limit", data.Limit)
+	span.SetData("offset", data.Offset)
+	span.SetData("roles", data.Roles)
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrListUsersRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
@@ -47,7 +57,9 @@ func (repository *ListUsersRepository) ListUsers(
 		query = query.Where("role IN (?)", bun.In(data.Roles))
 	}
 
-	if err = query.Scan(ctx); err != nil {
+	if err = query.Scan(span.Context()); err != nil {
+		span.SetData("scan.error", err.Error())
+
 		return nil, NewErrListUsersRepository(fmt.Errorf("list credentials: %w", err))
 	}
 

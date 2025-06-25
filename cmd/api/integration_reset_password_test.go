@@ -38,7 +38,7 @@ func TestResetPasswordAPI(t *testing.T) {
 
 	t.Log("RequestPasswordReset")
 	{
-		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, user.email), 10*time.Second)
+		capturer := utilstest.WaitForLog(logs, captureEmailLog(t, user.email), 3*time.Second)
 
 		rawRes, err := client.RequestPasswordReset(t.Context(), &codegen.RequestPasswordResetForm{
 			Email: codegen.Email(user.email),

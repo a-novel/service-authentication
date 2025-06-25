@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 
@@ -120,7 +121,7 @@ func TestListUsers(t *testing.T) {
 
 			if testCase.listUsersData != nil {
 				source.EXPECT().
-					ListUsers(t.Context(), services.ListUsersRequest{
+					ListUsers(mock.Anything, services.ListUsersRequest{
 						Limit:  testCase.params.Limit.Value,
 						Offset: testCase.params.Offset.Value,
 						Roles: lo.Map(

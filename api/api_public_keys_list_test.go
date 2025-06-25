@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/go-faster/jx"
@@ -135,7 +136,7 @@ func TestListPublicKeys(t *testing.T) {
 
 			if testCase.listKeysData != nil {
 				source.EXPECT().
-					SearchKeys(t.Context(), services.SearchKeysRequest{
+					SearchKeys(mock.Anything, services.SearchKeysRequest{
 						Usage:   models.KeyUsage(testCase.params.Usage),
 						Private: false,
 					}).

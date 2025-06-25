@@ -1,18 +1,15 @@
 package services_test
 
 import (
-	"bytes"
-	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"io"
-	"os"
+	"github.com/a-novel/service-authentication/config/mails"
+	"github.com/stretchr/testify/mock"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/config"
@@ -37,6 +34,7 @@ func TestRequestRegister(t *testing.T) {
 		request services.RequestRegisterRequest
 
 		createShortCodeData *createShortCodeData
+		sendMail            bool
 
 		expectErr error
 	}{
@@ -58,6 +56,8 @@ func TestRequestRegister(t *testing.T) {
 					PlainCode: "abcdef123456",
 				},
 			},
+
+			sendMail: true,
 		},
 		{
 			name: "CreateShortCodeError",
@@ -78,19 +78,11 @@ func TestRequestRegister(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			r, w, err := os.Pipe()
-			require.NoError(t, err)
-
-			logger := zerolog.New(w)
-
-			ctx, cancel := context.WithCancel(logger.WithContext(t.Context()))
-			defer cancel()
-
 			source := servicesmocks.NewMockRequestRegisterSource(t)
 
 			if testCase.createShortCodeData != nil {
 				source.EXPECT().
-					CreateShortCode(ctx, services.CreateShortCodeRequest{
+					CreateShortCode(mock.Anything, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageRequestRegister,
 						Target:   testCase.request.Email,
 						TTL:      config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL,
@@ -99,42 +91,35 @@ func TestRequestRegister(t *testing.T) {
 					Return(testCase.createShortCodeData.resp, testCase.createShortCodeData.err)
 			}
 
+			if testCase.sendMail {
+				source.EXPECT().SMTP(
+					mock.Anything,
+					mock.MatchedBy(func(req *template.Template) bool {
+						return req.Name() == mails.Mails.Register.Name()
+					}),
+					testCase.request.Lang,
+					[]string{testCase.request.Email},
+					map[string]any{
+						"ShortCode": testCase.createShortCodeData.resp.PlainCode,
+						"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
+						"URL":       config.SMTP.URLs.Register,
+						"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
+					},
+				).
+					Return()
+			}
+
 			service := services.NewRequestRegisterService(source)
 
-			resp, err := service.RequestRegister(ctx, testCase.request)
+			resp, err := service.RequestRegister(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
-
-			cancel()
 
 			if err == nil {
 				require.Equal(t, testCase.createShortCodeData.resp, resp)
+			}
 
-				outC := make(chan []byte)
-				// copy the output in a separate goroutine so printing can't block indefinitely
-				go func() {
-					var buf bytes.Buffer
-					_, _ = io.Copy(&buf, r)
-					outC <- buf.Bytes()
-				}()
-
+			if testCase.sendMail {
 				service.Wait()
-				require.NoError(t, w.Close())
-
-				var jsonLog struct {
-					Level               string         `json:"level"`
-					DynamicTemplateData map[string]any `json:"dynamicTemplateData"`
-				}
-
-				out := <-outC
-				require.NoError(t, json.Unmarshal(out, &jsonLog))
-
-				require.Equal(t, "info", jsonLog.Level, string(out))
-				require.Equal(t, map[string]any{
-					"ShortCode": testCase.createShortCodeData.resp.PlainCode,
-					"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
-					"URL":       config.SMTP.URLs.Register,
-					"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
-				}, jsonLog.DynamicTemplateData)
 			}
 
 			source.AssertExpectations(t)

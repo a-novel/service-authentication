@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/samber/lo"
 	"golang.org/x/crypto/ed25519"
@@ -41,11 +42,22 @@ type IssueRefreshTokenService struct {
 func (service *IssueRefreshTokenService) IssueRefreshToken(
 	ctx context.Context, request IssueRefreshTokenRequest,
 ) (string, error) {
+	span := sentry.StartSpan(ctx, "IssueRefreshTokenService.IssueRefreshToken")
+	defer span.Finish()
+
+	span.SetData("userID", lo.FromPtr(request.Claims.UserID))
+	span.SetData("refreshTokenID", lo.FromPtr(request.Claims.RefreshTokenID))
+	span.SetData("roles", request.Claims.Roles)
+
 	if request.Claims.RefreshTokenID != nil {
+		span.SetData("error", "refresh token ID is not nil")
+
 		return "", NewErrIssueRefreshTokenService(ErrRefreshRefreshToken)
 	}
 
 	if request.Claims.UserID == nil {
+		span.SetData("error", "user ID is not set in the claims")
+
 		return "", NewErrIssueRefreshTokenService(ErrRefreshTokenWithAnonSession)
 	}
 
@@ -55,11 +67,15 @@ func (service *IssueRefreshTokenService) IssueRefreshToken(
 
 	claims, err := jwt.NewBasicClaims(customClaims, service.claimsConfig)
 	if err != nil {
+		span.SetData("claims.create.error", err.Error())
+
 		return "", NewErrIssueRefreshTokenService(fmt.Errorf("create claims: %w", err))
 	}
 
-	refreshToken, err := service.producer.Issue(ctx, claims, nil)
+	refreshToken, err := service.producer.Issue(span.Context(), claims, nil)
 	if err != nil {
+		span.SetData("jwt.issue.error", err.Error())
+
 		return "", NewErrIssueRefreshTokenService(fmt.Errorf("issue token: %w", err))
 	}
 

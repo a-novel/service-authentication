@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/go-faster/jx"
@@ -107,7 +108,7 @@ func TestGetPublicKey(t *testing.T) {
 
 			if testCase.selectKeyData != nil {
 				source.EXPECT().
-					SelectKey(t.Context(), services.SelectKeyRequest{
+					SelectKey(mock.Anything, services.SelectKeyRequest{
 						ID:      uuid.UUID(testCase.params.Kid),
 						Private: false,
 					}).

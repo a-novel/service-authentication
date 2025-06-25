@@ -3,6 +3,7 @@ package api_test
 import (
 	"context"
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 
@@ -162,7 +163,7 @@ func TestUpdateRole(t *testing.T) {
 
 			if testCase.updateRoleData != nil {
 				source.EXPECT().
-					UpdateRole(ctx, services.UpdateRoleRequest{
+					UpdateRole(mock.Anything, services.UpdateRoleRequest{
 						TargetUserID:  uuid.UUID(testCase.form.GetUserID()),
 						CurrentUserID: uuid.MustParse("00000000-1000-0000-0000-000000000001"),
 						Role:          new(api.API).CredentialsRoleToModel(testCase.form.GetRole()),

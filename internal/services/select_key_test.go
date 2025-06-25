@@ -3,6 +3,7 @@ package services_test
 import (
 	"encoding/json"
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
@@ -191,7 +192,7 @@ func TestSelectKey(t *testing.T) {
 
 			if testCase.selectKeyData != nil {
 				source.EXPECT().
-					SelectKey(ctx, testCase.request.ID).
+					SelectKey(mock.Anything, testCase.request.ID).
 					Return(testCase.selectKeyData.resp, testCase.selectKeyData.err)
 			}
 

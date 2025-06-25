@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 )
 
 var ErrSelectCredentialsByEmailRepository = errors.New("SelectCredentialsByEmailRepository.SelectCredentialsByEmail")
@@ -29,16 +30,26 @@ type SelectCredentialsByEmailRepository struct{}
 func (repository *SelectCredentialsByEmailRepository) SelectCredentialsByEmail(
 	ctx context.Context, email string,
 ) (*CredentialsEntity, error) {
+	span := sentry.StartSpan(ctx, "SelectCredentialsByEmailRepository.SelectCredentialsByEmail")
+	defer span.Finish()
+
+	span.SetData("credentials.email", email)
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrSelectCredentialsByEmailRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	var entity CredentialsEntity
 
 	// Execute query.
-	if err = tx.NewSelect().Model(&entity).Where("email = ?", email).Order("email DESC").Scan(ctx); err != nil {
+	err = tx.NewSelect().Model(&entity).Where("email = ?", email).Order("email DESC").Scan(span.Context())
+	if err != nil {
+		span.SetData("scan.error", err.Error())
+
 		// Parse not found error as a managed error.
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, NewErrSelectCredentialsByEmailRepository(ErrCredentialsNotFound)

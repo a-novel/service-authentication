@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -100,7 +101,7 @@ func TestCreateSession(t *testing.T) {
 
 			if testCase.loginData != nil {
 				source.EXPECT().
-					Login(t.Context(), services.LoginRequest{
+					Login(mock.Anything, services.LoginRequest{
 						Email:    string(testCase.form.GetEmail()),
 						Password: string(testCase.form.GetPassword()),
 					}).

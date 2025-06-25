@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/google/uuid"
 )
@@ -27,16 +28,25 @@ type SelectKeyRepository struct{}
 // This allows to retrieve the exact key when performing reverse operations (signature verification or token
 // decryption).
 func (repository *SelectKeyRepository) SelectKey(ctx context.Context, id uuid.UUID) (*KeyEntity, error) {
+	span := sentry.StartSpan(ctx, "SelectKeyRepository.SelectKey")
+	defer span.Finish()
+
+	span.SetData("key.id", id.String())
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrSelectKeyRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	var entity KeyEntity
 
 	// Execute query.
-	if err = tx.NewSelect().Model(&entity).Where("id = ?", id).Order("id DESC").Scan(ctx); err != nil {
+	if err = tx.NewSelect().Model(&entity).Where("id = ?", id).Order("id DESC").Scan(span.Context()); err != nil {
+		span.SetData("scan.error", err.Error())
+
 		// Parse not found error as a managed error.
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, NewErrSelectKeyRepository(ErrKeyNotFound)

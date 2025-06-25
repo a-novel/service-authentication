@@ -2,18 +2,21 @@ package main
 
 import (
 	"context"
-	sentrymiddleware "github.com/a-novel-kit/middlewares/sentry"
+	"github.com/getsentry/sentry-go"
+	"github.com/getsentry/sentry-go/attribute"
+	sentryhttp "github.com/getsentry/sentry-go/http"
+	sentryotel "github.com/getsentry/sentry-go/otel"
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"log"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/rs/zerolog"
-
-	zeromiddleware "github.com/a-novel-kit/middlewares/zerolog"
 
 	"github.com/a-novel/service-authentication/api"
 	"github.com/a-novel/service-authentication/api/codegen"
@@ -24,27 +27,35 @@ import (
 )
 
 const (
-	MaxRequestSize = 2 << 20 // 2 MiB
+	MaxRequestSize     = 2 << 20 // 2 MiB
+	SentryFlushTimeout = 2 * time.Second
 )
 
 func main() {
+	ctx := context.Background()
 	// =================================================================================================================
 	// LOAD DEPENDENCIES (EXTERNAL)
 	// =================================================================================================================
-	logger := zerolog.New(os.Stderr).With().
-		Str("app", "authentication").
-		Timestamp().
-		Logger()
-
-	if config.LoggerColor {
-		logger = logger.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	if err := sentry.Init(config.SentryClient); err != nil {
+		log.Fatalf("initialize sentry: %v", err)
 	}
+	defer sentry.Flush(SentryFlushTimeout)
 
-	logger.Info().Msg("starting application...")
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(sentryotel.NewSentrySpanProcessor()))
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(sentryotel.NewSentryPropagator())
 
-	ctx, err := lib.NewAgoraContext(context.Background())
+	logger := sentry.NewLogger(ctx)
+	logger.SetAttributes(
+		attribute.String("app", "agora"),
+		attribute.String("service", "authentication"),
+	)
+
+	logger.Info(ctx, "starting application")
+
+	ctx, err := lib.NewAgoraContext(ctx, config.DSN)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("initialize agora context")
+		logger.Fatalf(ctx, "initialize agora context: %v", err)
 	}
 
 	// =================================================================================================================
@@ -118,14 +129,20 @@ func main() {
 
 	listUsersService := services.NewListUsersService(listUsersDAO)
 
-	requestRegisterService := services.NewRequestRegisterService(createShortCodeService)
+	smtpService := services.NewSMTPService()
+
+	requestRegisterService := services.NewRequestRegisterService(
+		services.NewRequestRegisterServiceSource(createShortCodeService, smtpService),
+	)
 	defer requestRegisterService.Wait()
 
-	requestEmailUpdateService := services.NewRequestEmailUpdateService(createShortCodeService)
+	requestEmailUpdateService := services.NewRequestEmailUpdateService(
+		services.NewRequestEmailUpdateServiceSource(createShortCodeService, smtpService),
+	)
 	defer requestEmailUpdateService.Wait()
 
 	requestPasswordResetService := services.NewRequestPasswordResetService(
-		services.NewRequestPasswordResetSource(selectCredentialsByEmailDAO, createShortCodeService),
+		services.NewRequestPasswordResetSource(selectCredentialsByEmailDAO, createShortCodeService, smtpService),
 	)
 	defer requestPasswordResetService.Wait()
 
@@ -137,9 +154,7 @@ func main() {
 
 	// MIDDLEWARES -----------------------------------------------------------------------------------------------------
 
-	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
-	router.Use(zeromiddleware.ZeroLog(&logger))
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Timeout(config.API.Timeouts.Request))
 	router.Use(middleware.RequestSize(MaxRequestSize))
@@ -158,14 +173,8 @@ func main() {
 		MaxAge: config.API.Cors.MaxAge,
 	}))
 
-	if config.Sentry.DSN != "" {
-		sentryHandler, err := sentrymiddleware.Sentry(config.Sentry.DSN)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("initialize sentry")
-		}
-
-		router.Use(sentryHandler)
-	}
+	sentryHandler := sentryhttp.New(sentryhttp.Options{})
+	router.Use(sentryHandler.Handle)
 
 	// RUN -------------------------------------------------------------------------------------------------------------
 
@@ -193,12 +202,12 @@ func main() {
 
 	securityHandler, err := api.NewSecurity(config.Permissions, authenticateService)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("initialize security handler")
+		logger.Fatalf(ctx, "start security handler: %v", err)
 	}
 
 	apiServer, err := codegen.NewServer(handler, securityHandler)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("initialize server")
+		logger.Fatalf(ctx, "start server: %v", err)
 	}
 
 	router.Mount("/v1/", http.StripPrefix("/v1", apiServer))
@@ -213,11 +222,10 @@ func main() {
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
-	logger.Info().
-		Str("address", httpServer.Addr).
-		Msg("application started!")
+	logger.SetAttributes(attribute.Int("server.port", config.API.Port))
+	logger.Info(ctx, "start http server")
 
 	if err = httpServer.ListenAndServe(); err != nil {
-		logger.Fatal().Err(err).Msg("application stopped")
+		logger.Fatalf(ctx, "start http server: %v", err)
 	}
 }

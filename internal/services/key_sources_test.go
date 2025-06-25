@@ -3,6 +3,7 @@ package services_test
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/samber/lo"
@@ -61,7 +62,7 @@ func TestKeySources(t *testing.T) { //nolint:paralleltest
 	searchKeysDAO := dao.NewSearchKeysRepository()
 	searchKeys := services.NewSearchKeysService(searchKeysDAO)
 
-	ctx, err := lib.NewAgoraContext(t.Context())
+	ctx, err := lib.NewAgoraContext(t.Context(), os.Getenv("DSN"))
 	require.NoError(t, err)
 
 	t.Run("AuthKeySource", func(t *testing.T) { //nolint:paralleltest

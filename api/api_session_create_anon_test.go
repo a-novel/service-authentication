@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -57,7 +58,7 @@ func TestCreateAnonSession(t *testing.T) {
 
 			if testCase.loginData != nil {
 				source.EXPECT().
-					LoginAnon(t.Context()).
+					LoginAnon(mock.Anything).
 					Return(testCase.loginData.resp, testCase.loginData.err)
 			}
 

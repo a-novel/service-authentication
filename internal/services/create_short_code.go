@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -59,15 +60,27 @@ type CreateShortCodeService struct {
 func (service *CreateShortCodeService) CreateShortCode(
 	ctx context.Context, request CreateShortCodeRequest,
 ) (*models.ShortCode, error) {
+	span := sentry.StartSpan(ctx, "CreateShortCodeService.CreateShortCode")
+	defer span.Finish()
+
+	span.SetData("request.target", request.Target)
+	span.SetData("request.usage", request.Usage)
+	span.SetData("request.ttl", request.TTL)
+	span.SetData("request.override", request.Override)
+
 	// Generate a new random code.
 	plainCode, err := lib.NewRandomURLString(config.ShortCodes.Size)
 	if err != nil {
+		span.SetData("generateRandomText.error", err.Error())
+
 		return nil, NewErrCreateShortCodeService(fmt.Errorf("generate short code: %w", err))
 	}
 
 	// Encrypt the short code in the database.
 	encrypted, err := lib.GenerateScrypt(plainCode, lib.ScryptParamsDefault)
 	if err != nil {
+		span.SetData("scrypt.error", err.Error())
+
 		return nil, NewErrCreateShortCodeService(fmt.Errorf("encrypt short code: %w", err))
 	}
 
@@ -78,13 +91,15 @@ func (service *CreateShortCodeService) CreateShortCode(
 	}
 
 	if err != nil {
+		span.SetData("json.serialize.error", err.Error())
+
 		return nil, NewErrCreateShortCodeService(fmt.Errorf("serialize data: %w", err))
 	}
 
 	now := time.Now()
 	expiry := now.Add(request.TTL)
 
-	entity, err := service.source.InsertShortCode(ctx, dao.InsertShortCodeData{
+	entity, err := service.source.InsertShortCode(span.Context(), dao.InsertShortCodeData{
 		ID:        uuid.New(),
 		Code:      encrypted,
 		Usage:     request.Usage,
@@ -95,8 +110,12 @@ func (service *CreateShortCodeService) CreateShortCode(
 		Override:  request.Override,
 	})
 	if err != nil {
+		span.SetData("dao.insertShortCode.error", err.Error())
+
 		return nil, NewErrCreateShortCodeService(fmt.Errorf("insert short code: %w", err))
 	}
+
+	span.SetData("shortCode.id", entity.ID)
 
 	return &models.ShortCode{
 		ID:        entity.ID,

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/a-novel/service-authentication/models"
 )
@@ -40,9 +41,17 @@ type SelectShortCodeByParamsRepository struct{}
 func (repository *SelectShortCodeByParamsRepository) SelectShortCodeByParams(
 	ctx context.Context, data SelectShortCodeByParamsData,
 ) (*ShortCodeEntity, error) {
+	span := sentry.StartSpan(ctx, "SelectShortCodeByParamsRepository.SelectShortCodeByParams")
+	defer span.Finish()
+
+	span.SetData("shortCode.target", data.Target)
+	span.SetData("shortCode.usage", data.Usage)
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrSelectShortCodeByParamsRepository(fmt.Errorf("get transaction: %w", err))
 	}
 
@@ -54,9 +63,11 @@ func (repository *SelectShortCodeByParamsRepository) SelectShortCodeByParams(
 		Where("target = ?", data.Target).
 		Where("usage = ?", data.Usage).
 		Order("id DESC").
-		Scan(ctx)
+		Scan(span.Context())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			span.SetData("scan.error", err.Error())
+
 			return nil, NewErrSelectShortCodeByParamsRepository(ErrShortCodeNotFound)
 		}
 

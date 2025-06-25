@@ -1,17 +1,14 @@
 package services_test
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
-	"io"
-	"os"
+	"github.com/a-novel/service-authentication/config/mails"
+	"github.com/stretchr/testify/mock"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/config"
@@ -43,6 +40,7 @@ func TestRequestPasswordReset(t *testing.T) {
 
 		selectCredentialsData *selectCredentialsData
 		createShortCodeData   *createShortCodeData
+		sendMail              bool
 
 		expectErr error
 	}{
@@ -70,6 +68,8 @@ func TestRequestPasswordReset(t *testing.T) {
 					PlainCode: "abcdef123456",
 				},
 			},
+
+			sendMail: true,
 		},
 		{
 			name: "CreateShortCodeError",
@@ -109,19 +109,11 @@ func TestRequestPasswordReset(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			r, w, err := os.Pipe()
-			require.NoError(t, err)
-
-			logger := zerolog.New(w)
-
-			ctx, cancel := context.WithCancel(logger.WithContext(t.Context()))
-			defer cancel()
-
 			source := servicesmocks.NewMockRequestPasswordResetSource(t)
 
 			if testCase.createShortCodeData != nil {
 				source.EXPECT().
-					CreateShortCode(ctx, services.CreateShortCodeRequest{
+					CreateShortCode(mock.Anything, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageResetPassword,
 						Target:   testCase.selectCredentialsData.resp.ID.String(),
 						TTL:      config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL,
@@ -132,46 +124,39 @@ func TestRequestPasswordReset(t *testing.T) {
 
 			if testCase.selectCredentialsData != nil {
 				source.EXPECT().
-					SelectCredentialsByEmail(ctx, testCase.request.Email).
+					SelectCredentialsByEmail(mock.Anything, testCase.request.Email).
 					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
+			}
+
+			if testCase.sendMail {
+				source.EXPECT().SMTP(
+					mock.Anything,
+					mock.MatchedBy(func(req *template.Template) bool {
+						return req.Name() == mails.Mails.PasswordReset.Name()
+					}),
+					testCase.request.Lang,
+					[]string{testCase.request.Email},
+					map[string]any{
+						"ShortCode": testCase.createShortCodeData.resp.PlainCode,
+						"Target":    testCase.selectCredentialsData.resp.ID.String(),
+						"URL":       config.SMTP.URLs.UpdatePassword,
+						"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
+					},
+				).
+					Return()
 			}
 
 			service := services.NewRequestPasswordResetService(source)
 
-			resp, err := service.RequestPasswordReset(ctx, testCase.request)
+			resp, err := service.RequestPasswordReset(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
-
-			cancel()
 
 			if err == nil {
 				require.Equal(t, testCase.createShortCodeData.resp, resp)
+			}
 
-				outC := make(chan []byte)
-				// copy the output in a separate goroutine so printing can't block indefinitely
-				go func() {
-					var buf bytes.Buffer
-					_, _ = io.Copy(&buf, r)
-					outC <- buf.Bytes()
-				}()
-
+			if testCase.sendMail {
 				service.Wait()
-				require.NoError(t, w.Close())
-
-				var jsonLog struct {
-					Level               string         `json:"level"`
-					DynamicTemplateData map[string]any `json:"dynamicTemplateData"`
-				}
-
-				out := <-outC
-				require.NoError(t, json.Unmarshal(out, &jsonLog))
-
-				require.Equal(t, "info", jsonLog.Level, string(out))
-				require.Equal(t, map[string]any{
-					"ShortCode": testCase.createShortCodeData.resp.PlainCode,
-					"Target":    testCase.selectCredentialsData.resp.ID.String(),
-					"URL":       config.SMTP.URLs.UpdatePassword,
-					"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
-				}, jsonLog.DynamicTemplateData)
 			}
 
 			source.AssertExpectations(t)

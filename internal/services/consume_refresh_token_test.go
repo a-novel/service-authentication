@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
@@ -274,13 +275,13 @@ func TestConsumeRefreshToken(t *testing.T) {
 
 			if testCase.selectCredentialsData != nil {
 				source.EXPECT().
-					SelectCredentials(t.Context(), uuid.MustParse("00000000-0000-0000-0000-000000000001")).
+					SelectCredentials(mock.Anything, uuid.MustParse("00000000-0000-0000-0000-000000000001")).
 					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
 			}
 
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
-					IssueToken(t.Context(), services.IssueTokenRequest{
+					IssueToken(mock.Anything, services.IssueTokenRequest{
 						UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 						Roles: []models.Role{
 							lo.Switch[models.CredentialsRole, models.Role](testCase.selectCredentialsData.resp.Role).

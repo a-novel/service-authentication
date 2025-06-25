@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,16 +64,28 @@ type InsertShortCodeRepository struct{}
 func (repository *InsertShortCodeRepository) InsertShortCode(
 	ctx context.Context, data InsertShortCodeData,
 ) (*ShortCodeEntity, error) {
+	span := sentry.StartSpan(ctx, "InsertShortCodeRepository.InsertShortCode")
+	defer span.Finish()
+
+	span.SetData("shortCode.id", data.ID.String())
+	span.SetData("shortCode.usage", data.Usage)
+	span.SetData("shortCode.target", data.Target)
+	span.SetData("shortCode.override", data.Override)
+
 	// Retrieve a connection to postgres from the context.
-	db, err := lib.PostgresContext(ctx)
+	db, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
 	// Since we may be performing 2 operations depending on the parameters, create a new transaction to prevent any
 	// data corruption.
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+	tx, err := db.BeginTx(span.Context(), &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 	if err != nil {
+		span.SetData("postgres.transaction.error", err.Error())
+
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("start transaction: %w", err))
 	}
 	// Make sure to roll back the transaction if an error occurs.
@@ -100,8 +113,10 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 			Where("usage = ?", data.Usage).
 			Where("COALESCE(deleted_at, expires_at) >= clock_timestamp()").
 			Returning("*").
-			Exec(ctx)
+			Exec(span.Context())
 		if err != nil {
+			span.SetData("discardShortCodes.error", err.Error())
+
 			return nil, NewErrInsertShortCodeRepository(fmt.Errorf("discard old short codes: %w", err))
 		}
 	} else {
@@ -109,12 +124,16 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 			Model((*ShortCodeEntity)(nil)).
 			Where("target = ?", data.Target).
 			Where("usage = ?", data.Usage).
-			Exists(ctx)
+			Exists(span.Context())
 		if err != nil {
+			span.SetData("checkShortCodeExists.error", err.Error())
+
 			return nil, NewErrInsertShortCodeRepository(fmt.Errorf("check short code existence: %w", err))
 		}
 
 		if exists {
+			span.SetData("checkShortCodeExists.error", "short code already exists")
+
 			return nil, NewErrInsertShortCodeRepository(ErrShortCodeAlreadyExists)
 		}
 	}
@@ -131,13 +150,17 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 	}
 
 	// Execute query.
-	_, err = tx.NewInsert().Model(newEntity).Returning("*").Exec(ctx)
+	_, err = tx.NewInsert().Model(newEntity).Returning("*").Exec(span.Context())
 	if err != nil {
+		span.SetData("insertShortCode.error", err.Error())
+
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("insert short code: %w", err))
 	}
 
 	// Commit the transaction.
 	if err = tx.Commit(); err != nil {
+		span.SetData("postgres.commit.error", err.Error())
+
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("commit transaction: %w", err))
 	}
 

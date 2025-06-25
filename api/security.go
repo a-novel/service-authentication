@@ -8,7 +8,6 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/configurator"
@@ -38,18 +37,20 @@ type SecurityHandler struct {
 func (security *SecurityHandler) HandleBearerAuth(
 	ctx context.Context, operationName codegen.OperationName, auth codegen.BearerAuth,
 ) (context.Context, error) {
-	logger := zerolog.Ctx(ctx).
-		With().
-		Str("operation", operationName).
-		Logger()
+	span := sentry.StartSpan(ctx, "API.HandleBearerAuth")
+	defer span.Finish()
+
+	span.SetData("request.operation", operationName)
 
 	// Get the claims from the token. This will also perform the necessary checks to ensure the token is valid.
-	claims, err := security.SecurityHandlerService.Authenticate(ctx, auth.Token)
+	claims, err := security.SecurityHandlerService.Authenticate(span.Context(), auth.Token)
 	if err != nil {
+		span.SetData("authenticate.err", err.Error())
+
 		return nil, errors.Join(err, ErrAuthentication)
 	}
 
-	hub := sentry.GetHubFromContext(ctx)
+	hub := sentry.GetHubFromContext(span.Context())
 	if hub == nil {
 		hub = sentry.CurrentHub().Clone()
 	}
@@ -85,12 +86,7 @@ func (security *SecurityHandler) HandleBearerAuth(
 	// Check if the user has the required permissions for the operation.
 	for _, permission := range auth.Roles {
 		if _, ok := grantedPermissions[models.Permission(permission)]; !ok {
-			logger.
-				Warn().
-				Err(models.ErrUnauthorized).
-				Any("required_permissions", auth.Roles).
-				Any("claims_permissions", grantedPermissions).
-				Msg("check permissions")
+			span.SetData("permission.err", "missing permission: "+permission)
 
 			return nil, ErrPermission
 		}

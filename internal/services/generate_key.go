@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -75,10 +76,17 @@ type GenerateKeyService struct {
 // GenerateKey generates a new key pair for a given usage. It uses the generateKeysConfig to generate the
 // correct payload. Private key is encrypted using the master key before being saved in the database.
 func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models.KeyUsage) (*uuid.UUID, error) {
+	span := sentry.StartSpan(ctx, "GenerateKeyService.GenerateKey")
+	defer span.Finish()
+
+	span.SetData("usage", usage)
+
 	// Check the time last key was inserted for this usage, and compare to config. If last key is too recent,
 	// return without generating a new key.
-	keys, err := service.source.SearchKeys(ctx, usage)
+	keys, err := service.source.SearchKeys(span.Context(), usage)
 	if err != nil {
+		span.SetData("dao.searchKeys.error", err.Error())
+
 		return nil, NewErrGenerateKeyService(fmt.Errorf("list keys: %w", err))
 	}
 
@@ -87,20 +95,29 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 		lastCreated = keys[0].CreatedAt
 	}
 
+	span.SetData("lastCreated", lastCreated.String())
+	span.SetData("rotationInterval", generateKeysConfig[usage].Config.Rotation.String())
+
 	// Last key was created within the rotation interval. No need to generate a new key.
 	if time.Since(lastCreated) < generateKeysConfig[usage].Config.Rotation {
+		span.SetData("skip", "last key was created within the rotation interval")
+
 		return &keys[0].ID, nil
 	}
 
 	// Generate a new key pair.
 	privateKey, publicKey, err := generateKeysConfig[usage].Generator()
 	if err != nil {
+		span.SetData("keyGenerator.error", err.Error())
+
 		return nil, NewErrGenerateKeyService(fmt.Errorf("generate key pair: %w", err))
 	}
 
 	// Encrypt the private key using the master key, so it is protected against database dumping.
-	privateKeyEncrypted, err := lib.EncryptMasterKey(ctx, privateKey)
+	privateKeyEncrypted, err := lib.EncryptMasterKey(span.Context(), privateKey)
 	if err != nil {
+		span.SetData("encryptPrivateKey.error", err.Error())
+
 		return nil, NewErrGenerateKeyService(fmt.Errorf("encrypt private key: %w", err))
 	}
 
@@ -110,15 +127,23 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 	// Extract the KID from the private key. Both public and private key should share the same KID.
 	kid, err := uuid.Parse(privateKey.KID)
 	if err != nil {
+		span.SetData("parseKID.error", err.Error())
+
 		return nil, NewErrGenerateKeyService(fmt.Errorf("parse KID: %w", err))
 	}
+
+	span.SetData("kid", kid.String())
 
 	var publicKeyEncoded *string
 
 	if publicKey != nil {
+		span.SetData("publicKey.kid", publicKey.KID)
+
 		// Serialize the public key.
 		publicKeySerialized, err := json.Marshal(publicKey)
 		if err != nil {
+			span.SetData("json.publicKey.serialize.error", err.Error())
+
 			return nil, NewErrGenerateKeyService(fmt.Errorf("serialize public key: %w", err))
 		}
 
@@ -135,7 +160,9 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 		Expiration: time.Now().Add(generateKeysConfig[usage].Config.TTL),
 	}
 
-	if _, err = service.source.InsertKey(ctx, insertData); err != nil {
+	if _, err = service.source.InsertKey(span.Context(), insertData); err != nil {
+		span.SetData("dao.insertKey.error", err.Error())
+
 		return nil, NewErrGenerateKeyService(fmt.Errorf("insert key: %w", err))
 	}
 

@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -78,7 +79,7 @@ func TestRequestRegistration(t *testing.T) {
 
 			if testCase.requestRegistrationData != nil {
 				source.EXPECT().
-					RequestRegister(t.Context(), services.RequestRegisterRequest{
+					RequestRegister(mock.Anything, services.RequestRegisterRequest{
 						Email: string(testCase.form.GetEmail()),
 						Lang:  models.Lang(testCase.form.GetLang().Value),
 					}).

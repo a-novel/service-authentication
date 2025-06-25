@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/getsentry/sentry-go"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,9 +42,17 @@ type UpdateCredentialsPasswordRepository struct{}
 func (repository *UpdateCredentialsPasswordRepository) UpdateCredentialsPassword(
 	ctx context.Context, userID uuid.UUID, data UpdateCredentialsPasswordData,
 ) (*CredentialsEntity, error) {
+	span := sentry.StartSpan(ctx, "UpdateCredentialsPasswordRepository.UpdateCredentialsPassword")
+	defer span.Finish()
+
+	span.SetData("credentials.id", userID.String())
+	span.SetData("credentials.now", data.Now.String())
+
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(ctx)
+	tx, err := lib.PostgresContext(span.Context())
 	if err != nil {
+		span.SetData("postgres.context.error", err.Error())
+
 		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("get postgres client: %w", err))
 	}
 
@@ -54,18 +63,32 @@ func (repository *UpdateCredentialsPasswordRepository) UpdateCredentialsPassword
 	}
 
 	// Execute query.
-	res, err := tx.NewUpdate().Model(entity).WherePK().Column("password", "updated_at").Returning("*").Exec(ctx)
+	res, err := tx.
+		NewUpdate().
+		Model(entity).
+		WherePK().
+		Column("password", "updated_at").
+		Returning("*").
+		Exec(span.Context())
 	if err != nil {
+		span.SetData("update.error", err.Error())
+
 		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("update credentials: %w", err))
 	}
 
 	// Make sure the credentials were updated.
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
+		span.SetData("rowsAffected.error", err.Error())
+
 		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("get rows affected: %w", err))
 	}
 
+	span.SetData("rowsAffected", rowsAffected)
+
 	if rowsAffected == 0 {
+		span.SetData("error", "credentials not found")
+
 		return nil, NewErrUpdateCredentialsPasswordRepository(ErrCredentialsNotFound)
 	}
 

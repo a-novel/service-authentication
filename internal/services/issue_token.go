@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
+	"github.com/samber/lo"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/ed25519"
@@ -46,6 +48,13 @@ type IssueTokenService struct {
 func (service *IssueTokenService) IssueToken(
 	ctx context.Context, request IssueTokenRequest,
 ) (string, error) {
+	span := sentry.StartSpan(ctx, "IssueTokenService.IssueToken")
+	defer span.Finish()
+
+	span.SetData("userID", lo.FromPtr(request.UserID))
+	span.SetData("refreshTokenID", lo.FromPtr(request.RefreshTokenID))
+	span.SetData("roles", request.Roles)
+
 	customClaims := models.AccessTokenClaims{
 		UserID:         request.UserID,
 		Roles:          request.Roles,
@@ -54,11 +63,15 @@ func (service *IssueTokenService) IssueToken(
 
 	claims, err := jwt.NewBasicClaims(customClaims, service.claimsConfig)
 	if err != nil {
+		span.SetData("claims.create.error", err.Error())
+
 		return "", NewErrIssueTokenService(fmt.Errorf("create claims: %w", err))
 	}
 
-	accessToken, err := service.producer.Issue(ctx, claims, nil)
+	accessToken, err := service.producer.Issue(span.Context(), claims, nil)
 	if err != nil {
+		span.SetData("jwt.issue.error", err.Error())
+
 		return "", NewErrIssueTokenService(fmt.Errorf("issue token: %w", err))
 	}
 

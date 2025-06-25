@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/a-novel/service-authentication/internal/services"
 	"log"
 	"os"
 	"os/exec"
@@ -28,11 +29,14 @@ func _patchSTD() {
 		panic(err)
 	}
 
+	// Patching stderr does not propagate to service, IDK why.
+	services.DebugLogger = log.New(os.Stderr, "", 0)
+
 	go func() {
 		listener := logs.Register()
 		for msg := range listener {
 			// Forward logs to default system outputs, in case we need them for debugging.
-			log.Println(msg)
+			log.Println("forwarded:", msg)
 		}
 	}()
 }

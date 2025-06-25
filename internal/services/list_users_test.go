@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 
@@ -120,7 +121,7 @@ func TestListUsers(t *testing.T) {
 
 			if testCase.listUsersData != nil {
 				source.EXPECT().
-					ListUsers(ctx, dao.ListUsersData{
+					ListUsers(mock.Anything, dao.ListUsersData{
 						Limit:  testCase.request.Limit,
 						Offset: testCase.request.Offset,
 						Roles:  testCase.request.Roles,
