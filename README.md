@@ -58,6 +58,13 @@ services:
       # Dummy key used only for local environment. Consider using a secure, private key in production.
       # Note it MUST match the one used in the authentication service.
       MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
+      # Used for tracing purposes, can be omitted.
+      # SENTRY_DSN: [your_sentry_dsn]
+      # SERVER_NAME: authentication-service-prod
+      # RELEASE: v0.1.2
+      # ENV: production
+      # Set the following if you want to debug the service locally.
+      # DEBUG: true
     networks:
       - api
 

@@ -2,6 +2,7 @@
 export PORT=4001
 export ENV="local"
 export APP_NAME="authentication"
+export DEBUG=true
 
 export AUTH_PLATFORM_URL_UPDATE_EMAIL="http://localhost:4001/update-email"
 export AUTH_PLATFORM_URL_UPDATE_PASSWORD="http://localhost:4001/update-password"
@@ -15,14 +16,11 @@ export POSTGRES_PORT=5001
 export POSTGRES_HOST="0.0.0.0"
 
 # SMTP configuration.
-export SMTP_PASSWORD="[SECRET]"
-export SMTP_SENDER="noreply@agoradesecrivains.com"
-export SMTP_DOMAIN="smtp-relay.gmail.com"
-export SMTP_ADDRESS="smtp-relay.gmail.com:587"
+#export SMTP_PASSWORD="[SECRET]"
+#export SMTP_SENDER="noreply@agoradesecrivains.com"
+#export SMTP_DOMAIN="smtp-relay.gmail.com"
+#export SMTP_ADDRESS="smtp-relay.gmail.com:587"
+export SMTP_SANDBOX=true
 
 # Secrets.
 export MASTER_KEY='fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
-
-# Other.
-export PODMAN_IGNORE_CGROUPSV1_WARNING="true"
-export PODMAN_COMPOSE_PROVIDER="podman-compose"
