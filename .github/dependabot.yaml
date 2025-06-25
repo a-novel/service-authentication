@@ -10,6 +10,11 @@ updates:
         patterns:
           - "github.com/uptrace/bun"
           - "github.com/uptrace/bun/*"
+      go.opentelemetry.io/otel:
+        applies-to: version-updates
+        patterns:
+          - "go.opentelemetry.io/otel"
+          - "go.opentelemetry.io/otel/*"
       github.com/a-novel-kit/middlewares:
         applies-to: version-updates
         patterns:
