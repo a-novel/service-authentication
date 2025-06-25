@@ -43,7 +43,7 @@ func (api *API) ListPublicKeys(
 		return nil, fmt.Errorf("convert keys to models: %w", err)
 	}
 
-	span.SetData("service.keys", keysModels)
+	span.SetData("service.keys.count", len(keysModels))
 
 	return lo.ToPtr(codegen.ListPublicKeysOKApplicationJSON(keysModels)), nil
 }
