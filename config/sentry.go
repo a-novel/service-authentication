@@ -2,10 +2,11 @@ package config
 
 import (
 	_ "embed"
-	"github.com/getsentry/sentry-go"
-	"github.com/samber/lo"
 	"net/http"
 	"os"
+
+	"github.com/getsentry/sentry-go"
+	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/configurator"
 )
@@ -27,6 +28,7 @@ var SentryClient = sentry.ClientOptions{
 	EnableLogs:       true,
 	TracesSampleRate: 1.0,
 	Debug:            os.Getenv("DEBUG") == "true",
+	DebugWriter:      os.Stderr,
 	ServerName:       lo.CoalesceOrEmpty(os.Getenv("SERVER_NAME"), "localhost"),
 	Release:          lo.CoalesceOrEmpty(os.Getenv("RELEASE"), "local"),
 	Environment:      lo.CoalesceOrEmpty(os.Getenv("ENV"), "development"),

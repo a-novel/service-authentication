@@ -2,7 +2,6 @@ package dao_test
 
 import (
 	"database/sql"
-	"github.com/a-novel/service-authentication/internal/lib"
 	"testing"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/dao"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
 

@@ -3,11 +3,12 @@ package api
 import (
 	"context"
 	"errors"
-	"github.com/getsentry/sentry-go"
 	"net/http"
 
-	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/getsentry/sentry-go"
 	"github.com/ogen-go/ogen/ogenerrors"
+
+	"github.com/a-novel/service-authentication/api/codegen"
 )
 
 var ErrUnauthorized = &codegen.UnexpectedErrorStatusCode{
@@ -55,7 +56,7 @@ func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErro
 	if err == nil {
 		return nil
 	}
-	
+
 	logger := sentry.NewLogger(ctx)
 	logger.Errorf(ctx, "security error: %v", err)
 

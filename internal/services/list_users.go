@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"errors"
-	"github.com/getsentry/sentry-go"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
 
 	"github.com/a-novel/service-authentication/internal/dao"

@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/getsentry/sentry-go"
+	"github.com/google/uuid"
 
 	"github.com/a-novel/service-authentication/api/codegen"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
-	"github.com/google/uuid"
 )
 
 func (api *API) ResetPassword(ctx context.Context, req *codegen.ResetPasswordForm) (codegen.ResetPasswordRes, error) {

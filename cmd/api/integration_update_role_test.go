@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/a-novel/service-authentication/internal/lib"
 	"os"
 	"testing"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
 	"github.com/a-novel/service-authentication/api/codegen"
 	"github.com/a-novel/service-authentication/internal/dao"
+	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
 

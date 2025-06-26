@@ -1,18 +1,22 @@
 # App.
 export PORT=4001
+export PORT_TEST=5001
 export ENV="local"
 export APP_NAME="authentication"
 export DEBUG=true
 
-export AUTH_PLATFORM_URL_UPDATE_EMAIL="http://localhost:4001/update-email"
-export AUTH_PLATFORM_URL_UPDATE_PASSWORD="http://localhost:4001/update-password"
-export AUTH_PLATFORM_URL_REGISTER="http://localhost:4001/register"
+# Client (frontend).
+export AUTH_PLATFORM_PORT=6001
+export AUTH_PLATFORM_URL_UPDATE_EMAIL="http://localhost:${AUTH_PLATFORM_PORT}/update-email"
+export AUTH_PLATFORM_URL_UPDATE_PASSWORD="http://localhost:${AUTH_PLATFORM_PORT}/update-password"
+export AUTH_PLATFORM_URL_REGISTER="http://localhost:${AUTH_PLATFORM_PORT}/register"
 
 # Postgres.
 export POSTGRES_USER="postgres"
 export POSTGRES_PASSWORD="postgres"
 export POSTGRES_DB="authentication"
-export POSTGRES_PORT=5001
+export POSTGRES_PORT=4002
+export POSTGRES_TEST_PORT=5002
 export POSTGRES_HOST="0.0.0.0"
 
 # SMTP configuration.
@@ -22,5 +26,18 @@ export POSTGRES_HOST="0.0.0.0"
 #export SMTP_ADDRESS="smtp-relay.gmail.com:587"
 export SMTP_SANDBOX=true
 
+# Tracing.
+# Used for tracing purposes, can be omitted.
+#export SENTRY_DSN=[your_sentry_dsn]
+#export SERVER_NAME=authentication-service-prod
+#export RELEASE=v0.1.2
+#export ENV=production
+# Set the following if you want to debug the service locally.
+export DEBUG=true
+
 # Secrets.
 export MASTER_KEY='fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca'
+
+# Other.
+export PODMAN_IGNORE_CGROUPSV1_WARNING="true"
+export PODMAN_COMPOSE_PROVIDER="podman-compose"

@@ -2,11 +2,11 @@ package services_test
 
 import (
 	"errors"
-	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/dao"

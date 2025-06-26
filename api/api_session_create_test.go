@@ -2,9 +2,9 @@ package api_test
 
 import (
 	"errors"
-	"github.com/stretchr/testify/mock"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/api"

@@ -1,6 +1,10 @@
 version: "2"
 
 formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
   settings:
     gci:
       sections:
@@ -8,7 +12,7 @@ formatters:
         - default # Default section: contains all imports that could not be matched to another section type.
         - prefix(github.com/a-novel-kit)
         - prefix(github.com/a-novel)
-        - prefix(github.com/a-novel/service-authentication)
+        - localmodule
 
 linters:
   default: all

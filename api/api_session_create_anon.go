@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+
 	"github.com/getsentry/sentry-go"
 
 	"github.com/a-novel/service-authentication/api/codegen"

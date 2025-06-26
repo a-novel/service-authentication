@@ -2,21 +2,21 @@ package main
 
 import (
 	"context"
-	"github.com/getsentry/sentry-go"
-	"github.com/getsentry/sentry-go/attribute"
-	sentryhttp "github.com/getsentry/sentry-go/http"
-	sentryotel "github.com/getsentry/sentry-go/otel"
-	"go.opentelemetry.io/otel"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"log"
 	"net"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+	"github.com/getsentry/sentry-go/attribute"
+	sentryhttp "github.com/getsentry/sentry-go/http"
+	sentryotel "github.com/getsentry/sentry-go/otel"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/a-novel/service-authentication/api"
 	"github.com/a-novel/service-authentication/api/codegen"
@@ -223,7 +223,7 @@ func main() {
 	}
 
 	logger.SetAttributes(attribute.Int("server.port", config.API.Port))
-	logger.Info(ctx, "start http server")
+	logger.Infof(ctx, "start http server on port %v", config.API.Port)
 
 	if err = httpServer.ListenAndServe(); err != nil {
 		logger.Fatalf(ctx, "start http server: %v", err)

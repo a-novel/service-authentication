@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/go-faster/errors"
 )
 
