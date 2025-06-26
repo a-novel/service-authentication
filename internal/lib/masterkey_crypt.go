@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 	"io"
 
+	"github.com/getsentry/sentry-go"
 	"golang.org/x/crypto/nacl/secretbox"
 )
 

@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/a-novel/service-authentication/internal/lib"
-	"github.com/getsentry/sentry-go"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 var ErrDeleteShortCodeRepository = errors.New("DeleteShortCodeRepository.DeleteShortCode")

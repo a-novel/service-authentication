@@ -173,6 +173,16 @@ Install the external dependencies:
 make install
 ```
 
+## Run infrastructure
+
+```bash
+make run-infra
+# To turn down:
+# make run-infra-down
+```
+
+> You may skip this step if you already have the global infrastructure running.
+
 ## Generate keys
 
 You need to do this at least once, to have a set of keys ready to use for authentication.
@@ -181,16 +191,14 @@ You need to do this at least once, to have a set of keys ready to use for authen
 > will fail.
 
 ```bash
-make rotate_keys
-# 9:07PM INF key generated app=authentication job=rotate-keys key_id=... usage=auth
-# 9:07PM INF no key generated app=authentication job=rotate-keys usage=refresh
-# 9:07PM INF rotation done app=authentication failed_keys=0 generated_keys=1 job=rotate-keys total_keys=2
+make run-rotate-keys
+
+# [Sentry] 2025/06/26 14:00:59 generated new key for usage auth: e70eaf3f-1861-4be7-80c2-85c34e9b8371
+# [Sentry] 2025/06/26 14:00:59 generated new key for usage refresh: cd4be805-6fed-4b50-8d6a-3e1fcd65e3c8
 ```
 
 ## Et Voilà!
 
 ```bash
-make api
-# 3:09PM INF starting application... app=authentication
-# 3:09PM INF application started! address=:4001 app=authentication
+make run-api
 ```

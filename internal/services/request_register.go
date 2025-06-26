@@ -5,9 +5,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 	"sync"
 	"text/template"
+
+	"github.com/getsentry/sentry-go"
 
 	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/config/mails"

@@ -10,7 +10,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
-      - postgres-test-data:/var/lib/postgresql/data/
+      - postgres-auth-test-data:/var/lib/postgresql/data/
 
   postgres-integration:
     image: docker.io/library/postgres:17
@@ -23,7 +23,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
-      - postgres-integration-test-data:/var/lib/postgresql/data/
+      - postgres-auth-integration-test-data:/var/lib/postgresql/data/
 
   pg-bouncer:
     image: docker.io/bitnami/pgbouncer:latest
@@ -31,7 +31,7 @@ services:
       - postgres
       - postgres-integration
     ports:
-      - "${POSTGRES_PORT}:6432"
+      - "${POSTGRES_TEST_PORT}:6432"
     networks:
       - app
     environment:
@@ -50,5 +50,5 @@ networks:
   app: {}
 
 volumes:
-  postgres-test-data:
-  postgres-integration-test-data:
+  postgres-auth-test-data:
+  postgres-auth-integration-test-data:

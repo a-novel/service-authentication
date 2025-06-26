@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/jwt/jwa"

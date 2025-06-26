@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/a-novel/service-authentication/config"
-	"github.com/a-novel/service-authentication/config/mails"
-	"github.com/a-novel/service-authentication/models"
-	"github.com/getsentry/sentry-go"
 	"log"
 	"net/smtp"
 	"os"
 	"text/template"
+
+	"github.com/getsentry/sentry-go"
+
+	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/config/mails"
+	"github.com/a-novel/service-authentication/models"
 )
 
 var DebugLogger = log.New(os.Stdout, "DEBUG: ", log.Lshortfile)

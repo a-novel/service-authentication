@@ -2,7 +2,6 @@ package dao_test
 
 import (
 	"encoding/json"
-	"github.com/a-novel/service-authentication/internal/dao"
 	"testing"
 
 	"github.com/google/uuid"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/a-novel-kit/jwt/jwa"
 
+	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 )
 

@@ -15,12 +15,12 @@ func NewErrNewAgoraContext(err error) error {
 func NewAgoraContext(parentCTX context.Context, dsn string) (context.Context, error) {
 	ctx, err := NewMasterKeyContext(parentCTX)
 	if err != nil {
-		return nil, NewErrNewAgoraContext(fmt.Errorf("create master key context: %w", err))
+		return parentCTX, NewErrNewAgoraContext(fmt.Errorf("create master key context: %w", err))
 	}
 
 	ctx, err = NewPostgresContext(ctx, dsn)
 	if err != nil {
-		return nil, NewErrNewAgoraContext(fmt.Errorf("create postgres context: %w", err))
+		return parentCTX, NewErrNewAgoraContext(fmt.Errorf("create postgres context: %w", err))
 	}
 
 	return ctx, nil

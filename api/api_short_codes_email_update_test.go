@@ -3,11 +3,11 @@ package api_test
 import (
 	"context"
 	"errors"
-	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/api"

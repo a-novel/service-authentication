@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 	"sync"
 	"text/template"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 
 	"github.com/a-novel/service-authentication/config"

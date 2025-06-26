@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/a-novel/service-authentication/internal/dao"
+
 	"github.com/getsentry/sentry-go"
 
 	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
 )
 

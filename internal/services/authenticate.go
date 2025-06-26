@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 
+	"github.com/getsentry/sentry-go"
 	"golang.org/x/crypto/ed25519"
 
 	"github.com/a-novel-kit/jwt"

@@ -38,15 +38,19 @@ mjml-generate:
 		npx mjml $$i -o $${i%.*}.html; \
 	done
 
+run-infra:
+	podman compose -p "${APP_NAME}" -f "${PWD}/build/podman-compose.yaml" up -d
+
+run-infra-down:
+	podman compose -p "${APP_NAME}" -f "${PWD}/build/podman-compose.yaml" down
+
 # Execute the keys rotation job locally.
-rotate_keys:
+run-rotate-keys:
 	bash -c "set -m; bash '$(CURDIR)/scripts/run_rotate_keys.sh'"
 
 # Run the API
-api:
+run-api:
 	bash -c "set -m; bash '$(CURDIR)/scripts/run.sh'"
 
 install:
 	pipx install sqlfluff
-
-.PHONY: api

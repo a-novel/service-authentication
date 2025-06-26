@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/a-novel/service-authentication/internal/lib"
 	"os"
 	"testing"
+
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 var ctx context.Context

@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
-	"github.com/a-novel/service-authentication/internal/lib"
-	"github.com/getsentry/sentry-go"
 	"strings"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/uptrace/bun"
 
 	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 func (api *API) Ping(_ context.Context) (codegen.PingRes, error) {

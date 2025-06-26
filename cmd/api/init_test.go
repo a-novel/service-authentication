@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/a-novel/service-authentication/internal/services"
 	"log"
 	"os"
 	"os/exec"
@@ -14,6 +13,7 @@ import (
 	"github.com/a-novel-kit/configurator/utilstest"
 
 	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/internal/services"
 )
 
 var logs *chans.MultiChan[string]

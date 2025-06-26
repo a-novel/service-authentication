@@ -2,19 +2,20 @@ package main
 
 import (
 	"context"
+	"log"
+	"time"
+
+	"github.com/getsentry/sentry-go"
 	"github.com/getsentry/sentry-go/attribute"
 	sentryotel "github.com/getsentry/sentry-go/otel"
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"log"
-	"time"
 
 	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
-	"github.com/getsentry/sentry-go"
 )
 
 const SentryFlushTimeout = 2 * time.Second
@@ -61,12 +62,14 @@ func main() {
 		keyID, err := generateKeysService.GenerateKey(subSpan.Context(), usage)
 		if err != nil {
 			subSpan.SetData("error", err.Error())
+			logger.Errorf(subSpan.Context(), "generate key for usage %s: %v", usage, err)
 
 			return
 		}
 
 		if keyID != nil {
 			subSpan.SetData("keyID", keyID)
+			logger.Infof(subSpan.Context(), "generated new key for usage %s: %s", usage, *keyID)
 
 			return
 		}

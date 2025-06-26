@@ -3,16 +3,16 @@ package services_test
 import (
 	"encoding/base64"
 	"errors"
-	"github.com/a-novel/service-authentication/config/mails"
-	"github.com/stretchr/testify/mock"
 	"testing"
 	"text/template"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/config/mails"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"

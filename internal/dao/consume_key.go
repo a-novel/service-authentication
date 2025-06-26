@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/a-novel/service-authentication/internal/lib"
-	"github.com/getsentry/sentry-go"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/jwt/jwa"
+
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 var ErrConsumeDAOKey = errors.New("ConsumeKey")

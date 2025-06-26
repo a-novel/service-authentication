@@ -5,11 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ed25519"
 

@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/a-novel/service-authentication/internal/lib"
+
 	"github.com/getsentry/sentry-go"
+
+	"github.com/a-novel/service-authentication/internal/lib"
 )
 
 var ErrExistsCredentialsEmailRepository = errors.New("ExistsCredentialsEmailRepository.ExistsCredentialsEmail")

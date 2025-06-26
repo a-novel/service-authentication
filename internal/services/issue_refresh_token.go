@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
 	"golang.org/x/crypto/ed25519"
 

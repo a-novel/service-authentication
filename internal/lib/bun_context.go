@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/a-novel/service-authentication/migrations"
+	"time"
+
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/migrate"
-	"time"
+
+	"github.com/a-novel/service-authentication/migrations"
 )
 
 type PostgresKey struct{}

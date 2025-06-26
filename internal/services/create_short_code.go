@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/go-faster/errors"
 	"github.com/google/uuid"
 
