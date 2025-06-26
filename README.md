@@ -30,7 +30,7 @@ You can import this application as a docker image. Below is an example using
 
 ```yaml
 services:
-  postgres-authentication:
+  authentication-postgres:
     image: docker.io/library/postgres:17
     networks:
       - api
@@ -41,7 +41,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
-      - postgres-auth-data:/var/lib/postgresql/data/
+      - authentication-postgres-data:/var/lib/postgresql/data/
 
   # Runs the secret key rotation on every launch.
   # Keys are smartly rotated, meaning new keys are generated only when necessary
@@ -50,11 +50,11 @@ services:
   authentication-rotate-keys-job:
     image: ghcr.io/a-novel/service-authentication/jobs/rotatekeys:v0
     depends_on:
-      - postgres-authentication
+      - authentication-postgres
     environment:
       ENV: local
       APP_NAME: authentication-service-rotate-keys-job
-      DSN: postgres://postgres:postgres@postgres-authentication:5432/authentication?sslmode=disable
+      DSN: postgres://postgres:postgres@authentication-postgres:5432/authentication?sslmode=disable
       # Dummy key used only for local environment. Consider using a secure, private key in production.
       # Note it MUST match the one used in the authentication service.
       MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
@@ -71,7 +71,7 @@ services:
   authentication-service:
     image: ghcr.io/a-novel/service-authentication/api:v0
     depends_on:
-      - postgres-authentication
+      - authentication-postgres
     ports:
       # Expose the service on port 4001 on the local machine.
       - "4001:8080"
@@ -79,7 +79,7 @@ services:
       PORT: 8080
       ENV: local
       APP_NAME: authentication-service
-      DSN: postgres://postgres:postgres@postgres-authentication:5432/authentication?sslmode=disable
+      DSN: postgres://postgres:postgres@authentication-postgres:5432/authentication?sslmode=disable
       # Dummy key used only for local environment. Consider using a secure, private key in production.
       # Note it MUST match the one used in the authentication keys rotation job.
       MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
@@ -107,7 +107,7 @@ networks:
   api: {}
 
 volumes:
-  postgres-auth-data:
+  authentication-postgres-data:
 ```
 
 Available tags includes:
