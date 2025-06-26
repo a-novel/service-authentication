@@ -1,8 +1,8 @@
 services:
-  postgres:
+  authentication-postgres:
     image: docker.io/library/postgres:17
     networks:
-      - app
+      - authentication-api-test
     environment:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_USER: "${POSTGRES_USER}"
@@ -10,12 +10,12 @@ services:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
-      - postgres-auth-test-data:/var/lib/postgresql/data/
+      - authentication-postgres-test-data:/var/lib/postgresql/data/
 
-  postgres-integration:
+  authentication-postgres-integration:
     image: docker.io/library/postgres:17
     networks:
-      - app
+      - authentication-api-test
     environment:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_USER: "${POSTGRES_USER}"
@@ -23,32 +23,32 @@ services:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
-      - postgres-auth-integration-test-data:/var/lib/postgresql/data/
+      - authentication-postgres-integration-test-data:/var/lib/postgresql/data/
 
-  pg-bouncer:
+  authentication-pg-bouncer:
     image: docker.io/bitnami/pgbouncer:latest
     depends_on:
-      - postgres
-      - postgres-integration
+      - authentication-postgres
+      - authentication-postgres-integration
     ports:
       - "${POSTGRES_TEST_PORT}:6432"
     networks:
-      - app
+      - authentication-api-test
     environment:
       PGBOUNCER_PORT: 6432
       POSTGRESQL_PORT: 5432
-      POSTGRESQL_HOST: postgres
+      POSTGRESQL_HOST: authentication-postgres
       POSTGRESQL_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRESQL_USER: "${POSTGRES_USER}"
       POSTGRESQL_DATABASE: "${POSTGRES_DB}"
       PGBOUNCER_DATABASE: "${POSTGRES_DB}"
       PGBOUNCER_USERLIST: '"${POSTGRES_USER}" "${POSTGRES_PASSWORD}"'
-      PGBOUNCER_DSN_0: "pg0=host=postgres port=5432 dbname=${POSTGRES_DB}"
-      PGBOUNCER_DSN_1: "pg1=host=postgres-integration port=5432 dbname=${POSTGRES_DB}"
+      PGBOUNCER_DSN_0: "pg0=host=authentication-postgres port=5432 dbname=${POSTGRES_DB}"
+      PGBOUNCER_DSN_1: "pg1=host=authentication-postgres-integration port=5432 dbname=${POSTGRES_DB}"
 
 networks:
-  app: {}
+  authentication-api-test: {}
 
 volumes:
-  postgres-auth-test-data:
-  postgres-auth-integration-test-data:
+  authentication-postgres-test-data:
+  authentication-postgres-integration-test-data:
