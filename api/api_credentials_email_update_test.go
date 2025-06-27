@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -50,7 +49,7 @@ func TestUpdateEmail(t *testing.T) {
 				},
 			},
 
-			expect: lo.ToPtr(codegen.Email("user@provider.com")),
+			expect: &codegen.NewEmail{Email: "user@provider.com"},
 		},
 		{
 			name: "UserNotFound",

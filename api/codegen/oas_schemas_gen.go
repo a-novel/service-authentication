@@ -532,8 +532,6 @@ func (s *DependencyStatus) UnmarshalText(data []byte) error {
 
 type Email string
 
-func (*Email) updateEmailRes() {}
-
 // EmailExistsNoContent is response for EmailExists operation.
 type EmailExistsNoContent struct{}
 
@@ -945,6 +943,24 @@ func (s *LoginForm) SetEmail(val Email) {
 func (s *LoginForm) SetPassword(val Password) {
 	s.Password = val
 }
+
+// Ref: #/components/schemas/NewEmail
+type NewEmail struct {
+	// The new email of the user.
+	Email Email `json:"email"`
+}
+
+// GetEmail returns the value of Email.
+func (s *NewEmail) GetEmail() Email {
+	return s.Email
+}
+
+// SetEmail sets the value of Email.
+func (s *NewEmail) SetEmail(val Email) {
+	s.Email = val
+}
+
+func (*NewEmail) updateEmailRes() {}
 
 // Ref: #/components/schemas/NotFoundError
 type NotFoundError struct {

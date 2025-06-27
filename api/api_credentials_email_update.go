@@ -7,7 +7,6 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 
 	"github.com/a-novel/service-authentication/api/codegen"
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -50,5 +49,5 @@ func (api *API) UpdateEmail(ctx context.Context, req *codegen.UpdateEmailForm) (
 
 	span.SetData("service.newEmail", res.NewEmail)
 
-	return lo.ToPtr(codegen.Email(res.NewEmail)), nil
+	return &codegen.NewEmail{Email: codegen.Email(res.NewEmail)}, nil
 }

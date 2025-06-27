@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/configurator/utilstest"
@@ -76,11 +75,11 @@ func TestUpdateEmailAPI(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		res, ok := rawRes.(*codegen.Email)
+		res, ok := rawRes.(*codegen.NewEmail)
 		require.True(t, ok)
 
 		require.NotEmpty(t, res)
-		require.Equal(t, codegen.Email(newEmail), lo.FromPtr(res))
+		require.Equal(t, codegen.Email(newEmail), res.Email)
 	}
 
 	t.Log("LoginWithOldEmailKO")
