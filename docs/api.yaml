@@ -604,7 +604,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Email"
+                $ref: "#/components/schemas/NewEmail"
                 description: The new email of the user.
         "401":
           description: Authentication failed.
@@ -1233,6 +1233,15 @@ components:
       format: uuid
       description: The unique identifier of the user.
       example: 29f71c01-5ae1-4b01-b729-e17488538e15
+
+    NewEmail:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+          description: The new email of the user.
 
     User:
       type: object

@@ -2417,7 +2417,7 @@ func decodeUpdateEmailResponse(resp *http.Response) (res UpdateEmailRes, _ error
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response Email
+			var response NewEmail
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
