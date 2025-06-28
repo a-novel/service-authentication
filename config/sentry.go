@@ -15,7 +15,11 @@ import (
 var sentryFile []byte
 
 type SentryType struct {
-	DSN string `yaml:"dsn"`
+	DSN         string `yaml:"dsn"`
+	ServerName  string `yaml:"serverName"`
+	Release     string `yaml:"release"`
+	Environment string `yaml:"environment"`
+	Debug       bool   `yaml:"debug"`
 }
 
 var Sentry = configurator.NewLoader[SentryType](Loader).MustLoad(
@@ -27,11 +31,11 @@ var SentryClient = sentry.ClientOptions{
 	EnableTracing:    true,
 	EnableLogs:       true,
 	TracesSampleRate: 1.0,
-	Debug:            os.Getenv("DEBUG") == "true",
+	Debug:            Sentry.Debug,
 	DebugWriter:      os.Stderr,
-	ServerName:       lo.CoalesceOrEmpty(os.Getenv("SERVER_NAME"), "localhost"),
-	Release:          lo.CoalesceOrEmpty(os.Getenv("RELEASE"), "local"),
-	Environment:      lo.CoalesceOrEmpty(os.Getenv("ENV"), "development"),
+	ServerName:       lo.CoalesceOrEmpty(Sentry.ServerName, "localhost"),
+	Release:          lo.CoalesceOrEmpty(Sentry.Release, "local"),
+	Environment:      lo.CoalesceOrEmpty(Sentry.Environment, "development"),
 	BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 		if hint == nil || hint.Context == nil {
 			return event
