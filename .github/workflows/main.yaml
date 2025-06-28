@@ -47,15 +47,15 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-node@v4
         with:
-          go-version: stable
-      - name: mockery
+          node-version: latest
+      - name: mjml
         shell: bash
         run: make mjml-generate
       - uses: a-novel-kit/workflows/generic-actions/check-changes@master
         id: changes
-      - name: Check mockery diff
+      - name: Check mjml diff
         if: steps.changes.outputs.diff == '1'
         run: echo "mjml definitions are not up-to-date, please run 'make mjml-generate' and commit the changes" && exit 1
 

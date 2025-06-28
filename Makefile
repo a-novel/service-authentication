@@ -30,12 +30,12 @@ openapi-generate:
 
 mjml-lint:
 	for i in `find ./config/mails -name "*.mjml" -type f`; do \
-		npx mjml --validate $$i; \
+		npx --yes --package=mjml@next mjml --validate $$i; \
 	done
 
 mjml-generate:
 	for i in `find ./config/mails -name "*.mjml" -type f`; do \
-		npx mjml $$i -o $${i%.*}.html; \
+		npx --yes --package=mjml@next mjml $$i -o $${i%.*}.html; \
 	done
 
 run-infra:
