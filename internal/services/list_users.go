@@ -31,6 +31,10 @@ type ListUsersService struct {
 	source ListUsersSource
 }
 
+func NewListUsersService(source ListUsersSource) *ListUsersService {
+	return &ListUsersService{source: source}
+}
+
 func (service *ListUsersService) ListUsers(
 	ctx context.Context, request ListUsersRequest,
 ) ([]*models.User, error) {
@@ -63,8 +67,4 @@ func (service *ListUsersService) ListUsers(
 			UpdatedAt: item.UpdatedAt,
 		}
 	}), nil
-}
-
-func NewListUsersService(source ListUsersSource) *ListUsersService {
-	return &ListUsersService{source: source}
 }

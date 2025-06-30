@@ -33,7 +33,9 @@ func checkGeneratedPrivateKey(ctx context.Context, t *testing.T, key string) (*j
 
 	// Decrypt.
 	var decrypted jwa.JWK
-	if err = lib.DecryptMasterKey(ctx, decoded, &decrypted); err != nil {
+
+	err = lib.DecryptMasterKey(ctx, decoded, &decrypted)
+	if err != nil {
 		return nil, fmt.Errorf("decrypt key: %w", err)
 	}
 
@@ -51,7 +53,9 @@ func checkGeneratedPublicKey(t *testing.T, key string) (*jwa.JWK, error) {
 
 	// Unmarshal.
 	var deserialized jwa.JWK
-	if err = deserialized.UnmarshalJSON(decoded); err != nil {
+
+	err = deserialized.UnmarshalJSON(decoded)
+	if err != nil {
 		return nil, fmt.Errorf("unmarshal key: %w", err)
 	}
 

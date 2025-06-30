@@ -27,6 +27,8 @@ var ErrInternalServerError = &codegen.UnexpectedErrorStatusCode{
 }
 
 type API struct {
+	codegen.UnimplementedHandler
+
 	LoginService               LoginService
 	LoginAnonService           LoginAnonService
 	ConsumeRefreshTokenService ConsumeRefreshTokenService
@@ -47,8 +49,6 @@ type API struct {
 
 	ListUsersService ListUsersService
 	GetUserService   GetUserService
-
-	codegen.UnimplementedHandler
 }
 
 func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErrorStatusCode {

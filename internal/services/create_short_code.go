@@ -50,6 +50,10 @@ type CreateShortCodeService struct {
 	source CreateShortCodeSource
 }
 
+func NewCreateShortCodeService(source CreateShortCodeSource) *CreateShortCodeService {
+	return &CreateShortCodeService{source: source}
+}
+
 // CreateShortCode creates a new short code in the database.
 //
 // This service automatically generates a random short code, encrypts it, and stores it in the database. The clear
@@ -126,8 +130,4 @@ func (service *CreateShortCodeService) CreateShortCode(
 		ExpiresAt: entity.ExpiresAt,
 		PlainCode: plainCode,
 	}, nil
-}
-
-func NewCreateShortCodeService(source CreateShortCodeSource) *CreateShortCodeService {
-	return &CreateShortCodeService{source: source}
 }

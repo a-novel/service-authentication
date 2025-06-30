@@ -36,6 +36,19 @@ type ConsumeRefreshTokenSource interface {
 	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
 }
 
+func NewNewConsumeRefreshTokenServiceSource(
+	selectCredentialsDAO *dao.SelectCredentialsRepository,
+	issueTokenService *IssueTokenService,
+) ConsumeRefreshTokenSource {
+	return &struct {
+		*dao.SelectCredentialsRepository
+		*IssueTokenService
+	}{
+		SelectCredentialsRepository: selectCredentialsDAO,
+		IssueTokenService:           issueTokenService,
+	}
+}
+
 type ConsumeRefreshTokenRequest struct {
 	// The last valid access token must be provided as an extra security measure. It may be expired, but must still
 	// be signed by an active key. Information in the access token is checked against the refresh token claims, and
@@ -48,6 +61,49 @@ type ConsumeRefreshTokenService struct {
 	source                ConsumeRefreshTokenSource
 	accessTokenRecipient  *jwt.Recipient
 	refreshTokenRecipient *jwt.Recipient
+}
+
+func NewConsumeRefreshTokenService(
+	source ConsumeRefreshTokenSource,
+	accessTokenKeysSource *jwk.Source[ed25519.PublicKey],
+	refreshTokenKeysSource *jwk.Source[ed25519.PublicKey],
+) *ConsumeRefreshTokenService {
+	accessTokenVerifier := jws.NewSourcedED25519Verifier(accessTokenKeysSource)
+	refreshTokenVerifier := jws.NewSourcedED25519Verifier(refreshTokenKeysSource)
+
+	accessTokenDeserializer := jwp.NewClaimsChecker(&jwp.ClaimsCheckerConfig{
+		Checks: []jwp.ClaimsCheck{
+			jwp.NewClaimsCheckTarget(jwt.TargetConfig{
+				Issuer:   config.Tokens.Usages[models.KeyUsageAuth].Issuer,
+				Audience: config.Tokens.Usages[models.KeyUsageAuth].Audience,
+				Subject:  config.Tokens.Usages[models.KeyUsageAuth].Subject,
+			}),
+			// Ignore timestamps checks. We just need to ensure this service issued the token, not that it's
+			// still valid.
+		},
+	})
+	refreshTokenDeserializer := jwp.NewClaimsChecker(&jwp.ClaimsCheckerConfig{
+		Checks: []jwp.ClaimsCheck{
+			jwp.NewClaimsCheckTarget(jwt.TargetConfig{
+				Issuer:   config.Tokens.Usages[models.KeyUsageRefresh].Issuer,
+				Audience: config.Tokens.Usages[models.KeyUsageRefresh].Audience,
+				Subject:  config.Tokens.Usages[models.KeyUsageRefresh].Subject,
+			}),
+			jwp.NewClaimsCheckTimestamp(config.Tokens.Usages[models.KeyUsageRefresh].Leeway, true),
+		},
+	})
+
+	return &ConsumeRefreshTokenService{
+		source: source,
+		accessTokenRecipient: jwt.NewRecipient(jwt.RecipientConfig{
+			Plugins:      []jwt.RecipientPlugin{accessTokenVerifier},
+			Deserializer: accessTokenDeserializer.Unmarshal,
+		}),
+		refreshTokenRecipient: jwt.NewRecipient(jwt.RecipientConfig{
+			Plugins:      []jwt.RecipientPlugin{refreshTokenVerifier},
+			Deserializer: refreshTokenDeserializer.Unmarshal,
+		}),
+	}
 }
 
 func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
@@ -146,60 +202,4 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	}
 
 	return accessToken, nil
-}
-
-func NewNewConsumeRefreshTokenServiceSource(
-	selectCredentialsDAO *dao.SelectCredentialsRepository,
-	issueTokenService *IssueTokenService,
-) ConsumeRefreshTokenSource {
-	return &struct {
-		*dao.SelectCredentialsRepository
-		*IssueTokenService
-	}{
-		SelectCredentialsRepository: selectCredentialsDAO,
-		IssueTokenService:           issueTokenService,
-	}
-}
-
-func NewConsumeRefreshTokenService(
-	source ConsumeRefreshTokenSource,
-	accessTokenKeysSource *jwk.Source[ed25519.PublicKey],
-	refreshTokenKeysSource *jwk.Source[ed25519.PublicKey],
-) *ConsumeRefreshTokenService {
-	accessTokenVerifier := jws.NewSourcedED25519Verifier(accessTokenKeysSource)
-	refreshTokenVerifier := jws.NewSourcedED25519Verifier(refreshTokenKeysSource)
-
-	accessTokenDeserializer := jwp.NewClaimsChecker(&jwp.ClaimsCheckerConfig{
-		Checks: []jwp.ClaimsCheck{
-			jwp.NewClaimsCheckTarget(jwt.TargetConfig{
-				Issuer:   config.Tokens.Usages[models.KeyUsageAuth].Issuer,
-				Audience: config.Tokens.Usages[models.KeyUsageAuth].Audience,
-				Subject:  config.Tokens.Usages[models.KeyUsageAuth].Subject,
-			}),
-			// Ignore timestamps checks. We just need to ensure this service issued the token, not that it's
-			// still valid.
-		},
-	})
-	refreshTokenDeserializer := jwp.NewClaimsChecker(&jwp.ClaimsCheckerConfig{
-		Checks: []jwp.ClaimsCheck{
-			jwp.NewClaimsCheckTarget(jwt.TargetConfig{
-				Issuer:   config.Tokens.Usages[models.KeyUsageRefresh].Issuer,
-				Audience: config.Tokens.Usages[models.KeyUsageRefresh].Audience,
-				Subject:  config.Tokens.Usages[models.KeyUsageRefresh].Subject,
-			}),
-			jwp.NewClaimsCheckTimestamp(config.Tokens.Usages[models.KeyUsageRefresh].Leeway, true),
-		},
-	})
-
-	return &ConsumeRefreshTokenService{
-		source: source,
-		accessTokenRecipient: jwt.NewRecipient(jwt.RecipientConfig{
-			Plugins:      []jwt.RecipientPlugin{accessTokenVerifier},
-			Deserializer: accessTokenDeserializer.Unmarshal,
-		}),
-		refreshTokenRecipient: jwt.NewRecipient(jwt.RecipientConfig{
-			Plugins:      []jwt.RecipientPlugin{refreshTokenVerifier},
-			Deserializer: refreshTokenDeserializer.Unmarshal,
-		}),
-	}
 }

@@ -40,7 +40,9 @@ func EncryptMasterKey(ctx context.Context, data any) ([]byte, error) {
 	}
 
 	var nonce [24]byte
-	if _, err = io.ReadFull(rand.Reader, nonce[:]); err != nil {
+
+	_, err = io.ReadFull(rand.Reader, nonce[:])
+	if err != nil {
 		return nil, NewErrEncryptMasterKey(fmt.Errorf("generate nonce: %w", err))
 	}
 
@@ -72,7 +74,8 @@ func DecryptMasterKey(ctx context.Context, data []byte, output any) error {
 		return NewErrDecryptMasterKey(fmt.Errorf("decrypt data: %w", ErrInvalidSecret))
 	}
 
-	if err = json.Unmarshal(decrypted, &output); err != nil {
+	err = json.Unmarshal(decrypted, &output)
+	if err != nil {
 		span.SetData("unmarshal.error", err.Error())
 
 		return NewErrDecryptMasterKey(fmt.Errorf("unmarshal data: %w", err))

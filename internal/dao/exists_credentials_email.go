@@ -22,6 +22,10 @@ func NewErrExistsCredentialsEmailRepository(err error) error {
 // You may create one using the NewExistsCredentialsEmailRepository function.
 type ExistsCredentialsEmailRepository struct{}
 
+func NewExistsCredentialsEmailRepository() *ExistsCredentialsEmailRepository {
+	return &ExistsCredentialsEmailRepository{}
+}
+
 // ExistsCredentialsEmail returns whether a credential with the given email exists in the database.
 //
 // Emails MUST be unique, and this method should be used to verify the availability of an address before creating it.
@@ -54,8 +58,4 @@ func (repository *ExistsCredentialsEmailRepository) ExistsCredentialsEmail(
 	}
 
 	return exists, nil
-}
-
-func NewExistsCredentialsEmailRepository() *ExistsCredentialsEmailRepository {
-	return &ExistsCredentialsEmailRepository{}
 }

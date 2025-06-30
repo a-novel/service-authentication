@@ -24,6 +24,10 @@ func NewErrSelectCredentialsRepository(err error) error {
 // You may create one using the NewSelectCredentialsRepository function.
 type SelectCredentialsRepository struct{}
 
+func NewSelectCredentialsRepository() *SelectCredentialsRepository {
+	return &SelectCredentialsRepository{}
+}
+
 // SelectCredentials returns a set of credentials based on their unique identifier (ID).
 //
 // The password is returned, encrypted, to allow for password verification (when creating a session). The result of
@@ -49,7 +53,8 @@ func (repository *SelectCredentialsRepository) SelectCredentials(
 	var entity CredentialsEntity
 
 	// Execute query.
-	if err = tx.NewSelect().Model(&entity).Where("id = ?", id).Order("id DESC").Scan(span.Context()); err != nil {
+	err = tx.NewSelect().Model(&entity).Where("id = ?", id).Order("id DESC").Scan(span.Context())
+	if err != nil {
 		span.SetData("scan.error", err.Error())
 
 		// Parse not found error as a managed error.
@@ -61,8 +66,4 @@ func (repository *SelectCredentialsRepository) SelectCredentials(
 	}
 
 	return &entity, nil
-}
-
-func NewSelectCredentialsRepository() *SelectCredentialsRepository {
-	return &SelectCredentialsRepository{}
 }

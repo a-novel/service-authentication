@@ -30,37 +30,6 @@ type AuthenticateService struct {
 	recipient *jwt.Recipient
 }
 
-// Authenticate verifies the claims of an access token request and returns the claims if they are valid. Once
-// validated, those claims can be trusted to perform authenticated actions.
-//
-// New claims can be issued using the IssueTokenService.
-func (service *AuthenticateService) Authenticate(
-	ctx context.Context, accessToken string,
-) (*models.AccessTokenClaims, error) {
-	span := sentry.StartSpan(ctx, "AuthenticateService.Authenticate")
-	defer span.Finish()
-
-	// Don't bother trying to authenticate if the token is empty.
-	if accessToken == "" {
-		span.SetData("error", "token is empty")
-
-		return nil, NewErrAuthenticateService(fmt.Errorf("token is empty: %w", models.ErrUnauthorized))
-	}
-
-	var claims models.AccessTokenClaims
-	if err := service.recipient.Consume(span.Context(), accessToken, &claims); err != nil {
-		span.SetData("jwt.consume.error", err.Error())
-
-		if errors.Is(err, jws.ErrInvalidSignature) {
-			return nil, NewErrAuthenticateService(fmt.Errorf("consume token: %w", models.ErrUnauthorized))
-		}
-
-		return nil, NewErrAuthenticateService(fmt.Errorf("consume token: %w", err))
-	}
-
-	return &claims, nil
-}
-
 func NewAuthenticateService(authVerifySource *jwk.Source[ed25519.PublicKey]) *AuthenticateService {
 	verifier := jws.NewSourcedED25519Verifier(authVerifySource)
 
@@ -81,4 +50,37 @@ func NewAuthenticateService(authVerifySource *jwk.Source[ed25519.PublicKey]) *Au
 			Deserializer: deserializer.Unmarshal,
 		}),
 	}
+}
+
+// Authenticate verifies the claims of an access token request and returns the claims if they are valid. Once
+// validated, those claims can be trusted to perform authenticated actions.
+//
+// New claims can be issued using the IssueTokenService.
+func (service *AuthenticateService) Authenticate(
+	ctx context.Context, accessToken string,
+) (*models.AccessTokenClaims, error) {
+	span := sentry.StartSpan(ctx, "AuthenticateService.Authenticate")
+	defer span.Finish()
+
+	// Don't bother trying to authenticate if the token is empty.
+	if accessToken == "" {
+		span.SetData("error", "token is empty")
+
+		return nil, NewErrAuthenticateService(fmt.Errorf("token is empty: %w", models.ErrUnauthorized))
+	}
+
+	var claims models.AccessTokenClaims
+
+	err := service.recipient.Consume(span.Context(), accessToken, &claims)
+	if err != nil {
+		span.SetData("jwt.consume.error", err.Error())
+
+		if errors.Is(err, jws.ErrInvalidSignature) {
+			return nil, NewErrAuthenticateService(fmt.Errorf("consume token: %w", models.ErrUnauthorized))
+		}
+
+		return nil, NewErrAuthenticateService(fmt.Errorf("consume token: %w", err))
+	}
+
+	return &claims, nil
 }

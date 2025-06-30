@@ -34,6 +34,31 @@ type SecurityHandler struct {
 	SecurityHandlerService SecurityHandlerService
 }
 
+func NewSecurity(
+	granted models.PermissionsConfig,
+	service SecurityHandlerService,
+) (*SecurityHandler, error) {
+	resolveGranted, err := configurator.ResolveDependants[models.Role, models.Permission](
+		lo.MapEntries(
+			granted.Roles,
+			func(key models.Role, value models.RoleConfig) (models.Role, []models.Permission) {
+				return key, value.Permissions
+			},
+		),
+		lo.MapEntries(granted.Roles, func(key models.Role, value models.RoleConfig) (models.Role, []models.Role) {
+			return key, value.Inherits
+		}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("(NewSecurity) resolve granted permissions: %w", err)
+	}
+
+	return &SecurityHandler{
+		GrantedPermissions:     resolveGranted,
+		SecurityHandlerService: service,
+	}, nil
+}
+
 func (security *SecurityHandler) HandleBearerAuth(
 	ctx context.Context, operationName codegen.OperationName, auth codegen.BearerAuth,
 ) (context.Context, error) {
@@ -93,31 +118,6 @@ func (security *SecurityHandler) HandleBearerAuth(
 	}
 
 	return context.WithValue(ctx, ClaimsAPIKey{}, claims), nil
-}
-
-func NewSecurity(
-	granted models.PermissionsConfig,
-	service SecurityHandlerService,
-) (*SecurityHandler, error) {
-	resolveGranted, err := configurator.ResolveDependants[models.Role, models.Permission](
-		lo.MapEntries(
-			granted.Roles,
-			func(key models.Role, value models.RoleConfig) (models.Role, []models.Permission) {
-				return key, value.Permissions
-			},
-		),
-		lo.MapEntries(granted.Roles, func(key models.Role, value models.RoleConfig) (models.Role, []models.Role) {
-			return key, value.Inherits
-		}),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("(NewSecurity) resolve granted permissions: %w", err)
-	}
-
-	return &SecurityHandler{
-		GrantedPermissions:     resolveGranted,
-		SecurityHandlerService: service,
-	}, nil
 }
 
 type ClaimsAPIKey struct{}

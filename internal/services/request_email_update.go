@@ -27,6 +27,19 @@ type RequestEmailUpdateSource interface {
 	SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)
 }
 
+func NewRequestEmailUpdateServiceSource(
+	createShortCode *CreateShortCodeService,
+	smtp *SMTPService,
+) RequestEmailUpdateSource {
+	return &struct {
+		*CreateShortCodeService
+		*SMTPService
+	}{
+		CreateShortCodeService: createShortCode,
+		SMTPService:            smtp,
+	}
+}
+
 // RequestEmailUpdateRequest is the input used to perform the RequestEmailUpdateService.RequestEmailUpdate action.
 type RequestEmailUpdateRequest struct {
 	// ID of the account trying to update its email.
@@ -46,24 +59,12 @@ type RequestEmailUpdateService struct {
 	wg sync.WaitGroup
 }
 
-func (service *RequestEmailUpdateService) Wait() {
-	service.wg.Wait()
+func NewRequestEmailUpdateService(source RequestEmailUpdateSource) *RequestEmailUpdateService {
+	return &RequestEmailUpdateService{source: source}
 }
 
-func (service *RequestEmailUpdateService) sendMail(
-	ctx context.Context, request RequestEmailUpdateRequest, shortCode *models.ShortCode,
-) {
-	span := sentry.StartSpan(ctx, "RequestEmailUpdateService.sendMail")
-	defer span.Finish()
-
-	defer service.wg.Done()
-
-	service.source.SMTP(span.Context(), mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
-		"ShortCode": shortCode.PlainCode,
-		"Target":    request.ID.String(),
-		"URL":       config.SMTP.URLs.UpdateEmail,
-		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
-	})
+func (service *RequestEmailUpdateService) Wait() {
+	service.wg.Wait()
 }
 
 // RequestEmailUpdate requests an email update for a specific account.
@@ -96,24 +97,24 @@ func (service *RequestEmailUpdateService) RequestEmailUpdate(
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
+
 	go service.sendMail(context.WithoutCancel(span.Context()), request, shortCode)
 
 	return shortCode, nil
 }
 
-func NewRequestEmailUpdateServiceSource(
-	createShortCode *CreateShortCodeService,
-	smtp *SMTPService,
-) RequestEmailUpdateSource {
-	return &struct {
-		*CreateShortCodeService
-		*SMTPService
-	}{
-		CreateShortCodeService: createShortCode,
-		SMTPService:            smtp,
-	}
-}
+func (service *RequestEmailUpdateService) sendMail(
+	ctx context.Context, request RequestEmailUpdateRequest, shortCode *models.ShortCode,
+) {
+	span := sentry.StartSpan(ctx, "RequestEmailUpdateService.sendMail")
+	defer span.Finish()
 
-func NewRequestEmailUpdateService(source RequestEmailUpdateSource) *RequestEmailUpdateService {
-	return &RequestEmailUpdateService{source: source}
+	defer service.wg.Done()
+
+	service.source.SMTP(span.Context(), mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
+		"ShortCode": shortCode.PlainCode,
+		"Target":    request.ID.String(),
+		"URL":       config.SMTP.URLs.UpdateEmail,
+		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
+	})
 }

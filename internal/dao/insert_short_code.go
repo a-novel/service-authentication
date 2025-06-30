@@ -53,6 +53,10 @@ type InsertShortCodeData struct {
 // You may create one using the NewInsertShortCodeRepository function.
 type InsertShortCodeRepository struct{}
 
+func NewInsertShortCodeRepository() *InsertShortCodeRepository {
+	return &InsertShortCodeRepository{}
+}
+
 // InsertShortCode inserts a new short code in the database.
 //
 // The clear value of the short code MUST not be saved with this repository, but instead sent to the target using a
@@ -158,15 +162,12 @@ func (repository *InsertShortCodeRepository) InsertShortCode(
 	}
 
 	// Commit the transaction.
-	if err = tx.Commit(); err != nil {
+	err = tx.Commit()
+	if err != nil {
 		span.SetData("postgres.commit.error", err.Error())
 
 		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("commit transaction: %w", err))
 	}
 
 	return newEntity, nil
-}
-
-func NewInsertShortCodeRepository() *InsertShortCodeRepository {
-	return &InsertShortCodeRepository{}
 }

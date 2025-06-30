@@ -39,6 +39,10 @@ type SelectKeyService struct {
 	source SelectKeySource
 }
 
+func NewSelectKeyService(source SelectKeySource) *SelectKeyService {
+	return &SelectKeyService{source: source}
+}
+
 func (service *SelectKeyService) SelectKey(ctx context.Context, request SelectKeyRequest) (*jwa.JWK, error) {
 	span := sentry.StartSpan(ctx, "SelectKeyService.SelectKey")
 	defer span.Finish()
@@ -61,8 +65,4 @@ func (service *SelectKeyService) SelectKey(ctx context.Context, request SelectKe
 	}
 
 	return deserialized, nil
-}
-
-func NewSelectKeyService(source SelectKeySource) *SelectKeyService {
-	return &SelectKeyService{source: source}
 }

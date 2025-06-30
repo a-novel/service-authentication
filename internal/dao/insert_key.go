@@ -49,6 +49,10 @@ type InsertKeyData struct {
 // You may create one using the NewInsertKeyRepository function.
 type InsertKeyRepository struct{}
 
+func NewInsertKeyRepository() *InsertKeyRepository {
+	return &InsertKeyRepository{}
+}
+
 // InsertKey inserts a new key pair in the database.
 //
 // A given key pair is REQUIRED to have an expiration date, as it must be rotated on a regular basis. Only public keys
@@ -80,7 +84,8 @@ func (repository *InsertKeyRepository) InsertKey(ctx context.Context, data Inser
 	}
 
 	// Execute query.
-	if _, err = tx.NewInsert().Model(entity).Exec(span.Context()); err != nil {
+	_, err = tx.NewInsert().Model(entity).Exec(span.Context())
+	if err != nil {
 		span.SetData("insert.error", err.Error())
 		// Don't check for collision errors: this is useless, as randomly generated UUIDs have a negligible chance of
 		// colliding.
@@ -88,8 +93,4 @@ func (repository *InsertKeyRepository) InsertKey(ctx context.Context, data Inser
 	}
 
 	return entity, nil
-}
-
-func NewInsertKeyRepository() *InsertKeyRepository {
-	return &InsertKeyRepository{}
 }

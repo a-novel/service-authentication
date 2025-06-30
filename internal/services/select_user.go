@@ -29,6 +29,10 @@ type SelectUserService struct {
 	source SelectUserSource
 }
 
+func NewSelectUserService(source SelectUserSource) *SelectUserService {
+	return &SelectUserService{source: source}
+}
+
 func (service *SelectUserService) SelectUser(
 	ctx context.Context, request SelectUserRequest,
 ) (*models.User, error) {
@@ -54,8 +58,4 @@ func (service *SelectUserService) SelectUser(
 		CreatedAt: entity.CreatedAt,
 		UpdatedAt: entity.UpdatedAt,
 	}, nil
-}
-
-func NewSelectUserService(source SelectUserSource) *SelectUserService {
-	return &SelectUserService{source: source}
 }

@@ -40,16 +40,20 @@ func NewPostgresContext(ctx context.Context, dsn string) (context.Context, error
 	// Apply migrations.
 	mig := migrate.NewMigrations()
 
-	if err := mig.Discover(migrations.Migrations); err != nil {
+	err := mig.Discover(migrations.Migrations)
+	if err != nil {
 		return nil, fmt.Errorf("discover mig: %w", err)
 	}
 
 	migrator := migrate.NewMigrator(client, mig)
-	if err := migrator.Init(ctx); err != nil {
+
+	err = migrator.Init(ctx)
+	if err != nil {
 		return nil, fmt.Errorf("create migrator: %w", err)
 	}
 
-	if _, err := migrator.Migrate(ctx); err != nil {
+	_, err = migrator.Migrate(ctx)
+	if err != nil {
 		return nil, fmt.Errorf("apply mig: %w", err)
 	}
 

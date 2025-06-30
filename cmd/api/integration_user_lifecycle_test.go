@@ -33,7 +33,8 @@ func captureEmailLog(t *testing.T, email string) utilstest.LogCaptureFN {
 			To []string `json:"to"`
 		}
 
-		if err := json.Unmarshal([]byte(log), &content); err != nil {
+		err := json.Unmarshal([]byte(log), &content)
+		if err != nil {
 			t.Errorf("Failed to unmarshal email log (%q): %v", log, err)
 
 			return false
@@ -56,7 +57,8 @@ func extractShortCode(log string) (string, error) {
 		} `json:"dynamicTemplateData"`
 	}
 
-	if err := json.Unmarshal([]byte(log), &out); err != nil {
+	err := json.Unmarshal([]byte(log), &out)
+	if err != nil {
 		return "", fmt.Errorf("unmarshal email log: %w", err)
 	}
 

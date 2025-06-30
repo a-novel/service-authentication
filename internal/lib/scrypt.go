@@ -68,7 +68,9 @@ var ScryptParamsDefault = ScryptParams{
 func GenerateScrypt(password string, params ScryptParams) (string, error) {
 	// Generate a cryptographically secure random salt.
 	salt := make([]byte, params.SaltLength)
-	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+
+	_, err := io.ReadFull(rand.Reader, salt)
+	if err != nil {
 		return "", NewErrGenerateScrypt(fmt.Errorf("generate salt: %w", err))
 	}
 

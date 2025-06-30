@@ -69,8 +69,22 @@ type GenerateKeySource interface {
 	InsertKey(ctx context.Context, data dao.InsertKeyData) (*dao.KeyEntity, error)
 }
 
+func NewGenerateKeySource(searchDAO *dao.SearchKeysRepository, insertDAO *dao.InsertKeyRepository) GenerateKeySource {
+	return &struct {
+		dao.SearchKeysRepository
+		dao.InsertKeyRepository
+	}{
+		SearchKeysRepository: *searchDAO,
+		InsertKeyRepository:  *insertDAO,
+	}
+}
+
 type GenerateKeyService struct {
 	source GenerateKeySource
+}
+
+func NewGenerateKeyService(source GenerateKeySource) *GenerateKeyService {
+	return &GenerateKeyService{source: source}
 }
 
 // GenerateKey generates a new key pair for a given usage. It uses the generateKeysConfig to generate the
@@ -160,25 +174,12 @@ func (service *GenerateKeyService) GenerateKey(ctx context.Context, usage models
 		Expiration: time.Now().Add(generateKeysConfig[usage].Config.TTL),
 	}
 
-	if _, err = service.source.InsertKey(span.Context(), insertData); err != nil {
+	_, err = service.source.InsertKey(span.Context(), insertData)
+	if err != nil {
 		span.SetData("dao.insertKey.error", err.Error())
 
 		return nil, NewErrGenerateKeyService(fmt.Errorf("insert key: %w", err))
 	}
 
 	return &kid, nil
-}
-
-func NewGenerateKeySource(searchDAO *dao.SearchKeysRepository, insertDAO *dao.InsertKeyRepository) GenerateKeySource {
-	return &struct {
-		dao.SearchKeysRepository
-		dao.InsertKeyRepository
-	}{
-		SearchKeysRepository: *searchDAO,
-		InsertKeyRepository:  *insertDAO,
-	}
-}
-
-func NewGenerateKeyService(source GenerateKeySource) *GenerateKeyService {
-	return &GenerateKeyService{source: source}
 }

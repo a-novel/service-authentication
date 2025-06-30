@@ -10,6 +10,10 @@ type SecuritySource struct {
 	token string
 }
 
+func NewSecuritySource() *SecuritySource {
+	return &SecuritySource{}
+}
+
 func (security *SecuritySource) BearerAuth(_ context.Context, _ codegen.OperationName) (codegen.BearerAuth, error) {
 	return codegen.BearerAuth{
 		Token: security.token,
@@ -22,8 +26,4 @@ func (security *SecuritySource) SetToken(token string) {
 
 func (security *SecuritySource) GetToken() string {
 	return security.token
-}
-
-func NewSecuritySource() *SecuritySource {
-	return &SecuritySource{}
 }

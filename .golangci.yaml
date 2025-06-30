@@ -19,23 +19,19 @@ linters:
   disable:
     - depguard
     - dupl
+    - revive
     - exhaustruct
     - varnamelen
-    - revive
     - ireturn
     - gochecknoinits
     - gochecknoglobals
-    - iface
     - funlen
-    - funcorder
-    - cyclop
-    - err113
+    - iface
     - contextcheck # Conflicts with Sentry context propagation.
 
   settings:
-    gosec:
-      excludes:
-        - G115
+    cyclop:
+      max-complexity: 15
     tagliatelle:
       case:
         rules:
@@ -53,6 +49,7 @@ linters:
           - gocognit
           - tagliatelle
           - cyclop
+          - err113
           - gosec
       # DAO behaves poorly in parallel testing, mainly because each test is done concurrently using its own transaction.
       - path: dao/(.+)_test.go

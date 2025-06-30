@@ -20,6 +20,10 @@ type SecurityHandlerService struct {
 	endpoint string
 }
 
+func NewSecurityHandlerService(endpoint string) *SecurityHandlerService {
+	return &SecurityHandlerService{endpoint: endpoint}
+}
+
 func (security *SecurityHandlerService) Authenticate(
 	ctx context.Context, accessToken string,
 ) (*models.AccessTokenClaims, error) {
@@ -56,8 +60,4 @@ func (security *SecurityHandlerService) Authenticate(
 		}),
 		RefreshTokenID: lo.Ternary(refreshTokenIDOK, &refreshTokenID, nil),
 	}, nil
-}
-
-func NewSecurityHandlerService(endpoint string) *SecurityHandlerService {
-	return &SecurityHandlerService{endpoint: endpoint}
 }

@@ -28,6 +28,10 @@ type LoginAnonService struct {
 	source LoginAnonSource
 }
 
+func NewLoginAnonService(source LoginAnonSource) *LoginAnonService {
+	return &LoginAnonService{source: source}
+}
+
 // LoginAnon creates a new anonymous session. Anonymous sessions grant basic access to public protected resources.
 //
 // On success, a new access token is returned, so the user can access protected resources.
@@ -45,8 +49,4 @@ func (service *LoginAnonService) LoginAnon(ctx context.Context) (string, error) 
 	}
 
 	return accessToken, nil
-}
-
-func NewLoginAnonService(source LoginAnonSource) *LoginAnonService {
-	return &LoginAnonService{source: source}
 }

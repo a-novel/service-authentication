@@ -30,6 +30,22 @@ type RequestPasswordResetSource interface {
 	SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)
 }
 
+func NewRequestPasswordResetSource(
+	selectCredentials *dao.SelectCredentialsByEmailRepository,
+	createShortCode *CreateShortCodeService,
+	smtp *SMTPService,
+) RequestPasswordResetSource {
+	return &struct {
+		*dao.SelectCredentialsByEmailRepository
+		*CreateShortCodeService
+		*SMTPService
+	}{
+		SelectCredentialsByEmailRepository: selectCredentials,
+		CreateShortCodeService:             createShortCode,
+		SMTPService:                        smtp,
+	}
+}
+
 // RequestPasswordResetRequest is the input used to perform the RequestPasswordResetService.RequestPasswordReset
 // action.
 type RequestPasswordResetRequest struct {
@@ -49,24 +65,12 @@ type RequestPasswordResetService struct {
 	wg sync.WaitGroup
 }
 
-func (service *RequestPasswordResetService) Wait() {
-	service.wg.Wait()
+func NewRequestPasswordResetService(source RequestPasswordResetSource) *RequestPasswordResetService {
+	return &RequestPasswordResetService{source: source}
 }
 
-func (service *RequestPasswordResetService) sendMail(
-	ctx context.Context, request RequestPasswordResetRequest, userID uuid.UUID, shortCode *models.ShortCode,
-) {
-	span := sentry.StartSpan(ctx, "RequestPasswordResetService.sendMail")
-	defer span.Finish()
-
-	defer service.wg.Done()
-
-	service.source.SMTP(span.Context(), mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
-		"ShortCode": shortCode.PlainCode,
-		"Target":    userID.String(),
-		"URL":       config.SMTP.URLs.UpdatePassword,
-		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
-	})
+func (service *RequestPasswordResetService) Wait() {
+	service.wg.Wait()
 }
 
 // RequestPasswordReset sends a short code to the user's email, allowing them to register.
@@ -107,27 +111,24 @@ func (service *RequestPasswordResetService) RequestPasswordReset(
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
+
 	go service.sendMail(context.WithoutCancel(span.Context()), request, credentials.ID, shortCode)
 
 	return shortCode, nil
 }
 
-func NewRequestPasswordResetSource(
-	selectCredentials *dao.SelectCredentialsByEmailRepository,
-	createShortCode *CreateShortCodeService,
-	smtp *SMTPService,
-) RequestPasswordResetSource {
-	return &struct {
-		*dao.SelectCredentialsByEmailRepository
-		*CreateShortCodeService
-		*SMTPService
-	}{
-		SelectCredentialsByEmailRepository: selectCredentials,
-		CreateShortCodeService:             createShortCode,
-		SMTPService:                        smtp,
-	}
-}
+func (service *RequestPasswordResetService) sendMail(
+	ctx context.Context, request RequestPasswordResetRequest, userID uuid.UUID, shortCode *models.ShortCode,
+) {
+	span := sentry.StartSpan(ctx, "RequestPasswordResetService.sendMail")
+	defer span.Finish()
 
-func NewRequestPasswordResetService(source RequestPasswordResetSource) *RequestPasswordResetService {
-	return &RequestPasswordResetService{source: source}
+	defer service.wg.Done()
+
+	service.source.SMTP(span.Context(), mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
+		"ShortCode": shortCode.PlainCode,
+		"Target":    userID.String(),
+		"URL":       config.SMTP.URLs.UpdatePassword,
+		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
+	})
 }

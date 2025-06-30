@@ -39,6 +39,28 @@ type IssueRefreshTokenService struct {
 	claimsConfig jwt.ClaimsProducerConfig
 }
 
+func NewIssueRefreshTokenService(authSignSource *jwk.Source[ed25519.PrivateKey]) *IssueRefreshTokenService {
+	signer := jws.NewSourcedED25519Signer(authSignSource)
+
+	producer := jwt.NewProducer(jwt.ProducerConfig{
+		Plugins: []jwt.ProducerPlugin{signer},
+	})
+
+	basicClaims := jwt.ClaimsProducerConfig{
+		TargetConfig: jwt.TargetConfig{
+			Issuer:   config.Tokens.Usages[models.KeyUsageRefresh].Issuer,
+			Audience: config.Tokens.Usages[models.KeyUsageRefresh].Audience,
+			Subject:  config.Tokens.Usages[models.KeyUsageRefresh].Subject,
+		},
+		TTL: config.Tokens.Usages[models.KeyUsageRefresh].TTL,
+	}
+
+	return &IssueRefreshTokenService{
+		producer:     producer,
+		claimsConfig: basicClaims,
+	}
+}
+
 func (service *IssueRefreshTokenService) IssueRefreshToken(
 	ctx context.Context, request IssueRefreshTokenRequest,
 ) (string, error) {
@@ -80,26 +102,4 @@ func (service *IssueRefreshTokenService) IssueRefreshToken(
 	}
 
 	return refreshToken, nil
-}
-
-func NewIssueRefreshTokenService(authSignSource *jwk.Source[ed25519.PrivateKey]) *IssueRefreshTokenService {
-	signer := jws.NewSourcedED25519Signer(authSignSource)
-
-	producer := jwt.NewProducer(jwt.ProducerConfig{
-		Plugins: []jwt.ProducerPlugin{signer},
-	})
-
-	basicClaims := jwt.ClaimsProducerConfig{
-		TargetConfig: jwt.TargetConfig{
-			Issuer:   config.Tokens.Usages[models.KeyUsageRefresh].Issuer,
-			Audience: config.Tokens.Usages[models.KeyUsageRefresh].Audience,
-			Subject:  config.Tokens.Usages[models.KeyUsageRefresh].Subject,
-		},
-		TTL: config.Tokens.Usages[models.KeyUsageRefresh].TTL,
-	}
-
-	return &IssueRefreshTokenService{
-		producer:     producer,
-		claimsConfig: basicClaims,
-	}
 }

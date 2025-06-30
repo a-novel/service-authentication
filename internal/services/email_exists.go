@@ -26,6 +26,10 @@ type EmailExistsService struct {
 	source EmailExistsSource
 }
 
+func NewEmailExistsService(source EmailExistsSource) *EmailExistsService {
+	return &EmailExistsService{source: source}
+}
+
 func (service *EmailExistsService) EmailExists(ctx context.Context, request EmailExistsRequest) (bool, error) {
 	span := sentry.StartSpan(ctx, "EmailExistsService.EmailExists")
 	defer span.Finish()
@@ -42,8 +46,4 @@ func (service *EmailExistsService) EmailExists(ctx context.Context, request Emai
 	span.SetData("exists", exists)
 
 	return exists, nil
-}
-
-func NewEmailExistsService(source EmailExistsSource) *EmailExistsService {
-	return &EmailExistsService{source: source}
 }

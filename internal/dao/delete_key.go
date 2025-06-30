@@ -35,6 +35,10 @@ type DeleteKeyData struct {
 // You may create one using the NewDeleteKeyRepository function.
 type DeleteKeyRepository struct{}
 
+func NewDeleteKeyRepository() *DeleteKeyRepository {
+	return &DeleteKeyRepository{}
+}
+
 // DeleteKey performs a soft delete of a KeyEntity.
 //
 // A KeyEntity expires naturally through its KeyEntity.ExpiresAt field. However, some circumstances may require a key
@@ -102,8 +106,4 @@ func (repository *DeleteKeyRepository) DeleteKey(ctx context.Context, data Delet
 	}
 
 	return entity, nil
-}
-
-func NewDeleteKeyRepository() *DeleteKeyRepository {
-	return &DeleteKeyRepository{}
 }

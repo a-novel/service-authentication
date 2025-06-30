@@ -36,6 +36,10 @@ type UpdateCredentialsPasswordData struct {
 // You may create one using the NewUpdateCredentialsPasswordRepository function.
 type UpdateCredentialsPasswordRepository struct{}
 
+func NewUpdateCredentialsPasswordRepository() *UpdateCredentialsPasswordRepository {
+	return &UpdateCredentialsPasswordRepository{}
+}
+
 // UpdateCredentialsPassword updates the password of a set of credentials in the database.
 //
 // This method MUST be called after extra checks on the user identity have been performed. This is a sensitive
@@ -94,8 +98,4 @@ func (repository *UpdateCredentialsPasswordRepository) UpdateCredentialsPassword
 	}
 
 	return entity, nil
-}
-
-func NewUpdateCredentialsPasswordRepository() *UpdateCredentialsPasswordRepository {
-	return &UpdateCredentialsPasswordRepository{}
 }
