@@ -33,6 +33,19 @@ type UpdateRoleSource interface {
 	SelectCredentials(ctx context.Context, id uuid.UUID) (*dao.CredentialsEntity, error)
 }
 
+func NewUpdateRoleServiceSource(
+	updateRoleDAO *dao.UpdateCredentialsRoleRepository,
+	selectCredentialsDAO *dao.SelectCredentialsRepository,
+) UpdateRoleSource {
+	return &struct {
+		*dao.UpdateCredentialsRoleRepository
+		*dao.SelectCredentialsRepository
+	}{
+		UpdateCredentialsRoleRepository: updateRoleDAO,
+		SelectCredentialsRepository:     selectCredentialsDAO,
+	}
+}
+
 type UpdateRoleRequest struct {
 	TargetUserID  uuid.UUID
 	CurrentUserID uuid.UUID
@@ -41,6 +54,10 @@ type UpdateRoleRequest struct {
 
 type UpdateRoleService struct {
 	source UpdateRoleSource
+}
+
+func NewUpdateRoleService(source UpdateRoleSource) *UpdateRoleService {
+	return &UpdateRoleService{source: source}
 }
 
 func (service *UpdateRoleService) UpdateRole(
@@ -148,21 +165,4 @@ func (service *UpdateRoleService) UpdateRole(
 		CreatedAt: updatedCredentials.CreatedAt,
 		UpdatedAt: updatedCredentials.UpdatedAt,
 	}, nil
-}
-
-func NewUpdateRoleServiceSource(
-	updateRoleDAO *dao.UpdateCredentialsRoleRepository,
-	selectCredentialsDAO *dao.SelectCredentialsRepository,
-) UpdateRoleSource {
-	return &struct {
-		*dao.UpdateCredentialsRoleRepository
-		*dao.SelectCredentialsRepository
-	}{
-		UpdateCredentialsRoleRepository: updateRoleDAO,
-		SelectCredentialsRepository:     selectCredentialsDAO,
-	}
-}
-
-func NewUpdateRoleService(source UpdateRoleSource) *UpdateRoleService {
-	return &UpdateRoleService{source: source}
 }

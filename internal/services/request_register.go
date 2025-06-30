@@ -27,6 +27,19 @@ type RequestRegisterSource interface {
 	SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)
 }
 
+func NewRequestRegisterServiceSource(
+	createShortCode *CreateShortCodeService,
+	smtp *SMTPService,
+) RequestEmailUpdateSource {
+	return &struct {
+		*CreateShortCodeService
+		*SMTPService
+	}{
+		CreateShortCodeService: createShortCode,
+		SMTPService:            smtp,
+	}
+}
+
 // RequestRegisterRequest is the input used to perform the RequestRegisterService.RequestRegister action.
 type RequestRegisterRequest struct {
 	// Email of the user trying to register. This email will receive a link that can be used to register.
@@ -44,24 +57,12 @@ type RequestRegisterService struct {
 	wg sync.WaitGroup
 }
 
-func (service *RequestRegisterService) Wait() {
-	service.wg.Wait()
+func NewRequestRegisterService(source RequestRegisterSource) *RequestRegisterService {
+	return &RequestRegisterService{source: source}
 }
 
-func (service *RequestRegisterService) sendMail(
-	ctx context.Context, request RequestRegisterRequest, shortCode *models.ShortCode,
-) {
-	span := sentry.StartSpan(ctx, "RequestRegisterService.sendMail")
-	defer span.Finish()
-
-	defer service.wg.Done()
-
-	service.source.SMTP(span.Context(), mails.Mails.Register, request.Lang, []string{request.Email}, map[string]any{
-		"ShortCode": shortCode.PlainCode,
-		"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-		"URL":       config.SMTP.URLs.Register,
-		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
-	})
+func (service *RequestRegisterService) Wait() {
+	service.wg.Wait()
 }
 
 // RequestRegister sends a short code to the user's email, allowing them to register.
@@ -95,24 +96,24 @@ func (service *RequestRegisterService) RequestRegister(
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
+
 	go service.sendMail(context.WithoutCancel(span.Context()), request, shortCode)
 
 	return shortCode, nil
 }
 
-func NewRequestRegisterServiceSource(
-	createShortCode *CreateShortCodeService,
-	smtp *SMTPService,
-) RequestEmailUpdateSource {
-	return &struct {
-		*CreateShortCodeService
-		*SMTPService
-	}{
-		CreateShortCodeService: createShortCode,
-		SMTPService:            smtp,
-	}
-}
+func (service *RequestRegisterService) sendMail(
+	ctx context.Context, request RequestRegisterRequest, shortCode *models.ShortCode,
+) {
+	span := sentry.StartSpan(ctx, "RequestRegisterService.sendMail")
+	defer span.Finish()
 
-func NewRequestRegisterService(source RequestRegisterSource) *RequestRegisterService {
-	return &RequestRegisterService{source: source}
+	defer service.wg.Done()
+
+	service.source.SMTP(span.Context(), mails.Mails.Register, request.Lang, []string{request.Email}, map[string]any{
+		"ShortCode": shortCode.PlainCode,
+		"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+		"URL":       config.SMTP.URLs.Register,
+		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
+	})
 }

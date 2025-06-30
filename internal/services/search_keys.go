@@ -39,6 +39,10 @@ type SearchKeysService struct {
 	source SearchKeysSource
 }
 
+func NewSearchKeysService(source SearchKeysSource) *SearchKeysService {
+	return &SearchKeysService{source: source}
+}
+
 // SearchKeys retrieves a batch of keys from the source. All keys are serialized, and match the usage required
 // by the request.
 func (service *SearchKeysService) SearchKeys(ctx context.Context, request SearchKeysRequest) ([]*jwa.JWK, error) {
@@ -75,8 +79,4 @@ func (service *SearchKeysService) SearchKeys(ctx context.Context, request Search
 	}
 
 	return deserialized, nil
-}
-
-func NewSearchKeysService(source SearchKeysSource) *SearchKeysService {
-	return &SearchKeysService{source: source}
 }

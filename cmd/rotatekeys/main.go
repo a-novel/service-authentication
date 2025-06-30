@@ -23,7 +23,8 @@ const SentryFlushTimeout = 2 * time.Second
 func main() {
 	ctx := context.Background()
 
-	if err := sentry.Init(config.SentryClient); err != nil {
+	err := sentry.Init(config.SentryClient)
+	if err != nil {
 		log.Fatalf("initialize sentry: %v", err)
 	}
 	defer sentry.Flush(SentryFlushTimeout)
@@ -38,7 +39,7 @@ func main() {
 		attribute.String("service", "authentication"),
 	)
 
-	ctx, err := lib.NewAgoraContext(ctx, config.DSN)
+	ctx, err = lib.NewAgoraContext(ctx, config.DSN)
 	if err != nil {
 		logger.Fatalf(ctx, "initialize agora context: %v", err)
 	}

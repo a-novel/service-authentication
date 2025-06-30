@@ -28,6 +28,22 @@ type RegisterSource interface {
 	ConsumeShortCode(ctx context.Context, request ConsumeShortCodeRequest) (*models.ShortCode, error)
 }
 
+func NewRegisterSource(
+	insertCredentialsDAO *dao.InsertCredentialsRepository,
+	issueTokenService *IssueTokenService,
+	consumeShortCodeService *ConsumeShortCodeService,
+) RegisterSource {
+	return &struct {
+		*dao.InsertCredentialsRepository
+		*IssueTokenService
+		*ConsumeShortCodeService
+	}{
+		InsertCredentialsRepository: insertCredentialsDAO,
+		IssueTokenService:           issueTokenService,
+		ConsumeShortCodeService:     consumeShortCodeService,
+	}
+}
+
 type RegisterRequest struct {
 	Email     string
 	Password  string
@@ -36,6 +52,10 @@ type RegisterRequest struct {
 
 type RegisterService struct {
 	source RegisterSource
+}
+
+func NewRegisterService(source RegisterSource) *RegisterService {
+	return &RegisterService{source: source}
 }
 
 func (service *RegisterService) Register(ctx context.Context, request RegisterRequest) (string, error) {
@@ -94,7 +114,8 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	span.SetData("credentials.id", credentials.ID)
 
 	// Commit transaction.
-	if err = commit(true); err != nil {
+	err = commit(true)
+	if err != nil {
 		span.SetData("postgres.commit.error", err.Error())
 
 		return "", NewErrRegisterService(fmt.Errorf("commit transaction: %w", err))
@@ -117,24 +138,4 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	}
 
 	return accessToken, nil
-}
-
-func NewRegisterSource(
-	insertCredentialsDAO *dao.InsertCredentialsRepository,
-	issueTokenService *IssueTokenService,
-	consumeShortCodeService *ConsumeShortCodeService,
-) RegisterSource {
-	return &struct {
-		*dao.InsertCredentialsRepository
-		*IssueTokenService
-		*ConsumeShortCodeService
-	}{
-		InsertCredentialsRepository: insertCredentialsDAO,
-		IssueTokenService:           issueTokenService,
-		ConsumeShortCodeService:     consumeShortCodeService,
-	}
-}
-
-func NewRegisterService(source RegisterSource) *RegisterService {
-	return &RegisterService{source: source}
 }

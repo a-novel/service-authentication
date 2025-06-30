@@ -23,6 +23,10 @@ func NewErrSelectCredentialsByEmailRepository(err error) error {
 // You may create one using the NewSelectCredentialsByEmailRepository function.
 type SelectCredentialsByEmailRepository struct{}
 
+func NewSelectCredentialsByEmailRepository() *SelectCredentialsByEmailRepository {
+	return &SelectCredentialsByEmailRepository{}
+}
+
 // SelectCredentialsByEmail returns a set of credentials based on their email.
 //
 // The password is returned, encrypted, to allow for password verification (when creating a session). The result of
@@ -61,8 +65,4 @@ func (repository *SelectCredentialsByEmailRepository) SelectCredentialsByEmail(
 	}
 
 	return &entity, nil
-}
-
-func NewSelectCredentialsByEmailRepository() *SelectCredentialsByEmailRepository {
-	return &SelectCredentialsByEmailRepository{}
 }

@@ -29,6 +29,10 @@ const KeysMaxBatchSize = 100
 // You may create one using the NewSearchKeysRepository function.
 type SearchKeysRepository struct{}
 
+func NewSearchKeysRepository() *SearchKeysRepository {
+	return &SearchKeysRepository{}
+}
+
 // SearchKeys lists keys related to a specific usage.
 //
 // All keys that share the same usage are called a batch. A batch only contains active keys, and is ordered by creation
@@ -81,8 +85,4 @@ func (repository *SearchKeysRepository) SearchKeys(ctx context.Context, usage mo
 	}
 
 	return entities, nil
-}
-
-func NewSearchKeysRepository() *SearchKeysRepository {
-	return &SearchKeysRepository{}
 }

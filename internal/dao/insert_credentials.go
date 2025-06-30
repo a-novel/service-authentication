@@ -51,6 +51,10 @@ type InsertCredentialsData struct {
 // You may create one using the NewInsertCredentialsRepository function.
 type InsertCredentialsRepository struct{}
 
+func NewInsertCredentialsRepository() *InsertCredentialsRepository {
+	return &InsertCredentialsRepository{}
+}
+
 // InsertCredentials inserts a new set of credentials in the database.
 //
 // The new credentials MUST have a unique email. This email is used to reach the user, and to uniquely identify them.
@@ -86,7 +90,8 @@ func (repository *InsertCredentialsRepository) InsertCredentials(
 	}
 
 	// Execute query.
-	if _, err = tx.NewInsert().Model(entity).Exec(span.Context()); err != nil {
+	_, err = tx.NewInsert().Model(entity).Exec(span.Context())
+	if err != nil {
 		span.SetData("insert.error", err.Error())
 
 		var pgErr pgdriver.Error
@@ -98,8 +103,4 @@ func (repository *InsertCredentialsRepository) InsertCredentials(
 	}
 
 	return entity, nil
-}
-
-func NewInsertCredentialsRepository() *InsertCredentialsRepository {
-	return &InsertCredentialsRepository{}
 }

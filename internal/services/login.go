@@ -27,6 +27,19 @@ type LoginSource interface {
 	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
 }
 
+func NewLoginServiceSource(
+	selectCredentialsByEmailDAO *dao.SelectCredentialsByEmailRepository,
+	issueTokenService *IssueTokenService,
+) LoginSource {
+	return &struct {
+		*dao.SelectCredentialsByEmailRepository
+		*IssueTokenService
+	}{
+		SelectCredentialsByEmailRepository: selectCredentialsByEmailDAO,
+		IssueTokenService:                  issueTokenService,
+	}
+}
+
 // LoginRequest is the request sent by the client to log in.
 type LoginRequest struct {
 	// Email of the user trying to log in.
@@ -40,6 +53,10 @@ type LoginRequest struct {
 // You may create one using the NewLoginService function.
 type LoginService struct {
 	source LoginSource
+}
+
+func NewLoginService(source LoginSource) *LoginService {
+	return &LoginService{source: source}
 }
 
 // Login a user.
@@ -65,7 +82,8 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 	span.SetData("role", credentials.Role)
 
 	// Validate password.
-	if err = lib.CompareScrypt(request.Password, credentials.Password); err != nil {
+	err = lib.CompareScrypt(request.Password, credentials.Password)
+	if err != nil {
 		span.SetData("password.compare.error", err.Error())
 
 		return "", NewErrLoginService(fmt.Errorf("compare password: %w", err))
@@ -88,21 +106,4 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 	}
 
 	return accessToken, nil
-}
-
-func NewLoginServiceSource(
-	selectCredentialsByEmailDAO *dao.SelectCredentialsByEmailRepository,
-	issueTokenService *IssueTokenService,
-) LoginSource {
-	return &struct {
-		*dao.SelectCredentialsByEmailRepository
-		*IssueTokenService
-	}{
-		SelectCredentialsByEmailRepository: selectCredentialsByEmailDAO,
-		IssueTokenService:                  issueTokenService,
-	}
-}
-
-func NewLoginService(source LoginSource) *LoginService {
-	return &LoginService{source: source}
 }

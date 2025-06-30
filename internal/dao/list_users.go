@@ -26,6 +26,10 @@ type ListUsersData struct {
 
 type ListUsersRepository struct{}
 
+func NewListUsersRepository() *ListUsersRepository {
+	return &ListUsersRepository{}
+}
+
 func (repository *ListUsersRepository) ListUsers(
 	ctx context.Context, data ListUsersData,
 ) ([]*CredentialsEntity, error) {
@@ -57,15 +61,12 @@ func (repository *ListUsersRepository) ListUsers(
 		query = query.Where("role IN (?)", bun.In(data.Roles))
 	}
 
-	if err = query.Scan(span.Context()); err != nil {
+	err = query.Scan(span.Context())
+	if err != nil {
 		span.SetData("scan.error", err.Error())
 
 		return nil, NewErrListUsersRepository(fmt.Errorf("list credentials: %w", err))
 	}
 
 	return entities, nil
-}
-
-func NewListUsersRepository() *ListUsersRepository {
-	return &ListUsersRepository{}
 }

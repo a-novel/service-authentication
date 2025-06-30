@@ -48,7 +48,8 @@ var (
 func ParseMailTemplate(t *template.Template, lang models.Lang, data any) (string, error) {
 	builder := new(strings.Builder)
 
-	if err := t.ExecuteTemplate(builder, lang.String(), data); err != nil {
+	err := t.ExecuteTemplate(builder, lang.String(), data)
+	if err != nil {
 		return "", fmt.Errorf("execute template: %w", err)
 	}
 

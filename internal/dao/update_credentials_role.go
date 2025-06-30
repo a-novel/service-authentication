@@ -26,6 +26,10 @@ type UpdateCredentialsRoleData struct {
 
 type UpdateCredentialsRoleRepository struct{}
 
+func NewUpdateCredentialsRoleRepository() *UpdateCredentialsRoleRepository {
+	return &UpdateCredentialsRoleRepository{}
+}
+
 func (repository *UpdateCredentialsRoleRepository) UpdateCredentialsRole(
 	ctx context.Context, userID uuid.UUID, data UpdateCredentialsRoleData,
 ) (*CredentialsEntity, error) {
@@ -80,8 +84,4 @@ func (repository *UpdateCredentialsRoleRepository) UpdateCredentialsRole(
 	}
 
 	return entity, nil
-}
-
-func NewUpdateCredentialsRoleRepository() *UpdateCredentialsRoleRepository {
-	return &UpdateCredentialsRoleRepository{}
 }

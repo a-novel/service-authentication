@@ -20,6 +20,10 @@ var DebugLogger = log.New(os.Stdout, "DEBUG: ", log.Lshortfile)
 
 type SMTPService struct{}
 
+func NewSMTPService() *SMTPService {
+	return &SMTPService{}
+}
+
 func (service *SMTPService) SMTP(
 	ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any,
 ) {
@@ -77,8 +81,4 @@ func (service *SMTPService) SMTP(
 
 		return
 	}
-}
-
-func NewSMTPService() *SMTPService {
-	return &SMTPService{}
 }

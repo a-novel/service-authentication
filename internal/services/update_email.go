@@ -29,6 +29,19 @@ type UpdateEmailSource interface {
 	ConsumeShortCode(ctx context.Context, request ConsumeShortCodeRequest) (*models.ShortCode, error)
 }
 
+func NewUpdateEmailSource(
+	updateCredentialsEmail *dao.UpdateCredentialsEmailRepository,
+	consumeShortCode *ConsumeShortCodeService,
+) UpdateEmailSource {
+	return &struct {
+		*dao.UpdateCredentialsEmailRepository
+		*ConsumeShortCodeService
+	}{
+		UpdateCredentialsEmailRepository: updateCredentialsEmail,
+		ConsumeShortCodeService:          consumeShortCode,
+	}
+}
+
 type UpdateEmailRequest struct {
 	UserID    uuid.UUID
 	ShortCode string
@@ -40,6 +53,10 @@ type UpdateEmailResponse struct {
 
 type UpdateEmailService struct {
 	source UpdateEmailSource
+}
+
+func NewUpdateEmailService(source UpdateEmailSource) *UpdateEmailService {
+	return &UpdateEmailService{source: source}
 }
 
 func (service *UpdateEmailService) UpdateEmail(
@@ -77,7 +94,9 @@ func (service *UpdateEmailService) UpdateEmail(
 	}
 
 	var newEmail string
-	if err = json.Unmarshal(shortCode.Data, &newEmail); err != nil {
+
+	err = json.Unmarshal(shortCode.Data, &newEmail)
+	if err != nil {
 		span.SetData("json.unmarshal.error", err.Error())
 
 		return nil, NewErrUpdateEmailService(fmt.Errorf("unmarshal short code data: %w", err))
@@ -99,7 +118,8 @@ func (service *UpdateEmailService) UpdateEmail(
 	span.SetData("dao.credentials.email", credentials.Email)
 
 	// Commit transaction.
-	if err = commit(true); err != nil {
+	err = commit(true)
+	if err != nil {
 		span.SetData("postgres.commit.error", err.Error())
 
 		return nil, NewErrUpdateEmailService(fmt.Errorf("commit transaction: %w", err))
@@ -108,21 +128,4 @@ func (service *UpdateEmailService) UpdateEmail(
 	return &UpdateEmailResponse{
 		NewEmail: credentials.Email,
 	}, nil
-}
-
-func NewUpdateEmailSource(
-	updateCredentialsEmail *dao.UpdateCredentialsEmailRepository,
-	consumeShortCode *ConsumeShortCodeService,
-) UpdateEmailSource {
-	return &struct {
-		*dao.UpdateCredentialsEmailRepository
-		*ConsumeShortCodeService
-	}{
-		UpdateCredentialsEmailRepository: updateCredentialsEmail,
-		ConsumeShortCodeService:          consumeShortCode,
-	}
-}
-
-func NewUpdateEmailService(source UpdateEmailSource) *UpdateEmailService {
-	return &UpdateEmailService{source: source}
 }

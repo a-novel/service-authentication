@@ -73,7 +73,8 @@ func InitAuthServer() {
 	}
 
 	go func() {
-		if err = httpServer.ListenAndServe(); err != nil {
+		err = httpServer.ListenAndServe()
+		if err != nil {
 			panic(err)
 		}
 	}()

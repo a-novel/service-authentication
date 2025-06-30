@@ -48,6 +48,10 @@ type DeleteShortCodeData struct {
 // You may create one using the NewDeleteShortCodeRepository function.
 type DeleteShortCodeRepository struct{}
 
+func NewDeleteShortCodeRepository() *DeleteShortCodeRepository {
+	return &DeleteShortCodeRepository{}
+}
+
 // DeleteShortCode performs a soft delete of a ShortCodeEntity.
 //
 // A short code is a one-time password used to grant a user access to a specific resource. Only one instance of
@@ -118,8 +122,4 @@ func (repository *DeleteShortCodeRepository) DeleteShortCode(
 	}
 
 	return entity, nil
-}
-
-func NewDeleteShortCodeRepository() *DeleteShortCodeRepository {
-	return &DeleteShortCodeRepository{}
 }

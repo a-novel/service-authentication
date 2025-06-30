@@ -23,6 +23,10 @@ func NewErrSelectKeyRepository(err error) error {
 // You may create one using the NewSelectKeyRepository function.
 type SelectKeyRepository struct{}
 
+func NewSelectKeyRepository() *SelectKeyRepository {
+	return &SelectKeyRepository{}
+}
+
 // SelectKey returns a public/private key pair based on their unique identifier (ID).
 //
 // The ID of a key pair is usually carried by the payload they were used on, for example thw KIS field of a JWT header.
@@ -45,7 +49,8 @@ func (repository *SelectKeyRepository) SelectKey(ctx context.Context, id uuid.UU
 	var entity KeyEntity
 
 	// Execute query.
-	if err = tx.NewSelect().Model(&entity).Where("id = ?", id).Order("id DESC").Scan(span.Context()); err != nil {
+	err = tx.NewSelect().Model(&entity).Where("id = ?", id).Order("id DESC").Scan(span.Context())
+	if err != nil {
 		span.SetData("scan.error", err.Error())
 
 		// Parse not found error as a managed error.
@@ -57,8 +62,4 @@ func (repository *SelectKeyRepository) SelectKey(ctx context.Context, id uuid.UU
 	}
 
 	return &entity, nil
-}
-
-func NewSelectKeyRepository() *SelectKeyRepository {
-	return &SelectKeyRepository{}
 }

@@ -14,7 +14,9 @@ import (
 
 func (api *API) jwkToModel(src *jwa.JWK) (*codegen.JWK, error) {
 	rawPayload := new(codegen.JWKAdditional)
-	if err := rawPayload.UnmarshalJSON(src.Payload); err != nil {
+
+	err := rawPayload.UnmarshalJSON(src.Payload)
+	if err != nil {
 		return nil, fmt.Errorf("unmarshal payload: %w", err)
 	}
 

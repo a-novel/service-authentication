@@ -33,6 +33,10 @@ type SelectShortCodeByParamsData struct {
 // You may create one using the NewSelectShortCodeByParamsRepository function.
 type SelectShortCodeByParamsRepository struct{}
 
+func NewSelectShortCodeByParamsRepository() *SelectShortCodeByParamsRepository {
+	return &SelectShortCodeByParamsRepository{}
+}
+
 // SelectShortCodeByParams returns a short code based on its unique combined identifier (target and usage).
 //
 // This method only returns active short codes.
@@ -76,8 +80,4 @@ func (repository *SelectShortCodeByParamsRepository) SelectShortCodeByParams(
 	}
 
 	return &entity, nil
-}
-
-func NewSelectShortCodeByParamsRepository() *SelectShortCodeByParamsRepository {
-	return &SelectShortCodeByParamsRepository{}
 }

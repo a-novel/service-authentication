@@ -43,6 +43,28 @@ type IssueTokenService struct {
 	claimsConfig jwt.ClaimsProducerConfig
 }
 
+func NewIssueTokenService(authSignSource *jwk.Source[ed25519.PrivateKey]) *IssueTokenService {
+	signer := jws.NewSourcedED25519Signer(authSignSource)
+
+	producer := jwt.NewProducer(jwt.ProducerConfig{
+		Plugins: []jwt.ProducerPlugin{signer},
+	})
+
+	basicClaims := jwt.ClaimsProducerConfig{
+		TargetConfig: jwt.TargetConfig{
+			Issuer:   config.Tokens.Usages[models.KeyUsageAuth].Issuer,
+			Audience: config.Tokens.Usages[models.KeyUsageAuth].Audience,
+			Subject:  config.Tokens.Usages[models.KeyUsageAuth].Subject,
+		},
+		TTL: config.Tokens.Usages[models.KeyUsageAuth].TTL,
+	}
+
+	return &IssueTokenService{
+		producer:     producer,
+		claimsConfig: basicClaims,
+	}
+}
+
 // IssueToken issues a new auth data for accessing the APIs. This data can then be passed to the AuthenticateService
 // to verify the user's identity.
 func (service *IssueTokenService) IssueToken(
@@ -76,26 +98,4 @@ func (service *IssueTokenService) IssueToken(
 	}
 
 	return accessToken, nil
-}
-
-func NewIssueTokenService(authSignSource *jwk.Source[ed25519.PrivateKey]) *IssueTokenService {
-	signer := jws.NewSourcedED25519Signer(authSignSource)
-
-	producer := jwt.NewProducer(jwt.ProducerConfig{
-		Plugins: []jwt.ProducerPlugin{signer},
-	})
-
-	basicClaims := jwt.ClaimsProducerConfig{
-		TargetConfig: jwt.TargetConfig{
-			Issuer:   config.Tokens.Usages[models.KeyUsageAuth].Issuer,
-			Audience: config.Tokens.Usages[models.KeyUsageAuth].Audience,
-			Subject:  config.Tokens.Usages[models.KeyUsageAuth].Subject,
-		},
-		TTL: config.Tokens.Usages[models.KeyUsageAuth].TTL,
-	}
-
-	return &IssueTokenService{
-		producer:     producer,
-		claimsConfig: basicClaims,
-	}
 }

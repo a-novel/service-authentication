@@ -39,6 +39,10 @@ type UpdateCredentialsEmailData struct {
 // You may create one using the NewUpdateCredentialsEmailRepository function.
 type UpdateCredentialsEmailRepository struct{}
 
+func NewUpdateCredentialsEmailRepository() *UpdateCredentialsEmailRepository {
+	return &UpdateCredentialsEmailRepository{}
+}
+
 // UpdateCredentialsEmail updates the email of a set of credentials in the database.
 //
 // The new email MUST have been validated beforehand, and be unique among all credentials.
@@ -99,8 +103,4 @@ func (repository *UpdateCredentialsEmailRepository) UpdateCredentialsEmail(
 	}
 
 	return entity, nil
-}
-
-func NewUpdateCredentialsEmailRepository() *UpdateCredentialsEmailRepository {
-	return &UpdateCredentialsEmailRepository{}
 }

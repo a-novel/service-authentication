@@ -31,6 +31,19 @@ type ConsumeShortCodeSource interface {
 	DeleteShortCode(ctx context.Context, data dao.DeleteShortCodeData) (*dao.ShortCodeEntity, error)
 }
 
+func NewConsumeShortCodeSource(
+	selectShortCode *dao.SelectShortCodeByParamsRepository,
+	deleteShortCode *dao.DeleteShortCodeRepository,
+) ConsumeShortCodeSource {
+	return &struct {
+		*dao.SelectShortCodeByParamsRepository
+		*dao.DeleteShortCodeRepository
+	}{
+		SelectShortCodeByParamsRepository: selectShortCode,
+		DeleteShortCodeRepository:         deleteShortCode,
+	}
+}
+
 // ConsumeShortCodeRequest is the input used to perform the ConsumeShortCodeService.ConsumeShortCode action.
 type ConsumeShortCodeRequest struct {
 	// Information about the resource the short code grants access to.
@@ -46,6 +59,10 @@ type ConsumeShortCodeRequest struct {
 // You may create one using the NewConsumeShortCodeService function.
 type ConsumeShortCodeService struct {
 	source ConsumeShortCodeSource
+}
+
+func NewConsumeShortCodeService(source ConsumeShortCodeSource) *ConsumeShortCodeService {
+	return &ConsumeShortCodeService{source: source}
 }
 
 // ConsumeShortCode validates a plain code against an encrypted short code, and expires the short code if the
@@ -77,7 +94,8 @@ func (service *ConsumeShortCodeService) ConsumeShortCode(
 	span.SetData("shortCode.id", entity.ID)
 
 	// Compare the encrypted code with the plain code of the request.
-	if err = lib.CompareScrypt(request.Code, entity.Code); err != nil {
+	err = lib.CompareScrypt(request.Code, entity.Code)
+	if err != nil {
 		span.SetData("scrypt.error", err.Error())
 
 		return nil, NewErrConsumeShortCodeService(errors.Join(
@@ -107,21 +125,4 @@ func (service *ConsumeShortCodeService) ConsumeShortCode(
 		ExpiresAt: entity.ExpiresAt,
 		PlainCode: request.Code,
 	}, nil
-}
-
-func NewConsumeShortCodeSource(
-	selectShortCode *dao.SelectShortCodeByParamsRepository,
-	deleteShortCode *dao.DeleteShortCodeRepository,
-) ConsumeShortCodeSource {
-	return &struct {
-		*dao.SelectShortCodeByParamsRepository
-		*dao.DeleteShortCodeRepository
-	}{
-		SelectShortCodeByParamsRepository: selectShortCode,
-		DeleteShortCodeRepository:         deleteShortCode,
-	}
-}
-
-func NewConsumeShortCodeService(source ConsumeShortCodeSource) *ConsumeShortCodeService {
-	return &ConsumeShortCodeService{source: source}
 }

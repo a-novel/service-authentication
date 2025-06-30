@@ -33,6 +33,22 @@ type UpdatePasswordSource interface {
 	ConsumeShortCode(ctx context.Context, request ConsumeShortCodeRequest) (*models.ShortCode, error)
 }
 
+func NewUpdatePasswordSource(
+	selectCredentialsDAO *dao.SelectCredentialsRepository,
+	updateCredentialsDAO *dao.UpdateCredentialsPasswordRepository,
+	consumeShortCode *ConsumeShortCodeService,
+) UpdatePasswordSource {
+	return &struct {
+		*dao.SelectCredentialsRepository
+		*dao.UpdateCredentialsPasswordRepository
+		*ConsumeShortCodeService
+	}{
+		SelectCredentialsRepository:         selectCredentialsDAO,
+		UpdateCredentialsPasswordRepository: updateCredentialsDAO,
+		ConsumeShortCodeService:             consumeShortCode,
+	}
+}
+
 type UpdatePasswordRequest struct {
 	Password        string
 	CurrentPassword string
@@ -42,6 +58,10 @@ type UpdatePasswordRequest struct {
 
 type UpdatePasswordService struct {
 	source UpdatePasswordSource
+}
+
+func NewUpdatePasswordService(source UpdatePasswordSource) *UpdatePasswordService {
+	return &UpdatePasswordService{source: source}
 }
 
 func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, request UpdatePasswordRequest) error {
@@ -96,7 +116,8 @@ func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, reques
 		}
 
 		// Check if the current password is correct.
-		if err = lib.CompareScrypt(request.CurrentPassword, credentials.Password); err != nil {
+		err = lib.CompareScrypt(request.CurrentPassword, credentials.Password)
+		if err != nil {
 			span.SetData("scrypt.compare.error", err.Error())
 
 			return NewErrUpdatePasswordService(fmt.Errorf("compare current password: %w", err))
@@ -117,31 +138,12 @@ func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, reques
 	}
 
 	// Commit transaction.
-	if err = commit(true); err != nil {
+	err = commit(true)
+	if err != nil {
 		span.SetData("postgres.commit.error", err.Error())
 
 		return NewErrUpdatePasswordService(fmt.Errorf("commit transaction: %w", err))
 	}
 
 	return nil
-}
-
-func NewUpdatePasswordSource(
-	selectCredentialsDAO *dao.SelectCredentialsRepository,
-	updateCredentialsDAO *dao.UpdateCredentialsPasswordRepository,
-	consumeShortCode *ConsumeShortCodeService,
-) UpdatePasswordSource {
-	return &struct {
-		*dao.SelectCredentialsRepository
-		*dao.UpdateCredentialsPasswordRepository
-		*ConsumeShortCodeService
-	}{
-		SelectCredentialsRepository:         selectCredentialsDAO,
-		UpdateCredentialsPasswordRepository: updateCredentialsDAO,
-		ConsumeShortCodeService:             consumeShortCode,
-	}
-}
-
-func NewUpdatePasswordService(source UpdatePasswordSource) *UpdatePasswordService {
-	return &UpdatePasswordService{source: source}
 }
