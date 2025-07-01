@@ -351,10 +351,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								switch r.Method {
 								case "PATCH":
 									s.handleRefreshSessionRequest([0]string{}, elemIsEscaped, w, r)
-								case "PUT":
-									s.handleCreateRefreshTokenRequest([0]string{}, elemIsEscaped, w, r)
 								default:
-									s.notAllowed(w, r, "PATCH,PUT")
+									s.notAllowed(w, r, "PATCH")
 								}
 
 								return
@@ -938,14 +936,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 									r.name = RefreshSessionOperation
 									r.summary = "Refresh access token."
 									r.operationID = "refreshSession"
-									r.pathPattern = "/session/refresh"
-									r.args = args
-									r.count = 0
-									return r, true
-								case "PUT":
-									r.name = CreateRefreshTokenOperation
-									r.summary = "Issue a new refresh token."
-									r.operationID = "createRefreshToken"
 									r.pathPattern = "/session/refresh"
 									r.args = args
 									r.count = 0

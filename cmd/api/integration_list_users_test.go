@@ -65,7 +65,7 @@ func TestListUsers(t *testing.T) {
 		require.NoError(t, err)
 
 		res, ok := rawRes.(*codegen.ListUsersOKApplicationJSON)
-		require.True(t, ok)
+		require.True(t, ok, rawRes)
 
 		targetedUsers := lo.Filter(*res, func(item codegen.User, _ int) bool {
 			return lo.Contains(
@@ -99,7 +99,7 @@ func TestListUsers(t *testing.T) {
 		require.NoError(t, err)
 
 		res, ok := rawRes.(*codegen.ListUsersOKApplicationJSON)
-		require.True(t, ok)
+		require.True(t, ok, rawRes)
 
 		targetedUsers := lo.Filter(*res, func(item codegen.User, _ int) bool {
 			return lo.Contains(

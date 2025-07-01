@@ -63,20 +63,6 @@ func TestIssueRefreshToken(t *testing.T) {
 
 			expectErr: services.ErrRefreshTokenWithAnonSession,
 		},
-		{
-			name: "RefreshRefreshToken",
-
-			publicKey: publicKeys[0],
-			request: services.IssueRefreshTokenRequest{
-				Claims: &models.AccessTokenClaims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []models.Role{models.RoleUser},
-					RefreshTokenID: lo.ToPtr("00000000-0000-0000-0000-000000000002"),
-				},
-			},
-
-			expectErr: services.ErrRefreshRefreshToken,
-		},
 	}
 
 	for _, testCase := range testCases {
@@ -91,7 +77,7 @@ func TestIssueRefreshToken(t *testing.T) {
 
 			service := services.NewIssueRefreshTokenService(source)
 
-			data, err := service.IssueRefreshToken(t.Context(), testCase.request)
+			data, _, err := service.IssueRefreshToken(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 
 			if err == nil {
@@ -100,10 +86,11 @@ func TestIssueRefreshToken(t *testing.T) {
 					Plugins: []jwt.RecipientPlugin{verifier},
 				})
 
-				var claims models.RefreshTokenClaims
+				var tokenClaims models.RefreshTokenClaims
 
-				require.NoError(t, recipient.Consume(t.Context(), data, &claims))
-				require.Equal(t, testCase.expect, claims)
+				require.NoError(t, recipient.Consume(t.Context(), data, &tokenClaims))
+				require.Equal(t, testCase.expect.UserID, tokenClaims.UserID)
+				require.NotEmpty(t, tokenClaims.Jti)
 			}
 		})
 	}

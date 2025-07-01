@@ -93,7 +93,7 @@ func mustIssueRefreshToken(
 	})
 
 	issuer := services.NewIssueRefreshTokenService(source)
-	token, err := issuer.IssueRefreshToken(t.Context(), request)
+	token, _, err := issuer.IssueRefreshToken(t.Context(), request)
 	require.NoError(t, err)
 
 	return token

@@ -20,3 +20,8 @@ type RefreshTokenClaims struct {
 	// ID of the user that created the session.
 	UserID uuid.UUID `json:"userID,omitempty"`
 }
+
+type Token struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken,omitempty"`
+}

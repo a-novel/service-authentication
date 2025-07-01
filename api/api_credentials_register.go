@@ -10,10 +10,11 @@ import (
 	"github.com/a-novel/service-authentication/api/codegen"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models"
 )
 
 type RegisterService interface {
-	Register(ctx context.Context, request services.RegisterRequest) (string, error)
+	Register(ctx context.Context, request services.RegisterRequest) (*models.Token, error)
 }
 
 func (api *API) Register(ctx context.Context, req *codegen.RegisterForm) (codegen.RegisterRes, error) {
@@ -22,7 +23,7 @@ func (api *API) Register(ctx context.Context, req *codegen.RegisterForm) (codege
 
 	span.SetData("request.email", req.GetEmail())
 
-	accessToken, err := api.RegisterService.Register(span.Context(), services.RegisterRequest{
+	token, err := api.RegisterService.Register(span.Context(), services.RegisterRequest{
 		Email:     string(req.GetEmail()),
 		Password:  string(req.GetPassword()),
 		ShortCode: string(req.GetShortCode()),
@@ -43,5 +44,5 @@ func (api *API) Register(ctx context.Context, req *codegen.RegisterForm) (codege
 		return nil, fmt.Errorf("register user: %w", err)
 	}
 
-	return &codegen.Token{AccessToken: accessToken}, nil
+	return &codegen.Token{AccessToken: token.AccessToken, RefreshToken: token.RefreshToken}, nil
 }

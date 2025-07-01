@@ -36,7 +36,7 @@ type ConsumeRefreshTokenSource interface {
 	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
 }
 
-func NewNewConsumeRefreshTokenServiceSource(
+func NewConsumeRefreshTokenServiceSource(
 	selectCredentialsDAO *dao.SelectCredentialsRepository,
 	issueTokenService *IssueTokenService,
 ) ConsumeRefreshTokenSource {
@@ -167,7 +167,7 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	span.SetData("accessTokenClaims.refreshTokenID", lo.FromPtr(accessTokenClaims.RefreshTokenID))
 	span.SetData("refreshTokenClaims.jti", refreshTokenClaims.Jti)
 
-	if accessTokenClaims.RefreshTokenID != nil && *accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
+	if lo.FromPtr(accessTokenClaims.RefreshTokenID) != refreshTokenClaims.Jti {
 		span.SetData("error", "access token was not issued with the provided refresh token")
 
 		return "", NewErrConsumeRefreshTokenService(ErrTokenIssuedWithDifferentRefreshToken)

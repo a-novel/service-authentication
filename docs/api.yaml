@@ -236,35 +236,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnexpectedError"
-    put:
-      tags:
-        - session
-      summary: Issue a new refresh token.
-      description: |
-        Issue a new refresh token. The access token used for this request must not be anonymous, and must come from
-        direct login (not a refresh token).
-      operationId: createRefreshToken
-      responses:
-        "200":
-          description: The session is valid.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RefreshToken"
-        "403":
-          description: |
-            The authorization header is correctly set, but verification failed. The token is properly parsed, but its
-            signature might be tampered or expired.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ForbiddenError"
-        default:
-          description: An unexpected error occurred while processing the request.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UnexpectedError"
 
   /public-keys:
     get:
@@ -897,6 +868,7 @@ components:
       type: object
       required:
         - accessToken
+        - refreshToken
       properties:
         accessToken:
           type: string
@@ -908,11 +880,6 @@ components:
             W50IiwiZXhwIjoxNzM5NTk2NzU1LCJpYXQiOjE3Mzk1MTAzNTUsImlzcyI6ImFub3ZlbC1hdXRoZW50aWNhdGlvbiIsImp0aSI6IjI5NDcx
             YzAxLTVhZTEtNGIwMS1iNzI5LWUxNzQ4ODUzOGUxNSIsIm5iZiI6MTczOTUxMDM1NSwicm9sZXMiOlsiYXV0aDphbm9uIl0sInN1YiI6InV
             zZXItYWNjZXNzIn0.Bx5iCWhT31WktGbwYTKq-M-oaNfPvpcRxQk4YO4dYij-FXlVNmuechkIfARNJeX9FTfRL00PXvA2_kvfjC2rCQ
-    RefreshToken:
-      type: object
-      required:
-        - refreshToken
-      properties:
         refreshToken:
           type: string
           description: |

@@ -280,22 +280,24 @@ func (_m *MockRegisterService) EXPECT() *MockRegisterService_Expecter {
 }
 
 // Register provides a mock function for the type MockRegisterService
-func (_mock *MockRegisterService) Register(ctx context.Context, request services.RegisterRequest) (string, error) {
+func (_mock *MockRegisterService) Register(ctx context.Context, request services.RegisterRequest) (*models.Token, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Register")
 	}
 
-	var r0 string
+	var r0 *models.Token
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.RegisterRequest) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.RegisterRequest) (*models.Token, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.RegisterRequest) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.RegisterRequest) *models.Token); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Token)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, services.RegisterRequest) error); ok {
 		r1 = returnFunc(ctx, request)
@@ -324,12 +326,12 @@ func (_c *MockRegisterService_Register_Call) Run(run func(ctx context.Context, r
 	return _c
 }
 
-func (_c *MockRegisterService_Register_Call) Return(s string, err error) *MockRegisterService_Register_Call {
-	_c.Call.Return(s, err)
+func (_c *MockRegisterService_Register_Call) Return(token *models.Token, err error) *MockRegisterService_Register_Call {
+	_c.Call.Return(token, err)
 	return _c
 }
 
-func (_c *MockRegisterService_Register_Call) RunAndReturn(run func(ctx context.Context, request services.RegisterRequest) (string, error)) *MockRegisterService_Register_Call {
+func (_c *MockRegisterService_Register_Call) RunAndReturn(run func(ctx context.Context, request services.RegisterRequest) (*models.Token, error)) *MockRegisterService_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -614,22 +616,24 @@ func (_m *MockLoginService) EXPECT() *MockLoginService_Expecter {
 }
 
 // Login provides a mock function for the type MockLoginService
-func (_mock *MockLoginService) Login(ctx context.Context, request services.LoginRequest) (string, error) {
+func (_mock *MockLoginService) Login(ctx context.Context, request services.LoginRequest) (*models.Token, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Login")
 	}
 
-	var r0 string
+	var r0 *models.Token
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.LoginRequest) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.LoginRequest) (*models.Token, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.LoginRequest) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.LoginRequest) *models.Token); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Token)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, services.LoginRequest) error); ok {
 		r1 = returnFunc(ctx, request)
@@ -658,12 +662,12 @@ func (_c *MockLoginService_Login_Call) Run(run func(ctx context.Context, request
 	return _c
 }
 
-func (_c *MockLoginService_Login_Call) Return(s string, err error) *MockLoginService_Login_Call {
-	_c.Call.Return(s, err)
+func (_c *MockLoginService_Login_Call) Return(token *models.Token, err error) *MockLoginService_Login_Call {
+	_c.Call.Return(token, err)
 	return _c
 }
 
-func (_c *MockLoginService_Login_Call) RunAndReturn(run func(ctx context.Context, request services.LoginRequest) (string, error)) *MockLoginService_Login_Call {
+func (_c *MockLoginService_Login_Call) RunAndReturn(run func(ctx context.Context, request services.LoginRequest) (*models.Token, error)) *MockLoginService_Login_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -745,88 +749,6 @@ func (_c *MockLoginAnonService_LoginAnon_Call) Return(s string, err error) *Mock
 }
 
 func (_c *MockLoginAnonService_LoginAnon_Call) RunAndReturn(run func(ctx context.Context) (string, error)) *MockLoginAnonService_LoginAnon_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// NewMockIssueRefreshTokenService creates a new instance of MockIssueRefreshTokenService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewMockIssueRefreshTokenService(t interface {
-	mock.TestingT
-	Cleanup(func())
-}) *MockIssueRefreshTokenService {
-	mock := &MockIssueRefreshTokenService{}
-	mock.Mock.Test(t)
-
-	t.Cleanup(func() { mock.AssertExpectations(t) })
-
-	return mock
-}
-
-// MockIssueRefreshTokenService is an autogenerated mock type for the IssueRefreshTokenService type
-type MockIssueRefreshTokenService struct {
-	mock.Mock
-}
-
-type MockIssueRefreshTokenService_Expecter struct {
-	mock *mock.Mock
-}
-
-func (_m *MockIssueRefreshTokenService) EXPECT() *MockIssueRefreshTokenService_Expecter {
-	return &MockIssueRefreshTokenService_Expecter{mock: &_m.Mock}
-}
-
-// IssueRefreshToken provides a mock function for the type MockIssueRefreshTokenService
-func (_mock *MockIssueRefreshTokenService) IssueRefreshToken(ctx context.Context, request services.IssueRefreshTokenRequest) (string, error) {
-	ret := _mock.Called(ctx, request)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IssueRefreshToken")
-	}
-
-	var r0 string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) (string, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) string); ok {
-		r0 = returnFunc(ctx, request)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueRefreshTokenRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockIssueRefreshTokenService_IssueRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueRefreshToken'
-type MockIssueRefreshTokenService_IssueRefreshToken_Call struct {
-	*mock.Call
-}
-
-// IssueRefreshToken is a helper method to define mock.On call
-//   - ctx
-//   - request
-func (_e *MockIssueRefreshTokenService_Expecter) IssueRefreshToken(ctx interface{}, request interface{}) *MockIssueRefreshTokenService_IssueRefreshToken_Call {
-	return &MockIssueRefreshTokenService_IssueRefreshToken_Call{Call: _e.mock.On("IssueRefreshToken", ctx, request)}
-}
-
-func (_c *MockIssueRefreshTokenService_IssueRefreshToken_Call) Run(run func(ctx context.Context, request services.IssueRefreshTokenRequest)) *MockIssueRefreshTokenService_IssueRefreshToken_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.IssueRefreshTokenRequest))
-	})
-	return _c
-}
-
-func (_c *MockIssueRefreshTokenService_IssueRefreshToken_Call) Return(s string, err error) *MockIssueRefreshTokenService_IssueRefreshToken_Call {
-	_c.Call.Return(s, err)
-	return _c
-}
-
-func (_c *MockIssueRefreshTokenService_IssueRefreshToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueRefreshTokenRequest) (string, error)) *MockIssueRefreshTokenService_IssueRefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

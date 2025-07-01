@@ -798,6 +798,69 @@ func (_m *MockLoginSource) EXPECT() *MockLoginSource_Expecter {
 	return &MockLoginSource_Expecter{mock: &_m.Mock}
 }
 
+// IssueRefreshToken provides a mock function for the type MockLoginSource
+func (_mock *MockLoginSource) IssueRefreshToken(ctx context.Context, request services.IssueRefreshTokenRequest) (string, *jwa.Claims, error) {
+	ret := _mock.Called(ctx, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IssueRefreshToken")
+	}
+
+	var r0 string
+	var r1 *jwa.Claims
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) (string, *jwa.Claims, error)); ok {
+		return returnFunc(ctx, request)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) string); ok {
+		r0 = returnFunc(ctx, request)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueRefreshTokenRequest) *jwa.Claims); ok {
+		r1 = returnFunc(ctx, request)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*jwa.Claims)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, services.IssueRefreshTokenRequest) error); ok {
+		r2 = returnFunc(ctx, request)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockLoginSource_IssueRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueRefreshToken'
+type MockLoginSource_IssueRefreshToken_Call struct {
+	*mock.Call
+}
+
+// IssueRefreshToken is a helper method to define mock.On call
+//   - ctx
+//   - request
+func (_e *MockLoginSource_Expecter) IssueRefreshToken(ctx interface{}, request interface{}) *MockLoginSource_IssueRefreshToken_Call {
+	return &MockLoginSource_IssueRefreshToken_Call{Call: _e.mock.On("IssueRefreshToken", ctx, request)}
+}
+
+func (_c *MockLoginSource_IssueRefreshToken_Call) Run(run func(ctx context.Context, request services.IssueRefreshTokenRequest)) *MockLoginSource_IssueRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(services.IssueRefreshTokenRequest))
+	})
+	return _c
+}
+
+func (_c *MockLoginSource_IssueRefreshToken_Call) Return(s string, claims *jwa.Claims, err error) *MockLoginSource_IssueRefreshToken_Call {
+	_c.Call.Return(s, claims, err)
+	return _c
+}
+
+func (_c *MockLoginSource_IssueRefreshToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueRefreshTokenRequest) (string, *jwa.Claims, error)) *MockLoginSource_IssueRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // IssueToken provides a mock function for the type MockLoginSource
 func (_mock *MockLoginSource) IssueToken(ctx context.Context, request services.IssueTokenRequest) (string, error) {
 	ret := _mock.Called(ctx, request)
@@ -1129,6 +1192,69 @@ func (_c *MockRegisterSource_InsertCredentials_Call) Return(credentialsEntity *d
 }
 
 func (_c *MockRegisterSource_InsertCredentials_Call) RunAndReturn(run func(ctx context.Context, data dao.InsertCredentialsData) (*dao.CredentialsEntity, error)) *MockRegisterSource_InsertCredentials_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IssueRefreshToken provides a mock function for the type MockRegisterSource
+func (_mock *MockRegisterSource) IssueRefreshToken(ctx context.Context, request services.IssueRefreshTokenRequest) (string, *jwa.Claims, error) {
+	ret := _mock.Called(ctx, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IssueRefreshToken")
+	}
+
+	var r0 string
+	var r1 *jwa.Claims
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) (string, *jwa.Claims, error)); ok {
+		return returnFunc(ctx, request)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) string); ok {
+		r0 = returnFunc(ctx, request)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueRefreshTokenRequest) *jwa.Claims); ok {
+		r1 = returnFunc(ctx, request)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*jwa.Claims)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, services.IssueRefreshTokenRequest) error); ok {
+		r2 = returnFunc(ctx, request)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockRegisterSource_IssueRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueRefreshToken'
+type MockRegisterSource_IssueRefreshToken_Call struct {
+	*mock.Call
+}
+
+// IssueRefreshToken is a helper method to define mock.On call
+//   - ctx
+//   - request
+func (_e *MockRegisterSource_Expecter) IssueRefreshToken(ctx interface{}, request interface{}) *MockRegisterSource_IssueRefreshToken_Call {
+	return &MockRegisterSource_IssueRefreshToken_Call{Call: _e.mock.On("IssueRefreshToken", ctx, request)}
+}
+
+func (_c *MockRegisterSource_IssueRefreshToken_Call) Run(run func(ctx context.Context, request services.IssueRefreshTokenRequest)) *MockRegisterSource_IssueRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(services.IssueRefreshTokenRequest))
+	})
+	return _c
+}
+
+func (_c *MockRegisterSource_IssueRefreshToken_Call) Return(s string, claims *jwa.Claims, err error) *MockRegisterSource_IssueRefreshToken_Call {
+	_c.Call.Return(s, claims, err)
+	return _c
+}
+
+func (_c *MockRegisterSource_IssueRefreshToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueRefreshTokenRequest) (string, *jwa.Claims, error)) *MockRegisterSource_IssueRefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

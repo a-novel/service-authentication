@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/ed25519"
 
 	"github.com/a-novel-kit/jwt"
+	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel-kit/jwt/jwk"
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -18,9 +19,6 @@ import (
 )
 
 var (
-	ErrRefreshRefreshToken = errors.New(
-		"only access token issued from a direct login can be used to generate a refresh token",
-	)
 	ErrRefreshTokenWithAnonSession = errors.New("anonymous sessions cannot issue a refresh token")
 
 	ErrIssueRefreshTokenService = errors.New("IssueRefreshTokenService.IssueRefreshToken")
@@ -63,7 +61,7 @@ func NewIssueRefreshTokenService(authSignSource *jwk.Source[ed25519.PrivateKey])
 
 func (service *IssueRefreshTokenService) IssueRefreshToken(
 	ctx context.Context, request IssueRefreshTokenRequest,
-) (string, error) {
+) (string, *jwa.Claims, error) {
 	span := sentry.StartSpan(ctx, "IssueRefreshTokenService.IssueRefreshToken")
 	defer span.Finish()
 
@@ -71,35 +69,29 @@ func (service *IssueRefreshTokenService) IssueRefreshToken(
 	span.SetData("refreshTokenID", lo.FromPtr(request.Claims.RefreshTokenID))
 	span.SetData("roles", request.Claims.Roles)
 
-	if request.Claims.RefreshTokenID != nil {
-		span.SetData("error", "refresh token ID is not nil")
-
-		return "", NewErrIssueRefreshTokenService(ErrRefreshRefreshToken)
-	}
-
 	if request.Claims.UserID == nil {
 		span.SetData("error", "user ID is not set in the claims")
 
-		return "", NewErrIssueRefreshTokenService(ErrRefreshTokenWithAnonSession)
+		return "", nil, NewErrIssueRefreshTokenService(ErrRefreshTokenWithAnonSession)
 	}
 
-	customClaims := models.RefreshTokenClaims{
-		UserID: lo.FromPtr(request.Claims.UserID),
+	customClaims := map[string]any{
+		"userID": lo.FromPtr(request.Claims.UserID),
 	}
 
 	claims, err := jwt.NewBasicClaims(customClaims, service.claimsConfig)
 	if err != nil {
 		span.SetData("claims.create.error", err.Error())
 
-		return "", NewErrIssueRefreshTokenService(fmt.Errorf("create claims: %w", err))
+		return "", nil, NewErrIssueRefreshTokenService(fmt.Errorf("create claims: %w", err))
 	}
 
 	refreshToken, err := service.producer.Issue(span.Context(), claims, nil)
 	if err != nil {
 		span.SetData("jwt.issue.error", err.Error())
 
-		return "", NewErrIssueRefreshTokenService(fmt.Errorf("issue token: %w", err))
+		return "", nil, NewErrIssueRefreshTokenService(fmt.Errorf("issue token: %w", err))
 	}
 
-	return refreshToken, nil
+	return refreshToken, claims, nil
 }

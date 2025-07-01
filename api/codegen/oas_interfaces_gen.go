@@ -9,10 +9,6 @@ type CreateAnonSessionRes interface {
 	createAnonSessionRes()
 }
 
-type CreateRefreshTokenRes interface {
-	createRefreshTokenRes()
-}
-
 type CreateSessionRes interface {
 	createSessionRes()
 }

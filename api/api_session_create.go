@@ -11,10 +11,11 @@ import (
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models"
 )
 
 type LoginService interface {
-	Login(ctx context.Context, request services.LoginRequest) (string, error)
+	Login(ctx context.Context, request services.LoginRequest) (*models.Token, error)
 }
 
 func (api *API) CreateSession(ctx context.Context, req *codegen.LoginForm) (codegen.CreateSessionRes, error) {
@@ -23,7 +24,7 @@ func (api *API) CreateSession(ctx context.Context, req *codegen.LoginForm) (code
 
 	span.SetData("request.email", req.GetEmail())
 
-	accessToken, err := api.LoginService.Login(span.Context(), services.LoginRequest{
+	token, err := api.LoginService.Login(span.Context(), services.LoginRequest{
 		Email:    string(req.GetEmail()),
 		Password: string(req.GetPassword()),
 	})
@@ -43,5 +44,5 @@ func (api *API) CreateSession(ctx context.Context, req *codegen.LoginForm) (code
 		return nil, fmt.Errorf("login user: %w", err)
 	}
 
-	return &codegen.Token{AccessToken: accessToken}, nil
+	return &codegen.Token{AccessToken: token.AccessToken, RefreshToken: token.RefreshToken}, nil
 }

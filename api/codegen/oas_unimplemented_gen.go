@@ -37,17 +37,6 @@ func (UnimplementedHandler) CreateAnonSession(ctx context.Context) (r CreateAnon
 	return r, ht.ErrNotImplemented
 }
 
-// CreateRefreshToken implements createRefreshToken operation.
-//
-// Issue a new refresh token. The access token used for this request must not be anonymous, and must
-// come from
-// direct login (not a refresh token).
-//
-// PUT /session/refresh
-func (UnimplementedHandler) CreateRefreshToken(ctx context.Context) (r CreateRefreshTokenRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // CreateSession implements createSession operation.
 //
 // Create a new session, using a set of credentials. The provided credentials will be used to

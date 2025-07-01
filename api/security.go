@@ -113,7 +113,7 @@ func (security *SecurityHandler) HandleBearerAuth(
 		if _, ok := grantedPermissions[models.Permission(permission)]; !ok {
 			span.SetData("permission.err", "missing permission: "+permission)
 
-			return nil, ErrPermission
+			return nil, fmt.Errorf("%w: missing permission %s", ErrPermission, permission)
 		}
 	}
 

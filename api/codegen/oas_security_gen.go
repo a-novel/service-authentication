@@ -34,8 +34,7 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	CheckSessionOperation:       []string{},
-	CreateRefreshTokenOperation: []string{},
+	CheckSessionOperation: []string{},
 	EmailExistsOperation: []string{
 		"email:exists",
 	},

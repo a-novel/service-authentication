@@ -90,30 +90,6 @@ func TestConsumeRefreshToken(t *testing.T) {
 			request: services.ConsumeRefreshTokenRequest{
 				RefreshToken: sampleRefreshToken,
 				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []models.Role{models.RoleUser},
-				}),
-			},
-
-			selectCredentialsData: &selectCredentialsData{
-				resp: &dao.CredentialsEntity{
-					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Role: models.CredentialsRoleAdmin,
-				},
-			},
-
-			issueTokenData: &issueTokenData{
-				resp: "access_token",
-			},
-
-			expect: "access_token",
-		},
-		{
-			name: "IssuedByTheSameRefreshToken",
-
-			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: sampleRefreshToken,
-				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []models.Role{models.RoleUser},
 					RefreshTokenID: &refreshPayload.Jti,
