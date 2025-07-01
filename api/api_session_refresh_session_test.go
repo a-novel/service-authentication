@@ -46,7 +46,10 @@ func TestRefreshSession(t *testing.T) {
 				resp: "new-access-token",
 			},
 
-			expect: &codegen.Token{AccessToken: "new-access-token"},
+			expect: &codegen.Token{
+				RefreshToken: "refresh-token",
+				AccessToken:  "new-access-token",
+			},
 		},
 		{
 			name: "Unauthorized",

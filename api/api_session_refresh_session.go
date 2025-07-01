@@ -46,5 +46,8 @@ func (api *API) RefreshSession(
 		return nil, fmt.Errorf("refresh session: %w", err)
 	}
 
-	return &codegen.Token{AccessToken: accessToken}, nil
+	return &codegen.Token{
+		AccessToken:  accessToken,
+		RefreshToken: params.RefreshToken,
+	}, nil
 }
