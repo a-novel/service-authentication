@@ -13,6 +13,7 @@ import (
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestCreateSession(t *testing.T) {
@@ -21,7 +22,7 @@ func TestCreateSession(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type loginData struct {
-		resp string
+		resp *models.Token
 		err  error
 	}
 
@@ -44,10 +45,16 @@ func TestCreateSession(t *testing.T) {
 			},
 
 			loginData: &loginData{
-				resp: "access-token",
+				resp: &models.Token{
+					AccessToken:  "access-token",
+					RefreshToken: "refresh-token",
+				},
 			},
 
-			expect: &codegen.Token{AccessToken: "access-token"},
+			expect: &codegen.Token{
+				AccessToken:  "access-token",
+				RefreshToken: "refresh-token",
+			},
 		},
 		{
 			name: "UserNotFound",

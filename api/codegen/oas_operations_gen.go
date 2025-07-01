@@ -8,7 +8,6 @@ type OperationName = string
 const (
 	CheckSessionOperation         OperationName = "CheckSession"
 	CreateAnonSessionOperation    OperationName = "CreateAnonSession"
-	CreateRefreshTokenOperation   OperationName = "CreateRefreshToken"
 	CreateSessionOperation        OperationName = "CreateSession"
 	EmailExistsOperation          OperationName = "EmailExists"
 	GetPublicKeyOperation         OperationName = "GetPublicKey"

@@ -26,14 +26,6 @@ type Handler interface {
 	//
 	// PUT /session/anon
 	CreateAnonSession(ctx context.Context) (CreateAnonSessionRes, error)
-	// CreateRefreshToken implements createRefreshToken operation.
-	//
-	// Issue a new refresh token. The access token used for this request must not be anonymous, and must
-	// come from
-	// direct login (not a refresh token).
-	//
-	// PUT /session/refresh
-	CreateRefreshToken(ctx context.Context) (CreateRefreshTokenRes, error)
 	// CreateSession implements createSession operation.
 	//
 	// Create a new session, using a set of credentials. The provided credentials will be used to

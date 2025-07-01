@@ -66,10 +66,11 @@ func extractShortCode(log string) (string, error) {
 }
 
 type userData struct {
-	email    string
-	password string
-	user     string
-	token    string
+	email        string
+	password     string
+	user         string
+	token        string
+	refreshToken string
 }
 
 func createUser(t *testing.T, client *codegen.Client) *userData {
@@ -79,7 +80,7 @@ func createUser(t *testing.T, client *codegen.Client) *userData {
 	email := user + "@example.com"
 	password := rand.Text()
 
-	var shortCode, token string
+	var shortCode, token, refreshToken string
 
 	t.Log("RequestRegistration")
 	{
@@ -109,17 +110,20 @@ func createUser(t *testing.T, client *codegen.Client) *userData {
 		require.NoError(t, err)
 
 		res, ok := rawRes.(*codegen.Token)
-		require.True(t, ok)
+		require.True(t, ok, rawRes)
 		require.NotEmpty(t, res.GetAccessToken())
+		require.NotEmpty(t, res.GetRefreshToken())
 
 		token = res.GetAccessToken()
+		refreshToken = res.GetRefreshToken()
 	}
 
 	return &userData{
-		email:    email,
-		password: password,
-		user:     user,
-		token:    token,
+		email:        email,
+		password:     password,
+		user:         user,
+		token:        token,
+		refreshToken: refreshToken,
 	}
 }
 
@@ -156,7 +160,7 @@ func TestUserLifecycle(t *testing.T) {
 		require.NoError(t, err)
 
 		token, ok := res.(*codegen.Token)
-		require.True(t, ok)
+		require.True(t, ok, res)
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()

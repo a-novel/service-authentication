@@ -66,7 +66,7 @@ func TestUpdatePasswordAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		token, ok := res.(*codegen.Token)
-		require.True(t, ok)
+		require.True(t, ok, res)
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()

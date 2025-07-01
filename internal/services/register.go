@@ -11,6 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 
+	"github.com/a-novel-kit/jwt/jwa"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
@@ -25,21 +27,25 @@ func NewErrRegisterService(err error) error {
 type RegisterSource interface {
 	InsertCredentials(ctx context.Context, data dao.InsertCredentialsData) (*dao.CredentialsEntity, error)
 	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
+	IssueRefreshToken(ctx context.Context, request IssueRefreshTokenRequest) (string, *jwa.Claims, error)
 	ConsumeShortCode(ctx context.Context, request ConsumeShortCodeRequest) (*models.ShortCode, error)
 }
 
 func NewRegisterSource(
 	insertCredentialsDAO *dao.InsertCredentialsRepository,
 	issueTokenService *IssueTokenService,
+	issueRefreshTokenService *IssueRefreshTokenService,
 	consumeShortCodeService *ConsumeShortCodeService,
 ) RegisterSource {
 	return &struct {
 		*dao.InsertCredentialsRepository
 		*IssueTokenService
 		*ConsumeShortCodeService
+		*IssueRefreshTokenService
 	}{
 		InsertCredentialsRepository: insertCredentialsDAO,
 		IssueTokenService:           issueTokenService,
+		IssueRefreshTokenService:    issueRefreshTokenService,
 		ConsumeShortCodeService:     consumeShortCodeService,
 	}
 }
@@ -58,7 +64,7 @@ func NewRegisterService(source RegisterSource) *RegisterService {
 	return &RegisterService{source: source}
 }
 
-func (service *RegisterService) Register(ctx context.Context, request RegisterRequest) (string, error) {
+func (service *RegisterService) Register(ctx context.Context, request RegisterRequest) (*models.Token, error) {
 	span := sentry.StartSpan(ctx, "RegisterService.Register")
 	defer span.Finish()
 
@@ -69,7 +75,7 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	if err != nil {
 		span.SetData("scrypt.error", err.Error())
 
-		return "", NewErrRegisterService(fmt.Errorf("encrypt password: %w", err))
+		return nil, NewErrRegisterService(fmt.Errorf("encrypt password: %w", err))
 	}
 
 	// Registration can fail after the short code is consumed. To prevent this, we wrap the operation in a single
@@ -81,7 +87,7 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	if err != nil {
 		span.SetData("postgres.transaction.error", err.Error())
 
-		return "", NewErrRegisterService(fmt.Errorf("create transaction: %w", err))
+		return nil, NewErrRegisterService(fmt.Errorf("create transaction: %w", err))
 	}
 
 	defer func() { _ = commit(false) }()
@@ -95,7 +101,7 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	if err != nil {
 		span.SetData("consumeShortCode.error", err.Error())
 
-		return "", NewErrRegisterService(fmt.Errorf("consume short code: %w", err))
+		return nil, NewErrRegisterService(fmt.Errorf("consume short code: %w", err))
 	}
 
 	// Insert credentials.
@@ -108,7 +114,7 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	if err != nil {
 		span.SetData("dao.insertCredentials.error", err.Error())
 
-		return "", NewErrRegisterService(fmt.Errorf("insert credentials: %w", err))
+		return nil, NewErrRegisterService(fmt.Errorf("insert credentials: %w", err))
 	}
 
 	span.SetData("credentials.id", credentials.ID)
@@ -118,7 +124,24 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	if err != nil {
 		span.SetData("postgres.commit.error", err.Error())
 
-		return "", NewErrRegisterService(fmt.Errorf("commit transaction: %w", err))
+		return nil, NewErrRegisterService(fmt.Errorf("commit transaction: %w", err))
+	}
+
+	refreshToken, refreshTokenClaims, err := service.source.IssueRefreshToken(span.Context(), IssueRefreshTokenRequest{
+		Claims: &models.AccessTokenClaims{
+			UserID: &credentials.ID,
+			Roles: []models.Role{
+				lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
+					Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+					Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+					Default(models.RoleUser),
+			},
+		},
+	})
+	if err != nil {
+		span.SetData("issueRefreshToken.error", err.Error())
+
+		return nil, NewErrLoginService(fmt.Errorf("issue refresh token: %w", err))
 	}
 
 	// Generate a new authentication token.
@@ -130,12 +153,16 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 				Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
 				Default(models.RoleUser),
 		},
+		RefreshTokenID: &refreshTokenClaims.Jti,
 	})
 	if err != nil {
 		span.SetData("issueToken.error", err.Error())
 
-		return "", NewErrRegisterService(fmt.Errorf("issue accessToken: %w", err))
+		return nil, NewErrRegisterService(fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return accessToken, nil
+	return &models.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }

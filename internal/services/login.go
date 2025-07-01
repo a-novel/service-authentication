@@ -8,6 +8,8 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
 
+	"github.com/a-novel-kit/jwt/jwa"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
@@ -25,18 +27,22 @@ func NewErrLoginService(err error) error {
 type LoginSource interface {
 	SelectCredentialsByEmail(ctx context.Context, email string) (*dao.CredentialsEntity, error)
 	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
+	IssueRefreshToken(ctx context.Context, request IssueRefreshTokenRequest) (string, *jwa.Claims, error)
 }
 
 func NewLoginServiceSource(
 	selectCredentialsByEmailDAO *dao.SelectCredentialsByEmailRepository,
 	issueTokenService *IssueTokenService,
+	issueRefreshTokenService *IssueRefreshTokenService,
 ) LoginSource {
 	return &struct {
 		*dao.SelectCredentialsByEmailRepository
 		*IssueTokenService
+		*IssueRefreshTokenService
 	}{
 		SelectCredentialsByEmailRepository: selectCredentialsByEmailDAO,
 		IssueTokenService:                  issueTokenService,
+		IssueRefreshTokenService:           issueRefreshTokenService,
 	}
 }
 
@@ -64,7 +70,7 @@ func NewLoginService(source LoginSource) *LoginService {
 // On success, a new access token is returned, so the user can access protected resources.
 //
 // You may also create an anonymous session using the LoginAnonService.
-func (service *LoginService) Login(ctx context.Context, request LoginRequest) (string, error) {
+func (service *LoginService) Login(ctx context.Context, request LoginRequest) (*models.Token, error) {
 	span := sentry.StartSpan(ctx, "LoginService.Login")
 	defer span.Finish()
 
@@ -75,7 +81,7 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 	if err != nil {
 		span.SetData("dao.error", err.Error())
 
-		return "", NewErrLoginService(fmt.Errorf("select credentials by email: %w", err))
+		return nil, NewErrLoginService(fmt.Errorf("select credentials by email: %w", err))
 	}
 
 	span.SetData("userID", credentials.ID)
@@ -86,7 +92,24 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 	if err != nil {
 		span.SetData("password.compare.error", err.Error())
 
-		return "", NewErrLoginService(fmt.Errorf("compare password: %w", err))
+		return nil, NewErrLoginService(fmt.Errorf("compare password: %w", err))
+	}
+
+	refreshToken, refreshTokenClaims, err := service.source.IssueRefreshToken(span.Context(), IssueRefreshTokenRequest{
+		Claims: &models.AccessTokenClaims{
+			UserID: &credentials.ID,
+			Roles: []models.Role{
+				lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
+					Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+					Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+					Default(models.RoleUser),
+			},
+		},
+	})
+	if err != nil {
+		span.SetData("issueRefreshToken.error", err.Error())
+
+		return nil, NewErrLoginService(fmt.Errorf("issue refresh token: %w", err))
 	}
 
 	// Generate a new authentication token.
@@ -98,12 +121,16 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (s
 				Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
 				Default(models.RoleUser),
 		},
+		RefreshTokenID: &refreshTokenClaims.Jti,
 	})
 	if err != nil {
 		span.SetData("issueToken.error", err.Error())
 
-		return "", NewErrLoginService(fmt.Errorf("issue accessToken: %w", err))
+		return nil, NewErrLoginService(fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return accessToken, nil
+	return &models.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }

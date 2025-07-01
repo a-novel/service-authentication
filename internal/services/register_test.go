@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel-kit/jwt/jwa"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
@@ -24,6 +26,12 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 	type createCredentialsData struct {
 		resp *dao.CredentialsEntity
 		err  error
+	}
+
+	type issueRefreshTokenData struct {
+		token  string
+		claims *jwa.Claims
+		err    error
 	}
 
 	type issueTokenData struct {
@@ -42,9 +50,10 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 
 		createCredentialsData *createCredentialsData
 		issueTokenData        *issueTokenData
+		issueRefreshTokenData *issueRefreshTokenData
 		consumeShortCodeData  *consumeShortCodeData
 
-		expect    string
+		expect    *models.Token
 		expectErr error
 	}{
 		{
@@ -69,11 +78,23 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 				},
 			},
 
+			issueRefreshTokenData: &issueRefreshTokenData{
+				token: "refresh-token",
+				claims: &jwa.Claims{
+					ClaimsCommon: jwa.ClaimsCommon{
+						Jti: "refresh-token-id",
+					},
+				},
+			},
+
 			issueTokenData: &issueTokenData{
 				resp: "access-token",
 			},
 
-			expect: "access-token",
+			expect: &models.Token{
+				AccessToken:  "access-token",
+				RefreshToken: "refresh-token",
+			},
 		},
 		{
 			name: "Error/ConsumeShortCode",
@@ -129,7 +150,44 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 				},
 			},
 
+			issueRefreshTokenData: &issueRefreshTokenData{
+				token: "refresh-token",
+				claims: &jwa.Claims{
+					ClaimsCommon: jwa.ClaimsCommon{
+						Jti: "refresh-token-id",
+					},
+				},
+			},
+
 			issueTokenData: &issueTokenData{
+				err: errFoo,
+			},
+
+			expectErr: errFoo,
+		},
+		{
+			name: "Error/IssueRefreshToken",
+
+			request: services.RegisterRequest{
+				Email:     "user@provider.com",
+				Password:  "password-2",
+				ShortCode: "short-code",
+			},
+
+			consumeShortCodeData: &consumeShortCodeData{},
+
+			createCredentialsData: &createCredentialsData{
+				resp: &dao.CredentialsEntity{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Email:     "user@provider.com",
+					Password:  "password-2-hashed",
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					Role:      models.CredentialsRoleUser,
+				},
+			},
+
+			issueRefreshTokenData: &issueRefreshTokenData{
 				err: errFoo,
 			},
 
@@ -165,11 +223,27 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 					Return(testCase.createCredentialsData.resp, testCase.createCredentialsData.err)
 			}
 
+			if testCase.issueRefreshTokenData != nil {
+				source.EXPECT().
+					IssueRefreshToken(mock.Anything, services.IssueRefreshTokenRequest{
+						Claims: &models.AccessTokenClaims{
+							UserID: &testCase.createCredentialsData.resp.ID,
+							Roles:  []models.Role{models.RoleUser},
+						},
+					}).
+					Return(
+						testCase.issueRefreshTokenData.token,
+						testCase.issueRefreshTokenData.claims,
+						testCase.issueRefreshTokenData.err,
+					)
+			}
+
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
 					IssueToken(mock.Anything, services.IssueTokenRequest{
-						UserID: &testCase.createCredentialsData.resp.ID,
-						Roles:  []models.Role{models.RoleUser},
+						UserID:         &testCase.createCredentialsData.resp.ID,
+						Roles:          []models.Role{models.RoleUser},
+						RefreshTokenID: &testCase.issueRefreshTokenData.claims.Jti,
 					}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
 			}

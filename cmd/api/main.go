@@ -95,7 +95,7 @@ func main() {
 	issueTokenService := services.NewIssueTokenService(authSignSource)
 	issueRefreshTokenService := services.NewIssueRefreshTokenService(refreshSignSource)
 	consumeRefreshTokenService := services.NewConsumeRefreshTokenService(
-		services.NewNewConsumeRefreshTokenServiceSource(
+		services.NewConsumeRefreshTokenServiceSource(
 			selectCredentialsDAO,
 			issueTokenService,
 		),
@@ -110,13 +110,14 @@ func main() {
 	loginService := services.NewLoginService(services.NewLoginServiceSource(
 		selectCredentialsByEmailDAO,
 		issueTokenService,
+		issueRefreshTokenService,
 	))
 	loginAnonService := services.NewLoginAnonService(issueTokenService)
 	authenticateService := services.NewAuthenticateService(authVerifySource)
 
 	emailExistsService := services.NewEmailExistsService(emailExistsDAO)
 	registerService := services.NewRegisterService(services.NewRegisterSource(
-		insertCredentialsDAO, issueTokenService, consumeShortCodeService,
+		insertCredentialsDAO, issueTokenService, issueRefreshTokenService, consumeShortCodeService,
 	))
 	updateEmailService := services.NewUpdateEmailService(services.NewUpdateEmailSource(
 		updateEmailDAO, consumeShortCodeService,
@@ -183,7 +184,6 @@ func main() {
 		LoginService:               loginService,
 		LoginAnonService:           loginAnonService,
 		ConsumeRefreshTokenService: consumeRefreshTokenService,
-		IssueRefreshTokenService:   issueRefreshTokenService,
 
 		SelectKeyService:  selectKeyService,
 		SearchKeysService: searchKeysService,

@@ -553,7 +553,6 @@ func (s *ForbiddenError) SetError(val string) {
 	s.Error = val
 }
 
-func (*ForbiddenError) createRefreshTokenRes()   {}
 func (*ForbiddenError) createSessionRes()        {}
 func (*ForbiddenError) emailExistsRes()          {}
 func (*ForbiddenError) getPublicKeyRes()         {}
@@ -1239,24 +1238,6 @@ func (s PingOK) Read(p []byte) (n int, err error) {
 
 func (*PingOK) pingRes() {}
 
-// Ref: #/components/schemas/RefreshToken
-type RefreshToken struct {
-	// The token used to refresh the session.
-	RefreshToken string `json:"refreshToken"`
-}
-
-// GetRefreshToken returns the value of RefreshToken.
-func (s *RefreshToken) GetRefreshToken() string {
-	return s.RefreshToken
-}
-
-// SetRefreshToken sets the value of RefreshToken.
-func (s *RefreshToken) SetRefreshToken(val string) {
-	s.RefreshToken = val
-}
-
-func (*RefreshToken) createRefreshTokenRes() {}
-
 // Data used to create a user.
 // Ref: #/components/schemas/RegisterForm
 type RegisterForm struct {
@@ -1457,6 +1438,8 @@ type Token struct {
 	// on
 	// protected routes.
 	AccessToken string `json:"accessToken"`
+	// The token used to refresh the session.
+	RefreshToken string `json:"refreshToken"`
 }
 
 // GetAccessToken returns the value of AccessToken.
@@ -1464,9 +1447,19 @@ func (s *Token) GetAccessToken() string {
 	return s.AccessToken
 }
 
+// GetRefreshToken returns the value of RefreshToken.
+func (s *Token) GetRefreshToken() string {
+	return s.RefreshToken
+}
+
 // SetAccessToken sets the value of AccessToken.
 func (s *Token) SetAccessToken(val string) {
 	s.AccessToken = val
+}
+
+// SetRefreshToken sets the value of RefreshToken.
+func (s *Token) SetRefreshToken(val string) {
+	s.RefreshToken = val
 }
 
 func (*Token) createAnonSessionRes() {}

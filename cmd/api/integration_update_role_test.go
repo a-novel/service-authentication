@@ -41,7 +41,7 @@ func TestUpdateRole(t *testing.T) {
 		require.NoError(t, err)
 
 		_, ok := rawRes.(*codegen.ForbiddenError)
-		require.True(t, ok)
+		require.True(t, ok, rawRes)
 	}
 
 	// Elevate user2 to super_admin.
@@ -59,30 +59,16 @@ func TestUpdateRole(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		// Re-login to update token with new role.
-		var refreshToken string
-
-		t.Log("GenerateRefreshToken")
-		{
-			rawRes, err := client.CreateRefreshToken(t.Context())
-			require.NoError(t, err)
-
-			res, ok := rawRes.(*codegen.RefreshToken)
-			require.True(t, ok)
-
-			refreshToken = res.GetRefreshToken()
-		}
-
 		t.Log("RefreshToken")
 		{
 			rawRes, err := client.RefreshSession(t.Context(), codegen.RefreshSessionParams{
-				RefreshToken: refreshToken,
+				RefreshToken: user2.refreshToken,
 				AccessToken:  securityClient.GetToken(),
 			})
 			require.NoError(t, err)
 
 			res, ok := rawRes.(*codegen.Token)
-			require.True(t, ok)
+			require.True(t, ok, rawRes)
 
 			securityClient.SetToken(res.GetAccessToken())
 		}
@@ -97,7 +83,7 @@ func TestUpdateRole(t *testing.T) {
 		require.NoError(t, err)
 
 		res, ok := rawRes.(*codegen.User)
-		require.True(t, ok)
+		require.True(t, ok, rawRes)
 		require.Equal(t, codegen.CredentialsRoleAdmin, res.GetRole())
 	}
 }

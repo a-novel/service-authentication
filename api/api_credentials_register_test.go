@@ -12,6 +12,7 @@ import (
 	apimocks "github.com/a-novel/service-authentication/api/mocks"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestRegister(t *testing.T) {
@@ -20,7 +21,7 @@ func TestRegister(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type registerData struct {
-		resp string
+		resp *models.Token
 		err  error
 	}
 
@@ -44,10 +45,16 @@ func TestRegister(t *testing.T) {
 			},
 
 			registerData: &registerData{
-				resp: "access-token",
+				resp: &models.Token{
+					AccessToken:  "access-token",
+					RefreshToken: "refresh-token",
+				},
 			},
 
-			expect: &codegen.Token{AccessToken: "access-token"},
+			expect: &codegen.Token{
+				AccessToken:  "access-token",
+				RefreshToken: "refresh-token",
+			},
 		},
 		{
 			name: "EmailAlreadyExists",
