@@ -8,7 +8,7 @@ require (
 	github.com/getsentry/sentry-go v0.34.0
 	github.com/getsentry/sentry-go/otel v0.34.0
 	github.com/go-chi/chi/v5 v5.2.2
-	github.com/go-chi/cors v1.2.1
+	github.com/go-chi/cors v1.2.2
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.1.0
 	github.com/goccy/go-yaml v1.18.0
