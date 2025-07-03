@@ -18,7 +18,12 @@ type RefreshTokenClaims struct {
 	// ID of the user that created the session. Can be empty for anonymous sessions.
 	Jti string `json:"jti"`
 	// ID of the user that created the session.
-	UserID uuid.UUID `json:"userID,omitempty"`
+	UserID uuid.UUID `json:"userID"`
+}
+
+type RefreshTokenClaimsInput struct {
+	// ID of the user that created the session.
+	UserID uuid.UUID `json:"userID"`
 }
 
 type Token struct {

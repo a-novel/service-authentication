@@ -4,7 +4,8 @@ go 1.24.4
 
 require (
 	github.com/a-novel-kit/configurator v1.4.3
-	github.com/a-novel-kit/jwt v1.1.4
+	github.com/a-novel-kit/jwt v1.1.5
+	github.com/a-novel/service-json-keys v0.2.3
 	github.com/getsentry/sentry-go v0.34.0
 	github.com/getsentry/sentry-go/otel v0.34.0
 	github.com/go-chi/chi/v5 v5.2.2

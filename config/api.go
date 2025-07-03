@@ -28,6 +28,11 @@ type APIType struct {
 		AllowCredentials bool     `yaml:"allowCredentials"`
 		MaxAge           int      `yaml:"maxAge"`
 	} `yaml:"cors"`
+	Dependencies struct {
+		JSONKeys struct {
+			URL string `yaml:"url"`
+		} `yaml:"jsonKeys"`
+	} `yaml:"dependencies"`
 }
 
 var API = configurator.NewLoader[APIType](Loader).MustLoad(

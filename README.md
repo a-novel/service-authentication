@@ -30,6 +30,19 @@ You can import this application as a docker image. Below is an example using
 
 ```yaml
 services:
+  json-keys-postgres:
+    image: docker.io/library/postgres:17
+    networks:
+      - api
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: json-keys
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+    volumes:
+      - json-keys-postgres-data:/var/lib/postgresql/data/
+
   authentication-postgres:
     image: docker.io/library/postgres:17
     networks:
@@ -43,26 +56,24 @@ services:
     volumes:
       - authentication-postgres-data:/var/lib/postgresql/data/
 
-  # Runs the secret key rotation on every launch.
-  # Keys are smartly rotated, meaning new keys are generated only when necessary
-  # (eg: keys missing or last generated version is too old).
-  # The container will exit by itself when the job is done.
-  authentication-rotate-keys-job:
-    image: ghcr.io/a-novel/service-authentication/jobs/rotatekeys:v0
+  json-keys-service:
+    image: ghcr.io/a-novel/service-json-keys/standalone:v0
     depends_on:
-      - authentication-postgres
+      - json-keys-postgres
+    ports:
+      # Expose the service on port 4001 on the local machine.
+      - "4021:8080"
     environment:
+      PORT: 8080
       ENV: local
-      APP_NAME: authentication-service-rotate-keys-job
-      DSN: postgres://postgres:postgres@authentication-postgres:5432/authentication?sslmode=disable
+      APP_NAME: json-keys-service
+      DSN: postgres://postgres:postgres@json-keys-postgres:5432/json-keys?sslmode=disable
       # Dummy key used only for local environment. Consider using a secure, private key in production.
-      # Note it MUST match the one used in the authentication service.
       MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
       # Used for tracing purposes, can be omitted.
       # SENTRY_DSN: [your_sentry_dsn]
-      # SERVER_NAME: authentication-service-prod
+      # SERVER_NAME: json-keys-service-prod
       # RELEASE: v0.1.2
-      # ENV: production
       # Set the following if you want to debug the service locally.
       # DEBUG: true
     networks:
@@ -72,6 +83,7 @@ services:
     image: ghcr.io/a-novel/service-authentication/api:v0
     depends_on:
       - authentication-postgres
+      - json-keys-service
     ports:
       # Expose the service on port 4001 on the local machine.
       - "4001:8080"
@@ -80,9 +92,6 @@ services:
       ENV: local
       APP_NAME: authentication-service
       DSN: postgres://postgres:postgres@authentication-postgres:5432/authentication?sslmode=disable
-      # Dummy key used only for local environment. Consider using a secure, private key in production.
-      # Note it MUST match the one used in the authentication keys rotation job.
-      MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
       # In sandbox mode, mails are logged in the server logs rather than being sent. Alternatively, you need to provide
       # a valid SMTP server configuration.
       SMTP_SANDBOX: true
@@ -97,7 +106,6 @@ services:
       # SENTRY_DSN: [your_sentry_dsn]
       # SERVER_NAME: authentication-service-prod
       # RELEASE: v0.1.2
-      # ENV: production
       # Set the following if you want to debug the service locally.
       # DEBUG: true
     networks:
@@ -108,6 +116,7 @@ networks:
 
 volumes:
   authentication-postgres-data:
+  json-keys-postgres-data:
 ```
 
 Available tags includes:
@@ -182,20 +191,6 @@ make run-infra
 ```
 
 > You may skip this step if you already have the global infrastructure running.
-
-## Generate keys
-
-You need to do this at least once, to have a set of keys ready to use for authentication.
-
-> It is recommended to run this regularly, otherwise keys will expire and authentication
-> will fail.
-
-```bash
-make run-rotate-keys
-
-# [Sentry] 2025/06/26 14:00:59 generated new key for usage auth: e70eaf3f-1861-4be7-80c2-85c34e9b8371
-# [Sentry] 2025/06/26 14:00:59 generated new key for usage refresh: cd4be805-6fed-4b50-8d6a-3e1fcd65e3c8
-```
 
 ## Et Voilà!
 

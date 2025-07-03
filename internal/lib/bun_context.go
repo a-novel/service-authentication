@@ -5,14 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
 	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/migrate"
-
-	"github.com/a-novel/service-authentication/migrations"
 )
 
 type PostgresKey struct{}
@@ -21,7 +20,7 @@ var ErrInvalidPostgresContext = errors.New("invalid postgres context")
 
 const PingTimeout = 10 * time.Second
 
-func NewPostgresContext(ctx context.Context, dsn string) (context.Context, error) {
+func NewPostgresContext(ctx context.Context, dsn string, migrations fs.FS) (context.Context, error) {
 	// Open a connection to the database.
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 
@@ -37,24 +36,26 @@ func NewPostgresContext(ctx context.Context, dsn string) (context.Context, error
 		}
 	}
 
-	// Apply migrations.
-	mig := migrate.NewMigrations()
+	if migrations != nil {
+		// Apply migrations.
+		mig := migrate.NewMigrations()
 
-	err := mig.Discover(migrations.Migrations)
-	if err != nil {
-		return nil, fmt.Errorf("discover mig: %w", err)
-	}
+		err := mig.Discover(migrations)
+		if err != nil {
+			return nil, fmt.Errorf("discover mig: %w", err)
+		}
 
-	migrator := migrate.NewMigrator(client, mig)
+		migrator := migrate.NewMigrator(client, mig)
 
-	err = migrator.Init(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("create migrator: %w", err)
-	}
+		err = migrator.Init(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("create migrator: %w", err)
+		}
 
-	_, err = migrator.Migrate(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("apply mig: %w", err)
+		_, err = migrator.Migrate(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("apply mig: %w", err)
+		}
 	}
 
 	ctxPG := context.WithValue(ctx, PostgresKey{}, bun.IDB(client))

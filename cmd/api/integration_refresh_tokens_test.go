@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
-	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/internal/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/internal/api/codegen"
 )
 
 // STORY: The user can update its token, and the new token is valid.

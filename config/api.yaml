@@ -10,3 +10,6 @@ cors:
     - "*"
   allowCredentials: false
   maxAge: 3600
+dependencies:
+  jsonKeys:
+    url: ${JSON_KEYS_URL}

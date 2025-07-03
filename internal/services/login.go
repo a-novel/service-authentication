@@ -8,7 +8,11 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
 
-	"github.com/a-novel-kit/jwt/jwa"
+	jkModels "github.com/a-novel/service-json-keys/models"
+	jkPkg "github.com/a-novel/service-json-keys/pkg"
+
+	"github.com/a-novel-kit/jwt"
+	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
@@ -26,23 +30,19 @@ func NewErrLoginService(err error) error {
 // You may build one using the NewLoginServiceSource function.
 type LoginSource interface {
 	SelectCredentialsByEmail(ctx context.Context, email string) (*dao.CredentialsEntity, error)
-	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
-	IssueRefreshToken(ctx context.Context, request IssueRefreshTokenRequest) (string, *jwa.Claims, error)
+	SignClaims(ctx context.Context, usage jkModels.KeyUsage, claims any) (string, error)
 }
 
 func NewLoginServiceSource(
 	selectCredentialsByEmailDAO *dao.SelectCredentialsByEmailRepository,
-	issueTokenService *IssueTokenService,
-	issueRefreshTokenService *IssueRefreshTokenService,
+	issueTokenService *jkPkg.ClaimsSigner,
 ) LoginSource {
 	return &struct {
 		*dao.SelectCredentialsByEmailRepository
-		*IssueTokenService
-		*IssueRefreshTokenService
+		*jkPkg.ClaimsSigner
 	}{
 		SelectCredentialsByEmailRepository: selectCredentialsByEmailDAO,
-		IssueTokenService:                  issueTokenService,
-		IssueRefreshTokenService:           issueRefreshTokenService,
+		ClaimsSigner:                       issueTokenService,
 	}
 }
 
@@ -95,8 +95,37 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (*
 		return nil, NewErrLoginService(fmt.Errorf("compare password: %w", err))
 	}
 
-	refreshToken, refreshTokenClaims, err := service.source.IssueRefreshToken(span.Context(), IssueRefreshTokenRequest{
-		Claims: &models.AccessTokenClaims{
+	refreshToken, err := service.source.SignClaims(
+		span.Context(),
+		jkModels.KeyUsageRefresh,
+		models.RefreshTokenClaimsInput{
+			UserID: credentials.ID,
+		},
+	)
+	if err != nil {
+		span.SetData("issueRefreshToken.error", err.Error())
+
+		return nil, NewErrLoginService(fmt.Errorf("issue refresh token: %w", err))
+	}
+
+	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{
+		Plugins: []jwt.RecipientPlugin{jws.NewInsecureVerifier()},
+	})
+
+	var refreshTokenClaims models.RefreshTokenClaims
+
+	err = refreshTokenRecipient.Consume(span.Context(), refreshToken, &refreshTokenClaims)
+	if err != nil {
+		span.SetData("unmarshalRefreshToken.error", err.Error())
+
+		return nil, NewErrLoginService(fmt.Errorf("unmarshal refresh token claims: %w", err))
+	}
+
+	// Generate a new authentication token.
+	accessToken, err := service.source.SignClaims(
+		span.Context(),
+		jkModels.KeyUsageAuth,
+		models.AccessTokenClaims{
 			UserID: &credentials.ID,
 			Roles: []models.Role{
 				lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
@@ -104,25 +133,9 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (*
 					Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
 					Default(models.RoleUser),
 			},
+			RefreshTokenID: &refreshTokenClaims.Jti,
 		},
-	})
-	if err != nil {
-		span.SetData("issueRefreshToken.error", err.Error())
-
-		return nil, NewErrLoginService(fmt.Errorf("issue refresh token: %w", err))
-	}
-
-	// Generate a new authentication token.
-	accessToken, err := service.source.IssueToken(span.Context(), IssueTokenRequest{
-		UserID: &credentials.ID,
-		Roles: []models.Role{
-			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
-				Case(models.CredentialsRoleAdmin, models.RoleAdmin).
-				Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
-				Default(models.RoleUser),
-		},
-		RefreshTokenID: &refreshTokenClaims.Jti,
-	})
+	)
 	if err != nil {
 		span.SetData("issueToken.error", err.Error())
 

@@ -8,10 +8,11 @@ import (
 	"context"
 	"text/template"
 
-	"github.com/a-novel-kit/jwt/jwa"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
-	"github.com/a-novel/service-authentication/models"
+	models0 "github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-json-keys/models"
+	"github.com/a-novel/service-json-keys/pkg"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -41,61 +42,6 @@ type MockConsumeRefreshTokenSource_Expecter struct {
 
 func (_m *MockConsumeRefreshTokenSource) EXPECT() *MockConsumeRefreshTokenSource_Expecter {
 	return &MockConsumeRefreshTokenSource_Expecter{mock: &_m.Mock}
-}
-
-// IssueToken provides a mock function for the type MockConsumeRefreshTokenSource
-func (_mock *MockConsumeRefreshTokenSource) IssueToken(ctx context.Context, request services.IssueTokenRequest) (string, error) {
-	ret := _mock.Called(ctx, request)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IssueToken")
-	}
-
-	var r0 string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueTokenRequest) (string, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueTokenRequest) string); ok {
-		r0 = returnFunc(ctx, request)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueTokenRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockConsumeRefreshTokenSource_IssueToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueToken'
-type MockConsumeRefreshTokenSource_IssueToken_Call struct {
-	*mock.Call
-}
-
-// IssueToken is a helper method to define mock.On call
-//   - ctx
-//   - request
-func (_e *MockConsumeRefreshTokenSource_Expecter) IssueToken(ctx interface{}, request interface{}) *MockConsumeRefreshTokenSource_IssueToken_Call {
-	return &MockConsumeRefreshTokenSource_IssueToken_Call{Call: _e.mock.On("IssueToken", ctx, request)}
-}
-
-func (_c *MockConsumeRefreshTokenSource_IssueToken_Call) Run(run func(ctx context.Context, request services.IssueTokenRequest)) *MockConsumeRefreshTokenSource_IssueToken_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.IssueTokenRequest))
-	})
-	return _c
-}
-
-func (_c *MockConsumeRefreshTokenSource_IssueToken_Call) Return(s string, err error) *MockConsumeRefreshTokenSource_IssueToken_Call {
-	_c.Call.Return(s, err)
-	return _c
-}
-
-func (_c *MockConsumeRefreshTokenSource_IssueToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueTokenRequest) (string, error)) *MockConsumeRefreshTokenSource_IssueToken_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // SelectCredentials provides a mock function for the type MockConsumeRefreshTokenSource
@@ -151,6 +97,180 @@ func (_c *MockConsumeRefreshTokenSource_SelectCredentials_Call) Return(credentia
 }
 
 func (_c *MockConsumeRefreshTokenSource_SelectCredentials_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*dao.CredentialsEntity, error)) *MockConsumeRefreshTokenSource_SelectCredentials_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SignClaims provides a mock function for the type MockConsumeRefreshTokenSource
+func (_mock *MockConsumeRefreshTokenSource) SignClaims(ctx context.Context, usage models.KeyUsage, claims any) (string, error) {
+	ret := _mock.Called(ctx, usage, claims)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SignClaims")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, any) (string, error)); ok {
+		return returnFunc(ctx, usage, claims)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, any) string); ok {
+		r0 = returnFunc(ctx, usage, claims)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage, any) error); ok {
+		r1 = returnFunc(ctx, usage, claims)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockConsumeRefreshTokenSource_SignClaims_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignClaims'
+type MockConsumeRefreshTokenSource_SignClaims_Call struct {
+	*mock.Call
+}
+
+// SignClaims is a helper method to define mock.On call
+//   - ctx
+//   - usage
+//   - claims
+func (_e *MockConsumeRefreshTokenSource_Expecter) SignClaims(ctx interface{}, usage interface{}, claims interface{}) *MockConsumeRefreshTokenSource_SignClaims_Call {
+	return &MockConsumeRefreshTokenSource_SignClaims_Call{Call: _e.mock.On("SignClaims", ctx, usage, claims)}
+}
+
+func (_c *MockConsumeRefreshTokenSource_SignClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, claims any)) *MockConsumeRefreshTokenSource_SignClaims_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(any))
+	})
+	return _c
+}
+
+func (_c *MockConsumeRefreshTokenSource_SignClaims_Call) Return(s string, err error) *MockConsumeRefreshTokenSource_SignClaims_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockConsumeRefreshTokenSource_SignClaims_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage, claims any) (string, error)) *MockConsumeRefreshTokenSource_SignClaims_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// VerifyClaims provides a mock function for the type MockConsumeRefreshTokenSource
+func (_mock *MockConsumeRefreshTokenSource) VerifyClaims(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions) (*models0.AccessTokenClaims, error) {
+	ret := _mock.Called(ctx, usage, accessToken, options)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifyClaims")
+	}
+
+	var r0 *models0.AccessTokenClaims
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) (*models0.AccessTokenClaims, error)); ok {
+		return returnFunc(ctx, usage, accessToken, options)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) *models0.AccessTokenClaims); ok {
+		r0 = returnFunc(ctx, usage, accessToken, options)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models0.AccessTokenClaims)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) error); ok {
+		r1 = returnFunc(ctx, usage, accessToken, options)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockConsumeRefreshTokenSource_VerifyClaims_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VerifyClaims'
+type MockConsumeRefreshTokenSource_VerifyClaims_Call struct {
+	*mock.Call
+}
+
+// VerifyClaims is a helper method to define mock.On call
+//   - ctx
+//   - usage
+//   - accessToken
+//   - options
+func (_e *MockConsumeRefreshTokenSource_Expecter) VerifyClaims(ctx interface{}, usage interface{}, accessToken interface{}, options interface{}) *MockConsumeRefreshTokenSource_VerifyClaims_Call {
+	return &MockConsumeRefreshTokenSource_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, usage, accessToken, options)}
+}
+
+func (_c *MockConsumeRefreshTokenSource_VerifyClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions)) *MockConsumeRefreshTokenSource_VerifyClaims_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(string), args[3].(*pkg.VerifyClaimsOptions))
+	})
+	return _c
+}
+
+func (_c *MockConsumeRefreshTokenSource_VerifyClaims_Call) Return(accessTokenClaims *models0.AccessTokenClaims, err error) *MockConsumeRefreshTokenSource_VerifyClaims_Call {
+	_c.Call.Return(accessTokenClaims, err)
+	return _c
+}
+
+func (_c *MockConsumeRefreshTokenSource_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions) (*models0.AccessTokenClaims, error)) *MockConsumeRefreshTokenSource_VerifyClaims_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// VerifyRefreshTokenClaims provides a mock function for the type MockConsumeRefreshTokenSource
+func (_mock *MockConsumeRefreshTokenSource) VerifyRefreshTokenClaims(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions) (*models0.RefreshTokenClaims, error) {
+	ret := _mock.Called(ctx, usage, accessToken, options)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifyRefreshTokenClaims")
+	}
+
+	var r0 *models0.RefreshTokenClaims
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) (*models0.RefreshTokenClaims, error)); ok {
+		return returnFunc(ctx, usage, accessToken, options)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) *models0.RefreshTokenClaims); ok {
+		r0 = returnFunc(ctx, usage, accessToken, options)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models0.RefreshTokenClaims)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) error); ok {
+		r1 = returnFunc(ctx, usage, accessToken, options)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VerifyRefreshTokenClaims'
+type MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call struct {
+	*mock.Call
+}
+
+// VerifyRefreshTokenClaims is a helper method to define mock.On call
+//   - ctx
+//   - usage
+//   - accessToken
+//   - options
+func (_e *MockConsumeRefreshTokenSource_Expecter) VerifyRefreshTokenClaims(ctx interface{}, usage interface{}, accessToken interface{}, options interface{}) *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call {
+	return &MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call{Call: _e.mock.On("VerifyRefreshTokenClaims", ctx, usage, accessToken, options)}
+}
+
+func (_c *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions)) *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(string), args[3].(*pkg.VerifyClaimsOptions))
+	})
+	return _c
+}
+
+func (_c *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call) Return(refreshTokenClaims *models0.RefreshTokenClaims, err error) *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call {
+	_c.Call.Return(refreshTokenClaims, err)
+	return _c
+}
+
+func (_c *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions) (*models0.RefreshTokenClaims, error)) *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -462,231 +582,6 @@ func (_c *MockEmailExistsSource_ExistsCredentialsEmail_Call) RunAndReturn(run fu
 	return _c
 }
 
-// NewMockGenerateKeySource creates a new instance of MockGenerateKeySource. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewMockGenerateKeySource(t interface {
-	mock.TestingT
-	Cleanup(func())
-}) *MockGenerateKeySource {
-	mock := &MockGenerateKeySource{}
-	mock.Mock.Test(t)
-
-	t.Cleanup(func() { mock.AssertExpectations(t) })
-
-	return mock
-}
-
-// MockGenerateKeySource is an autogenerated mock type for the GenerateKeySource type
-type MockGenerateKeySource struct {
-	mock.Mock
-}
-
-type MockGenerateKeySource_Expecter struct {
-	mock *mock.Mock
-}
-
-func (_m *MockGenerateKeySource) EXPECT() *MockGenerateKeySource_Expecter {
-	return &MockGenerateKeySource_Expecter{mock: &_m.Mock}
-}
-
-// InsertKey provides a mock function for the type MockGenerateKeySource
-func (_mock *MockGenerateKeySource) InsertKey(ctx context.Context, data dao.InsertKeyData) (*dao.KeyEntity, error) {
-	ret := _mock.Called(ctx, data)
-
-	if len(ret) == 0 {
-		panic("no return value specified for InsertKey")
-	}
-
-	var r0 *dao.KeyEntity
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dao.InsertKeyData) (*dao.KeyEntity, error)); ok {
-		return returnFunc(ctx, data)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dao.InsertKeyData) *dao.KeyEntity); ok {
-		r0 = returnFunc(ctx, data)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dao.KeyEntity)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, dao.InsertKeyData) error); ok {
-		r1 = returnFunc(ctx, data)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockGenerateKeySource_InsertKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertKey'
-type MockGenerateKeySource_InsertKey_Call struct {
-	*mock.Call
-}
-
-// InsertKey is a helper method to define mock.On call
-//   - ctx
-//   - data
-func (_e *MockGenerateKeySource_Expecter) InsertKey(ctx interface{}, data interface{}) *MockGenerateKeySource_InsertKey_Call {
-	return &MockGenerateKeySource_InsertKey_Call{Call: _e.mock.On("InsertKey", ctx, data)}
-}
-
-func (_c *MockGenerateKeySource_InsertKey_Call) Run(run func(ctx context.Context, data dao.InsertKeyData)) *MockGenerateKeySource_InsertKey_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dao.InsertKeyData))
-	})
-	return _c
-}
-
-func (_c *MockGenerateKeySource_InsertKey_Call) Return(keyEntity *dao.KeyEntity, err error) *MockGenerateKeySource_InsertKey_Call {
-	_c.Call.Return(keyEntity, err)
-	return _c
-}
-
-func (_c *MockGenerateKeySource_InsertKey_Call) RunAndReturn(run func(ctx context.Context, data dao.InsertKeyData) (*dao.KeyEntity, error)) *MockGenerateKeySource_InsertKey_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SearchKeys provides a mock function for the type MockGenerateKeySource
-func (_mock *MockGenerateKeySource) SearchKeys(ctx context.Context, usage models.KeyUsage) ([]*dao.KeyEntity, error) {
-	ret := _mock.Called(ctx, usage)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SearchKeys")
-	}
-
-	var r0 []*dao.KeyEntity
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage) ([]*dao.KeyEntity, error)); ok {
-		return returnFunc(ctx, usage)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage) []*dao.KeyEntity); ok {
-		r0 = returnFunc(ctx, usage)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*dao.KeyEntity)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage) error); ok {
-		r1 = returnFunc(ctx, usage)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockGenerateKeySource_SearchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchKeys'
-type MockGenerateKeySource_SearchKeys_Call struct {
-	*mock.Call
-}
-
-// SearchKeys is a helper method to define mock.On call
-//   - ctx
-//   - usage
-func (_e *MockGenerateKeySource_Expecter) SearchKeys(ctx interface{}, usage interface{}) *MockGenerateKeySource_SearchKeys_Call {
-	return &MockGenerateKeySource_SearchKeys_Call{Call: _e.mock.On("SearchKeys", ctx, usage)}
-}
-
-func (_c *MockGenerateKeySource_SearchKeys_Call) Run(run func(ctx context.Context, usage models.KeyUsage)) *MockGenerateKeySource_SearchKeys_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage))
-	})
-	return _c
-}
-
-func (_c *MockGenerateKeySource_SearchKeys_Call) Return(keyEntitys []*dao.KeyEntity, err error) *MockGenerateKeySource_SearchKeys_Call {
-	_c.Call.Return(keyEntitys, err)
-	return _c
-}
-
-func (_c *MockGenerateKeySource_SearchKeys_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage) ([]*dao.KeyEntity, error)) *MockGenerateKeySource_SearchKeys_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// NewMockKeysProviderSource creates a new instance of MockKeysProviderSource. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewMockKeysProviderSource(t interface {
-	mock.TestingT
-	Cleanup(func())
-}) *MockKeysProviderSource {
-	mock := &MockKeysProviderSource{}
-	mock.Mock.Test(t)
-
-	t.Cleanup(func() { mock.AssertExpectations(t) })
-
-	return mock
-}
-
-// MockKeysProviderSource is an autogenerated mock type for the KeysProviderSource type
-type MockKeysProviderSource struct {
-	mock.Mock
-}
-
-type MockKeysProviderSource_Expecter struct {
-	mock *mock.Mock
-}
-
-func (_m *MockKeysProviderSource) EXPECT() *MockKeysProviderSource_Expecter {
-	return &MockKeysProviderSource_Expecter{mock: &_m.Mock}
-}
-
-// SearchKeys provides a mock function for the type MockKeysProviderSource
-func (_mock *MockKeysProviderSource) SearchKeys(ctx context.Context, request services.SearchKeysRequest) ([]*jwa.JWK, error) {
-	ret := _mock.Called(ctx, request)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SearchKeys")
-	}
-
-	var r0 []*jwa.JWK
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.SearchKeysRequest) ([]*jwa.JWK, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.SearchKeysRequest) []*jwa.JWK); ok {
-		r0 = returnFunc(ctx, request)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*jwa.JWK)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.SearchKeysRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockKeysProviderSource_SearchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchKeys'
-type MockKeysProviderSource_SearchKeys_Call struct {
-	*mock.Call
-}
-
-// SearchKeys is a helper method to define mock.On call
-//   - ctx
-//   - request
-func (_e *MockKeysProviderSource_Expecter) SearchKeys(ctx interface{}, request interface{}) *MockKeysProviderSource_SearchKeys_Call {
-	return &MockKeysProviderSource_SearchKeys_Call{Call: _e.mock.On("SearchKeys", ctx, request)}
-}
-
-func (_c *MockKeysProviderSource_SearchKeys_Call) Run(run func(ctx context.Context, request services.SearchKeysRequest)) *MockKeysProviderSource_SearchKeys_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.SearchKeysRequest))
-	})
-	return _c
-}
-
-func (_c *MockKeysProviderSource_SearchKeys_Call) Return(jWKs []*jwa.JWK, err error) *MockKeysProviderSource_SearchKeys_Call {
-	_c.Call.Return(jWKs, err)
-	return _c
-}
-
-func (_c *MockKeysProviderSource_SearchKeys_Call) RunAndReturn(run func(ctx context.Context, request services.SearchKeysRequest) ([]*jwa.JWK, error)) *MockKeysProviderSource_SearchKeys_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // NewMockListUsersSource creates a new instance of MockListUsersSource. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockListUsersSource(t interface {
@@ -798,124 +693,6 @@ func (_m *MockLoginSource) EXPECT() *MockLoginSource_Expecter {
 	return &MockLoginSource_Expecter{mock: &_m.Mock}
 }
 
-// IssueRefreshToken provides a mock function for the type MockLoginSource
-func (_mock *MockLoginSource) IssueRefreshToken(ctx context.Context, request services.IssueRefreshTokenRequest) (string, *jwa.Claims, error) {
-	ret := _mock.Called(ctx, request)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IssueRefreshToken")
-	}
-
-	var r0 string
-	var r1 *jwa.Claims
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) (string, *jwa.Claims, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) string); ok {
-		r0 = returnFunc(ctx, request)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueRefreshTokenRequest) *jwa.Claims); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*jwa.Claims)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, services.IssueRefreshTokenRequest) error); ok {
-		r2 = returnFunc(ctx, request)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// MockLoginSource_IssueRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueRefreshToken'
-type MockLoginSource_IssueRefreshToken_Call struct {
-	*mock.Call
-}
-
-// IssueRefreshToken is a helper method to define mock.On call
-//   - ctx
-//   - request
-func (_e *MockLoginSource_Expecter) IssueRefreshToken(ctx interface{}, request interface{}) *MockLoginSource_IssueRefreshToken_Call {
-	return &MockLoginSource_IssueRefreshToken_Call{Call: _e.mock.On("IssueRefreshToken", ctx, request)}
-}
-
-func (_c *MockLoginSource_IssueRefreshToken_Call) Run(run func(ctx context.Context, request services.IssueRefreshTokenRequest)) *MockLoginSource_IssueRefreshToken_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.IssueRefreshTokenRequest))
-	})
-	return _c
-}
-
-func (_c *MockLoginSource_IssueRefreshToken_Call) Return(s string, claims *jwa.Claims, err error) *MockLoginSource_IssueRefreshToken_Call {
-	_c.Call.Return(s, claims, err)
-	return _c
-}
-
-func (_c *MockLoginSource_IssueRefreshToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueRefreshTokenRequest) (string, *jwa.Claims, error)) *MockLoginSource_IssueRefreshToken_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// IssueToken provides a mock function for the type MockLoginSource
-func (_mock *MockLoginSource) IssueToken(ctx context.Context, request services.IssueTokenRequest) (string, error) {
-	ret := _mock.Called(ctx, request)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IssueToken")
-	}
-
-	var r0 string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueTokenRequest) (string, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueTokenRequest) string); ok {
-		r0 = returnFunc(ctx, request)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueTokenRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockLoginSource_IssueToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueToken'
-type MockLoginSource_IssueToken_Call struct {
-	*mock.Call
-}
-
-// IssueToken is a helper method to define mock.On call
-//   - ctx
-//   - request
-func (_e *MockLoginSource_Expecter) IssueToken(ctx interface{}, request interface{}) *MockLoginSource_IssueToken_Call {
-	return &MockLoginSource_IssueToken_Call{Call: _e.mock.On("IssueToken", ctx, request)}
-}
-
-func (_c *MockLoginSource_IssueToken_Call) Run(run func(ctx context.Context, request services.IssueTokenRequest)) *MockLoginSource_IssueToken_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.IssueTokenRequest))
-	})
-	return _c
-}
-
-func (_c *MockLoginSource_IssueToken_Call) Return(s string, err error) *MockLoginSource_IssueToken_Call {
-	_c.Call.Return(s, err)
-	return _c
-}
-
-func (_c *MockLoginSource_IssueToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueTokenRequest) (string, error)) *MockLoginSource_IssueToken_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // SelectCredentialsByEmail provides a mock function for the type MockLoginSource
 func (_mock *MockLoginSource) SelectCredentialsByEmail(ctx context.Context, email string) (*dao.CredentialsEntity, error) {
 	ret := _mock.Called(ctx, email)
@@ -973,6 +750,62 @@ func (_c *MockLoginSource_SelectCredentialsByEmail_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// SignClaims provides a mock function for the type MockLoginSource
+func (_mock *MockLoginSource) SignClaims(ctx context.Context, usage models.KeyUsage, claims any) (string, error) {
+	ret := _mock.Called(ctx, usage, claims)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SignClaims")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, any) (string, error)); ok {
+		return returnFunc(ctx, usage, claims)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, any) string); ok {
+		r0 = returnFunc(ctx, usage, claims)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage, any) error); ok {
+		r1 = returnFunc(ctx, usage, claims)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockLoginSource_SignClaims_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignClaims'
+type MockLoginSource_SignClaims_Call struct {
+	*mock.Call
+}
+
+// SignClaims is a helper method to define mock.On call
+//   - ctx
+//   - usage
+//   - claims
+func (_e *MockLoginSource_Expecter) SignClaims(ctx interface{}, usage interface{}, claims interface{}) *MockLoginSource_SignClaims_Call {
+	return &MockLoginSource_SignClaims_Call{Call: _e.mock.On("SignClaims", ctx, usage, claims)}
+}
+
+func (_c *MockLoginSource_SignClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, claims any)) *MockLoginSource_SignClaims_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(any))
+	})
+	return _c
+}
+
+func (_c *MockLoginSource_SignClaims_Call) Return(s string, err error) *MockLoginSource_SignClaims_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockLoginSource_SignClaims_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage, claims any) (string, error)) *MockLoginSource_SignClaims_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockLoginAnonSource creates a new instance of MockLoginAnonSource. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockLoginAnonSource(t interface {
@@ -1000,57 +833,58 @@ func (_m *MockLoginAnonSource) EXPECT() *MockLoginAnonSource_Expecter {
 	return &MockLoginAnonSource_Expecter{mock: &_m.Mock}
 }
 
-// IssueToken provides a mock function for the type MockLoginAnonSource
-func (_mock *MockLoginAnonSource) IssueToken(ctx context.Context, request services.IssueTokenRequest) (string, error) {
-	ret := _mock.Called(ctx, request)
+// SignClaims provides a mock function for the type MockLoginAnonSource
+func (_mock *MockLoginAnonSource) SignClaims(ctx context.Context, usage models.KeyUsage, claims any) (string, error) {
+	ret := _mock.Called(ctx, usage, claims)
 
 	if len(ret) == 0 {
-		panic("no return value specified for IssueToken")
+		panic("no return value specified for SignClaims")
 	}
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueTokenRequest) (string, error)); ok {
-		return returnFunc(ctx, request)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, any) (string, error)); ok {
+		return returnFunc(ctx, usage, claims)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueTokenRequest) string); ok {
-		r0 = returnFunc(ctx, request)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, any) string); ok {
+		r0 = returnFunc(ctx, usage, claims)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueTokenRequest) error); ok {
-		r1 = returnFunc(ctx, request)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage, any) error); ok {
+		r1 = returnFunc(ctx, usage, claims)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockLoginAnonSource_IssueToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueToken'
-type MockLoginAnonSource_IssueToken_Call struct {
+// MockLoginAnonSource_SignClaims_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignClaims'
+type MockLoginAnonSource_SignClaims_Call struct {
 	*mock.Call
 }
 
-// IssueToken is a helper method to define mock.On call
+// SignClaims is a helper method to define mock.On call
 //   - ctx
-//   - request
-func (_e *MockLoginAnonSource_Expecter) IssueToken(ctx interface{}, request interface{}) *MockLoginAnonSource_IssueToken_Call {
-	return &MockLoginAnonSource_IssueToken_Call{Call: _e.mock.On("IssueToken", ctx, request)}
+//   - usage
+//   - claims
+func (_e *MockLoginAnonSource_Expecter) SignClaims(ctx interface{}, usage interface{}, claims interface{}) *MockLoginAnonSource_SignClaims_Call {
+	return &MockLoginAnonSource_SignClaims_Call{Call: _e.mock.On("SignClaims", ctx, usage, claims)}
 }
 
-func (_c *MockLoginAnonSource_IssueToken_Call) Run(run func(ctx context.Context, request services.IssueTokenRequest)) *MockLoginAnonSource_IssueToken_Call {
+func (_c *MockLoginAnonSource_SignClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, claims any)) *MockLoginAnonSource_SignClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.IssueTokenRequest))
+		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(any))
 	})
 	return _c
 }
 
-func (_c *MockLoginAnonSource_IssueToken_Call) Return(s string, err error) *MockLoginAnonSource_IssueToken_Call {
+func (_c *MockLoginAnonSource_SignClaims_Call) Return(s string, err error) *MockLoginAnonSource_SignClaims_Call {
 	_c.Call.Return(s, err)
 	return _c
 }
 
-func (_c *MockLoginAnonSource_IssueToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueTokenRequest) (string, error)) *MockLoginAnonSource_IssueToken_Call {
+func (_c *MockLoginAnonSource_SignClaims_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage, claims any) (string, error)) *MockLoginAnonSource_SignClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1083,23 +917,23 @@ func (_m *MockRegisterSource) EXPECT() *MockRegisterSource_Expecter {
 }
 
 // ConsumeShortCode provides a mock function for the type MockRegisterSource
-func (_mock *MockRegisterSource) ConsumeShortCode(ctx context.Context, request services.ConsumeShortCodeRequest) (*models.ShortCode, error) {
+func (_mock *MockRegisterSource) ConsumeShortCode(ctx context.Context, request services.ConsumeShortCodeRequest) (*models0.ShortCode, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ConsumeShortCode")
 	}
 
-	var r0 *models.ShortCode
+	var r0 *models0.ShortCode
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) (*models.ShortCode, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) (*models0.ShortCode, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) *models.ShortCode); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) *models0.ShortCode); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.ShortCode)
+			r0 = ret.Get(0).(*models0.ShortCode)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, services.ConsumeShortCodeRequest) error); ok {
@@ -1129,12 +963,12 @@ func (_c *MockRegisterSource_ConsumeShortCode_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockRegisterSource_ConsumeShortCode_Call) Return(shortCode *models.ShortCode, err error) *MockRegisterSource_ConsumeShortCode_Call {
+func (_c *MockRegisterSource_ConsumeShortCode_Call) Return(shortCode *models0.ShortCode, err error) *MockRegisterSource_ConsumeShortCode_Call {
 	_c.Call.Return(shortCode, err)
 	return _c
 }
 
-func (_c *MockRegisterSource_ConsumeShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.ConsumeShortCodeRequest) (*models.ShortCode, error)) *MockRegisterSource_ConsumeShortCode_Call {
+func (_c *MockRegisterSource_ConsumeShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.ConsumeShortCodeRequest) (*models0.ShortCode, error)) *MockRegisterSource_ConsumeShortCode_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1196,120 +1030,58 @@ func (_c *MockRegisterSource_InsertCredentials_Call) RunAndReturn(run func(ctx c
 	return _c
 }
 
-// IssueRefreshToken provides a mock function for the type MockRegisterSource
-func (_mock *MockRegisterSource) IssueRefreshToken(ctx context.Context, request services.IssueRefreshTokenRequest) (string, *jwa.Claims, error) {
-	ret := _mock.Called(ctx, request)
+// SignClaims provides a mock function for the type MockRegisterSource
+func (_mock *MockRegisterSource) SignClaims(ctx context.Context, usage models.KeyUsage, claims any) (string, error) {
+	ret := _mock.Called(ctx, usage, claims)
 
 	if len(ret) == 0 {
-		panic("no return value specified for IssueRefreshToken")
-	}
-
-	var r0 string
-	var r1 *jwa.Claims
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) (string, *jwa.Claims, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueRefreshTokenRequest) string); ok {
-		r0 = returnFunc(ctx, request)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueRefreshTokenRequest) *jwa.Claims); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*jwa.Claims)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, services.IssueRefreshTokenRequest) error); ok {
-		r2 = returnFunc(ctx, request)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// MockRegisterSource_IssueRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueRefreshToken'
-type MockRegisterSource_IssueRefreshToken_Call struct {
-	*mock.Call
-}
-
-// IssueRefreshToken is a helper method to define mock.On call
-//   - ctx
-//   - request
-func (_e *MockRegisterSource_Expecter) IssueRefreshToken(ctx interface{}, request interface{}) *MockRegisterSource_IssueRefreshToken_Call {
-	return &MockRegisterSource_IssueRefreshToken_Call{Call: _e.mock.On("IssueRefreshToken", ctx, request)}
-}
-
-func (_c *MockRegisterSource_IssueRefreshToken_Call) Run(run func(ctx context.Context, request services.IssueRefreshTokenRequest)) *MockRegisterSource_IssueRefreshToken_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.IssueRefreshTokenRequest))
-	})
-	return _c
-}
-
-func (_c *MockRegisterSource_IssueRefreshToken_Call) Return(s string, claims *jwa.Claims, err error) *MockRegisterSource_IssueRefreshToken_Call {
-	_c.Call.Return(s, claims, err)
-	return _c
-}
-
-func (_c *MockRegisterSource_IssueRefreshToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueRefreshTokenRequest) (string, *jwa.Claims, error)) *MockRegisterSource_IssueRefreshToken_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// IssueToken provides a mock function for the type MockRegisterSource
-func (_mock *MockRegisterSource) IssueToken(ctx context.Context, request services.IssueTokenRequest) (string, error) {
-	ret := _mock.Called(ctx, request)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IssueToken")
+		panic("no return value specified for SignClaims")
 	}
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueTokenRequest) (string, error)); ok {
-		return returnFunc(ctx, request)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, any) (string, error)); ok {
+		return returnFunc(ctx, usage, claims)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.IssueTokenRequest) string); ok {
-		r0 = returnFunc(ctx, request)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, any) string); ok {
+		r0 = returnFunc(ctx, usage, claims)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.IssueTokenRequest) error); ok {
-		r1 = returnFunc(ctx, request)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage, any) error); ok {
+		r1 = returnFunc(ctx, usage, claims)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockRegisterSource_IssueToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueToken'
-type MockRegisterSource_IssueToken_Call struct {
+// MockRegisterSource_SignClaims_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignClaims'
+type MockRegisterSource_SignClaims_Call struct {
 	*mock.Call
 }
 
-// IssueToken is a helper method to define mock.On call
+// SignClaims is a helper method to define mock.On call
 //   - ctx
-//   - request
-func (_e *MockRegisterSource_Expecter) IssueToken(ctx interface{}, request interface{}) *MockRegisterSource_IssueToken_Call {
-	return &MockRegisterSource_IssueToken_Call{Call: _e.mock.On("IssueToken", ctx, request)}
+//   - usage
+//   - claims
+func (_e *MockRegisterSource_Expecter) SignClaims(ctx interface{}, usage interface{}, claims interface{}) *MockRegisterSource_SignClaims_Call {
+	return &MockRegisterSource_SignClaims_Call{Call: _e.mock.On("SignClaims", ctx, usage, claims)}
 }
 
-func (_c *MockRegisterSource_IssueToken_Call) Run(run func(ctx context.Context, request services.IssueTokenRequest)) *MockRegisterSource_IssueToken_Call {
+func (_c *MockRegisterSource_SignClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, claims any)) *MockRegisterSource_SignClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.IssueTokenRequest))
+		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(any))
 	})
 	return _c
 }
 
-func (_c *MockRegisterSource_IssueToken_Call) Return(s string, err error) *MockRegisterSource_IssueToken_Call {
+func (_c *MockRegisterSource_SignClaims_Call) Return(s string, err error) *MockRegisterSource_SignClaims_Call {
 	_c.Call.Return(s, err)
 	return _c
 }
 
-func (_c *MockRegisterSource_IssueToken_Call) RunAndReturn(run func(ctx context.Context, request services.IssueTokenRequest) (string, error)) *MockRegisterSource_IssueToken_Call {
+func (_c *MockRegisterSource_SignClaims_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage, claims any) (string, error)) *MockRegisterSource_SignClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1342,23 +1114,23 @@ func (_m *MockRequestEmailUpdateSource) EXPECT() *MockRequestEmailUpdateSource_E
 }
 
 // CreateShortCode provides a mock function for the type MockRequestEmailUpdateSource
-func (_mock *MockRequestEmailUpdateSource) CreateShortCode(ctx context.Context, request services.CreateShortCodeRequest) (*models.ShortCode, error) {
+func (_mock *MockRequestEmailUpdateSource) CreateShortCode(ctx context.Context, request services.CreateShortCodeRequest) (*models0.ShortCode, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateShortCode")
 	}
 
-	var r0 *models.ShortCode
+	var r0 *models0.ShortCode
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) (*models.ShortCode, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) (*models0.ShortCode, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) *models.ShortCode); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) *models0.ShortCode); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.ShortCode)
+			r0 = ret.Get(0).(*models0.ShortCode)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, services.CreateShortCodeRequest) error); ok {
@@ -1388,18 +1160,18 @@ func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) Return(shortCode *models.ShortCode, err error) *MockRequestEmailUpdateSource_CreateShortCode_Call {
+func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) Return(shortCode *models0.ShortCode, err error) *MockRequestEmailUpdateSource_CreateShortCode_Call {
 	_c.Call.Return(shortCode, err)
 	return _c
 }
 
-func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models.ShortCode, error)) *MockRequestEmailUpdateSource_CreateShortCode_Call {
+func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models0.ShortCode, error)) *MockRequestEmailUpdateSource_CreateShortCode_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SMTP provides a mock function for the type MockRequestEmailUpdateSource
-func (_mock *MockRequestEmailUpdateSource) SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any) {
+func (_mock *MockRequestEmailUpdateSource) SMTP(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any) {
 	_mock.Called(ctx, message, lang, tos, data)
 	return
 }
@@ -1419,9 +1191,9 @@ func (_e *MockRequestEmailUpdateSource_Expecter) SMTP(ctx interface{}, message i
 	return &MockRequestEmailUpdateSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
 }
 
-func (_c *MockRequestEmailUpdateSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestEmailUpdateSource_SMTP_Call {
+func (_c *MockRequestEmailUpdateSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestEmailUpdateSource_SMTP_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models.Lang), args[3].([]string), args[4].(any))
+		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models0.Lang), args[3].([]string), args[4].(any))
 	})
 	return _c
 }
@@ -1431,7 +1203,7 @@ func (_c *MockRequestEmailUpdateSource_SMTP_Call) Return() *MockRequestEmailUpda
 	return _c
 }
 
-func (_c *MockRequestEmailUpdateSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestEmailUpdateSource_SMTP_Call {
+func (_c *MockRequestEmailUpdateSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestEmailUpdateSource_SMTP_Call {
 	_c.Run(run)
 	return _c
 }
@@ -1464,23 +1236,23 @@ func (_m *MockRequestPasswordResetSource) EXPECT() *MockRequestPasswordResetSour
 }
 
 // CreateShortCode provides a mock function for the type MockRequestPasswordResetSource
-func (_mock *MockRequestPasswordResetSource) CreateShortCode(ctx context.Context, request services.CreateShortCodeRequest) (*models.ShortCode, error) {
+func (_mock *MockRequestPasswordResetSource) CreateShortCode(ctx context.Context, request services.CreateShortCodeRequest) (*models0.ShortCode, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateShortCode")
 	}
 
-	var r0 *models.ShortCode
+	var r0 *models0.ShortCode
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) (*models.ShortCode, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) (*models0.ShortCode, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) *models.ShortCode); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) *models0.ShortCode); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.ShortCode)
+			r0 = ret.Get(0).(*models0.ShortCode)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, services.CreateShortCodeRequest) error); ok {
@@ -1510,18 +1282,18 @@ func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) Return(shortCode *models.ShortCode, err error) *MockRequestPasswordResetSource_CreateShortCode_Call {
+func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) Return(shortCode *models0.ShortCode, err error) *MockRequestPasswordResetSource_CreateShortCode_Call {
 	_c.Call.Return(shortCode, err)
 	return _c
 }
 
-func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models.ShortCode, error)) *MockRequestPasswordResetSource_CreateShortCode_Call {
+func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models0.ShortCode, error)) *MockRequestPasswordResetSource_CreateShortCode_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SMTP provides a mock function for the type MockRequestPasswordResetSource
-func (_mock *MockRequestPasswordResetSource) SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any) {
+func (_mock *MockRequestPasswordResetSource) SMTP(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any) {
 	_mock.Called(ctx, message, lang, tos, data)
 	return
 }
@@ -1541,9 +1313,9 @@ func (_e *MockRequestPasswordResetSource_Expecter) SMTP(ctx interface{}, message
 	return &MockRequestPasswordResetSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
 }
 
-func (_c *MockRequestPasswordResetSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestPasswordResetSource_SMTP_Call {
+func (_c *MockRequestPasswordResetSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestPasswordResetSource_SMTP_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models.Lang), args[3].([]string), args[4].(any))
+		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models0.Lang), args[3].([]string), args[4].(any))
 	})
 	return _c
 }
@@ -1553,7 +1325,7 @@ func (_c *MockRequestPasswordResetSource_SMTP_Call) Return() *MockRequestPasswor
 	return _c
 }
 
-func (_c *MockRequestPasswordResetSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestPasswordResetSource_SMTP_Call {
+func (_c *MockRequestPasswordResetSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestPasswordResetSource_SMTP_Call {
 	_c.Run(run)
 	return _c
 }
@@ -1643,23 +1415,23 @@ func (_m *MockRequestRegisterSource) EXPECT() *MockRequestRegisterSource_Expecte
 }
 
 // CreateShortCode provides a mock function for the type MockRequestRegisterSource
-func (_mock *MockRequestRegisterSource) CreateShortCode(ctx context.Context, request services.CreateShortCodeRequest) (*models.ShortCode, error) {
+func (_mock *MockRequestRegisterSource) CreateShortCode(ctx context.Context, request services.CreateShortCodeRequest) (*models0.ShortCode, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateShortCode")
 	}
 
-	var r0 *models.ShortCode
+	var r0 *models0.ShortCode
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) (*models.ShortCode, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) (*models0.ShortCode, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) *models.ShortCode); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CreateShortCodeRequest) *models0.ShortCode); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.ShortCode)
+			r0 = ret.Get(0).(*models0.ShortCode)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, services.CreateShortCodeRequest) error); ok {
@@ -1689,18 +1461,18 @@ func (_c *MockRequestRegisterSource_CreateShortCode_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockRequestRegisterSource_CreateShortCode_Call) Return(shortCode *models.ShortCode, err error) *MockRequestRegisterSource_CreateShortCode_Call {
+func (_c *MockRequestRegisterSource_CreateShortCode_Call) Return(shortCode *models0.ShortCode, err error) *MockRequestRegisterSource_CreateShortCode_Call {
 	_c.Call.Return(shortCode, err)
 	return _c
 }
 
-func (_c *MockRequestRegisterSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models.ShortCode, error)) *MockRequestRegisterSource_CreateShortCode_Call {
+func (_c *MockRequestRegisterSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models0.ShortCode, error)) *MockRequestRegisterSource_CreateShortCode_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SMTP provides a mock function for the type MockRequestRegisterSource
-func (_mock *MockRequestRegisterSource) SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any) {
+func (_mock *MockRequestRegisterSource) SMTP(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any) {
 	_mock.Called(ctx, message, lang, tos, data)
 	return
 }
@@ -1720,9 +1492,9 @@ func (_e *MockRequestRegisterSource_Expecter) SMTP(ctx interface{}, message inte
 	return &MockRequestRegisterSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
 }
 
-func (_c *MockRequestRegisterSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestRegisterSource_SMTP_Call {
+func (_c *MockRequestRegisterSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestRegisterSource_SMTP_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models.Lang), args[3].([]string), args[4].(any))
+		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models0.Lang), args[3].([]string), args[4].(any))
 	})
 	return _c
 }
@@ -1732,176 +1504,8 @@ func (_c *MockRequestRegisterSource_SMTP_Call) Return() *MockRequestRegisterSour
 	return _c
 }
 
-func (_c *MockRequestRegisterSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)) *MockRequestRegisterSource_SMTP_Call {
+func (_c *MockRequestRegisterSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestRegisterSource_SMTP_Call {
 	_c.Run(run)
-	return _c
-}
-
-// NewMockSearchKeysSource creates a new instance of MockSearchKeysSource. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewMockSearchKeysSource(t interface {
-	mock.TestingT
-	Cleanup(func())
-}) *MockSearchKeysSource {
-	mock := &MockSearchKeysSource{}
-	mock.Mock.Test(t)
-
-	t.Cleanup(func() { mock.AssertExpectations(t) })
-
-	return mock
-}
-
-// MockSearchKeysSource is an autogenerated mock type for the SearchKeysSource type
-type MockSearchKeysSource struct {
-	mock.Mock
-}
-
-type MockSearchKeysSource_Expecter struct {
-	mock *mock.Mock
-}
-
-func (_m *MockSearchKeysSource) EXPECT() *MockSearchKeysSource_Expecter {
-	return &MockSearchKeysSource_Expecter{mock: &_m.Mock}
-}
-
-// SearchKeys provides a mock function for the type MockSearchKeysSource
-func (_mock *MockSearchKeysSource) SearchKeys(ctx context.Context, usage models.KeyUsage) ([]*dao.KeyEntity, error) {
-	ret := _mock.Called(ctx, usage)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SearchKeys")
-	}
-
-	var r0 []*dao.KeyEntity
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage) ([]*dao.KeyEntity, error)); ok {
-		return returnFunc(ctx, usage)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage) []*dao.KeyEntity); ok {
-		r0 = returnFunc(ctx, usage)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*dao.KeyEntity)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage) error); ok {
-		r1 = returnFunc(ctx, usage)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockSearchKeysSource_SearchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchKeys'
-type MockSearchKeysSource_SearchKeys_Call struct {
-	*mock.Call
-}
-
-// SearchKeys is a helper method to define mock.On call
-//   - ctx
-//   - usage
-func (_e *MockSearchKeysSource_Expecter) SearchKeys(ctx interface{}, usage interface{}) *MockSearchKeysSource_SearchKeys_Call {
-	return &MockSearchKeysSource_SearchKeys_Call{Call: _e.mock.On("SearchKeys", ctx, usage)}
-}
-
-func (_c *MockSearchKeysSource_SearchKeys_Call) Run(run func(ctx context.Context, usage models.KeyUsage)) *MockSearchKeysSource_SearchKeys_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage))
-	})
-	return _c
-}
-
-func (_c *MockSearchKeysSource_SearchKeys_Call) Return(keyEntitys []*dao.KeyEntity, err error) *MockSearchKeysSource_SearchKeys_Call {
-	_c.Call.Return(keyEntitys, err)
-	return _c
-}
-
-func (_c *MockSearchKeysSource_SearchKeys_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage) ([]*dao.KeyEntity, error)) *MockSearchKeysSource_SearchKeys_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// NewMockSelectKeySource creates a new instance of MockSelectKeySource. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewMockSelectKeySource(t interface {
-	mock.TestingT
-	Cleanup(func())
-}) *MockSelectKeySource {
-	mock := &MockSelectKeySource{}
-	mock.Mock.Test(t)
-
-	t.Cleanup(func() { mock.AssertExpectations(t) })
-
-	return mock
-}
-
-// MockSelectKeySource is an autogenerated mock type for the SelectKeySource type
-type MockSelectKeySource struct {
-	mock.Mock
-}
-
-type MockSelectKeySource_Expecter struct {
-	mock *mock.Mock
-}
-
-func (_m *MockSelectKeySource) EXPECT() *MockSelectKeySource_Expecter {
-	return &MockSelectKeySource_Expecter{mock: &_m.Mock}
-}
-
-// SelectKey provides a mock function for the type MockSelectKeySource
-func (_mock *MockSelectKeySource) SelectKey(ctx context.Context, id uuid.UUID) (*dao.KeyEntity, error) {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SelectKey")
-	}
-
-	var r0 *dao.KeyEntity
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*dao.KeyEntity, error)); ok {
-		return returnFunc(ctx, id)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *dao.KeyEntity); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dao.KeyEntity)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockSelectKeySource_SelectKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectKey'
-type MockSelectKeySource_SelectKey_Call struct {
-	*mock.Call
-}
-
-// SelectKey is a helper method to define mock.On call
-//   - ctx
-//   - id
-func (_e *MockSelectKeySource_Expecter) SelectKey(ctx interface{}, id interface{}) *MockSelectKeySource_SelectKey_Call {
-	return &MockSelectKeySource_SelectKey_Call{Call: _e.mock.On("SelectKey", ctx, id)}
-}
-
-func (_c *MockSelectKeySource_SelectKey_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockSelectKeySource_SelectKey_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *MockSelectKeySource_SelectKey_Call) Return(keyEntity *dao.KeyEntity, err error) *MockSelectKeySource_SelectKey_Call {
-	_c.Call.Return(keyEntity, err)
-	return _c
-}
-
-func (_c *MockSelectKeySource_SelectKey_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*dao.KeyEntity, error)) *MockSelectKeySource_SelectKey_Call {
-	_c.Call.Return(run)
 	return _c
 }
 
@@ -2017,23 +1621,23 @@ func (_m *MockUpdateEmailSource) EXPECT() *MockUpdateEmailSource_Expecter {
 }
 
 // ConsumeShortCode provides a mock function for the type MockUpdateEmailSource
-func (_mock *MockUpdateEmailSource) ConsumeShortCode(ctx context.Context, request services.ConsumeShortCodeRequest) (*models.ShortCode, error) {
+func (_mock *MockUpdateEmailSource) ConsumeShortCode(ctx context.Context, request services.ConsumeShortCodeRequest) (*models0.ShortCode, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ConsumeShortCode")
 	}
 
-	var r0 *models.ShortCode
+	var r0 *models0.ShortCode
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) (*models.ShortCode, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) (*models0.ShortCode, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) *models.ShortCode); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) *models0.ShortCode); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.ShortCode)
+			r0 = ret.Get(0).(*models0.ShortCode)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, services.ConsumeShortCodeRequest) error); ok {
@@ -2063,12 +1667,12 @@ func (_c *MockUpdateEmailSource_ConsumeShortCode_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockUpdateEmailSource_ConsumeShortCode_Call) Return(shortCode *models.ShortCode, err error) *MockUpdateEmailSource_ConsumeShortCode_Call {
+func (_c *MockUpdateEmailSource_ConsumeShortCode_Call) Return(shortCode *models0.ShortCode, err error) *MockUpdateEmailSource_ConsumeShortCode_Call {
 	_c.Call.Return(shortCode, err)
 	return _c
 }
 
-func (_c *MockUpdateEmailSource_ConsumeShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.ConsumeShortCodeRequest) (*models.ShortCode, error)) *MockUpdateEmailSource_ConsumeShortCode_Call {
+func (_c *MockUpdateEmailSource_ConsumeShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.ConsumeShortCodeRequest) (*models0.ShortCode, error)) *MockUpdateEmailSource_ConsumeShortCode_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2159,23 +1763,23 @@ func (_m *MockUpdatePasswordSource) EXPECT() *MockUpdatePasswordSource_Expecter 
 }
 
 // ConsumeShortCode provides a mock function for the type MockUpdatePasswordSource
-func (_mock *MockUpdatePasswordSource) ConsumeShortCode(ctx context.Context, request services.ConsumeShortCodeRequest) (*models.ShortCode, error) {
+func (_mock *MockUpdatePasswordSource) ConsumeShortCode(ctx context.Context, request services.ConsumeShortCodeRequest) (*models0.ShortCode, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ConsumeShortCode")
 	}
 
-	var r0 *models.ShortCode
+	var r0 *models0.ShortCode
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) (*models.ShortCode, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) (*models0.ShortCode, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) *models.ShortCode); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ConsumeShortCodeRequest) *models0.ShortCode); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.ShortCode)
+			r0 = ret.Get(0).(*models0.ShortCode)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, services.ConsumeShortCodeRequest) error); ok {
@@ -2205,12 +1809,12 @@ func (_c *MockUpdatePasswordSource_ConsumeShortCode_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockUpdatePasswordSource_ConsumeShortCode_Call) Return(shortCode *models.ShortCode, err error) *MockUpdatePasswordSource_ConsumeShortCode_Call {
+func (_c *MockUpdatePasswordSource_ConsumeShortCode_Call) Return(shortCode *models0.ShortCode, err error) *MockUpdatePasswordSource_ConsumeShortCode_Call {
 	_c.Call.Return(shortCode, err)
 	return _c
 }
 
-func (_c *MockUpdatePasswordSource_ConsumeShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.ConsumeShortCodeRequest) (*models.ShortCode, error)) *MockUpdatePasswordSource_ConsumeShortCode_Call {
+func (_c *MockUpdatePasswordSource_ConsumeShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.ConsumeShortCodeRequest) (*models0.ShortCode, error)) *MockUpdatePasswordSource_ConsumeShortCode_Call {
 	_c.Call.Return(run)
 	return _c
 }

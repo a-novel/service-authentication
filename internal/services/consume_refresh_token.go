@@ -8,14 +8,12 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"golang.org/x/crypto/ed25519"
 
-	"github.com/a-novel-kit/jwt"
-	"github.com/a-novel-kit/jwt/jwk"
-	"github.com/a-novel-kit/jwt/jwp"
+	jkModels "github.com/a-novel/service-json-keys/models"
+	jkPkg "github.com/a-novel/service-json-keys/pkg"
+
 	"github.com/a-novel-kit/jwt/jws"
 
-	"github.com/a-novel/service-authentication/config"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
 )
@@ -33,19 +31,33 @@ func NewErrConsumeRefreshTokenService(err error) error {
 
 type ConsumeRefreshTokenSource interface {
 	SelectCredentials(ctx context.Context, id uuid.UUID) (*dao.CredentialsEntity, error)
-	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
+	SignClaims(ctx context.Context, usage jkModels.KeyUsage, claims any) (string, error)
+	VerifyClaims(
+		ctx context.Context, usage jkModels.KeyUsage, accessToken string, options *jkPkg.VerifyClaimsOptions,
+	) (*models.AccessTokenClaims, error)
+	VerifyRefreshTokenClaims(
+		ctx context.Context, usage jkModels.KeyUsage, accessToken string, options *jkPkg.VerifyClaimsOptions,
+	) (*models.RefreshTokenClaims, error)
 }
 
 func NewConsumeRefreshTokenServiceSource(
 	selectCredentialsDAO *dao.SelectCredentialsRepository,
-	issueTokenService *IssueTokenService,
+	issueTokenService *jkPkg.ClaimsSigner,
+	accessTokenService *jkPkg.ClaimsVerifier[models.AccessTokenClaims],
+	refreshTokenService *jkPkg.ClaimsVerifier[models.RefreshTokenClaims],
 ) ConsumeRefreshTokenSource {
 	return &struct {
 		*dao.SelectCredentialsRepository
-		*IssueTokenService
+		*jkPkg.ClaimsSigner
+		*jkPkg.ClaimsVerifier[models.AccessTokenClaims]
+		*RefreshTokenClaimsVerifier
 	}{
 		SelectCredentialsRepository: selectCredentialsDAO,
-		IssueTokenService:           issueTokenService,
+		ClaimsSigner:                issueTokenService,
+		ClaimsVerifier:              accessTokenService,
+		RefreshTokenClaimsVerifier: &RefreshTokenClaimsVerifier{
+			verifier: refreshTokenService,
+		},
 	}
 }
 
@@ -58,51 +70,12 @@ type ConsumeRefreshTokenRequest struct {
 }
 
 type ConsumeRefreshTokenService struct {
-	source                ConsumeRefreshTokenSource
-	accessTokenRecipient  *jwt.Recipient
-	refreshTokenRecipient *jwt.Recipient
+	source ConsumeRefreshTokenSource
 }
 
-func NewConsumeRefreshTokenService(
-	source ConsumeRefreshTokenSource,
-	accessTokenKeysSource *jwk.Source[ed25519.PublicKey],
-	refreshTokenKeysSource *jwk.Source[ed25519.PublicKey],
-) *ConsumeRefreshTokenService {
-	accessTokenVerifier := jws.NewSourcedED25519Verifier(accessTokenKeysSource)
-	refreshTokenVerifier := jws.NewSourcedED25519Verifier(refreshTokenKeysSource)
-
-	accessTokenDeserializer := jwp.NewClaimsChecker(&jwp.ClaimsCheckerConfig{
-		Checks: []jwp.ClaimsCheck{
-			jwp.NewClaimsCheckTarget(jwt.TargetConfig{
-				Issuer:   config.Tokens.Usages[models.KeyUsageAuth].Issuer,
-				Audience: config.Tokens.Usages[models.KeyUsageAuth].Audience,
-				Subject:  config.Tokens.Usages[models.KeyUsageAuth].Subject,
-			}),
-			// Ignore timestamps checks. We just need to ensure this service issued the token, not that it's
-			// still valid.
-		},
-	})
-	refreshTokenDeserializer := jwp.NewClaimsChecker(&jwp.ClaimsCheckerConfig{
-		Checks: []jwp.ClaimsCheck{
-			jwp.NewClaimsCheckTarget(jwt.TargetConfig{
-				Issuer:   config.Tokens.Usages[models.KeyUsageRefresh].Issuer,
-				Audience: config.Tokens.Usages[models.KeyUsageRefresh].Audience,
-				Subject:  config.Tokens.Usages[models.KeyUsageRefresh].Subject,
-			}),
-			jwp.NewClaimsCheckTimestamp(config.Tokens.Usages[models.KeyUsageRefresh].Leeway, true),
-		},
-	})
-
+func NewConsumeRefreshTokenService(source ConsumeRefreshTokenSource) *ConsumeRefreshTokenService {
 	return &ConsumeRefreshTokenService{
 		source: source,
-		accessTokenRecipient: jwt.NewRecipient(jwt.RecipientConfig{
-			Plugins:      []jwt.RecipientPlugin{accessTokenVerifier},
-			Deserializer: accessTokenDeserializer.Unmarshal,
-		}),
-		refreshTokenRecipient: jwt.NewRecipient(jwt.RecipientConfig{
-			Plugins:      []jwt.RecipientPlugin{refreshTokenVerifier},
-			Deserializer: refreshTokenDeserializer.Unmarshal,
-		}),
 	}
 }
 
@@ -124,22 +97,29 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("%w: refresh token is empty", models.ErrUnauthorized))
 	}
 
-	var accessTokenClaims models.AccessTokenClaims
-
-	err := service.accessTokenRecipient.Consume(span.Context(), request.AccessToken, &accessTokenClaims)
+	accessTokenClaims, err := service.source.VerifyClaims(
+		span.Context(),
+		jkModels.KeyUsageAuth,
+		request.AccessToken,
+		&jkPkg.VerifyClaimsOptions{IgnoreExpired: true},
+	)
 	if err != nil {
-		span.SetData("accessToken.consume.error", err.Error())
+		span.SetData("accessToken.verify.error", err.Error())
+		sentry.CaptureException(err)
 
 		if errors.Is(err, jws.ErrInvalidSignature) {
 			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume access token: %w", models.ErrUnauthorized))
 		}
 
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume access token: %w", err))
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("verify access token claims: %w", err))
 	}
 
-	var refreshTokenClaims models.RefreshTokenClaims
-
-	err = service.refreshTokenRecipient.Consume(span.Context(), request.RefreshToken, &refreshTokenClaims)
+	refreshTokenClaims, err := service.source.VerifyRefreshTokenClaims(
+		span.Context(),
+		jkModels.KeyUsageRefresh,
+		request.RefreshToken,
+		nil,
+	)
 	if err != nil {
 		span.SetData("refreshToken.consume.error", err.Error())
 
@@ -173,26 +153,33 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		return "", NewErrConsumeRefreshTokenService(ErrTokenIssuedWithDifferentRefreshToken)
 	}
 
+	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
+		span.SetData("error", "access token userID does not match refresh token userID")
+
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf(
+			"%w (accessToken.userID: %s, refreshToken.userID: %s)",
+			ErrMismatchRefreshClaims,
+			lo.FromPtr(accessTokenClaims.UserID),
+			refreshTokenClaims.UserID,
+		))
+	}
+
 	// Retrieve updated credentials.
-	if accessTokenClaims.UserID != nil {
-		credentials, err := service.source.SelectCredentials(ctx, lo.FromPtr(accessTokenClaims.UserID))
-		if err != nil {
-			span.SetData("selectCredentials.error", err.Error())
+	credentials, err := service.source.SelectCredentials(ctx, lo.FromPtr(accessTokenClaims.UserID))
+	if err != nil {
+		span.SetData("selectCredentials.error", err.Error())
 
-			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("select credentials: %w", err))
-		}
+		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("select credentials: %w", err))
+	}
 
-		accessTokenClaims.Roles = []models.Role{
+	newAccessToken, err := service.source.SignClaims(span.Context(), jkModels.KeyUsageAuth, &models.AccessTokenClaims{
+		UserID: accessTokenClaims.UserID,
+		Roles: []models.Role{
 			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
 				Case(models.CredentialsRoleAdmin, models.RoleAdmin).
 				Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
 				Default(models.RoleUser),
-		}
-	}
-
-	accessToken, err := service.source.IssueToken(span.Context(), IssueTokenRequest{
-		UserID:         accessTokenClaims.UserID,
-		Roles:          accessTokenClaims.Roles,
+		},
 		RefreshTokenID: &refreshTokenClaims.Jti,
 	})
 	if err != nil {
@@ -201,5 +188,5 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return accessToken, nil
+	return newAccessToken, nil
 }

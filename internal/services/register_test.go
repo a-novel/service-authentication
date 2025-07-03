@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/jwt/jwa"
+	jkModels "github.com/a-novel/service-json-keys/models"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
@@ -28,15 +29,13 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 		err  error
 	}
 
-	type issueRefreshTokenData struct {
-		token  string
-		claims *jwa.Claims
-		err    error
-	}
-
 	type issueTokenData struct {
 		resp string
 		err  error
+	}
+
+	type issueRefreshTokenData struct {
+		err error
 	}
 
 	type consumeShortCodeData struct {
@@ -78,14 +77,7 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 				},
 			},
 
-			issueRefreshTokenData: &issueRefreshTokenData{
-				token: "refresh-token",
-				claims: &jwa.Claims{
-					ClaimsCommon: jwa.ClaimsCommon{
-						Jti: "refresh-token-id",
-					},
-				},
-			},
+			issueRefreshTokenData: &issueRefreshTokenData{},
 
 			issueTokenData: &issueTokenData{
 				resp: "access-token",
@@ -93,7 +85,7 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 
 			expect: &models.Token{
 				AccessToken:  "access-token",
-				RefreshToken: "refresh-token",
+				RefreshToken: mockUnsignedRefreshToken,
 			},
 		},
 		{
@@ -150,14 +142,7 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 				},
 			},
 
-			issueRefreshTokenData: &issueRefreshTokenData{
-				token: "refresh-token",
-				claims: &jwa.Claims{
-					ClaimsCommon: jwa.ClaimsCommon{
-						Jti: "refresh-token-id",
-					},
-				},
-			},
+			issueRefreshTokenData: &issueRefreshTokenData{},
 
 			issueTokenData: &issueTokenData{
 				err: errFoo,
@@ -197,7 +182,7 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 
 	for _, testCase := range testCases { //nolint:paralleltest
 		t.Run(testCase.name, func(t *testing.T) {
-			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"))
+			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DAO_DSN"), nil)
 			require.NoError(t, err)
 
 			source := servicesmocks.NewMockRegisterSource(t)
@@ -225,26 +210,30 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 
 			if testCase.issueRefreshTokenData != nil {
 				source.EXPECT().
-					IssueRefreshToken(mock.Anything, services.IssueRefreshTokenRequest{
-						Claims: &models.AccessTokenClaims{
-							UserID: &testCase.createCredentialsData.resp.ID,
-							Roles:  []models.Role{models.RoleUser},
-						},
+					SignClaims(mock.Anything, jkModels.KeyUsageRefresh, models.RefreshTokenClaimsInput{
+						UserID: testCase.createCredentialsData.resp.ID,
 					}).
 					Return(
-						testCase.issueRefreshTokenData.token,
-						testCase.issueRefreshTokenData.claims,
+						mockUnsignedRefreshToken,
 						testCase.issueRefreshTokenData.err,
 					)
 			}
 
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
-					IssueToken(mock.Anything, services.IssueTokenRequest{
-						UserID:         &testCase.createCredentialsData.resp.ID,
-						Roles:          []models.Role{models.RoleUser},
-						RefreshTokenID: &testCase.issueRefreshTokenData.claims.Jti,
-					}).
+					SignClaims(mock.Anything, jkModels.KeyUsageAuth,
+						models.AccessTokenClaims{
+							UserID: &testCase.createCredentialsData.resp.ID,
+							Roles: []models.Role{
+								lo.Switch[models.CredentialsRole, models.Role](
+									testCase.createCredentialsData.resp.Role,
+								).
+									Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+									Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+									Default(models.RoleUser),
+							},
+							RefreshTokenID: lo.ToPtr(mockUnsignedJTI),
+						}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
 			}
 

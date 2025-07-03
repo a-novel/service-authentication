@@ -44,10 +44,6 @@ run-infra:
 run-infra-down:
 	podman compose -p "${APP_NAME}" -f "${PWD}/build/podman-compose.yaml" down
 
-# Execute the keys rotation job locally.
-run-rotate-keys:
-	bash -c "set -m; bash '$(CURDIR)/scripts/run_rotate_keys.sh'"
-
 # Run the API
 run-api:
 	bash -c "set -m; bash '$(CURDIR)/scripts/run.sh'"

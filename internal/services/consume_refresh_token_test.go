@@ -1,9 +1,6 @@
 package services_test
 
 import (
-	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"testing"
 
@@ -11,11 +8,11 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/ed25519"
 
-	"github.com/a-novel-kit/jwt"
-	"github.com/a-novel-kit/jwt/jwa"
-	"github.com/a-novel-kit/jwt/jwk"
+	jkModels "github.com/a-novel/service-json-keys/models"
+	jkPkg "github.com/a-novel/service-json-keys/pkg"
+
+	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
@@ -28,58 +25,35 @@ func TestConsumeRefreshToken(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	privateRefreshKeys, publicRefreshKeys := generateAuthTokenKeySet(t, 3)
-
-	publicRefreshKeysJSON := lo.Map(publicRefreshKeys, func(item *jwk.Key[ed25519.PublicKey], _ int) *jwa.JWK {
-		return item.JWK
-	})
-
-	fakePrivateRefreshKey, _, err := jwk.GenerateED25519()
-	require.NoError(t, err)
-
-	privateAccessKeys, publicAccessKeys := generateAuthTokenKeySet(t, 3)
-
-	publicAccessKeysJSON := lo.Map(publicAccessKeys, func(item *jwk.Key[ed25519.PublicKey], _ int) *jwa.JWK {
-		return item.JWK
-	})
-
-	fakePrivateAccessKey, _, err := jwk.GenerateED25519()
-	require.NoError(t, err)
-
-	type issueTokenData struct {
-		resp string
-		err  error
-	}
-
 	type selectCredentialsData struct {
 		resp *dao.CredentialsEntity
 		err  error
 	}
 
-	sampleRefreshToken := mustIssueRefreshToken(t, privateRefreshKeys[0], services.IssueRefreshTokenRequest{
-		Claims: &models.AccessTokenClaims{
-			UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			Roles:  []models.Role{models.RoleUser},
-		},
-	})
+	type signClaimsData struct {
+		resp string
+		err  error
+	}
 
-	sampleRefreshTokenParsed, err := jwt.DecodeToken(sampleRefreshToken, new(jwt.SignedTokenDecoder))
-	require.NoError(t, err)
+	type verifyClaimsData struct {
+		resp *models.AccessTokenClaims
+		err  error
+	}
 
-	decoded, err := base64.RawURLEncoding.DecodeString(sampleRefreshTokenParsed.Payload)
-	require.NoError(t, err)
-
-	var refreshPayload models.RefreshTokenClaims
-
-	require.NoError(t, json.Unmarshal(decoded, &refreshPayload))
+	type verifyRefreshTokenClaimsData struct {
+		resp *models.RefreshTokenClaims
+		err  error
+	}
 
 	testCases := []struct {
 		name string
 
 		request services.ConsumeRefreshTokenRequest
 
-		issueTokenData        *issueTokenData
-		selectCredentialsData *selectCredentialsData
+		selectCredentialsData        *selectCredentialsData
+		signClaimsData               *signClaimsData
+		verifyClaimsData             *verifyClaimsData
+		verifyRefreshTokenClaimsData *verifyRefreshTokenClaimsData
 
 		expect    string
 		expectErr error
@@ -88,12 +62,23 @@ func TestConsumeRefreshToken(t *testing.T) {
 			name: "Success",
 
 			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: sampleRefreshToken,
-				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+
+			verifyClaimsData: &verifyClaimsData{
+				resp: &models.AccessTokenClaims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []models.Role{models.RoleUser},
-					RefreshTokenID: &refreshPayload.Jti,
-				}),
+					Roles:          []models.Role{models.RoleAdmin},
+					RefreshTokenID: lo.ToPtr("refresh_token_id"),
+				},
+			},
+
+			verifyRefreshTokenClaimsData: &verifyRefreshTokenClaimsData{
+				resp: &models.RefreshTokenClaims{
+					Jti:    "refresh_token_id",
+					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
 			},
 
 			selectCredentialsData: &selectCredentialsData{
@@ -103,22 +88,34 @@ func TestConsumeRefreshToken(t *testing.T) {
 				},
 			},
 
-			issueTokenData: &issueTokenData{
+			signClaimsData: &signClaimsData{
 				resp: "access_token",
 			},
 
 			expect: "access_token",
 		},
+
 		{
-			name: "IssueTokenError",
+			name: "SignError",
 
 			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: sampleRefreshToken,
-				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+
+			verifyClaimsData: &verifyClaimsData{
+				resp: &models.AccessTokenClaims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []models.Role{models.RoleUser},
-					RefreshTokenID: &refreshPayload.Jti,
-				}),
+					Roles:          []models.Role{models.RoleAdmin},
+					RefreshTokenID: lo.ToPtr("refresh_token_id"),
+				},
+			},
+
+			verifyRefreshTokenClaimsData: &verifyRefreshTokenClaimsData{
+				resp: &models.RefreshTokenClaims{
+					Jti:    "refresh_token_id",
+					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
 			},
 
 			selectCredentialsData: &selectCredentialsData{
@@ -128,7 +125,7 @@ func TestConsumeRefreshToken(t *testing.T) {
 				},
 			},
 
-			issueTokenData: &issueTokenData{
+			signClaimsData: &signClaimsData{
 				err: errFoo,
 			},
 
@@ -138,12 +135,23 @@ func TestConsumeRefreshToken(t *testing.T) {
 			name: "SelectCredentialsError",
 
 			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: sampleRefreshToken,
-				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+
+			verifyClaimsData: &verifyClaimsData{
+				resp: &models.AccessTokenClaims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []models.Role{models.RoleUser},
-					RefreshTokenID: &refreshPayload.Jti,
-				}),
+					Roles:          []models.Role{models.RoleAdmin},
+					RefreshTokenID: lo.ToPtr("refresh_token_id"),
+				},
+			},
+
+			verifyRefreshTokenClaimsData: &verifyRefreshTokenClaimsData{
+				resp: &models.RefreshTokenClaims{
+					Jti:    "refresh_token_id",
+					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
 			},
 
 			selectCredentialsData: &selectCredentialsData{
@@ -153,50 +161,60 @@ func TestConsumeRefreshToken(t *testing.T) {
 			expectErr: errFoo,
 		},
 		{
-			name: "IssuedByAnotherRefreshToken",
+			name: "VerifyRefreshTokenClaimsError",
 
 			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: sampleRefreshToken,
-				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+
+			verifyClaimsData: &verifyClaimsData{
+				resp: &models.AccessTokenClaims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []models.Role{models.RoleUser},
-					RefreshTokenID: lo.ToPtr("00000000-0000-0000-0000-000000000001"),
-				}),
+					Roles:          []models.Role{models.RoleAdmin},
+					RefreshTokenID: lo.ToPtr("refresh_token_id"),
+				},
 			},
 
-			expectErr: services.ErrTokenIssuedWithDifferentRefreshToken,
-		},
-		{
-			name: "MismatchClaims",
-
-			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: sampleRefreshToken,
-				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000002")),
-					Roles:          []models.Role{models.RoleUser},
-					RefreshTokenID: &refreshPayload.Jti,
-				}),
+			verifyRefreshTokenClaimsData: &verifyRefreshTokenClaimsData{
+				err: errFoo,
 			},
 
-			expectErr: services.ErrMismatchRefreshClaims,
+			expectErr: errFoo,
 		},
 		{
-			name: "NoAccessToken",
+			name: "VerifyClaimsError",
 
 			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: sampleRefreshToken,
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
 			},
 
-			expectErr: models.ErrUnauthorized,
+			verifyClaimsData: &verifyClaimsData{
+				err: errFoo,
+			},
+
+			expectErr: errFoo,
 		},
+
 		{
-			name: "NoRefreshToken",
+			name: "InvalidRefreshToken",
 
 			request: services.ConsumeRefreshTokenRequest{
-				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []models.Role{models.RoleUser},
-				}),
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+
+			verifyClaimsData: &verifyClaimsData{
+				resp: &models.AccessTokenClaims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []models.Role{models.RoleAdmin},
+					RefreshTokenID: lo.ToPtr("refresh_token_id"),
+				},
+			},
+
+			verifyRefreshTokenClaimsData: &verifyRefreshTokenClaimsData{
+				err: jws.ErrInvalidSignature,
 			},
 
 			expectErr: models.ErrUnauthorized,
@@ -205,32 +223,84 @@ func TestConsumeRefreshToken(t *testing.T) {
 			name: "InvalidAccessToken",
 
 			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: sampleRefreshToken,
-				AccessToken: mustIssueToken(t, fakePrivateAccessKey, services.IssueTokenRequest{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []models.Role{models.RoleUser},
-				}),
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+
+			verifyClaimsData: &verifyClaimsData{
+				err: jws.ErrInvalidSignature,
+			},
+
+			expectErr: models.ErrUnauthorized,
+		},
+
+		{
+			name: "NoRefreshToken",
+
+			request: services.ConsumeRefreshTokenRequest{
+				AccessToken: "access_token",
 			},
 
 			expectErr: models.ErrUnauthorized,
 		},
 		{
-			name: "InvalidRefreshToken",
+			name: "NoAccessToken",
 
 			request: services.ConsumeRefreshTokenRequest{
-				RefreshToken: mustIssueRefreshToken(t, fakePrivateRefreshKey, services.IssueRefreshTokenRequest{
-					Claims: &models.AccessTokenClaims{
-						UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-						Roles:  []models.Role{models.RoleUser},
-					},
-				}),
-				AccessToken: mustIssueToken(t, privateAccessKeys[0], services.IssueTokenRequest{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []models.Role{models.RoleUser},
-				}),
+				RefreshToken: "refresh_token",
 			},
 
 			expectErr: models.ErrUnauthorized,
+		},
+		{
+			name: "NotSameUser",
+
+			request: services.ConsumeRefreshTokenRequest{
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+
+			verifyClaimsData: &verifyClaimsData{
+				resp: &models.AccessTokenClaims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []models.Role{models.RoleAdmin},
+					RefreshTokenID: lo.ToPtr("refresh_token_id"),
+				},
+			},
+
+			verifyRefreshTokenClaimsData: &verifyRefreshTokenClaimsData{
+				resp: &models.RefreshTokenClaims{
+					Jti:    "refresh_token_id",
+					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				},
+			},
+
+			expectErr: services.ErrMismatchRefreshClaims,
+		},
+		{
+			name: "NotSameRefreshToken",
+
+			request: services.ConsumeRefreshTokenRequest{
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+
+			verifyClaimsData: &verifyClaimsData{
+				resp: &models.AccessTokenClaims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []models.Role{models.RoleAdmin},
+					RefreshTokenID: lo.ToPtr("refresh_token_id"),
+				},
+			},
+
+			verifyRefreshTokenClaimsData: &verifyRefreshTokenClaimsData{
+				resp: &models.RefreshTokenClaims{
+					Jti:    "other_refresh_token_id",
+					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
+			},
+
+			expectErr: services.ErrTokenIssuedWithDifferentRefreshToken,
 		},
 	}
 
@@ -240,14 +310,27 @@ func TestConsumeRefreshToken(t *testing.T) {
 
 			source := servicesmocks.NewMockConsumeRefreshTokenSource(t)
 
-			accessTokenKeysSource := jwk.NewED25519PublicSource(jwk.SourceConfig{
-				Fetch: func(_ context.Context) ([]*jwa.JWK, error) {
-					return publicAccessKeysJSON, nil
-				},
-			})
-			refreshTokenKeysSource := jwk.NewED25519PublicSource(jwk.SourceConfig{
-				Fetch: func(_ context.Context) ([]*jwa.JWK, error) { return publicRefreshKeysJSON, nil },
-			})
+			if testCase.verifyClaimsData != nil {
+				source.EXPECT().
+					VerifyClaims(
+						mock.Anything,
+						jkModels.KeyUsageAuth,
+						testCase.request.AccessToken,
+						&jkPkg.VerifyClaimsOptions{IgnoreExpired: true},
+					).
+					Return(testCase.verifyClaimsData.resp, testCase.verifyClaimsData.err)
+			}
+
+			if testCase.verifyRefreshTokenClaimsData != nil {
+				source.EXPECT().
+					VerifyRefreshTokenClaims(
+						mock.Anything,
+						jkModels.KeyUsageRefresh,
+						testCase.request.RefreshToken,
+						(*jkPkg.VerifyClaimsOptions)(nil),
+					).
+					Return(testCase.verifyRefreshTokenClaimsData.resp, testCase.verifyRefreshTokenClaimsData.err)
+			}
 
 			if testCase.selectCredentialsData != nil {
 				source.EXPECT().
@@ -255,24 +338,31 @@ func TestConsumeRefreshToken(t *testing.T) {
 					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
 			}
 
-			if testCase.issueTokenData != nil {
+			if testCase.signClaimsData != nil {
 				source.EXPECT().
-					IssueToken(mock.Anything, services.IssueTokenRequest{
-						UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-						Roles: []models.Role{
-							lo.Switch[models.CredentialsRole, models.Role](testCase.selectCredentialsData.resp.Role).
-								Case(models.CredentialsRoleAdmin, models.RoleAdmin).
-								Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
-								Default(models.RoleUser),
+					SignClaims(
+						mock.Anything,
+						jkModels.KeyUsageAuth,
+						&models.AccessTokenClaims{
+							UserID: testCase.verifyClaimsData.resp.UserID,
+							Roles: []models.Role{
+								lo.Switch[models.CredentialsRole, models.Role](
+									testCase.selectCredentialsData.resp.Role,
+								).
+									Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+									Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+									Default(models.RoleUser),
+							},
+							RefreshTokenID: &testCase.verifyRefreshTokenClaimsData.resp.Jti,
 						},
-						RefreshTokenID: &refreshPayload.Jti,
-					}).
-					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
+					).
+					Return(testCase.signClaimsData.resp, testCase.signClaimsData.err)
 			}
 
-			service := services.NewConsumeRefreshTokenService(source, accessTokenKeysSource, refreshTokenKeysSource)
+			service := services.NewConsumeRefreshTokenService(source)
 
 			resp, err := service.ConsumeRefreshToken(t.Context(), testCase.request)
+			require.ErrorIs(t, err, testCase.expectErr)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
 

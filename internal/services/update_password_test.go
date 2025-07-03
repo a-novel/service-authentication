@@ -170,7 +170,7 @@ func TestUpdatePassword(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"))
+			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"), nil)
 			require.NoError(t, err)
 
 			source := servicesmocks.NewMockUpdatePasswordSource(t)
