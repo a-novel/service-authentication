@@ -10,8 +10,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
-	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/internal/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/internal/api/codegen"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
@@ -22,7 +22,7 @@ func TestListUsers(t *testing.T) {
 	require.NoError(t, err)
 
 	// YOLO
-	ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"))
+	ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"), nil)
 	require.NoError(t, err)
 
 	fixtures := []*dao.CredentialsEntity{

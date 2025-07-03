@@ -18,12 +18,15 @@ import (
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
-	"github.com/a-novel/service-authentication/api"
-	"github.com/a-novel/service-authentication/api/codegen"
+	jkPkg "github.com/a-novel/service-json-keys/pkg"
+
 	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/service-authentication/internal/api"
+	"github.com/a-novel/service-authentication/internal/api/codegen"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models"
 )
 
 const (
@@ -59,14 +62,28 @@ func main() {
 		logger.Fatalf(ctx, "initialize agora context: %v", err)
 	}
 
+	client, err := jkPkg.NewAPIClient(ctx, config.API.Dependencies.JSONKeys.URL)
+	if err != nil {
+		logger.Fatalf(ctx, "create JSON Keys API client: %v", err)
+	}
+
+	signer := jkPkg.NewClaimsSigner(client)
+
+	accessTokenVerifier, err := jkPkg.NewClaimsVerifier[models.AccessTokenClaims](client)
+	if err != nil {
+		logger.Fatalf(ctx, "create access token verifier: %v", err)
+	}
+
+	refreshTokenVerifier, err := jkPkg.NewClaimsVerifier[models.RefreshTokenClaims](client)
+	if err != nil {
+		logger.Fatalf(ctx, "create refresh token verifier: %v", err)
+	}
+
 	// =================================================================================================================
 	// LOAD REPOSITORIES (INTERNAL)
 	// =================================================================================================================
 
 	// REPOSITORIES ----------------------------------------------------------------------------------------------------
-
-	searchKeysDAO := dao.NewSearchKeysRepository()
-	selectKeyDAO := dao.NewSelectKeyRepository()
 
 	selectShortCodeDAO := dao.NewSelectShortCodeByParamsRepository()
 	deleteShortCodeDAO := dao.NewDeleteShortCodeRepository()
@@ -84,23 +101,13 @@ func main() {
 
 	// SERVICES --------------------------------------------------------------------------------------------------------
 
-	searchKeysService := services.NewSearchKeysService(searchKeysDAO)
-	selectKeyService := services.NewSelectKeyService(selectKeyDAO)
-
-	authSignSource := services.NewAuthPrivateKeysProvider(searchKeysService)
-	authVerifySource := services.NewAuthPublicKeysProvider(searchKeysService)
-	refreshSignSource := services.NewRefreshPrivateKeysProvider(searchKeysService)
-	refreshVerifySource := services.NewRefreshPublicKeysProvider(searchKeysService)
-
-	issueTokenService := services.NewIssueTokenService(authSignSource)
-	issueRefreshTokenService := services.NewIssueRefreshTokenService(refreshSignSource)
 	consumeRefreshTokenService := services.NewConsumeRefreshTokenService(
 		services.NewConsumeRefreshTokenServiceSource(
 			selectCredentialsDAO,
-			issueTokenService,
+			signer,
+			accessTokenVerifier,
+			refreshTokenVerifier,
 		),
-		authVerifySource,
-		refreshVerifySource,
 	)
 	createShortCodeService := services.NewCreateShortCodeService(insertShortCodeDAO)
 	consumeShortCodeService := services.NewConsumeShortCodeService(
@@ -109,15 +116,13 @@ func main() {
 
 	loginService := services.NewLoginService(services.NewLoginServiceSource(
 		selectCredentialsByEmailDAO,
-		issueTokenService,
-		issueRefreshTokenService,
+		signer,
 	))
-	loginAnonService := services.NewLoginAnonService(issueTokenService)
-	authenticateService := services.NewAuthenticateService(authVerifySource)
+	loginAnonService := services.NewLoginAnonService(signer)
 
 	emailExistsService := services.NewEmailExistsService(emailExistsDAO)
 	registerService := services.NewRegisterService(services.NewRegisterSource(
-		insertCredentialsDAO, issueTokenService, issueRefreshTokenService, consumeShortCodeService,
+		insertCredentialsDAO, signer, consumeShortCodeService,
 	))
 	updateEmailService := services.NewUpdateEmailService(services.NewUpdateEmailSource(
 		updateEmailDAO, consumeShortCodeService,
@@ -185,9 +190,6 @@ func main() {
 		LoginAnonService:           loginAnonService,
 		ConsumeRefreshTokenService: consumeRefreshTokenService,
 
-		SelectKeyService:  selectKeyService,
-		SearchKeysService: searchKeysService,
-
 		RequestRegisterService:      requestRegisterService,
 		RequestEmailUpdateService:   requestEmailUpdateService,
 		RequestPasswordResetService: requestPasswordResetService,
@@ -201,7 +203,7 @@ func main() {
 		ListUsersService: listUsersService,
 	}
 
-	securityHandler, err := api.NewSecurity(config.Permissions, authenticateService)
+	securityHandler, err := api.NewSecurity(accessTokenVerifier, config.Permissions)
 	if err != nil {
 		logger.Fatalf(ctx, "start security handler: %v", err)
 	}

@@ -27,6 +27,8 @@ linters:
     - gochecknoglobals
     - funlen
     - iface
+    - err113
+    - wrapcheck
     - contextcheck # Conflicts with Sentry context propagation.
 
   settings:

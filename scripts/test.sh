@@ -21,6 +21,7 @@ podman compose -p "${APP_NAME}" -f "${PODMAN_FILE}" up -d
 export DAO_DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_TEST_PORT}/pg0?sslmode=disable"
 export DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_TEST_PORT}/pg1?sslmode=disable"
 export PORT=${PORT_TEST}
+export JSON_KEYS_URL="http://localhost:${JSON_KEYS_SERVICE_TEST_PORT}/v1"
 
 # shellcheck disable=SC2046
 go run ${TEST_TOOL_PKG} --format pkgname -- -count=1 -cover $(go list ./... | grep -v /mocks | grep -v /codegen)

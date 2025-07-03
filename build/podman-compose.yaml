@@ -14,8 +14,46 @@ services:
     volumes:
       - authentication-postgres-data:/var/lib/postgresql/data/
 
+  json-keys-postgres:
+    image: docker.io/library/postgres:17
+    networks:
+      - api
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: json-keys
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+    volumes:
+      - json-keys-postgres-data:/var/lib/postgresql/data/
+
+  json-keys-service:
+    image: ghcr.io/a-novel/service-json-keys/standalone:v0
+    depends_on:
+      - json-keys-postgres
+    ports:
+      # Expose the service on port 4001 on the local machine.
+      - "${JSON_KEYS_SERVICE_PORT}:8080"
+    environment:
+      PORT: 8080
+      ENV: local
+      APP_NAME: json-keys-service
+      DSN: postgres://postgres:postgres@json-keys-postgres:5432/json-keys?sslmode=disable
+      # Dummy key used only for local environment. Consider using a secure, private key in production.
+      MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
+      # Used for tracing purposes, can be omitted.
+      # SENTRY_DSN: [your_sentry_dsn]
+      # SERVER_NAME: json-keys-service-prod
+      # RELEASE: v0.1.2
+      # ENV: production
+      # Set the following if you want to debug the service locally.
+      DEBUG: true
+    networks:
+      - api
+
 networks:
   api: {}
 
 volumes:
   authentication-postgres-data:
+  json-keys-postgres-data:

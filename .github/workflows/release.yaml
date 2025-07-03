@@ -25,58 +25,68 @@ jobs:
       id-token: write
     services:
       postgres:
-        image: postgres:17-alpine
         ports:
-          - "5432:5432"
+          - "5431:5432"
+        image: docker.io/library/postgres:17
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
+          --health-interval 500ms
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 50
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
           POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+      postgres-json-keys:
+        image: docker.io/library/postgres:17
+        ports:
+          - "5434:5432"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 500ms
+          --health-timeout 5s
+          --health-retries 50
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: json-keys
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+      json-keys:
+        image: ghcr.io/a-novel/service-json-keys/standalone:v0
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          PORT: 8080
+          DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
+          ENV: local
+          APP_NAME: json-keys-service
+          MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
+          DEBUG: true
     env:
-      DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
+      DSN: postgres://postgres:postgres@localhost:5431/postgres?sslmode=disable
+      PORT: 8080
+      JSON_KEYS_URL: "http://localhost:4001/v1"
+      AUTH_PLATFORM_URL_UPDATE_EMAIL: http://localhost:6001/update-email
+      AUTH_PLATFORM_URL_UPDATE_PASSWORD: http://localhost:6001/update-password
+      AUTH_PLATFORM_URL_REGISTER: http://localhost:6001/register
+      DEBUG: true
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker-rest-api@master
         with:
           file: build/api.Dockerfile
           image_name: ${{ github.repository }}/api
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"
-
-  rotate-keys-build:
-    needs: [release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-    services:
-      postgres:
-        image: postgres:17-alpine
-        ports:
-          - "5432:5432"
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-    env:
-      DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
-    steps:
-      - uses: a-novel-kit/workflows/build-actions/docker-job@master
-        with:
-          file: build/rotatekeys.Dockerfile
-          image_name: ${{ github.repository }}/jobs/rotatekeys
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_args: -e DSN="${DSN}" -e MASTER_KEY="${MASTER_KEY}"
+          run_args: >-
+            -e DSN="${DSN}"
+            -e JSON_KEYS_URL="${JSON_KEYS_URL}"
+            -e AUTH_PLATFORM_URL_UPDATE_EMAIL="${AUTH_PLATFORM_URL_UPDATE_EMAIL}"
+            -e AUTH_PLATFORM_URL_UPDATE_PASSWORD="${AUTH_PLATFORM_URL_UPDATE_PASSWORD}"
+            -e AUTH_PLATFORM_URL_REGISTER="${AUTH_PLATFORM_URL_REGISTER}"
+            -e PORT="${PORT}"
+            -e DEBUG="${DEBUG}"

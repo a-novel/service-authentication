@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/jwt/jwa"
+	jkModels "github.com/a-novel/service-json-keys/models"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
@@ -38,9 +38,7 @@ func TestLogin(t *testing.T) {
 	}
 
 	type issueRefreshTokenData struct {
-		token  string
-		claims *jwa.Claims
-		err    error
+		err error
 	}
 
 	testCases := []struct {
@@ -68,14 +66,7 @@ func TestLogin(t *testing.T) {
 				},
 			},
 
-			issueRefreshTokenData: &issueRefreshTokenData{
-				token: "refresh-token",
-				claims: &jwa.Claims{
-					ClaimsCommon: jwa.ClaimsCommon{
-						Jti: "refresh-token-id",
-					},
-				},
-			},
+			issueRefreshTokenData: &issueRefreshTokenData{},
 
 			issueTokenData: &issueTokenData{
 				resp: "access-token",
@@ -83,7 +74,7 @@ func TestLogin(t *testing.T) {
 
 			expect: &models.Token{
 				AccessToken:  "access-token",
-				RefreshToken: "refresh-token",
+				RefreshToken: mockUnsignedRefreshToken,
 			},
 		},
 		{
@@ -99,14 +90,7 @@ func TestLogin(t *testing.T) {
 				},
 			},
 
-			issueRefreshTokenData: &issueRefreshTokenData{
-				token: "refresh-token",
-				claims: &jwa.Claims{
-					ClaimsCommon: jwa.ClaimsCommon{
-						Jti: "refresh-token-id",
-					},
-				},
-			},
+			issueRefreshTokenData: &issueRefreshTokenData{},
 
 			issueTokenData: &issueTokenData{
 				resp: "access-token",
@@ -114,7 +98,7 @@ func TestLogin(t *testing.T) {
 
 			expect: &models.Token{
 				AccessToken:  "access-token",
-				RefreshToken: "refresh-token",
+				RefreshToken: mockUnsignedRefreshToken,
 			},
 		},
 		{
@@ -130,14 +114,7 @@ func TestLogin(t *testing.T) {
 				},
 			},
 
-			issueRefreshTokenData: &issueRefreshTokenData{
-				token: "refresh-token",
-				claims: &jwa.Claims{
-					ClaimsCommon: jwa.ClaimsCommon{
-						Jti: "refresh-token-id",
-					},
-				},
-			},
+			issueRefreshTokenData: &issueRefreshTokenData{},
 
 			issueTokenData: &issueTokenData{
 				resp: "access-token",
@@ -145,7 +122,7 @@ func TestLogin(t *testing.T) {
 
 			expect: &models.Token{
 				AccessToken:  "access-token",
-				RefreshToken: "refresh-token",
+				RefreshToken: mockUnsignedRefreshToken,
 			},
 		},
 		{
@@ -161,14 +138,7 @@ func TestLogin(t *testing.T) {
 				},
 			},
 
-			issueRefreshTokenData: &issueRefreshTokenData{
-				token: "refresh-token",
-				claims: &jwa.Claims{
-					ClaimsCommon: jwa.ClaimsCommon{
-						Jti: "refresh-token-id",
-					},
-				},
-			},
+			issueRefreshTokenData: &issueRefreshTokenData{},
 
 			issueTokenData: &issueTokenData{
 				resp: "access-token",
@@ -176,7 +146,7 @@ func TestLogin(t *testing.T) {
 
 			expect: &models.Token{
 				AccessToken:  "access-token",
-				RefreshToken: "refresh-token",
+				RefreshToken: mockUnsignedRefreshToken,
 			},
 		},
 		{
@@ -207,14 +177,7 @@ func TestLogin(t *testing.T) {
 				},
 			},
 
-			issueRefreshTokenData: &issueRefreshTokenData{
-				token: "refresh-token",
-				claims: &jwa.Claims{
-					ClaimsCommon: jwa.ClaimsCommon{
-						Jti: "refresh-token-id",
-					},
-				},
-			},
+			issueRefreshTokenData: &issueRefreshTokenData{},
 
 			issueTokenData: &issueTokenData{
 				err: errFoo,
@@ -270,36 +233,30 @@ func TestLogin(t *testing.T) {
 
 			if testCase.issueRefreshTokenData != nil {
 				source.EXPECT().
-					IssueRefreshToken(mock.Anything, services.IssueRefreshTokenRequest{
-						Claims: &models.AccessTokenClaims{
-							UserID: &testCase.selectCredentialsData.resp.ID,
-							Roles: []models.Role{
-								lo.Switch[models.CredentialsRole, models.Role](testCase.selectCredentialsData.resp.Role).
-									Case(models.CredentialsRoleAdmin, models.RoleAdmin).
-									Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
-									Default(models.RoleUser),
-							},
-						},
+					SignClaims(mock.Anything, jkModels.KeyUsageRefresh, models.RefreshTokenClaimsInput{
+						UserID: testCase.selectCredentialsData.resp.ID,
 					}).
 					Return(
-						testCase.issueRefreshTokenData.token,
-						testCase.issueRefreshTokenData.claims,
+						mockUnsignedRefreshToken,
 						testCase.issueRefreshTokenData.err,
 					)
 			}
 
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
-					IssueToken(mock.Anything, services.IssueTokenRequest{
-						UserID: &testCase.selectCredentialsData.resp.ID,
-						Roles: []models.Role{
-							lo.Switch[models.CredentialsRole, models.Role](testCase.selectCredentialsData.resp.Role).
-								Case(models.CredentialsRoleAdmin, models.RoleAdmin).
-								Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
-								Default(models.RoleUser),
-						},
-						RefreshTokenID: &testCase.issueRefreshTokenData.claims.Jti,
-					}).
+					SignClaims(mock.Anything, jkModels.KeyUsageAuth,
+						models.AccessTokenClaims{
+							UserID: &testCase.selectCredentialsData.resp.ID,
+							Roles: []models.Role{
+								lo.Switch[models.CredentialsRole, models.Role](
+									testCase.selectCredentialsData.resp.Role,
+								).
+									Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+									Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+									Default(models.RoleUser),
+							},
+							RefreshTokenID: lo.ToPtr(mockUnsignedJTI),
+						}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
 			}
 

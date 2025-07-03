@@ -2,4 +2,7 @@ package models
 
 import "errors"
 
-var ErrUnauthorized = errors.New("unauthorized")
+var (
+	ErrForbidden    = errors.New("forbidden")
+	ErrUnauthorized = errors.New("unauthorized")
+)

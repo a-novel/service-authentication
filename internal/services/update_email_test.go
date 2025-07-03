@@ -105,7 +105,7 @@ func TestUpdateEmail(t *testing.T) { //nolint:paralleltest
 
 	for _, testCase := range testCases { //nolint:paralleltest
 		t.Run(testCase.name, func(t *testing.T) {
-			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"))
+			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"), nil)
 			require.NoError(t, err)
 
 			source := servicesmocks.NewMockUpdateEmailSource(t)

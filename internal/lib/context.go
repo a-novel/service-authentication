@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/a-novel/service-authentication/migrations"
 )
 
 var ErrNewAgoraContext = errors.New("NewAgoraContext")
@@ -13,12 +15,7 @@ func NewErrNewAgoraContext(err error) error {
 }
 
 func NewAgoraContext(parentCTX context.Context, dsn string) (context.Context, error) {
-	ctx, err := NewMasterKeyContext(parentCTX)
-	if err != nil {
-		return parentCTX, NewErrNewAgoraContext(fmt.Errorf("create master key context: %w", err))
-	}
-
-	ctx, err = NewPostgresContext(ctx, dsn)
+	ctx, err := NewPostgresContext(parentCTX, dsn, migrations.Migrations)
 	if err != nil {
 		return parentCTX, NewErrNewAgoraContext(fmt.Errorf("create postgres context: %w", err))
 	}

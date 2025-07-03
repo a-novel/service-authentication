@@ -1,18 +1,13 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"os"
-	"os/exec"
-	"path"
-	"path/filepath"
 
 	"github.com/a-novel-kit/configurator/chans"
 	"github.com/a-novel-kit/configurator/utilstest"
 
-	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/internal/api/apiclient/testapiclient"
 	"github.com/a-novel/service-authentication/internal/services"
 )
 
@@ -41,26 +36,9 @@ func _patchSTD() {
 	}()
 }
 
-func _runKeysRotation() {
-	// Run keys rotation.
-	pwd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	rotateKeysPath := path.Join(filepath.Dir(pwd), "..", "cmd", "rotatekeys", "main.go")
-
-	out, err := exec.CommandContext(context.Background(), "go", "run", rotateKeysPath).CombinedOutput()
-	if err != nil {
-		panic(fmt.Sprintf("rotate keys: %v\n%v", err, string(out)))
-	}
-}
-
 // Create a separate database to run integration tests.
 func init() {
 	_patchSTD()
-
-	_runKeysRotation()
 
 	go func() {
 		main()

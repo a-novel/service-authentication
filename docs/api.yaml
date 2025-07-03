@@ -2,7 +2,7 @@
 # https://github.com/OAI/OpenAPI-Specification/releases
 openapi: 3.1.1
 servers:
-  - url: http://127.0.0.1:4001/v1
+  - url: http://127.0.0.1:4011/v1
 
 info:
   title: A-Novel Authentication API.
@@ -30,8 +30,6 @@ tags:
     description: |
       Session management. Those routes are the entrypoint for all authenticated endpoints, and the only ones that can
       be accessed without specific permissions.
-  - name: jwk
-    description: Routes exposing the public keys used for JSON Web Algorithms.
   - name: shortCode
     description: |
       A short-code represents a temporary password used to grant a one-time access to a specific resource.
@@ -230,97 +228,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnprocessableEntityError"
-        default:
-          description: An unexpected error occurred while processing the request.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UnexpectedError"
-
-  /public-keys:
-    get:
-      tags:
-        - jwk
-      security:
-        - bearerAuth:
-            - "jwk:read"
-      summary: Get the public keys used for JSON Web Algorithms.
-      description: |
-        Get a public key from its usage.
-      parameters:
-        - $ref: "#/components/parameters/KID"
-      operationId: getPublicKey
-      responses:
-        "200":
-          description: The public key have been retrieved successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JWK"
-        "401":
-          description: Authentication failed.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UnauthorizedError"
-        "403":
-          description: Access denied.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ForbiddenError"
-        "404":
-          description: The provided key usage does not match any key.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotFoundError"
-        default:
-          description: An unexpected error occurred while processing the request.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UnexpectedError"
-
-  /public-keys/list:
-    get:
-      tags:
-        - jwk
-      security:
-        - bearerAuth:
-            - "jwk:read"
-      summary: List all public keys used for JSON Web Algorithms.
-      description: |
-        Get all public keys from the service that match a given usage.
-      parameters:
-        - name: usage
-          in: query
-          description: The intended usage of the keys.
-          required: true
-          schema:
-            $ref: "#/components/schemas/KeyUsage"
-      operationId: listPublicKeys
-      responses:
-        "200":
-          description: The public keys were retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/JWK"
-        "401":
-          description: Authentication failed.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UnauthorizedError"
-        "403":
-          description: Access denied.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ForbiddenError"
         default:
           description: An unexpected error occurred while processing the request.
           content:
@@ -1060,36 +967,6 @@ components:
           $ref: "#/components/schemas/CredentialsRole"
           description: The new role of the user.
 
-    KeyUsage:
-      type: string
-      description: The intended usage of the key.
-      example: auth
-      enum:
-        - auth
-        - refresh
-    JWK:
-      type: object
-      required:
-        - kty
-        - use
-        - key_ops
-        - alg
-      additionalProperties: true
-      properties:
-        kty:
-          $ref: "#/components/schemas/KTY"
-        use:
-          $ref: "#/components/schemas/Use"
-        key_ops:
-          type: array
-          example: ["sign", "verify"]
-          items:
-            $ref: "#/components/schemas/KeyOp"
-        alg:
-          $ref: "#/components/schemas/Alg"
-        kid:
-          $ref: "#/components/schemas/KID"
-
     # ======================================================== TYPES =======================================================
     Role:
       type: string
@@ -1099,81 +976,6 @@ components:
       type: string
       description: A role specifically assigned to a user.
       enum: ["user", "admin", "super_admin"]
-    KTY:
-      type: string
-      description: The type of the key embedded in the JWK.
-      example: OKP
-      enum:
-        - oct
-        - RSA
-        - EC
-        - OKP
-    Use:
-      type: string
-      description: The intended use of the public key.
-      example: sig
-      enum:
-        - sig
-        - enc
-    KeyOp:
-      type: string
-      description: The operation that can be performed using the key.
-      example: sign
-      enum:
-        - sign
-        - verify
-        - encrypt
-        - decrypt
-        - wrapKey
-        - unwrapKey
-        - deriveKey
-        - deriveBits
-    Alg:
-      type: string
-      description: The algorithm this key can be used for.
-      example: EdDSA
-      enum:
-        - HS256
-        - HS384
-        - HS512
-        - RS256
-        - RS384
-        - RS512
-        - ES256
-        - ES384
-        - ES512
-        - PS256
-        - PS384
-        - PS512
-        - EdDSA
-        - RSA-OAEP
-        - RSA-OAEP-256
-        - A128KW
-        - A192KW
-        - A256KW
-        - dir
-        - ECDH-ES
-        - ECDH-ES+A128KW
-        - ECDH-ES+A192KW
-        - ECDH-ES+A256KW
-        - A128GCMKW
-        - A192GCMKW
-        - A256GCMKW
-        - PBES2-HS256+A128KW
-        - PBES2-HS384+A192KW
-        - PBES2-HS512+A256KW
-        # Enc values.
-        - A128CBC-HS256
-        - A192CBC-HS384
-        - A256CBC-HS512
-        - A128GCM
-        - A192GCM
-        - A256GCM
-    KID:
-      type: string
-      description: The unique identifier of the key, conveyed through its KID field.
-      example: 29f71c01-5ae1-4b01-b729-e17488538e15
-      format: uuid
 
     Email:
       type: string
@@ -1350,13 +1152,6 @@ components:
             $ref: "#/components/schemas/UpdateRoleForm"
   # ================================================== QUERY PARAMETERS ================================================
   parameters:
-    KID:
-      name: kid
-      in: query
-      description: The unique identifier of the key, conveyed through its KID field.
-      required: true
-      schema:
-        $ref: "#/components/schemas/KID"
     Email:
       name: email
       in: query

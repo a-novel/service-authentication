@@ -11,7 +11,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 
-	"github.com/a-novel-kit/jwt/jwa"
+	jkModels "github.com/a-novel/service-json-keys/models"
+	jkPkg "github.com/a-novel/service-json-keys/pkg"
+
+	"github.com/a-novel-kit/jwt"
+	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
@@ -26,26 +30,22 @@ func NewErrRegisterService(err error) error {
 
 type RegisterSource interface {
 	InsertCredentials(ctx context.Context, data dao.InsertCredentialsData) (*dao.CredentialsEntity, error)
-	IssueToken(ctx context.Context, request IssueTokenRequest) (string, error)
-	IssueRefreshToken(ctx context.Context, request IssueRefreshTokenRequest) (string, *jwa.Claims, error)
+	SignClaims(ctx context.Context, usage jkModels.KeyUsage, claims any) (string, error)
 	ConsumeShortCode(ctx context.Context, request ConsumeShortCodeRequest) (*models.ShortCode, error)
 }
 
 func NewRegisterSource(
 	insertCredentialsDAO *dao.InsertCredentialsRepository,
-	issueTokenService *IssueTokenService,
-	issueRefreshTokenService *IssueRefreshTokenService,
+	issueTokenService *jkPkg.ClaimsSigner,
 	consumeShortCodeService *ConsumeShortCodeService,
 ) RegisterSource {
 	return &struct {
 		*dao.InsertCredentialsRepository
-		*IssueTokenService
 		*ConsumeShortCodeService
-		*IssueRefreshTokenService
+		*jkPkg.ClaimsSigner
 	}{
 		InsertCredentialsRepository: insertCredentialsDAO,
-		IssueTokenService:           issueTokenService,
-		IssueRefreshTokenService:    issueRefreshTokenService,
+		ClaimsSigner:                issueTokenService,
 		ConsumeShortCodeService:     consumeShortCodeService,
 	}
 }
@@ -127,8 +127,37 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 		return nil, NewErrRegisterService(fmt.Errorf("commit transaction: %w", err))
 	}
 
-	refreshToken, refreshTokenClaims, err := service.source.IssueRefreshToken(span.Context(), IssueRefreshTokenRequest{
-		Claims: &models.AccessTokenClaims{
+	refreshToken, err := service.source.SignClaims(
+		span.Context(),
+		jkModels.KeyUsageRefresh,
+		models.RefreshTokenClaimsInput{
+			UserID: credentials.ID,
+		},
+	)
+	if err != nil {
+		span.SetData("issueRefreshToken.error", err.Error())
+
+		return nil, NewErrLoginService(fmt.Errorf("issue refresh token: %w", err))
+	}
+
+	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{
+		Plugins: []jwt.RecipientPlugin{jws.NewInsecureVerifier()},
+	})
+
+	var refreshTokenClaims models.RefreshTokenClaims
+
+	err = refreshTokenRecipient.Consume(span.Context(), refreshToken, &refreshTokenClaims)
+	if err != nil {
+		span.SetData("unmarshalRefreshToken.error", err.Error())
+
+		return nil, NewErrRegisterService(fmt.Errorf("unmarshal refresh token claims: %w", err))
+	}
+
+	// Generate a new authentication token.
+	accessToken, err := service.source.SignClaims(
+		span.Context(),
+		jkModels.KeyUsageAuth,
+		models.AccessTokenClaims{
 			UserID: &credentials.ID,
 			Roles: []models.Role{
 				lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
@@ -136,25 +165,9 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 					Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
 					Default(models.RoleUser),
 			},
+			RefreshTokenID: &refreshTokenClaims.Jti,
 		},
-	})
-	if err != nil {
-		span.SetData("issueRefreshToken.error", err.Error())
-
-		return nil, NewErrLoginService(fmt.Errorf("issue refresh token: %w", err))
-	}
-
-	// Generate a new authentication token.
-	accessToken, err := service.source.IssueToken(span.Context(), IssueTokenRequest{
-		UserID: &credentials.ID,
-		Roles: []models.Role{
-			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
-				Case(models.CredentialsRoleAdmin, models.RoleAdmin).
-				Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
-				Default(models.RoleUser),
-		},
-		RefreshTokenID: &refreshTokenClaims.Jti,
-	})
+	)
 	if err != nil {
 		span.SetData("issueToken.error", err.Error())
 

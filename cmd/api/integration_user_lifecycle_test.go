@@ -12,8 +12,8 @@ import (
 
 	"github.com/a-novel-kit/configurator/utilstest"
 
-	"github.com/a-novel/service-authentication/api/apiclient/testapiclient"
-	"github.com/a-novel/service-authentication/api/codegen"
+	"github.com/a-novel/service-authentication/internal/api/apiclient/testapiclient"
+	"github.com/a-novel/service-authentication/internal/api/codegen"
 )
 
 // STORY: The user can create an account, and login with it.

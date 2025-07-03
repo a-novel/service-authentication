@@ -5,9 +5,15 @@ packages:
       pkgname: servicesmocks
       dir: internal/services/mocks
       filename: mocks.go
-  github.com/a-novel/service-authentication/api:
+  github.com/a-novel/service-authentication/internal/api:
     config:
       all: true
       pkgname: apimocks
-      dir: api/mocks
+      dir: internal/api/mocks
+      filename: mocks.go
+  github.com/a-novel/service-authentication/pkg:
+    config:
+      all: true
+      pkgname: pkgmocks
+      dir: pkg/mocks
       filename: mocks.go
