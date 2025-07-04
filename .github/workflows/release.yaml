@@ -42,8 +42,6 @@ jobs:
 
       postgres-json-keys:
         image: docker.io/library/postgres:17
-        ports:
-          - "5434:5432"
         options: >-
           --health-cmd pg_isready
           --health-interval 500ms
@@ -58,6 +56,8 @@ jobs:
 
       json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone:v0
+        ports:
+          - "4001:8080"
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
