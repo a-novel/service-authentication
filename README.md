@@ -250,7 +250,7 @@ type SecurityHandler struct {
 func NewSecurity(
 	source authPkg.AuthenticateSource, permissions authModels.PermissionsConfig,
 ) (*SecurityHandler, error) {
-	handler, err := SecurityHandler.NewHandleBearerAuth[codegen.OperationName](source, permissions)
+	handler, err := authPkg.NewHandleBearerAuth[codegen.OperationName](source, permissions)
 	if err != nil {
 		return nil, fmt.Errorf("NewSecurity: %w", err)
 	}
