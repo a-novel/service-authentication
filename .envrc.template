@@ -1,6 +1,8 @@
 # App.
-export PORT=4001
-export PORT_TEST=5001
+export PORT=4011
+export PORT_TEST=4012
+export JSON_KEYS_SERVICE_PORT=4001
+export JSON_KEYS_SERVICE_URL="http://localhost:${JSON_KEYS_SERVICE_PORT}"
 export ENV="local"
 export APP_NAME="authentication"
 export DEBUG=true
@@ -15,8 +17,9 @@ export AUTH_PLATFORM_URL_REGISTER="http://localhost:${AUTH_PLATFORM_PORT}/regist
 export POSTGRES_USER="postgres"
 export POSTGRES_PASSWORD="postgres"
 export POSTGRES_DB="authentication"
-export POSTGRES_PORT=4002
-export POSTGRES_TEST_PORT=5002
+export POSTGRES_PORT=5011
+export POSTGRES_TEST_PORT=5012
+export JSON_KEYS_SERVICE_TEST_PORT=5001
 export POSTGRES_HOST="0.0.0.0"
 
 # SMTP configuration.
@@ -31,7 +34,6 @@ export SMTP_SANDBOX=true
 #export SENTRY_DSN=[your_sentry_dsn]
 #export SERVER_NAME=authentication-service-prod
 #export RELEASE=v0.1.2
-#export ENV=production
 
 # Other.
 export PODMAN_IGNORE_CGROUPSV1_WARNING="true"
