@@ -1,17 +1,15 @@
 # App.
 export PORT=4011
 export PORT_TEST=4012
-export JSON_KEYS_SERVICE_PORT=4001
-export JSON_KEYS_SERVICE_URL="http://localhost:${JSON_KEYS_SERVICE_PORT}"
 export ENV="local"
 export APP_NAME="authentication"
 export DEBUG=true
 
 # Client (frontend).
 export AUTH_PLATFORM_PORT=6001
-export AUTH_PLATFORM_URL_UPDATE_EMAIL="http://localhost:${AUTH_PLATFORM_PORT}/update-email"
-export AUTH_PLATFORM_URL_UPDATE_PASSWORD="http://localhost:${AUTH_PLATFORM_PORT}/update-password"
-export AUTH_PLATFORM_URL_REGISTER="http://localhost:${AUTH_PLATFORM_PORT}/register"
+export AUTH_PLATFORM_URL_UPDATE_EMAIL="http://localhost:${AUTH_PLATFORM_PORT}/ext/email/validate"
+export AUTH_PLATFORM_URL_UPDATE_PASSWORD="http://localhost:${AUTH_PLATFORM_PORT}/ext/password/update"
+export AUTH_PLATFORM_URL_REGISTER="http://localhost:${AUTH_PLATFORM_PORT}/ext/account/create"
 
 # Postgres.
 export POSTGRES_USER="postgres"
@@ -19,8 +17,19 @@ export POSTGRES_PASSWORD="postgres"
 export POSTGRES_DB="authentication"
 export POSTGRES_PORT=5011
 export POSTGRES_TEST_PORT=5012
-export JSON_KEYS_SERVICE_TEST_PORT=5001
 export POSTGRES_HOST="0.0.0.0"
+
+export DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
+export DSN_DAO_TEST="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_TEST_PORT}/pg0?sslmode=disable"
+export DSN_INTEGRATION_TEST="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_TEST_PORT}/pg1?sslmode=disable"
+
+
+# Dependencies.
+export JSON_KEYS_SERVICE_PORT=4001
+export JSON_KEYS_SERVICE_URL="http://localhost:${JSON_KEYS_SERVICE_PORT}"
+export JSON_KEYS_MASTER="fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
+export JSON_KEYS_SERVICE_TEST_PORT=5001
+export JSON_KEYS_SERVICE_TEST_URL="http://localhost:${JSON_KEYS_SERVICE_TEST_PORT}"
 
 # SMTP configuration.
 #export SMTP_PASSWORD="[SECRET]"
