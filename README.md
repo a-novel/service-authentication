@@ -99,9 +99,9 @@ services:
       # SMTP_SENDER: noreply@agoradesecrivains.com
       # SMTP_DOMAIN: smtp-relay.gmail.com
       # SMTP_ADDRESS: smtp-relay.gmail.com:587
-      AUTH_PLATFORM_URL_UPDATE_EMAIL: http://localhost:4001/update-email
-      AUTH_PLATFORM_URL_UPDATE_PASSWORD: http://localhost:4001/update-password
-      AUTH_PLATFORM_URL_REGISTER: http://localhost:4001/register
+      AUTH_PLATFORM_URL_UPDATE_EMAIL: http://localhost:6001/ext/email/validate
+      AUTH_PLATFORM_URL_UPDATE_PASSWORD: http://localhost:6001/ext/password/update
+      AUTH_PLATFORM_URL_REGISTER: http://localhost:6001/ext/account/create
       # Used for tracing purposes, can be omitted.
       # SENTRY_DSN: [your_sentry_dsn]
       # SERVER_NAME: authentication-service-prod
