@@ -60,9 +60,6 @@ services:
     image: ghcr.io/a-novel/service-json-keys/standalone:v0
     depends_on:
       - json-keys-postgres
-    ports:
-      # Expose the service on port 4001 on the local machine.
-      - "4021:8080"
     environment:
       PORT: 8080
       ENV: local
@@ -86,14 +83,15 @@ services:
       - json-keys-service
     ports:
       # Expose the service on port 4001 on the local machine.
-      - "4001:8080"
+      - "4011:8080"
     environment:
       PORT: 8080
       ENV: local
       APP_NAME: authentication-service
       DSN: postgres://postgres:postgres@authentication-postgres:5432/authentication?sslmode=disable
-      # In sandbox mode, mails are logged in the server logs rather than being sent. Alternatively, you need to provide
-      # a valid SMTP server configuration.
+      JSON_KEYS_URL: http://json-keys-service:8080/v1
+      # In sandbox mode, mails are logged in the server logs rather than being sent. Alternatively,
+      # you need to provide a valid SMTP server configuration.
       SMTP_SANDBOX: true
       # SMTP_PASSWORD: your_smtp_password
       # SMTP_SENDER: noreply@agoradesecrivains.com
