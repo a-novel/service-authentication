@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestResetPassword(t *testing.T) {
@@ -27,48 +27,48 @@ func TestResetPassword(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		form *codegen.ResetPasswordForm
+		form *apimodels.ResetPasswordForm
 
 		updatePasswordData *updatePasswordData
 
-		expect    codegen.ResetPasswordRes
+		expect    apimodels.ResetPasswordRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			form: &codegen.ResetPasswordForm{
+			form: &apimodels.ResetPasswordForm{
 				Password:  "secret",
 				ShortCode: "foobarqux",
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			updatePasswordData: &updatePasswordData{},
 
-			expect: &codegen.ResetPasswordNoContent{},
+			expect: &apimodels.ResetPasswordNoContent{},
 		},
 		{
 			name: "ErrInvalidPassword",
 
-			form: &codegen.ResetPasswordForm{
+			form: &apimodels.ResetPasswordForm{
 				Password:  "secret",
 				ShortCode: "foobarqux",
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			updatePasswordData: &updatePasswordData{
 				err: lib.ErrInvalidPassword,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid short code"},
+			expect: &apimodels.ForbiddenError{Error: "invalid short code"},
 		},
 		{
 			name: "Error",
 
-			form: &codegen.ResetPasswordForm{
+			form: &apimodels.ResetPasswordForm{
 				Password:  "secret",
 				ShortCode: "foobarqux",
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			updatePasswordData: &updatePasswordData{

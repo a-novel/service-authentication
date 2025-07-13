@@ -2,23 +2,23 @@ package dao
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun/driver/pgdriver"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
+
 	"github.com/a-novel/service-authentication/models"
 )
 
-var ErrInsertCredentialsRepository = errors.New("InsertCredentialsRepository.InsertCredentials")
-
-func NewErrInsertCredentialsRepository(err error) error {
-	return errors.Join(err, ErrInsertCredentialsRepository)
-}
+//go:embed insert_credentials.sql
+var insertCredentialsQuery string
 
 // InsertCredentialsData is the input used to perform the InsertCredentialsRepository.InsertCredentials action.
 type InsertCredentialsData struct {
@@ -65,42 +65,40 @@ func NewInsertCredentialsRepository() *InsertCredentialsRepository {
 func (repository *InsertCredentialsRepository) InsertCredentials(
 	ctx context.Context, data InsertCredentialsData,
 ) (*CredentialsEntity, error) {
-	span := sentry.StartSpan(ctx, "InsertCredentialsRepository.InsertCredentials")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.InsertCredentials")
+	defer span.End()
 
-	span.SetData("credentials.id", data.ID.String())
-	span.SetData("credentials.email", data.Email)
-	span.SetData("credentials.now", data.Now.Format(time.RFC3339))
+	span.SetAttributes(
+		attribute.String("credentials.id", data.ID.String()),
+		attribute.String("credentials.email", data.Email),
+		attribute.Int64("credentials.now", data.Now.Unix()),
+	)
+
+	entity := &CredentialsEntity{}
 
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(span.Context())
+	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
-
-		return nil, NewErrInsertCredentialsRepository(fmt.Errorf("get postgres client: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres client: %w", err))
 	}
 
-	entity := &CredentialsEntity{
-		ID:        data.ID,
-		Email:     data.Email,
-		Password:  data.Password,
-		CreatedAt: data.Now,
-		UpdatedAt: data.Now,
-		Role:      models.CredentialsRoleUser,
-	}
-
-	// Execute query.
-	_, err = tx.NewInsert().Model(entity).Exec(span.Context())
+	err = tx.NewRaw(
+		insertCredentialsQuery,
+		data.ID,
+		data.Email,
+		data.Password,
+		data.Now,
+		data.Now,
+		models.CredentialsRoleUser,
+	).Scan(ctx, entity)
 	if err != nil {
-		span.SetData("insert.error", err.Error())
-
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return nil, NewErrInsertCredentialsRepository(errors.Join(err, ErrCredentialsAlreadyExists))
+			return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsAlreadyExists))
 		}
 
-		return nil, NewErrInsertCredentialsRepository(fmt.Errorf("insert credentials: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("insert credentials: %w", err))
 	}
 
-	return entity, nil
+	return otel.ReportSuccess(span, entity), nil
 }

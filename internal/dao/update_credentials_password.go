@@ -2,21 +2,21 @@ package dao
 
 import (
 	"context"
+	"database/sql"
+	_ "embed"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
 )
 
-var ErrUpdateCredentialsPasswordRepository = errors.New("UpdateCredentialsPasswordRepository.UpdateCredentialsPassword")
-
-func NewErrUpdateCredentialsPasswordRepository(err error) error {
-	return errors.Join(err, ErrUpdateCredentialsPasswordRepository)
-}
+//go:embed update_credentials_password.sql
+var updateCredentialsPasswordQuery string
 
 // UpdateCredentialsPasswordData is the input used to perform the
 // UpdateCredentialsPasswordRepository.UpdateCredentialsPassword action.
@@ -47,55 +47,30 @@ func NewUpdateCredentialsPasswordRepository() *UpdateCredentialsPasswordReposito
 func (repository *UpdateCredentialsPasswordRepository) UpdateCredentialsPassword(
 	ctx context.Context, userID uuid.UUID, data UpdateCredentialsPasswordData,
 ) (*CredentialsEntity, error) {
-	span := sentry.StartSpan(ctx, "UpdateCredentialsPasswordRepository.UpdateCredentialsPassword")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.UpdateCredentialsPassword")
+	defer span.End()
 
-	span.SetData("credentials.id", userID.String())
-	span.SetData("credentials.now", data.Now.String())
+	span.SetAttributes(
+		attribute.String("credentials.id", userID.String()),
+		attribute.Int64("credentials.now", data.Now.Unix()),
+	)
 
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(span.Context())
+	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
-
-		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("get postgres client: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres client: %w", err))
 	}
 
-	entity := &CredentialsEntity{
-		ID:        userID,
-		Password:  data.Password,
-		UpdatedAt: data.Now,
-	}
+	entity := &CredentialsEntity{}
 
-	// Execute query.
-	res, err := tx.
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Column("password", "updated_at").
-		Returning("*").
-		Exec(span.Context())
+	err = tx.NewRaw(updateCredentialsPasswordQuery, data.Password, data.Now, userID).Scan(ctx, entity)
 	if err != nil {
-		span.SetData("update.error", err.Error())
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, otel.ReportError(span, ErrCredentialsNotFound)
+		}
 
-		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("update credentials: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("update credentials: %w", err))
 	}
 
-	// Make sure the credentials were updated.
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		span.SetData("rowsAffected.error", err.Error())
-
-		return nil, NewErrUpdateCredentialsPasswordRepository(fmt.Errorf("get rows affected: %w", err))
-	}
-
-	span.SetData("rowsAffected", rowsAffected)
-
-	if rowsAffected == 0 {
-		span.SetData("error", "credentials not found")
-
-		return nil, NewErrUpdateCredentialsPasswordRepository(ErrCredentialsNotFound)
-	}
-
-	return entity, nil
+	return otel.ReportSuccess(span, entity), nil
 }

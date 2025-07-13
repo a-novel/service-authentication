@@ -3,23 +3,23 @@ package dao
 import (
 	"context"
 	"database/sql"
-	"errors"
+	_ "embed"
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/uptrace/bun"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
+
 	"github.com/a-novel/service-authentication/models"
 )
 
-var ErrInsertShortCodeRepository = errors.New("InsertShortCodeRepository.InsertShortCode")
-
-func NewErrInsertShortCodeRepository(err error) error {
-	return errors.Join(err, ErrInsertShortCodeRepository)
-}
+//go:embed insert_short_code.sql
+var insertShortCodeQuery string
 
 // InsertShortCodeData is the input used to perform the InsertShortCodeRepository.InsertShortCode action.
 type InsertShortCodeData struct {
@@ -68,106 +68,95 @@ func NewInsertShortCodeRepository() *InsertShortCodeRepository {
 func (repository *InsertShortCodeRepository) InsertShortCode(
 	ctx context.Context, data InsertShortCodeData,
 ) (*ShortCodeEntity, error) {
-	span := sentry.StartSpan(ctx, "InsertShortCodeRepository.InsertShortCode")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.InsertShortCodeRepository")
+	defer span.End()
 
-	span.SetData("shortCode.id", data.ID.String())
-	span.SetData("shortCode.usage", data.Usage)
-	span.SetData("shortCode.target", data.Target)
-	span.SetData("shortCode.override", data.Override)
+	span.SetAttributes(
+		attribute.String("shortCode.id", data.ID.String()),
+		attribute.String("shortCode.usage", data.Usage.String()),
+		attribute.String("shortCode.target", data.Target),
+		attribute.Bool("shortCode.override", data.Override),
+	)
 
-	// Retrieve a connection to postgres from the context.
-	db, err := lib.PostgresContext(span.Context())
-	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
+	output := &ShortCodeEntity{}
 
-		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("get postgres client: %w", err))
-	}
+	txOptions := &sql.TxOptions{Isolation: sql.LevelRepeatableRead}
 
-	// Since we may be performing 2 operations depending on the parameters, create a new transaction to prevent any
-	// data corruption.
-	tx, err := db.BeginTx(span.Context(), &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
-	if err != nil {
-		span.SetData("postgres.transaction.error", err.Error())
+	err := postgres.RunInTx(ctx, txOptions, func(ctx context.Context, tx bun.IDB) error {
+		var err error
 
-		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("start transaction: %w", err))
-	}
-	// Make sure to roll back the transaction if an error occurs.
-	defer func() { _ = tx.Rollback() }()
-
-	if data.Override {
-		oldEntity := &ShortCodeEntity{
-			// So as we switch between Go/Pg timestamps, and transactions / views / triggers,
-			// there is a mismatch when comparing dates which can sometimes lead Postgres to
-			// believe this (expired) row is still part of the active short codes view.
-			//
-			// To make sure any conflicting short code is considered expired by the time
-			// we perform the insertion, we cheat and make the deletion date one second
-			// older. This is usually enough to prevent any issue.
-			DeletedAt:      lo.ToPtr(data.Now.Add(-time.Second)),
-			DeletedComment: lo.ToPtr(DeleteCommentOverrideWithNewerKey),
+		if data.Override {
+			err = repository.discardConflicts(ctx, tx, data)
+		} else {
+			err = repository.checkConflicts(ctx, tx, data)
 		}
 
-		// Discard any conflicting short codes before starting.
-		_, err = tx.NewUpdate().
-			Model(oldEntity).
-			ModelTableExpr("active_short_codes").
-			Column("deleted_at", "deleted_comment").
-			Where("target = ?", data.Target).
-			Where("usage = ?", data.Usage).
-			Where("COALESCE(deleted_at, expires_at) >= clock_timestamp()").
-			Returning("*").
-			Exec(span.Context())
 		if err != nil {
-			span.SetData("discardShortCodes.error", err.Error())
-
-			return nil, NewErrInsertShortCodeRepository(fmt.Errorf("discard old short codes: %w", err))
-		}
-	} else {
-		exists, err := tx.NewSelect().
-			Model((*ShortCodeEntity)(nil)).
-			Where("target = ?", data.Target).
-			Where("usage = ?", data.Usage).
-			Exists(span.Context())
-		if err != nil {
-			span.SetData("checkShortCodeExists.error", err.Error())
-
-			return nil, NewErrInsertShortCodeRepository(fmt.Errorf("check short code existence: %w", err))
+			return fmt.Errorf("insert short code: %w", err)
 		}
 
-		if exists {
-			span.SetData("checkShortCodeExists.error", "short code already exists")
-
-			return nil, NewErrInsertShortCodeRepository(ErrShortCodeAlreadyExists)
-		}
-	}
-
-	// Insert the new short code.
-	newEntity := &ShortCodeEntity{
-		ID:        data.ID,
-		Code:      data.Code,
-		Usage:     data.Usage,
-		Target:    data.Target,
-		Data:      data.Data,
-		CreatedAt: data.Now,
-		ExpiresAt: data.ExpiresAt,
-	}
-
-	// Execute query.
-	_, err = tx.NewInsert().Model(newEntity).Returning("*").Exec(span.Context())
+		return tx.NewRaw(
+			insertShortCodeQuery,
+			data.ID,
+			data.Code,
+			data.Usage,
+			data.Target,
+			data.Data,
+			data.Now,
+			data.ExpiresAt,
+		).Scan(ctx, output)
+	})
 	if err != nil {
-		span.SetData("insertShortCode.error", err.Error())
-
-		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("insert short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	// Commit the transaction.
-	err = tx.Commit()
+	return otel.ReportSuccess(span, output), nil
+}
+
+//go:embed insert_short_code.discard_conflict.sql
+var discardShortCodeConflictQuery string
+
+func (repository *InsertShortCodeRepository) discardConflicts(
+	ctx context.Context, tx bun.IDB, data InsertShortCodeData,
+) error {
+	// Discard any conflicting short codes before starting.
+	_, err := tx.NewRaw(
+		discardShortCodeConflictQuery,
+		// So as we switch between Go/Pg timestamps, and transactions / views / triggers,
+		// there is a mismatch when comparing dates which can sometimes lead Postgres to
+		// believe this (expired) row is still part of the active short codes view.
+		//
+		// To make sure any conflicting short code is considered expired by the time
+		// we perform the insertion, we cheat and make the deletion date one second
+		// older. This is usually enough to prevent any issue.
+		lo.ToPtr(data.Now.Add(-time.Second)),
+		lo.ToPtr(DeleteCommentOverrideWithNewerKey),
+		data.Target,
+		data.Usage,
+	).Exec(ctx)
+
+	return err
+}
+
+//go:embed insert_short_code.check_conflict.sql
+var checkShortCodeConflictQuery string
+
+func (repository *InsertShortCodeRepository) checkConflicts(
+	ctx context.Context, tx bun.IDB, data InsertShortCodeData,
+) error {
+	res, err := tx.NewRaw(checkShortCodeConflictQuery, data.Target, data.Usage).Exec(ctx)
 	if err != nil {
-		span.SetData("postgres.commit.error", err.Error())
-
-		return nil, NewErrInsertShortCodeRepository(fmt.Errorf("commit transaction: %w", err))
+		return fmt.Errorf("check short code existence: %w", err)
 	}
 
-	return newEntity, nil
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+
+	if n == 1 {
+		return ErrShortCodeAlreadyExists
+	}
+
+	return nil
 }

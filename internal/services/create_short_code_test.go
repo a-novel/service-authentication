@@ -16,6 +16,7 @@ import (
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
+	"github.com/a-novel/service-authentication/models"
 )
 
 func TestCreateShortCode(t *testing.T) {
@@ -110,7 +111,7 @@ func TestCreateShortCode(t *testing.T) {
 					})
 			}
 
-			service := services.NewCreateShortCodeService(source)
+			service := services.NewCreateShortCodeService(source, models.DefaultShortCodesConfig)
 
 			resp, err := service.CreateShortCode(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)

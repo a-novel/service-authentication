@@ -6,21 +6,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
-	"github.com/go-faster/errors"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/config"
+	"github.com/a-novel/golib/otel"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrCreateShortCodeService = errors.New("CreateShortCodeService.CreateShortCode")
-
-func NewErrCreateShortCodeService(err error) error {
-	return errors.Join(err, ErrCreateShortCodeService)
-}
 
 // CreateShortCodeSource is the source used to perform the CreateShortCodeService.CreateShortCode action.
 type CreateShortCodeSource interface {
@@ -48,10 +42,11 @@ type CreateShortCodeRequest struct {
 // You may create one using the NewCreateShortCodeService function.
 type CreateShortCodeService struct {
 	source CreateShortCodeSource
+	config models.ShortCodesConfig
 }
 
-func NewCreateShortCodeService(source CreateShortCodeSource) *CreateShortCodeService {
-	return &CreateShortCodeService{source: source}
+func NewCreateShortCodeService(source CreateShortCodeSource, config models.ShortCodesConfig) *CreateShortCodeService {
+	return &CreateShortCodeService{source: source, config: config}
 }
 
 // CreateShortCode creates a new short code in the database.
@@ -64,28 +59,26 @@ func NewCreateShortCodeService(source CreateShortCodeSource) *CreateShortCodeSer
 func (service *CreateShortCodeService) CreateShortCode(
 	ctx context.Context, request CreateShortCodeRequest,
 ) (*models.ShortCode, error) {
-	span := sentry.StartSpan(ctx, "CreateShortCodeService.CreateShortCode")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.CreateShortCode")
+	defer span.End()
 
-	span.SetData("request.target", request.Target)
-	span.SetData("request.usage", request.Usage)
-	span.SetData("request.ttl", request.TTL)
-	span.SetData("request.override", request.Override)
+	span.SetAttributes(
+		attribute.String("request.target", request.Target),
+		attribute.String("request.usage", request.Usage.String()),
+		attribute.Int64("request.ttl", request.TTL.Milliseconds()),
+		attribute.Bool("request.override", request.Override),
+	)
 
 	// Generate a new random code.
-	plainCode, err := lib.NewRandomURLString(config.ShortCodes.Size)
+	plainCode, err := lib.NewRandomURLString(service.config.Size)
 	if err != nil {
-		span.SetData("generateRandomText.error", err.Error())
-
-		return nil, NewErrCreateShortCodeService(fmt.Errorf("generate short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("generate short code: %w", err))
 	}
 
 	// Encrypt the short code in the database.
 	encrypted, err := lib.GenerateScrypt(plainCode, lib.ScryptParamsDefault)
 	if err != nil {
-		span.SetData("scrypt.error", err.Error())
-
-		return nil, NewErrCreateShortCodeService(fmt.Errorf("encrypt short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("encrypt short code: %w", err))
 	}
 
 	// Serialize the data associated with the short code before storing it.
@@ -95,15 +88,13 @@ func (service *CreateShortCodeService) CreateShortCode(
 	}
 
 	if err != nil {
-		span.SetData("json.serialize.error", err.Error())
-
-		return nil, NewErrCreateShortCodeService(fmt.Errorf("serialize data: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("serialize data: %w", err))
 	}
 
 	now := time.Now()
 	expiry := now.Add(request.TTL)
 
-	entity, err := service.source.InsertShortCode(span.Context(), dao.InsertShortCodeData{
+	entity, err := service.source.InsertShortCode(ctx, dao.InsertShortCodeData{
 		ID:        uuid.New(),
 		Code:      encrypted,
 		Usage:     request.Usage,
@@ -114,14 +105,12 @@ func (service *CreateShortCodeService) CreateShortCode(
 		Override:  request.Override,
 	})
 	if err != nil {
-		span.SetData("dao.insertShortCode.error", err.Error())
-
-		return nil, NewErrCreateShortCodeService(fmt.Errorf("insert short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("insert short code: %w", err))
 	}
 
-	span.SetData("shortCode.id", entity.ID)
+	span.SetAttributes(attribute.String("shortCode.id", entity.ID.String()))
 
-	return &models.ShortCode{
+	return otel.ReportSuccess(span, &models.ShortCode{
 		ID:        entity.ID,
 		Usage:     entity.Usage,
 		Target:    entity.Target,
@@ -129,5 +118,5 @@ func (service *CreateShortCodeService) CreateShortCode(
 		CreatedAt: entity.CreatedAt,
 		ExpiresAt: entity.ExpiresAt,
 		PlainCode: plainCode,
-	}, nil
+	}), nil
 }

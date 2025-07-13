@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/a-novel/golib/otel"
 	jkModels "github.com/a-novel/service-json-keys/models"
 	jkPkg "github.com/a-novel/service-json-keys/pkg"
 
@@ -21,13 +22,7 @@ import (
 var (
 	ErrMismatchRefreshClaims                = errors.New("refresh token and access token do not match")
 	ErrTokenIssuedWithDifferentRefreshToken = errors.New("access token was not issued with the provided refresh token")
-
-	ErrConsumeRefreshTokenService = errors.New("ConsumeRefreshTokenService.ConsumeRefreshToken")
 )
-
-func NewErrConsumeRefreshTokenService(err error) error {
-	return errors.Join(err, ErrConsumeRefreshTokenService)
-}
 
 type ConsumeRefreshTokenSource interface {
 	SelectCredentials(ctx context.Context, id uuid.UUID) (*dao.CredentialsEntity, error)
@@ -82,61 +77,52 @@ func NewConsumeRefreshTokenService(source ConsumeRefreshTokenSource) *ConsumeRef
 func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	ctx context.Context, request ConsumeRefreshTokenRequest,
 ) (string, error) {
-	span := sentry.StartSpan(ctx, "ConsumeRefreshTokenService.ConsumeRefreshToken")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.ConsumeRefreshToken")
+	defer span.End()
 
 	if request.AccessToken == "" {
-		span.SetData("error", "access token is empty")
-
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("%w: access token is empty", models.ErrUnauthorized))
+		return "", otel.ReportError(span, fmt.Errorf("%w: access token is empty", models.ErrUnauthorized))
 	}
 
 	if request.RefreshToken == "" {
-		span.SetData("error", "refresh token is empty")
-
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("%w: refresh token is empty", models.ErrUnauthorized))
+		return "", otel.ReportError(span, fmt.Errorf("%w: refresh token is empty", models.ErrUnauthorized))
 	}
 
 	accessTokenClaims, err := service.source.VerifyClaims(
-		span.Context(),
+		ctx,
 		jkModels.KeyUsageAuth,
 		request.AccessToken,
 		&jkPkg.VerifyClaimsOptions{IgnoreExpired: true},
 	)
 	if err != nil {
-		span.SetData("accessToken.verify.error", err.Error())
-		sentry.CaptureException(err)
-
 		if errors.Is(err, jws.ErrInvalidSignature) {
-			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume access token: %w", models.ErrUnauthorized))
+			return "", otel.ReportError(span, fmt.Errorf("consume access token: %w", models.ErrUnauthorized))
 		}
 
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("verify access token claims: %w", err))
+		return "", otel.ReportError(span, fmt.Errorf("verify access token claims: %w", err))
 	}
 
 	refreshTokenClaims, err := service.source.VerifyRefreshTokenClaims(
-		span.Context(),
+		ctx,
 		jkModels.KeyUsageRefresh,
 		request.RefreshToken,
 		nil,
 	)
 	if err != nil {
-		span.SetData("refreshToken.consume.error", err.Error())
-
 		if errors.Is(err, jws.ErrInvalidSignature) {
-			return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume refresh token: %w", models.ErrUnauthorized))
+			return "", otel.ReportError(span, fmt.Errorf("consume refresh token: %w", models.ErrUnauthorized))
 		}
 
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("consume refresh token: %w", err))
+		return "", otel.ReportError(span, fmt.Errorf("consume refresh token: %w", err))
 	}
 
-	span.SetData("accessTokenClaims.userID", lo.FromPtr(accessTokenClaims.UserID))
-	span.SetData("refreshTokenClaims.userID", refreshTokenClaims.UserID)
+	span.SetAttributes(
+		attribute.String("accessTokenClaims.userID", lo.FromPtr(accessTokenClaims.UserID).String()),
+		attribute.String("refreshTokenClaims.userID", refreshTokenClaims.UserID.String()),
+	)
 
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
-		span.SetData("error", "access token userID does not match refresh token userID")
-
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf(
+		return "", otel.ReportError(span, fmt.Errorf(
 			"%w (accessToken.userID: %s, refreshToken.userID: %s)",
 			ErrMismatchRefreshClaims,
 			lo.FromPtr(accessTokenClaims.UserID),
@@ -144,19 +130,17 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		))
 	}
 
-	span.SetData("accessTokenClaims.refreshTokenID", lo.FromPtr(accessTokenClaims.RefreshTokenID))
-	span.SetData("refreshTokenClaims.jti", refreshTokenClaims.Jti)
+	span.SetAttributes(
+		attribute.String("accessTokenClaims.refreshTokenID", lo.FromPtr(accessTokenClaims.RefreshTokenID)),
+		attribute.String("refreshTokenClaims.jti", refreshTokenClaims.Jti),
+	)
 
 	if lo.FromPtr(accessTokenClaims.RefreshTokenID) != refreshTokenClaims.Jti {
-		span.SetData("error", "access token was not issued with the provided refresh token")
-
-		return "", NewErrConsumeRefreshTokenService(ErrTokenIssuedWithDifferentRefreshToken)
+		return "", otel.ReportError(span, ErrTokenIssuedWithDifferentRefreshToken)
 	}
 
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
-		span.SetData("error", "access token userID does not match refresh token userID")
-
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf(
+		return "", otel.ReportError(span, fmt.Errorf(
 			"%w (accessToken.userID: %s, refreshToken.userID: %s)",
 			ErrMismatchRefreshClaims,
 			lo.FromPtr(accessTokenClaims.UserID),
@@ -167,12 +151,10 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 	// Retrieve updated credentials.
 	credentials, err := service.source.SelectCredentials(ctx, lo.FromPtr(accessTokenClaims.UserID))
 	if err != nil {
-		span.SetData("selectCredentials.error", err.Error())
-
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("select credentials: %w", err))
+		return "", otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
-	newAccessToken, err := service.source.SignClaims(span.Context(), jkModels.KeyUsageAuth, &models.AccessTokenClaims{
+	newAccessToken, err := service.source.SignClaims(ctx, jkModels.KeyUsageAuth, &models.AccessTokenClaims{
 		UserID: accessTokenClaims.UserID,
 		Roles: []models.Role{
 			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
@@ -183,10 +165,8 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		RefreshTokenID: &refreshTokenClaims.Jti,
 	})
 	if err != nil {
-		span.SetData("issueToken.error", err.Error())
-
-		return "", NewErrConsumeRefreshTokenService(fmt.Errorf("issue accessToken: %w", err))
+		return "", otel.ReportError(span, fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return newAccessToken, nil
+	return otel.ReportSuccess(span, newAccessToken), nil
 }

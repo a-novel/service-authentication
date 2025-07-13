@@ -2,20 +2,15 @@ package services
 
 import (
 	"context"
-	"errors"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/a-novel/golib/otel"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrSelectUserService = errors.New("SelectUserService.SelectUser")
-
-func NewErrSelectUserService(err error) error {
-	return errors.Join(err, ErrSelectUserService)
-}
 
 type SelectUserSource interface {
 	SelectCredentials(ctx context.Context, id uuid.UUID) (*dao.CredentialsEntity, error)
@@ -36,26 +31,27 @@ func NewSelectUserService(source SelectUserSource) *SelectUserService {
 func (service *SelectUserService) SelectUser(
 	ctx context.Context, request SelectUserRequest,
 ) (*models.User, error) {
-	span := sentry.StartSpan(ctx, "SelectUserService.SelectUser")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.SelectUser")
+	defer span.End()
 
-	span.SetData("request.userID", request.ID.String())
+	span.SetAttributes(attribute.String("request.userID", request.ID.String()))
 
-	entity, err := service.source.SelectCredentials(span.Context(), request.ID)
+	entity, err := service.source.SelectCredentials(ctx, request.ID)
 	if err != nil {
-		span.SetData("dao.error", err.Error())
-
-		return nil, NewErrSelectUserService(err)
+		return nil, otel.ReportError(span, err)
 	}
 
-	span.SetData("dao.entity.email", entity.Email)
-	span.SetData("dao.entity.role", entity.Role)
+	span.SetAttributes(
+		attribute.String("dao.entity.id", entity.ID.String()),
+		attribute.String("dao.entity.email", entity.Email),
+		attribute.String("dao.entity.role", entity.Role.String()),
+	)
 
-	return &models.User{
+	return otel.ReportSuccess(span, &models.User{
 		ID:        entity.ID,
 		Email:     entity.Email,
 		Role:      entity.Role,
 		CreatedAt: entity.CreatedAt,
 		UpdatedAt: entity.UpdatedAt,
-	}, nil
+	}), nil
 }

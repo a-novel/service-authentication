@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestCreateSession(t *testing.T) {
@@ -29,17 +29,17 @@ func TestCreateSession(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		form *codegen.LoginForm
+		form *apimodels.LoginForm
 
 		loginData *loginData
 
-		expect    codegen.CreateSessionRes
+		expect    apimodels.CreateSessionRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			form: &codegen.LoginForm{
+			form: &apimodels.LoginForm{
 				Email:    "user@provider.com",
 				Password: "secret",
 			},
@@ -51,7 +51,7 @@ func TestCreateSession(t *testing.T) {
 				},
 			},
 
-			expect: &codegen.Token{
+			expect: &apimodels.Token{
 				AccessToken:  "access-token",
 				RefreshToken: "refresh-token",
 			},
@@ -59,7 +59,7 @@ func TestCreateSession(t *testing.T) {
 		{
 			name: "UserNotFound",
 
-			form: &codegen.LoginForm{
+			form: &apimodels.LoginForm{
 				Email:    "user@provider.com",
 				Password: "secret",
 			},
@@ -68,12 +68,12 @@ func TestCreateSession(t *testing.T) {
 				err: dao.ErrCredentialsNotFound,
 			},
 
-			expect: &codegen.NotFoundError{Error: "user not found"},
+			expect: &apimodels.NotFoundError{Error: "user not found"},
 		},
 		{
 			name: "InvalidPassword",
 
-			form: &codegen.LoginForm{
+			form: &apimodels.LoginForm{
 				Email:    "user@provider.com",
 				Password: "secret",
 			},
@@ -82,12 +82,12 @@ func TestCreateSession(t *testing.T) {
 				err: lib.ErrInvalidPassword,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid user password"},
+			expect: &apimodels.ForbiddenError{Error: "invalid user password"},
 		},
 		{
 			name: "Error",
 
-			form: &codegen.LoginForm{
+			form: &apimodels.LoginForm{
 				Email:    "user@provider.com",
 				Password: "secret",
 			},

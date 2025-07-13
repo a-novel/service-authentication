@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestRegister(t *testing.T) {
@@ -28,17 +28,17 @@ func TestRegister(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		form *codegen.RegisterForm
+		form *apimodels.RegisterForm
 
 		registerData *registerData
 
-		expect    codegen.RegisterRes
+		expect    apimodels.RegisterRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			form: &codegen.RegisterForm{
+			form: &apimodels.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -51,7 +51,7 @@ func TestRegister(t *testing.T) {
 				},
 			},
 
-			expect: &codegen.Token{
+			expect: &apimodels.Token{
 				AccessToken:  "access-token",
 				RefreshToken: "refresh-token",
 			},
@@ -59,7 +59,7 @@ func TestRegister(t *testing.T) {
 		{
 			name: "EmailAlreadyExists",
 
-			form: &codegen.RegisterForm{
+			form: &apimodels.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -69,12 +69,12 @@ func TestRegister(t *testing.T) {
 				err: dao.ErrCredentialsAlreadyExists,
 			},
 
-			expect: &codegen.ConflictError{Error: "email already taken"},
+			expect: &apimodels.ConflictError{Error: "email already taken"},
 		},
 		{
 			name: "ShortCodeNotFound",
 
-			form: &codegen.RegisterForm{
+			form: &apimodels.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -84,12 +84,12 @@ func TestRegister(t *testing.T) {
 				err: dao.ErrShortCodeNotFound,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid short code"},
+			expect: &apimodels.ForbiddenError{Error: "invalid short code"},
 		},
 		{
 			name: "InvalidShortCode",
 
-			form: &codegen.RegisterForm{
+			form: &apimodels.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",
@@ -99,12 +99,12 @@ func TestRegister(t *testing.T) {
 				err: services.ErrInvalidShortCode,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid short code"},
+			expect: &apimodels.ForbiddenError{Error: "invalid short code"},
 		},
 		{
 			name: "Error",
 
-			form: &codegen.RegisterForm{
+			form: &apimodels.RegisterForm{
 				Email:     "user@provider.com",
 				Password:  "secret",
 				ShortCode: "foobarqux",

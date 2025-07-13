@@ -1,0 +1,7 @@
+# Ignore test files
+**/*_test.go
+**/*.test.go
+
+docs
+.github
+scripts

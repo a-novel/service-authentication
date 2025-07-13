@@ -1,39 +1,47 @@
-FROM golang:alpine AS builder
+FROM docker.io/library/golang:alpine AS builder
 
 WORKDIR /app
 
-COPY ../cmd/api ./cmd/api
-COPY ../config ./config
+# ======================================================================================================================
+# Copy build files.
+# ======================================================================================================================
+COPY ../go.mod ./go.mod
+COPY ../go.sum ./go.sum
+COPY "../cmd/api" "./cmd/api"
 COPY ../internal/api ./internal/api
 COPY ../internal/dao ./internal/dao
 COPY ../internal/lib ./internal/lib
 COPY ../internal/services ./internal/services
-COPY ../migrations ./migrations
 COPY ../pkg ./pkg
 COPY ../models ./models
-COPY ../go.mod ./go.mod
-COPY ../go.sum ./go.sum
 
 RUN go mod download
 
+# ======================================================================================================================
+# Build executables.
+# ======================================================================================================================
 RUN go build -o /api cmd/api/main.go
 
-FROM alpine:latest
+FROM docker.io/library/alpine:latest
 
 WORKDIR /
 
 COPY --from=builder /api /api
 
+# ======================================================================================================================
+# Healthcheck.
+# ======================================================================================================================
 RUN apk --update add curl
 
-ENV HOST="0.0.0.0"
+HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
+  CMD curl -f http://localhost:8080/v1/ping || exit 1
 
+# ======================================================================================================================
+# Finish setup.
+# ======================================================================================================================
 ENV PORT=8080
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=1s --timeout=5s --retries=20 --start-period=1s \
-  CMD curl -f http://localhost:8080/v1/ping || exit 1
-
-# Run
+# Make sure the migrations are run before the API starts.
 CMD ["/api"]

@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestRequestPasswordReset(t *testing.T) {
@@ -26,40 +26,40 @@ func TestRequestPasswordReset(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		form *codegen.RequestPasswordResetForm
+		form *apimodels.RequestPasswordResetForm
 
 		requestPasswordResetData *requestPasswordResetData
 
-		expect    codegen.RequestPasswordResetRes
+		expect    apimodels.RequestPasswordResetRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			form: &codegen.RequestPasswordResetForm{
+			form: &apimodels.RequestPasswordResetForm{
 				Email: "user@provider.com",
 			},
 
 			requestPasswordResetData: &requestPasswordResetData{},
 
-			expect: &codegen.RequestPasswordResetNoContent{},
+			expect: &apimodels.RequestPasswordResetNoContent{},
 		},
 		{
 			name: "Success/Lang",
 
-			form: &codegen.RequestPasswordResetForm{
+			form: &apimodels.RequestPasswordResetForm{
 				Email: "user@provider.com",
-				Lang:  codegen.OptLang{Value: codegen.LangFr, Set: true},
+				Lang:  apimodels.OptLang{Value: apimodels.LangFr, Set: true},
 			},
 
 			requestPasswordResetData: &requestPasswordResetData{},
 
-			expect: &codegen.RequestPasswordResetNoContent{},
+			expect: &apimodels.RequestPasswordResetNoContent{},
 		},
 		{
 			name: "RequestPasswordResetError",
 
-			form: &codegen.RequestPasswordResetForm{
+			form: &apimodels.RequestPasswordResetForm{
 				Email: "user@provider.com",
 			},
 

@@ -1,9 +1,9 @@
 package services_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
@@ -12,14 +12,18 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/postgres"
+
 	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
+	testutils "github.com/a-novel/service-authentication/internal/test"
 	"github.com/a-novel/service-authentication/models"
 )
 
-func TestUpdateEmail(t *testing.T) { //nolint:paralleltest
+func TestUpdateEmail(t *testing.T) {
+	t.Parallel()
+
 	errFoo := errors.New("foo")
 
 	type updateCredentialsEmailData struct {
@@ -103,47 +107,50 @@ func TestUpdateEmail(t *testing.T) { //nolint:paralleltest
 		},
 	}
 
-	for _, testCase := range testCases { //nolint:paralleltest
+	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"), nil)
-			require.NoError(t, err)
+			t.Parallel()
 
-			source := servicesmocks.NewMockUpdateEmailSource(t)
+			postgres.RunTransactionalTest(t, testutils.TestDBConfig, func(ctx context.Context, t *testing.T) {
+				t.Helper()
 
-			if testCase.consumeShortCodeData != nil {
-				source.EXPECT().
-					ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
-						Usage:  models.ShortCodeUsageValidateMail,
-						Target: testCase.request.UserID.String(),
-						Code:   testCase.request.ShortCode,
-					}).
-					Return(testCase.consumeShortCodeData.resp, testCase.consumeShortCodeData.err)
-			}
+				source := servicesmocks.NewMockUpdateEmailSource(t)
 
-			if testCase.updateCredentialsEmailData != nil {
-				source.EXPECT().
-					UpdateCredentialsEmail(
-						mock.Anything,
-						testCase.request.UserID,
-						mock.MatchedBy(func(data dao.UpdateCredentialsEmailData) bool {
-							var newEmail string
-							err = json.Unmarshal(testCase.consumeShortCodeData.resp.Data, &newEmail)
+				if testCase.consumeShortCodeData != nil {
+					source.EXPECT().
+						ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
+							Usage:  models.ShortCodeUsageValidateMail,
+							Target: testCase.request.UserID.String(),
+							Code:   testCase.request.ShortCode,
+						}).
+						Return(testCase.consumeShortCodeData.resp, testCase.consumeShortCodeData.err)
+				}
 
-							return assert.NoError(t, err) &&
-								assert.Equal(t, newEmail, data.Email) &&
-								assert.WithinDuration(t, time.Now(), data.Now, time.Second)
-						}),
-					).
-					Return(testCase.updateCredentialsEmailData.resp, testCase.updateCredentialsEmailData.err)
-			}
+				if testCase.updateCredentialsEmailData != nil {
+					source.EXPECT().
+						UpdateCredentialsEmail(
+							mock.Anything,
+							testCase.request.UserID,
+							mock.MatchedBy(func(data dao.UpdateCredentialsEmailData) bool {
+								var newEmail string
+								err := json.Unmarshal(testCase.consumeShortCodeData.resp.Data, &newEmail)
 
-			service := services.NewUpdateEmailService(source)
+								return assert.NoError(t, err) &&
+									assert.Equal(t, newEmail, data.Email) &&
+									assert.WithinDuration(t, time.Now(), data.Now, time.Second)
+							}),
+						).
+						Return(testCase.updateCredentialsEmailData.resp, testCase.updateCredentialsEmailData.err)
+				}
 
-			resp, err := service.UpdateEmail(ctx, testCase.request)
-			require.ErrorIs(t, err, testCase.expectErr)
-			require.Equal(t, testCase.expect, resp)
+				service := services.NewUpdateEmailService(source)
 
-			source.AssertExpectations(t)
+				resp, err := service.UpdateEmail(ctx, testCase.request)
+				require.ErrorIs(t, err, testCase.expectErr)
+				require.Equal(t, testCase.expect, resp)
+
+				source.AssertExpectations(t)
+			})
 		})
 	}
 }

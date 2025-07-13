@@ -3,20 +3,20 @@ package dao
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
+
 	"github.com/a-novel/service-authentication/models"
 )
 
-var ErrSelectShortCodeByParamsRepository = errors.New("SelectShortCodeByParamsRepository.SelectShortCodeByParams")
-
-func NewErrSelectShortCodeByParamsRepository(err error) error {
-	return errors.Join(err, ErrSelectShortCodeByParamsRepository)
-}
+//go:embed select_short_code_by_params.sql
+var selectShortCodeByParamsQuery string
 
 // SelectShortCodeByParamsData is the input used to perform the
 // SelectShortCodeByParamsRepository.SelectShortCodeByParams action.
@@ -46,38 +46,31 @@ func NewSelectShortCodeByParamsRepository() *SelectShortCodeByParamsRepository {
 func (repository *SelectShortCodeByParamsRepository) SelectShortCodeByParams(
 	ctx context.Context, data SelectShortCodeByParamsData,
 ) (*ShortCodeEntity, error) {
-	span := sentry.StartSpan(ctx, "SelectShortCodeByParamsRepository.SelectShortCodeByParams")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.SelectShortCodeByParams")
+	defer span.End()
 
-	span.SetData("shortCode.target", data.Target)
-	span.SetData("shortCode.usage", data.Usage)
+	span.SetAttributes(
+		attribute.String("data", data.Target),
+		attribute.String("usage", data.Usage.String()),
+	)
 
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(span.Context())
+	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
-
-		return nil, NewErrSelectShortCodeByParamsRepository(fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	var entity ShortCodeEntity
+	entity := &ShortCodeEntity{}
 
 	// Execute query.
-	err = tx.NewSelect().
-		Model(&entity).
-		Where("target = ?", data.Target).
-		Where("usage = ?", data.Usage).
-		Order("id DESC").
-		Scan(span.Context())
+	err = tx.NewRaw(selectShortCodeByParamsQuery, data.Target, data.Usage).Scan(ctx, entity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			span.SetData("scan.error", err.Error())
-
-			return nil, NewErrSelectShortCodeByParamsRepository(ErrShortCodeNotFound)
+			return nil, otel.ReportError(span, ErrShortCodeNotFound)
 		}
 
-		return nil, NewErrSelectShortCodeByParamsRepository(fmt.Errorf("select short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("select short code: %w", err))
 	}
 
-	return &entity, nil
+	return otel.ReportSuccess(span, entity), nil
 }

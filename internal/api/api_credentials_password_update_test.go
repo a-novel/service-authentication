@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
 
@@ -32,11 +32,11 @@ func TestEmailUpdate(t *testing.T) {
 		name string
 
 		userID *uuid.UUID
-		form   *codegen.UpdatePasswordForm
+		form   *apimodels.UpdatePasswordForm
 
 		updatePasswordData *updatePasswordData
 
-		expect    codegen.UpdatePasswordRes
+		expect    apimodels.UpdatePasswordRes
 		expectErr error
 	}{
 		{
@@ -44,19 +44,19 @@ func TestEmailUpdate(t *testing.T) {
 
 			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 
-			form: &codegen.UpdatePasswordForm{
+			form: &apimodels.UpdatePasswordForm{
 				Password:        "secret",
 				CurrentPassword: "foobarqux",
 			},
 
 			updatePasswordData: &updatePasswordData{},
 
-			expect: &codegen.UpdatePasswordNoContent{},
+			expect: &apimodels.UpdatePasswordNoContent{},
 		},
 		{
 			name: "NoUser",
 
-			form: &codegen.UpdatePasswordForm{
+			form: &apimodels.UpdatePasswordForm{
 				Password:        "secret",
 				CurrentPassword: "foobarqux",
 			},
@@ -68,7 +68,7 @@ func TestEmailUpdate(t *testing.T) {
 
 			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 
-			form: &codegen.UpdatePasswordForm{
+			form: &apimodels.UpdatePasswordForm{
 				Password:        "secret",
 				CurrentPassword: "foobarqux",
 			},
@@ -77,14 +77,14 @@ func TestEmailUpdate(t *testing.T) {
 				err: lib.ErrInvalidPassword,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid user password"},
+			expect: &apimodels.ForbiddenError{Error: "invalid user password"},
 		},
 		{
 			name: "Error",
 
 			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 
-			form: &codegen.UpdatePasswordForm{
+			form: &apimodels.UpdatePasswordForm{
 				Password:        "secret",
 				CurrentPassword: "foobarqux",
 			},

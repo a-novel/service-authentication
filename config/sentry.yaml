@@ -1,5 +1,0 @@
-dsn: ${SENTRY_DSN}
-serverName: ${SERVER_NAME}
-release: ${RELEASE}
-environment: ${ENV}
-debug: ${DEBUG}

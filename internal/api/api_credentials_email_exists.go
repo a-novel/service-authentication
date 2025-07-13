@@ -5,41 +5,39 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/codes"
 
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/golib/otel"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 type EmailExistsService interface {
 	EmailExists(ctx context.Context, request services.EmailExistsRequest) (bool, error)
 }
 
-func (api *API) EmailExists(ctx context.Context, params codegen.EmailExistsParams) (codegen.EmailExistsRes, error) {
-	span := sentry.StartSpan(ctx, "API.EmailExists")
-	defer span.Finish()
+func (api *API) EmailExists(ctx context.Context, params apimodels.EmailExistsParams) (apimodels.EmailExistsRes, error) {
+	ctx, span := otel.Tracer().Start(ctx, "api.EmailExists")
+	defer span.End()
 
-	span.SetData("request.email", params.Email)
-
-	exists, err := api.EmailExistsService.EmailExists(span.Context(), services.EmailExistsRequest{
+	exists, err := api.EmailExistsService.EmailExists(ctx, services.EmailExistsRequest{
 		Email: string(params.Email),
 	})
 
-	span.SetData("service.exists", exists)
-
 	switch {
-	case errors.Is(err, dao.ErrCredentialsNotFound):
-		span.SetData("service.err", err.Error())
+	case errors.Is(err, dao.ErrCredentialsNotFound) || (!exists && err == nil):
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
-		fallthrough
-	case !exists && err == nil:
-		return &codegen.NotFoundError{Error: "email not found"}, nil
+		return &apimodels.NotFoundError{Error: "email not found"}, nil
 	case err != nil:
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
 		return nil, fmt.Errorf("check email existence: %w", err)
 	}
 
-	return &codegen.EmailExistsNoContent{}, nil
+	return otel.ReportSuccess(span, &apimodels.EmailExistsNoContent{}), nil
 }

@@ -6,22 +6,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/a-novel/golib/otel"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
 
-var (
-	ErrInvalidShortCode = errors.New("invalid short code")
-
-	ErrConsumeShortCodeService = errors.New("ConsumeShortCodeService.ConsumeShortCode")
-)
-
-func NewErrConsumeShortCodeService(err error) error {
-	return errors.Join(err, ErrConsumeShortCodeService)
-}
+var ErrInvalidShortCode = errors.New("invalid short code")
 
 // ConsumeShortCodeSource is the source used to perform the ConsumeShortCodeService.ConsumeShortCode action.
 //
@@ -75,48 +69,44 @@ func NewConsumeShortCodeService(source ConsumeShortCodeSource) *ConsumeShortCode
 func (service *ConsumeShortCodeService) ConsumeShortCode(
 	ctx context.Context, request ConsumeShortCodeRequest,
 ) (*models.ShortCode, error) {
-	span := sentry.StartSpan(ctx, "ConsumeShortCodeService.ConsumeShortCode")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.ConsumeShortCode")
+	defer span.End()
 
-	span.SetData("request.target", request.Target)
-	span.SetData("request.usage", request.Usage)
+	span.SetAttributes(
+		attribute.String("request.target", request.Target),
+		attribute.String("request.usage", request.Usage.String()),
+	)
 
-	entity, err := service.source.SelectShortCodeByParams(span.Context(), dao.SelectShortCodeByParamsData{
+	entity, err := service.source.SelectShortCodeByParams(ctx, dao.SelectShortCodeByParamsData{
 		Target: request.Target,
 		Usage:  request.Usage,
 	})
 	if err != nil {
-		span.SetData("dao.selectShortCode.error", err.Error())
-
-		return nil, NewErrConsumeShortCodeService(fmt.Errorf("retrieve short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("retrieve short code: %w", err))
 	}
 
-	span.SetData("shortCode.id", entity.ID)
+	span.SetAttributes(attribute.String("shortCode.id", entity.ID.String()))
 
 	// Compare the encrypted code with the plain code of the request.
 	err = lib.CompareScrypt(request.Code, entity.Code)
 	if err != nil {
-		span.SetData("scrypt.error", err.Error())
-
-		return nil, NewErrConsumeShortCodeService(errors.Join(
+		return nil, otel.ReportError(span, errors.Join(
 			fmt.Errorf("compare short code: %w", err),
 			ErrInvalidShortCode,
 		))
 	}
 
 	// Delete the short code from the database. It has been consumed.
-	_, err = service.source.DeleteShortCode(span.Context(), dao.DeleteShortCodeData{
+	_, err = service.source.DeleteShortCode(ctx, dao.DeleteShortCodeData{
 		ID:      entity.ID,
 		Now:     time.Now(),
 		Comment: dao.DeleteCommentConsumed,
 	})
 	if err != nil {
-		span.SetData("dao.deleteShortCode.error", err.Error())
-
-		return nil, NewErrConsumeShortCodeService(fmt.Errorf("delete short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("delete short code: %w", err))
 	}
 
-	return &models.ShortCode{
+	return otel.ReportSuccess(span, &models.ShortCode{
 		ID:        entity.ID,
 		Usage:     entity.Usage,
 		Target:    entity.Target,
@@ -124,5 +114,5 @@ func (service *ConsumeShortCodeService) ConsumeShortCode(
 		CreatedAt: entity.CreatedAt,
 		ExpiresAt: entity.ExpiresAt,
 		PlainCode: request.Code,
-	}, nil
+	}), nil
 }

@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/codes"
 
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/golib/otel"
+
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
 
@@ -18,21 +20,17 @@ type UpdatePasswordService interface {
 }
 
 func (api *API) UpdatePassword(
-	ctx context.Context, req *codegen.UpdatePasswordForm) (codegen.UpdatePasswordRes, error,
+	ctx context.Context, req *apimodels.UpdatePasswordForm) (apimodels.UpdatePasswordRes, error,
 ) {
-	span := sentry.StartSpan(ctx, "API.UpdatePassword")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "api.UpdatePassword")
+	defer span.End()
 
-	userID, err := pkg.RequireUserID(span.Context())
+	userID, err := pkg.RequireUserID(ctx)
 	if err != nil {
-		span.SetData("request.userID.err", err.Error())
-
-		return nil, fmt.Errorf("get user id: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("get user id: %w", err))
 	}
 
-	span.SetData("request.userID", userID)
-
-	err = api.UpdatePasswordService.UpdatePassword(span.Context(), services.UpdatePasswordRequest{
+	err = api.UpdatePasswordService.UpdatePassword(ctx, services.UpdatePasswordRequest{
 		Password:        string(req.GetPassword()),
 		CurrentPassword: string(req.GetCurrentPassword()),
 		UserID:          userID,
@@ -40,14 +38,16 @@ func (api *API) UpdatePassword(
 
 	switch {
 	case errors.Is(err, lib.ErrInvalidPassword):
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
-		return &codegen.ForbiddenError{Error: "invalid user password"}, nil
+		return &apimodels.ForbiddenError{Error: "invalid user password"}, nil
 	case err != nil:
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
 		return nil, fmt.Errorf("update password: %w", err)
 	}
 
-	return &codegen.UpdatePasswordNoContent{}, nil
+	return otel.ReportSuccess(span, &apimodels.UpdatePasswordNoContent{}), nil
 }

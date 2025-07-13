@@ -5,44 +5,50 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/codes"
 
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/golib/otel"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 type LoginService interface {
 	Login(ctx context.Context, request services.LoginRequest) (*models.Token, error)
 }
 
-func (api *API) CreateSession(ctx context.Context, req *codegen.LoginForm) (codegen.CreateSessionRes, error) {
-	span := sentry.StartSpan(ctx, "API.CreateSession")
-	defer span.Finish()
+func (api *API) CreateSession(ctx context.Context, req *apimodels.LoginForm) (apimodels.CreateSessionRes, error) {
+	ctx, span := otel.Tracer().Start(ctx, "api.CreateSession")
+	defer span.End()
 
-	span.SetData("request.email", req.GetEmail())
-
-	token, err := api.LoginService.Login(span.Context(), services.LoginRequest{
+	token, err := api.LoginService.Login(ctx, services.LoginRequest{
 		Email:    string(req.GetEmail()),
 		Password: string(req.GetPassword()),
 	})
 
 	switch {
 	case errors.Is(err, dao.ErrCredentialsNotFound):
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
-		return &codegen.NotFoundError{Error: "user not found"}, nil
+		return &apimodels.NotFoundError{Error: "user not found"}, nil
 	case errors.Is(err, lib.ErrInvalidPassword):
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
-		return &codegen.ForbiddenError{Error: "invalid user password"}, nil
+		return &apimodels.ForbiddenError{Error: "invalid user password"}, nil
 	case err != nil:
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
 		return nil, fmt.Errorf("login user: %w", err)
 	}
 
-	return &codegen.Token{AccessToken: token.AccessToken, RefreshToken: token.RefreshToken}, nil
+	return otel.ReportSuccess(span, &apimodels.Token{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+	}), nil
 }

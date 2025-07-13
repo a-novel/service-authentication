@@ -29,17 +29,17 @@ openapi-generate:
 	go generate ./...
 
 mjml-lint:
-	for i in `find ./config/mails -name "*.mjml" -type f`; do \
+	for i in `find ./internal/lib/mails -name "*.mjml" -type f`; do \
 		npx --yes --package=mjml@next mjml --validate $$i; \
 	done
 
 mjml-generate:
-	for i in `find ./config/mails -name "*.mjml" -type f`; do \
+	for i in `find ./internal/lib/mails -name "*.mjml" -type f`; do \
 		npx --yes --package=mjml@next mjml $$i -o $${i%.*}.html; \
 	done
 
 run-infra:
-	podman compose -p "${APP_NAME}" -f "${PWD}/build/podman-compose.yaml" up -d
+	podman compose -p "${APP_NAME}" -f "${PWD}/build/podman-compose.yaml" up -d --build --pull-always
 
 run-infra-down:
 	podman compose -p "${APP_NAME}" -f "${PWD}/build/podman-compose.yaml" down

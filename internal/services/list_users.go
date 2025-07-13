@@ -2,20 +2,15 @@ package services
 
 import (
 	"context"
-	"errors"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/a-novel/golib/otel"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrListUsersService = errors.New("ListUsersService.ListUsers")
-
-func NewErrListUsersService(err error) error {
-	return errors.Join(err, ErrListUsersService)
-}
 
 type ListUsersSource interface {
 	ListUsers(ctx context.Context, data dao.ListUsersData) ([]*dao.CredentialsEntity, error)
@@ -24,7 +19,7 @@ type ListUsersSource interface {
 type ListUsersRequest struct {
 	Limit  int
 	Offset int
-	Roles  []models.CredentialsRole
+	Roles  models.CredentialsRoles
 }
 
 type ListUsersService struct {
@@ -38,27 +33,27 @@ func NewListUsersService(source ListUsersSource) *ListUsersService {
 func (service *ListUsersService) ListUsers(
 	ctx context.Context, request ListUsersRequest,
 ) ([]*models.User, error) {
-	span := sentry.StartSpan(ctx, "ListUsersService.ListUsers")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.ListUsers")
+	defer span.End()
 
-	span.SetData("limit", request.Limit)
-	span.SetData("offset", request.Offset)
-	span.SetData("roles", request.Roles)
+	span.SetAttributes(
+		attribute.Int("request.limit", request.Limit),
+		attribute.Int("request.offset", request.Offset),
+		attribute.StringSlice("request.roles", request.Roles.Strings()),
+	)
 
-	entities, err := service.source.ListUsers(span.Context(), dao.ListUsersData{
+	entities, err := service.source.ListUsers(ctx, dao.ListUsersData{
 		Limit:  request.Limit,
 		Offset: request.Offset,
 		Roles:  request.Roles,
 	})
 	if err != nil {
-		span.SetData("dao.error", err.Error())
-
-		return nil, NewErrListUsersService(err)
+		return nil, otel.ReportError(span, err)
 	}
 
-	span.SetData("dao.entities.count", len(entities))
+	span.SetAttributes(attribute.Int("response.count", len(entities)))
 
-	return lo.Map(entities, func(item *dao.CredentialsEntity, _ int) *models.User {
+	return otel.ReportSuccess(span, lo.Map(entities, func(item *dao.CredentialsEntity, _ int) *models.User {
 		return &models.User{
 			ID:        item.ID,
 			Email:     item.Email,
@@ -66,5 +61,5 @@ func (service *ListUsersService) ListUsers(
 			CreatedAt: item.CreatedAt,
 			UpdatedAt: item.UpdatedAt,
 		}
-	}), nil
+	})), nil
 }

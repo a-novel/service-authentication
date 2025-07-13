@@ -2,25 +2,20 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"github.com/uptrace/bun"
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
 
 	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrUpdateEmailService = errors.New("UpdateEmailService.UpdateEmail")
-
-func NewErrUpdateEmailService(err error) error {
-	return errors.Join(err, ErrUpdateEmailService)
-}
 
 type UpdateEmailSource interface {
 	UpdateCredentialsEmail(
@@ -62,70 +57,54 @@ func NewUpdateEmailService(source UpdateEmailSource) *UpdateEmailService {
 func (service *UpdateEmailService) UpdateEmail(
 	ctx context.Context, request UpdateEmailRequest,
 ) (*UpdateEmailResponse, error) {
-	span := sentry.StartSpan(ctx, "UpdateEmailService.UpdateEmail")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.UpdateEmail")
+	defer span.End()
 
-	span.SetData("request.userID", request.UserID.String())
+	span.SetAttributes(attribute.String("request.userID", request.UserID.String()))
 
-	// Email update can fail after the short code is consumed. To prevent this, we wrap the operation in a single
-	// transaction.
-	ctxTx, commit, err := lib.PostgresContextTx(span.Context(), &sql.TxOptions{
-		Isolation: sql.LevelRepeatableRead,
-		ReadOnly:  false,
+	var (
+		err         error
+		credentials *dao.CredentialsEntity
+	)
+
+	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
+		// Verify short code.
+		shortCode, err := service.source.ConsumeShortCode(ctx, ConsumeShortCodeRequest{
+			Usage:  models.ShortCodeUsageValidateMail,
+			Target: request.UserID.String(),
+			Code:   request.ShortCode,
+		})
+		if err != nil {
+			return fmt.Errorf("consume short code: %w", err)
+		}
+
+		var newEmail string
+
+		err = json.Unmarshal(shortCode.Data, &newEmail)
+		if err != nil {
+			return fmt.Errorf("unmarshal short code data: %w", err)
+		}
+
+		span.SetAttributes(attribute.String("shortCode.newEmail", newEmail))
+
+		// Update email.
+		credentials, err = service.source.UpdateCredentialsEmail(ctx, request.UserID, dao.UpdateCredentialsEmailData{
+			Email: newEmail,
+			Now:   time.Now(),
+		})
+		if err != nil {
+			return fmt.Errorf("update email: %w", err)
+		}
+
+		span.SetAttributes(attribute.String("dao.credentials.email", credentials.Email))
+
+		return nil
 	})
 	if err != nil {
-		span.SetData("postgres.transaction.error", err.Error())
-
-		return nil, NewErrUpdateEmailService(fmt.Errorf("create transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	defer func() { _ = commit(false) }()
-
-	// Verify short code.
-	shortCode, err := service.source.ConsumeShortCode(ctxTx, ConsumeShortCodeRequest{
-		Usage:  models.ShortCodeUsageValidateMail,
-		Target: request.UserID.String(),
-		Code:   request.ShortCode,
-	})
-	if err != nil {
-		span.SetData("service.consumeShortCode.error", err.Error())
-
-		return nil, NewErrUpdateEmailService(fmt.Errorf("consume short code: %w", err))
-	}
-
-	var newEmail string
-
-	err = json.Unmarshal(shortCode.Data, &newEmail)
-	if err != nil {
-		span.SetData("json.unmarshal.error", err.Error())
-
-		return nil, NewErrUpdateEmailService(fmt.Errorf("unmarshal short code data: %w", err))
-	}
-
-	span.SetData("shortCode.newEmail", newEmail)
-
-	// Update email.
-	credentials, err := service.source.UpdateCredentialsEmail(ctxTx, request.UserID, dao.UpdateCredentialsEmailData{
-		Email: newEmail,
-		Now:   time.Now(),
-	})
-	if err != nil {
-		span.SetData("dao.updateCredentialsEmail.error", err.Error())
-
-		return nil, NewErrUpdateEmailService(fmt.Errorf("update email: %w", err))
-	}
-
-	span.SetData("dao.credentials.email", credentials.Email)
-
-	// Commit transaction.
-	err = commit(true)
-	if err != nil {
-		span.SetData("postgres.commit.error", err.Error())
-
-		return nil, NewErrUpdateEmailService(fmt.Errorf("commit transaction: %w", err))
-	}
-
-	return &UpdateEmailResponse{
+	return otel.ReportSuccess(span, &UpdateEmailResponse{
 		NewEmail: credentials.Email,
-	}, nil
+	}), nil
 }

@@ -2,28 +2,23 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"github.com/uptrace/bun"
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
 
-var (
-	ErrMissingShortCodeAndCurrentPassword = errors.New("missing short code and current password")
-
-	ErrUpdatePasswordService = errors.New("UpdatePasswordService.UpdatePassword")
-)
-
-func NewErrUpdatePasswordService(err error) error {
-	return errors.Join(err, ErrUpdatePasswordService)
-}
+var ErrMissingShortCodeAndCurrentPassword = errors.New("missing short code and current password")
 
 type UpdatePasswordSource interface {
 	UpdateCredentialsPassword(
@@ -65,85 +60,62 @@ func NewUpdatePasswordService(source UpdatePasswordSource) *UpdatePasswordServic
 }
 
 func (service *UpdatePasswordService) UpdatePassword(ctx context.Context, request UpdatePasswordRequest) error {
-	span := sentry.StartSpan(ctx, "UpdatePasswordService.UpdatePassword")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.UpdatePassword")
+	defer span.End()
 
-	span.SetData("request.userID", request.UserID.String())
+	span.SetAttributes(attribute.String("request.userID", request.UserID.String()))
 
 	// Encrypt the new password.
 	encryptedPassword, err := lib.GenerateScrypt(request.Password, lib.ScryptParamsDefault)
 	if err != nil {
-		span.SetData("password.encrypt.error", err.Error())
-
-		return NewErrUpdatePasswordService(fmt.Errorf("encrypt password: %w", err))
+		return otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
 	}
 
-	// Password update can fail after the short code is consumed. To prevent this, we wrap the operation in a single
-	// transaction.
-	ctxTx, commit, err := lib.PostgresContextTx(span.Context(), &sql.TxOptions{
-		Isolation: sql.LevelRepeatableRead,
-		ReadOnly:  false,
-	})
-	if err != nil {
-		span.SetData("postgres.transaction.error", err.Error())
+	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
+		switch {
+		// If using a password reset, user does not have access to its original password. It should have issued a short
+		// code to reset its password.
+		case request.ShortCode != "":
+			// Consume short code.
+			_, err = service.source.ConsumeShortCode(ctx, ConsumeShortCodeRequest{
+				Usage:  models.ShortCodeUsageResetPassword,
+				Target: request.UserID.String(),
+				Code:   request.ShortCode,
+			})
+			if err != nil {
+				return fmt.Errorf("consume short code: %w", err)
+			}
+		case request.CurrentPassword != "":
+			credentials, err := service.source.SelectCredentials(ctx, request.UserID)
+			if err != nil {
+				return fmt.Errorf("select credentials: %w", err)
+			}
 
-		return NewErrUpdatePasswordService(fmt.Errorf("create transaction: %w", err))
-	}
+			// Check if the current password is correct.
+			err = lib.CompareScrypt(request.CurrentPassword, credentials.Password)
+			if err != nil {
+				return fmt.Errorf("compare current password: %w", err)
+			}
+		default:
+			return ErrMissingShortCodeAndCurrentPassword
+		}
 
-	defer func() { _ = commit(false) }()
-
-	switch {
-	// If using a password reset, user does not have access to its original password. It should have issued a short
-	// code to reset its password.
-	case request.ShortCode != "":
-		// Consume short code.
-		_, err = service.source.ConsumeShortCode(ctxTx, ConsumeShortCodeRequest{
-			Usage:  models.ShortCodeUsageResetPassword,
-			Target: request.UserID.String(),
-			Code:   request.ShortCode,
+		// Update password.
+		_, err = service.source.UpdateCredentialsPassword(ctx, request.UserID, dao.UpdateCredentialsPasswordData{
+			Password: encryptedPassword,
+			Now:      time.Now(),
 		})
 		if err != nil {
-			span.SetData("service.consumeShortCode.error", err.Error())
-
-			return NewErrUpdatePasswordService(fmt.Errorf("consume short code: %w", err))
-		}
-	case request.CurrentPassword != "":
-		credentials, err := service.source.SelectCredentials(ctxTx, request.UserID)
-		if err != nil {
-			span.SetData("dao.selectCredentials.error", err.Error())
-
-			return NewErrUpdatePasswordService(fmt.Errorf("select credentials: %w", err))
+			return fmt.Errorf("update password: %w", err)
 		}
 
-		// Check if the current password is correct.
-		err = lib.CompareScrypt(request.CurrentPassword, credentials.Password)
-		if err != nil {
-			span.SetData("scrypt.compare.error", err.Error())
-
-			return NewErrUpdatePasswordService(fmt.Errorf("compare current password: %w", err))
-		}
-	default:
-		return ErrMissingShortCodeAndCurrentPassword
-	}
-
-	// Update password.
-	_, err = service.source.UpdateCredentialsPassword(ctxTx, request.UserID, dao.UpdateCredentialsPasswordData{
-		Password: encryptedPassword,
-		Now:      time.Now(),
+		return nil
 	})
 	if err != nil {
-		span.SetData("dao.updateCredentialsPassword.error", err.Error())
-
-		return NewErrUpdatePasswordService(fmt.Errorf("update password: %w", err))
+		return otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	// Commit transaction.
-	err = commit(true)
-	if err != nil {
-		span.SetData("postgres.commit.error", err.Error())
-
-		return NewErrUpdatePasswordService(fmt.Errorf("commit transaction: %w", err))
-	}
+	otel.ReportSuccessNoContent(span)
 
 	return nil
 }

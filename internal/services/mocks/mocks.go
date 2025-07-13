@@ -1170,41 +1170,51 @@ func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) RunAndReturn(run fu
 	return _c
 }
 
-// SMTP provides a mock function for the type MockRequestEmailUpdateSource
-func (_mock *MockRequestEmailUpdateSource) SMTP(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any) {
-	_mock.Called(ctx, message, lang, tos, data)
-	return
+// SendMail provides a mock function for the type MockRequestEmailUpdateSource
+func (_mock *MockRequestEmailUpdateSource) SendMail(to []string, t *template.Template, tName string, data any) error {
+	ret := _mock.Called(to, t, tName, data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendMail")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func([]string, *template.Template, string, any) error); ok {
+		r0 = returnFunc(to, t, tName, data)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
 }
 
-// MockRequestEmailUpdateSource_SMTP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SMTP'
-type MockRequestEmailUpdateSource_SMTP_Call struct {
+// MockRequestEmailUpdateSource_SendMail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendMail'
+type MockRequestEmailUpdateSource_SendMail_Call struct {
 	*mock.Call
 }
 
-// SMTP is a helper method to define mock.On call
-//   - ctx
-//   - message
-//   - lang
-//   - tos
+// SendMail is a helper method to define mock.On call
+//   - to
+//   - t
+//   - tName
 //   - data
-func (_e *MockRequestEmailUpdateSource_Expecter) SMTP(ctx interface{}, message interface{}, lang interface{}, tos interface{}, data interface{}) *MockRequestEmailUpdateSource_SMTP_Call {
-	return &MockRequestEmailUpdateSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
+func (_e *MockRequestEmailUpdateSource_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockRequestEmailUpdateSource_SendMail_Call {
+	return &MockRequestEmailUpdateSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
-func (_c *MockRequestEmailUpdateSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestEmailUpdateSource_SMTP_Call {
+func (_c *MockRequestEmailUpdateSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestEmailUpdateSource_SendMail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models0.Lang), args[3].([]string), args[4].(any))
+		run(args[0].([]string), args[1].(*template.Template), args[2].(string), args[3].(any))
 	})
 	return _c
 }
 
-func (_c *MockRequestEmailUpdateSource_SMTP_Call) Return() *MockRequestEmailUpdateSource_SMTP_Call {
-	_c.Call.Return()
+func (_c *MockRequestEmailUpdateSource_SendMail_Call) Return(err error) *MockRequestEmailUpdateSource_SendMail_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockRequestEmailUpdateSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestEmailUpdateSource_SMTP_Call {
-	_c.Run(run)
+func (_c *MockRequestEmailUpdateSource_SendMail_Call) RunAndReturn(run func(to []string, t *template.Template, tName string, data any) error) *MockRequestEmailUpdateSource_SendMail_Call {
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -1292,44 +1302,6 @@ func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) RunAndReturn(run 
 	return _c
 }
 
-// SMTP provides a mock function for the type MockRequestPasswordResetSource
-func (_mock *MockRequestPasswordResetSource) SMTP(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any) {
-	_mock.Called(ctx, message, lang, tos, data)
-	return
-}
-
-// MockRequestPasswordResetSource_SMTP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SMTP'
-type MockRequestPasswordResetSource_SMTP_Call struct {
-	*mock.Call
-}
-
-// SMTP is a helper method to define mock.On call
-//   - ctx
-//   - message
-//   - lang
-//   - tos
-//   - data
-func (_e *MockRequestPasswordResetSource_Expecter) SMTP(ctx interface{}, message interface{}, lang interface{}, tos interface{}, data interface{}) *MockRequestPasswordResetSource_SMTP_Call {
-	return &MockRequestPasswordResetSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
-}
-
-func (_c *MockRequestPasswordResetSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestPasswordResetSource_SMTP_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models0.Lang), args[3].([]string), args[4].(any))
-	})
-	return _c
-}
-
-func (_c *MockRequestPasswordResetSource_SMTP_Call) Return() *MockRequestPasswordResetSource_SMTP_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *MockRequestPasswordResetSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestPasswordResetSource_SMTP_Call {
-	_c.Run(run)
-	return _c
-}
-
 // SelectCredentialsByEmail provides a mock function for the type MockRequestPasswordResetSource
 func (_mock *MockRequestPasswordResetSource) SelectCredentialsByEmail(ctx context.Context, email string) (*dao.CredentialsEntity, error) {
 	ret := _mock.Called(ctx, email)
@@ -1383,6 +1355,54 @@ func (_c *MockRequestPasswordResetSource_SelectCredentialsByEmail_Call) Return(c
 }
 
 func (_c *MockRequestPasswordResetSource_SelectCredentialsByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (*dao.CredentialsEntity, error)) *MockRequestPasswordResetSource_SelectCredentialsByEmail_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SendMail provides a mock function for the type MockRequestPasswordResetSource
+func (_mock *MockRequestPasswordResetSource) SendMail(to []string, t *template.Template, tName string, data any) error {
+	ret := _mock.Called(to, t, tName, data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendMail")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func([]string, *template.Template, string, any) error); ok {
+		r0 = returnFunc(to, t, tName, data)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRequestPasswordResetSource_SendMail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendMail'
+type MockRequestPasswordResetSource_SendMail_Call struct {
+	*mock.Call
+}
+
+// SendMail is a helper method to define mock.On call
+//   - to
+//   - t
+//   - tName
+//   - data
+func (_e *MockRequestPasswordResetSource_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockRequestPasswordResetSource_SendMail_Call {
+	return &MockRequestPasswordResetSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
+}
+
+func (_c *MockRequestPasswordResetSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestPasswordResetSource_SendMail_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]string), args[1].(*template.Template), args[2].(string), args[3].(any))
+	})
+	return _c
+}
+
+func (_c *MockRequestPasswordResetSource_SendMail_Call) Return(err error) *MockRequestPasswordResetSource_SendMail_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRequestPasswordResetSource_SendMail_Call) RunAndReturn(run func(to []string, t *template.Template, tName string, data any) error) *MockRequestPasswordResetSource_SendMail_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1471,41 +1491,51 @@ func (_c *MockRequestRegisterSource_CreateShortCode_Call) RunAndReturn(run func(
 	return _c
 }
 
-// SMTP provides a mock function for the type MockRequestRegisterSource
-func (_mock *MockRequestRegisterSource) SMTP(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any) {
-	_mock.Called(ctx, message, lang, tos, data)
-	return
+// SendMail provides a mock function for the type MockRequestRegisterSource
+func (_mock *MockRequestRegisterSource) SendMail(to []string, t *template.Template, tName string, data any) error {
+	ret := _mock.Called(to, t, tName, data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendMail")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func([]string, *template.Template, string, any) error); ok {
+		r0 = returnFunc(to, t, tName, data)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
 }
 
-// MockRequestRegisterSource_SMTP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SMTP'
-type MockRequestRegisterSource_SMTP_Call struct {
+// MockRequestRegisterSource_SendMail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendMail'
+type MockRequestRegisterSource_SendMail_Call struct {
 	*mock.Call
 }
 
-// SMTP is a helper method to define mock.On call
-//   - ctx
-//   - message
-//   - lang
-//   - tos
+// SendMail is a helper method to define mock.On call
+//   - to
+//   - t
+//   - tName
 //   - data
-func (_e *MockRequestRegisterSource_Expecter) SMTP(ctx interface{}, message interface{}, lang interface{}, tos interface{}, data interface{}) *MockRequestRegisterSource_SMTP_Call {
-	return &MockRequestRegisterSource_SMTP_Call{Call: _e.mock.On("SMTP", ctx, message, lang, tos, data)}
+func (_e *MockRequestRegisterSource_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockRequestRegisterSource_SendMail_Call {
+	return &MockRequestRegisterSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
-func (_c *MockRequestRegisterSource_SMTP_Call) Run(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestRegisterSource_SMTP_Call {
+func (_c *MockRequestRegisterSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestRegisterSource_SendMail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*template.Template), args[2].(models0.Lang), args[3].([]string), args[4].(any))
+		run(args[0].([]string), args[1].(*template.Template), args[2].(string), args[3].(any))
 	})
 	return _c
 }
 
-func (_c *MockRequestRegisterSource_SMTP_Call) Return() *MockRequestRegisterSource_SMTP_Call {
-	_c.Call.Return()
+func (_c *MockRequestRegisterSource_SendMail_Call) Return(err error) *MockRequestRegisterSource_SendMail_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockRequestRegisterSource_SMTP_Call) RunAndReturn(run func(ctx context.Context, message *template.Template, lang models0.Lang, tos []string, data any)) *MockRequestRegisterSource_SMTP_Call {
-	_c.Run(run)
+func (_c *MockRequestRegisterSource_SendMail_Call) RunAndReturn(run func(to []string, t *template.Template, tName string, data any) error) *MockRequestRegisterSource_SendMail_Call {
+	_c.Call.Return(run)
 	return _c
 }
 

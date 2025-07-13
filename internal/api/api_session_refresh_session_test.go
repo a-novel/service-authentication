@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestRefreshSession(t *testing.T) {
@@ -27,17 +27,17 @@ func TestRefreshSession(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		params codegen.RefreshSessionParams
+		params apimodels.RefreshSessionParams
 
 		consumeRefreshTokenData *consumeRefreshTokenData
 
-		expect    codegen.RefreshSessionRes
+		expect    apimodels.RefreshSessionRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			params: codegen.RefreshSessionParams{
+			params: apimodels.RefreshSessionParams{
 				RefreshToken: "refresh-token",
 				AccessToken:  "access-token",
 			},
@@ -46,7 +46,7 @@ func TestRefreshSession(t *testing.T) {
 				resp: "new-access-token",
 			},
 
-			expect: &codegen.Token{
+			expect: &apimodels.Token{
 				RefreshToken: "refresh-token",
 				AccessToken:  "new-access-token",
 			},
@@ -54,7 +54,7 @@ func TestRefreshSession(t *testing.T) {
 		{
 			name: "Unauthorized",
 
-			params: codegen.RefreshSessionParams{
+			params: apimodels.RefreshSessionParams{
 				RefreshToken: "refresh-token",
 				AccessToken:  "access-token",
 			},
@@ -63,12 +63,12 @@ func TestRefreshSession(t *testing.T) {
 				err: models.ErrUnauthorized,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid user password"},
+			expect: &apimodels.ForbiddenError{Error: "invalid user password"},
 		},
 		{
 			name: "MismatchRefreshClaims",
 
-			params: codegen.RefreshSessionParams{
+			params: apimodels.RefreshSessionParams{
 				RefreshToken: "refresh-token",
 				AccessToken:  "access-token",
 			},
@@ -77,12 +77,12 @@ func TestRefreshSession(t *testing.T) {
 				err: services.ErrMismatchRefreshClaims,
 			},
 
-			expect: &codegen.UnprocessableEntityError{Error: "invalid refresh token"},
+			expect: &apimodels.UnprocessableEntityError{Error: "invalid refresh token"},
 		},
 		{
 			name: "TokenIssuedWithDifferentRefreshToken",
 
-			params: codegen.RefreshSessionParams{
+			params: apimodels.RefreshSessionParams{
 				RefreshToken: "refresh-token",
 				AccessToken:  "access-token",
 			},
@@ -91,12 +91,12 @@ func TestRefreshSession(t *testing.T) {
 				err: services.ErrTokenIssuedWithDifferentRefreshToken,
 			},
 
-			expect: &codegen.UnprocessableEntityError{Error: "invalid refresh token"},
+			expect: &apimodels.UnprocessableEntityError{Error: "invalid refresh token"},
 		},
 		{
 			name: "Error",
 
-			params: codegen.RefreshSessionParams{
+			params: apimodels.RefreshSessionParams{
 				RefreshToken: "refresh-token",
 				AccessToken:  "access-token",
 			},

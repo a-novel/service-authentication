@@ -1,6 +1,10 @@
 [sqlfluff]
 dialect = postgres
 exclude_rules = AM04
+templater = placeholder
+
+[sqlfluff:templater:placeholder]
+param_style = question_mark
 
 [sqlfluff:indentation]
 tab_space_size = 2

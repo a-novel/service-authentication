@@ -2,22 +2,22 @@ package dao
 
 import (
 	"context"
+	"database/sql"
+	_ "embed"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun/driver/pgdriver"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
 )
 
-var ErrUpdateCredentialsEmailRepository = errors.New("UpdateCredentialsEmailRepository.UpdateCredentialsEmail")
-
-func NewErrUpdateCredentialsEmailRepository(err error) error {
-	return errors.Join(err, ErrUpdateCredentialsEmailRepository)
-}
+//go:embed update_credentials_email.sql
+var updateCredentialsEmailQuery string
 
 // UpdateCredentialsEmailData is the input used to perform the
 // UpdateCredentialsEmailRepository.UpdateCredentialsEmail action.
@@ -52,55 +52,37 @@ func NewUpdateCredentialsEmailRepository() *UpdateCredentialsEmailRepository {
 func (repository *UpdateCredentialsEmailRepository) UpdateCredentialsEmail(
 	ctx context.Context, userID uuid.UUID, data UpdateCredentialsEmailData,
 ) (*CredentialsEntity, error) {
-	span := sentry.StartSpan(ctx, "UpdateCredentialsEmailRepository.UpdateCredentialsEmail")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.UpdateCredentialsEmail")
+	defer span.End()
 
-	span.SetData("credentials.id", userID.String())
-	span.SetData("credentials.email", data.Email)
-	span.SetData("credentials.now", data.Now.String())
+	span.SetAttributes(
+		attribute.String("credentials.id", userID.String()),
+		attribute.String("credentials.email", data.Email),
+		attribute.Int64("credentials.now", data.Now.Unix()),
+	)
 
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(span.Context())
+	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
-
-		return nil, NewErrUpdateCredentialsEmailRepository(fmt.Errorf("get postgres client: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres client: %w", err))
 	}
 
-	entity := &CredentialsEntity{
-		ID:        userID,
-		Email:     data.Email,
-		UpdatedAt: data.Now,
-	}
+	entity := &CredentialsEntity{}
 
 	// Execute query.
-	res, err := tx.NewUpdate().Model(entity).WherePK().Column("email", "updated_at").Returning("*").Exec(span.Context())
+	err = tx.NewRaw(updateCredentialsEmailQuery, data.Email, data.Now, userID).Scan(ctx, entity)
 	if err != nil {
-		span.SetData("update.error", err.Error())
-
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return nil, NewErrUpdateCredentialsEmailRepository(errors.Join(err, ErrCredentialsAlreadyExists))
+			return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsAlreadyExists))
 		}
 
-		return nil, NewErrUpdateCredentialsEmailRepository(fmt.Errorf("update credentials: %w", err))
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, otel.ReportError(span, ErrCredentialsNotFound)
+		}
+
+		return nil, otel.ReportError(span, fmt.Errorf("update credentials: %w", err))
 	}
 
-	// Make sure the credentials were updated.
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		span.SetData("rowsAffected.error", err.Error())
-
-		return nil, NewErrUpdateCredentialsEmailRepository(fmt.Errorf("get rows affected: %w", err))
-	}
-
-	span.SetData("rowsAffected", rowsAffected)
-
-	if rowsAffected == 0 {
-		span.SetData("error", "credentials not found")
-
-		return nil, NewErrUpdateCredentialsEmailRepository(ErrCredentialsNotFound)
-	}
-
-	return entity, nil
+	return otel.ReportSuccess(span, entity), nil
 }

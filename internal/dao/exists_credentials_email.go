@@ -2,19 +2,17 @@ package dao
 
 import (
 	"context"
-	"errors"
+	_ "embed"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
 )
 
-var ErrExistsCredentialsEmailRepository = errors.New("ExistsCredentialsEmailRepository.ExistsCredentialsEmail")
-
-func NewErrExistsCredentialsEmailRepository(err error) error {
-	return errors.Join(err, ErrExistsCredentialsEmailRepository)
-}
+//go:embed exists_credentials_email.sql
+var existsCredentialsEmailQuery string
 
 // ExistsCredentialsEmailRepository is the repository used to perform the
 // ExistsCredentialsEmailRepository.ExistsCredentialsEmail action.
@@ -32,30 +30,26 @@ func NewExistsCredentialsEmailRepository() *ExistsCredentialsEmailRepository {
 func (repository *ExistsCredentialsEmailRepository) ExistsCredentialsEmail(
 	ctx context.Context, email string,
 ) (bool, error) {
-	span := sentry.StartSpan(ctx, "ExistsCredentialsEmailRepository.ExistsCredentialsEmail")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.ExistsCredentialsEmail")
+	defer span.End()
 
-	span.SetData("email", email)
+	span.SetAttributes(attribute.String("email", email))
 
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(span.Context())
+	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
-
-		return false, NewErrExistsCredentialsEmailRepository(fmt.Errorf("get postgres client: %w", err))
+		return false, otel.ReportError(span, fmt.Errorf("get postgres client: %w", err))
 	}
 
-	// Execute query.
-	exists, err := tx.NewSelect().
-		Model((*CredentialsEntity)(nil)).
-		Where("email = ?", email).
-		Order("email DESC").
-		Exists(span.Context())
+	res, err := tx.NewRaw(existsCredentialsEmailQuery, email).Exec(ctx)
 	if err != nil {
-		span.SetData("exists.error", err.Error())
-
-		return false, NewErrExistsCredentialsEmailRepository(fmt.Errorf("check database: %w", err))
+		return false, otel.ReportError(span, fmt.Errorf("check database: %w", err))
 	}
 
-	return exists, nil
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, otel.ReportError(span, fmt.Errorf("get rows affected: %w", err))
+	}
+
+	return otel.ReportSuccess(span, n == 1), nil
 }

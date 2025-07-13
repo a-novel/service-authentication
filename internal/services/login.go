@@ -2,12 +2,12 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
+	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/a-novel/golib/otel"
 	jkModels "github.com/a-novel/service-json-keys/models"
 	jkPkg "github.com/a-novel/service-json-keys/pkg"
 
@@ -18,12 +18,6 @@ import (
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrLoginService = errors.New("LoginService.Login")
-
-func NewErrLoginService(err error) error {
-	return errors.Join(err, ErrLoginService)
-}
 
 // LoginSource is the source used to perform the LoginService.Login action.
 //
@@ -71,41 +65,37 @@ func NewLoginService(source LoginSource) *LoginService {
 //
 // You may also create an anonymous session using the LoginAnonService.
 func (service *LoginService) Login(ctx context.Context, request LoginRequest) (*models.Token, error) {
-	span := sentry.StartSpan(ctx, "LoginService.Login")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.Login")
+	defer span.End()
 
-	span.SetData("email", request.Email)
+	span.SetAttributes(attribute.String("email", request.Email))
 
 	// Retrieve credentials.
-	credentials, err := service.source.SelectCredentialsByEmail(span.Context(), request.Email)
+	credentials, err := service.source.SelectCredentialsByEmail(ctx, request.Email)
 	if err != nil {
-		span.SetData("dao.error", err.Error())
-
-		return nil, NewErrLoginService(fmt.Errorf("select credentials by email: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("select credentials by email: %w", err))
 	}
 
-	span.SetData("userID", credentials.ID)
-	span.SetData("role", credentials.Role)
+	span.SetAttributes(
+		attribute.String("credentials.id", credentials.ID.String()),
+		attribute.String("credentials.role", credentials.Role.String()),
+	)
 
 	// Validate password.
 	err = lib.CompareScrypt(request.Password, credentials.Password)
 	if err != nil {
-		span.SetData("password.compare.error", err.Error())
-
-		return nil, NewErrLoginService(fmt.Errorf("compare password: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}
 
 	refreshToken, err := service.source.SignClaims(
-		span.Context(),
+		ctx,
 		jkModels.KeyUsageRefresh,
 		models.RefreshTokenClaimsInput{
 			UserID: credentials.ID,
 		},
 	)
 	if err != nil {
-		span.SetData("issueRefreshToken.error", err.Error())
-
-		return nil, NewErrLoginService(fmt.Errorf("issue refresh token: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("issue refresh token: %w", err))
 	}
 
 	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{
@@ -114,16 +104,14 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (*
 
 	var refreshTokenClaims models.RefreshTokenClaims
 
-	err = refreshTokenRecipient.Consume(span.Context(), refreshToken, &refreshTokenClaims)
+	err = refreshTokenRecipient.Consume(ctx, refreshToken, &refreshTokenClaims)
 	if err != nil {
-		span.SetData("unmarshalRefreshToken.error", err.Error())
-
-		return nil, NewErrLoginService(fmt.Errorf("unmarshal refresh token claims: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("unmarshal refresh token claims: %w", err))
 	}
 
 	// Generate a new authentication token.
 	accessToken, err := service.source.SignClaims(
-		span.Context(),
+		ctx,
 		jkModels.KeyUsageAuth,
 		models.AccessTokenClaims{
 			UserID: &credentials.ID,
@@ -137,13 +125,11 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (*
 		},
 	)
 	if err != nil {
-		span.SetData("issueToken.error", err.Error())
-
-		return nil, NewErrLoginService(fmt.Errorf("issue accessToken: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return &models.Token{
+	return otel.ReportSuccess(span, &models.Token{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-	}, nil
+	}), nil
 }

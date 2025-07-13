@@ -2,21 +2,21 @@ package dao
 
 import (
 	"context"
+	"database/sql"
+	_ "embed"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
 )
 
-var ErrDeleteShortCodeRepository = errors.New("DeleteShortCodeRepository.DeleteShortCode")
-
-func NewErrDeleteShortCodeRepository(err error) error {
-	return errors.Join(err, ErrDeleteShortCodeRepository)
-}
+//go:embed delete_short_code.sql
+var deleteShortCodeQuery string
 
 const (
 	// DeleteCommentOverrideWithNewerKey is the default deletion comment set when a newer version of an active short
@@ -69,57 +69,31 @@ func NewDeleteShortCodeRepository() *DeleteShortCodeRepository {
 func (repository *DeleteShortCodeRepository) DeleteShortCode(
 	ctx context.Context, data DeleteShortCodeData,
 ) (*ShortCodeEntity, error) {
-	span := sentry.StartSpan(ctx, "DeleteShortCodeRepository.DeleteShortCode")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.DeleteShortCode")
+	defer span.End()
 
-	span.SetData("shortCode.id", data.ID.String())
-	span.SetData("shortCode.now", data.Now.String())
-	span.SetData("shortCode.comment", data.Comment)
+	span.SetAttributes(
+		attribute.String("shortCode.id", data.ID.String()),
+		attribute.Int64("shortCode.now", data.Now.Unix()),
+		attribute.String("shortCode.comment", data.Comment),
+	)
+
+	entity := &ShortCodeEntity{}
 
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(span.Context())
+	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
-
-		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("get postgres client: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres client: %w", err))
 	}
 
-	entity := &ShortCodeEntity{
-		ID:             data.ID,
-		DeletedAt:      &data.Now,
-		DeletedComment: &data.Comment,
-	}
-
-	// Execute query.
-	res, err := tx.NewUpdate().
-		Model(entity).
-		ModelTableExpr("active_short_codes").
-		Where("id = ?", data.ID).
-		Column("deleted_at", "deleted_comment"). // Only update the deletion fields.
-		Returning("*").
-		Exec(span.Context())
+	err = tx.NewRaw(deleteShortCodeQuery, data.Now, data.Comment, data.ID).Scan(ctx, entity)
 	if err != nil {
-		span.SetData("update.error", err.Error())
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, otel.ReportError(span, fmt.Errorf("delete short code: %w", ErrShortCodeNotFound))
+		}
 
-		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("delete short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("delete short code: %w", err))
 	}
 
-	// Ensure something has been deleted.
-	// This operation should never fail, as we use a driver that supports it.
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		span.SetData("rowsAffected.error", err.Error())
-
-		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("get rows affected: %w", err))
-	}
-
-	span.SetData("rowsAffected", rowsAffected)
-
-	if rowsAffected == 0 {
-		span.SetData("error", "short code not found")
-
-		return nil, NewErrDeleteShortCodeRepository(fmt.Errorf("delete key: %w", ErrShortCodeNotFound))
-	}
-
-	return entity, nil
+	return otel.ReportSuccess(span, entity), nil
 }

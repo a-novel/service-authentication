@@ -1,3 +1,3 @@
-package authentication
+package jsonkeys
 
-//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target internal/api/codegen -package codegen --clean docs/api.yaml
+//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target models/api -package apimodels --clean docs/api.yaml

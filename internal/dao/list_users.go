@@ -2,26 +2,25 @@ package dao
 
 import (
 	"context"
-	"errors"
+	_ "embed"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/uptrace/bun"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
+
 	"github.com/a-novel/service-authentication/models"
 )
 
-var ErrListUsersRepository = errors.New("ListUsersRepository.ListUsers")
-
-func NewErrListUsersRepository(err error) error {
-	return errors.Join(err, ErrListUsersRepository)
-}
+//go:embed list_users.sql
+var listUsersQuery string
 
 type ListUsersData struct {
 	Limit  int
 	Offset int
-	Roles  []models.CredentialsRole
+	Roles  models.CredentialsRoles
 }
 
 type ListUsersRepository struct{}
@@ -33,40 +32,37 @@ func NewListUsersRepository() *ListUsersRepository {
 func (repository *ListUsersRepository) ListUsers(
 	ctx context.Context, data ListUsersData,
 ) ([]*CredentialsEntity, error) {
-	span := sentry.StartSpan(ctx, "ListUsersRepository.ListUsers")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.ListUsers")
+	defer span.End()
 
-	span.SetData("limit", data.Limit)
-	span.SetData("offset", data.Offset)
-	span.SetData("roles", data.Roles)
+	span.SetAttributes(
+		attribute.Int("data.limit", data.Limit),
+		attribute.Int("data.offset", data.Offset),
+		attribute.StringSlice("data.roles", data.Roles.Strings()),
+	)
+
+	if len(data.Roles) == 0 {
+		// Make sure roles are defined for the query.
+		data.Roles = models.CredentialsRoles{}
+	}
 
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(span.Context())
+	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
-
-		return nil, NewErrListUsersRepository(fmt.Errorf("get postgres client: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres client: %w", err))
 	}
 
-	entities := make([]*CredentialsEntity, 0)
+	entities := make([]*CredentialsEntity, 0, data.Limit)
 
-	query := tx.NewSelect().
-		Model(&entities).
-		Column("id", "email", "role", "created_at", "updated_at").
-		Order("updated_at DESC").
-		Limit(data.Limit).
-		Offset(data.Offset)
-
-	if len(data.Roles) > 0 {
-		query = query.Where("role IN (?)", bun.In(data.Roles))
-	}
-
-	err = query.Scan(span.Context())
+	err = tx.NewRaw(
+		listUsersQuery,
+		bun.NullZero(data.Limit),
+		data.Offset,
+		bun.In(data.Roles),
+	).Scan(ctx, &entities)
 	if err != nil {
-		span.SetData("scan.error", err.Error())
-
-		return nil, NewErrListUsersRepository(fmt.Errorf("list credentials: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("list credentials: %w", err))
 	}
 
-	return entities, nil
+	return otel.ReportSuccess(span, entities), nil
 }

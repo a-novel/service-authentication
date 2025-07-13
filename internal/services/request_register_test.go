@@ -4,15 +4,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/config"
-	"github.com/a-novel/service-authentication/config/mails"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
@@ -22,6 +19,8 @@ func TestRequestRegister(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
+
+	smtpConfig := models.SMTPURLsConfig{Register: "register-url"}
 
 	type createShortCodeData struct {
 		resp *models.ShortCode
@@ -85,31 +84,33 @@ func TestRequestRegister(t *testing.T) {
 					CreateShortCode(mock.Anything, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageRequestRegister,
 						Target:   testCase.request.Email,
-						TTL:      config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL,
+						TTL:      models.DefaultShortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL,
 						Override: true,
 					}).
 					Return(testCase.createShortCodeData.resp, testCase.createShortCodeData.err)
 			}
 
 			if testCase.sendMail {
-				source.EXPECT().SMTP(
-					mock.Anything,
-					mock.MatchedBy(func(req *template.Template) bool {
-						return req.Name() == mails.Mails.Register.Name()
-					}),
-					testCase.request.Lang,
-					[]string{testCase.request.Email},
-					map[string]any{
-						"ShortCode": testCase.createShortCodeData.resp.PlainCode,
-						"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
-						"URL":       config.SMTP.URLs.Register,
-						"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
-					},
-				).
-					Return()
+				source.EXPECT().
+					SendMail(
+						[]string{testCase.request.Email},
+						models.Mails.Register,
+						testCase.request.Lang.String(),
+						map[string]any{
+							"ShortCode": testCase.createShortCodeData.resp.PlainCode,
+							"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
+							"URL":       smtpConfig.Register,
+							"Duration": models.
+								DefaultShortCodesConfig.
+								Usages[models.ShortCodeUsageRequestRegister].
+								TTL.String(),
+							"_Purpose": "register",
+						},
+					).
+					Return(nil)
 			}
 
-			service := services.NewRequestRegisterService(source)
+			service := services.NewRequestRegisterService(source, models.DefaultShortCodesConfig, smtpConfig)
 
 			resp, err := service.RequestRegister(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
