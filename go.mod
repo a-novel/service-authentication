@@ -5,7 +5,7 @@ go 1.24.5
 require (
 	github.com/a-novel-kit/configurator v1.4.3
 	github.com/a-novel-kit/jwt v1.1.5
-	github.com/a-novel/service-json-keys v0.2.3
+	github.com/a-novel/service-json-keys v1.0.0
 	github.com/getsentry/sentry-go v0.34.1
 	github.com/getsentry/sentry-go/otel v0.34.1
 	github.com/go-chi/chi/v5 v5.2.2
@@ -28,6 +28,7 @@ require (
 )
 
 require (
+	github.com/a-novel/golib v0.1.10 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/fatih/color v1.18.0 // indirect
@@ -46,10 +47,12 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/contrib/bridges/otelslog v0.12.0 // indirect
+	go.opentelemetry.io/otel/log v0.13.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
-	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
