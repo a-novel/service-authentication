@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -24,54 +23,11 @@ import (
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/api"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
-type AppAppConfig struct {
-	Name string `json:"name" yaml:"name"`
-}
-
-type DependencyConfig struct {
-	JSONKeysURL string `json:"jsonKeysURL" yaml:"jsonKeysURL"`
-}
-
-type AppApiTimeoutsConfig struct {
-	Read       time.Duration `json:"read"       yaml:"read"`
-	ReadHeader time.Duration `json:"readHeader" yaml:"readHeader"`
-	Write      time.Duration `json:"write"      yaml:"write"`
-	Idle       time.Duration `json:"idle"       yaml:"idle"`
-	Request    time.Duration `json:"request"    yaml:"request"`
-}
-
-type AppCorsConfig struct {
-	AllowedOrigins   []string `json:"allowedOrigins"   yaml:"allowedOrigins"`
-	AllowedHeaders   []string `json:"allowedHeaders"   yaml:"allowedHeaders"`
-	AllowCredentials bool     `json:"allowCredentials" yaml:"allowCredentials"`
-	MaxAge           int      `json:"maxAge"           yaml:"maxAge"`
-}
-
-type AppAPIConfig struct {
-	Port           int                  `json:"port"           yaml:"port"`
-	Timeouts       AppApiTimeoutsConfig `json:"timeouts"       yaml:"timeouts"`
-	MaxRequestSize int64                `json:"maxRequestSize" yaml:"maxRequestSize"`
-	Cors           AppCorsConfig        `json:"cors"           yaml:"cors"`
-}
-
-type AppConfig[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender] struct {
-	App AppAppConfig `json:"app" yaml:"app"`
-	API AppAPIConfig `json:"api" yaml:"api"`
-
-	DependencyConfig  DependencyConfig         `json:"dependencies" yaml:"dependencies"`
-	PermissionsConfig models.PermissionsConfig `json:"permissions"  yaml:"permissions"`
-	ShortCodesConfig  models.ShortCodesConfig  `json:"shortCodes"   yaml:"shortCodes"`
-	SMTPURLsConfig    models.SMTPURLsConfig    `json:"smtpUrls"     yaml:"smtpUrls"`
-
-	SMTP     SMTP `json:"smtp"     yaml:"smtp"`
-	Otel     Otel `json:"otel"     yaml:"otel"`
-	Postgres Pg   `json:"postgres" yaml:"postgres"`
-}
-
 func App[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender](
-	ctx context.Context, config AppConfig[Otel, Pg, SMTP],
+	ctx context.Context, config config.App[Otel, Pg, SMTP],
 ) error {
 	// =================================================================================================================
 	// DEPENDENCIES

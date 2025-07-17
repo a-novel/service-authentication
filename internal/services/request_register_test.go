@@ -13,6 +13,7 @@ import (
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 func TestRequestRegister(t *testing.T) {
@@ -84,7 +85,7 @@ func TestRequestRegister(t *testing.T) {
 					CreateShortCode(mock.Anything, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageRequestRegister,
 						Target:   testCase.request.Email,
-						TTL:      models.DefaultShortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL,
+						TTL:      config.ShortCodesPresetDefault.Usages[models.ShortCodeUsageRequestRegister].TTL,
 						Override: true,
 					}).
 					Return(testCase.createShortCodeData.resp, testCase.createShortCodeData.err)
@@ -100,8 +101,7 @@ func TestRequestRegister(t *testing.T) {
 							"ShortCode": testCase.createShortCodeData.resp.PlainCode,
 							"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
 							"URL":       smtpConfig.Register,
-							"Duration": models.
-								DefaultShortCodesConfig.
+							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageRequestRegister].
 								TTL.String(),
 							"_Purpose": "register",
@@ -110,7 +110,7 @@ func TestRequestRegister(t *testing.T) {
 					Return(nil)
 			}
 
-			service := services.NewRequestRegisterService(source, models.DefaultShortCodesConfig, smtpConfig)
+			service := services.NewRequestRegisterService(source, config.ShortCodesPresetDefault, smtpConfig)
 
 			resp, err := service.RequestRegister(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)

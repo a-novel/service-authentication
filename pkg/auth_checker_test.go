@@ -14,6 +14,7 @@ import (
 	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 	"github.com/a-novel/service-authentication/pkg"
 	pkgmocks "github.com/a-novel/service-authentication/pkg/mocks"
 )
@@ -150,8 +151,8 @@ func TestAuthenticate(t *testing.T) {
 				}
 			}
 
-			auth, err := pkg.NewHandleBearerAuth[string](source, models.PermissionsConfig{
-				Roles: map[models.Role]models.RoleConfig{
+			auth, err := pkg.NewHandleBearerAuth[string](source, config.Permissions{
+				Roles: map[models.Role]config.Role{
 					models.RoleAnon: {
 						Permissions: []models.Permission{"foo"},
 					},

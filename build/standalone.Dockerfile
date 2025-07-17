@@ -5,17 +5,17 @@ WORKDIR /app
 # ======================================================================================================================
 # Copy build files.
 # ======================================================================================================================
-COPY ../go.mod ./go.mod
-COPY ../go.sum ./go.sum
-COPY "../cmd/api" "./cmd/api"
-COPY "../cmd/migrations" "./cmd/migrations"
-COPY ../internal/api ./internal/api
-COPY ../internal/dao ./internal/dao
-COPY ../internal/lib ./internal/lib
-COPY ../internal/services ./internal/services
-COPY ../migrations ./migrations
-COPY ../pkg ./pkg
-COPY ../models ./models
+COPY ./go.mod ./go.mod
+COPY ./go.sum ./go.sum
+COPY "./cmd/api" "./cmd/api"
+COPY "./cmd/migrations" "./cmd/migrations"
+COPY ./internal/api ./internal/api
+COPY ./internal/dao ./internal/dao
+COPY ./internal/lib ./internal/lib
+COPY ./internal/services ./internal/services
+COPY ./migrations ./migrations
+COPY ./pkg ./pkg
+COPY ./models ./models
 
 RUN go mod download
 

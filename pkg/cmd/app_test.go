@@ -15,11 +15,12 @@ import (
 	"github.com/a-novel/golib/smtp"
 
 	"github.com/a-novel/service-authentication/migrations"
+	"github.com/a-novel/service-authentication/models/config"
 	"github.com/a-novel/service-authentication/pkg"
 	cmdpkg "github.com/a-novel/service-authentication/pkg/cmd"
 )
 
-type TestConfig cmdpkg.AppConfig[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender]
+type TestConfig config.App[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender]
 
 type AppTestSuite func(ctx context.Context, t *testing.T, config TestConfig)
 
@@ -50,10 +51,10 @@ func TestApp(t *testing.T) {
 			require.NoError(t, listener.Close(), "failed to close listener")
 
 			postgres.RunIsolatedTransactionalTest(
-				t, cmdpkg.PostgresConfigTest, migrations.Migrations, func(ctx context.Context, t *testing.T) {
+				t, config.PostgresPresetTest, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 					t.Helper()
 
-					appConfig := cmdpkg.AppConfigTest(port)
+					appConfig := config.AppPresetTest(port)
 
 					go func() {
 						assert.NoError(t, cmdpkg.App(ctx, appConfig))

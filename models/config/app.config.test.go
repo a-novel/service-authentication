@@ -1,4 +1,4 @@
-package cmdpkg
+package config
 
 import (
 	"os"
@@ -13,15 +13,15 @@ import (
 	"github.com/a-novel/service-authentication/models"
 )
 
-func AppConfigTest(port int) AppConfig[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender] {
-	return AppConfig[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender]{
-		App: AppAppConfig{
+func AppPresetTest(port int) App[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender] {
+	return App[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender]{
+		App: Main{
 			Name: config.LoadEnv(os.Getenv("APP_NAME"), AppName, config.StringParser),
 		},
-		API: AppAPIConfig{
+		API: API{
 			Port:           port,
 			MaxRequestSize: config.LoadEnv(os.Getenv("API_MAX_REQUEST_SIZE"), APIMaxRequestSize, config.Int64Parser),
-			Timeouts: AppApiTimeoutsConfig{
+			Timeouts: APITimeouts{
 				Read: config.LoadEnv(os.Getenv("API_TIMEOUT_READ"), APITimeoutRead, config.DurationParser),
 				ReadHeader: config.LoadEnv(
 					os.Getenv("API_TIMEOUT_READ_HEADER"), APITimeoutReadHeader, config.DurationParser,
@@ -30,7 +30,7 @@ func AppConfigTest(port int) AppConfig[*otelpresets.SentryOtelConfig, postgres.C
 				Idle:    config.LoadEnv(os.Getenv("API_TIMEOUT_IDLE"), APITimeoutIdle, config.DurationParser),
 				Request: config.LoadEnv(os.Getenv("API_TIMEOUT_REQUEST"), APITimeoutRequest, config.DurationParser),
 			},
-			Cors: AppCorsConfig{
+			Cors: Cors{
 				AllowedOrigins: config.LoadEnv(
 					os.Getenv("API_CORS_ALLOWED_ORIGINS"), APICorsAllowedOrigins, config.SliceParser(config.StringParser),
 				),
@@ -44,11 +44,11 @@ func AppConfigTest(port int) AppConfig[*otelpresets.SentryOtelConfig, postgres.C
 			},
 		},
 
-		DependencyConfig: DependencyConfig{
+		DependencyConfig: Dependencies{
 			JSONKeysURL: os.Getenv("JSON_KEYS_SERVICE_TEST_URL"),
 		},
-		PermissionsConfig: models.DefaultPermissionsConfig,
-		ShortCodesConfig:  models.DefaultShortCodesConfig,
+		PermissionsConfig: PermissionsConfigDefault,
+		ShortCodesConfig:  ShortCodesPresetDefault,
 		SMTPURLsConfig: models.SMTPURLsConfig{
 			UpdateEmail: config.LoadEnv(
 				os.Getenv("AUTH_PLATFORM_URL_UPDATE_EMAIL"),
@@ -76,6 +76,6 @@ func AppConfigTest(port int) AppConfig[*otelpresets.SentryOtelConfig, postgres.C
 			FlushTimeout: config.LoadEnv(os.Getenv("SENTRY_FLUSH_TIMEOUT"), SentryFlushTimeout, config.DurationParser),
 			Debug:        isDebug,
 		},
-		Postgres: PostgresConfigTest,
+		Postgres: PostgresPresetTest,
 	}
 }

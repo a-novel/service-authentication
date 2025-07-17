@@ -13,6 +13,7 @@ import (
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 // RequestPasswordResetSource is the source used to perform the RequestPasswordResetService.RequestPasswordReset
@@ -54,7 +55,7 @@ type RequestPasswordResetRequest struct {
 // You may create one using the NewRequestPasswordResetService function.
 type RequestPasswordResetService struct {
 	source           RequestPasswordResetSource
-	shortCodesConfig models.ShortCodesConfig
+	shortCodesConfig config.ShortCodes
 	smtpConfig       models.SMTPURLsConfig
 	// Enable graceful shutdowns by waiting for all goroutines spanned by the service to finish.
 	wg sync.WaitGroup
@@ -62,7 +63,7 @@ type RequestPasswordResetService struct {
 
 func NewRequestPasswordResetService(
 	source RequestPasswordResetSource,
-	shortCodesConfig models.ShortCodesConfig,
+	shortCodesConfig config.ShortCodes,
 	smtpConfig models.SMTPURLsConfig,
 ) *RequestPasswordResetService {
 	return &RequestPasswordResetService{source: source, shortCodesConfig: shortCodesConfig, smtpConfig: smtpConfig}

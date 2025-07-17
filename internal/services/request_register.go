@@ -12,6 +12,7 @@ import (
 	"github.com/a-novel/golib/smtp"
 
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 // RequestRegisterSource is the source used to perform the RequestRegisterService.RequestRegister action.
@@ -46,7 +47,7 @@ type RequestRegisterRequest struct {
 // You may create one using the NewRequestRegisterService function.
 type RequestRegisterService struct {
 	source           RequestRegisterSource
-	shortCodesConfig models.ShortCodesConfig
+	shortCodesConfig config.ShortCodes
 	smtpConfig       models.SMTPURLsConfig
 	// Enable graceful shutdowns by waiting for all goroutines spanned by the service to finish.
 	wg sync.WaitGroup
@@ -54,7 +55,7 @@ type RequestRegisterService struct {
 
 func NewRequestRegisterService(
 	source RequestRegisterSource,
-	shortCodesConfig models.ShortCodesConfig,
+	shortCodesConfig config.ShortCodes,
 	smtpConfig models.SMTPURLsConfig,
 ) *RequestRegisterService {
 	return &RequestRegisterService{source: source, shortCodesConfig: shortCodesConfig, smtpConfig: smtpConfig}
