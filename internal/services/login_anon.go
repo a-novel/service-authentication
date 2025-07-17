@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/a-novel/golib/otel"
-	jkModels "github.com/a-novel/service-json-keys/models"
+	jkmodels "github.com/a-novel/service-json-keys/models"
 
 	"github.com/a-novel/service-authentication/models"
 )
 
 // LoginAnonSource is the source used to perform the LoginAnonService.LoginAnon action.
 type LoginAnonSource interface {
-	SignClaims(ctx context.Context, usage jkModels.KeyUsage, claims any) (string, error)
+	SignClaims(ctx context.Context, usage jkmodels.KeyUsage, claims any) (string, error)
 }
 
 // LoginAnonService is the service used to perform the LoginAnonService.LoginAnon action.
@@ -35,7 +35,7 @@ func (service *LoginAnonService) LoginAnon(ctx context.Context) (string, error) 
 
 	accessToken, err := service.source.SignClaims(
 		ctx,
-		jkModels.KeyUsageAuth,
+		jkmodels.KeyUsageAuth,
 		models.AccessTokenClaims{
 			Roles: []models.Role{models.RoleAnon},
 		},

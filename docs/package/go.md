@@ -19,14 +19,14 @@ You must provide an interface to handle claims validation. You can use the
 package main
 
 import (
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 	authModels "github.com/a-novel/service-authentication/models"
 )
 
 // serverURL := "http://localhost:4001/v1"
-client, err := jkPkg.NewAPIClient(serverURL)
+client, err := jkpkg.NewAPIClient(serverURL)
 
-verifier, err := jkPkg.NewClaimsVerifier[authModels.AccessTokenClaims](client)
+verifier, err := jkpkg.NewClaimsVerifier[authModels.AccessTokenClaims](client)
 ```
 
 You must then plug the security handler to your API. The API must be compatible with

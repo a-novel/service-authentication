@@ -8,8 +8,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel/golib/otel"
-	jkModels "github.com/a-novel/service-json-keys/models"
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel-kit/jwt"
 	"github.com/a-novel-kit/jwt/jws"
@@ -24,16 +24,16 @@ import (
 // You may build one using the NewLoginServiceSource function.
 type LoginSource interface {
 	SelectCredentialsByEmail(ctx context.Context, email string) (*dao.CredentialsEntity, error)
-	SignClaims(ctx context.Context, usage jkModels.KeyUsage, claims any) (string, error)
+	SignClaims(ctx context.Context, usage jkmodels.KeyUsage, claims any) (string, error)
 }
 
 func NewLoginServiceSource(
 	selectCredentialsByEmailDAO *dao.SelectCredentialsByEmailRepository,
-	issueTokenService *jkPkg.ClaimsSigner,
+	issueTokenService *jkpkg.ClaimsSigner,
 ) LoginSource {
 	return &struct {
 		*dao.SelectCredentialsByEmailRepository
-		*jkPkg.ClaimsSigner
+		*jkpkg.ClaimsSigner
 	}{
 		SelectCredentialsByEmailRepository: selectCredentialsByEmailDAO,
 		ClaimsSigner:                       issueTokenService,
@@ -89,7 +89,7 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (*
 
 	refreshToken, err := service.source.SignClaims(
 		ctx,
-		jkModels.KeyUsageRefresh,
+		jkmodels.KeyUsageRefresh,
 		models.RefreshTokenClaimsInput{
 			UserID: credentials.ID,
 		},
@@ -112,7 +112,7 @@ func (service *LoginService) Login(ctx context.Context, request LoginRequest) (*
 	// Generate a new authentication token.
 	accessToken, err := service.source.SignClaims(
 		ctx,
-		jkModels.KeyUsageAuth,
+		jkmodels.KeyUsageAuth,
 		models.AccessTokenClaims{
 			UserID: &credentials.ID,
 			Roles: []models.Role{

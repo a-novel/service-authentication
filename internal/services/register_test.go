@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/golib/postgres"
-	jkModels "github.com/a-novel/service-json-keys/models"
+	jkmodels "github.com/a-novel/service-json-keys/models"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
@@ -216,7 +216,7 @@ func TestRegister(t *testing.T) {
 
 				if testCase.issueRefreshTokenData != nil {
 					source.EXPECT().
-						SignClaims(mock.Anything, jkModels.KeyUsageRefresh, models.RefreshTokenClaimsInput{
+						SignClaims(mock.Anything, jkmodels.KeyUsageRefresh, models.RefreshTokenClaimsInput{
 							UserID: testCase.createCredentialsData.resp.ID,
 						}).
 						Return(
@@ -227,7 +227,7 @@ func TestRegister(t *testing.T) {
 
 				if testCase.issueTokenData != nil {
 					source.EXPECT().
-						SignClaims(mock.Anything, jkModels.KeyUsageAuth,
+						SignClaims(mock.Anything, jkmodels.KeyUsageAuth,
 							models.AccessTokenClaims{
 								UserID: &testCase.createCredentialsData.resp.ID,
 								Roles: []models.Role{

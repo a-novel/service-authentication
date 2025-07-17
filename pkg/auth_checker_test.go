@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	jkModels "github.com/a-novel/service-json-keys/models"
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -130,9 +130,9 @@ func TestAuthenticate(t *testing.T) {
 				source.EXPECT().
 					VerifyClaims(
 						mock.Anything,
-						jkModels.KeyUsageAuth,
+						jkmodels.KeyUsageAuth,
 						testCase.request.token,
-						(*jkPkg.VerifyClaimsOptions)(nil),
+						(*jkpkg.VerifyClaimsOptions)(nil),
 					).
 					Return(testCase.sourceData.resp, testCase.sourceData.err)
 			}
