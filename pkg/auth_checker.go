@@ -17,6 +17,7 @@ import (
 	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 type AuthenticateSource interface {
@@ -38,16 +39,16 @@ type HandleBearerAuth[OpName string] struct {
 }
 
 func NewHandleBearerAuth[OpName string](
-	source AuthenticateSource, permissions models.PermissionsConfig,
+	source AuthenticateSource, permissions config.Permissions,
 ) (*HandleBearerAuth[OpName], error) {
 	resolveGranted, err := configurator.ResolveDependants[models.Role, models.Permission](
 		lo.MapEntries(
 			permissions.Roles,
-			func(key models.Role, value models.RoleConfig) (models.Role, []models.Permission) {
+			func(key models.Role, value config.Role) (models.Role, []models.Permission) {
 				return key, value.Permissions
 			},
 		),
-		lo.MapEntries(permissions.Roles, func(key models.Role, value models.RoleConfig) (models.Role, []models.Role) {
+		lo.MapEntries(permissions.Roles, func(key models.Role, value config.Role) (models.Role, []models.Role) {
 			return key, value.Inherits
 		}),
 	)

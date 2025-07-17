@@ -14,6 +14,7 @@ import (
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 // CreateShortCodeSource is the source used to perform the CreateShortCodeService.CreateShortCode action.
@@ -42,10 +43,10 @@ type CreateShortCodeRequest struct {
 // You may create one using the NewCreateShortCodeService function.
 type CreateShortCodeService struct {
 	source CreateShortCodeSource
-	config models.ShortCodesConfig
+	config config.ShortCodes
 }
 
-func NewCreateShortCodeService(source CreateShortCodeSource, config models.ShortCodesConfig) *CreateShortCodeService {
+func NewCreateShortCodeService(source CreateShortCodeSource, config config.ShortCodes) *CreateShortCodeService {
 	return &CreateShortCodeService{source: source, config: config}
 }
 

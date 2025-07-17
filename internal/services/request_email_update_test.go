@@ -12,6 +12,7 @@ import (
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 func TestRequestEmailUpdate(t *testing.T) {
@@ -85,7 +86,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 					CreateShortCode(mock.Anything, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageValidateMail,
 						Target:   testCase.request.ID.String(),
-						TTL:      models.DefaultShortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL,
+						TTL:      config.ShortCodesPresetDefault.Usages[models.ShortCodeUsageValidateMail].TTL,
 						Data:     testCase.request.Email,
 						Override: true,
 					}).
@@ -102,8 +103,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 							"ShortCode": testCase.createShortCodeData.resp.PlainCode,
 							"Target":    testCase.request.ID.String(),
 							"URL":       smtpConfig.UpdateEmail,
-							"Duration": models.
-								DefaultShortCodesConfig.
+							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageValidateMail].
 								TTL.String(),
 							"_Purpose": "email-update",
@@ -112,7 +112,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 					Return(nil)
 			}
 
-			service := services.NewRequestEmailUpdateService(source, models.DefaultShortCodesConfig, smtpConfig)
+			service := services.NewRequestEmailUpdateService(source, config.ShortCodesPresetDefault, smtpConfig)
 
 			resp, err := service.RequestEmailUpdate(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)

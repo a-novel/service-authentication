@@ -12,6 +12,7 @@ import (
 	"github.com/a-novel/golib/smtp"
 
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 // RequestEmailUpdateSource is the source used to perform the RequestEmailUpdateService.RequestEmailUpdate action.
@@ -48,7 +49,7 @@ type RequestEmailUpdateRequest struct {
 // You may create one using the NewRequestEmailUpdateService function.
 type RequestEmailUpdateService struct {
 	source           RequestEmailUpdateSource
-	shortCodesConfig models.ShortCodesConfig
+	shortCodesConfig config.ShortCodes
 	smtpConfig       models.SMTPURLsConfig
 	// Enable graceful shutdowns by waiting for all goroutines spanned by the service to finish.
 	wg sync.WaitGroup
@@ -56,7 +57,7 @@ type RequestEmailUpdateService struct {
 
 func NewRequestEmailUpdateService(
 	source RequestEmailUpdateSource,
-	shortCodesConfig models.ShortCodesConfig,
+	shortCodesConfig config.ShortCodes,
 	smtpConfig models.SMTPURLsConfig,
 ) *RequestEmailUpdateService {
 	return &RequestEmailUpdateService{source: source, shortCodesConfig: shortCodesConfig, smtpConfig: smtpConfig}

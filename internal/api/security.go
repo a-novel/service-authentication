@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/api"
+	"github.com/a-novel/service-authentication/models/config"
 	"github.com/a-novel/service-authentication/pkg"
 )
 
@@ -14,7 +14,7 @@ type SecurityHandler struct {
 }
 
 func NewSecurity(
-	source pkg.AuthenticateSource, permissions models.PermissionsConfig,
+	source pkg.AuthenticateSource, permissions config.Permissions,
 ) (*SecurityHandler, error) {
 	handler, err := pkg.NewHandleBearerAuth[apimodels.OperationName](source, permissions)
 	if err != nil {

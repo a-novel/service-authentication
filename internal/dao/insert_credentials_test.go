@@ -12,7 +12,7 @@ import (
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
-	testutils "github.com/a-novel/service-authentication/pkg/cmd"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 func TestInsertCredentials(t *testing.T) {
@@ -91,7 +91,7 @@ func TestInsertCredentials(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			postgres.RunTransactionalTest(t, testutils.PostgresConfigTest, func(ctx context.Context, t *testing.T) {
+			postgres.RunTransactionalTest(t, config.PostgresPresetTest, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
 				db, err := postgres.GetContext(ctx)

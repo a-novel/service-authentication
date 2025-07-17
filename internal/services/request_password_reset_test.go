@@ -13,6 +13,7 @@ import (
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 func TestRequestPasswordReset(t *testing.T) {
@@ -115,7 +116,7 @@ func TestRequestPasswordReset(t *testing.T) {
 					CreateShortCode(mock.Anything, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageResetPassword,
 						Target:   testCase.selectCredentialsData.resp.ID.String(),
-						TTL:      models.DefaultShortCodesConfig.Usages[models.ShortCodeUsageResetPassword].TTL,
+						TTL:      config.ShortCodesPresetDefault.Usages[models.ShortCodeUsageResetPassword].TTL,
 						Override: true,
 					}).
 					Return(testCase.createShortCodeData.resp, testCase.createShortCodeData.err)
@@ -137,8 +138,7 @@ func TestRequestPasswordReset(t *testing.T) {
 							"ShortCode": testCase.createShortCodeData.resp.PlainCode,
 							"Target":    testCase.selectCredentialsData.resp.ID.String(),
 							"URL":       smtpConfig.UpdatePassword,
-							"Duration": models.
-								DefaultShortCodesConfig.
+							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageResetPassword].
 								TTL.String(),
 							"_Purpose": "password-reset",
@@ -147,7 +147,7 @@ func TestRequestPasswordReset(t *testing.T) {
 					Return(nil)
 			}
 
-			service := services.NewRequestPasswordResetService(source, models.DefaultShortCodesConfig, smtpConfig)
+			service := services.NewRequestPasswordResetService(source, config.ShortCodesPresetDefault, smtpConfig)
 
 			resp, err := service.RequestPasswordReset(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)

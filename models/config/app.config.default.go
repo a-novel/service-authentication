@@ -1,4 +1,4 @@
-package cmdpkg
+package config
 
 import (
 	"os"
@@ -39,7 +39,7 @@ var isDebug = config.LoadEnv(
 	lo.CoalesceOrEmpty(os.Getenv("SENTRY_DEBUG"), os.Getenv("DEBUG")), false, config.BoolParser,
 )
 
-var ProdSMTPConfig = smtp.ProdSender{
+var SMTPProd = smtp.ProdSender{
 	Addr:     os.Getenv("SMTP_ADDR"),
 	Name:     os.Getenv("SMTP_SENDER_NAME"),
 	Email:    os.Getenv("SMTP_SENDER_EMAIL"),
@@ -47,14 +47,14 @@ var ProdSMTPConfig = smtp.ProdSender{
 	Domain:   os.Getenv("SMTP_SENDER_DOMAIN"),
 }
 
-var AppConfigDefault = AppConfig[*otelpresets.SentryOtelConfig, postgres.Config, smtp.Sender]{
-	App: AppAppConfig{
+var AppPresetDefault = App[*otelpresets.SentryOtelConfig, postgres.Config, smtp.Sender]{
+	App: Main{
 		Name: config.LoadEnv(os.Getenv("APP_NAME"), AppName, config.StringParser),
 	},
-	API: AppAPIConfig{
+	API: API{
 		Port:           config.LoadEnv(os.Getenv("API_PORT"), APIPort, config.IntParser),
 		MaxRequestSize: config.LoadEnv(os.Getenv("API_MAX_REQUEST_SIZE"), APIMaxRequestSize, config.Int64Parser),
-		Timeouts: AppApiTimeoutsConfig{
+		Timeouts: APITimeouts{
 			Read: config.LoadEnv(os.Getenv("API_TIMEOUT_READ"), APITimeoutRead, config.DurationParser),
 			ReadHeader: config.LoadEnv(
 				os.Getenv("API_TIMEOUT_READ_HEADER"), APITimeoutReadHeader, config.DurationParser,
@@ -63,7 +63,7 @@ var AppConfigDefault = AppConfig[*otelpresets.SentryOtelConfig, postgres.Config,
 			Idle:    config.LoadEnv(os.Getenv("API_TIMEOUT_IDLE"), APITimeoutIdle, config.DurationParser),
 			Request: config.LoadEnv(os.Getenv("API_TIMEOUT_REQUEST"), APITimeoutRequest, config.DurationParser),
 		},
-		Cors: AppCorsConfig{
+		Cors: Cors{
 			AllowedOrigins: config.LoadEnv(
 				os.Getenv("API_CORS_ALLOWED_ORIGINS"), APICorsAllowedOrigins, config.SliceParser(config.StringParser),
 			),
@@ -77,11 +77,11 @@ var AppConfigDefault = AppConfig[*otelpresets.SentryOtelConfig, postgres.Config,
 		},
 	},
 
-	DependencyConfig: DependencyConfig{
+	DependencyConfig: Dependencies{
 		JSONKeysURL: os.Getenv("JSON_KEYS_SERVICE_URL"),
 	},
-	PermissionsConfig: models.DefaultPermissionsConfig,
-	ShortCodesConfig:  models.DefaultShortCodesConfig,
+	PermissionsConfig: PermissionsConfigDefault,
+	ShortCodesConfig:  ShortCodesPresetDefault,
 	SMTPURLsConfig: models.SMTPURLsConfig{
 		UpdateEmail: config.LoadEnv(
 			os.Getenv("AUTH_PLATFORM_URL_UPDATE_EMAIL"),
@@ -100,7 +100,7 @@ var AppConfigDefault = AppConfig[*otelpresets.SentryOtelConfig, postgres.Config,
 		),
 	},
 
-	SMTP: lo.Ternary[smtp.Sender](os.Getenv("SMTP_ADDR") == "", smtp.NewDebugSender(nil), &ProdSMTPConfig),
+	SMTP: lo.Ternary[smtp.Sender](os.Getenv("SMTP_ADDR") == "", smtp.NewDebugSender(nil), &SMTPProd),
 	Otel: &otelpresets.SentryOtelConfig{
 		DSN:          os.Getenv("SENTRY_DSN"),
 		ServerName:   config.LoadEnv(os.Getenv("APP_NAME"), AppName, config.StringParser),
@@ -109,5 +109,5 @@ var AppConfigDefault = AppConfig[*otelpresets.SentryOtelConfig, postgres.Config,
 		FlushTimeout: config.LoadEnv(os.Getenv("SENTRY_FLUSH_TIMEOUT"), SentryFlushTimeout, config.DurationParser),
 		Debug:        isDebug,
 	},
-	Postgres: PostgresConfigDefault,
+	Postgres: PostgresPresetDefault,
 }
