@@ -7,11 +7,11 @@ import (
 	"github.com/a-novel/golib/postgres"
 
 	"github.com/a-novel/service-authentication/migrations"
-	cmdpkg "github.com/a-novel/service-authentication/models/config"
+	"github.com/a-novel/service-authentication/models/config"
 )
 
 func main() {
-	ctx, err := postgres.NewContext(context.Background(), cmdpkg.PostgresPresetDefault)
+	ctx, err := postgres.NewContext(context.Background(), config.PostgresPresetDefault)
 	if err != nil {
 		log.Fatalf("failed to create context: %v", err)
 	}
