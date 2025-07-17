@@ -53,12 +53,15 @@ linters:
           - cyclop
           - err113
           - gosec
-      # DAO behaves poorly in parallel testing, mainly because each test is done concurrently using its own transaction.
-      - path: dao/(.+)_test.go
+      # The postgres instances used in CI and local development have fairly limited resources.
+      # These limited instances poorly handle the multiple concurrent transactions used to
+      # ensure test isolation. Because of this, we limit the usage of parallelism in tests
+      # that rely on a postgres connection.
+      - path: internal/dao/(.+)_test.go
         linters:
           - tparallel
           - paralleltest
-      - path: cmd/api/(.+)_test.go
+      - path: pkg/cmd/(.+)_test.go
         linters:
           - tparallel
           - paralleltest

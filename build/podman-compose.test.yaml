@@ -1,6 +1,10 @@
 services:
   authentication-postgres:
-    image: docker.io/library/postgres:17
+    build:
+      context: ..
+      dockerfile: ./build/database.Dockerfile
+    ports:
+      - "${POSTGRES_TEST_PORT}:5432"
     networks:
       - authentication-api-test
     environment:
@@ -12,42 +16,8 @@ services:
     volumes:
       - authentication-postgres-test-data:/var/lib/postgresql/data/
 
-  authentication-postgres-integration:
-    image: docker.io/library/postgres:17
-    networks:
-      - authentication-api-test
-    environment:
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_USER: "${POSTGRES_USER}"
-      POSTGRES_DB: "${POSTGRES_DB}"
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-    volumes:
-      - authentication-postgres-integration-test-data:/var/lib/postgresql/data/
-
-  authentication-pg-bouncer:
-    image: docker.io/bitnami/pgbouncer:latest
-    depends_on:
-      - authentication-postgres
-      - authentication-postgres-integration
-    ports:
-      - "${POSTGRES_TEST_PORT}:6432"
-    networks:
-      - authentication-api-test
-    environment:
-      PGBOUNCER_PORT: 6432
-      POSTGRESQL_PORT: 5432
-      POSTGRESQL_HOST: authentication-postgres
-      POSTGRESQL_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRESQL_USER: "${POSTGRES_USER}"
-      POSTGRESQL_DATABASE: "${POSTGRES_DB}"
-      PGBOUNCER_DATABASE: "${POSTGRES_DB}"
-      PGBOUNCER_USERLIST: '"${POSTGRES_USER}" "${POSTGRES_PASSWORD}"'
-      PGBOUNCER_DSN_0: "pg0=host=authentication-postgres port=5432 dbname=${POSTGRES_DB}"
-      PGBOUNCER_DSN_1: "pg1=host=authentication-postgres-integration port=5432 dbname=${POSTGRES_DB}"
-
   json-keys-postgres:
-    image: docker.io/library/postgres:17
+    image: ghcr.io/a-novel/service-json-keys/database:v1
     networks:
       - authentication-api-test
     environment:
@@ -59,33 +29,26 @@ services:
     volumes:
       - json-keys-postgres-test-data:/var/lib/postgresql/data/
 
+  # The Master Key is a secure, 32-bit random secret used to encrypt private JSON keys
+  # in the database.
+  # This value is a dummy key used for tests. Use your own random key in production.
   json-keys-service:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v0
-    depends_on:
-      - json-keys-postgres
+    image: ghcr.io/a-novel/service-json-keys/standalone:v1
     ports:
       # Expose the service on port 4001 on the local machine.
       - "${JSON_KEYS_SERVICE_TEST_PORT}:8080"
+    depends_on:
+      - json-keys-postgres
     environment:
-      PORT: 8080
-      ENV: local
-      APP_NAME: json-keys-service
-      DSN: postgres://postgres:postgres@json-keys-postgres:5432/json-keys?sslmode=disable
-      # Dummy key used only for local environment. Consider using a secure, private key in production.
-      MASTER_KEY: "${JSON_KEYS_MASTER}"
-      # Used for tracing purposes, can be omitted.
-      # SENTRY_DSN: [your_sentry_dsn]
-      # SERVER_NAME: json-keys-service-test
-      # RELEASE: v0.1.2
-      # Set the following if you want to debug the service locally.
+      POSTGRES_DSN: postgres://postgres:postgres@json-keys-postgres:5432/json-keys?sslmode=disable
+      APP_MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
       DEBUG: true
     networks:
       - authentication-api-test
 
 networks:
-  authentication-api-test: {}
+  authentication-api-test:
 
 volumes:
   authentication-postgres-test-data:
-  authentication-postgres-integration-test-data:
   json-keys-postgres-test-data:

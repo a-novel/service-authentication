@@ -2,15 +2,16 @@ package services
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/uptrace/bun"
+	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
 	jkModels "github.com/a-novel/service-json-keys/models"
 	jkPkg "github.com/a-novel/service-json-keys/pkg"
 
@@ -21,12 +22,6 @@ import (
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrRegisterService = errors.New("RegisterService.Register")
-
-func NewErrRegisterService(err error) error {
-	return errors.Join(err, ErrRegisterService)
-}
 
 type RegisterSource interface {
 	InsertCredentials(ctx context.Context, data dao.InsertCredentialsData) (*dao.CredentialsEntity, error)
@@ -65,79 +60,58 @@ func NewRegisterService(source RegisterSource) *RegisterService {
 }
 
 func (service *RegisterService) Register(ctx context.Context, request RegisterRequest) (*models.Token, error) {
-	span := sentry.StartSpan(ctx, "RegisterService.Register")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.Register")
+	defer span.End()
 
-	span.SetData("email", request.Email)
+	span.SetAttributes(attribute.String("email", request.Email))
 
 	// Encrypt the password.
 	encryptedPassword, err := lib.GenerateScrypt(request.Password, lib.ScryptParamsDefault)
 	if err != nil {
-		span.SetData("scrypt.error", err.Error())
-
-		return nil, NewErrRegisterService(fmt.Errorf("encrypt password: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
 	}
 
-	// Registration can fail after the short code is consumed. To prevent this, we wrap the operation in a single
-	// transaction.
-	ctxTx, commit, err := lib.PostgresContextTx(span.Context(), &sql.TxOptions{
-		Isolation: sql.LevelRepeatableRead,
-		ReadOnly:  false,
+	var credentials *dao.CredentialsEntity
+
+	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
+		// Verify short code.
+		_, err = service.source.ConsumeShortCode(ctx, ConsumeShortCodeRequest{
+			Usage:  models.ShortCodeUsageRequestRegister,
+			Target: request.Email,
+			Code:   request.ShortCode,
+		})
+		if err != nil {
+			return fmt.Errorf("consume short code: %w", err)
+		}
+
+		// Insert credentials.
+		credentials, err = service.source.InsertCredentials(ctx, dao.InsertCredentialsData{
+			ID:       uuid.New(),
+			Email:    request.Email,
+			Password: encryptedPassword,
+			Now:      time.Now(),
+		})
+		if err != nil {
+			return fmt.Errorf("insert credentials: %w", err)
+		}
+
+		span.SetAttributes(attribute.String("credentials.id", credentials.ID.String()))
+
+		return nil
 	})
 	if err != nil {
-		span.SetData("postgres.transaction.error", err.Error())
-
-		return nil, NewErrRegisterService(fmt.Errorf("create transaction: %w", err))
-	}
-
-	defer func() { _ = commit(false) }()
-
-	// Verify short code.
-	_, err = service.source.ConsumeShortCode(ctxTx, ConsumeShortCodeRequest{
-		Usage:  models.ShortCodeUsageRequestRegister,
-		Target: request.Email,
-		Code:   request.ShortCode,
-	})
-	if err != nil {
-		span.SetData("consumeShortCode.error", err.Error())
-
-		return nil, NewErrRegisterService(fmt.Errorf("consume short code: %w", err))
-	}
-
-	// Insert credentials.
-	credentials, err := service.source.InsertCredentials(ctxTx, dao.InsertCredentialsData{
-		ID:       uuid.New(),
-		Email:    request.Email,
-		Password: encryptedPassword,
-		Now:      time.Now(),
-	})
-	if err != nil {
-		span.SetData("dao.insertCredentials.error", err.Error())
-
-		return nil, NewErrRegisterService(fmt.Errorf("insert credentials: %w", err))
-	}
-
-	span.SetData("credentials.id", credentials.ID)
-
-	// Commit transaction.
-	err = commit(true)
-	if err != nil {
-		span.SetData("postgres.commit.error", err.Error())
-
-		return nil, NewErrRegisterService(fmt.Errorf("commit transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
 	refreshToken, err := service.source.SignClaims(
-		span.Context(),
+		ctx,
 		jkModels.KeyUsageRefresh,
 		models.RefreshTokenClaimsInput{
 			UserID: credentials.ID,
 		},
 	)
 	if err != nil {
-		span.SetData("issueRefreshToken.error", err.Error())
-
-		return nil, NewErrLoginService(fmt.Errorf("issue refresh token: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("issue refresh token: %w", err))
 	}
 
 	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{
@@ -146,16 +120,14 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 
 	var refreshTokenClaims models.RefreshTokenClaims
 
-	err = refreshTokenRecipient.Consume(span.Context(), refreshToken, &refreshTokenClaims)
+	err = refreshTokenRecipient.Consume(ctx, refreshToken, &refreshTokenClaims)
 	if err != nil {
-		span.SetData("unmarshalRefreshToken.error", err.Error())
-
-		return nil, NewErrRegisterService(fmt.Errorf("unmarshal refresh token claims: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("unmarshal refresh token claims: %w", err))
 	}
 
 	// Generate a new authentication token.
 	accessToken, err := service.source.SignClaims(
-		span.Context(),
+		ctx,
 		jkModels.KeyUsageAuth,
 		models.AccessTokenClaims{
 			UserID: &credentials.ID,
@@ -169,13 +141,11 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 		},
 	)
 	if err != nil {
-		span.SetData("issueToken.error", err.Error())
-
-		return nil, NewErrRegisterService(fmt.Errorf("issue accessToken: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return &models.Token{
+	return otel.ReportSuccess(span, &models.Token{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-	}, nil
+	}), nil
 }

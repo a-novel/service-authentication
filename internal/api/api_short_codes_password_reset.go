@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
+	"github.com/a-novel/golib/otel"
 
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 type RequestPasswordResetService interface {
@@ -16,23 +16,18 @@ type RequestPasswordResetService interface {
 }
 
 func (api *API) RequestPasswordReset(
-	ctx context.Context, req *codegen.RequestPasswordResetForm,
-) (codegen.RequestPasswordResetRes, error) {
-	span := sentry.StartSpan(ctx, "API.RequestPasswordReset")
-	defer span.Finish()
+	ctx context.Context, req *apimodels.RequestPasswordResetForm,
+) (apimodels.RequestPasswordResetRes, error) {
+	ctx, span := otel.Tracer().Start(ctx, "api.RequestPasswordReset")
+	defer span.End()
 
-	span.SetData("request.email", req.GetEmail())
-	span.SetData("request.lang", req.GetLang().Value)
-
-	_, err := api.RequestPasswordResetService.RequestPasswordReset(span.Context(), services.RequestPasswordResetRequest{
+	_, err := api.RequestPasswordResetService.RequestPasswordReset(ctx, services.RequestPasswordResetRequest{
 		Email: string(req.GetEmail()),
 		Lang:  models.Lang(req.GetLang().Value),
 	})
 	if err != nil {
-		span.SetData("service.err", err.Error())
-
-		return nil, fmt.Errorf("request password reset: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("request password reset: %w", err))
 	}
 
-	return &codegen.RequestPasswordResetNoContent{}, nil
+	return otel.ReportSuccess(span, &apimodels.RequestPasswordResetNoContent{}), nil
 }

@@ -6,18 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/a-novel/golib/otel"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrUpdateRoleService = errors.New("UpdateRoleService.UpdateRole")
-
-func NewErrUpdateRoleService(err error) error {
-	return errors.Join(err, ErrUpdateRoleService)
-}
 
 var (
 	ErrUpdateToHigherRole     = errors.New("user is not allowed to upgrade users to a higher role than its own")
@@ -63,106 +59,96 @@ func NewUpdateRoleService(source UpdateRoleSource) *UpdateRoleService {
 func (service *UpdateRoleService) UpdateRole(
 	ctx context.Context, request UpdateRoleRequest,
 ) (*models.User, error) {
-	span := sentry.StartSpan(ctx, "UpdateRoleService.UpdateRole")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.UpdateRole")
+	defer span.End()
 
-	span.SetData("request.targetUserID", request.TargetUserID.String())
-	span.SetData("request.currentUserID", request.CurrentUserID.String())
-	span.SetData("request.role", request.Role)
+	span.SetAttributes(
+		attribute.String("request.targetUserID", request.TargetUserID.String()),
+		attribute.String("request.currentUserID", request.CurrentUserID.String()),
+		attribute.String("request.role", request.Role.String()),
+	)
 
 	// No self-update allowed.
 	if request.CurrentUserID == request.TargetUserID {
-		span.SetData("error", "self role update is not allowed")
-
-		return nil, NewErrUpdateRoleService(ErrSelfRoleUpdate)
+		return nil, otel.ReportError(span, ErrSelfRoleUpdate)
 	}
 
 	newTargetRoleImportance := models.KnownCredentialsRolesWithImportance[request.Role]
-	span.SetData("newTargetRoleImportance", newTargetRoleImportance)
+	span.SetAttributes(attribute.Int("newTargetRoleImportance", newTargetRoleImportance.Int()))
 
 	// Role importance start at 1.
 	if newTargetRoleImportance == models.CredentialRoleImportanceUnknown {
-		span.SetData("error", "unknown role")
-
-		return nil, NewErrUpdateRoleService(fmt.Errorf("%w: %s", ErrUnknownRole, request.Role))
+		return nil, otel.ReportError(span, fmt.Errorf("%w: %s", ErrUnknownRole, request.Role))
 	}
 
 	// Retrieve the target user credentials.
-	targetCredentials, err := service.source.SelectCredentials(span.Context(), request.TargetUserID)
+	targetCredentials, err := service.source.SelectCredentials(ctx, request.TargetUserID)
 	if err != nil {
-		span.SetData("dao.selectCredentials.error", err.Error())
-
-		return nil, NewErrUpdateRoleService(fmt.Errorf("select target credentials: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("select target credentials: %w", err))
 	}
 
-	span.SetData("targetCredentials.email", targetCredentials.Email)
+	span.SetAttributes(attribute.String("targetCredentials.email", targetCredentials.Email))
 
 	// Retrieve the current user credentials.
-	currentCredentials, err := service.source.SelectCredentials(span.Context(), request.CurrentUserID)
+	currentCredentials, err := service.source.SelectCredentials(ctx, request.CurrentUserID)
 	if err != nil {
-		span.SetData("dao.selectCredentials.error", err.Error())
-
-		return nil, NewErrUpdateRoleService(fmt.Errorf("select current user credentials: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("select current user credentials: %w", err))
 	}
 
-	span.SetData("currentCredentials.email", currentCredentials.Email)
+	span.SetAttributes(attribute.String("currentCredentials.email", currentCredentials.Email))
 
 	targetRoleIImportance := models.KnownCredentialsRolesWithImportance[targetCredentials.Role]
 	currentRoleIImportance := models.KnownCredentialsRolesWithImportance[currentCredentials.Role]
 
-	span.SetData("targetRoleImportance", targetRoleIImportance)
-	span.SetData("currentRoleImportance", currentRoleIImportance)
+	span.SetAttributes(
+		attribute.Int("targetRoleImportance", targetRoleIImportance.Int()),
+		attribute.Int("currentRoleImportance", currentRoleIImportance.Int()),
+	)
 
 	// User can only upgrade users up to its own role.
 	if newTargetRoleImportance >= targetRoleIImportance && newTargetRoleImportance > currentRoleIImportance {
-		span.SetData("error", "user is not allowed to upgrade users to a higher role than its own")
-
-		return nil, NewErrUpdateRoleService(
+		return nil, otel.ReportError(span,
 			fmt.Errorf("%w: upgrade from %s to %s", ErrUpdateToHigherRole, currentCredentials.Role, request.Role),
 		)
 	}
 
 	// User can only downgrade users from a lower role.
 	if newTargetRoleImportance <= targetRoleIImportance && targetRoleIImportance >= currentRoleIImportance {
-		span.SetData("error", "user can only downgrade users from a lower role")
-
-		return nil, NewErrUpdateRoleService(
+		return nil, otel.ReportError(span,
 			fmt.Errorf("%w: downgrade from %s to %s", ErrMustDowngradeLowerRole, currentCredentials.Role, request.Role),
 		)
 	}
 
 	// If new role is equal to the current role, return the target credentials (noop).
 	if newTargetRoleImportance == targetRoleIImportance {
-		span.SetData("noop", "new role is equal to the current role, returning target credentials")
+		span.SetAttributes(attribute.Bool("noop", true))
 
-		return &models.User{
+		return otel.ReportSuccess(span, &models.User{
 			ID:        targetCredentials.ID,
 			Email:     targetCredentials.Email,
 			Role:      targetCredentials.Role,
 			CreatedAt: targetCredentials.CreatedAt,
 			UpdatedAt: targetCredentials.UpdatedAt,
-		}, nil
+		}), nil
 	}
 
 	// Update the role.
 	updatedCredentials, err := service.source.UpdateCredentialsRole(
-		span.Context(),
+		ctx,
 		request.TargetUserID, dao.UpdateCredentialsRoleData{
 			Role: request.Role,
 			Now:  time.Now(),
 		},
 	)
 	if err != nil {
-		span.SetData("dao.updateCredentialsRole.error", err.Error())
-
-		return nil, NewErrUpdateRoleService(err)
+		return nil, otel.ReportError(span, err)
 	}
 
-	return &models.User{
+	return otel.ReportSuccess(span, &models.User{
 		ID:        updatedCredentials.ID,
 		Email:     updatedCredentials.Email,
 		Role:      updatedCredentials.Role,
 		CreatedAt: updatedCredentials.CreatedAt,
 		UpdatedAt: updatedCredentials.UpdatedAt,
-	}, nil
+	}), nil
 }

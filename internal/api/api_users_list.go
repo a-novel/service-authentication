@@ -4,52 +4,43 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/samber/lo"
 
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/golib/otel"
+
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 type ListUsersService interface {
 	ListUsers(ctx context.Context, request services.ListUsersRequest) ([]*models.User, error)
 }
 
-func (api *API) ListUsers(ctx context.Context, params codegen.ListUsersParams) (codegen.ListUsersRes, error) {
-	span := sentry.StartSpan(ctx, "API.ListUsers")
-	defer span.Finish()
+func (api *API) ListUsers(ctx context.Context, params apimodels.ListUsersParams) (apimodels.ListUsersRes, error) {
+	ctx, span := otel.Tracer().Start(ctx, "api.ListUsers")
+	defer span.End()
 
-	span.SetData("request.limit", params.Limit.Value)
-	span.SetData("request.offset", params.Offset.Value)
-	span.SetData("request.roles", params.Roles)
-
-	users, err := api.ListUsersService.ListUsers(span.Context(), services.ListUsersRequest{
+	users, err := api.ListUsersService.ListUsers(ctx, services.ListUsersRequest{
 		Limit:  params.Limit.Value,
 		Offset: params.Offset.Value,
-		Roles: lo.Map(params.Roles, func(item codegen.CredentialsRole, _ int) models.CredentialsRole {
+		Roles: lo.Map(params.Roles, func(item apimodels.CredentialsRole, _ int) models.CredentialsRole {
 			return api.CredentialsRoleToModel(item)
 		}),
 	})
 	if err != nil {
-		span.SetData("service.err", err.Error())
-
-		return nil, fmt.Errorf("list users: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("list users: %w", err))
 	}
 
-	res := codegen.ListUsersOKApplicationJSON(
-		lo.Map(users, func(item *models.User, _ int) codegen.User {
-			return codegen.User{
-				ID:        codegen.UserID(item.ID),
-				Email:     codegen.Email(item.Email),
+	return otel.ReportSuccess(span, lo.ToPtr(apimodels.ListUsersOKApplicationJSON(
+		lo.Map(users, func(item *models.User, _ int) apimodels.User {
+			return apimodels.User{
+				ID:        apimodels.UserID(item.ID),
+				Email:     apimodels.Email(item.Email),
 				Role:      api.CredentialsRoleFromModel(item.Role),
 				CreatedAt: item.CreatedAt,
 				UpdatedAt: item.UpdatedAt,
 			}
 		}),
-	)
-
-	span.SetData("service.users.count", len(res))
-
-	return &res, nil
+	))), nil
 }

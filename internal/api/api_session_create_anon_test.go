@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestCreateAnonSession(t *testing.T) {
@@ -27,7 +27,7 @@ func TestCreateAnonSession(t *testing.T) {
 
 		loginData *loginData
 
-		expect    codegen.CreateAnonSessionRes
+		expect    apimodels.CreateAnonSessionRes
 		expectErr error
 	}{
 		{
@@ -37,7 +37,7 @@ func TestCreateAnonSession(t *testing.T) {
 				resp: "access-token",
 			},
 
-			expect: &codegen.Token{AccessToken: "access-token"},
+			expect: &apimodels.Token{AccessToken: "access-token"},
 		},
 		{
 			name: "Error",

@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestEmailExists(t *testing.T) {
@@ -27,17 +27,17 @@ func TestEmailExists(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		params codegen.EmailExistsParams
+		params apimodels.EmailExistsParams
 
 		emailExistsData *emailExistsData
 
-		expect    codegen.EmailExistsRes
+		expect    apimodels.EmailExistsRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			params: codegen.EmailExistsParams{
+			params: apimodels.EmailExistsParams{
 				Email: "user@provider.com",
 			},
 
@@ -45,12 +45,12 @@ func TestEmailExists(t *testing.T) {
 				resp: true,
 			},
 
-			expect: &codegen.EmailExistsNoContent{},
+			expect: &apimodels.EmailExistsNoContent{},
 		},
 		{
 			name: "EmailNotFound",
 
-			params: codegen.EmailExistsParams{
+			params: apimodels.EmailExistsParams{
 				Email: "user@provider.com",
 			},
 
@@ -58,12 +58,12 @@ func TestEmailExists(t *testing.T) {
 				resp: false,
 			},
 
-			expect: &codegen.NotFoundError{Error: "email not found"},
+			expect: &apimodels.NotFoundError{Error: "email not found"},
 		},
 		{
 			name: "EmailNotFoundError",
 
-			params: codegen.EmailExistsParams{
+			params: apimodels.EmailExistsParams{
 				Email: "user@provider.com",
 			},
 
@@ -71,12 +71,12 @@ func TestEmailExists(t *testing.T) {
 				err: dao.ErrCredentialsNotFound,
 			},
 
-			expect: &codegen.NotFoundError{Error: "email not found"},
+			expect: &apimodels.NotFoundError{Error: "email not found"},
 		},
 		{
 			name: "Error",
 
-			params: codegen.EmailExistsParams{
+			params: apimodels.EmailExistsParams{
 				Email: "user@provider.com",
 			},
 

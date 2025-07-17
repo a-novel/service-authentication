@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestNewError(t *testing.T) {
@@ -22,7 +22,7 @@ func TestNewError(t *testing.T) {
 
 		err error
 
-		expect *codegen.UnexpectedErrorStatusCode
+		expect *apimodels.UnexpectedErrorStatusCode
 	}{
 		{
 			name: "NoError",
@@ -34,9 +34,9 @@ func TestNewError(t *testing.T) {
 				Err: ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			},
 
-			expect: &codegen.UnexpectedErrorStatusCode{
+			expect: &apimodels.UnexpectedErrorStatusCode{
 				StatusCode: http.StatusUnauthorized,
-				Response:   codegen.UnexpectedError{Error: "Unauthorized"},
+				Response:   apimodels.UnexpectedError{Error: "Unauthorized"},
 			},
 		},
 		{
@@ -44,9 +44,9 @@ func TestNewError(t *testing.T) {
 
 			err: errFoo,
 
-			expect: &codegen.UnexpectedErrorStatusCode{
+			expect: &apimodels.UnexpectedErrorStatusCode{
 				StatusCode: http.StatusInternalServerError,
-				Response:   codegen.UnexpectedError{Error: "internal server error"},
+				Response:   apimodels.UnexpectedError{Error: "internal server error"},
 			},
 		},
 	}

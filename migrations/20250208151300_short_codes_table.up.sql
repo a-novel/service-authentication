@@ -27,12 +27,6 @@ CREATE TABLE short_codes
 
 CREATE INDEX short_codes_target_usage_idx ON short_codes (target, usage);
 
-CREATE INDEX short_codes_created_at_idx ON short_codes (created_at);
+CREATE INDEX short_codes_deleted_idx ON short_codes (deleted_at, expires_at);
 
-CREATE VIEW active_short_codes AS
-(
-  SELECT *
-  FROM short_codes
-  WHERE COALESCE(deleted_at, expires_at) >= CLOCK_TIMESTAMP()
-  ORDER BY id DESC
-);
+CREATE INDEX short_codes_created_at_idx ON short_codes (created_at);

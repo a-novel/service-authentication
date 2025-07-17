@@ -3,32 +3,35 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/ogen-go/ogen/ogenerrors"
 
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/golib/otel"
+	jkApiModels "github.com/a-novel/service-json-keys/models/api"
+
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
-var ErrUnauthorized = &codegen.UnexpectedErrorStatusCode{
+var ErrUnauthorized = &apimodels.UnexpectedErrorStatusCode{
 	StatusCode: http.StatusUnauthorized,
-	Response:   codegen.UnexpectedError{Error: "Unauthorized"},
+	Response:   apimodels.UnexpectedError{Error: "Unauthorized"},
 }
 
-var ErrForbidden = &codegen.UnexpectedErrorStatusCode{
+var ErrForbidden = &apimodels.UnexpectedErrorStatusCode{
 	StatusCode: http.StatusForbidden,
-	Response:   codegen.UnexpectedError{Error: "Forbidden"},
+	Response:   apimodels.UnexpectedError{Error: "Forbidden"},
 }
 
-var ErrInternalServerError = &codegen.UnexpectedErrorStatusCode{
+var ErrInternalServerError = &apimodels.UnexpectedErrorStatusCode{
 	StatusCode: http.StatusInternalServerError,
-	Response:   codegen.UnexpectedError{Error: "internal server error"},
+	Response:   apimodels.UnexpectedError{Error: "internal server error"},
 }
 
 type API struct {
-	codegen.UnimplementedHandler
+	apimodels.UnimplementedHandler
 
 	LoginService               LoginService
 	LoginAnonService           LoginAnonService
@@ -46,16 +49,18 @@ type API struct {
 
 	ListUsersService ListUsersService
 	GetUserService   GetUserService
+
+	JKClient *jkApiModels.Client
 }
 
-func (api *API) NewError(ctx context.Context, err error) *codegen.UnexpectedErrorStatusCode {
+func (api *API) NewError(ctx context.Context, err error) *apimodels.UnexpectedErrorStatusCode {
 	// no-op
 	if err == nil {
 		return nil
 	}
 
-	logger := sentry.NewLogger(ctx)
-	logger.Errorf(ctx, "security error: %v", err)
+	logger := otel.Logger()
+	logger.ErrorContext(ctx, fmt.Sprintf("security error: %v", err))
 
 	// Return a different error if authentication failed. Also do not log error (we will still have the API log from
 	// the default middleware if needed).

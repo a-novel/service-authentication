@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestRequestRegistration(t *testing.T) {
@@ -26,40 +26,40 @@ func TestRequestRegistration(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		form *codegen.RequestRegistrationForm
+		form *apimodels.RequestRegistrationForm
 
 		requestRegistrationData *requestRegistrationData
 
-		expect    codegen.RequestRegistrationRes
+		expect    apimodels.RequestRegistrationRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			form: &codegen.RequestRegistrationForm{
+			form: &apimodels.RequestRegistrationForm{
 				Email: "user@provider.com",
 			},
 
 			requestRegistrationData: &requestRegistrationData{},
 
-			expect: &codegen.RequestRegistrationNoContent{},
+			expect: &apimodels.RequestRegistrationNoContent{},
 		},
 		{
 			name: "Success/Lang",
 
-			form: &codegen.RequestRegistrationForm{
+			form: &apimodels.RequestRegistrationForm{
 				Email: "user@provider.com",
-				Lang:  codegen.OptLang{Value: codegen.LangFr, Set: true},
+				Lang:  apimodels.OptLang{Value: apimodels.LangFr, Set: true},
 			},
 
 			requestRegistrationData: &requestRegistrationData{},
 
-			expect: &codegen.RequestRegistrationNoContent{},
+			expect: &apimodels.RequestRegistrationNoContent{},
 		},
 		{
 			name: "RequestRegistrationError",
 
-			form: &codegen.RequestRegistrationForm{
+			form: &apimodels.RequestRegistrationForm{
 				Email: "user@provider.com",
 			},
 

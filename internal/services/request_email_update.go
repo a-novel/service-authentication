@@ -2,41 +2,34 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
-	"text/template"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/config"
-	"github.com/a-novel/service-authentication/config/mails"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/smtp"
+
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrRequestEmailUpdateService = errors.New("RequestEmailUpdateService.RequestEmailUpdate")
-
-func NewErrRequestEmailUpdateService(err error) error {
-	return errors.Join(err, ErrRequestEmailUpdateService)
-}
 
 // RequestEmailUpdateSource is the source used to perform the RequestEmailUpdateService.RequestEmailUpdate action.
 type RequestEmailUpdateSource interface {
 	CreateShortCode(ctx context.Context, request CreateShortCodeRequest) (*models.ShortCode, error)
-	SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)
+	smtp.Sender
 }
 
 func NewRequestEmailUpdateServiceSource(
 	createShortCode *CreateShortCodeService,
-	smtp *SMTPService,
+	smtpSender smtp.Sender,
 ) RequestEmailUpdateSource {
 	return &struct {
 		*CreateShortCodeService
-		*SMTPService
+		smtp.Sender
 	}{
 		CreateShortCodeService: createShortCode,
-		SMTPService:            smtp,
+		Sender:                 smtpSender,
 	}
 }
 
@@ -54,13 +47,19 @@ type RequestEmailUpdateRequest struct {
 //
 // You may create one using the NewRequestEmailUpdateService function.
 type RequestEmailUpdateService struct {
-	source RequestEmailUpdateSource
+	source           RequestEmailUpdateSource
+	shortCodesConfig models.ShortCodesConfig
+	smtpConfig       models.SMTPURLsConfig
 	// Enable graceful shutdowns by waiting for all goroutines spanned by the service to finish.
 	wg sync.WaitGroup
 }
 
-func NewRequestEmailUpdateService(source RequestEmailUpdateSource) *RequestEmailUpdateService {
-	return &RequestEmailUpdateService{source: source}
+func NewRequestEmailUpdateService(
+	source RequestEmailUpdateSource,
+	shortCodesConfig models.ShortCodesConfig,
+	smtpConfig models.SMTPURLsConfig,
+) *RequestEmailUpdateService {
+	return &RequestEmailUpdateService{source: source, shortCodesConfig: shortCodesConfig, smtpConfig: smtpConfig}
 }
 
 func (service *RequestEmailUpdateService) Wait() {
@@ -74,47 +73,60 @@ func (service *RequestEmailUpdateService) Wait() {
 func (service *RequestEmailUpdateService) RequestEmailUpdate(
 	ctx context.Context, request RequestEmailUpdateRequest,
 ) (*models.ShortCode, error) {
-	span := sentry.StartSpan(ctx, "RequestEmailUpdateService.RequestEmailUpdate")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.RequestEmailUpdate")
+	defer span.End()
 
-	span.SetData("request.id", request.ID.String())
-	span.SetData("request.email", request.Email)
-	span.SetData("request.lang", request.Lang)
+	span.SetAttributes(
+		attribute.String("request.id", request.ID.String()),
+		attribute.String("request.email", request.Email),
+		attribute.String("request.lang", request.Lang.String()),
+	)
 
 	// Create a new short code.
-	shortCode, err := service.source.CreateShortCode(span.Context(), CreateShortCodeRequest{
+	shortCode, err := service.source.CreateShortCode(ctx, CreateShortCodeRequest{
 		Usage:    models.ShortCodeUsageValidateMail,
 		Target:   request.ID.String(),
 		Data:     request.Email,
-		TTL:      config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL,
+		TTL:      service.shortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL,
 		Override: true,
 	})
 	if err != nil {
-		span.SetData("service.createShortCode.error", err.Error())
-
-		return nil, NewErrRequestEmailUpdateService(fmt.Errorf("create short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
 
-	go service.sendMail(context.WithoutCancel(span.Context()), request, shortCode)
+	go service.sendMail(context.WithoutCancel(ctx), request, shortCode)
 
-	return shortCode, nil
+	return otel.ReportSuccess(span, shortCode), nil
 }
 
 func (service *RequestEmailUpdateService) sendMail(
 	ctx context.Context, request RequestEmailUpdateRequest, shortCode *models.ShortCode,
 ) {
-	span := sentry.StartSpan(ctx, "RequestEmailUpdateService.sendMail")
-	defer span.Finish()
+	_, span := otel.Tracer().Start(ctx, "service.RequestEmailUpdate.sendMail")
+	defer span.End()
 
 	defer service.wg.Done()
 
-	service.source.SMTP(span.Context(), mails.Mails.EmailUpdate, request.Lang, []string{request.Email}, map[string]any{
-		"ShortCode": shortCode.PlainCode,
-		"Target":    request.ID.String(),
-		"URL":       config.SMTP.URLs.UpdateEmail,
-		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
-	})
+	err := service.source.SendMail(
+		[]string{request.Email},
+		models.Mails.EmailUpdate,
+		request.Lang.String(),
+		map[string]any{
+			"ShortCode": shortCode.PlainCode,
+			"Target":    request.ID.String(),
+			"URL":       service.smtpConfig.UpdateEmail,
+			"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
+			"_Purpose":  "email-update",
+		},
+	)
+	if err != nil {
+		_ = otel.ReportError(span, fmt.Errorf("send mail: %w", err))
+
+		return
+	}
+
+	otel.ReportSuccessNoContent(span)
 }

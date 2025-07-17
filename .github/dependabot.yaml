@@ -26,3 +26,9 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+  - package-ecosystem: npm
+    rebase-strategy: auto
+    open-pull-requests-limit: 25
+    directory: /docs
+    schedule:
+      interval: daily

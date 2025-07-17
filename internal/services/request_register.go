@@ -3,40 +3,33 @@ package services
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"sync"
-	"text/template"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/config"
-	"github.com/a-novel/service-authentication/config/mails"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/smtp"
+
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrRequestRegisterService = errors.New("RequestRegisterService.RequestRegister")
-
-func NewErrRequestRegisterService(err error) error {
-	return errors.Join(err, ErrRequestRegisterService)
-}
 
 // RequestRegisterSource is the source used to perform the RequestRegisterService.RequestRegister action.
 type RequestRegisterSource interface {
 	CreateShortCode(ctx context.Context, request CreateShortCodeRequest) (*models.ShortCode, error)
-	SMTP(ctx context.Context, message *template.Template, lang models.Lang, tos []string, data any)
+	smtp.Sender
 }
 
 func NewRequestRegisterServiceSource(
 	createShortCode *CreateShortCodeService,
-	smtp *SMTPService,
+	smtpSender smtp.Sender,
 ) RequestEmailUpdateSource {
 	return &struct {
 		*CreateShortCodeService
-		*SMTPService
+		smtp.Sender
 	}{
 		CreateShortCodeService: createShortCode,
-		SMTPService:            smtp,
+		Sender:                 smtpSender,
 	}
 }
 
@@ -52,13 +45,19 @@ type RequestRegisterRequest struct {
 //
 // You may create one using the NewRequestRegisterService function.
 type RequestRegisterService struct {
-	source RequestRegisterSource
+	source           RequestRegisterSource
+	shortCodesConfig models.ShortCodesConfig
+	smtpConfig       models.SMTPURLsConfig
 	// Enable graceful shutdowns by waiting for all goroutines spanned by the service to finish.
 	wg sync.WaitGroup
 }
 
-func NewRequestRegisterService(source RequestRegisterSource) *RequestRegisterService {
-	return &RequestRegisterService{source: source}
+func NewRequestRegisterService(
+	source RequestRegisterSource,
+	shortCodesConfig models.ShortCodesConfig,
+	smtpConfig models.SMTPURLsConfig,
+) *RequestRegisterService {
+	return &RequestRegisterService{source: source, shortCodesConfig: shortCodesConfig, smtpConfig: smtpConfig}
 }
 
 func (service *RequestRegisterService) Wait() {
@@ -75,45 +74,58 @@ func (service *RequestRegisterService) Wait() {
 func (service *RequestRegisterService) RequestRegister(
 	ctx context.Context, request RequestRegisterRequest,
 ) (*models.ShortCode, error) {
-	span := sentry.StartSpan(ctx, "RequestRegisterService.RequestRegister")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.RequestRegister")
+	defer span.End()
 
-	span.SetData("request.email", request.Email)
-	span.SetData("request.lang", request.Lang)
+	span.SetAttributes(
+		attribute.String("request.email", request.Email),
+		attribute.String("request.lang", request.Lang.String()),
+	)
 
 	// Create a new short code.
-	shortCode, err := service.source.CreateShortCode(span.Context(), CreateShortCodeRequest{
+	shortCode, err := service.source.CreateShortCode(ctx, CreateShortCodeRequest{
 		Usage:    models.ShortCodeUsageRequestRegister,
 		Target:   request.Email,
-		TTL:      config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL,
+		TTL:      service.shortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL,
 		Override: true,
 	})
 	if err != nil {
-		span.SetData("dao.createShortCode.error", err.Error())
-
-		return nil, NewErrRequestRegisterService(fmt.Errorf("create short code: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
 	// Sends the short code by mail, once the request is done (context terminated).
 	service.wg.Add(1)
 
-	go service.sendMail(context.WithoutCancel(span.Context()), request, shortCode)
+	go service.sendMail(context.WithoutCancel(ctx), request, shortCode)
 
-	return shortCode, nil
+	return otel.ReportSuccess(span, shortCode), nil
 }
 
 func (service *RequestRegisterService) sendMail(
 	ctx context.Context, request RequestRegisterRequest, shortCode *models.ShortCode,
 ) {
-	span := sentry.StartSpan(ctx, "RequestRegisterService.sendMail")
-	defer span.Finish()
+	_, span := otel.Tracer().Start(ctx, "service.RequestRegister.sendMail")
+	defer span.End()
 
 	defer service.wg.Done()
 
-	service.source.SMTP(span.Context(), mails.Mails.Register, request.Lang, []string{request.Email}, map[string]any{
-		"ShortCode": shortCode.PlainCode,
-		"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-		"URL":       config.SMTP.URLs.Register,
-		"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
-	})
+	err := service.source.SendMail(
+		[]string{request.Email},
+		models.Mails.Register,
+		request.Lang.String(),
+		map[string]any{
+			"ShortCode": shortCode.PlainCode,
+			"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+			"URL":       service.smtpConfig.Register,
+			"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
+			"_Purpose":  "register",
+		},
+	)
+	if err != nil {
+		_ = otel.ReportError(span, fmt.Errorf("send mail: %w", err))
+
+		return
+	}
+
+	otel.ReportSuccessNoContent(span)
 }

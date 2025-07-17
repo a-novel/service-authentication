@@ -24,7 +24,7 @@ var (
 // Under normal circumstances, the combination of target and usage should be used to retrieve a short code, as this
 // combination is guaranteed to point to a single, active short code.
 type ShortCodeEntity struct {
-	bun.BaseModel `bun:"table:short_codes,select:active_short_codes"`
+	bun.BaseModel `bun:"table:short_codes"`
 
 	// Unique identifier of the short code.
 	ID uuid.UUID `bun:"id,pk,type:uuid"`

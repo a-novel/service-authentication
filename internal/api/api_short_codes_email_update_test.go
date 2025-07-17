@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
 
@@ -31,11 +31,11 @@ func TestRequestEmailUpdate(t *testing.T) {
 		name string
 
 		userID *uuid.UUID
-		form   *codegen.RequestEmailUpdateForm
+		form   *apimodels.RequestEmailUpdateForm
 
 		requestEmailUpdateData *requestEmailUpdateData
 
-		expect    codegen.RequestEmailUpdateRes
+		expect    apimodels.RequestEmailUpdateRes
 		expectErr error
 	}{
 		{
@@ -43,32 +43,32 @@ func TestRequestEmailUpdate(t *testing.T) {
 
 			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 
-			form: &codegen.RequestEmailUpdateForm{
+			form: &apimodels.RequestEmailUpdateForm{
 				Email: "user@provider.com",
 			},
 
 			requestEmailUpdateData: &requestEmailUpdateData{},
 
-			expect: &codegen.RequestEmailUpdateNoContent{},
+			expect: &apimodels.RequestEmailUpdateNoContent{},
 		},
 		{
 			name: "Success/Lang",
 
 			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 
-			form: &codegen.RequestEmailUpdateForm{
+			form: &apimodels.RequestEmailUpdateForm{
 				Email: "user@provider.com",
-				Lang:  codegen.OptLang{Value: codegen.LangFr, Set: true},
+				Lang:  apimodels.OptLang{Value: apimodels.LangFr, Set: true},
 			},
 
 			requestEmailUpdateData: &requestEmailUpdateData{},
 
-			expect: &codegen.RequestEmailUpdateNoContent{},
+			expect: &apimodels.RequestEmailUpdateNoContent{},
 		},
 		{
 			name: "NoUser",
 
-			form: &codegen.RequestEmailUpdateForm{
+			form: &apimodels.RequestEmailUpdateForm{
 				Email: "user@provider.com",
 			},
 
@@ -79,7 +79,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 
 			userID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 
-			form: &codegen.RequestEmailUpdateForm{
+			form: &apimodels.RequestEmailUpdateForm{
 				Email: "user@provider.com",
 			},
 

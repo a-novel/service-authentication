@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/a-novel/golib/otel"
 	jkModels "github.com/a-novel/service-json-keys/models"
 	jkPkg "github.com/a-novel/service-json-keys/pkg"
 
@@ -61,40 +61,24 @@ func NewHandleBearerAuth[OpName string](
 func (handler *HandleBearerAuth[OpName]) HandleBearerAuth(
 	ctx context.Context, operationName OpName, auth Token,
 ) (context.Context, error) {
-	span := sentry.StartSpan(ctx, "Pkg.HandleBearerAuth")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "pkg.HandleBearerAuth")
+	defer span.End()
 
-	span.SetData("request.operation", operationName)
+	span.SetAttributes(attribute.String("request.operation", string(operationName)))
 
 	// If no token is provided, we cannot authenticate.
 	if auth.GetToken() == "" {
-		span.SetData("authenticate.err", "token is empty")
-
-		return ctx, fmt.Errorf("token is empty: %w", models.ErrUnauthorized)
+		return ctx, otel.ReportError(span, fmt.Errorf("token is empty: %w", models.ErrUnauthorized))
 	}
 
-	claims, err := handler.source.VerifyClaims(span.Context(), jkModels.KeyUsageAuth, auth.GetToken(), nil)
+	claims, err := handler.source.VerifyClaims(ctx, jkModels.KeyUsageAuth, auth.GetToken(), nil)
 	if err != nil {
-		span.SetData("error", err.Error())
-		sentry.CaptureException(err)
-
 		if errors.Is(err, jws.ErrInvalidSignature) {
-			return ctx, fmt.Errorf("consume token: %w", models.ErrUnauthorized)
+			return ctx, otel.ReportError(span, fmt.Errorf("consume token: %w", models.ErrUnauthorized))
 		}
 
-		return ctx, fmt.Errorf("verify claims: %w", err)
+		return ctx, otel.ReportError(span, fmt.Errorf("verify claims: %w", err))
 	}
-
-	hub := sentry.GetHubFromContext(span.Context())
-	if hub == nil {
-		hub = sentry.CurrentHub().Clone()
-	}
-
-	hub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetUser(sentry.User{
-			ID: lo.FromPtr(claims.UserID).String(),
-		})
-	})
 
 	// Retrieve all the permissions granted to the user, based on its roles.
 	grantedPermissions := make(map[models.Permission]struct{})
@@ -107,31 +91,17 @@ func (handler *HandleBearerAuth[OpName]) HandleBearerAuth(
 		}
 	}
 
-	hub.AddBreadcrumb(&sentry.Breadcrumb{
-		Category: "permissions",
-		Message:  "check permissions",
-		Data: map[string]any{
-			"required_permissions": auth.GetRoles(),
-			"claims_permissions":   grantedPermissions,
-		},
-		Level:     sentry.LevelInfo,
-		Timestamp: time.Now(),
-	}, nil)
-
 	// Check if the user has the required permissions for the operation.
 	for _, permission := range auth.GetRoles() {
 		if _, ok := grantedPermissions[models.Permission(permission)]; !ok {
-			span.SetData("permission.err", "missing permission: "+permission)
-
-			return ctx, fmt.Errorf("%w: missing permission %s", models.ErrForbidden, permission)
+			return ctx, otel.ReportError(span, fmt.Errorf("%w: missing permission %s", models.ErrForbidden, permission))
 		}
 	}
 
 	// Set the claims in the context for further use.
-	ctx = SetClaimsContext(span.Context(), claims)
-	span.SetData("claims", claims)
+	ctx = SetClaimsContext(ctx, claims)
 
-	return ctx, nil
+	return otel.ReportSuccess(span, ctx), nil
 }
 
 func SetClaimsContext(ctx context.Context, claims *models.AccessTokenClaims) context.Context {

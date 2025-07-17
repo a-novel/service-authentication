@@ -1,8 +1,8 @@
 package services_test
 
 import (
+	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
@@ -11,10 +11,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/postgres"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
+	testutils "github.com/a-novel/service-authentication/internal/test"
 	"github.com/a-novel/service-authentication/models"
 )
 
@@ -170,45 +173,46 @@ func TestUpdatePassword(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DSN"), nil)
-			require.NoError(t, err)
+			postgres.RunTransactionalTest(t, testutils.TestDBConfig, func(ctx context.Context, t *testing.T) {
+				t.Helper()
 
-			source := servicesmocks.NewMockUpdatePasswordSource(t)
+				source := servicesmocks.NewMockUpdatePasswordSource(t)
 
-			if testCase.consumeShortCodeData != nil {
-				source.EXPECT().
-					ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
-						Usage:  models.ShortCodeUsageResetPassword,
-						Target: testCase.request.UserID.String(),
-						Code:   testCase.request.ShortCode,
-					}).
-					Return(testCase.consumeShortCodeData.resp, testCase.consumeShortCodeData.err)
-			}
+				if testCase.consumeShortCodeData != nil {
+					source.EXPECT().
+						ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
+							Usage:  models.ShortCodeUsageResetPassword,
+							Target: testCase.request.UserID.String(),
+							Code:   testCase.request.ShortCode,
+						}).
+						Return(testCase.consumeShortCodeData.resp, testCase.consumeShortCodeData.err)
+				}
 
-			if testCase.selectCredentialsData != nil {
-				source.EXPECT().
-					SelectCredentials(mock.Anything, testCase.request.UserID).
-					Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
-			}
+				if testCase.selectCredentialsData != nil {
+					source.EXPECT().
+						SelectCredentials(mock.Anything, testCase.request.UserID).
+						Return(testCase.selectCredentialsData.resp, testCase.selectCredentialsData.err)
+				}
 
-			if testCase.updateCredentialsPasswordData != nil {
-				source.EXPECT().
-					UpdateCredentialsPassword(
-						mock.Anything, testCase.request.UserID,
-						mock.MatchedBy(func(data dao.UpdateCredentialsPasswordData) bool {
-							return assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
-								assert.WithinDuration(t, time.Now(), data.Now, time.Second)
-						}),
-					).
-					Return(testCase.updateCredentialsPasswordData.resp, testCase.updateCredentialsPasswordData.err)
-			}
+				if testCase.updateCredentialsPasswordData != nil {
+					source.EXPECT().
+						UpdateCredentialsPassword(
+							mock.Anything, testCase.request.UserID,
+							mock.MatchedBy(func(data dao.UpdateCredentialsPasswordData) bool {
+								return assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
+									assert.WithinDuration(t, time.Now(), data.Now, time.Second)
+							}),
+						).
+						Return(testCase.updateCredentialsPasswordData.resp, testCase.updateCredentialsPasswordData.err)
+				}
 
-			service := services.NewUpdatePasswordService(source)
+				service := services.NewUpdatePasswordService(source)
 
-			err = service.UpdatePassword(ctx, testCase.request)
-			require.ErrorIs(t, err, testCase.expectErr)
+				err = service.UpdatePassword(ctx, testCase.request)
+				require.ErrorIs(t, err, testCase.expectErr)
 
-			source.AssertExpectations(t)
+				source.AssertExpectations(t)
+			})
 		})
 	}
 }

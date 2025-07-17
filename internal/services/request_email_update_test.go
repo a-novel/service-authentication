@@ -3,15 +3,12 @@ package services_test
 import (
 	"errors"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/config"
-	"github.com/a-novel/service-authentication/config/mails"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
@@ -21,6 +18,8 @@ func TestRequestEmailUpdate(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
+
+	smtpConfig := models.SMTPURLsConfig{UpdateEmail: "update-email-url"}
 
 	type createShortCodeData struct {
 		resp *models.ShortCode
@@ -86,7 +85,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 					CreateShortCode(mock.Anything, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageValidateMail,
 						Target:   testCase.request.ID.String(),
-						TTL:      config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL,
+						TTL:      models.DefaultShortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL,
 						Data:     testCase.request.Email,
 						Override: true,
 					}).
@@ -94,24 +93,26 @@ func TestRequestEmailUpdate(t *testing.T) {
 			}
 
 			if testCase.sendMail {
-				source.EXPECT().SMTP(
-					mock.Anything,
-					mock.MatchedBy(func(req *template.Template) bool {
-						return req.Name() == mails.Mails.EmailUpdate.Name()
-					}),
-					testCase.request.Lang,
-					[]string{testCase.request.Email},
-					map[string]any{
-						"ShortCode": testCase.createShortCodeData.resp.PlainCode,
-						"Target":    testCase.request.ID.String(),
-						"URL":       config.SMTP.URLs.UpdateEmail,
-						"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
-					},
-				).
-					Return()
+				source.EXPECT().
+					SendMail(
+						[]string{testCase.request.Email},
+						models.Mails.EmailUpdate,
+						testCase.request.Lang.String(),
+						map[string]any{
+							"ShortCode": testCase.createShortCodeData.resp.PlainCode,
+							"Target":    testCase.request.ID.String(),
+							"URL":       smtpConfig.UpdateEmail,
+							"Duration": models.
+								DefaultShortCodesConfig.
+								Usages[models.ShortCodeUsageValidateMail].
+								TTL.String(),
+							"_Purpose": "email-update",
+						},
+					).
+					Return(nil)
 			}
 
-			service := services.NewRequestEmailUpdateService(source)
+			service := services.NewRequestEmailUpdateService(source, models.DefaultShortCodesConfig, smtpConfig)
 
 			resp, err := service.RequestEmailUpdate(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)

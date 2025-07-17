@@ -17,6 +17,21 @@ const (
 
 type CredentialsRole string
 
+func (role CredentialsRole) String() string {
+	return string(role)
+}
+
+type CredentialsRoles []CredentialsRole
+
+func (roles CredentialsRoles) Strings() []string {
+	strs := make([]string, len(roles))
+	for i, role := range roles {
+		strs[i] = role.String()
+	}
+
+	return strs
+}
+
 const (
 	CredentialsRoleUser       CredentialsRole = "user"
 	CredentialsRoleAdmin      CredentialsRole = "admin"
@@ -24,6 +39,10 @@ const (
 )
 
 type CredentialRoleImportance int
+
+func (importance CredentialRoleImportance) Int() int {
+	return int(importance)
+}
 
 const (
 	CredentialRoleImportanceUnknown    CredentialRoleImportance = 0

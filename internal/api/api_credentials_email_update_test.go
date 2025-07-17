@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestUpdateEmail(t *testing.T) {
@@ -28,18 +28,18 @@ func TestUpdateEmail(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		form *codegen.UpdateEmailForm
+		form *apimodels.UpdateEmailForm
 
 		updateEmailData *updateEmailData
 
-		expect    codegen.UpdateEmailRes
+		expect    apimodels.UpdateEmailRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			form: &codegen.UpdateEmailForm{
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			form: &apimodels.UpdateEmailForm{
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -49,13 +49,13 @@ func TestUpdateEmail(t *testing.T) {
 				},
 			},
 
-			expect: &codegen.NewEmail{Email: "user@provider.com"},
+			expect: &apimodels.NewEmail{Email: "user@provider.com"},
 		},
 		{
 			name: "UserNotFound",
 
-			form: &codegen.UpdateEmailForm{
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			form: &apimodels.UpdateEmailForm{
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -63,13 +63,13 @@ func TestUpdateEmail(t *testing.T) {
 				err: dao.ErrCredentialsNotFound,
 			},
 
-			expect: &codegen.NotFoundError{Error: "user not found"},
+			expect: &apimodels.NotFoundError{Error: "user not found"},
 		},
 		{
 			name: "ShortCodeNotFound",
 
-			form: &codegen.UpdateEmailForm{
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			form: &apimodels.UpdateEmailForm{
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -77,13 +77,13 @@ func TestUpdateEmail(t *testing.T) {
 				err: dao.ErrShortCodeNotFound,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid short code"},
+			expect: &apimodels.ForbiddenError{Error: "invalid short code"},
 		},
 		{
 			name: "InvalidShortCode",
 
-			form: &codegen.UpdateEmailForm{
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			form: &apimodels.UpdateEmailForm{
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -91,13 +91,13 @@ func TestUpdateEmail(t *testing.T) {
 				err: services.ErrInvalidShortCode,
 			},
 
-			expect: &codegen.ForbiddenError{Error: "invalid short code"},
+			expect: &apimodels.ForbiddenError{Error: "invalid short code"},
 		},
 		{
 			name: "EmailAlreadyTaken",
 
-			form: &codegen.UpdateEmailForm{
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			form: &apimodels.UpdateEmailForm{
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 
@@ -105,13 +105,13 @@ func TestUpdateEmail(t *testing.T) {
 				err: dao.ErrCredentialsAlreadyExists,
 			},
 
-			expect: &codegen.ConflictError{Error: "email already taken"},
+			expect: &apimodels.ConflictError{Error: "email already taken"},
 		},
 		{
 			name: "Error",
 
-			form: &codegen.UpdateEmailForm{
-				UserID:    codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			form: &apimodels.UpdateEmailForm{
+				UserID:    apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				ShortCode: "foobarqux",
 			},
 

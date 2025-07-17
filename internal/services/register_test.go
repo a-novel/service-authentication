@@ -1,8 +1,8 @@
 package services_test
 
 import (
+	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
@@ -12,16 +12,20 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/postgres"
 	jkModels "github.com/a-novel/service-json-keys/models"
 
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/lib"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
+	testutils "github.com/a-novel/service-authentication/internal/test"
 	"github.com/a-novel/service-authentication/models"
 )
 
-func TestRegister(t *testing.T) { //nolint:paralleltest
+func TestRegister(t *testing.T) {
+	t.Parallel()
+
 	errFoo := errors.New("foo")
 
 	type createCredentialsData struct {
@@ -180,70 +184,73 @@ func TestRegister(t *testing.T) { //nolint:paralleltest
 		},
 	}
 
-	for _, testCase := range testCases { //nolint:paralleltest
+	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			ctx, err := lib.NewPostgresContext(t.Context(), os.Getenv("DAO_DSN"), nil)
-			require.NoError(t, err)
+			t.Parallel()
 
-			source := servicesmocks.NewMockRegisterSource(t)
+			postgres.RunTransactionalTest(t, testutils.TestDBConfig, func(ctx context.Context, t *testing.T) {
+				t.Helper()
 
-			if testCase.consumeShortCodeData != nil {
-				source.EXPECT().
-					ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
-						Usage:  models.ShortCodeUsageRequestRegister,
-						Target: testCase.request.Email,
-						Code:   testCase.request.ShortCode,
-					}).
-					Return(nil, testCase.consumeShortCodeData.err)
-			}
+				source := servicesmocks.NewMockRegisterSource(t)
 
-			if testCase.createCredentialsData != nil {
-				source.EXPECT().
-					InsertCredentials(mock.Anything, mock.MatchedBy(func(data dao.InsertCredentialsData) bool {
-						return assert.Equal(t, testCase.request.Email, data.Email) &&
-							assert.NotEqual(t, uuid.Nil, data.ID) &&
-							assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
-							assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password))
-					})).
-					Return(testCase.createCredentialsData.resp, testCase.createCredentialsData.err)
-			}
-
-			if testCase.issueRefreshTokenData != nil {
-				source.EXPECT().
-					SignClaims(mock.Anything, jkModels.KeyUsageRefresh, models.RefreshTokenClaimsInput{
-						UserID: testCase.createCredentialsData.resp.ID,
-					}).
-					Return(
-						mockUnsignedRefreshToken,
-						testCase.issueRefreshTokenData.err,
-					)
-			}
-
-			if testCase.issueTokenData != nil {
-				source.EXPECT().
-					SignClaims(mock.Anything, jkModels.KeyUsageAuth,
-						models.AccessTokenClaims{
-							UserID: &testCase.createCredentialsData.resp.ID,
-							Roles: []models.Role{
-								lo.Switch[models.CredentialsRole, models.Role](
-									testCase.createCredentialsData.resp.Role,
-								).
-									Case(models.CredentialsRoleAdmin, models.RoleAdmin).
-									Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
-									Default(models.RoleUser),
-							},
-							RefreshTokenID: lo.ToPtr(mockUnsignedJTI),
+				if testCase.consumeShortCodeData != nil {
+					source.EXPECT().
+						ConsumeShortCode(mock.Anything, services.ConsumeShortCodeRequest{
+							Usage:  models.ShortCodeUsageRequestRegister,
+							Target: testCase.request.Email,
+							Code:   testCase.request.ShortCode,
 						}).
-					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
-			}
+						Return(nil, testCase.consumeShortCodeData.err)
+				}
 
-			service := services.NewRegisterService(source)
+				if testCase.createCredentialsData != nil {
+					source.EXPECT().
+						InsertCredentials(mock.Anything, mock.MatchedBy(func(data dao.InsertCredentialsData) bool {
+							return assert.Equal(t, testCase.request.Email, data.Email) &&
+								assert.NotEqual(t, uuid.Nil, data.ID) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password))
+						})).
+						Return(testCase.createCredentialsData.resp, testCase.createCredentialsData.err)
+				}
 
-			resp, err := service.Register(ctx, testCase.request)
-			require.ErrorIs(t, err, testCase.expectErr)
-			require.Equal(t, testCase.expect, resp)
+				if testCase.issueRefreshTokenData != nil {
+					source.EXPECT().
+						SignClaims(mock.Anything, jkModels.KeyUsageRefresh, models.RefreshTokenClaimsInput{
+							UserID: testCase.createCredentialsData.resp.ID,
+						}).
+						Return(
+							mockUnsignedRefreshToken,
+							testCase.issueRefreshTokenData.err,
+						)
+				}
 
-			source.AssertExpectations(t)
+				if testCase.issueTokenData != nil {
+					source.EXPECT().
+						SignClaims(mock.Anything, jkModels.KeyUsageAuth,
+							models.AccessTokenClaims{
+								UserID: &testCase.createCredentialsData.resp.ID,
+								Roles: []models.Role{
+									lo.Switch[models.CredentialsRole, models.Role](
+										testCase.createCredentialsData.resp.Role,
+									).
+										Case(models.CredentialsRoleAdmin, models.RoleAdmin).
+										Case(models.CredentialsRoleSuperAdmin, models.RoleSuperAdmin).
+										Default(models.RoleUser),
+								},
+								RefreshTokenID: lo.ToPtr(mockUnsignedJTI),
+							}).
+						Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)
+				}
+
+				service := services.NewRegisterService(source)
+
+				resp, err := service.Register(ctx, testCase.request)
+				require.ErrorIs(t, err, testCase.expectErr)
+				require.Equal(t, testCase.expect, resp)
+
+				source.AssertExpectations(t)
+			})
 		})
 	}
 }

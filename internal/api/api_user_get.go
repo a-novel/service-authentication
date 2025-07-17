@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/codes"
 
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/golib/otel"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 type GetUserService interface {
@@ -19,35 +21,33 @@ type GetUserService interface {
 }
 
 func (api *API) GetUser(
-	ctx context.Context, params codegen.GetUserParams,
-) (codegen.GetUserRes, error) {
-	span := sentry.StartSpan(ctx, "API.GetUser")
-	defer span.Finish()
+	ctx context.Context, params apimodels.GetUserParams,
+) (apimodels.GetUserRes, error) {
+	ctx, span := otel.Tracer().Start(ctx, "api.GetUser")
+	defer span.End()
 
-	span.SetData("request.userID", params.UserID)
-
-	user, err := api.GetUserService.SelectUser(span.Context(), services.SelectUserRequest{
+	user, err := api.GetUserService.SelectUser(ctx, services.SelectUserRequest{
 		ID: uuid.UUID(params.UserID),
 	})
 
 	switch {
 	case errors.Is(err, dao.ErrCredentialsNotFound):
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
-		return &codegen.NotFoundError{Error: "user not found"}, nil
+		return &apimodels.NotFoundError{Error: "user not found"}, nil
 	case err != nil:
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
 		return nil, fmt.Errorf("get user: %w", err)
 	}
 
-	span.SetData("service.user", user)
-
-	return &codegen.User{
-		ID:        codegen.UserID(user.ID),
-		Email:     codegen.Email(user.Email),
+	return otel.ReportSuccess(span, &apimodels.User{
+		ID:        apimodels.UserID(user.ID),
+		Email:     apimodels.Email(user.Email),
 		Role:      api.CredentialsRoleFromModel(user.Role),
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
-	}, nil
+	}), nil
 }

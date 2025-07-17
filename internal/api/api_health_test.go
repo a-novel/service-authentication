@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestPing(t *testing.T) {
@@ -15,5 +15,5 @@ func TestPing(t *testing.T) {
 
 	res, err := new(api.API).Ping(t.Context())
 	require.NoError(t, err)
-	require.Equal(t, &codegen.PingOK{Data: strings.NewReader("pong")}, res)
+	require.Equal(t, &apimodels.PingOK{Data: strings.NewReader("pong")}, res)
 }

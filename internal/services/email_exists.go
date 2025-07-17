@@ -4,15 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
-	"github.com/go-faster/errors"
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/a-novel/golib/otel"
 )
-
-var ErrEmailExistsService = errors.New("EmailExistsService.EmailExists")
-
-func NewErrEmailExistsService(err error) error {
-	return errors.Join(err, ErrEmailExistsService)
-}
 
 type EmailExistsSource interface {
 	ExistsCredentialsEmail(ctx context.Context, email string) (bool, error)
@@ -31,19 +26,17 @@ func NewEmailExistsService(source EmailExistsSource) *EmailExistsService {
 }
 
 func (service *EmailExistsService) EmailExists(ctx context.Context, request EmailExistsRequest) (bool, error) {
-	span := sentry.StartSpan(ctx, "EmailExistsService.EmailExists")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.EmailExists")
+	defer span.End()
 
-	span.SetData("email", request.Email)
+	span.SetAttributes(attribute.String("email", request.Email))
 
-	exists, err := service.source.ExistsCredentialsEmail(span.Context(), request.Email)
+	exists, err := service.source.ExistsCredentialsEmail(ctx, request.Email)
 	if err != nil {
-		span.SetData("dao.error", err.Error())
-
-		return false, NewErrEmailExistsService(fmt.Errorf("check email existence: %w", err))
+		return false, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
 	}
 
-	span.SetData("exists", exists)
+	span.SetAttributes(attribute.Bool("exists", exists))
 
-	return exists, nil
+	return otel.ReportSuccess(span, exists), nil
 }

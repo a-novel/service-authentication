@@ -3,15 +3,12 @@ package services_test
 import (
 	"errors"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/config"
-	"github.com/a-novel/service-authentication/config/mails"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
@@ -22,6 +19,8 @@ func TestRequestPasswordReset(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
+
+	smtpConfig := models.SMTPURLsConfig{UpdatePassword: "update-password-url"}
 
 	type selectCredentialsData struct {
 		resp *dao.CredentialsEntity
@@ -116,7 +115,7 @@ func TestRequestPasswordReset(t *testing.T) {
 					CreateShortCode(mock.Anything, services.CreateShortCodeRequest{
 						Usage:    models.ShortCodeUsageResetPassword,
 						Target:   testCase.selectCredentialsData.resp.ID.String(),
-						TTL:      config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL,
+						TTL:      models.DefaultShortCodesConfig.Usages[models.ShortCodeUsageResetPassword].TTL,
 						Override: true,
 					}).
 					Return(testCase.createShortCodeData.resp, testCase.createShortCodeData.err)
@@ -129,24 +128,26 @@ func TestRequestPasswordReset(t *testing.T) {
 			}
 
 			if testCase.sendMail {
-				source.EXPECT().SMTP(
-					mock.Anything,
-					mock.MatchedBy(func(req *template.Template) bool {
-						return req.Name() == mails.Mails.PasswordReset.Name()
-					}),
-					testCase.request.Lang,
-					[]string{testCase.request.Email},
-					map[string]any{
-						"ShortCode": testCase.createShortCodeData.resp.PlainCode,
-						"Target":    testCase.selectCredentialsData.resp.ID.String(),
-						"URL":       config.SMTP.URLs.UpdatePassword,
-						"Duration":  config.ShortCodes.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
-					},
-				).
-					Return()
+				source.EXPECT().
+					SendMail(
+						[]string{testCase.request.Email},
+						models.Mails.PasswordReset,
+						testCase.request.Lang.String(),
+						map[string]any{
+							"ShortCode": testCase.createShortCodeData.resp.PlainCode,
+							"Target":    testCase.selectCredentialsData.resp.ID.String(),
+							"URL":       smtpConfig.UpdatePassword,
+							"Duration": models.
+								DefaultShortCodesConfig.
+								Usages[models.ShortCodeUsageResetPassword].
+								TTL.String(),
+							"_Purpose": "password-reset",
+						},
+					).
+					Return(nil)
 			}
 
-			service := services.NewRequestPasswordResetService(source)
+			service := services.NewRequestPasswordResetService(source, models.DefaultShortCodesConfig, smtpConfig)
 
 			resp, err := service.RequestPasswordReset(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)

@@ -3,3 +3,8 @@
 coverage.txt
 
 .envrc
+
+docs/.vitepress/cache
+docs/.vitepress/.temp
+docs/.vitepress/dist
+docs/node_modules

@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - v*
+      - "**"
 
 jobs:
   release:
@@ -15,8 +15,69 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+  database-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+    steps:
+      - uses: a-novel-kit/workflows/build-actions/docker@master
+        id: database_build
+        with:
+          file: build/database.Dockerfile
+          image_name: ${{ github.repository }}/database
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: >-
+            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" 
+            -e POSTGRES_USER="${POSTGRES_USER}" 
+            -e POSTGRES_DB="${POSTGRES_DB}"
+            -e POSTGRES_HOST_AUTH_METHOD="${POSTGRES_HOST_AUTH_METHOD}"
+            -e POSTGRES_INITDB_ARGS="${POSTGRES_INITDB_ARGS}"
+
+  migrations-build:
+    runs-on: ubuntu-latest
+    needs: [database-build]
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    services:
+      postgres:
+        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+    steps:
+      - uses: a-novel-kit/workflows/build-actions/docker-job@master
+        with:
+          file: build/migrations.Dockerfile
+          image_name: ${{ github.repository }}/jobs/migrations
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
+
   api-build:
-    needs: [release]
+    needs: [database-build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,14 +86,9 @@ jobs:
       id-token: write
     services:
       postgres:
+        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
         ports:
-          - "5431:5432"
-        image: docker.io/library/postgres:17
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 500ms
-          --health-timeout 5s
-          --health-retries 50
+          - "5432:5432"
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -41,52 +97,107 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: docker.io/library/postgres:17
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 500ms
-          --health-timeout 5s
-          --health-retries 50
+        image: ghcr.io/a-novel/service-json-keys/database:v1
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
-          POSTGRES_DB: json-keys
+          POSTGRES_DB: postgres
           POSTGRES_HOST_AUTH_METHOD: scram-sha-256
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v0
+        image: ghcr.io/a-novel/service-json-keys/standalone:v1
         ports:
           - "4001:8080"
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         env:
-          PORT: 8080
-          DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
-          ENV: local
-          APP_NAME: json-keys-service
-          MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
-          DEBUG: true
+          POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
-      DSN: postgres://postgres:postgres@localhost:5431/postgres?sslmode=disable
-      PORT: 8080
-      JSON_KEYS_URL: "http://localhost:4001/v1"
-      AUTH_PLATFORM_URL_UPDATE_EMAIL: http://localhost:6001/update-email
-      AUTH_PLATFORM_URL_UPDATE_PASSWORD: http://localhost:6001/update-password
-      AUTH_PLATFORM_URL_REGISTER: http://localhost:6001/register
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
+      AUTH_PLATFORM_URL: http://localhost:6001
       DEBUG: true
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker-rest-api@master
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/run-migrations
+      - uses: a-novel-kit/workflows/build-actions/docker@master
         with:
           file: build/api.Dockerfile
           image_name: ${{ github.repository }}/api
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
-            -e DSN="${DSN}"
-            -e JSON_KEYS_URL="${JSON_KEYS_URL}"
-            -e AUTH_PLATFORM_URL_UPDATE_EMAIL="${AUTH_PLATFORM_URL_UPDATE_EMAIL}"
-            -e AUTH_PLATFORM_URL_UPDATE_PASSWORD="${AUTH_PLATFORM_URL_UPDATE_PASSWORD}"
-            -e AUTH_PLATFORM_URL_REGISTER="${AUTH_PLATFORM_URL_REGISTER}"
-            -e PORT="${PORT}"
+            -e POSTGRES_DSN="${POSTGRES_DSN}"
+            -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
+            -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
+            -e DEBUG="${DEBUG}"
+
+  standalone-build:
+    needs: [database-build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    services:
+      postgres:
+        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+      postgres-json-keys:
+        image: ghcr.io/a-novel/service-json-keys/database:v1
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      json-keys:
+        image: ghcr.io/a-novel/service-json-keys/standalone:v1
+        ports:
+          - "4001:8080"
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
+    env:
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
+      AUTH_PLATFORM_URL: http://localhost:6001
+      DEBUG: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/run-migrations
+      - uses: a-novel-kit/workflows/build-actions/docker@master
+        with:
+          file: build/standalone.Dockerfile
+          image_name: ${{ github.repository }}/standalone
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: >-
+            -e POSTGRES_DSN="${POSTGRES_DSN}"
+            -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
+            -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
             -e DEBUG="${DEBUG}"

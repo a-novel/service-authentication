@@ -2,21 +2,13 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
-
+	"github.com/a-novel/golib/otel"
 	jkModels "github.com/a-novel/service-json-keys/models"
 
 	"github.com/a-novel/service-authentication/models"
 )
-
-var ErrLoginAnonService = errors.New("LoginAnonService.LoginAnon")
-
-func NewErrLoginAnonService(err error) error {
-	return errors.Join(err, ErrLoginAnonService)
-}
 
 // LoginAnonSource is the source used to perform the LoginAnonService.LoginAnon action.
 type LoginAnonSource interface {
@@ -38,21 +30,19 @@ func NewLoginAnonService(source LoginAnonSource) *LoginAnonService {
 //
 // On success, a new access token is returned, so the user can access protected resources.
 func (service *LoginAnonService) LoginAnon(ctx context.Context) (string, error) {
-	span := sentry.StartSpan(ctx, "LoginAnonService.LoginAnon")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "service.LoginAnon")
+	defer span.End()
 
 	accessToken, err := service.source.SignClaims(
-		span.Context(),
+		ctx,
 		jkModels.KeyUsageAuth,
 		models.AccessTokenClaims{
 			Roles: []models.Role{models.RoleAnon},
 		},
 	)
 	if err != nil {
-		span.SetData("service.error", err.Error())
-
-		return "", NewErrLoginAnonService(fmt.Errorf("issue accessToken: %w", err))
+		return "", otel.ReportError(span, fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return accessToken, nil
+	return otel.ReportSuccess(span, accessToken), nil
 }

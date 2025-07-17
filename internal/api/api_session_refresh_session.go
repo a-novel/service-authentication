@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/codes"
 
-	"github.com/a-novel/service-authentication/internal/api/codegen"
+	"github.com/a-novel/golib/otel"
+
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 type ConsumeRefreshTokenService interface {
@@ -17,13 +19,13 @@ type ConsumeRefreshTokenService interface {
 }
 
 func (api *API) RefreshSession(
-	ctx context.Context, params codegen.RefreshSessionParams,
-) (codegen.RefreshSessionRes, error) {
-	span := sentry.StartSpan(ctx, "API.RefreshSession")
-	defer span.Finish()
+	ctx context.Context, params apimodels.RefreshSessionParams,
+) (apimodels.RefreshSessionRes, error) {
+	ctx, span := otel.Tracer().Start(ctx, "api.RefreshSession")
+	defer span.End()
 
 	accessToken, err := api.ConsumeRefreshTokenService.ConsumeRefreshToken(
-		span.Context(),
+		ctx,
 		services.ConsumeRefreshTokenRequest{
 			AccessToken:  params.AccessToken,
 			RefreshToken: params.RefreshToken,
@@ -32,22 +34,25 @@ func (api *API) RefreshSession(
 
 	switch {
 	case errors.Is(err, models.ErrUnauthorized):
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
-		return &codegen.ForbiddenError{Error: "invalid user password"}, nil
+		return &apimodels.ForbiddenError{Error: "invalid user password"}, nil
 	case errors.Is(err, services.ErrMismatchRefreshClaims),
 		errors.Is(err, services.ErrTokenIssuedWithDifferentRefreshToken):
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
-		return &codegen.UnprocessableEntityError{Error: "invalid refresh token"}, nil
+		return &apimodels.UnprocessableEntityError{Error: "invalid refresh token"}, nil
 	case err != nil:
-		span.SetData("service.err", err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 
 		return nil, fmt.Errorf("refresh session: %w", err)
 	}
 
-	return &codegen.Token{
+	return otel.ReportSuccess(span, &apimodels.Token{
 		AccessToken:  accessToken,
 		RefreshToken: params.RefreshToken,
-	}, nil
+	}), nil
 }

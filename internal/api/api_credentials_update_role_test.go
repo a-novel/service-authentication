@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
 
@@ -33,19 +33,19 @@ func TestUpdateRole(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		form *codegen.UpdateRoleForm
+		form *apimodels.UpdateRoleForm
 
 		updateRoleData *updateRoleData
 
-		expect    codegen.UpdateRoleRes
+		expect    apimodels.UpdateRoleRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			form: &codegen.UpdateRoleForm{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000002")),
-				Role:   codegen.CredentialsRoleUser,
+			form: &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000002")),
+				Role:   apimodels.CredentialsRoleUser,
 			},
 
 			updateRoleData: &updateRoleData{
@@ -58,10 +58,10 @@ func TestUpdateRole(t *testing.T) {
 				},
 			},
 
-			expect: &codegen.User{
-				ID:        codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000002")),
-				Email:     codegen.Email("target@mail.com"),
-				Role:      codegen.CredentialsRoleUser,
+			expect: &apimodels.User{
+				ID:        apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000002")),
+				Email:     apimodels.Email("target@mail.com"),
+				Role:      apimodels.CredentialsRoleUser,
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 			},
@@ -69,79 +69,79 @@ func TestUpdateRole(t *testing.T) {
 		{
 			name: "CredentialsNotFound",
 
-			form: &codegen.UpdateRoleForm{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Role:   codegen.CredentialsRoleUser,
+			form: &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				Role:   apimodels.CredentialsRoleUser,
 			},
 
 			updateRoleData: &updateRoleData{
 				err: dao.ErrCredentialsNotFound,
 			},
 
-			expect: &codegen.NotFoundError{Error: dao.ErrCredentialsNotFound.Error()},
+			expect: &apimodels.NotFoundError{Error: dao.ErrCredentialsNotFound.Error()},
 		},
 		{
 			name: "UpdateToHigherRole",
 
-			form: &codegen.UpdateRoleForm{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Role:   codegen.CredentialsRoleUser,
+			form: &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				Role:   apimodels.CredentialsRoleUser,
 			},
 
 			updateRoleData: &updateRoleData{
 				err: services.ErrUpdateToHigherRole,
 			},
 
-			expect: &codegen.ForbiddenError{Error: services.ErrUpdateToHigherRole.Error()},
+			expect: &apimodels.ForbiddenError{Error: services.ErrUpdateToHigherRole.Error()},
 		},
 		{
 			name: "MustDowngradeLowerRole",
 
-			form: &codegen.UpdateRoleForm{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Role:   codegen.CredentialsRoleUser,
+			form: &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				Role:   apimodels.CredentialsRoleUser,
 			},
 
 			updateRoleData: &updateRoleData{
 				err: services.ErrMustDowngradeLowerRole,
 			},
 
-			expect: &codegen.ForbiddenError{Error: services.ErrMustDowngradeLowerRole.Error()},
+			expect: &apimodels.ForbiddenError{Error: services.ErrMustDowngradeLowerRole.Error()},
 		},
 		{
 			name: "UnknownRole",
 
-			form: &codegen.UpdateRoleForm{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Role:   codegen.CredentialsRoleUser,
+			form: &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				Role:   apimodels.CredentialsRoleUser,
 			},
 
 			updateRoleData: &updateRoleData{
 				err: services.ErrUnknownRole,
 			},
 
-			expect: &codegen.UnprocessableEntityError{Error: services.ErrUnknownRole.Error()},
+			expect: &apimodels.UnprocessableEntityError{Error: services.ErrUnknownRole.Error()},
 		},
 		{
 			name: "SelfRoleUpdate",
 
-			form: &codegen.UpdateRoleForm{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Role:   codegen.CredentialsRoleUser,
+			form: &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				Role:   apimodels.CredentialsRoleUser,
 			},
 
 			updateRoleData: &updateRoleData{
 				err: services.ErrSelfRoleUpdate,
 			},
 
-			expect: &codegen.UnprocessableEntityError{Error: services.ErrSelfRoleUpdate.Error()},
+			expect: &apimodels.UnprocessableEntityError{Error: services.ErrSelfRoleUpdate.Error()},
 		},
 		{
 			name: "Error",
 
-			form: &codegen.UpdateRoleForm{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Role:   codegen.CredentialsRoleUser,
+			form: &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				Role:   apimodels.CredentialsRoleUser,
 			},
 
 			updateRoleData: &updateRoleData{

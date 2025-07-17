@@ -3,19 +3,18 @@ package dao
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"errors"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/postgres"
 )
 
-var ErrSelectCredentialsByEmailRepository = errors.New("SelectCredentialsByEmailRepository.SelectCredentialsByEmail")
-
-func NewErrSelectCredentialsByEmailRepository(err error) error {
-	return errors.Join(err, ErrSelectCredentialsByEmailRepository)
-}
+//go:embed select_credentials_by_email.sql
+var selectCredentialsByEmailQuery string
 
 // SelectCredentialsByEmailRepository is the repository used to perform the
 // SelectCredentialsByEmailRepository.SelectCredentialsByEmail action.
@@ -36,33 +35,29 @@ func NewSelectCredentialsByEmailRepository() *SelectCredentialsByEmailRepository
 func (repository *SelectCredentialsByEmailRepository) SelectCredentialsByEmail(
 	ctx context.Context, email string,
 ) (*CredentialsEntity, error) {
-	span := sentry.StartSpan(ctx, "SelectCredentialsByEmailRepository.SelectCredentialsByEmail")
-	defer span.Finish()
+	ctx, span := otel.Tracer().Start(ctx, "dao.ExistsCredentialsEmail")
+	defer span.End()
 
-	span.SetData("credentials.email", email)
+	span.SetAttributes(attribute.String("email", email))
 
 	// Retrieve a connection to postgres from the context.
-	tx, err := lib.PostgresContext(span.Context())
+	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		span.SetData("postgres.context.error", err.Error())
-
-		return nil, NewErrSelectCredentialsByEmailRepository(fmt.Errorf("get postgres client: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres client: %w", err))
 	}
 
-	var entity CredentialsEntity
+	entity := &CredentialsEntity{}
 
 	// Execute query.
-	err = tx.NewSelect().Model(&entity).Where("email = ?", email).Order("email DESC").Scan(span.Context())
+	err = tx.NewRaw(selectCredentialsByEmailQuery, email).Scan(ctx, entity)
 	if err != nil {
-		span.SetData("scan.error", err.Error())
-
 		// Parse not found error as a managed error.
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, NewErrSelectCredentialsByEmailRepository(ErrCredentialsNotFound)
+			return nil, otel.ReportError(span, ErrCredentialsNotFound)
 		}
 
-		return nil, NewErrSelectCredentialsByEmailRepository(fmt.Errorf("select key: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("select key: %w", err))
 	}
 
-	return &entity, nil
+	return otel.ReportSuccess(span, entity), nil
 }

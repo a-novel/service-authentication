@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestGetUser(t *testing.T) {
@@ -29,18 +29,18 @@ func TestGetUser(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		params codegen.GetUserParams
+		params apimodels.GetUserParams
 
 		GetUserData *GetUserData
 
-		expect    codegen.GetUserRes
+		expect    apimodels.GetUserRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			params: codegen.GetUserParams{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000003")),
+			params: apimodels.GetUserParams{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000003")),
 			},
 
 			GetUserData: &GetUserData{
@@ -53,10 +53,10 @@ func TestGetUser(t *testing.T) {
 				},
 			},
 
-			expect: &codegen.User{
-				ID:        codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			expect: &apimodels.User{
+				ID:        apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Email:     "user1@email.com",
-				Role:      codegen.CredentialsRoleUser,
+				Role:      apimodels.CredentialsRoleUser,
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
@@ -64,8 +64,8 @@ func TestGetUser(t *testing.T) {
 		{
 			name: "Error",
 
-			params: codegen.GetUserParams{
-				UserID: codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000003")),
+			params: apimodels.GetUserParams{
+				UserID: apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000003")),
 			},
 
 			GetUserData: &GetUserData{

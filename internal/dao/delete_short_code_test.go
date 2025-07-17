@@ -1,7 +1,7 @@
 package dao_test
 
 import (
-	"database/sql"
+	"context"
 	"testing"
 	"time"
 
@@ -9,8 +9,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/postgres"
+
 	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/lib"
+	testutils "github.com/a-novel/service-authentication/internal/test"
 	"github.com/a-novel/service-authentication/models"
 )
 
@@ -149,24 +151,21 @@ func TestDeleteShortCode(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			tx, commit, err := lib.PostgresContextTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
-			require.NoError(t, err)
+			postgres.RunTransactionalTest(t, testutils.TestDBConfig, func(ctx context.Context, t *testing.T) {
+				t.Helper()
 
-			t.Cleanup(func() {
-				_ = commit(false)
-			})
-
-			db, err := lib.PostgresContext(tx)
-			require.NoError(t, err)
-
-			if len(testCase.fixtures) > 0 {
-				_, err = db.NewInsert().Model(&testCase.fixtures).Exec(tx)
+				db, err := postgres.GetContext(ctx)
 				require.NoError(t, err)
-			}
 
-			key, err := repository.DeleteShortCode(tx, testCase.data)
-			require.ErrorIs(t, err, testCase.expectErr)
-			require.Equal(t, testCase.expect, key)
+				if len(testCase.fixtures) > 0 {
+					_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
+					require.NoError(t, err)
+				}
+
+				key, err := repository.DeleteShortCode(ctx, testCase.data)
+				require.ErrorIs(t, err, testCase.expectErr)
+				require.Equal(t, testCase.expect, key)
+			})
 		})
 	}
 }

@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/internal/api"
-	"github.com/a-novel/service-authentication/internal/api/codegen"
 	apimocks "github.com/a-novel/service-authentication/internal/api/mocks"
 	"github.com/a-novel/service-authentication/internal/services"
 	"github.com/a-novel/service-authentication/models"
+	"github.com/a-novel/service-authentication/models/api"
 )
 
 func TestListUsers(t *testing.T) {
@@ -30,20 +30,20 @@ func TestListUsers(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		params codegen.ListUsersParams
+		params apimodels.ListUsersParams
 
 		listUsersData *listUsersData
 
-		expect    codegen.ListUsersRes
+		expect    apimodels.ListUsersRes
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			params: codegen.ListUsersParams{
-				Limit:  codegen.OptInt{Value: 10, Set: true},
-				Offset: codegen.OptInt{Value: 2, Set: true},
-				Roles:  []codegen.CredentialsRole{codegen.CredentialsRoleUser},
+			params: apimodels.ListUsersParams{
+				Limit:  apimodels.OptInt{Value: 10, Set: true},
+				Offset: apimodels.OptInt{Value: 2, Set: true},
+				Roles:  []apimodels.CredentialsRole{apimodels.CredentialsRoleUser},
 			},
 
 			listUsersData: &listUsersData{
@@ -72,25 +72,25 @@ func TestListUsers(t *testing.T) {
 				},
 			},
 
-			expect: &codegen.ListUsersOKApplicationJSON{
+			expect: &apimodels.ListUsersOKApplicationJSON{
 				{
-					ID:        codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000003")),
+					ID:        apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000003")),
 					Email:     "user3@email.com",
-					Role:      codegen.CredentialsRoleUser,
+					Role:      apimodels.CredentialsRoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 				},
 				{
-					ID:        codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000002")),
+					ID:        apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000002")),
 					Email:     "user2@email.com",
-					Role:      codegen.CredentialsRoleAdmin,
+					Role:      apimodels.CredentialsRoleAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
 				{
-					ID:        codegen.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					ID:        apimodels.UserID(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Email:     "user1@email.com",
-					Role:      codegen.CredentialsRoleUser,
+					Role:      apimodels.CredentialsRoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				},
@@ -99,10 +99,10 @@ func TestListUsers(t *testing.T) {
 		{
 			name: "Error",
 
-			params: codegen.ListUsersParams{
-				Limit:  codegen.OptInt{Value: 10, Set: true},
-				Offset: codegen.OptInt{Value: 2, Set: true},
-				Roles:  []codegen.CredentialsRole{codegen.CredentialsRoleUser},
+			params: apimodels.ListUsersParams{
+				Limit:  apimodels.OptInt{Value: 10, Set: true},
+				Offset: apimodels.OptInt{Value: 2, Set: true},
+				Roles:  []apimodels.CredentialsRole{apimodels.CredentialsRoleUser},
 			},
 
 			listUsersData: &listUsersData{
@@ -126,7 +126,7 @@ func TestListUsers(t *testing.T) {
 						Offset: testCase.params.Offset.Value,
 						Roles: lo.Map(
 							testCase.params.Roles,
-							func(item codegen.CredentialsRole, _ int) models.CredentialsRole {
+							func(item apimodels.CredentialsRole, _ int) models.CredentialsRole {
 								return new(api.API).CredentialsRoleToModel(item)
 							},
 						),
