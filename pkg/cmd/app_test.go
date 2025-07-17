@@ -14,7 +14,6 @@ import (
 	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
 
-	testutils "github.com/a-novel/service-authentication/internal/test"
 	"github.com/a-novel/service-authentication/migrations"
 	"github.com/a-novel/service-authentication/pkg"
 	cmdpkg "github.com/a-novel/service-authentication/pkg/cmd"
@@ -51,7 +50,7 @@ func TestApp(t *testing.T) {
 			require.NoError(t, listener.Close(), "failed to close listener")
 
 			postgres.RunIsolatedTransactionalTest(
-				t, testutils.TestDBConfig, migrations.Migrations, func(ctx context.Context, t *testing.T) {
+				t, cmdpkg.PostgresConfigTest, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 					t.Helper()
 
 					appConfig := cmdpkg.AppConfigTest(port)

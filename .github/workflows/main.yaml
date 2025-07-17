@@ -151,7 +151,7 @@ jobs:
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/go-actions/test-go@master
         with:
-          ignore_patterns: /mocks,/test,/models/api
+          ignore_patterns: /mocks,/test,/models/api,/cmd
           skip_setup: true
 
   report-codecov:

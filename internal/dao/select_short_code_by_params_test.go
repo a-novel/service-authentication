@@ -12,7 +12,7 @@ import (
 	"github.com/a-novel/golib/postgres"
 
 	"github.com/a-novel/service-authentication/internal/dao"
-	testutils "github.com/a-novel/service-authentication/internal/test"
+	testutils "github.com/a-novel/service-authentication/pkg/cmd"
 )
 
 func TestSelectShortCodeByParams(t *testing.T) {
@@ -121,7 +121,7 @@ func TestSelectShortCodeByParams(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			postgres.RunTransactionalTest(t, testutils.TestDBConfig, func(ctx context.Context, t *testing.T) {
+			postgres.RunTransactionalTest(t, testutils.PostgresConfigTest, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
 				db, err := postgres.GetContext(ctx)

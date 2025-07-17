@@ -109,5 +109,5 @@ var AppConfigDefault = AppConfig[*otelpresets.SentryOtelConfig, postgres.Config,
 		FlushTimeout: config.LoadEnv(os.Getenv("SENTRY_FLUSH_TIMEOUT"), SentryFlushTimeout, config.DurationParser),
 		Debug:        isDebug,
 	},
-	Postgres: PostgresConfig,
+	Postgres: PostgresConfigDefault,
 }
