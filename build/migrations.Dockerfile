@@ -9,7 +9,7 @@ COPY ./go.mod ./go.mod
 COPY ./go.sum ./go.sum
 COPY "./cmd/migrations" "./cmd/migrations"
 COPY ./migrations ./migrations
-COPY "./pkg/cmd/postgres.go" "./pkg/cmd/postgres.go"
+COPY "./pkg/cmd/postgres.config.default.go" "./pkg/cmd/postgres.config.default.go"
 
 RUN go mod download
 

@@ -17,8 +17,8 @@ import (
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
-	testutils "github.com/a-novel/service-authentication/internal/test"
 	"github.com/a-novel/service-authentication/models"
+	testutils "github.com/a-novel/service-authentication/pkg/cmd"
 )
 
 func TestUpdateEmail(t *testing.T) {
@@ -111,7 +111,7 @@ func TestUpdateEmail(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			postgres.RunTransactionalTest(t, testutils.TestDBConfig, func(ctx context.Context, t *testing.T) {
+			postgres.RunTransactionalTest(t, testutils.PostgresConfigTest, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
 				source := servicesmocks.NewMockUpdateEmailSource(t)

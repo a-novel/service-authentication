@@ -10,7 +10,6 @@ import (
 	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
 
-	testutils "github.com/a-novel/service-authentication/internal/test"
 	"github.com/a-novel/service-authentication/models"
 )
 
@@ -77,6 +76,6 @@ func AppConfigTest(port int) AppConfig[*otelpresets.SentryOtelConfig, postgres.C
 			FlushTimeout: config.LoadEnv(os.Getenv("SENTRY_FLUSH_TIMEOUT"), SentryFlushTimeout, config.DurationParser),
 			Debug:        isDebug,
 		},
-		Postgres: testutils.TestDBConfig,
+		Postgres: PostgresConfigTest,
 	}
 }

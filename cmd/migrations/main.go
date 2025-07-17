@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	ctx, err := postgres.NewContext(context.Background(), cmdpkg.PostgresConfig)
+	ctx, err := postgres.NewContext(context.Background(), cmdpkg.PostgresConfigDefault)
 	if err != nil {
 		log.Fatalf("failed to create context: %v", err)
 	}
