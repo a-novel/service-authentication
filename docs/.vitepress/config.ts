@@ -1,5 +1,4 @@
 import { defineConfig } from "vitepress";
-import yamlLoader from "../plugins/yaml";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 // https://vitepress.dev/reference/site-config
@@ -33,7 +32,6 @@ export default defineConfig({
 
   vite: {
     plugins: [
-      yamlLoader,
       viteStaticCopy({
         targets: [
           {
