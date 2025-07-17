@@ -44,10 +44,10 @@ type App[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender] struct {
 	App Main `json:"app" yaml:"app"`
 	API API  `json:"api" yaml:"api"`
 
-	DependencyConfig  Dependencies          `json:"dependencies" yaml:"dependencies"`
-	PermissionsConfig Permissions           `json:"permissions"  yaml:"permissions"`
-	ShortCodesConfig  ShortCodes            `json:"shortCodes"   yaml:"shortCodes"`
-	SMTPURLsConfig    models.SMTPURLsConfig `json:"smtpUrls"     yaml:"smtpUrls"`
+	DependenciesConfig Dependencies          `json:"dependencies" yaml:"dependencies"`
+	PermissionsConfig  Permissions           `json:"permissions"  yaml:"permissions"`
+	ShortCodesConfig   ShortCodes            `json:"shortCodes"   yaml:"shortCodes"`
+	SMTPURLsConfig     models.SMTPURLsConfig `json:"smtpUrls"     yaml:"smtpUrls"`
 
 	SMTP     SMTP `json:"smtp"     yaml:"smtp"`
 	Otel     Otel `json:"otel"     yaml:"otel"`

@@ -49,7 +49,7 @@ func App[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender](
 		}
 	}
 
-	jkClient, err := jkPkg.NewAPIClient(ctx, config.DependencyConfig.JSONKeysURL)
+	jkClient, err := jkPkg.NewAPIClient(ctx, config.DependenciesConfig.JSONKeysURL)
 	if err != nil {
 		return fmt.Errorf("create JSON keys client: %w", err)
 	}

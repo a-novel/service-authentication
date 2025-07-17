@@ -44,7 +44,7 @@ func AppPresetTest(port int) App[*otelpresets.SentryOtelConfig, postgres.Config,
 			},
 		},
 
-		DependencyConfig: Dependencies{
+		DependenciesConfig: Dependencies{
 			JSONKeysURL: os.Getenv("JSON_KEYS_SERVICE_TEST_URL"),
 		},
 		PermissionsConfig: PermissionsConfigDefault,

@@ -77,7 +77,7 @@ var AppPresetDefault = App[*otelpresets.SentryOtelConfig, postgres.Config, smtp.
 		},
 	},
 
-	DependencyConfig: Dependencies{
+	DependenciesConfig: Dependencies{
 		JSONKeysURL: os.Getenv("JSON_KEYS_SERVICE_URL"),
 	},
 	PermissionsConfig: PermissionsConfigDefault,
