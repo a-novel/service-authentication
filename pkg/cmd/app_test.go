@@ -20,7 +20,7 @@ import (
 	cmdpkg "github.com/a-novel/service-authentication/pkg/cmd"
 )
 
-type TestConfig config.App[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender]
+type TestConfig = config.App[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender]
 
 type AppTestSuite func(ctx context.Context, t *testing.T, config TestConfig)
 
@@ -72,7 +72,7 @@ func TestApp(t *testing.T) {
 						return assert.NoError(t, err)
 					}, 10*time.Second, 100*time.Millisecond)
 
-					testSuite(ctx, t, TestConfig(appConfig))
+					testSuite(ctx, t, appConfig)
 				},
 			)
 		})
