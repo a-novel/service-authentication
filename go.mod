@@ -5,7 +5,7 @@ go 1.24.5
 require (
 	github.com/a-novel-kit/configurator v1.4.3
 	github.com/a-novel-kit/jwt v1.1.5
-	github.com/a-novel/golib v0.6.5
+	github.com/a-novel/golib v0.6.6
 	github.com/a-novel/service-json-keys v1.1.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.2
@@ -16,8 +16,8 @@ require (
 	github.com/ogen-go/ogen v1.14.0
 	github.com/samber/lo v1.51.0
 	github.com/stretchr/testify v1.10.0
-	github.com/uptrace/bun v1.2.14
-	github.com/uptrace/bun/driver/pgdriver v1.2.14
+	github.com/uptrace/bun v1.2.15
+	github.com/uptrace/bun/driver/pgdriver v1.2.15
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/metric v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0
@@ -42,7 +42,7 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
-	github.com/uptrace/bun/dialect/pgdialect v1.2.14 // indirect
+	github.com/uptrace/bun/dialect/pgdialect v1.2.15 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
