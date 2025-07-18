@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
+
 	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
@@ -29,47 +31,46 @@ func testAppUpdatePassword(ctx context.Context, t *testing.T, appConfig TestConf
 
 	t.Log("UpdatePassword/WrongPassword")
 	{
-		rawRes, err := client.UpdatePassword(t.Context(), &apimodels.UpdatePasswordForm{
-			Password:        apimodels.Password(newPassword),
-			CurrentPassword: "fakepassword",
-		})
+		_, err = ogen.MustGetResponse[apimodels.UpdatePasswordRes, *apimodels.ForbiddenError](
+			client.UpdatePassword(t.Context(), &apimodels.UpdatePasswordForm{
+				Password:        apimodels.Password(newPassword),
+				CurrentPassword: "fakepassword",
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.ForbiddenError{}, rawRes)
 	}
 
 	t.Log("UpdatePassword")
 	{
-		rawRes, err := client.UpdatePassword(t.Context(), &apimodels.UpdatePasswordForm{
-			Password:        apimodels.Password(newPassword),
-			CurrentPassword: apimodels.Password(user.password),
-		})
+		_, err = ogen.MustGetResponse[apimodels.UpdatePasswordRes, *apimodels.UpdatePasswordNoContent](
+			client.UpdatePassword(t.Context(), &apimodels.UpdatePasswordForm{
+				Password:        apimodels.Password(newPassword),
+				CurrentPassword: apimodels.Password(user.password),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.UpdatePasswordNoContent{}, rawRes)
 	}
 
 	t.Log("LoginWithOldPasswordKO")
 	{
-		res, err := client.CreateSession(t.Context(), &apimodels.LoginForm{
-			Email:    apimodels.Email(user.email),
-			Password: apimodels.Password(user.password),
-		})
+		_, err = ogen.MustGetResponse[apimodels.CreateSessionRes, *apimodels.ForbiddenError](
+			client.CreateSession(t.Context(), &apimodels.LoginForm{
+				Email:    apimodels.Email(user.email),
+				Password: apimodels.Password(user.password),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.ForbiddenError{}, res)
 	}
 
 	t.Log("LoginWithNewPasswordOK")
 	{
-		res, err := client.CreateSession(t.Context(), &apimodels.LoginForm{
-			Email:    apimodels.Email(user.email),
-			Password: apimodels.Password(newPassword),
-		})
+		token, err := ogen.MustGetResponse[apimodels.CreateSessionRes, *apimodels.Token](
+			client.CreateSession(t.Context(), &apimodels.LoginForm{
+				Email:    apimodels.Email(user.email),
+				Password: apimodels.Password(newPassword),
+			}),
+		)
 		require.NoError(t, err)
-
-		token, ok := res.(*apimodels.Token)
-		require.True(t, ok, res)
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()

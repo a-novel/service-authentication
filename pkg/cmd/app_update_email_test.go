@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
+
 	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
@@ -37,12 +39,12 @@ func testAppUpdateEmail(ctx context.Context, t *testing.T, appConfig TestConfig)
 
 	t.Log("RequestEmailUpdate")
 	{
-		rawRes, err := client.RequestEmailUpdate(t.Context(), &apimodels.RequestEmailUpdateForm{
-			Email: apimodels.Email(newEmail),
-		})
+		_, err = ogen.MustGetResponse[apimodels.RequestEmailUpdateRes, *apimodels.RequestEmailUpdateNoContent](
+			client.RequestEmailUpdate(t.Context(), &apimodels.RequestEmailUpdateForm{
+				Email: apimodels.Email(newEmail),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.RequestEmailUpdateNoContent{}, rawRes)
 
 		var ok bool
 
@@ -58,25 +60,24 @@ func testAppUpdateEmail(ctx context.Context, t *testing.T, appConfig TestConfig)
 
 	t.Log("UpdateEmail/WrongUserID")
 	{
-		rawRes, err := client.UpdateEmail(t.Context(), &apimodels.UpdateEmailForm{
-			ShortCode: apimodels.ShortCode(shortCode),
-			UserID:    apimodels.UserID(uuid.New()),
-		})
+		_, err = ogen.MustGetResponse[apimodels.UpdateEmailRes, *apimodels.ForbiddenError](
+			client.UpdateEmail(t.Context(), &apimodels.UpdateEmailForm{
+				ShortCode: apimodels.ShortCode(shortCode),
+				UserID:    apimodels.UserID(uuid.New()),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.ForbiddenError{}, rawRes)
 	}
 
 	t.Log("UpdateEmail")
 	{
-		rawRes, err := client.UpdateEmail(t.Context(), &apimodels.UpdateEmailForm{
-			ShortCode: apimodels.ShortCode(shortCode),
-			UserID:    apimodels.UserID(userID.Value),
-		})
+		res, err := ogen.MustGetResponse[apimodels.UpdateEmailRes, *apimodels.NewEmail](
+			client.UpdateEmail(t.Context(), &apimodels.UpdateEmailForm{
+				ShortCode: apimodels.ShortCode(shortCode),
+				UserID:    apimodels.UserID(userID.Value),
+			}),
+		)
 		require.NoError(t, err)
-
-		res, ok := rawRes.(*apimodels.NewEmail)
-		require.True(t, ok, res)
 
 		require.NotEmpty(t, res)
 		require.Equal(t, apimodels.Email(newEmail), res.Email)
@@ -84,25 +85,24 @@ func testAppUpdateEmail(ctx context.Context, t *testing.T, appConfig TestConfig)
 
 	t.Log("LoginWithOldEmailKO")
 	{
-		res, err := client.CreateSession(t.Context(), &apimodels.LoginForm{
-			Email:    apimodels.Email(user.email),
-			Password: apimodels.Password(user.password),
-		})
+		_, err = ogen.MustGetResponse[apimodels.CreateSessionRes, *apimodels.NotFoundError](
+			client.CreateSession(t.Context(), &apimodels.LoginForm{
+				Email:    apimodels.Email(user.email),
+				Password: apimodels.Password(user.password),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.NotFoundError{}, res)
 	}
 
 	t.Log("LoginWithNewEmailOK")
 	{
-		res, err := client.CreateSession(t.Context(), &apimodels.LoginForm{
-			Email:    apimodels.Email(newEmail),
-			Password: apimodels.Password(user.password),
-		})
+		token, err := ogen.MustGetResponse[apimodels.CreateSessionRes, *apimodels.Token](
+			client.CreateSession(t.Context(), &apimodels.LoginForm{
+				Email:    apimodels.Email(newEmail),
+				Password: apimodels.Password(user.password),
+			}),
+		)
 		require.NoError(t, err)
-
-		token, ok := res.(*apimodels.Token)
-		require.True(t, ok, res)
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()

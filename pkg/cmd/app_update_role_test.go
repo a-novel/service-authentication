@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
+
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/api"
@@ -36,15 +38,13 @@ func testAppUpdateRole(ctx context.Context, t *testing.T, appConfig TestConfig) 
 
 	t.Log("NotEnoughPrivileges")
 	{
-		rawRes, err := client.UpdateRole(t.Context(), &apimodels.UpdateRoleForm{
-			UserID: apimodels.UserID(user1Claims.GetUserID().Value),
-			Role:   apimodels.CredentialsRoleAdmin,
-		})
-
+		_, err = ogen.MustGetResponse[apimodels.UpdateRoleRes, *apimodels.ForbiddenError](
+			client.UpdateRole(t.Context(), &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(user1Claims.GetUserID().Value),
+				Role:   apimodels.CredentialsRoleAdmin,
+			}),
+		)
 		require.NoError(t, err)
-
-		_, ok := rawRes.(*apimodels.ForbiddenError)
-		require.True(t, ok, rawRes)
 	}
 
 	// Elevate user2 to super_admin.
@@ -61,14 +61,13 @@ func testAppUpdateRole(ctx context.Context, t *testing.T, appConfig TestConfig) 
 
 		t.Log("RefreshToken")
 		{
-			rawRes, err := client.RefreshSession(t.Context(), apimodels.RefreshSessionParams{
-				RefreshToken: user2.refreshToken,
-				AccessToken:  security.GetToken(),
-			})
+			res, err := ogen.MustGetResponse[apimodels.RefreshSessionRes, *apimodels.Token](
+				client.RefreshSession(t.Context(), apimodels.RefreshSessionParams{
+					RefreshToken: user2.refreshToken,
+					AccessToken:  security.GetToken(),
+				}),
+			)
 			require.NoError(t, err)
-
-			res, ok := rawRes.(*apimodels.Token)
-			require.True(t, ok, rawRes)
 
 			security.SetToken(res.GetAccessToken())
 		}
@@ -76,14 +75,14 @@ func testAppUpdateRole(ctx context.Context, t *testing.T, appConfig TestConfig) 
 
 	t.Log("OK")
 	{
-		rawRes, err := client.UpdateRole(t.Context(), &apimodels.UpdateRoleForm{
-			UserID: apimodels.UserID(user1Claims.GetUserID().Value),
-			Role:   apimodels.CredentialsRoleAdmin,
-		})
+		res, err := ogen.MustGetResponse[apimodels.UpdateRoleRes, *apimodels.User](
+			client.UpdateRole(t.Context(), &apimodels.UpdateRoleForm{
+				UserID: apimodels.UserID(user1Claims.GetUserID().Value),
+				Role:   apimodels.CredentialsRoleAdmin,
+			}),
+		)
 		require.NoError(t, err)
 
-		res, ok := rawRes.(*apimodels.User)
-		require.True(t, ok, rawRes)
 		require.Equal(t, apimodels.CredentialsRoleAdmin, res.GetRole())
 	}
 }
