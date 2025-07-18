@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	jkModels "github.com/a-novel/service-json-keys/models"
+	jkmodels "github.com/a-novel/service-json-keys/models"
 
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
@@ -62,7 +62,7 @@ func TestLoginAnon(t *testing.T) {
 
 			if testCase.issueTokenData != nil {
 				source.EXPECT().
-					SignClaims(mock.Anything, jkModels.KeyUsageAuth, models.AccessTokenClaims{
+					SignClaims(mock.Anything, jkmodels.KeyUsageAuth, models.AccessTokenClaims{
 						Roles: []models.Role{models.RoleAnon},
 					}).
 					Return(testCase.issueTokenData.resp, testCase.issueTokenData.err)

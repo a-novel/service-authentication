@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel/golib/otel"
-	jkModels "github.com/a-novel/service-json-keys/models"
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel-kit/configurator"
 	"github.com/a-novel-kit/jwt/jws"
@@ -22,7 +22,7 @@ import (
 
 type AuthenticateSource interface {
 	VerifyClaims(
-		ctx context.Context, usage jkModels.KeyUsage, accessToken string, options *jkPkg.VerifyClaimsOptions,
+		ctx context.Context, usage jkmodels.KeyUsage, accessToken string, options *jkpkg.VerifyClaimsOptions,
 	) (*models.AccessTokenClaims, error)
 }
 
@@ -72,7 +72,7 @@ func (handler *HandleBearerAuth[OpName]) HandleBearerAuth(
 		return ctx, otel.ReportError(span, fmt.Errorf("token is empty: %w", models.ErrUnauthorized))
 	}
 
-	claims, err := handler.source.VerifyClaims(ctx, jkModels.KeyUsageAuth, auth.GetToken(), nil)
+	claims, err := handler.source.VerifyClaims(ctx, jkmodels.KeyUsageAuth, auth.GetToken(), nil)
 	if err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) {
 			return ctx, otel.ReportError(span, fmt.Errorf("consume token: %w", models.ErrUnauthorized))

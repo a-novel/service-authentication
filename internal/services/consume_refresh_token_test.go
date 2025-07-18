@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	jkModels "github.com/a-novel/service-json-keys/models"
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -314,9 +314,9 @@ func TestConsumeRefreshToken(t *testing.T) {
 				source.EXPECT().
 					VerifyClaims(
 						mock.Anything,
-						jkModels.KeyUsageAuth,
+						jkmodels.KeyUsageAuth,
 						testCase.request.AccessToken,
-						&jkPkg.VerifyClaimsOptions{IgnoreExpired: true},
+						&jkpkg.VerifyClaimsOptions{IgnoreExpired: true},
 					).
 					Return(testCase.verifyClaimsData.resp, testCase.verifyClaimsData.err)
 			}
@@ -325,9 +325,9 @@ func TestConsumeRefreshToken(t *testing.T) {
 				source.EXPECT().
 					VerifyRefreshTokenClaims(
 						mock.Anything,
-						jkModels.KeyUsageRefresh,
+						jkmodels.KeyUsageRefresh,
 						testCase.request.RefreshToken,
-						(*jkPkg.VerifyClaimsOptions)(nil),
+						(*jkpkg.VerifyClaimsOptions)(nil),
 					).
 					Return(testCase.verifyRefreshTokenClaimsData.resp, testCase.verifyRefreshTokenClaimsData.err)
 			}
@@ -342,7 +342,7 @@ func TestConsumeRefreshToken(t *testing.T) {
 				source.EXPECT().
 					SignClaims(
 						mock.Anything,
-						jkModels.KeyUsageAuth,
+						jkmodels.KeyUsageAuth,
 						&models.AccessTokenClaims{
 							UserID: testCase.verifyClaimsData.resp.UserID,
 							Roles: []models.Role{

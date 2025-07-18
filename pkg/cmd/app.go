@@ -15,8 +15,8 @@ import (
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
-	jkModels "github.com/a-novel/service-json-keys/models"
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel/service-authentication/internal/api"
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -49,20 +49,20 @@ func App[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender](
 		}
 	}
 
-	jkClient, err := jkPkg.NewAPIClient(ctx, config.DependenciesConfig.JSONKeysURL)
+	jkClient, err := jkpkg.NewAPIClient(ctx, config.DependenciesConfig.JSONKeysURL)
 	if err != nil {
 		return fmt.Errorf("create JSON keys client: %w", err)
 	}
 
-	signer := jkPkg.NewClaimsSigner(jkClient)
+	signer := jkpkg.NewClaimsSigner(jkClient)
 
-	accessTokenVerifier, err := jkPkg.NewClaimsVerifier[models.AccessTokenClaims](jkClient, jkModels.DefaultJWKSConfig)
+	accessTokenVerifier, err := jkpkg.NewClaimsVerifier[models.AccessTokenClaims](jkClient, jkmodels.DefaultJWKSConfig)
 	if err != nil {
 		return fmt.Errorf("create access token verifier: %w", err)
 	}
 
-	refreshTokenVerifier, err := jkPkg.NewClaimsVerifier[models.RefreshTokenClaims](
-		jkClient, jkModels.DefaultJWKSConfig,
+	refreshTokenVerifier, err := jkpkg.NewClaimsVerifier[models.RefreshTokenClaims](
+		jkClient, jkmodels.DefaultJWKSConfig,
 	)
 	if err != nil {
 		return fmt.Errorf("create refresh token verifier: %w", err)

@@ -12,8 +12,8 @@ import (
 
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
-	jkModels "github.com/a-novel/service-json-keys/models"
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel-kit/jwt"
 	"github.com/a-novel-kit/jwt/jws"
@@ -25,19 +25,19 @@ import (
 
 type RegisterSource interface {
 	InsertCredentials(ctx context.Context, data dao.InsertCredentialsData) (*dao.CredentialsEntity, error)
-	SignClaims(ctx context.Context, usage jkModels.KeyUsage, claims any) (string, error)
+	SignClaims(ctx context.Context, usage jkmodels.KeyUsage, claims any) (string, error)
 	ConsumeShortCode(ctx context.Context, request ConsumeShortCodeRequest) (*models.ShortCode, error)
 }
 
 func NewRegisterSource(
 	insertCredentialsDAO *dao.InsertCredentialsRepository,
-	issueTokenService *jkPkg.ClaimsSigner,
+	issueTokenService *jkpkg.ClaimsSigner,
 	consumeShortCodeService *ConsumeShortCodeService,
 ) RegisterSource {
 	return &struct {
 		*dao.InsertCredentialsRepository
 		*ConsumeShortCodeService
-		*jkPkg.ClaimsSigner
+		*jkpkg.ClaimsSigner
 	}{
 		InsertCredentialsRepository: insertCredentialsDAO,
 		ClaimsSigner:                issueTokenService,
@@ -105,7 +105,7 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 
 	refreshToken, err := service.source.SignClaims(
 		ctx,
-		jkModels.KeyUsageRefresh,
+		jkmodels.KeyUsageRefresh,
 		models.RefreshTokenClaimsInput{
 			UserID: credentials.ID,
 		},
@@ -128,7 +128,7 @@ func (service *RegisterService) Register(ctx context.Context, request RegisterRe
 	// Generate a new authentication token.
 	accessToken, err := service.source.SignClaims(
 		ctx,
-		jkModels.KeyUsageAuth,
+		jkmodels.KeyUsageAuth,
 		models.AccessTokenClaims{
 			UserID: &credentials.ID,
 			Roles: []models.Role{

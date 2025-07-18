@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	jkModels "github.com/a-novel/service-json-keys/models"
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel/service-authentication/models"
 )
 
 type RefreshTokenClaimsVerifier struct {
-	verifier *jkPkg.ClaimsVerifier[models.RefreshTokenClaims]
+	verifier *jkpkg.ClaimsVerifier[models.RefreshTokenClaims]
 }
 
 func (verifier *RefreshTokenClaimsVerifier) VerifyRefreshTokenClaims(
-	ctx context.Context, usage jkModels.KeyUsage, accessToken string, options *jkPkg.VerifyClaimsOptions,
+	ctx context.Context, usage jkmodels.KeyUsage, accessToken string, options *jkpkg.VerifyClaimsOptions,
 ) (*models.RefreshTokenClaims, error) {
 	claims, err := verifier.verifier.VerifyClaims(ctx, usage, accessToken, options)
 	if err != nil {

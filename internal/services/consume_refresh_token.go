@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel/golib/otel"
-	jkModels "github.com/a-novel/service-json-keys/models"
-	jkPkg "github.com/a-novel/service-json-keys/pkg"
+	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -26,25 +26,25 @@ var (
 
 type ConsumeRefreshTokenSource interface {
 	SelectCredentials(ctx context.Context, id uuid.UUID) (*dao.CredentialsEntity, error)
-	SignClaims(ctx context.Context, usage jkModels.KeyUsage, claims any) (string, error)
+	SignClaims(ctx context.Context, usage jkmodels.KeyUsage, claims any) (string, error)
 	VerifyClaims(
-		ctx context.Context, usage jkModels.KeyUsage, accessToken string, options *jkPkg.VerifyClaimsOptions,
+		ctx context.Context, usage jkmodels.KeyUsage, accessToken string, options *jkpkg.VerifyClaimsOptions,
 	) (*models.AccessTokenClaims, error)
 	VerifyRefreshTokenClaims(
-		ctx context.Context, usage jkModels.KeyUsage, accessToken string, options *jkPkg.VerifyClaimsOptions,
+		ctx context.Context, usage jkmodels.KeyUsage, accessToken string, options *jkpkg.VerifyClaimsOptions,
 	) (*models.RefreshTokenClaims, error)
 }
 
 func NewConsumeRefreshTokenServiceSource(
 	selectCredentialsDAO *dao.SelectCredentialsRepository,
-	issueTokenService *jkPkg.ClaimsSigner,
-	accessTokenService *jkPkg.ClaimsVerifier[models.AccessTokenClaims],
-	refreshTokenService *jkPkg.ClaimsVerifier[models.RefreshTokenClaims],
+	issueTokenService *jkpkg.ClaimsSigner,
+	accessTokenService *jkpkg.ClaimsVerifier[models.AccessTokenClaims],
+	refreshTokenService *jkpkg.ClaimsVerifier[models.RefreshTokenClaims],
 ) ConsumeRefreshTokenSource {
 	return &struct {
 		*dao.SelectCredentialsRepository
-		*jkPkg.ClaimsSigner
-		*jkPkg.ClaimsVerifier[models.AccessTokenClaims]
+		*jkpkg.ClaimsSigner
+		*jkpkg.ClaimsVerifier[models.AccessTokenClaims]
 		*RefreshTokenClaimsVerifier
 	}{
 		SelectCredentialsRepository: selectCredentialsDAO,
@@ -90,9 +90,9 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 
 	accessTokenClaims, err := service.source.VerifyClaims(
 		ctx,
-		jkModels.KeyUsageAuth,
+		jkmodels.KeyUsageAuth,
 		request.AccessToken,
-		&jkPkg.VerifyClaimsOptions{IgnoreExpired: true},
+		&jkpkg.VerifyClaimsOptions{IgnoreExpired: true},
 	)
 	if err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) {
@@ -104,7 +104,7 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 
 	refreshTokenClaims, err := service.source.VerifyRefreshTokenClaims(
 		ctx,
-		jkModels.KeyUsageRefresh,
+		jkmodels.KeyUsageRefresh,
 		request.RefreshToken,
 		nil,
 	)
@@ -154,7 +154,7 @@ func (service *ConsumeRefreshTokenService) ConsumeRefreshToken(
 		return "", otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
-	newAccessToken, err := service.source.SignClaims(ctx, jkModels.KeyUsageAuth, &models.AccessTokenClaims{
+	newAccessToken, err := service.source.SignClaims(ctx, jkmodels.KeyUsageAuth, &models.AccessTokenClaims{
 		UserID: accessTokenClaims.UserID,
 		Roles: []models.Role{
 			lo.Switch[models.CredentialsRole, models.Role](credentials.Role).
