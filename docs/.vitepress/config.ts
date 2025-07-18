@@ -19,7 +19,10 @@ export default defineConfig({
       },
       {
         text: "Package",
-        items: [{ text: "Go module", link: "/package/go" }],
+        items: [
+          { text: "Go module", link: "/package/go" },
+          { text: "React client", link: "/package/react" },
+        ],
       },
     ],
 
