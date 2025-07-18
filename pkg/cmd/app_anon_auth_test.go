@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
+
 	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
@@ -20,12 +22,10 @@ func testAppAuthAnon(ctx context.Context, t *testing.T, appConfig TestConfig) {
 
 	t.Log("CheckSession/Unauthenticated")
 	{
-		rawRes, err := client.CheckSession(t.Context())
-
+		_, err = ogen.MustGetResponse[apimodels.CheckSessionRes, *apimodels.UnauthorizedError](
+			client.CheckSession(t.Context()),
+		)
 		require.NoError(t, err)
-
-		_, ok := rawRes.(*apimodels.UnauthorizedError)
-		require.True(t, ok, rawRes)
 	}
 
 	security.SetToken(authAnon(t, appConfig))

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
 	"github.com/a-novel/golib/smtp"
 
 	"github.com/a-novel/service-authentication/models/api"
@@ -25,11 +26,11 @@ func authAnon(t *testing.T, appConfig TestConfig) string {
 	client, err := pkg.NewAPIClient(t.Context(), fmt.Sprintf("http://localhost:%v/v1", appConfig.API.Port), security)
 	require.NoError(t, err)
 
-	rawRes, err := client.CreateAnonSession(t.Context())
-	require.NoError(t, err)
+	res, err := ogen.MustGetResponse[apimodels.CreateAnonSessionRes, *apimodels.Token](
+		client.CreateAnonSession(t.Context()),
+	)
 
-	res, ok := rawRes.(*apimodels.Token)
-	require.True(t, ok, rawRes)
+	require.NoError(t, err)
 	require.NotEmpty(t, res.GetAccessToken())
 
 	return res.GetAccessToken()
@@ -81,11 +82,8 @@ func getShortCode(target, purpose string, appConfig TestConfig) (string, bool) {
 func checkSession(t *testing.T, client *apimodels.Client) *apimodels.Claims {
 	t.Helper()
 
-	rawRes, err := client.CheckSession(t.Context())
+	res, err := ogen.MustGetResponse[apimodels.CheckSessionRes, *apimodels.Claims](client.CheckSession(t.Context()))
 	require.NoError(t, err)
-
-	res, ok := rawRes.(*apimodels.Claims)
-	require.True(t, ok, rawRes)
 
 	return res
 }
@@ -117,11 +115,12 @@ func createUser(t *testing.T, appConfig TestConfig) *userData {
 
 	t.Log("RequestRegistration")
 	{
-		rawRes, err := client.RequestRegistration(t.Context(), &apimodels.RequestRegistrationForm{
-			Email: apimodels.Email(email),
-		})
+		_, err = ogen.MustGetResponse[apimodels.RequestRegistrationRes, *apimodels.RequestRegistrationNoContent](
+			client.RequestRegistration(t.Context(), &apimodels.RequestRegistrationForm{
+				Email: apimodels.Email(email),
+			}),
+		)
 		require.NoError(t, err)
-		require.IsType(t, &apimodels.RequestRegistrationNoContent{}, rawRes)
 
 		var ok bool
 
@@ -134,15 +133,15 @@ func createUser(t *testing.T, appConfig TestConfig) *userData {
 
 	t.Log("CreateUser")
 	{
-		rawRes, err := client.Register(t.Context(), &apimodels.RegisterForm{
-			Email:     apimodels.Email(email),
-			Password:  apimodels.Password(password),
-			ShortCode: apimodels.ShortCode(shortCode),
-		})
+		res, err := ogen.MustGetResponse[apimodels.RegisterRes, *apimodels.Token](
+			client.Register(t.Context(), &apimodels.RegisterForm{
+				Email:     apimodels.Email(email),
+				Password:  apimodels.Password(password),
+				ShortCode: apimodels.ShortCode(shortCode),
+			}),
+		)
 		require.NoError(t, err)
 
-		res, ok := rawRes.(*apimodels.Token)
-		require.True(t, ok, rawRes)
 		require.NotEmpty(t, res.GetAccessToken())
 		require.NotEmpty(t, res.GetRefreshToken())
 
@@ -156,13 +155,10 @@ func createUser(t *testing.T, appConfig TestConfig) *userData {
 
 	t.Log("DecodeClaims")
 	{
-		rawClaims, err := client.CheckSession(t.Context())
+		claims, err := ogen.MustGetResponse[apimodels.CheckSessionRes, *apimodels.Claims](
+			client.CheckSession(t.Context()),
+		)
 		require.NoError(t, err)
-		require.NotNil(t, rawClaims)
-
-		claims, ok := rawClaims.(*apimodels.Claims)
-		require.True(t, ok, rawClaims)
-		require.NotEmpty(t, claims.GetUserID())
 
 		userID = claims.GetUserID().Value.String()
 	}

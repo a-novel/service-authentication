@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
+
 	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
@@ -29,14 +31,14 @@ func testAppRefreshToken(ctx context.Context, t *testing.T, appConfig TestConfig
 
 	t.Log("RefreshToken")
 	{
-		rawRes, err := client.RefreshSession(t.Context(), apimodels.RefreshSessionParams{
-			RefreshToken: user.refreshToken,
-			AccessToken:  user.token,
-		})
+		res, err := ogen.MustGetResponse[apimodels.RefreshSessionRes, *apimodels.Token](
+			client.RefreshSession(t.Context(), apimodels.RefreshSessionParams{
+				RefreshToken: user.refreshToken,
+				AccessToken:  user.token,
+			}),
+		)
 		require.NoError(t, err)
 
-		res, ok := rawRes.(*apimodels.Token)
-		require.True(t, ok, rawRes)
 		require.NotEmpty(t, res.GetAccessToken())
 		require.NotEqual(t, res.GetRefreshToken(), res.GetAccessToken())
 

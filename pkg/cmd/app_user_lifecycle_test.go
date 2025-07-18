@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
+
 	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
@@ -29,25 +31,24 @@ func testAppUserLifecycle(ctx context.Context, t *testing.T, appConfig TestConfi
 
 	t.Log("Login/WrongPassword")
 	{
-		res, err := client.CreateSession(t.Context(), &apimodels.LoginForm{
-			Email:    apimodels.Email(user.email),
-			Password: "fakepassword",
-		})
+		_, err = ogen.MustGetResponse[apimodels.CreateSessionRes, *apimodels.ForbiddenError](
+			client.CreateSession(t.Context(), &apimodels.LoginForm{
+				Email:    apimodels.Email(user.email),
+				Password: "fakepassword",
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.ForbiddenError{}, res)
 	}
 
 	t.Log("Login")
 	{
-		res, err := client.CreateSession(t.Context(), &apimodels.LoginForm{
-			Email:    apimodels.Email(user.email),
-			Password: apimodels.Password(user.password),
-		})
+		token, err := ogen.MustGetResponse[apimodels.CreateSessionRes, *apimodels.Token](
+			client.CreateSession(t.Context(), &apimodels.LoginForm{
+				Email:    apimodels.Email(user.email),
+				Password: apimodels.Password(user.password),
+			}),
+		)
 		require.NoError(t, err)
-
-		token, ok := res.(*apimodels.Token)
-		require.True(t, ok, res)
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()

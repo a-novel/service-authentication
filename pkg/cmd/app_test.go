@@ -3,13 +3,13 @@ package cmdpkg_test
 import (
 	"context"
 	"fmt"
-	"net"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
 	otelpresets "github.com/a-novel/golib/otel/presets"
 	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
@@ -39,20 +39,12 @@ func TestApp(t *testing.T) {
 
 	for testName, testSuite := range testSuites {
 		t.Run(testName, func(t *testing.T) {
-			listener, err := net.Listen("tcp", ":0")
-			require.NoError(t, err)
-
-			addr, ok := listener.Addr().(*net.TCPAddr)
-			require.True(t, ok, "expected TCPAddr, got %T", listener.Addr())
-
-			port := addr.Port
-
-			// Close the listener.
-			require.NoError(t, listener.Close(), "failed to close listener")
-
 			postgres.RunIsolatedTransactionalTest(
 				t, config.PostgresPresetTest, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 					t.Helper()
+
+					port, err := ogen.GetRandomPort()
+					require.NoError(t, err)
 
 					appConfig := config.AppPresetTest(port)
 

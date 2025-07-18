@@ -11,6 +11,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
 	"github.com/a-novel/golib/postgres"
 
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -63,11 +64,10 @@ func testAppListUsers(ctx context.Context, t *testing.T, appConfig TestConfig) {
 	// Verify the fixtures are present in the list of returned users.
 	t.Log("ListUsers")
 	{
-		rawRes, err := client.ListUsers(ctx, apimodels.ListUsersParams{})
+		res, err := ogen.MustGetResponse[apimodels.ListUsersRes, *apimodels.ListUsersOKApplicationJSON](
+			client.ListUsers(ctx, apimodels.ListUsersParams{}),
+		)
 		require.NoError(t, err)
-
-		res, ok := rawRes.(*apimodels.ListUsersOKApplicationJSON)
-		require.True(t, ok, rawRes)
 
 		targetedUsers := lo.Filter(*res, func(item apimodels.User, _ int) bool {
 			return lo.Contains(
@@ -95,13 +95,12 @@ func testAppListUsers(ctx context.Context, t *testing.T, appConfig TestConfig) {
 	{
 		fixtures = []*dao.CredentialsEntity{fixtures[0], fixtures[2]}
 
-		rawRes, err := client.ListUsers(t.Context(), apimodels.ListUsersParams{
-			Roles: []apimodels.CredentialsRole{apimodels.CredentialsRoleUser},
-		})
+		res, err := ogen.MustGetResponse[apimodels.ListUsersRes, *apimodels.ListUsersOKApplicationJSON](
+			client.ListUsers(t.Context(), apimodels.ListUsersParams{
+				Roles: []apimodels.CredentialsRole{apimodels.CredentialsRoleUser},
+			}),
+		)
 		require.NoError(t, err)
-
-		res, ok := rawRes.(*apimodels.ListUsersOKApplicationJSON)
-		require.True(t, ok, rawRes)
 
 		targetedUsers := lo.Filter(*res, func(item apimodels.User, _ int) bool {
 			return lo.Contains(

@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/ogen"
+
 	"github.com/a-novel/service-authentication/models/api"
 	"github.com/a-novel/service-authentication/pkg"
 )
@@ -40,12 +42,12 @@ func testAppResetPassword(ctx context.Context, t *testing.T, appConfig TestConfi
 
 	t.Log("RequestPasswordReset")
 	{
-		rawRes, err := client.RequestPasswordReset(t.Context(), &apimodels.RequestPasswordResetForm{
-			Email: apimodels.Email(user.email),
-		})
+		_, err = ogen.MustGetResponse[apimodels.RequestPasswordResetRes, *apimodels.RequestPasswordResetNoContent](
+			client.RequestPasswordReset(t.Context(), &apimodels.RequestPasswordResetForm{
+				Email: apimodels.Email(user.email),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.RequestPasswordResetNoContent{}, rawRes)
 
 		var ok bool
 
@@ -58,49 +60,48 @@ func testAppResetPassword(ctx context.Context, t *testing.T, appConfig TestConfi
 
 	t.Log("ResetPassword/WrongUserID")
 	{
-		rawRes, err := client.ResetPassword(t.Context(), &apimodels.ResetPasswordForm{
-			ShortCode: apimodels.ShortCode(shortCode),
-			Password:  apimodels.Password(newPassword),
-			UserID:    apimodels.UserID(uuid.New()),
-		})
+		_, err = ogen.MustGetResponse[apimodels.ResetPasswordRes, *apimodels.ForbiddenError](
+			client.ResetPassword(t.Context(), &apimodels.ResetPasswordForm{
+				ShortCode: apimodels.ShortCode(shortCode),
+				Password:  apimodels.Password(newPassword),
+				UserID:    apimodels.UserID(uuid.New()),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.ForbiddenError{}, rawRes)
 	}
 
 	t.Log("ResetPassword")
 	{
-		rawRes, err := client.ResetPassword(t.Context(), &apimodels.ResetPasswordForm{
-			ShortCode: apimodels.ShortCode(shortCode),
-			Password:  apimodels.Password(newPassword),
-			UserID:    apimodels.UserID(userID.Value),
-		})
+		_, err = ogen.MustGetResponse[apimodels.ResetPasswordRes, *apimodels.ResetPasswordNoContent](
+			client.ResetPassword(t.Context(), &apimodels.ResetPasswordForm{
+				ShortCode: apimodels.ShortCode(shortCode),
+				Password:  apimodels.Password(newPassword),
+				UserID:    apimodels.UserID(userID.Value),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.ResetPasswordNoContent{}, rawRes)
 	}
 
 	t.Log("LoginWithOldPasswordKO")
 	{
-		res, err := client.CreateSession(t.Context(), &apimodels.LoginForm{
-			Email:    apimodels.Email(user.email),
-			Password: apimodels.Password(user.password),
-		})
+		_, err = ogen.MustGetResponse[apimodels.CreateSessionRes, *apimodels.ForbiddenError](
+			client.CreateSession(t.Context(), &apimodels.LoginForm{
+				Email:    apimodels.Email(user.email),
+				Password: apimodels.Password(user.password),
+			}),
+		)
 		require.NoError(t, err)
-
-		require.IsType(t, &apimodels.ForbiddenError{}, res)
 	}
 
 	t.Log("LoginWithNewPasswordOK")
 	{
-		res, err := client.CreateSession(t.Context(), &apimodels.LoginForm{
-			Email:    apimodels.Email(user.email),
-			Password: apimodels.Password(newPassword),
-		})
+		token, err := ogen.MustGetResponse[apimodels.CreateSessionRes, *apimodels.Token](
+			client.CreateSession(t.Context(), &apimodels.LoginForm{
+				Email:    apimodels.Email(user.email),
+				Password: apimodels.Password(newPassword),
+			}),
+		)
 		require.NoError(t, err)
-
-		token, ok := res.(*apimodels.Token)
-		require.True(t, ok, res)
 
 		require.NotEqual(t, token.GetAccessToken(), user.token)
 		user.token = token.GetAccessToken()
