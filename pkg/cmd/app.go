@@ -15,7 +15,7 @@ import (
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
-	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkconfig "github.com/a-novel/service-json-keys/models/config"
 	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel/service-authentication/internal/api"
@@ -56,13 +56,13 @@ func App[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender](
 
 	signer := jkpkg.NewClaimsSigner(jkClient)
 
-	accessTokenVerifier, err := jkpkg.NewClaimsVerifier[models.AccessTokenClaims](jkClient, jkmodels.DefaultJWKSConfig)
+	accessTokenVerifier, err := jkpkg.NewClaimsVerifier[models.AccessTokenClaims](jkClient, jkconfig.JWKSPresetDefault)
 	if err != nil {
 		return fmt.Errorf("create access token verifier: %w", err)
 	}
 
 	refreshTokenVerifier, err := jkpkg.NewClaimsVerifier[models.RefreshTokenClaims](
-		jkClient, jkmodels.DefaultJWKSConfig,
+		jkClient, jkconfig.JWKSPresetDefault,
 	)
 	if err != nil {
 		return fmt.Errorf("create refresh token verifier: %w", err)
