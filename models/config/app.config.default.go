@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"time"
 
 	"github.com/samber/lo"
@@ -36,77 +35,77 @@ var (
 )
 
 var isDebug = config.LoadEnv(
-	lo.CoalesceOrEmpty(os.Getenv("SENTRY_DEBUG"), os.Getenv("DEBUG")), false, config.BoolParser,
+	lo.CoalesceOrEmpty(getEnv("SENTRY_DEBUG"), getEnv("DEBUG")), false, config.BoolParser,
 )
 
 var SMTPProd = smtp.ProdSender{
-	Addr:     os.Getenv("SMTP_ADDR"),
-	Name:     os.Getenv("SMTP_SENDER_NAME"),
-	Email:    os.Getenv("SMTP_SENDER_EMAIL"),
-	Password: os.Getenv("SMTP_SENDER_PASSWORD"),
-	Domain:   os.Getenv("SMTP_SENDER_DOMAIN"),
+	Addr:     getEnv("SMTP_ADDR"),
+	Name:     getEnv("SMTP_SENDER_NAME"),
+	Email:    getEnv("SMTP_SENDER_EMAIL"),
+	Password: getEnv("SMTP_SENDER_PASSWORD"),
+	Domain:   getEnv("SMTP_SENDER_DOMAIN"),
 }
 
 var AppPresetDefault = App[*otelpresets.SentryOtelConfig, postgres.Config, smtp.Sender]{
 	App: Main{
-		Name: config.LoadEnv(os.Getenv("APP_NAME"), AppName, config.StringParser),
+		Name: config.LoadEnv(getEnv("APP_NAME"), AppName, config.StringParser),
 	},
 	API: API{
-		Port:           config.LoadEnv(os.Getenv("API_PORT"), APIPort, config.IntParser),
-		MaxRequestSize: config.LoadEnv(os.Getenv("API_MAX_REQUEST_SIZE"), APIMaxRequestSize, config.Int64Parser),
+		Port:           config.LoadEnv(getEnv("API_PORT"), APIPort, config.IntParser),
+		MaxRequestSize: config.LoadEnv(getEnv("API_MAX_REQUEST_SIZE"), APIMaxRequestSize, config.Int64Parser),
 		Timeouts: APITimeouts{
-			Read: config.LoadEnv(os.Getenv("API_TIMEOUT_READ"), APITimeoutRead, config.DurationParser),
+			Read: config.LoadEnv(getEnv("API_TIMEOUT_READ"), APITimeoutRead, config.DurationParser),
 			ReadHeader: config.LoadEnv(
-				os.Getenv("API_TIMEOUT_READ_HEADER"), APITimeoutReadHeader, config.DurationParser,
+				getEnv("API_TIMEOUT_READ_HEADER"), APITimeoutReadHeader, config.DurationParser,
 			),
-			Write:   config.LoadEnv(os.Getenv("API_TIMEOUT_WRITE"), APITimeoutWrite, config.DurationParser),
-			Idle:    config.LoadEnv(os.Getenv("API_TIMEOUT_IDLE"), APITimeoutIdle, config.DurationParser),
-			Request: config.LoadEnv(os.Getenv("API_TIMEOUT_REQUEST"), APITimeoutRequest, config.DurationParser),
+			Write:   config.LoadEnv(getEnv("API_TIMEOUT_WRITE"), APITimeoutWrite, config.DurationParser),
+			Idle:    config.LoadEnv(getEnv("API_TIMEOUT_IDLE"), APITimeoutIdle, config.DurationParser),
+			Request: config.LoadEnv(getEnv("API_TIMEOUT_REQUEST"), APITimeoutRequest, config.DurationParser),
 		},
 		Cors: Cors{
 			AllowedOrigins: config.LoadEnv(
-				os.Getenv("API_CORS_ALLOWED_ORIGINS"), APICorsAllowedOrigins, config.SliceParser(config.StringParser),
+				getEnv("API_CORS_ALLOWED_ORIGINS"), APICorsAllowedOrigins, config.SliceParser(config.StringParser),
 			),
 			AllowedHeaders: config.LoadEnv(
-				os.Getenv("API_CORS_ALLOWED_HEADERS"), APICorsAllowedHeaders, config.SliceParser(config.StringParser),
+				getEnv("API_CORS_ALLOWED_HEADERS"), APICorsAllowedHeaders, config.SliceParser(config.StringParser),
 			),
 			AllowCredentials: config.LoadEnv(
-				os.Getenv("API_CORS_ALLOW_CREDENTIALS"), APICorsAllowCredentials, config.BoolParser,
+				getEnv("API_CORS_ALLOW_CREDENTIALS"), APICorsAllowCredentials, config.BoolParser,
 			),
-			MaxAge: config.LoadEnv(os.Getenv("API_CORS_MAX_AGE"), APICorsMaxAge, config.IntParser),
+			MaxAge: config.LoadEnv(getEnv("API_CORS_MAX_AGE"), APICorsMaxAge, config.IntParser),
 		},
 	},
 
 	DependenciesConfig: Dependencies{
-		JSONKeysURL: os.Getenv("JSON_KEYS_SERVICE_URL"),
+		JSONKeysURL: getEnv("JSON_KEYS_SERVICE_URL"),
 	},
 	PermissionsConfig: PermissionsConfigDefault,
 	ShortCodesConfig:  ShortCodesPresetDefault,
 	SMTPURLsConfig: models.SMTPURLsConfig{
 		UpdateEmail: config.LoadEnv(
-			os.Getenv("AUTH_PLATFORM_URL_UPDATE_EMAIL"),
-			os.Getenv("AUTH_PLATFORM_URL")+"/ext/email/validate",
+			getEnv("AUTH_PLATFORM_URL_UPDATE_EMAIL"),
+			getEnv("AUTH_PLATFORM_URL")+"/ext/email/validate",
 			config.StringParser,
 		),
 		UpdatePassword: config.LoadEnv(
-			os.Getenv("AUTH_PLATFORM_URL_UPDATE_PASSWORD"),
-			os.Getenv("AUTH_PLATFORM_URL")+"/ext/password/update",
+			getEnv("AUTH_PLATFORM_URL_UPDATE_PASSWORD"),
+			getEnv("AUTH_PLATFORM_URL")+"/ext/password/update",
 			config.StringParser,
 		),
 		Register: config.LoadEnv(
-			os.Getenv("AUTH_PLATFORM_URL_REGISTER"),
-			os.Getenv("AUTH_PLATFORM_URL")+"/ext/account/create",
+			getEnv("AUTH_PLATFORM_URL_REGISTER"),
+			getEnv("AUTH_PLATFORM_URL")+"/ext/account/create",
 			config.StringParser,
 		),
 	},
 
-	SMTP: lo.Ternary[smtp.Sender](os.Getenv("SMTP_ADDR") == "", smtp.NewDebugSender(nil), &SMTPProd),
+	SMTP: lo.Ternary[smtp.Sender](getEnv("SMTP_ADDR") == "", smtp.NewDebugSender(nil), &SMTPProd),
 	Otel: &otelpresets.SentryOtelConfig{
-		DSN:          os.Getenv("SENTRY_DSN"),
-		ServerName:   config.LoadEnv(os.Getenv("APP_NAME"), AppName, config.StringParser),
-		Release:      os.Getenv("SENTRY_RELEASE"),
-		Environment:  lo.CoalesceOrEmpty(os.Getenv("SENTRY_ENVIRONMENT"), os.Getenv("ENV")),
-		FlushTimeout: config.LoadEnv(os.Getenv("SENTRY_FLUSH_TIMEOUT"), SentryFlushTimeout, config.DurationParser),
+		DSN:          getEnv("SENTRY_DSN"),
+		ServerName:   config.LoadEnv(getEnv("APP_NAME"), AppName, config.StringParser),
+		Release:      getEnv("SENTRY_RELEASE"),
+		Environment:  lo.CoalesceOrEmpty(getEnv("SENTRY_ENVIRONMENT"), getEnv("ENV")),
+		FlushTimeout: config.LoadEnv(getEnv("SENTRY_FLUSH_TIMEOUT"), SentryFlushTimeout, config.DurationParser),
 		Debug:        isDebug,
 	},
 	Postgres: PostgresPresetDefault,
