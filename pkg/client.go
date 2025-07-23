@@ -23,12 +23,12 @@ func NewAPIClient(ctx context.Context, url string, source apimodels.SecuritySour
 	}
 
 	start := time.Now()
-	_, err = client.Ping(ctx)
+	_, err = client.Healthcheck(ctx)
 
 	for time.Since(start) < defaultPingTimeout && err != nil {
 		time.Sleep(defaultPingInterval)
 
-		_, err = client.Ping(ctx)
+		_, err = client.Healthcheck(ctx)
 	}
 
 	if err != nil {
