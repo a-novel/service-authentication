@@ -223,9 +223,9 @@ emails will be forwarded to the service logs instead.
 When providing SMTP configuration, you should also provide links to the client platform users will be redirected to when
 they click on the links in the emails.
 
-| Variable                            | Description                                                                        | Default                                        |
-| ----------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `AUTH_PLATFORM_URL`                 | The platform URL. Can be omitted if the other values are all explicitly passed in. |                                                |
-| `AUTH_PLATFORM_URL_UPDATE_EMAIL`    | Page the user lands on when completing an email update.                            | `AUTH_PLATFORM_URL` + `"/ext/email/validate"`  |
-| `AUTH_PLATFORM_URL_UPDATE_PASSWORD` | Page the user lands on when completing a password update.                          | `AUTH_PLATFORM_URL` + `"/ext/password/update"` |
-| `AUTH_PLATFORM_URL_REGISTER`        | Page the user lands on when completing registration.                               | `AUTH_PLATFORM_URL` + `"/ext/account/create"`  |
+| Variable                            | Description                                                                        | Default                                       |
+| ----------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------- |
+| `AUTH_PLATFORM_URL`                 | The platform URL. Can be omitted if the other values are all explicitly passed in. |                                               |
+| `AUTH_PLATFORM_URL_UPDATE_EMAIL`    | Page the user lands on when completing an email update.                            | `AUTH_PLATFORM_URL` + `"/ext/email/validate"` |
+| `AUTH_PLATFORM_URL_UPDATE_PASSWORD` | Page the user lands on when completing a password update.                          | `AUTH_PLATFORM_URL` + `"/ext/password/reset"` |
+| `AUTH_PLATFORM_URL_REGISTER`        | Page the user lands on when completing registration.                               | `AUTH_PLATFORM_URL` + `"/ext/account/create"` |
