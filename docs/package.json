@@ -15,6 +15,6 @@
     "vite": "^7.0.5",
     "vite-plugin-static-copy": "^3.1.1",
     "vitepress": "^1.6.3",
-    "vue": "^3.5.17"
+    "vue": "^3.5.18"
   }
 }
