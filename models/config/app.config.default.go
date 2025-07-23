@@ -89,7 +89,7 @@ var AppPresetDefault = App[*otelpresets.SentryOtelConfig, postgres.Config, smtp.
 		),
 		UpdatePassword: config.LoadEnv(
 			getEnv("AUTH_PLATFORM_URL_UPDATE_PASSWORD"),
-			getEnv("AUTH_PLATFORM_URL")+"/ext/password/update",
+			getEnv("AUTH_PLATFORM_URL")+"/ext/password/reset",
 			config.StringParser,
 		),
 		Register: config.LoadEnv(
