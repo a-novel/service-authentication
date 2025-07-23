@@ -6,7 +6,7 @@ require (
 	github.com/a-novel-kit/configurator v1.4.3
 	github.com/a-novel-kit/jwt v1.1.5
 	github.com/a-novel/golib v0.7.1
-	github.com/a-novel/service-json-keys v1.2.1
+	github.com/a-novel/service-json-keys v1.2.2
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.2
 	github.com/go-faster/errors v0.7.1
@@ -53,7 +53,7 @@ require (
 	go.opentelemetry.io/otel/sdk/log v0.13.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/exp v0.0.0-20250711185948-6ae5c78190dc // indirect
+	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect

@@ -17,6 +17,7 @@ formatters:
 linters:
   default: all
   disable:
+    - wsl
     - depguard
     - dupl
     - revive
