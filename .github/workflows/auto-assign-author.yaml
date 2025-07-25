@@ -11,6 +11,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: a-novel-kit/workflows/generic-actions/auto-assign-author@master
+        if: ${{ inputs.author != 'renovate[bot]' }}
         with:
           pull_request: ${{ github.event.pull_request.number }}
           author: ${{ github.event.pull_request.user.login }}
