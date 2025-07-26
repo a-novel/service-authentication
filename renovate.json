@@ -8,8 +8,8 @@
   },
   "packageRules": [
     {
-      "description": "Automerge non-major updates",
-      "matchUpdateTypes": ["minor", "patch"],
+      "description": "Automerge updates",
+      "matchPackageNames": ["!major"],
       "automerge": true
     }
   ],
