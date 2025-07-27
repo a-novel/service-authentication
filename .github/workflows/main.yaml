@@ -22,10 +22,8 @@ jobs:
         shell: bash
         run: go generate ./...
       - uses: a-novel-kit/workflows/generic-actions/check-changes@master
-        id: changes
-      - name: Check go generate diff
-        if: steps.changes.outputs.diff == '1'
-        run: echo "go generate changes are not up-to-date, please run 'go generate ./...' and commit the changes" && exit 1
+        with:
+          fail_message: go generate definitions are not up-to-date, please run 'go generate ./...' and commit the changes
 
   generated-mockery:
     runs-on: ubuntu-latest
@@ -40,11 +38,8 @@ jobs:
         shell: bash
         run: make mocks
       - uses: a-novel-kit/workflows/generic-actions/check-changes@master
-        id: changes
-      - name: Check mockery diff
-        if: steps.changes.outputs.diff == '1'
-        run: echo "mockery definitions are not up-to-date, please run 'make mocks' and commit the changes" && exit 1
-
+        with:
+          fail_message: mockery definitions are not up-to-date, please run 'make mocks' and commit the changes
   generated-mjml:
     runs-on: ubuntu-latest
     permissions:
@@ -58,10 +53,8 @@ jobs:
         shell: bash
         run: make mjml-generate
       - uses: a-novel-kit/workflows/generic-actions/check-changes@master
-        id: changes
-      - name: Check mjml diff
-        if: steps.changes.outputs.diff == '1'
-        run: echo "mjml definitions are not up-to-date, please run 'make mjml-generate' and commit the changes" && exit 1
+        with:
+          fail_message: mjml definitions are not up-to-date, please run 'make mjml-generate' and commit the changes
 
   lint-go:
     runs-on: ubuntu-latest

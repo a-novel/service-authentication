@@ -9,10 +9,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    if: ${{ github.event.pull_request.user.login != 'renovate[bot]' }}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/auto-assign-author@master
-        if: ${{ inputs.author != 'renovate[bot]' }}
+      - uses: a-novel-kit/workflows/generic-actions/assign-bot@master
         with:
-          pull_request: ${{ github.event.pull_request.number }}
-          author: ${{ github.event.pull_request.user.login }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
