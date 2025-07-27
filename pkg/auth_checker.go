@@ -9,11 +9,11 @@ import (
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/a-novel/golib/deps"
 	"github.com/a-novel/golib/otel"
 	jkmodels "github.com/a-novel/service-json-keys/models"
 	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
-	"github.com/a-novel-kit/configurator"
 	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/models"
@@ -41,7 +41,7 @@ type HandleBearerAuth[OpName string] struct {
 func NewHandleBearerAuth[OpName string](
 	source AuthenticateSource, permissions config.Permissions,
 ) (*HandleBearerAuth[OpName], error) {
-	resolveGranted, err := configurator.ResolveDependants[models.Role, models.Permission](
+	resolveGranted, err := deps.ResolveDependants[models.Role, models.Permission](
 		lo.MapEntries(
 			permissions.Roles,
 			func(key models.Role, value config.Role) (models.Role, []models.Permission) {

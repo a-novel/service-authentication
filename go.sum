@@ -1,9 +1,7 @@
-github.com/a-novel-kit/configurator v1.4.3 h1:fF7i98yWb3I9ZV6jUp4JHrabqgfte6vYIJcQqDlGjuo=
-github.com/a-novel-kit/configurator v1.4.3/go.mod h1:teWtbk40EKAaluOKUjnMsCxl3FzB09qiEAUukaAgwM4=
 github.com/a-novel-kit/jwt v1.1.5 h1:yxwJy36NvD6bbiVQ7vNq1bpNG2ioHUYjRp0eA/a94Ko=
 github.com/a-novel-kit/jwt v1.1.5/go.mod h1:VAQw0tHzVpLGIC5uaql6QiBqKp8sAQx66YOJO/98Oj0=
-github.com/a-novel/golib v0.7.1 h1:MF+kr9IC5E/aJFlOzVa87/2bToPuzFolPyzK0EH2EZA=
-github.com/a-novel/golib v0.7.1/go.mod h1:Tj4VG1rIpogmd/PBdqQlpNtDk0+6Ezzm5R7XdkZ6RGM=
+github.com/a-novel/golib v0.8.0 h1:WbzfEDgtCvil7IFxUdAP+InaagleV6gJPWangI3LurY=
+github.com/a-novel/golib v0.8.0/go.mod h1:bdra1WmkboXHSYi0CwSla5LmLdg1gVMQjMe2Q7sFUaE=
 github.com/a-novel/service-json-keys v1.2.4 h1:B4x+5zOH7ZsUJTktyYQ3uh44Sf94ElLwdbc93zu6stY=
 github.com/a-novel/service-json-keys v1.2.4/go.mod h1:T6K7Wntm8zdgHhTzPp66kasH5b6839uWm6jJpdaT0/8=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
