@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: latest
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v43.0.4
+        uses: renovatebot/github-action@v43.0.5
         with:
           token: ${{ secrets.ACTION_PAT }}
         env:
