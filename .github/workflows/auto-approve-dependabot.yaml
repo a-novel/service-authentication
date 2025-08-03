@@ -11,7 +11,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    if: github.event.pull_request.user.login == 'renovate[bot]'
+    if: ${{ github.event.pull_request.user.login == vars.DEPENDENCY_BOT_LOGIN }}
     steps:
       - uses: actions/checkout@v4
       - uses: a-novel-kit/workflows/generic-actions/approve-bot@master

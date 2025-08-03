@@ -1,17 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "assignAutomerge": true,
-  "assignees": ["kushuh"],
-  "postUpgradeTasks": {
-    "commands": ["npx -y prettier . --write"],
-    "executionMode": "branch"
-  },
-  "packageRules": [
-    {
-      "description": "Automerge updates",
-      "matchPackageNames": ["!major"],
-      "automerge": true
-    }
-  ],
   "extends": ["config:recommended"]
 }
