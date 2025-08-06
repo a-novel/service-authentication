@@ -1,5 +1,7 @@
 github.com/a-novel-kit/jwt v1.1.5 h1:yxwJy36NvD6bbiVQ7vNq1bpNG2ioHUYjRp0eA/a94Ko=
 github.com/a-novel-kit/jwt v1.1.5/go.mod h1:VAQw0tHzVpLGIC5uaql6QiBqKp8sAQx66YOJO/98Oj0=
+github.com/a-novel-kit/jwt v1.1.6 h1:YX0leUshckwRH4Oa2TtNhOeGCBC5+3VYuUhHVcdcJhY=
+github.com/a-novel-kit/jwt v1.1.6/go.mod h1:1SIH5jCTp2s7riDl1Z+B4ioGvIEgvTRTbg0sccyX1i0=
 github.com/a-novel/golib v0.8.0 h1:WbzfEDgtCvil7IFxUdAP+InaagleV6gJPWangI3LurY=
 github.com/a-novel/golib v0.8.0/go.mod h1:bdra1WmkboXHSYi0CwSla5LmLdg1gVMQjMe2Q7sFUaE=
 github.com/a-novel/service-json-keys v1.2.4 h1:B4x+5zOH7ZsUJTktyYQ3uh44Sf94ElLwdbc93zu6stY=
