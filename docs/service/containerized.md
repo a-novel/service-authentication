@@ -19,7 +19,7 @@ to run.
 # https://github.com/containers/podman-compose
 services:
   json-keys-postgres:
-    image: ghcr.io/a-novel/service-json-keys/database:v1
+    image: ghcr.io/a-novel/service-json-keys/database:v1.2.5
     networks:
       - api
     environment:
@@ -32,7 +32,7 @@ services:
       - json-keys-postgres-data:/var/lib/postgresql/data/
 
   authentication-postgres:
-    image: ghcr.io/a-novel/service-authentication/database:v1
+    image: ghcr.io/a-novel/service-authentication/database:v1.1.3
     networks:
       - api
     environment:
@@ -45,7 +45,7 @@ services:
       - json-keys-postgres-data:/var/lib/postgresql/data/
 
   json-keys-service:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v1
+    image: ghcr.io/a-novel/service-json-keys/standalone:v1.2.5
     depends_on:
       json-keys-postgres:
         condition: service_healthy
@@ -56,7 +56,7 @@ services:
       - api
 
   authentication-postgres-migrations:
-    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v1
+    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v1.1.3
     depends_on:
       authentication-postgres:
         condition: service_healthy
@@ -66,7 +66,7 @@ services:
       POSTGRES_DSN: postgres://postgres:postgres@authentication-postgres:5432/json-keys?sslmode=disable
 
   authentication-service:
-    image: ghcr.io/a-novel/service-authentication/api:v1
+    image: ghcr.io/a-novel/service-authentication/api:v1.1.3
     depends_on:
       authentication-postgres:
         condition: service_healthy
@@ -103,7 +103,7 @@ The standalone image takes longer to boot, and it is not suited for production u
 # https://github.com/containers/podman-compose
 services:
   json-keys-postgres:
-    image: ghcr.io/a-novel/service-json-keys/database:v1
+    image: ghcr.io/a-novel/service-json-keys/database:v1.2.5
     networks:
       - api
     environment:
@@ -116,7 +116,7 @@ services:
       - json-keys-postgres-data:/var/lib/postgresql/data/
 
   authentication-postgres:
-    image: ghcr.io/a-novel/service-authentication/database:v1
+    image: ghcr.io/a-novel/service-authentication/database:v1.1.3
     networks:
       - api
     environment:
@@ -129,7 +129,7 @@ services:
       - json-keys-postgres-data:/var/lib/postgresql/data/
 
   json-keys-service:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v1
+    image: ghcr.io/a-novel/service-json-keys/standalone:v1.2.5
     depends_on:
       json-keys-postgres:
         condition: service_healthy
@@ -140,7 +140,7 @@ services:
       - api
 
   authentication-service:
-    image: ghcr.io/a-novel/service-authentication/standalone:v1
+    image: ghcr.io/a-novel/service-authentication/standalone:v1.1.3
     depends_on:
       authentication-postgres:
         condition: service_healthy
