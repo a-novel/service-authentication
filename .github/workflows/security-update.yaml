@@ -1,0 +1,18 @@
+name: run security update
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  security-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/security-update@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          app_private_key: ${{ secrets.PUBLISH_BOT_PRIVATE_KEY }}
+          app_id: ${{ vars.PUBLISH_BOT_ID }}
