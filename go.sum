@@ -2,8 +2,8 @@ github.com/a-novel-kit/jwt v1.1.6 h1:YX0leUshckwRH4Oa2TtNhOeGCBC5+3VYuUhHVcdcJhY
 github.com/a-novel-kit/jwt v1.1.6/go.mod h1:1SIH5jCTp2s7riDl1Z+B4ioGvIEgvTRTbg0sccyX1i0=
 github.com/a-novel/golib v0.8.1 h1:BxVEhJa8mlhs0w+LUfXxIz00ZtrfsWsqgB4J/ecVyec=
 github.com/a-novel/golib v0.8.1/go.mod h1:t7ZBLZuyj+ENpx0sWRZZ1cc3BEOb7Cc27qgX0JyUA8Y=
-github.com/a-novel/service-json-keys v1.2.5 h1:vfJq4UAURo6eLdIQp4CLrFIu31mwZolLIRqlfSHUShQ=
-github.com/a-novel/service-json-keys v1.2.5/go.mod h1:glFt74NIkSvA6nRqED92e89Kp1ONXhGZiAkr+Ivic4c=
+github.com/a-novel/service-json-keys v1.2.6 h1:70jWrsmRXMO2MWB8iXhkBj24f/vAXvaExwP4c4bbRWI=
+github.com/a-novel/service-json-keys v1.2.6/go.mod h1:EiaGPYh8/tCTiyK5nwREzR2yjyO4c5hi9XqF3mddjoE=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlclark/regexp2 v1.11.5 h1:Q/sSnsKerHeCkc/jSTNq1oCm7KiVgUMZRDUoRu0JQZQ=
