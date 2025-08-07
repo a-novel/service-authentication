@@ -17,7 +17,7 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/data/
 
   json-keys-postgres:
-    image: ghcr.io/a-novel/service-json-keys/database:v1.2.5
+    image: ghcr.io/a-novel/service-json-keys/database:v1.2.6
     networks:
       - api
     environment:
