@@ -1,5 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "postUpdateOptions": ["gomodTidy"],
+  "docker-compose": {
+    "managerFilePatterns": ["/(^|/)(?:podman-)?compose[^/]*\\.ya?ml$/"]
+  },
   "extends": ["config:recommended"]
 }
