@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	github.com/a-novel-kit/jwt v1.1.6
-	github.com/a-novel/golib v0.8.0
+	github.com/a-novel/golib v0.8.1
 	github.com/a-novel/service-json-keys v1.2.5
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.2
@@ -27,8 +27,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/getsentry/sentry-go v0.34.1 // indirect
-	github.com/getsentry/sentry-go/otel v0.34.1 // indirect
+	github.com/getsentry/sentry-go v0.35.0 // indirect
+	github.com/getsentry/sentry-go/otel v0.35.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-faster/yaml v0.4.6 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
