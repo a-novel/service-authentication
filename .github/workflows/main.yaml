@@ -112,7 +112,7 @@ jobs:
           --health-retries 5
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.2.5
+        image: ghcr.io/a-novel/service-json-keys/database:v1.2.6
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -267,7 +267,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.2.5
+        image: ghcr.io/a-novel/service-json-keys/database:v1.2.6
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -330,7 +330,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.2.5
+        image: ghcr.io/a-novel/service-json-keys/database:v1.2.6
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
