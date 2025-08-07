@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:alpine AS builder
+FROM docker.io/library/golang:1.24.6-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN go mod download
 # ======================================================================================================================
 RUN go build -o /migrations cmd/migrations/main.go
 
-FROM docker.io/library/alpine:latest
+FROM docker.io/library/alpine:3.22.1
 
 WORKDIR /
 
