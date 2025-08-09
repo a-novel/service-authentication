@@ -74,17 +74,38 @@ type MockAuthenticateSource_VerifyClaims_Call struct {
 }
 
 // VerifyClaims is a helper method to define mock.On call
-//   - ctx
-//   - usage
-//   - accessToken
-//   - options
+//   - ctx context.Context
+//   - usage models.KeyUsage
+//   - accessToken string
+//   - options *pkg.VerifyClaimsOptions
 func (_e *MockAuthenticateSource_Expecter) VerifyClaims(ctx interface{}, usage interface{}, accessToken interface{}, options interface{}) *MockAuthenticateSource_VerifyClaims_Call {
 	return &MockAuthenticateSource_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, usage, accessToken, options)}
 }
 
 func (_c *MockAuthenticateSource_VerifyClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions)) *MockAuthenticateSource_VerifyClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(string), args[3].(*pkg.VerifyClaimsOptions))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 models.KeyUsage
+		if args[1] != nil {
+			arg1 = args[1].(models.KeyUsage)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 *pkg.VerifyClaimsOptions
+		if args[3] != nil {
+			arg3 = args[3].(*pkg.VerifyClaimsOptions)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }

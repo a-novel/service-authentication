@@ -4,19 +4,19 @@ test:
 
 # Check code quality.
 lint:
-	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3.0 run
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3.1 run
 	npx prettier . --check
 	sqlfluff lint
 
 # Generate mocked interfaces for Go tests.
 mocks:
 	rm -rf `find . -type d -name mocks`
-	go run github.com/vektra/mockery/v3@v3.2.5
+	go run github.com/vektra/mockery/v3@v3.5.2
 
 # Reformat code so it passes the code style lint checks.
 format:
 	go mod tidy
-	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3.0 run --fix
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3.1 run --fix
 	npx prettier . --write
 	sqlfluff fix
 

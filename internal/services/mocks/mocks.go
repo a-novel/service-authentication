@@ -78,15 +78,26 @@ type MockConsumeRefreshTokenSource_SelectCredentials_Call struct {
 }
 
 // SelectCredentials is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id uuid.UUID
 func (_e *MockConsumeRefreshTokenSource_Expecter) SelectCredentials(ctx interface{}, id interface{}) *MockConsumeRefreshTokenSource_SelectCredentials_Call {
 	return &MockConsumeRefreshTokenSource_SelectCredentials_Call{Call: _e.mock.On("SelectCredentials", ctx, id)}
 }
 
 func (_c *MockConsumeRefreshTokenSource_SelectCredentials_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockConsumeRefreshTokenSource_SelectCredentials_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -133,16 +144,32 @@ type MockConsumeRefreshTokenSource_SignClaims_Call struct {
 }
 
 // SignClaims is a helper method to define mock.On call
-//   - ctx
-//   - usage
-//   - claims
+//   - ctx context.Context
+//   - usage models.KeyUsage
+//   - claims any
 func (_e *MockConsumeRefreshTokenSource_Expecter) SignClaims(ctx interface{}, usage interface{}, claims interface{}) *MockConsumeRefreshTokenSource_SignClaims_Call {
 	return &MockConsumeRefreshTokenSource_SignClaims_Call{Call: _e.mock.On("SignClaims", ctx, usage, claims)}
 }
 
 func (_c *MockConsumeRefreshTokenSource_SignClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, claims any)) *MockConsumeRefreshTokenSource_SignClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(any))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 models.KeyUsage
+		if args[1] != nil {
+			arg1 = args[1].(models.KeyUsage)
+		}
+		var arg2 any
+		if args[2] != nil {
+			arg2 = args[2].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -191,17 +218,38 @@ type MockConsumeRefreshTokenSource_VerifyClaims_Call struct {
 }
 
 // VerifyClaims is a helper method to define mock.On call
-//   - ctx
-//   - usage
-//   - accessToken
-//   - options
+//   - ctx context.Context
+//   - usage models.KeyUsage
+//   - accessToken string
+//   - options *pkg.VerifyClaimsOptions
 func (_e *MockConsumeRefreshTokenSource_Expecter) VerifyClaims(ctx interface{}, usage interface{}, accessToken interface{}, options interface{}) *MockConsumeRefreshTokenSource_VerifyClaims_Call {
 	return &MockConsumeRefreshTokenSource_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, usage, accessToken, options)}
 }
 
 func (_c *MockConsumeRefreshTokenSource_VerifyClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions)) *MockConsumeRefreshTokenSource_VerifyClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(string), args[3].(*pkg.VerifyClaimsOptions))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 models.KeyUsage
+		if args[1] != nil {
+			arg1 = args[1].(models.KeyUsage)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 *pkg.VerifyClaimsOptions
+		if args[3] != nil {
+			arg3 = args[3].(*pkg.VerifyClaimsOptions)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -250,17 +298,38 @@ type MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call struct {
 }
 
 // VerifyRefreshTokenClaims is a helper method to define mock.On call
-//   - ctx
-//   - usage
-//   - accessToken
-//   - options
+//   - ctx context.Context
+//   - usage models.KeyUsage
+//   - accessToken string
+//   - options *pkg.VerifyClaimsOptions
 func (_e *MockConsumeRefreshTokenSource_Expecter) VerifyRefreshTokenClaims(ctx interface{}, usage interface{}, accessToken interface{}, options interface{}) *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call {
 	return &MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call{Call: _e.mock.On("VerifyRefreshTokenClaims", ctx, usage, accessToken, options)}
 }
 
 func (_c *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions)) *MockConsumeRefreshTokenSource_VerifyRefreshTokenClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(string), args[3].(*pkg.VerifyClaimsOptions))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 models.KeyUsage
+		if args[1] != nil {
+			arg1 = args[1].(models.KeyUsage)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 *pkg.VerifyClaimsOptions
+		if args[3] != nil {
+			arg3 = args[3].(*pkg.VerifyClaimsOptions)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -336,15 +405,26 @@ type MockConsumeShortCodeSource_DeleteShortCode_Call struct {
 }
 
 // DeleteShortCode is a helper method to define mock.On call
-//   - ctx
-//   - data
+//   - ctx context.Context
+//   - data dao.DeleteShortCodeData
 func (_e *MockConsumeShortCodeSource_Expecter) DeleteShortCode(ctx interface{}, data interface{}) *MockConsumeShortCodeSource_DeleteShortCode_Call {
 	return &MockConsumeShortCodeSource_DeleteShortCode_Call{Call: _e.mock.On("DeleteShortCode", ctx, data)}
 }
 
 func (_c *MockConsumeShortCodeSource_DeleteShortCode_Call) Run(run func(ctx context.Context, data dao.DeleteShortCodeData)) *MockConsumeShortCodeSource_DeleteShortCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dao.DeleteShortCodeData))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 dao.DeleteShortCodeData
+		if args[1] != nil {
+			arg1 = args[1].(dao.DeleteShortCodeData)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -393,15 +473,26 @@ type MockConsumeShortCodeSource_SelectShortCodeByParams_Call struct {
 }
 
 // SelectShortCodeByParams is a helper method to define mock.On call
-//   - ctx
-//   - data
+//   - ctx context.Context
+//   - data dao.SelectShortCodeByParamsData
 func (_e *MockConsumeShortCodeSource_Expecter) SelectShortCodeByParams(ctx interface{}, data interface{}) *MockConsumeShortCodeSource_SelectShortCodeByParams_Call {
 	return &MockConsumeShortCodeSource_SelectShortCodeByParams_Call{Call: _e.mock.On("SelectShortCodeByParams", ctx, data)}
 }
 
 func (_c *MockConsumeShortCodeSource_SelectShortCodeByParams_Call) Run(run func(ctx context.Context, data dao.SelectShortCodeByParamsData)) *MockConsumeShortCodeSource_SelectShortCodeByParams_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dao.SelectShortCodeByParamsData))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 dao.SelectShortCodeByParamsData
+		if args[1] != nil {
+			arg1 = args[1].(dao.SelectShortCodeByParamsData)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -477,15 +568,26 @@ type MockCreateShortCodeSource_InsertShortCode_Call struct {
 }
 
 // InsertShortCode is a helper method to define mock.On call
-//   - ctx
-//   - data
+//   - ctx context.Context
+//   - data dao.InsertShortCodeData
 func (_e *MockCreateShortCodeSource_Expecter) InsertShortCode(ctx interface{}, data interface{}) *MockCreateShortCodeSource_InsertShortCode_Call {
 	return &MockCreateShortCodeSource_InsertShortCode_Call{Call: _e.mock.On("InsertShortCode", ctx, data)}
 }
 
 func (_c *MockCreateShortCodeSource_InsertShortCode_Call) Run(run func(ctx context.Context, data dao.InsertShortCodeData)) *MockCreateShortCodeSource_InsertShortCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dao.InsertShortCodeData))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 dao.InsertShortCodeData
+		if args[1] != nil {
+			arg1 = args[1].(dao.InsertShortCodeData)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -559,15 +661,26 @@ type MockEmailExistsSource_ExistsCredentialsEmail_Call struct {
 }
 
 // ExistsCredentialsEmail is a helper method to define mock.On call
-//   - ctx
-//   - email
+//   - ctx context.Context
+//   - email string
 func (_e *MockEmailExistsSource_Expecter) ExistsCredentialsEmail(ctx interface{}, email interface{}) *MockEmailExistsSource_ExistsCredentialsEmail_Call {
 	return &MockEmailExistsSource_ExistsCredentialsEmail_Call{Call: _e.mock.On("ExistsCredentialsEmail", ctx, email)}
 }
 
 func (_c *MockEmailExistsSource_ExistsCredentialsEmail_Call) Run(run func(ctx context.Context, email string)) *MockEmailExistsSource_ExistsCredentialsEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -643,15 +756,26 @@ type MockListUsersSource_ListUsers_Call struct {
 }
 
 // ListUsers is a helper method to define mock.On call
-//   - ctx
-//   - data
+//   - ctx context.Context
+//   - data dao.ListUsersData
 func (_e *MockListUsersSource_Expecter) ListUsers(ctx interface{}, data interface{}) *MockListUsersSource_ListUsers_Call {
 	return &MockListUsersSource_ListUsers_Call{Call: _e.mock.On("ListUsers", ctx, data)}
 }
 
 func (_c *MockListUsersSource_ListUsers_Call) Run(run func(ctx context.Context, data dao.ListUsersData)) *MockListUsersSource_ListUsers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dao.ListUsersData))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 dao.ListUsersData
+		if args[1] != nil {
+			arg1 = args[1].(dao.ListUsersData)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -727,15 +851,26 @@ type MockLoginSource_SelectCredentialsByEmail_Call struct {
 }
 
 // SelectCredentialsByEmail is a helper method to define mock.On call
-//   - ctx
-//   - email
+//   - ctx context.Context
+//   - email string
 func (_e *MockLoginSource_Expecter) SelectCredentialsByEmail(ctx interface{}, email interface{}) *MockLoginSource_SelectCredentialsByEmail_Call {
 	return &MockLoginSource_SelectCredentialsByEmail_Call{Call: _e.mock.On("SelectCredentialsByEmail", ctx, email)}
 }
 
 func (_c *MockLoginSource_SelectCredentialsByEmail_Call) Run(run func(ctx context.Context, email string)) *MockLoginSource_SelectCredentialsByEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -782,16 +917,32 @@ type MockLoginSource_SignClaims_Call struct {
 }
 
 // SignClaims is a helper method to define mock.On call
-//   - ctx
-//   - usage
-//   - claims
+//   - ctx context.Context
+//   - usage models.KeyUsage
+//   - claims any
 func (_e *MockLoginSource_Expecter) SignClaims(ctx interface{}, usage interface{}, claims interface{}) *MockLoginSource_SignClaims_Call {
 	return &MockLoginSource_SignClaims_Call{Call: _e.mock.On("SignClaims", ctx, usage, claims)}
 }
 
 func (_c *MockLoginSource_SignClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, claims any)) *MockLoginSource_SignClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(any))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 models.KeyUsage
+		if args[1] != nil {
+			arg1 = args[1].(models.KeyUsage)
+		}
+		var arg2 any
+		if args[2] != nil {
+			arg2 = args[2].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -865,16 +1016,32 @@ type MockLoginAnonSource_SignClaims_Call struct {
 }
 
 // SignClaims is a helper method to define mock.On call
-//   - ctx
-//   - usage
-//   - claims
+//   - ctx context.Context
+//   - usage models.KeyUsage
+//   - claims any
 func (_e *MockLoginAnonSource_Expecter) SignClaims(ctx interface{}, usage interface{}, claims interface{}) *MockLoginAnonSource_SignClaims_Call {
 	return &MockLoginAnonSource_SignClaims_Call{Call: _e.mock.On("SignClaims", ctx, usage, claims)}
 }
 
 func (_c *MockLoginAnonSource_SignClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, claims any)) *MockLoginAnonSource_SignClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(any))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 models.KeyUsage
+		if args[1] != nil {
+			arg1 = args[1].(models.KeyUsage)
+		}
+		var arg2 any
+		if args[2] != nil {
+			arg2 = args[2].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -950,15 +1117,26 @@ type MockRegisterSource_ConsumeShortCode_Call struct {
 }
 
 // ConsumeShortCode is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.ConsumeShortCodeRequest
 func (_e *MockRegisterSource_Expecter) ConsumeShortCode(ctx interface{}, request interface{}) *MockRegisterSource_ConsumeShortCode_Call {
 	return &MockRegisterSource_ConsumeShortCode_Call{Call: _e.mock.On("ConsumeShortCode", ctx, request)}
 }
 
 func (_c *MockRegisterSource_ConsumeShortCode_Call) Run(run func(ctx context.Context, request services.ConsumeShortCodeRequest)) *MockRegisterSource_ConsumeShortCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.ConsumeShortCodeRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.ConsumeShortCodeRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.ConsumeShortCodeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1007,15 +1185,26 @@ type MockRegisterSource_InsertCredentials_Call struct {
 }
 
 // InsertCredentials is a helper method to define mock.On call
-//   - ctx
-//   - data
+//   - ctx context.Context
+//   - data dao.InsertCredentialsData
 func (_e *MockRegisterSource_Expecter) InsertCredentials(ctx interface{}, data interface{}) *MockRegisterSource_InsertCredentials_Call {
 	return &MockRegisterSource_InsertCredentials_Call{Call: _e.mock.On("InsertCredentials", ctx, data)}
 }
 
 func (_c *MockRegisterSource_InsertCredentials_Call) Run(run func(ctx context.Context, data dao.InsertCredentialsData)) *MockRegisterSource_InsertCredentials_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dao.InsertCredentialsData))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 dao.InsertCredentialsData
+		if args[1] != nil {
+			arg1 = args[1].(dao.InsertCredentialsData)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1062,16 +1251,32 @@ type MockRegisterSource_SignClaims_Call struct {
 }
 
 // SignClaims is a helper method to define mock.On call
-//   - ctx
-//   - usage
-//   - claims
+//   - ctx context.Context
+//   - usage models.KeyUsage
+//   - claims any
 func (_e *MockRegisterSource_Expecter) SignClaims(ctx interface{}, usage interface{}, claims interface{}) *MockRegisterSource_SignClaims_Call {
 	return &MockRegisterSource_SignClaims_Call{Call: _e.mock.On("SignClaims", ctx, usage, claims)}
 }
 
 func (_c *MockRegisterSource_SignClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, claims any)) *MockRegisterSource_SignClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(models.KeyUsage), args[2].(any))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 models.KeyUsage
+		if args[1] != nil {
+			arg1 = args[1].(models.KeyUsage)
+		}
+		var arg2 any
+		if args[2] != nil {
+			arg2 = args[2].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -1147,15 +1352,26 @@ type MockRequestEmailUpdateSource_CreateShortCode_Call struct {
 }
 
 // CreateShortCode is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.CreateShortCodeRequest
 func (_e *MockRequestEmailUpdateSource_Expecter) CreateShortCode(ctx interface{}, request interface{}) *MockRequestEmailUpdateSource_CreateShortCode_Call {
 	return &MockRequestEmailUpdateSource_CreateShortCode_Call{Call: _e.mock.On("CreateShortCode", ctx, request)}
 }
 
 func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) Run(run func(ctx context.Context, request services.CreateShortCodeRequest)) *MockRequestEmailUpdateSource_CreateShortCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.CreateShortCodeRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.CreateShortCodeRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.CreateShortCodeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1193,17 +1409,38 @@ type MockRequestEmailUpdateSource_SendMail_Call struct {
 }
 
 // SendMail is a helper method to define mock.On call
-//   - to
-//   - t
-//   - tName
-//   - data
+//   - to []string
+//   - t *template.Template
+//   - tName string
+//   - data any
 func (_e *MockRequestEmailUpdateSource_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockRequestEmailUpdateSource_SendMail_Call {
 	return &MockRequestEmailUpdateSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
 func (_c *MockRequestEmailUpdateSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestEmailUpdateSource_SendMail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]string), args[1].(*template.Template), args[2].(string), args[3].(any))
+		var arg0 []string
+		if args[0] != nil {
+			arg0 = args[0].([]string)
+		}
+		var arg1 *template.Template
+		if args[1] != nil {
+			arg1 = args[1].(*template.Template)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 any
+		if args[3] != nil {
+			arg3 = args[3].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1279,15 +1516,26 @@ type MockRequestPasswordResetSource_CreateShortCode_Call struct {
 }
 
 // CreateShortCode is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.CreateShortCodeRequest
 func (_e *MockRequestPasswordResetSource_Expecter) CreateShortCode(ctx interface{}, request interface{}) *MockRequestPasswordResetSource_CreateShortCode_Call {
 	return &MockRequestPasswordResetSource_CreateShortCode_Call{Call: _e.mock.On("CreateShortCode", ctx, request)}
 }
 
 func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) Run(run func(ctx context.Context, request services.CreateShortCodeRequest)) *MockRequestPasswordResetSource_CreateShortCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.CreateShortCodeRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.CreateShortCodeRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.CreateShortCodeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1336,15 +1584,26 @@ type MockRequestPasswordResetSource_SelectCredentialsByEmail_Call struct {
 }
 
 // SelectCredentialsByEmail is a helper method to define mock.On call
-//   - ctx
-//   - email
+//   - ctx context.Context
+//   - email string
 func (_e *MockRequestPasswordResetSource_Expecter) SelectCredentialsByEmail(ctx interface{}, email interface{}) *MockRequestPasswordResetSource_SelectCredentialsByEmail_Call {
 	return &MockRequestPasswordResetSource_SelectCredentialsByEmail_Call{Call: _e.mock.On("SelectCredentialsByEmail", ctx, email)}
 }
 
 func (_c *MockRequestPasswordResetSource_SelectCredentialsByEmail_Call) Run(run func(ctx context.Context, email string)) *MockRequestPasswordResetSource_SelectCredentialsByEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1382,17 +1641,38 @@ type MockRequestPasswordResetSource_SendMail_Call struct {
 }
 
 // SendMail is a helper method to define mock.On call
-//   - to
-//   - t
-//   - tName
-//   - data
+//   - to []string
+//   - t *template.Template
+//   - tName string
+//   - data any
 func (_e *MockRequestPasswordResetSource_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockRequestPasswordResetSource_SendMail_Call {
 	return &MockRequestPasswordResetSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
 func (_c *MockRequestPasswordResetSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestPasswordResetSource_SendMail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]string), args[1].(*template.Template), args[2].(string), args[3].(any))
+		var arg0 []string
+		if args[0] != nil {
+			arg0 = args[0].([]string)
+		}
+		var arg1 *template.Template
+		if args[1] != nil {
+			arg1 = args[1].(*template.Template)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 any
+		if args[3] != nil {
+			arg3 = args[3].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1468,15 +1748,26 @@ type MockRequestRegisterSource_CreateShortCode_Call struct {
 }
 
 // CreateShortCode is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.CreateShortCodeRequest
 func (_e *MockRequestRegisterSource_Expecter) CreateShortCode(ctx interface{}, request interface{}) *MockRequestRegisterSource_CreateShortCode_Call {
 	return &MockRequestRegisterSource_CreateShortCode_Call{Call: _e.mock.On("CreateShortCode", ctx, request)}
 }
 
 func (_c *MockRequestRegisterSource_CreateShortCode_Call) Run(run func(ctx context.Context, request services.CreateShortCodeRequest)) *MockRequestRegisterSource_CreateShortCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.CreateShortCodeRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.CreateShortCodeRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.CreateShortCodeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1514,17 +1805,38 @@ type MockRequestRegisterSource_SendMail_Call struct {
 }
 
 // SendMail is a helper method to define mock.On call
-//   - to
-//   - t
-//   - tName
-//   - data
+//   - to []string
+//   - t *template.Template
+//   - tName string
+//   - data any
 func (_e *MockRequestRegisterSource_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockRequestRegisterSource_SendMail_Call {
 	return &MockRequestRegisterSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
 func (_c *MockRequestRegisterSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestRegisterSource_SendMail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]string), args[1].(*template.Template), args[2].(string), args[3].(any))
+		var arg0 []string
+		if args[0] != nil {
+			arg0 = args[0].([]string)
+		}
+		var arg1 *template.Template
+		if args[1] != nil {
+			arg1 = args[1].(*template.Template)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 any
+		if args[3] != nil {
+			arg3 = args[3].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1600,15 +1912,26 @@ type MockSelectUserSource_SelectCredentials_Call struct {
 }
 
 // SelectCredentials is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id uuid.UUID
 func (_e *MockSelectUserSource_Expecter) SelectCredentials(ctx interface{}, id interface{}) *MockSelectUserSource_SelectCredentials_Call {
 	return &MockSelectUserSource_SelectCredentials_Call{Call: _e.mock.On("SelectCredentials", ctx, id)}
 }
 
 func (_c *MockSelectUserSource_SelectCredentials_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockSelectUserSource_SelectCredentials_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1684,15 +2007,26 @@ type MockUpdateEmailSource_ConsumeShortCode_Call struct {
 }
 
 // ConsumeShortCode is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.ConsumeShortCodeRequest
 func (_e *MockUpdateEmailSource_Expecter) ConsumeShortCode(ctx interface{}, request interface{}) *MockUpdateEmailSource_ConsumeShortCode_Call {
 	return &MockUpdateEmailSource_ConsumeShortCode_Call{Call: _e.mock.On("ConsumeShortCode", ctx, request)}
 }
 
 func (_c *MockUpdateEmailSource_ConsumeShortCode_Call) Run(run func(ctx context.Context, request services.ConsumeShortCodeRequest)) *MockUpdateEmailSource_ConsumeShortCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.ConsumeShortCodeRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.ConsumeShortCodeRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.ConsumeShortCodeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1741,16 +2075,32 @@ type MockUpdateEmailSource_UpdateCredentialsEmail_Call struct {
 }
 
 // UpdateCredentialsEmail is a helper method to define mock.On call
-//   - ctx
-//   - userID
-//   - data
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - data dao.UpdateCredentialsEmailData
 func (_e *MockUpdateEmailSource_Expecter) UpdateCredentialsEmail(ctx interface{}, userID interface{}, data interface{}) *MockUpdateEmailSource_UpdateCredentialsEmail_Call {
 	return &MockUpdateEmailSource_UpdateCredentialsEmail_Call{Call: _e.mock.On("UpdateCredentialsEmail", ctx, userID, data)}
 }
 
 func (_c *MockUpdateEmailSource_UpdateCredentialsEmail_Call) Run(run func(ctx context.Context, userID uuid.UUID, data dao.UpdateCredentialsEmailData)) *MockUpdateEmailSource_UpdateCredentialsEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(dao.UpdateCredentialsEmailData))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 dao.UpdateCredentialsEmailData
+		if args[2] != nil {
+			arg2 = args[2].(dao.UpdateCredentialsEmailData)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -1826,15 +2176,26 @@ type MockUpdatePasswordSource_ConsumeShortCode_Call struct {
 }
 
 // ConsumeShortCode is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.ConsumeShortCodeRequest
 func (_e *MockUpdatePasswordSource_Expecter) ConsumeShortCode(ctx interface{}, request interface{}) *MockUpdatePasswordSource_ConsumeShortCode_Call {
 	return &MockUpdatePasswordSource_ConsumeShortCode_Call{Call: _e.mock.On("ConsumeShortCode", ctx, request)}
 }
 
 func (_c *MockUpdatePasswordSource_ConsumeShortCode_Call) Run(run func(ctx context.Context, request services.ConsumeShortCodeRequest)) *MockUpdatePasswordSource_ConsumeShortCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.ConsumeShortCodeRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.ConsumeShortCodeRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.ConsumeShortCodeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1883,15 +2244,26 @@ type MockUpdatePasswordSource_SelectCredentials_Call struct {
 }
 
 // SelectCredentials is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id uuid.UUID
 func (_e *MockUpdatePasswordSource_Expecter) SelectCredentials(ctx interface{}, id interface{}) *MockUpdatePasswordSource_SelectCredentials_Call {
 	return &MockUpdatePasswordSource_SelectCredentials_Call{Call: _e.mock.On("SelectCredentials", ctx, id)}
 }
 
 func (_c *MockUpdatePasswordSource_SelectCredentials_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUpdatePasswordSource_SelectCredentials_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1940,16 +2312,32 @@ type MockUpdatePasswordSource_UpdateCredentialsPassword_Call struct {
 }
 
 // UpdateCredentialsPassword is a helper method to define mock.On call
-//   - ctx
-//   - userID
-//   - data
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - data dao.UpdateCredentialsPasswordData
 func (_e *MockUpdatePasswordSource_Expecter) UpdateCredentialsPassword(ctx interface{}, userID interface{}, data interface{}) *MockUpdatePasswordSource_UpdateCredentialsPassword_Call {
 	return &MockUpdatePasswordSource_UpdateCredentialsPassword_Call{Call: _e.mock.On("UpdateCredentialsPassword", ctx, userID, data)}
 }
 
 func (_c *MockUpdatePasswordSource_UpdateCredentialsPassword_Call) Run(run func(ctx context.Context, userID uuid.UUID, data dao.UpdateCredentialsPasswordData)) *MockUpdatePasswordSource_UpdateCredentialsPassword_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(dao.UpdateCredentialsPasswordData))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 dao.UpdateCredentialsPasswordData
+		if args[2] != nil {
+			arg2 = args[2].(dao.UpdateCredentialsPasswordData)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -2025,15 +2413,26 @@ type MockUpdateRoleSource_SelectCredentials_Call struct {
 }
 
 // SelectCredentials is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id uuid.UUID
 func (_e *MockUpdateRoleSource_Expecter) SelectCredentials(ctx interface{}, id interface{}) *MockUpdateRoleSource_SelectCredentials_Call {
 	return &MockUpdateRoleSource_SelectCredentials_Call{Call: _e.mock.On("SelectCredentials", ctx, id)}
 }
 
 func (_c *MockUpdateRoleSource_SelectCredentials_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUpdateRoleSource_SelectCredentials_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -2082,16 +2481,32 @@ type MockUpdateRoleSource_UpdateCredentialsRole_Call struct {
 }
 
 // UpdateCredentialsRole is a helper method to define mock.On call
-//   - ctx
-//   - userID
-//   - data
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - data dao.UpdateCredentialsRoleData
 func (_e *MockUpdateRoleSource_Expecter) UpdateCredentialsRole(ctx interface{}, userID interface{}, data interface{}) *MockUpdateRoleSource_UpdateCredentialsRole_Call {
 	return &MockUpdateRoleSource_UpdateCredentialsRole_Call{Call: _e.mock.On("UpdateCredentialsRole", ctx, userID, data)}
 }
 
 func (_c *MockUpdateRoleSource_UpdateCredentialsRole_Call) Run(run func(ctx context.Context, userID uuid.UUID, data dao.UpdateCredentialsRoleData)) *MockUpdateRoleSource_UpdateCredentialsRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(dao.UpdateCredentialsRoleData))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 dao.UpdateCredentialsRoleData
+		if args[2] != nil {
+			arg2 = args[2].(dao.UpdateCredentialsRoleData)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

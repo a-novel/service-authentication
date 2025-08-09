@@ -71,15 +71,26 @@ type MockEmailExistsService_EmailExists_Call struct {
 }
 
 // EmailExists is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.EmailExistsRequest
 func (_e *MockEmailExistsService_Expecter) EmailExists(ctx interface{}, request interface{}) *MockEmailExistsService_EmailExists_Call {
 	return &MockEmailExistsService_EmailExists_Call{Call: _e.mock.On("EmailExists", ctx, request)}
 }
 
 func (_c *MockEmailExistsService_EmailExists_Call) Run(run func(ctx context.Context, request services.EmailExistsRequest)) *MockEmailExistsService_EmailExists_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.EmailExistsRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.EmailExistsRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.EmailExistsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -155,15 +166,26 @@ type MockUpdateEmailService_UpdateEmail_Call struct {
 }
 
 // UpdateEmail is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.UpdateEmailRequest
 func (_e *MockUpdateEmailService_Expecter) UpdateEmail(ctx interface{}, request interface{}) *MockUpdateEmailService_UpdateEmail_Call {
 	return &MockUpdateEmailService_UpdateEmail_Call{Call: _e.mock.On("UpdateEmail", ctx, request)}
 }
 
 func (_c *MockUpdateEmailService_UpdateEmail_Call) Run(run func(ctx context.Context, request services.UpdateEmailRequest)) *MockUpdateEmailService_UpdateEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.UpdateEmailRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.UpdateEmailRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.UpdateEmailRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -228,15 +250,26 @@ type MockUpdatePasswordService_UpdatePassword_Call struct {
 }
 
 // UpdatePassword is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.UpdatePasswordRequest
 func (_e *MockUpdatePasswordService_Expecter) UpdatePassword(ctx interface{}, request interface{}) *MockUpdatePasswordService_UpdatePassword_Call {
 	return &MockUpdatePasswordService_UpdatePassword_Call{Call: _e.mock.On("UpdatePassword", ctx, request)}
 }
 
 func (_c *MockUpdatePasswordService_UpdatePassword_Call) Run(run func(ctx context.Context, request services.UpdatePasswordRequest)) *MockUpdatePasswordService_UpdatePassword_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.UpdatePasswordRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.UpdatePasswordRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.UpdatePasswordRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -312,15 +345,26 @@ type MockRegisterService_Register_Call struct {
 }
 
 // Register is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.RegisterRequest
 func (_e *MockRegisterService_Expecter) Register(ctx interface{}, request interface{}) *MockRegisterService_Register_Call {
 	return &MockRegisterService_Register_Call{Call: _e.mock.On("Register", ctx, request)}
 }
 
 func (_c *MockRegisterService_Register_Call) Run(run func(ctx context.Context, request services.RegisterRequest)) *MockRegisterService_Register_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.RegisterRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.RegisterRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.RegisterRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -396,15 +440,26 @@ type MockUpdateRoleService_UpdateRole_Call struct {
 }
 
 // UpdateRole is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.UpdateRoleRequest
 func (_e *MockUpdateRoleService_Expecter) UpdateRole(ctx interface{}, request interface{}) *MockUpdateRoleService_UpdateRole_Call {
 	return &MockUpdateRoleService_UpdateRole_Call{Call: _e.mock.On("UpdateRole", ctx, request)}
 }
 
 func (_c *MockUpdateRoleService_UpdateRole_Call) Run(run func(ctx context.Context, request services.UpdateRoleRequest)) *MockUpdateRoleService_UpdateRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.UpdateRoleRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.UpdateRoleRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.UpdateRoleRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -480,15 +535,26 @@ type MockLoginService_Login_Call struct {
 }
 
 // Login is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.LoginRequest
 func (_e *MockLoginService_Expecter) Login(ctx interface{}, request interface{}) *MockLoginService_Login_Call {
 	return &MockLoginService_Login_Call{Call: _e.mock.On("Login", ctx, request)}
 }
 
 func (_c *MockLoginService_Login_Call) Run(run func(ctx context.Context, request services.LoginRequest)) *MockLoginService_Login_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.LoginRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.LoginRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.LoginRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -562,14 +628,20 @@ type MockLoginAnonService_LoginAnon_Call struct {
 }
 
 // LoginAnon is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *MockLoginAnonService_Expecter) LoginAnon(ctx interface{}) *MockLoginAnonService_LoginAnon_Call {
 	return &MockLoginAnonService_LoginAnon_Call{Call: _e.mock.On("LoginAnon", ctx)}
 }
 
 func (_c *MockLoginAnonService_LoginAnon_Call) Run(run func(ctx context.Context)) *MockLoginAnonService_LoginAnon_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -643,15 +715,26 @@ type MockConsumeRefreshTokenService_ConsumeRefreshToken_Call struct {
 }
 
 // ConsumeRefreshToken is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.ConsumeRefreshTokenRequest
 func (_e *MockConsumeRefreshTokenService_Expecter) ConsumeRefreshToken(ctx interface{}, request interface{}) *MockConsumeRefreshTokenService_ConsumeRefreshToken_Call {
 	return &MockConsumeRefreshTokenService_ConsumeRefreshToken_Call{Call: _e.mock.On("ConsumeRefreshToken", ctx, request)}
 }
 
 func (_c *MockConsumeRefreshTokenService_ConsumeRefreshToken_Call) Run(run func(ctx context.Context, request services.ConsumeRefreshTokenRequest)) *MockConsumeRefreshTokenService_ConsumeRefreshToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.ConsumeRefreshTokenRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.ConsumeRefreshTokenRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.ConsumeRefreshTokenRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -727,15 +810,26 @@ type MockRequestEmailUpdateService_RequestEmailUpdate_Call struct {
 }
 
 // RequestEmailUpdate is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.RequestEmailUpdateRequest
 func (_e *MockRequestEmailUpdateService_Expecter) RequestEmailUpdate(ctx interface{}, request interface{}) *MockRequestEmailUpdateService_RequestEmailUpdate_Call {
 	return &MockRequestEmailUpdateService_RequestEmailUpdate_Call{Call: _e.mock.On("RequestEmailUpdate", ctx, request)}
 }
 
 func (_c *MockRequestEmailUpdateService_RequestEmailUpdate_Call) Run(run func(ctx context.Context, request services.RequestEmailUpdateRequest)) *MockRequestEmailUpdateService_RequestEmailUpdate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.RequestEmailUpdateRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.RequestEmailUpdateRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.RequestEmailUpdateRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -811,15 +905,26 @@ type MockRequestPasswordResetService_RequestPasswordReset_Call struct {
 }
 
 // RequestPasswordReset is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.RequestPasswordResetRequest
 func (_e *MockRequestPasswordResetService_Expecter) RequestPasswordReset(ctx interface{}, request interface{}) *MockRequestPasswordResetService_RequestPasswordReset_Call {
 	return &MockRequestPasswordResetService_RequestPasswordReset_Call{Call: _e.mock.On("RequestPasswordReset", ctx, request)}
 }
 
 func (_c *MockRequestPasswordResetService_RequestPasswordReset_Call) Run(run func(ctx context.Context, request services.RequestPasswordResetRequest)) *MockRequestPasswordResetService_RequestPasswordReset_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.RequestPasswordResetRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.RequestPasswordResetRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.RequestPasswordResetRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -895,15 +1000,26 @@ type MockRequestRegisterService_RequestRegister_Call struct {
 }
 
 // RequestRegister is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.RequestRegisterRequest
 func (_e *MockRequestRegisterService_Expecter) RequestRegister(ctx interface{}, request interface{}) *MockRequestRegisterService_RequestRegister_Call {
 	return &MockRequestRegisterService_RequestRegister_Call{Call: _e.mock.On("RequestRegister", ctx, request)}
 }
 
 func (_c *MockRequestRegisterService_RequestRegister_Call) Run(run func(ctx context.Context, request services.RequestRegisterRequest)) *MockRequestRegisterService_RequestRegister_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.RequestRegisterRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.RequestRegisterRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.RequestRegisterRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -979,15 +1095,26 @@ type MockGetUserService_SelectUser_Call struct {
 }
 
 // SelectUser is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.SelectUserRequest
 func (_e *MockGetUserService_Expecter) SelectUser(ctx interface{}, request interface{}) *MockGetUserService_SelectUser_Call {
 	return &MockGetUserService_SelectUser_Call{Call: _e.mock.On("SelectUser", ctx, request)}
 }
 
 func (_c *MockGetUserService_SelectUser_Call) Run(run func(ctx context.Context, request services.SelectUserRequest)) *MockGetUserService_SelectUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.SelectUserRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.SelectUserRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.SelectUserRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1063,15 +1190,26 @@ type MockListUsersService_ListUsers_Call struct {
 }
 
 // ListUsers is a helper method to define mock.On call
-//   - ctx
-//   - request
+//   - ctx context.Context
+//   - request services.ListUsersRequest
 func (_e *MockListUsersService_Expecter) ListUsers(ctx interface{}, request interface{}) *MockListUsersService_ListUsers_Call {
 	return &MockListUsersService_ListUsers_Call{Call: _e.mock.On("ListUsers", ctx, request)}
 }
 
 func (_c *MockListUsersService_ListUsers_Call) Run(run func(ctx context.Context, request services.ListUsersRequest)) *MockListUsersService_ListUsers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(services.ListUsersRequest))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.ListUsersRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.ListUsersRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
