@@ -1,8 +1,6 @@
 package config
 
 import (
-	"github.com/samber/lo"
-
 	"github.com/a-novel/golib/config"
 	otelpresets "github.com/a-novel/golib/otel/presets"
 	"github.com/a-novel/golib/postgres"
@@ -11,8 +9,8 @@ import (
 	"github.com/a-novel/service-authentication/models"
 )
 
-func AppPresetTest(port int) App[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender] {
-	return App[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender]{
+func AppPresetTest(port int) App[*otelpresets.LocalOtelConfig, postgres.Config, *smtp.TestSender] {
+	return App[*otelpresets.LocalOtelConfig, postgres.Config, *smtp.TestSender]{
 		App: Main{
 			Name: config.LoadEnv(getEnv("APP_NAME"), AppName, config.StringParser),
 		},
@@ -65,15 +63,8 @@ func AppPresetTest(port int) App[*otelpresets.SentryOtelConfig, postgres.Config,
 			),
 		},
 
-		SMTP: smtp.NewTestSender(),
-		Otel: &otelpresets.SentryOtelConfig{
-			DSN:          getEnv("SENTRY_DSN"),
-			ServerName:   config.LoadEnv(getEnv("APP_NAME"), AppName, config.StringParser),
-			Release:      getEnv("SENTRY_RELEASE"),
-			Environment:  lo.CoalesceOrEmpty(getEnv("SENTRY_ENVIRONMENT"), getEnv("ENV")),
-			FlushTimeout: config.LoadEnv(getEnv("SENTRY_FLUSH_TIMEOUT"), SentryFlushTimeout, config.DurationParser),
-			Debug:        isDebug,
-		},
+		SMTP:     smtp.NewTestSender(),
+		Otel:     &OtelDev,
 		Postgres: PostgresPresetTest,
 	}
 }

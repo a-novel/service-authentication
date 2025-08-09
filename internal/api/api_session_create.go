@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"go.opentelemetry.io/otel/codes"
-
 	"github.com/a-novel/golib/otel"
 
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -31,18 +29,15 @@ func (api *API) CreateSession(ctx context.Context, req *apimodels.LoginForm) (ap
 
 	switch {
 	case errors.Is(err, dao.ErrCredentialsNotFound):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return &apimodels.NotFoundError{Error: "user not found"}, nil
 	case errors.Is(err, lib.ErrInvalidPassword):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return &apimodels.ForbiddenError{Error: "invalid user password"}, nil
 	case err != nil:
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return nil, fmt.Errorf("login user: %w", err)
 	}

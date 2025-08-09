@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"go.opentelemetry.io/otel/codes"
-
 	"github.com/a-novel/golib/otel"
 
 	"github.com/a-novel/service-authentication/internal/services"
@@ -34,19 +32,16 @@ func (api *API) RefreshSession(
 
 	switch {
 	case errors.Is(err, models.ErrUnauthorized):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return &apimodels.ForbiddenError{Error: "invalid user password"}, nil
 	case errors.Is(err, services.ErrMismatchRefreshClaims),
 		errors.Is(err, services.ErrTokenIssuedWithDifferentRefreshToken):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return &apimodels.UnprocessableEntityError{Error: "invalid refresh token"}, nil
 	case err != nil:
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return nil, fmt.Errorf("refresh session: %w", err)
 	}

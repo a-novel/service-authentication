@@ -20,7 +20,7 @@ import (
 	cmdpkg "github.com/a-novel/service-authentication/pkg/cmd"
 )
 
-type TestConfig = config.App[*otelpresets.SentryOtelConfig, postgres.Config, *smtp.TestSender]
+type TestConfig = config.App[*otelpresets.LocalOtelConfig, postgres.Config, *smtp.TestSender]
 
 type AppTestSuite func(ctx context.Context, t *testing.T, config TestConfig)
 

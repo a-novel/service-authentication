@@ -106,10 +106,18 @@ func (service *RequestEmailUpdateService) RequestEmailUpdate(
 func (service *RequestEmailUpdateService) sendMail(
 	ctx context.Context, request RequestEmailUpdateRequest, shortCode *models.ShortCode,
 ) {
+	defer service.wg.Done()
+
 	_, span := otel.Tracer().Start(ctx, "service.RequestEmailUpdate.sendMail")
 	defer span.End()
 
-	defer service.wg.Done()
+	span.SetAttributes(
+		attribute.String("request.email", request.Email),
+		attribute.String("request.lang", request.Lang.String()),
+		attribute.String("short_code.target", shortCode.Target),
+	)
+
+	logger := otel.Logger()
 
 	err := service.source.SendMail(
 		[]string{request.Email},
@@ -124,10 +132,11 @@ func (service *RequestEmailUpdateService) sendMail(
 		},
 	)
 	if err != nil {
-		_ = otel.ReportError(span, fmt.Errorf("send mail: %w", err))
+		logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
 
 		return
 	}
 
+	logger.InfoContext(ctx, "email update request sent to "+request.Email)
 	otel.ReportSuccessNoContent(span)
 }
