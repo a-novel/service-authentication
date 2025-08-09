@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"go.opentelemetry.io/otel/codes"
 
 	"github.com/a-novel/golib/otel"
 
@@ -32,13 +31,11 @@ func (api *API) GetUser(
 
 	switch {
 	case errors.Is(err, dao.ErrCredentialsNotFound):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return &apimodels.NotFoundError{Error: "user not found"}, nil
 	case err != nil:
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return nil, fmt.Errorf("get user: %w", err)
 	}

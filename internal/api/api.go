@@ -64,6 +64,7 @@ func (api *API) NewError(ctx context.Context, err error) *apimodels.UnexpectedEr
 	// Return a different error if authentication failed. Also do not log error (we will still have the API log from
 	// the default middleware if needed).
 	var securityError *ogenerrors.SecurityError
+
 	if ok := errors.As(err, &securityError); ok {
 		logger.ErrorContext(ctx, fmt.Sprintf("security error: %v", err))
 

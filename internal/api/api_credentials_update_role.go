@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"go.opentelemetry.io/otel/codes"
 
 	"github.com/a-novel/golib/otel"
 
@@ -38,23 +37,19 @@ func (api *API) UpdateRole(ctx context.Context, req *apimodels.UpdateRoleForm) (
 
 	switch {
 	case errors.Is(err, dao.ErrCredentialsNotFound):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return &apimodels.NotFoundError{Error: err.Error()}, nil
 	case errors.Is(err, services.ErrUpdateToHigherRole), errors.Is(err, services.ErrMustDowngradeLowerRole):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return &apimodels.ForbiddenError{Error: err.Error()}, nil
 	case errors.Is(err, services.ErrUnknownRole), errors.Is(err, services.ErrSelfRoleUpdate):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return &apimodels.UnprocessableEntityError{Error: err.Error()}, nil
 	case err != nil:
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return nil, fmt.Errorf("update role: %w", err)
 	}

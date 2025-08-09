@@ -118,10 +118,18 @@ func (service *RequestPasswordResetService) RequestPasswordReset(
 func (service *RequestPasswordResetService) sendMail(
 	ctx context.Context, request RequestPasswordResetRequest, userID uuid.UUID, shortCode *models.ShortCode,
 ) {
+	defer service.wg.Done()
+
 	_, span := otel.Tracer().Start(ctx, "service.RequestPasswordReset.sendMail")
 	defer span.End()
 
-	defer service.wg.Done()
+	span.SetAttributes(
+		attribute.String("request.email", request.Email),
+		attribute.String("request.lang", request.Lang.String()),
+		attribute.String("short_code.target", shortCode.Target),
+	)
+
+	logger := otel.Logger()
 
 	err := service.source.SendMail(
 		[]string{request.Email},
@@ -136,10 +144,11 @@ func (service *RequestPasswordResetService) sendMail(
 		},
 	)
 	if err != nil {
-		_ = otel.ReportError(span, fmt.Errorf("send mail: %w", err))
+		logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
 
 		return
 	}
 
+	logger.InfoContext(ctx, "password reset request sent to "+request.Email)
 	otel.ReportSuccessNoContent(span)
 }

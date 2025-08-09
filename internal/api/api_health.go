@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/uptrace/bun"
-	"go.opentelemetry.io/otel/codes"
 
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
@@ -23,12 +22,9 @@ func (api *API) reportPostgres(ctx context.Context) apimodels.Dependency {
 	ctx, span := otel.Tracer().Start(ctx, "api.reportPostgres")
 	defer span.End()
 
-	logger := otel.Logger()
-
 	pg, err := postgres.GetContext(ctx)
 	if err != nil {
-		logger.ErrorContext(ctx, fmt.Sprintf("retrieve postgres context: %v", err))
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return apimodels.Dependency{
 			Name:   "postgres",
@@ -38,8 +34,7 @@ func (api *API) reportPostgres(ctx context.Context) apimodels.Dependency {
 
 	pgdb, ok := pg.(*bun.DB)
 	if !ok {
-		logger.ErrorContext(ctx, fmt.Sprintf("retrieve postgres context: invalid type %T", pg))
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, fmt.Errorf("retrieve postgres context: invalid type %T", pg))
 
 		return apimodels.Dependency{
 			Name:   "postgres",
@@ -49,8 +44,7 @@ func (api *API) reportPostgres(ctx context.Context) apimodels.Dependency {
 
 	err = pgdb.Ping()
 	if err != nil {
-		logger.ErrorContext(ctx, fmt.Sprintf("ping postgres: %v", err))
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return apimodels.Dependency{
 			Name:   "postgres",
@@ -70,12 +64,9 @@ func (api *API) reportJSONKeys(ctx context.Context) apimodels.Dependency {
 	ctx, span := otel.Tracer().Start(ctx, "api.reportJSONKeys")
 	defer span.End()
 
-	logger := otel.Logger()
-
 	rawRes, err := api.JKClient.Ping(ctx)
 	if err != nil {
-		logger.ErrorContext(ctx, fmt.Sprintf("ping JSON keys: %v", err))
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return apimodels.Dependency{
 			Name:   "json-keys",
@@ -85,8 +76,7 @@ func (api *API) reportJSONKeys(ctx context.Context) apimodels.Dependency {
 
 	_, ok := rawRes.(*jkApiModels.PingOK)
 	if !ok {
-		logger.ErrorContext(ctx, fmt.Sprintf("ping JSON keys: unexpected response: %v", rawRes))
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, fmt.Errorf("ping JSON keys: unexpected response type %T", rawRes))
 
 		return apimodels.Dependency{
 			Name:   "json-keys",

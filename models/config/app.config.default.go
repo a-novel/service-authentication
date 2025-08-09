@@ -6,6 +6,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel/golib/config"
+	"github.com/a-novel/golib/otel"
 	otelpresets "github.com/a-novel/golib/otel/presets"
 	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
@@ -14,7 +15,7 @@ import (
 )
 
 const (
-	SentryFlushTimeout = 2 * time.Second
+	OtelFlushTimeout = 2 * time.Second
 
 	AppName = "service-authentication"
 
@@ -34,10 +35,6 @@ var (
 	APICorsAllowedHeaders = []string{"*"}
 )
 
-var isDebug = config.LoadEnv(
-	lo.CoalesceOrEmpty(getEnv("SENTRY_DEBUG"), getEnv("DEBUG")), false, config.BoolParser,
-)
-
 var SMTPProd = smtp.ProdSender{
 	Addr:     getEnv("SMTP_ADDR"),
 	Name:     getEnv("SMTP_SENDER_NAME"),
@@ -46,7 +43,17 @@ var SMTPProd = smtp.ProdSender{
 	Domain:   getEnv("SMTP_SENDER_DOMAIN"),
 }
 
-var AppPresetDefault = App[*otelpresets.SentryOtelConfig, postgres.Config, smtp.Sender]{
+var OtelProd = otelpresets.GCloudOtelConfig{
+	ProjectID:    getEnv("GCLOUD_PROJECT_ID"),
+	FlushTimeout: OtelFlushTimeout,
+}
+
+var OtelDev = otelpresets.LocalOtelConfig{
+	PrettyPrint:  config.LoadEnv(getEnv("PRETTY_CONSOLE"), true, config.BoolParser),
+	FlushTimeout: OtelFlushTimeout,
+}
+
+var AppPresetDefault = App[otel.Config, postgres.Config, smtp.Sender]{
 	App: Main{
 		Name: config.LoadEnv(getEnv("APP_NAME"), AppName, config.StringParser),
 	},
@@ -99,14 +106,7 @@ var AppPresetDefault = App[*otelpresets.SentryOtelConfig, postgres.Config, smtp.
 		),
 	},
 
-	SMTP: lo.Ternary[smtp.Sender](getEnv("SMTP_ADDR") == "", smtp.NewDebugSender(nil), &SMTPProd),
-	Otel: &otelpresets.SentryOtelConfig{
-		DSN:          getEnv("SENTRY_DSN"),
-		ServerName:   config.LoadEnv(getEnv("APP_NAME"), AppName, config.StringParser),
-		Release:      getEnv("SENTRY_RELEASE"),
-		Environment:  lo.CoalesceOrEmpty(getEnv("SENTRY_ENVIRONMENT"), getEnv("ENV")),
-		FlushTimeout: config.LoadEnv(getEnv("SENTRY_FLUSH_TIMEOUT"), SentryFlushTimeout, config.DurationParser),
-		Debug:        isDebug,
-	},
+	SMTP:     lo.Ternary[smtp.Sender](getEnv("SMTP_ADDR") == "", smtp.NewDebugSender(nil), &SMTPProd),
+	Otel:     lo.Ternary[otel.Config](getEnv("GCLOUD_PROJECT_ID") == "", &OtelDev, &OtelProd),
 	Postgres: PostgresPresetDefault,
 }

@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"go.opentelemetry.io/otel/codes"
-
 	"github.com/a-novel/golib/otel"
 
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -28,13 +26,11 @@ func (api *API) EmailExists(ctx context.Context, params apimodels.EmailExistsPar
 
 	switch {
 	case errors.Is(err, dao.ErrCredentialsNotFound) || (!exists && err == nil):
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, errors.New("email not found"))
 
 		return &apimodels.NotFoundError{Error: "email not found"}, nil
 	case err != nil:
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
+		_ = otel.ReportError(span, err)
 
 		return nil, fmt.Errorf("check email existence: %w", err)
 	}
