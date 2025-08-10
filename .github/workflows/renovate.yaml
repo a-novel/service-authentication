@@ -10,6 +10,7 @@ jobs:
     steps:
       - uses: a-novel-kit/workflows/generic-actions/renovate@master
         with:
+          allowed_commands: '["^go generate .*", "^go tool .*"]'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
           app_id: ${{ vars.DEPENDENCY_BOT_ID }}

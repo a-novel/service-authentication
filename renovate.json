@@ -4,5 +4,9 @@
   "docker-compose": {
     "managerFilePatterns": ["/(^|/)(?:podman-)?compose[^/]*\\.ya?ml$/"]
   },
+  "postUpgradeTasks": {
+    "commands": ["go generate ./...", "go tool golangci-lint run ./... --fix"],
+    "executionMode": "branch"
+  },
   "extends": ["config:recommended"]
 }
