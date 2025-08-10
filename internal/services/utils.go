@@ -3,12 +3,15 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	jkmodels "github.com/a-novel/service-json-keys/models"
 	jkpkg "github.com/a-novel/service-json-keys/pkg"
 
 	"github.com/a-novel/service-authentication/models"
 )
+
+var SMTPTimeout = 10 * time.Second
 
 type RefreshTokenClaimsVerifier struct {
 	verifier *jkpkg.ClaimsVerifier[models.RefreshTokenClaims]

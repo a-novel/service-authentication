@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"sync"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 
@@ -118,24 +120,39 @@ func (service *RequestRegisterService) sendMail(
 
 	logger := otel.Logger()
 
-	err := service.source.SendMail(
-		[]string{request.Email},
-		models.Mails.Register,
-		request.Lang.String(),
-		map[string]any{
-			"ShortCode": shortCode.PlainCode,
-			"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-			"URL":       service.smtpConfig.Register,
-			"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
-			"_Purpose":  "register",
-		},
-	)
-	if err != nil {
-		logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+	c := make(chan error, 1)
+
+	go func() {
+		c <- service.source.SendMail(
+			[]string{request.Email},
+			models.Mails.Register,
+			request.Lang.String(),
+			map[string]any{
+				"ShortCode": shortCode.PlainCode,
+				"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+				"URL":       service.smtpConfig.Register,
+				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
+				"_Purpose":  "register",
+			},
+		)
+	}()
+
+	select {
+	case err := <-c:
+		if err != nil {
+			logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+
+			return
+		}
+
+		logger.InfoContext(ctx, "register request sent to "+request.Email)
+		otel.ReportSuccessNoContent(span)
+
+		return
+	case <-time.After(SMTPTimeout):
+		err := otel.ReportError(span, fmt.Errorf("send email: %w", os.ErrDeadlineExceeded))
+		logger.ErrorContext(ctx, err.Error())
 
 		return
 	}
-
-	logger.InfoContext(ctx, "register request sent to "+request.Email)
-	otel.ReportSuccessNoContent(span)
 }

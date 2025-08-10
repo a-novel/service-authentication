@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
+	"github.com/a-novel/golib/smtp"
 	jkApiModels "github.com/a-novel/service-json-keys/models/api"
 
 	"github.com/a-novel/service-authentication/models/api"
@@ -92,9 +94,32 @@ func (api *API) reportJSONKeys(ctx context.Context) apimodels.Dependency {
 	}
 }
 
+func (api *API) reportSMTP(ctx context.Context) apimodels.Dependency {
+	_, span := otel.Tracer().Start(ctx, "api.reportSMTP")
+	defer span.End()
+
+	err := api.SMTPClient.Ping()
+	if err != nil && !errors.Is(err, smtp.ErrPingTestSender) {
+		_ = otel.ReportError(span, err)
+
+		return apimodels.Dependency{
+			Name:   "smtp",
+			Status: apimodels.DependencyStatusDown,
+		}
+	}
+
+	otel.ReportSuccessNoContent(span)
+
+	return apimodels.Dependency{
+		Name:   "smtp",
+		Status: apimodels.DependencyStatusUp,
+	}
+}
+
 func (api *API) Healthcheck(ctx context.Context) (apimodels.HealthcheckRes, error) {
 	return &apimodels.Health{
 		Postgres: api.reportPostgres(ctx),
 		JsonKeys: api.reportJSONKeys(ctx),
+		SMTP:     api.reportSMTP(ctx),
 	}, nil
 }

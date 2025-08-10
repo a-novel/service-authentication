@@ -191,7 +191,8 @@ func App[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender](
 		ListUsersService: listUsersService,
 		GetUserService:   getUserService,
 
-		JKClient: jkClient,
+		JKClient:   jkClient,
+		SMTPClient: config.SMTP,
 	}
 
 	securityHandler, err := api.NewSecurity(accessTokenVerifier, config.PermissionsConfig)
