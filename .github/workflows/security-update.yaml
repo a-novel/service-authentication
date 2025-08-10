@@ -11,7 +11,7 @@ jobs:
       contents: write
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/security-update@master
+      - uses: a-novel-kit/workflows/node-actions/security-update@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.PUBLISH_BOT_PRIVATE_KEY }}

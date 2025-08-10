@@ -5,7 +5,7 @@ test:
 # Check code quality.
 lint:
 	go tool golangci-lint run
-	npx prettier . --check
+	pnpm lint
 	sqlfluff lint
 
 # Generate mocked interfaces for Go tests.
@@ -17,7 +17,7 @@ mocks:
 format:
 	go mod tidy
 	go tool golangci-lint run --fix
-	npx prettier . --write
+	pnpm format
 	sqlfluff fix
 
 # Lint OpenAPI specs.
@@ -27,16 +27,6 @@ openapi-lint:
 # Generate Go code.
 go-generate:
 	go generate ./...
-
-mjml-lint:
-	for i in `find ./internal/lib/mails -name "*.mjml" -type f`; do \
-		npx --yes --package=mjml@next mjml --validate $$i; \
-	done
-
-mjml-generate:
-	for i in `find ./internal/lib/mails -name "*.mjml" -type f`; do \
-		npx --yes --package=mjml@next mjml $$i -o $${i%.*}.html; \
-	done
 
 run-infra:
 	podman compose -p "${APP_NAME}" -f "${PWD}/build/podman-compose.yaml" up -d --build --pull-always

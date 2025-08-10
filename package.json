@@ -1,0 +1,21 @@
+{
+  "name": "service-authentication",
+  "version": "1.2.2",
+  "license": "AGPL-3.0",
+  "scripts": {
+    "format": "prettier --write .",
+    "lint": "pnpm run lint:prettier && pnpm run lint:mjml",
+    "lint:prettier": "prettier --check .",
+    "lint:mjml": "for i in `find . -name \"*.mjml\" -type f`; do mjml --validate $i; done",
+    "publish:major": "pnpm version major && git push --follow-tags",
+    "publish:minor": "pnpm version minor && git push --follow-tags",
+    "publish:patch": "pnpm version patch && git push --follow-tags",
+    "generate": "pnpm run generate:mjml",
+    "generate:mjml": "for i in `find . -name \"*.mjml\" -type f`; do mjml $i -o ${i%.*}.html; done"
+  },
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "mjml": "4.15.3",
+    "prettier": "^3.6.2"
+  }
+}

@@ -25,7 +25,7 @@ jobs:
         with:
           fail_message: go generate definitions are not up-to-date, please run 'go generate ./...' and commit the changes
 
-  generated-mjml:
+  generated-pnpm:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,12 +34,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: latest
-      - name: mjml
+      - name: install pnpm
         shell: bash
-        run: make mjml-generate
+        run: npm install -g pnpm
+      - name: install dependencies
+        shell: bash
+        run: pnpm i --frozen-lockfile
+      - name: pnpm
+        shell: bash
+        run: pnpm generate
       - uses: a-novel-kit/workflows/generic-actions/check-changes@master
         with:
-          fail_message: mjml definitions are not up-to-date, please run 'make mjml-generate' and commit the changes
+          fail_message: pnpm definitions are not up-to-date, please run 'pnpm generate' and commit the changes
 
   lint-go:
     runs-on: ubuntu-latest
@@ -63,12 +69,12 @@ jobs:
     steps:
       - uses: a-novel-kit/workflows/open-api-actions/lint-open-api@master
 
-  lint-prettier:
+  lint-node:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/prettier@master
+      - uses: a-novel-kit/workflows/node-actions/lint-node@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}

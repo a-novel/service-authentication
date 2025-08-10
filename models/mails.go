@@ -6,20 +6,20 @@ import (
 )
 
 var (
-	//go:embed mails/fr/email-update.mjml
+	//go:embed mails/fr/email-update.html
 	emailUpdateFr string
-	//go:embed mails/fr/password-reset.mjml
+	//go:embed mails/fr/password-reset.html
 	passwordResetFr string
-	//go:embed mails/fr/register.mjml
+	//go:embed mails/fr/register.html
 	registerFr string
 )
 
 var (
-	//go:embed mails/en/email-update.mjml
+	//go:embed mails/en/email-update.html
 	emailUpdateEn string
-	//go:embed mails/en/password-reset.mjml
+	//go:embed mails/en/password-reset.html
 	passwordResetEn string
-	//go:embed mails/en/register.mjml
+	//go:embed mails/en/register.html
 	registerEn string
 )
 

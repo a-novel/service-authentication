@@ -1,1 +1,3 @@
 pnpm-lock.yaml
+
+models/mails/**/*.html
