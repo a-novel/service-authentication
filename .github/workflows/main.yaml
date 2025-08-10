@@ -25,21 +25,6 @@ jobs:
         with:
           fail_message: go generate definitions are not up-to-date, please run 'go generate ./...' and commit the changes
 
-  generated-mockery:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: stable
-      - name: mockery
-        shell: bash
-        run: make mocks
-      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
-        with:
-          fail_message: mockery definitions are not up-to-date, please run 'make mocks' and commit the changes
   generated-mjml:
     runs-on: ubuntu-latest
     permissions:
@@ -58,7 +43,7 @@ jobs:
 
   lint-go:
     runs-on: ubuntu-latest
-    needs: [generated-go, generated-mockery]
+    needs: [generated-go]
     permissions:
       contents: read
     steps:
@@ -90,7 +75,7 @@ jobs:
           app_id: ${{ vars.DEPENDENCY_BOT_ID }}
 
   test:
-    needs: [generated-go, generated-mockery, database-build]
+    needs: [generated-go, database-build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
