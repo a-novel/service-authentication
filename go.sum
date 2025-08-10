@@ -23,8 +23,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.53.0 h1
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.53.0/go.mod h1:dtCRwgvytbGKWdlrjMOg9geBoRwRpCYWIOM/JhVsDIc=
 github.com/a-novel-kit/jwt v1.1.7 h1:FaeYN/lfA+SqnrEfY4kml5A1SDN9IYUF/NulgPeP/8U=
 github.com/a-novel-kit/jwt v1.1.7/go.mod h1:/hhLJmKPV1YnSPw/8bhMDIuYtl19Xoy03ZkMBnxYVUc=
-github.com/a-novel/golib v0.9.1 h1:CrZwFarX4o/iKpjI73Rq86edq9jZRe/lO4luAV1W8zI=
-github.com/a-novel/golib v0.9.1/go.mod h1:ZDAscJ00iVLWmtal3uCCTNvhFt975s8kikjN4H7Zy0E=
+github.com/a-novel/golib v0.9.2 h1:ogkkZjhR6hJh+nKS4APb4PkwF4YJS9omUqa8aBTMVgE=
+github.com/a-novel/golib v0.9.2/go.mod h1:ZDAscJ00iVLWmtal3uCCTNvhFt975s8kikjN4H7Zy0E=
 github.com/a-novel/service-json-keys v1.3.0 h1:H2vMLwVoqPdjMbUVJ8god8uppEz9mddWjxvqTjptvI0=
 github.com/a-novel/service-json-keys v1.3.0/go.mod h1:vTbtSt/YiHKaUtJ+hbZ1lZ4Lt7E554KZksHC9d0/8C4=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
