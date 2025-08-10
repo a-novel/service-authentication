@@ -297,6 +297,7 @@ func (*ForbiddenError) updateRoleRes()           {}
 type Health struct {
 	Postgres Dependency `json:"postgres"`
 	JsonKeys Dependency `json:"jsonKeys"`
+	SMTP     Dependency `json:"smtp"`
 }
 
 // GetPostgres returns the value of Postgres.
@@ -309,6 +310,11 @@ func (s *Health) GetJsonKeys() Dependency {
 	return s.JsonKeys
 }
 
+// GetSMTP returns the value of SMTP.
+func (s *Health) GetSMTP() Dependency {
+	return s.SMTP
+}
+
 // SetPostgres sets the value of Postgres.
 func (s *Health) SetPostgres(val Dependency) {
 	s.Postgres = val
@@ -317,6 +323,11 @@ func (s *Health) SetPostgres(val Dependency) {
 // SetJsonKeys sets the value of JsonKeys.
 func (s *Health) SetJsonKeys(val Dependency) {
 	s.JsonKeys = val
+}
+
+// SetSMTP sets the value of SMTP.
+func (s *Health) SetSMTP(val Dependency) {
+	s.SMTP = val
 }
 
 func (*Health) healthcheckRes() {}

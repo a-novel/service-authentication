@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
@@ -119,24 +121,39 @@ func (service *RequestEmailUpdateService) sendMail(
 
 	logger := otel.Logger()
 
-	err := service.source.SendMail(
-		[]string{request.Email},
-		models.Mails.EmailUpdate,
-		request.Lang.String(),
-		map[string]any{
-			"ShortCode": shortCode.PlainCode,
-			"Target":    request.ID.String(),
-			"URL":       service.smtpConfig.UpdateEmail,
-			"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
-			"_Purpose":  "email-update",
-		},
-	)
-	if err != nil {
-		logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+	c := make(chan error, 1)
+
+	go func() {
+		c <- service.source.SendMail(
+			[]string{request.Email},
+			models.Mails.EmailUpdate,
+			request.Lang.String(),
+			map[string]any{
+				"ShortCode": shortCode.PlainCode,
+				"Target":    request.ID.String(),
+				"URL":       service.smtpConfig.UpdateEmail,
+				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
+				"_Purpose":  "email-update",
+			},
+		)
+	}()
+
+	select {
+	case err := <-c:
+		if err != nil {
+			logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+
+			return
+		}
+
+		logger.InfoContext(ctx, "email update request sent to "+request.Email)
+		otel.ReportSuccessNoContent(span)
+
+		return
+	case <-time.After(SMTPTimeout):
+		err := otel.ReportError(span, fmt.Errorf("send email: %w", os.ErrDeadlineExceeded))
+		logger.ErrorContext(ctx, err.Error())
 
 		return
 	}
-
-	logger.InfoContext(ctx, "email update request sent to "+request.Email)
-	otel.ReportSuccessNoContent(span)
 }

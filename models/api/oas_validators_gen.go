@@ -134,6 +134,17 @@ func (s *Health) Validate() error {
 			Error: err,
 		})
 	}
+	if err := func() error {
+		if err := s.SMTP.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "smtp",
+			Error: err,
+		})
+	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}

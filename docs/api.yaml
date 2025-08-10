@@ -767,10 +767,13 @@ components:
       required:
         - postgres
         - jsonKeys
+        - smtp
       properties:
         postgres:
           $ref: "#/components/schemas/Dependency"
         jsonKeys:
+          $ref: "#/components/schemas/Dependency"
+        smtp:
           $ref: "#/components/schemas/Dependency"
 
     Token:

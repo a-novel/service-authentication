@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
@@ -131,24 +133,39 @@ func (service *RequestPasswordResetService) sendMail(
 
 	logger := otel.Logger()
 
-	err := service.source.SendMail(
-		[]string{request.Email},
-		models.Mails.PasswordReset,
-		request.Lang.String(),
-		map[string]any{
-			"ShortCode": shortCode.PlainCode,
-			"Target":    userID.String(),
-			"URL":       service.smtpConfig.UpdatePassword,
-			"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
-			"_Purpose":  "password-reset",
-		},
-	)
-	if err != nil {
-		logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+	c := make(chan error, 1)
+
+	go func() {
+		c <- service.source.SendMail(
+			[]string{request.Email},
+			models.Mails.PasswordReset,
+			request.Lang.String(),
+			map[string]any{
+				"ShortCode": shortCode.PlainCode,
+				"Target":    userID.String(),
+				"URL":       service.smtpConfig.UpdatePassword,
+				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
+				"_Purpose":  "password-reset",
+			},
+		)
+	}()
+
+	select {
+	case err := <-c:
+		if err != nil {
+			logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+
+			return
+		}
+
+		logger.InfoContext(ctx, "password reset request sent to "+request.Email)
+		otel.ReportSuccessNoContent(span)
+
+		return
+	case <-time.After(SMTPTimeout):
+		err := otel.ReportError(span, fmt.Errorf("send email: %w", os.ErrDeadlineExceeded))
+		logger.ErrorContext(ctx, err.Error())
 
 		return
 	}
-
-	logger.InfoContext(ctx, "password reset request sent to "+request.Email)
-	otel.ReportSuccessNoContent(span)
 }

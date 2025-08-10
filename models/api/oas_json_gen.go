@@ -675,11 +675,16 @@ func (s *Health) encodeFields(e *jx.Encoder) {
 		e.FieldStart("jsonKeys")
 		s.JsonKeys.Encode(e)
 	}
+	{
+		e.FieldStart("smtp")
+		s.SMTP.Encode(e)
+	}
 }
 
-var jsonFieldsNameOfHealth = [2]string{
+var jsonFieldsNameOfHealth = [3]string{
 	0: "postgres",
 	1: "jsonKeys",
+	2: "smtp",
 }
 
 // Decode decodes Health from json.
@@ -711,6 +716,16 @@ func (s *Health) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"jsonKeys\"")
 			}
+		case "smtp":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.SMTP.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"smtp\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -721,7 +736,7 @@ func (s *Health) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

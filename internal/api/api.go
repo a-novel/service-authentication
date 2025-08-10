@@ -9,6 +9,7 @@ import (
 	"github.com/ogen-go/ogen/ogenerrors"
 
 	"github.com/a-novel/golib/otel"
+	"github.com/a-novel/golib/smtp"
 	jkApiModels "github.com/a-novel/service-json-keys/models/api"
 
 	"github.com/a-novel/service-authentication/models"
@@ -50,7 +51,8 @@ type API struct {
 	ListUsersService ListUsersService
 	GetUserService   GetUserService
 
-	JKClient *jkApiModels.Client
+	JKClient   *jkApiModels.Client
+	SMTPClient smtp.Sender
 }
 
 func (api *API) NewError(ctx context.Context, err error) *apimodels.UnexpectedErrorStatusCode {
