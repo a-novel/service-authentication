@@ -1386,6 +1386,50 @@ func (_c *MockRequestEmailUpdateSource_CreateShortCode_Call) RunAndReturn(run fu
 	return _c
 }
 
+// Ping provides a mock function for the type MockRequestEmailUpdateSource
+func (_mock *MockRequestEmailUpdateSource) Ping() error {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Ping")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func() error); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRequestEmailUpdateSource_Ping_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Ping'
+type MockRequestEmailUpdateSource_Ping_Call struct {
+	*mock.Call
+}
+
+// Ping is a helper method to define mock.On call
+func (_e *MockRequestEmailUpdateSource_Expecter) Ping() *MockRequestEmailUpdateSource_Ping_Call {
+	return &MockRequestEmailUpdateSource_Ping_Call{Call: _e.mock.On("Ping")}
+}
+
+func (_c *MockRequestEmailUpdateSource_Ping_Call) Run(run func()) *MockRequestEmailUpdateSource_Ping_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockRequestEmailUpdateSource_Ping_Call) Return(err error) *MockRequestEmailUpdateSource_Ping_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRequestEmailUpdateSource_Ping_Call) RunAndReturn(run func() error) *MockRequestEmailUpdateSource_Ping_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SendMail provides a mock function for the type MockRequestEmailUpdateSource
 func (_mock *MockRequestEmailUpdateSource) SendMail(to []string, t *template.Template, tName string, data any) error {
 	ret := _mock.Called(to, t, tName, data)
@@ -1546,6 +1590,50 @@ func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) Return(shortCode 
 }
 
 func (_c *MockRequestPasswordResetSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models0.ShortCode, error)) *MockRequestPasswordResetSource_CreateShortCode_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Ping provides a mock function for the type MockRequestPasswordResetSource
+func (_mock *MockRequestPasswordResetSource) Ping() error {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Ping")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func() error); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRequestPasswordResetSource_Ping_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Ping'
+type MockRequestPasswordResetSource_Ping_Call struct {
+	*mock.Call
+}
+
+// Ping is a helper method to define mock.On call
+func (_e *MockRequestPasswordResetSource_Expecter) Ping() *MockRequestPasswordResetSource_Ping_Call {
+	return &MockRequestPasswordResetSource_Ping_Call{Call: _e.mock.On("Ping")}
+}
+
+func (_c *MockRequestPasswordResetSource_Ping_Call) Run(run func()) *MockRequestPasswordResetSource_Ping_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockRequestPasswordResetSource_Ping_Call) Return(err error) *MockRequestPasswordResetSource_Ping_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRequestPasswordResetSource_Ping_Call) RunAndReturn(run func() error) *MockRequestPasswordResetSource_Ping_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1778,6 +1866,50 @@ func (_c *MockRequestRegisterSource_CreateShortCode_Call) Return(shortCode *mode
 }
 
 func (_c *MockRequestRegisterSource_CreateShortCode_Call) RunAndReturn(run func(ctx context.Context, request services.CreateShortCodeRequest) (*models0.ShortCode, error)) *MockRequestRegisterSource_CreateShortCode_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Ping provides a mock function for the type MockRequestRegisterSource
+func (_mock *MockRequestRegisterSource) Ping() error {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Ping")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func() error); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRequestRegisterSource_Ping_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Ping'
+type MockRequestRegisterSource_Ping_Call struct {
+	*mock.Call
+}
+
+// Ping is a helper method to define mock.On call
+func (_e *MockRequestRegisterSource_Expecter) Ping() *MockRequestRegisterSource_Ping_Call {
+	return &MockRequestRegisterSource_Ping_Call{Call: _e.mock.On("Ping")}
+}
+
+func (_c *MockRequestRegisterSource_Ping_Call) Run(run func()) *MockRequestRegisterSource_Ping_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockRequestRegisterSource_Ping_Call) Return(err error) *MockRequestRegisterSource_Ping_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRequestRegisterSource_Ping_Call) RunAndReturn(run func() error) *MockRequestRegisterSource_Ping_Call {
 	_c.Call.Return(run)
 	return _c
 }
