@@ -7,11 +7,6 @@ lint:
 	go tool golangci-lint run
 	pnpm lint
 
-# Generate mocked interfaces for Go tests.
-mocks:
-	rm -rf `find . -type d -name mocks`
-	go run github.com/vektra/mockery/v3@v3.5.2
-
 # Reformat code so it passes the code style lint checks.
 format:
 	go mod tidy
