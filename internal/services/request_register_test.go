@@ -104,7 +104,7 @@ func TestRequestRegister(t *testing.T) {
 							"URL":       smtpConfig.Register,
 							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageRequestRegister].
-								TTL.String(),
+								TTL.Hours(),
 							"Banner":   assets.BannerBase64,
 							"_Purpose": "register",
 						},

@@ -132,7 +132,7 @@ func (service *RequestRegisterService) sendMail(
 				"ShortCode": shortCode.PlainCode,
 				"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 				"URL":       service.smtpConfig.Register,
-				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
+				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL.Hours(),
 				"Banner":    assets.BannerBase64,
 				"_Purpose":  "register",
 			},

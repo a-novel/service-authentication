@@ -141,7 +141,7 @@ func TestRequestPasswordReset(t *testing.T) {
 							"URL":       smtpConfig.UpdatePassword,
 							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageResetPassword].
-								TTL.String(),
+								TTL.Hours(),
 							"Banner":   assets.BannerBase64,
 							"_Purpose": "password-reset",
 						},

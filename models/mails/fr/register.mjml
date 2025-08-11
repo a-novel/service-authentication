@@ -10,6 +10,13 @@ Content-Type: text/html; charset="UTF-8";
   <mj-head>
     <mj-title>Demande d'inscription.</mj-title>
     <mj-preview>Ton lien d'inscription Agora Storyverse.</mj-preview>
+
+    <mj-style>
+      strong {
+        color: #ffab33 !important;
+        font-weight: bold !important;
+      }
+    </mj-style>
   </mj-head>
   <mj-body background-color="#000">
     <mj-include path="../mj-header.mjml" />
@@ -17,14 +24,14 @@ Content-Type: text/html; charset="UTF-8";
     <mj-section>
       <mj-column>
         <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
-          Pour rejoindre la communauté Agora Storyverse, rempli simplement le formulaire via le lien ci-dessous.
+          Pour <strong>rejoindre la communauté Agora Storyverse</strong>, rempli le formulaire via le lien ci-dessous.
           <br /><br />
-          Ce lien est valable pour une durée de {{.Duration}} seulement, alors fais vite!
+          Ce lien est valable pour une durée de <strong>{{.Duration}}h</strong> seulement, alors fais vite!
         </mj-text>
 
         <mj-button
           font-family="Helvetica"
-          background-color="#32adff"
+          background-color="#ffab33"
           color="white"
           href="{{.URL}}?shortCode={{.ShortCode}}&target={{.Target}}"
         >

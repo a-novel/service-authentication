@@ -145,7 +145,7 @@ func (service *RequestPasswordResetService) sendMail(
 				"ShortCode": shortCode.PlainCode,
 				"Target":    userID.String(),
 				"URL":       service.smtpConfig.UpdatePassword,
-				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
+				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageResetPassword].TTL.Hours(),
 				"Banner":    assets.BannerBase64,
 				"_Purpose":  "password-reset",
 			},

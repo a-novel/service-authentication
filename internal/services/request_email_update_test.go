@@ -106,7 +106,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 							"URL":       smtpConfig.UpdateEmail,
 							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageValidateMail].
-								TTL.String(),
+								TTL.Hours(),
 							"Banner":   assets.BannerBase64,
 							"_Purpose": "email-update",
 						},

@@ -10,6 +10,13 @@ Content-Type: text/html; charset="UTF-8";
   <mj-head>
     <mj-title>Email Update Request.</mj-title>
     <mj-preview>Update your Agora Storyverse email.</mj-preview>
+
+    <mj-style>
+      strong {
+        color: #ffab33 !important;
+        font-weight: bold !important;
+      }
+    </mj-style>
   </mj-head>
   <mj-body background-color="#000">
     <mj-include path="../mj-header.mjml" />
@@ -17,17 +24,16 @@ Content-Type: text/html; charset="UTF-8";
     <mj-section>
       <mj-column>
         <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
-          You have recently requested an update to your Agora Storyverse email. The update will be processed once you
-          click on the link at the end of this message.
-          <br /><br />
+          You have recently requested to <strong>update the email</strong> of your Agora Storyverse account. Validate
+          your email by clicking the link below to complete the update. <br /><br />
           If you did not initiate this request, you can ignore this message.
           <br /><br />
-          This link is valid for {{.Duration}} only, so act fast!
+          This link is valid for <strong>{{.Duration}}h</strong> only, so act fast!
         </mj-text>
 
         <mj-button
           font-family="Helvetica"
-          background-color="#32adff"
+          background-color="#ffab33"
           color="white"
           href="{{.URL}}?shortCode={{.ShortCode}}&target={{.Target}}"
         >

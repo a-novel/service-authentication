@@ -4,7 +4,7 @@
       <mj-column>
         <mj-image width="500px" alt="Agora Logo" src="{{.Banner}}" />
 
-        <mj-divider border-color="#32ADFF" />
+        <mj-divider border-color="#ffab33" />
       </mj-column>
     </mj-section>
   </mj-body>

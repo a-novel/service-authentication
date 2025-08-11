@@ -133,7 +133,7 @@ func (service *RequestEmailUpdateService) sendMail(
 				"ShortCode": shortCode.PlainCode,
 				"Target":    request.ID.String(),
 				"URL":       service.smtpConfig.UpdateEmail,
-				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
+				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL.Hours(),
 				"Banner":    assets.BannerBase64,
 				"_Purpose":  "email-update",
 			},
