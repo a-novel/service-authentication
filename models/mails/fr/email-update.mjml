@@ -1,7 +1,10 @@
 <mjml>
+  <mj-raw position="file-start">
+    Subject: Demande de mise à jour du courriel.; MIME-version: 1.0; Content-Type: text/html; charset="UTF-8";
+  </mj-raw>
   <mj-head>
     <mj-title>Demande de mise à jour du courriel.</mj-title>
-    <mj-preview> Mise à jour de ton courriel Agora des Écrivains. </mj-preview>
+    <mj-preview> Mise à jour de ton courriel Agora Storyverse. </mj-preview>
   </mj-head>
   <mj-body background-color="#000">
     <mj-section>
@@ -15,8 +18,8 @@
         <mj-divider border-color="#32ADFF" />
 
         <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
-          Tu as récemment émis une demande de mise à jour de ton courriel Agora des Écrivains. La mise à jour sera prise
-          en compte une fois que tu auras cliqué sur le lien en fin de message.
+          Tu as récemment émis une demande de mise à jour de ton courriel Agora Storyverse. La mise à jour sera prise en
+          compte une fois que tu auras cliqué sur le lien en fin de message.
           <br /><br />
           Si tu n'es pas à l'origine de cette demande, tu peux ignorer ce message.
           <br /><br />

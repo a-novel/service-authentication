@@ -1,7 +1,10 @@
 <mjml>
+  <mj-raw position="file-start">
+    Subject: Email Update Request.; MIME-version: 1.0; Content-Type: text/html; charset="UTF-8";
+  </mj-raw>
   <mj-head>
     <mj-title>Email Update Request.</mj-title>
-    <mj-preview> Update your Agora des Écrivains email. </mj-preview>
+    <mj-preview> Update your Agora Storyverse email. </mj-preview>
   </mj-head>
   <mj-body background-color="#000">
     <mj-section>
@@ -15,7 +18,7 @@
         <mj-divider border-color="#32ADFF" />
 
         <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
-          You have recently requested an update to your Agora des Écrivains email. The update will be processed once you
+          You have recently requested an update to your Agora Storyverse email. The update will be processed once you
           click on the link at the end of this message.
           <br /><br />
           If you did not initiate this request, you can ignore this message.

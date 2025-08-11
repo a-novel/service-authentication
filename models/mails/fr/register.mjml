@@ -1,7 +1,10 @@
 <mjml>
+  <mj-raw position="file-start">
+    Subject: Demande d'inscription.; MIME-version: 1.0; Content-Type: text/html; charset="UTF-8";
+  </mj-raw>
   <mj-head>
     <mj-title>Demande d'inscription.</mj-title>
-    <mj-preview> Ton lien d'inscription Agora des Écrivains. </mj-preview>
+    <mj-preview> Ton lien d'inscription Agora Storyverse. </mj-preview>
   </mj-head>
   <mj-body background-color="#000">
     <mj-section>
@@ -15,7 +18,7 @@
         <mj-divider border-color="#32ADFF" />
 
         <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
-          Pour rejoindre la communauté Agora des Écrivains, rempli simplement le formulaire via le lien ci-dessous.
+          Pour rejoindre la communauté Agora Storyverse, rempli simplement le formulaire via le lien ci-dessous.
           <br /><br />
           Ce lien est valable pour une durée de {{.Duration}} seulement, alors fais vite!
         </mj-text>
