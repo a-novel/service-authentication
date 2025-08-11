@@ -126,7 +126,7 @@ func (service *RequestEmailUpdateService) sendMail(
 
 	go func() {
 		c <- service.source.SendMail(
-			[]string{request.Email},
+			smtp.MailUsers{{Email: request.Email}},
 			models.Mails.EmailUpdate,
 			request.Lang.String(),
 			map[string]any{

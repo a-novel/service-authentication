@@ -138,7 +138,7 @@ func (service *RequestPasswordResetService) sendMail(
 
 	go func() {
 		c <- service.source.SendMail(
-			[]string{request.Email},
+			smtp.MailUsers{{Email: request.Email}},
 			models.Mails.PasswordReset,
 			request.Lang.String(),
 			map[string]any{

@@ -8,6 +8,7 @@ import (
 	"context"
 	"text/template"
 
+	"github.com/a-novel/golib/smtp"
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/internal/services"
 	models0 "github.com/a-novel/service-authentication/models"
@@ -1431,7 +1432,7 @@ func (_c *MockRequestEmailUpdateSource_Ping_Call) RunAndReturn(run func() error)
 }
 
 // SendMail provides a mock function for the type MockRequestEmailUpdateSource
-func (_mock *MockRequestEmailUpdateSource) SendMail(to []string, t *template.Template, tName string, data any) error {
+func (_mock *MockRequestEmailUpdateSource) SendMail(to smtp.MailUsers, t *template.Template, tName string, data any) error {
 	ret := _mock.Called(to, t, tName, data)
 
 	if len(ret) == 0 {
@@ -1439,7 +1440,7 @@ func (_mock *MockRequestEmailUpdateSource) SendMail(to []string, t *template.Tem
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func([]string, *template.Template, string, any) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(smtp.MailUsers, *template.Template, string, any) error); ok {
 		r0 = returnFunc(to, t, tName, data)
 	} else {
 		r0 = ret.Error(0)
@@ -1453,7 +1454,7 @@ type MockRequestEmailUpdateSource_SendMail_Call struct {
 }
 
 // SendMail is a helper method to define mock.On call
-//   - to []string
+//   - to smtp.MailUsers
 //   - t *template.Template
 //   - tName string
 //   - data any
@@ -1461,11 +1462,11 @@ func (_e *MockRequestEmailUpdateSource_Expecter) SendMail(to interface{}, t inte
 	return &MockRequestEmailUpdateSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
-func (_c *MockRequestEmailUpdateSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestEmailUpdateSource_SendMail_Call {
+func (_c *MockRequestEmailUpdateSource_SendMail_Call) Run(run func(to smtp.MailUsers, t *template.Template, tName string, data any)) *MockRequestEmailUpdateSource_SendMail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 []string
+		var arg0 smtp.MailUsers
 		if args[0] != nil {
-			arg0 = args[0].([]string)
+			arg0 = args[0].(smtp.MailUsers)
 		}
 		var arg1 *template.Template
 		if args[1] != nil {
@@ -1494,7 +1495,7 @@ func (_c *MockRequestEmailUpdateSource_SendMail_Call) Return(err error) *MockReq
 	return _c
 }
 
-func (_c *MockRequestEmailUpdateSource_SendMail_Call) RunAndReturn(run func(to []string, t *template.Template, tName string, data any) error) *MockRequestEmailUpdateSource_SendMail_Call {
+func (_c *MockRequestEmailUpdateSource_SendMail_Call) RunAndReturn(run func(to smtp.MailUsers, t *template.Template, tName string, data any) error) *MockRequestEmailUpdateSource_SendMail_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1707,7 +1708,7 @@ func (_c *MockRequestPasswordResetSource_SelectCredentialsByEmail_Call) RunAndRe
 }
 
 // SendMail provides a mock function for the type MockRequestPasswordResetSource
-func (_mock *MockRequestPasswordResetSource) SendMail(to []string, t *template.Template, tName string, data any) error {
+func (_mock *MockRequestPasswordResetSource) SendMail(to smtp.MailUsers, t *template.Template, tName string, data any) error {
 	ret := _mock.Called(to, t, tName, data)
 
 	if len(ret) == 0 {
@@ -1715,7 +1716,7 @@ func (_mock *MockRequestPasswordResetSource) SendMail(to []string, t *template.T
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func([]string, *template.Template, string, any) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(smtp.MailUsers, *template.Template, string, any) error); ok {
 		r0 = returnFunc(to, t, tName, data)
 	} else {
 		r0 = ret.Error(0)
@@ -1729,7 +1730,7 @@ type MockRequestPasswordResetSource_SendMail_Call struct {
 }
 
 // SendMail is a helper method to define mock.On call
-//   - to []string
+//   - to smtp.MailUsers
 //   - t *template.Template
 //   - tName string
 //   - data any
@@ -1737,11 +1738,11 @@ func (_e *MockRequestPasswordResetSource_Expecter) SendMail(to interface{}, t in
 	return &MockRequestPasswordResetSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
-func (_c *MockRequestPasswordResetSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestPasswordResetSource_SendMail_Call {
+func (_c *MockRequestPasswordResetSource_SendMail_Call) Run(run func(to smtp.MailUsers, t *template.Template, tName string, data any)) *MockRequestPasswordResetSource_SendMail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 []string
+		var arg0 smtp.MailUsers
 		if args[0] != nil {
-			arg0 = args[0].([]string)
+			arg0 = args[0].(smtp.MailUsers)
 		}
 		var arg1 *template.Template
 		if args[1] != nil {
@@ -1770,7 +1771,7 @@ func (_c *MockRequestPasswordResetSource_SendMail_Call) Return(err error) *MockR
 	return _c
 }
 
-func (_c *MockRequestPasswordResetSource_SendMail_Call) RunAndReturn(run func(to []string, t *template.Template, tName string, data any) error) *MockRequestPasswordResetSource_SendMail_Call {
+func (_c *MockRequestPasswordResetSource_SendMail_Call) RunAndReturn(run func(to smtp.MailUsers, t *template.Template, tName string, data any) error) *MockRequestPasswordResetSource_SendMail_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1915,7 +1916,7 @@ func (_c *MockRequestRegisterSource_Ping_Call) RunAndReturn(run func() error) *M
 }
 
 // SendMail provides a mock function for the type MockRequestRegisterSource
-func (_mock *MockRequestRegisterSource) SendMail(to []string, t *template.Template, tName string, data any) error {
+func (_mock *MockRequestRegisterSource) SendMail(to smtp.MailUsers, t *template.Template, tName string, data any) error {
 	ret := _mock.Called(to, t, tName, data)
 
 	if len(ret) == 0 {
@@ -1923,7 +1924,7 @@ func (_mock *MockRequestRegisterSource) SendMail(to []string, t *template.Templa
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func([]string, *template.Template, string, any) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(smtp.MailUsers, *template.Template, string, any) error); ok {
 		r0 = returnFunc(to, t, tName, data)
 	} else {
 		r0 = ret.Error(0)
@@ -1937,7 +1938,7 @@ type MockRequestRegisterSource_SendMail_Call struct {
 }
 
 // SendMail is a helper method to define mock.On call
-//   - to []string
+//   - to smtp.MailUsers
 //   - t *template.Template
 //   - tName string
 //   - data any
@@ -1945,11 +1946,11 @@ func (_e *MockRequestRegisterSource_Expecter) SendMail(to interface{}, t interfa
 	return &MockRequestRegisterSource_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
-func (_c *MockRequestRegisterSource_SendMail_Call) Run(run func(to []string, t *template.Template, tName string, data any)) *MockRequestRegisterSource_SendMail_Call {
+func (_c *MockRequestRegisterSource_SendMail_Call) Run(run func(to smtp.MailUsers, t *template.Template, tName string, data any)) *MockRequestRegisterSource_SendMail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 []string
+		var arg0 smtp.MailUsers
 		if args[0] != nil {
-			arg0 = args[0].([]string)
+			arg0 = args[0].(smtp.MailUsers)
 		}
 		var arg1 *template.Template
 		if args[1] != nil {
@@ -1978,7 +1979,7 @@ func (_c *MockRequestRegisterSource_SendMail_Call) Return(err error) *MockReques
 	return _c
 }
 
-func (_c *MockRequestRegisterSource_SendMail_Call) RunAndReturn(run func(to []string, t *template.Template, tName string, data any) error) *MockRequestRegisterSource_SendMail_Call {
+func (_c *MockRequestRegisterSource_SendMail_Call) RunAndReturn(run func(to smtp.MailUsers, t *template.Template, tName string, data any) error) *MockRequestRegisterSource_SendMail_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/smtp"
+
 	"github.com/a-novel/service-authentication/internal/services"
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
@@ -95,7 +97,7 @@ func TestRequestRegister(t *testing.T) {
 			if testCase.sendMail {
 				source.EXPECT().
 					SendMail(
-						[]string{testCase.request.Email},
+						smtp.MailUsers{{Email: testCase.request.Email}},
 						models.Mails.Register,
 						testCase.request.Lang.String(),
 						map[string]any{

@@ -125,7 +125,7 @@ func (service *RequestRegisterService) sendMail(
 
 	go func() {
 		c <- service.source.SendMail(
-			[]string{request.Email},
+			smtp.MailUsers{{Email: request.Email}},
 			models.Mails.Register,
 			request.Lang.String(),
 			map[string]any{
