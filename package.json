@@ -2,6 +2,7 @@
   "name": "service-authentication",
   "version": "1.2.3",
   "license": "AGPL-3.0",
+  "type": "module",
   "scripts": {
     "format": "pnpm run format:prettier",
     "format:prettier": "prettier --write . --config prettier.config.js",
