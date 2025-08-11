@@ -14,6 +14,7 @@ import (
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/config"
+	"github.com/a-novel/service-authentication/models/mails/assets"
 )
 
 func TestRequestPasswordReset(t *testing.T) {
@@ -141,6 +142,7 @@ func TestRequestPasswordReset(t *testing.T) {
 							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageResetPassword].
 								TTL.String(),
+							"Banner":   assets.BannerBase64,
 							"_Purpose": "password-reset",
 						},
 					).

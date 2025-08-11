@@ -1,0 +1,11 @@
+<mjml>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-image width="500px" alt="Agora Logo" src="{{.Banner}}" />
+
+        <mj-divider border-color="#32ADFF" />
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

@@ -15,6 +15,7 @@ import (
 
 	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/config"
+	"github.com/a-novel/service-authentication/models/mails/assets"
 )
 
 // RequestEmailUpdateSource is the source used to perform the RequestEmailUpdateService.RequestEmailUpdate action.
@@ -133,6 +134,7 @@ func (service *RequestEmailUpdateService) sendMail(
 				"Target":    request.ID.String(),
 				"URL":       service.smtpConfig.UpdateEmail,
 				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageValidateMail].TTL.String(),
+				"Banner":    assets.BannerBase64,
 				"_Purpose":  "email-update",
 			},
 		)

@@ -15,6 +15,7 @@ import (
 
 	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/config"
+	"github.com/a-novel/service-authentication/models/mails/assets"
 )
 
 // RequestRegisterSource is the source used to perform the RequestRegisterService.RequestRegister action.
@@ -132,6 +133,7 @@ func (service *RequestRegisterService) sendMail(
 				"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 				"URL":       service.smtpConfig.Register,
 				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageRequestRegister].TTL.String(),
+				"Banner":    assets.BannerBase64,
 				"_Purpose":  "register",
 			},
 		)

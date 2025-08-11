@@ -16,6 +16,7 @@ import (
 	"github.com/a-novel/service-authentication/internal/dao"
 	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/config"
+	"github.com/a-novel/service-authentication/models/mails/assets"
 )
 
 // RequestPasswordResetSource is the source used to perform the RequestPasswordResetService.RequestPasswordReset
@@ -145,6 +146,7 @@ func (service *RequestPasswordResetService) sendMail(
 				"Target":    userID.String(),
 				"URL":       service.smtpConfig.UpdatePassword,
 				"Duration":  service.shortCodesConfig.Usages[models.ShortCodeUsageResetPassword].TTL.String(),
+				"Banner":    assets.BannerBase64,
 				"_Purpose":  "password-reset",
 			},
 		)

@@ -14,6 +14,7 @@ import (
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/config"
+	"github.com/a-novel/service-authentication/models/mails/assets"
 )
 
 func TestRequestRegister(t *testing.T) {
@@ -104,6 +105,7 @@ func TestRequestRegister(t *testing.T) {
 							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageRequestRegister].
 								TTL.String(),
+							"Banner":   assets.BannerBase64,
 							"_Purpose": "register",
 						},
 					).

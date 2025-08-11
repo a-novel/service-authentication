@@ -13,6 +13,7 @@ import (
 	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
 	"github.com/a-novel/service-authentication/models"
 	"github.com/a-novel/service-authentication/models/config"
+	"github.com/a-novel/service-authentication/models/mails/assets"
 )
 
 func TestRequestEmailUpdate(t *testing.T) {
@@ -106,6 +107,7 @@ func TestRequestEmailUpdate(t *testing.T) {
 							"Duration": config.ShortCodesPresetDefault.
 								Usages[models.ShortCodeUsageValidateMail].
 								TTL.String(),
+							"Banner":   assets.BannerBase64,
 							"_Purpose": "email-update",
 						},
 					).
