@@ -15,15 +15,12 @@
         <mj-divider border-color="#32ADFF" />
 
         <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
-          Tu as récemment émis une demande de mise à jour de ton courriel Agora
-          des Écrivains. La mise à jour sera prise en compte une fois que tu
-          auras cliqué sur le lien en fin de message.
+          Tu as récemment émis une demande de mise à jour de ton courriel Agora des Écrivains. La mise à jour sera prise
+          en compte une fois que tu auras cliqué sur le lien en fin de message.
           <br /><br />
-          Si tu n'es pas à l'origine de cette demande, tu peux ignorer ce
-          message.
+          Si tu n'es pas à l'origine de cette demande, tu peux ignorer ce message.
           <br /><br />
-          Ce lien est valable pour une durée de {{.Duration}} seulement, alors
-          fais vite!
+          Ce lien est valable pour une durée de {{.Duration}} seulement, alors fais vite!
         </mj-text>
 
         <mj-button

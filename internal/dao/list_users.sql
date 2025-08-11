@@ -4,7 +4,16 @@ SELECT
   role,
   created_at,
   updated_at
-FROM credentials
-WHERE ((?2) IS NULL OR role IN (?2))
-ORDER BY updated_at DESC
-LIMIT ?0 OFFSET ?1;
+FROM
+  credentials
+WHERE
+  (
+    (?2) IS NULL
+    OR role IN (?2)
+  )
+ORDER BY
+  updated_at DESC
+LIMIT
+  ?0
+OFFSET
+  ?1;

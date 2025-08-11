@@ -15,11 +15,9 @@
         <mj-divider border-color="#32ADFF" />
 
         <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
-          Pour rejoindre la communauté Agora des Écrivains, rempli simplement le
-          formulaire via le lien ci-dessous.
+          Pour rejoindre la communauté Agora des Écrivains, rempli simplement le formulaire via le lien ci-dessous.
           <br /><br />
-          Ce lien est valable pour une durée de {{.Duration}} seulement, alors
-          fais vite!
+          Ce lien est valable pour une durée de {{.Duration}} seulement, alors fais vite!
         </mj-text>
 
         <mj-button

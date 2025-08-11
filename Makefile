@@ -6,7 +6,6 @@ test:
 lint:
 	go tool golangci-lint run
 	pnpm lint
-	sqlfluff lint
 
 # Generate mocked interfaces for Go tests.
 mocks:
@@ -18,7 +17,6 @@ format:
 	go mod tidy
 	go tool golangci-lint run --fix
 	pnpm format
-	sqlfluff fix
 
 # Lint OpenAPI specs.
 openapi-lint:
@@ -37,6 +35,3 @@ run-infra-down:
 # Run the API
 run-api:
 	bash -c "set -m; bash '$(CURDIR)/scripts/run.sh'"
-
-install:
-	pipx install sqlfluff

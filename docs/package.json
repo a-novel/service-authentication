@@ -2,12 +2,11 @@
   "name": "service-authentication",
   "version": "1.0.0",
   "description": "Github Pages site",
-  "main": "index.js",
-  "packageManager": "pnpm@10.14.0",
   "type": "module",
+  "main": "index.js",
   "scripts": {
-    "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
+    "docs:dev": "vitepress dev",
     "docs:preview": "vitepress preview"
   },
   "devDependencies": {
@@ -16,5 +15,6 @@
     "vite-plugin-static-copy": "^3.1.1",
     "vitepress": "^1.6.3",
     "vue": "^3.5.18"
-  }
+  },
+  "packageManager": "pnpm@10.14.0"
 }

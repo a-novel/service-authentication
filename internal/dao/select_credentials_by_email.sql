@@ -1,2 +1,6 @@
-SELECT * FROM credentials
-WHERE email = ?0;
+SELECT
+  *
+FROM
+  credentials
+WHERE
+  email = ?0;
