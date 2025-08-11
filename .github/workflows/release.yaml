@@ -126,7 +126,7 @@ jobs:
       AUTH_PLATFORM_URL: http://localhost:6001
       DEBUG: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@master
         with:
@@ -189,7 +189,7 @@ jobs:
       AUTH_PLATFORM_URL: http://localhost:6001
       DEBUG: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@master
         with:
