@@ -88,8 +88,8 @@ github.com/OpenPeeDeeP/depguard/v2 v2.2.1 h1:vckeWVESWp6Qog7UZSARNqfu/cZqvki8zsu
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1/go.mod h1:q4DKzC4UcVaAvcfd41CZh0PWpGgzrVxUYBlgKNGquUo=
 github.com/a-novel-kit/jwt v1.1.8 h1:773R9xzbQ8XLNtbFOx3dX7TNMe4JTF+ooORL3WOyNBU=
 github.com/a-novel-kit/jwt v1.1.8/go.mod h1:vnKtv+WNjuPRnfLVOgkfy0bCqo30f3D+gO+TGeMRKi8=
-github.com/a-novel/golib v0.10.0 h1:Ury4zC+GF7mP7A0aw/fIpC8Fso04tieK208OjasM+pE=
-github.com/a-novel/golib v0.10.0/go.mod h1:ZuAC931jiWmhigkHYomDNrOa9HKO6yoFgCeGp8OQ/Rc=
+github.com/a-novel/golib v0.10.1 h1:kGcF4Izr0aq/MQUPR9p9O6yK0PH5gP5iTZnr9ZVOctU=
+github.com/a-novel/golib v0.10.1/go.mod h1:kPwMc1zDpuJlWmsdgw0A/VTdFoJREnXcIXm/StoThCQ=
 github.com/a-novel/service-json-keys v1.3.1 h1:NLOXZE1X0zsDFpc8iNcJoVGpb6Hznwltll+2bPhnHpc=
 github.com/a-novel/service-json-keys v1.3.1/go.mod h1:hA58x/4jsZqIDkD32Q+dWMPcFa+TQ5ZQm3/Hcrw0+Mk=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
@@ -215,10 +215,10 @@ github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/
 github.com/fsnotify/fsnotify v1.8.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/fzipp/gocyclo v0.6.0 h1:lsblElZG7d3ALtGMx9fmxeTKZaLLpU8mET09yN4BBLo=
 github.com/fzipp/gocyclo v0.6.0/go.mod h1:rXPyn8fnlpa0R2csP/31uerbiVBugk5whMdlyaLkLoA=
-github.com/getsentry/sentry-go v0.35.0 h1:+FJNlnjJsZMG3g0/rmmP7GiKjQoUF5EXfEtBwtPtkzY=
-github.com/getsentry/sentry-go v0.35.0/go.mod h1:C55omcY9ChRQIUcVcGcs+Zdy4ZpQGvNJ7JYHIoSWOtE=
-github.com/getsentry/sentry-go/otel v0.35.0 h1:wotfrYR27zTviSnn164pTRBbupjyqsJ0F9rNmzTMmDc=
-github.com/getsentry/sentry-go/otel v0.35.0/go.mod h1:fTznqWrS6QkAgUwPRMvCC+dodTT5ishD9yBTIAWo4UY=
+github.com/getsentry/sentry-go v0.35.1 h1:iopow6UVLE2aXu46xKVIs8Z9D/YZkJrHkgozrxa+tOQ=
+github.com/getsentry/sentry-go v0.35.1/go.mod h1:C55omcY9ChRQIUcVcGcs+Zdy4ZpQGvNJ7JYHIoSWOtE=
+github.com/getsentry/sentry-go/otel v0.35.1 h1:vw9mMaEUnbJ053o7PawTAzTFISsShfIi9A1shpTfFt8=
+github.com/getsentry/sentry-go/otel v0.35.1/go.mod h1:c/tH1DVjCl6XyhicQBpUcMCuBN+1h+Fwf6vvqNQ7aF8=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/ghostiam/protogetter v0.3.15 h1:1KF5sXel0HE48zh1/vn0Loiw25A9ApyseLzQuif1mLY=
