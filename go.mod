@@ -1,6 +1,6 @@
 module github.com/a-novel/service-authentication
 
-go 1.25.0
+go 1.25.1
 
 require (
 	github.com/a-novel-kit/jwt v1.1.8
