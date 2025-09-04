@@ -3,7 +3,7 @@ name: run-migrations
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@v6
       with:
         go-version: stable
     - name: Download Go packages
