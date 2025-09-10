@@ -17,9 +17,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/uptrace/bun v1.2.15
 	github.com/uptrace/bun/driver/pgdriver v1.2.15
-	go.opentelemetry.io/otel v1.37.0
-	go.opentelemetry.io/otel/metric v1.37.0
-	go.opentelemetry.io/otel/trace v1.37.0
+	go.opentelemetry.io/otel v1.38.0
+	go.opentelemetry.io/otel/metric v1.38.0
+	go.opentelemetry.io/otel/trace v1.38.0
 	golang.org/x/crypto v0.41.0
 )
 
