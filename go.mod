@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/a-novel-kit/jwt v1.1.8
-	github.com/a-novel/golib v0.10.1
+	github.com/a-novel/golib v0.10.4
 	github.com/a-novel/service-json-keys v1.3.1
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.2
