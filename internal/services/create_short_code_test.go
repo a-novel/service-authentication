@@ -92,6 +92,7 @@ func TestCreateShortCode(t *testing.T) {
 						now := time.Now()
 
 						var dataMap map[string]string
+
 						err := json.Unmarshal(data.Data, &dataMap)
 
 						return assert.NoError(t, err) &&

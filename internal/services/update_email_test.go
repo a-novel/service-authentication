@@ -133,6 +133,7 @@ func TestUpdateEmail(t *testing.T) {
 							testCase.request.UserID,
 							mock.MatchedBy(func(data dao.UpdateCredentialsEmailData) bool {
 								var newEmail string
+
 								err := json.Unmarshal(testCase.consumeShortCodeData.resp.Data, &newEmail)
 
 								return assert.NoError(t, err) &&
