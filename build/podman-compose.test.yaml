@@ -17,7 +17,7 @@ services:
       - authentication-postgres-test-data:/var/lib/postgresql/data/
 
   json-keys-postgres:
-    image: ghcr.io/a-novel/service-json-keys/database:v1.3.7
+    image: ghcr.io/a-novel/service-json-keys/database:v1.3.8
     networks:
       - authentication-api-test
     environment:
@@ -33,7 +33,7 @@ services:
   # in the database.
   # This value is a dummy key used for tests. Use your own random key in production.
   json-keys-service:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.7
+    image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.8
     ports:
       # Expose the service on port 4001 on the local machine.
       - "${JSON_KEYS_SERVICE_TEST_PORT}:8080"
