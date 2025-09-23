@@ -7,6 +7,16 @@ on:
 jobs:
   renovate:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      statuses: write
+      contents: write
+      issues: write
+      pull-requests: write
+      packages: read
+      actions: read
+      id-token: write
+      security-events: read
     steps:
       - uses: a-novel-kit/workflows/generic-actions/renovate@master
         with:
