@@ -5,7 +5,7 @@
     "managerFilePatterns": ["/(^|/)(?:podman-)?compose[^/]*\\.ya?ml$/"]
   },
   "postUpgradeTasks": {
-    "commands": ["go generate ./...", "go tool golangci-lint run ./... --fix"],
+    "commands": ["go generate ./...", "go tool golangci-lint run ./... --fix", "pnpm generate"],
     "executionMode": "branch"
   },
   "extends": ["config:recommended"]
