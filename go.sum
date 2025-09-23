@@ -92,8 +92,8 @@ github.com/OpenPeeDeeP/depguard/v2 v2.2.1 h1:vckeWVESWp6Qog7UZSARNqfu/cZqvki8zsu
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1/go.mod h1:q4DKzC4UcVaAvcfd41CZh0PWpGgzrVxUYBlgKNGquUo=
 github.com/a-novel-kit/jwt v1.1.8 h1:773R9xzbQ8XLNtbFOx3dX7TNMe4JTF+ooORL3WOyNBU=
 github.com/a-novel-kit/jwt v1.1.8/go.mod h1:vnKtv+WNjuPRnfLVOgkfy0bCqo30f3D+gO+TGeMRKi8=
-github.com/a-novel/golib v0.10.6 h1:Htkw3+Z9jkNcwi+mX6H+pU93jgFWCGdkkNcc4uIwLOQ=
-github.com/a-novel/golib v0.10.6/go.mod h1:gymY2m0MTBm055mmzZSJT7XVjzfAxQAf/PCbM9iod1M=
+github.com/a-novel/golib v0.10.7 h1:2ioYyXztLgmp/Tf77nIs0GkIswGzUpc6W20mb7M0MP8=
+github.com/a-novel/golib v0.10.7/go.mod h1:1mI5X4iWOinBaFGEF3/tZ+3Y+SrNoV05O0OxZ2e9MoI=
 github.com/a-novel/service-json-keys v1.3.8 h1:EoPEQIq6Szp9Nc0HxxQOMjTEK46fIXvVF3kGexFus7U=
 github.com/a-novel/service-json-keys v1.3.8/go.mod h1:U+SicdkEBn1o9P0GJxGI1SDNYsUx2e3TCG/Sy2+k+sM=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
