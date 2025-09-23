@@ -4,9 +4,21 @@
   "docker-compose": {
     "managerFilePatterns": ["/(^|/)(?:podman-)?compose[^/]*\\.ya?ml$/"]
   },
-  "postUpgradeTasks": {
-    "commands": ["go generate ./...", "go tool golangci-lint run ./... --fix", "pnpm generate"],
-    "executionMode": "branch"
-  },
+  "packageRules": [
+    {
+      "matchManagers": ["gomod"],
+      "postUpgradeTasks": {
+        "commands": ["go generate ./...", "go tool golangci-lint run ./... --fix"],
+        "executionMode": "branch"
+      }
+    },
+    {
+      "matchManagers": ["npm"],
+      "postUpgradeTasks": {
+        "commands": ["pnpm i --frozen-lockfile && pnpm generate"],
+        "executionMode": "branch"
+      }
+    }
+  ],
   "extends": ["config:recommended"]
 }
