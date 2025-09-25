@@ -3,19 +3,20 @@
 package apimodels
 
 import (
+	"bytes"
 	"io"
 	"mime"
 	"net/http"
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
-
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/validate"
 )
 
 func (s *Server) decodeCreateSessionRequest(r *http.Request) (
 	req *LoginForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -36,22 +37,29 @@ func (s *Server) decodeCreateSessionRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request LoginForm
@@ -69,7 +77,7 @@ func (s *Server) decodeCreateSessionRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -77,16 +85,17 @@ func (s *Server) decodeCreateSessionRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
 
 func (s *Server) decodeRegisterRequest(r *http.Request) (
 	req *RegisterForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -107,22 +116,29 @@ func (s *Server) decodeRegisterRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request RegisterForm
@@ -140,7 +156,7 @@ func (s *Server) decodeRegisterRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -148,16 +164,17 @@ func (s *Server) decodeRegisterRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
 
 func (s *Server) decodeRequestEmailUpdateRequest(r *http.Request) (
 	req *RequestEmailUpdateForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -178,22 +195,29 @@ func (s *Server) decodeRequestEmailUpdateRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request RequestEmailUpdateForm
@@ -211,7 +235,7 @@ func (s *Server) decodeRequestEmailUpdateRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -219,16 +243,17 @@ func (s *Server) decodeRequestEmailUpdateRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
 
 func (s *Server) decodeRequestPasswordResetRequest(r *http.Request) (
 	req *RequestPasswordResetForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -249,22 +274,29 @@ func (s *Server) decodeRequestPasswordResetRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request RequestPasswordResetForm
@@ -282,7 +314,7 @@ func (s *Server) decodeRequestPasswordResetRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -290,16 +322,17 @@ func (s *Server) decodeRequestPasswordResetRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
 
 func (s *Server) decodeRequestRegistrationRequest(r *http.Request) (
 	req *RequestRegistrationForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -320,22 +353,29 @@ func (s *Server) decodeRequestRegistrationRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request RequestRegistrationForm
@@ -353,7 +393,7 @@ func (s *Server) decodeRequestRegistrationRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -361,16 +401,17 @@ func (s *Server) decodeRequestRegistrationRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
 
 func (s *Server) decodeResetPasswordRequest(r *http.Request) (
 	req *ResetPasswordForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -391,22 +432,29 @@ func (s *Server) decodeResetPasswordRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request ResetPasswordForm
@@ -424,7 +472,7 @@ func (s *Server) decodeResetPasswordRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -432,16 +480,17 @@ func (s *Server) decodeResetPasswordRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
 
 func (s *Server) decodeUpdateEmailRequest(r *http.Request) (
 	req *UpdateEmailForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -462,22 +511,29 @@ func (s *Server) decodeUpdateEmailRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request UpdateEmailForm
@@ -495,7 +551,7 @@ func (s *Server) decodeUpdateEmailRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -503,16 +559,17 @@ func (s *Server) decodeUpdateEmailRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
 
 func (s *Server) decodeUpdatePasswordRequest(r *http.Request) (
 	req *UpdatePasswordForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -533,22 +590,29 @@ func (s *Server) decodeUpdatePasswordRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request UpdatePasswordForm
@@ -566,7 +630,7 @@ func (s *Server) decodeUpdatePasswordRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -574,16 +638,17 @@ func (s *Server) decodeUpdatePasswordRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
 
 func (s *Server) decodeUpdateRoleRequest(r *http.Request) (
 	req *UpdateRoleForm,
+	rawBody []byte,
 	close func() error,
 	rerr error,
 ) {
@@ -604,22 +669,29 @@ func (s *Server) decodeUpdateRoleRequest(r *http.Request) (
 	}()
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return req, close, errors.Wrap(err, "parse media type")
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
 	}
 	switch {
 	case ct == "application/json":
 		if r.ContentLength == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
 		if err != nil {
-			return req, close, err
+			return req, rawBody, close, err
 		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 
 		if len(buf) == 0 {
-			return req, close, validate.ErrBodyRequired
+			return req, rawBody, close, validate.ErrBodyRequired
 		}
 
+		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
 		var request UpdateRoleForm
@@ -637,7 +709,7 @@ func (s *Server) decodeUpdateRoleRequest(r *http.Request) (
 				Body:        buf,
 				Err:         err,
 			}
-			return req, close, err
+			return req, rawBody, close, err
 		}
 		if err := func() error {
 			if err := request.Validate(); err != nil {
@@ -645,10 +717,10 @@ func (s *Server) decodeUpdateRoleRequest(r *http.Request) (
 			}
 			return nil
 		}(); err != nil {
-			return req, close, errors.Wrap(err, "validate")
+			return req, rawBody, close, errors.Wrap(err, "validate")
 		}
-		return &request, close, nil
+		return &request, rawBody, close, nil
 	default:
-		return req, close, validate.InvalidContentType(ct)
+		return req, rawBody, close, validate.InvalidContentType(ct)
 	}
 }
