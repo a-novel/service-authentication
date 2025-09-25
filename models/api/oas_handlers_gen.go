@@ -8,16 +8,15 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/metric"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
-	"go.opentelemetry.io/otel/trace"
-
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/ogen-go/ogen/middleware"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/otelogen"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type codeRecorder struct {
@@ -90,7 +89,7 @@ func (s *Server) handleCheckSessionRequest(args [0]string, argsEscaped bool, w h
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -155,6 +154,8 @@ func (s *Server) handleCheckSessionRequest(args [0]string, argsEscaped bool, w h
 		}
 	}
 
+	var rawBody []byte
+
 	var response CheckSessionRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
@@ -163,6 +164,7 @@ func (s *Server) handleCheckSessionRequest(args [0]string, argsEscaped bool, w h
 			OperationSummary: "Check the status of a session.",
 			OperationID:      "checkSession",
 			Body:             nil,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -272,7 +274,7 @@ func (s *Server) handleCreateAnonSessionRequest(args [0]string, argsEscaped bool
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -287,6 +289,8 @@ func (s *Server) handleCreateAnonSessionRequest(args [0]string, argsEscaped bool
 		err error
 	)
 
+	var rawBody []byte
+
 	var response CreateAnonSessionRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
@@ -295,6 +299,7 @@ func (s *Server) handleCreateAnonSessionRequest(args [0]string, argsEscaped bool
 			OperationSummary: "Create a new anonymous session.",
 			OperationID:      "createAnonSession",
 			Body:             nil,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -406,7 +411,7 @@ func (s *Server) handleCreateSessionRequest(args [0]string, argsEscaped bool, w 
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -424,7 +429,9 @@ func (s *Server) handleCreateSessionRequest(args [0]string, argsEscaped bool, w 
 			ID:   "createSession",
 		}
 	)
-	request, close, err := s.decodeCreateSessionRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeCreateSessionRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -448,6 +455,7 @@ func (s *Server) handleCreateSessionRequest(args [0]string, argsEscaped bool, w 
 			OperationSummary: "Create a new session.",
 			OperationID:      "createSession",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -557,7 +565,7 @@ func (s *Server) handleEmailExistsRequest(args [0]string, argsEscaped bool, w ht
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -632,6 +640,8 @@ func (s *Server) handleEmailExistsRequest(args [0]string, argsEscaped bool, w ht
 		return
 	}
 
+	var rawBody []byte
+
 	var response EmailExistsRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
@@ -640,6 +650,7 @@ func (s *Server) handleEmailExistsRequest(args [0]string, argsEscaped bool, w ht
 			OperationSummary: "Check the availability of an email.",
 			OperationID:      "emailExists",
 			Body:             nil,
+			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
 					Name: "email",
@@ -752,7 +763,7 @@ func (s *Server) handleGetUserRequest(args [0]string, argsEscaped bool, w http.R
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -827,6 +838,8 @@ func (s *Server) handleGetUserRequest(args [0]string, argsEscaped bool, w http.R
 		return
 	}
 
+	var rawBody []byte
+
 	var response GetUserRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
@@ -835,6 +848,7 @@ func (s *Server) handleGetUserRequest(args [0]string, argsEscaped bool, w http.R
 			OperationSummary: "Get a user.",
 			OperationID:      "getUser",
 			Body:             nil,
+			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
 					Name: "userID",
@@ -947,7 +961,7 @@ func (s *Server) handleHealthcheckRequest(args [0]string, argsEscaped bool, w ht
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -962,6 +976,8 @@ func (s *Server) handleHealthcheckRequest(args [0]string, argsEscaped bool, w ht
 		err error
 	)
 
+	var rawBody []byte
+
 	var response HealthcheckRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
@@ -970,6 +986,7 @@ func (s *Server) handleHealthcheckRequest(args [0]string, argsEscaped bool, w ht
 			OperationSummary: "Check the health of the service.",
 			OperationID:      "healthcheck",
 			Body:             nil,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -1077,7 +1094,7 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -1152,6 +1169,8 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 		return
 	}
 
+	var rawBody []byte
+
 	var response ListUsersRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
@@ -1160,6 +1179,7 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 			OperationSummary: "List all users.",
 			OperationID:      "listUsers",
 			Body:             nil,
+			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
 					Name: "limit",
@@ -1280,7 +1300,7 @@ func (s *Server) handlePingRequest(args [0]string, argsEscaped bool, w http.Resp
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -1295,6 +1315,8 @@ func (s *Server) handlePingRequest(args [0]string, argsEscaped bool, w http.Resp
 		err error
 	)
 
+	var rawBody []byte
+
 	var response PingRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
@@ -1303,6 +1325,7 @@ func (s *Server) handlePingRequest(args [0]string, argsEscaped bool, w http.Resp
 			OperationSummary: "Check the status of the service.",
 			OperationID:      "ping",
 			Body:             nil,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -1410,7 +1433,7 @@ func (s *Server) handleRefreshSessionRequest(args [0]string, argsEscaped bool, w
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -1439,6 +1462,8 @@ func (s *Server) handleRefreshSessionRequest(args [0]string, argsEscaped bool, w
 		return
 	}
 
+	var rawBody []byte
+
 	var response RefreshSessionRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
@@ -1447,6 +1472,7 @@ func (s *Server) handleRefreshSessionRequest(args [0]string, argsEscaped bool, w
 			OperationSummary: "Refresh access token.",
 			OperationID:      "refreshSession",
 			Body:             nil,
+			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
 					Name: "refreshToken",
@@ -1566,7 +1592,7 @@ func (s *Server) handleRegisterRequest(args [0]string, argsEscaped bool, w http.
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -1630,7 +1656,9 @@ func (s *Server) handleRegisterRequest(args [0]string, argsEscaped bool, w http.
 			return
 		}
 	}
-	request, close, err := s.decodeRegisterRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeRegisterRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -1654,6 +1682,7 @@ func (s *Server) handleRegisterRequest(args [0]string, argsEscaped bool, w http.
 			OperationSummary: "Create a new user.",
 			OperationID:      "register",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -1774,7 +1803,7 @@ func (s *Server) handleRequestEmailUpdateRequest(args [0]string, argsEscaped boo
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -1838,7 +1867,9 @@ func (s *Server) handleRequestEmailUpdateRequest(args [0]string, argsEscaped boo
 			return
 		}
 	}
-	request, close, err := s.decodeRequestEmailUpdateRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeRequestEmailUpdateRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -1862,6 +1893,7 @@ func (s *Server) handleRequestEmailUpdateRequest(args [0]string, argsEscaped boo
 			OperationSummary: "Set a new short code for user email change.",
 			OperationID:      "requestEmailUpdate",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -1978,7 +2010,7 @@ func (s *Server) handleRequestPasswordResetRequest(args [0]string, argsEscaped b
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -2042,7 +2074,9 @@ func (s *Server) handleRequestPasswordResetRequest(args [0]string, argsEscaped b
 			return
 		}
 	}
-	request, close, err := s.decodeRequestPasswordResetRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeRequestPasswordResetRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -2066,6 +2100,7 @@ func (s *Server) handleRequestPasswordResetRequest(args [0]string, argsEscaped b
 			OperationSummary: "Set a new short code for user password change.",
 			OperationID:      "requestPasswordReset",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -2187,7 +2222,7 @@ func (s *Server) handleRequestRegistrationRequest(args [0]string, argsEscaped bo
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -2251,7 +2286,9 @@ func (s *Server) handleRequestRegistrationRequest(args [0]string, argsEscaped bo
 			return
 		}
 	}
-	request, close, err := s.decodeRequestRegistrationRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeRequestRegistrationRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -2275,6 +2312,7 @@ func (s *Server) handleRequestRegistrationRequest(args [0]string, argsEscaped bo
 			OperationSummary: "Set a new short code for user registration.",
 			OperationID:      "requestRegistration",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -2386,7 +2424,7 @@ func (s *Server) handleResetPasswordRequest(args [0]string, argsEscaped bool, w 
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -2450,7 +2488,9 @@ func (s *Server) handleResetPasswordRequest(args [0]string, argsEscaped bool, w 
 			return
 		}
 	}
-	request, close, err := s.decodeResetPasswordRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeResetPasswordRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -2474,6 +2514,7 @@ func (s *Server) handleResetPasswordRequest(args [0]string, argsEscaped bool, w 
 			OperationSummary: "Reset the password of an user.",
 			OperationID:      "resetPassword",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -2585,7 +2626,7 @@ func (s *Server) handleUpdateEmailRequest(args [0]string, argsEscaped bool, w ht
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -2649,7 +2690,9 @@ func (s *Server) handleUpdateEmailRequest(args [0]string, argsEscaped bool, w ht
 			return
 		}
 	}
-	request, close, err := s.decodeUpdateEmailRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeUpdateEmailRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -2673,6 +2716,7 @@ func (s *Server) handleUpdateEmailRequest(args [0]string, argsEscaped bool, w ht
 			OperationSummary: "Update the email of an user.",
 			OperationID:      "updateEmail",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -2782,7 +2826,7 @@ func (s *Server) handleUpdatePasswordRequest(args [0]string, argsEscaped bool, w
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -2846,7 +2890,9 @@ func (s *Server) handleUpdatePasswordRequest(args [0]string, argsEscaped bool, w
 			return
 		}
 	}
-	request, close, err := s.decodeUpdatePasswordRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeUpdatePasswordRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -2870,6 +2916,7 @@ func (s *Server) handleUpdatePasswordRequest(args [0]string, argsEscaped bool, w
 			OperationSummary: "Update the password of an user.",
 			OperationID:      "updatePassword",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
@@ -2978,7 +3025,7 @@ func (s *Server) handleUpdateRoleRequest(args [0]string, argsEscaped bool, w htt
 			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
 			// max redirects exceeded), in which case status MUST be set to Error.
 			code := statusWriter.status
-			if code >= 100 && code < 500 {
+			if code < 100 || code >= 500 {
 				span.SetStatus(codes.Error, stage)
 			}
 
@@ -3042,7 +3089,9 @@ func (s *Server) handleUpdateRoleRequest(args [0]string, argsEscaped bool, w htt
 			return
 		}
 	}
-	request, close, err := s.decodeUpdateRoleRequest(r)
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeUpdateRoleRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -3066,6 +3115,7 @@ func (s *Server) handleUpdateRoleRequest(args [0]string, argsEscaped bool, w htt
 			OperationSummary: "Update the role of an user.",
 			OperationID:      "updateRole",
 			Body:             request,
+			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
