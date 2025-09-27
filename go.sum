@@ -546,8 +546,8 @@ github.com/nishanths/predeclared v0.2.2 h1:V2EPdZPliZymNAn79T8RkNApBjMmVKh5XRpLm
 github.com/nishanths/predeclared v0.2.2/go.mod h1:RROzoN6TnGQupbC+lqggsOlcgysk3LMK/HI84Mp280c=
 github.com/nunnatsa/ginkgolinter v0.21.0 h1:IYwuX+ajy3G1MezlMLB1BENRtFj16+Evyi4uki1NOOQ=
 github.com/nunnatsa/ginkgolinter v0.21.0/go.mod h1:QlzY9UP9zaqu58FjYxhp9bnjuwXwG1bfW5rid9ChNMw=
-github.com/ogen-go/ogen v1.15.0 h1:AuSLghM88ijLy8eIFr5d5kHYRU1i3Ewk1tGArpvDDTY=
-github.com/ogen-go/ogen v1.15.0/go.mod h1:bS+BP2cV7+IGjOM24znBmh+PrpZvYFXA7o3BNF4Hj2E=
+github.com/ogen-go/ogen v1.15.1 h1:Ujz2BY3DhcsuE3QUFbFQgN4qD/ak1GPJFfb58oig4qU=
+github.com/ogen-go/ogen v1.15.1/go.mod h1:bS+BP2cV7+IGjOM24znBmh+PrpZvYFXA7o3BNF4Hj2E=
 github.com/onsi/ginkgo/v2 v2.23.4 h1:ktYTpKJAVZnDT4VjxSbiBenUjmlL/5QkBEocaWXiQus=
 github.com/onsi/ginkgo/v2 v2.23.4/go.mod h1:Bt66ApGPBFzHyR+JO10Zbt0Gsp4uWxu5mIOTusL46e8=
 github.com/onsi/gomega v1.38.0 h1:c/WX+w8SLAinvuKKQFh77WEucCnPk4j2OTUr7lt7BeY=
