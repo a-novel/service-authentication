@@ -61,7 +61,12 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/open-api-actions/lint-open-api@master
+      - uses: a-novel-kit/workflows/node-actions/lint-node@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
+          app_id: ${{ vars.DEPENDENCY_BOT_ID }}
+          lint_action: lint:openapi
 
   lint-node:
     runs-on: ubuntu-latest

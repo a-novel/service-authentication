@@ -15,7 +15,7 @@ format:
 
 # Lint OpenAPI specs.
 openapi-lint:
-	npx @redocly/cli lint ./docs/api.yaml
+	pnpm lint:openapi
 
 # Generate Go code.
 go-generate:
