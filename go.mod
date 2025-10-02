@@ -12,7 +12,7 @@ require (
 	github.com/go-faster/jx v1.1.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/uuid v1.6.0
-	github.com/ogen-go/ogen v1.15.1
+	github.com/ogen-go/ogen v1.15.2
 	github.com/samber/lo v1.51.0
 	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.15

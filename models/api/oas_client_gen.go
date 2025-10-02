@@ -256,7 +256,7 @@ func (c *Client) sendCheckSession(ctx context.Context) (res CheckSessionRes, err
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("checkSession"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/session"),
+		semconv.URLTemplateKey.String("/session"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -364,7 +364,7 @@ func (c *Client) sendCreateAnonSession(ctx context.Context) (res CreateAnonSessi
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("createAnonSession"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/session/anon"),
+		semconv.URLTemplateKey.String("/session/anon"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -441,7 +441,7 @@ func (c *Client) sendCreateSession(ctx context.Context, request *LoginForm) (res
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("createSession"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/session"),
+		semconv.URLTemplateKey.String("/session"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -519,7 +519,7 @@ func (c *Client) sendEmailExists(ctx context.Context, params EmailExistsParams) 
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("emailExists"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/credentials/email"),
+		semconv.URLTemplateKey.String("/credentials/email"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -646,7 +646,7 @@ func (c *Client) sendGetUser(ctx context.Context, params GetUserParams) (res Get
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getUser"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/user"),
+		semconv.URLTemplateKey.String("/user"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -773,7 +773,7 @@ func (c *Client) sendHealthcheck(ctx context.Context) (res HealthcheckRes, err e
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("healthcheck"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/healthcheck"),
+		semconv.URLTemplateKey.String("/healthcheck"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -846,7 +846,7 @@ func (c *Client) sendListUsers(ctx context.Context, params ListUsersParams) (res
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("listUsers"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/users"),
+		semconv.URLTemplateKey.String("/users"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1016,7 +1016,7 @@ func (c *Client) sendPing(ctx context.Context) (res PingRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("ping"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/ping"),
+		semconv.URLTemplateKey.String("/ping"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1089,7 +1089,7 @@ func (c *Client) sendRefreshSession(ctx context.Context, params RefreshSessionPa
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("refreshSession"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
-		semconv.HTTPRouteKey.String("/session/refresh"),
+		semconv.URLTemplateKey.String("/session/refresh"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1197,7 +1197,7 @@ func (c *Client) sendRegister(ctx context.Context, request *RegisterForm) (res R
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("register"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/credentials"),
+		semconv.URLTemplateKey.String("/credentials"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1319,7 +1319,7 @@ func (c *Client) sendRequestEmailUpdate(ctx context.Context, request *RequestEma
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("requestEmailUpdate"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/short-code/update-email"),
+		semconv.URLTemplateKey.String("/short-code/update-email"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1437,7 +1437,7 @@ func (c *Client) sendRequestPasswordReset(ctx context.Context, request *RequestP
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("requestPasswordReset"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/short-code/update-password"),
+		semconv.URLTemplateKey.String("/short-code/update-password"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1560,7 +1560,7 @@ func (c *Client) sendRequestRegistration(ctx context.Context, request *RequestRe
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("requestRegistration"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/short-code/register"),
+		semconv.URLTemplateKey.String("/short-code/register"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1673,7 +1673,7 @@ func (c *Client) sendResetPassword(ctx context.Context, request *ResetPasswordFo
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("resetPassword"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
-		semconv.HTTPRouteKey.String("/credentials/password/reset"),
+		semconv.URLTemplateKey.String("/credentials/password/reset"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1786,7 +1786,7 @@ func (c *Client) sendUpdateEmail(ctx context.Context, request *UpdateEmailForm) 
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("updateEmail"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
-		semconv.HTTPRouteKey.String("/credentials/email"),
+		semconv.URLTemplateKey.String("/credentials/email"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1897,7 +1897,7 @@ func (c *Client) sendUpdatePassword(ctx context.Context, request *UpdatePassword
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("updatePassword"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
-		semconv.HTTPRouteKey.String("/credentials/password"),
+		semconv.URLTemplateKey.String("/credentials/password"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2007,7 +2007,7 @@ func (c *Client) sendUpdateRole(ctx context.Context, request *UpdateRoleForm) (r
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("updateRole"),
 		semconv.HTTPRequestMethodKey.String("PATCH"),
-		semconv.HTTPRouteKey.String("/credentials/role"),
+		semconv.URLTemplateKey.String("/credentials/role"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
