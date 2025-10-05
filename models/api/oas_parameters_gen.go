@@ -155,11 +155,11 @@ func decodeGetUserParams(args [0]string, argsEscaped bool, r *http.Request) (par
 // ListUsersParams is parameters of listUsers operation.
 type ListUsersParams struct {
 	// The maximum number of items to return.
-	Limit OptInt
+	Limit OptInt `json:",omitempty,omitzero"`
 	// The number of items to skip before starting to collect the result set.
-	Offset OptInt
+	Offset OptInt `json:",omitempty,omitzero"`
 	// The roles to filter the users by.
-	Roles []CredentialsRole
+	Roles []CredentialsRole `json:",omitempty"`
 }
 
 func unpackListUsersParams(packed middleware.Parameters) (params ListUsersParams) {
