@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@redocly/cli':
         specifier: ^2.2.2
-        version: 2.3.1(@opentelemetry/api@1.9.0)(ajv@8.17.1)(core-js@3.45.1)
+        version: 2.4.0(@opentelemetry/api@1.9.0)(ajv@8.17.1)(core-js@3.45.1)
       mjml:
         specifier: 4.16.1
         version: 4.16.1
@@ -197,8 +197,8 @@ packages:
   '@redocly/ajv@8.11.3':
     resolution: {integrity: sha512-4P3iZse91TkBiY+Dx5DUgxQ9GXkVJf++cmI0MOyLDxV9b5MUBI4II6ES8zA5JCbO72nKAJxWrw4PUPW+YP3ZDQ==}
 
-  '@redocly/cli@2.3.1':
-    resolution: {integrity: sha512-q4Ik8wvP7qZvAwq7n9hJrREHs3IuoKtW3NWP+Y0F1dM9YcdgNl9EwxCsqBHaeZPPpFbyMxpzTlqMEJGh5VCmqg==}
+  '@redocly/cli@2.4.0':
+    resolution: {integrity: sha512-RXINsLA5cFKZM0zB66/1rWWU4oENBZ5lcrnwcyoHQmaGt+rA7Glf/lORc9/JmkznVESFZ3t/9nsc7mSfGfwuAw==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
@@ -212,12 +212,12 @@ packages:
     resolution: {integrity: sha512-0EbE8LRbkogtcCXU7liAyC00n9uNG9hJ+eMyHFdUsy9lB/WGqnEBgwjA9q2cyzAVcdTkQqTBBU1XePNnN3OijA==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@redocly/openapi-core@2.3.1':
-    resolution: {integrity: sha512-lCEUq3BB6nwfDbUBEj9OUA46SJRCzD55GmuB4tFZnxIB1+E4FQb8kCD0UMtXh8hHImafpKoNXk5NzcQEuIZWWA==}
+  '@redocly/openapi-core@2.4.0':
+    resolution: {integrity: sha512-ft4qzUu7g9vabIkp09uLwQwpWgT5aycrmUENh0WyvYDZwv4eDg+tDSMP1Grt0nPy+GJ/LnIMpaYAPhrIMMhMzg==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
-  '@redocly/respect-core@2.3.1':
-    resolution: {integrity: sha512-4TTuPdiUlK3HcBHxyBza4bQxvpdOqlJyrcdhQgHZr21TFOzS5EJZgcXhnSLusk98sgoUeIMpUMK29VNIgz1xcg==}
+  '@redocly/respect-core@2.4.0':
+    resolution: {integrity: sha512-xpuOC/gySVc8Ncuz3ZKXWNxYI9BLgkuKh0YB7l2xXTgcFz84V3PHKDsivTPkP9eKKbCLZjjzmwJCr1eiFSrHjg==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
   '@sinclair/typebox@0.27.8':
@@ -1239,6 +1239,11 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  semver@7.7.3:
+    resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   set-cookie-parser@2.7.1:
     resolution: {integrity: sha512-IOc8uWeOZgnb3ptbCURJWNjWUPcO3ZnTTdzsurqERrP6nPyv+paC55vJM0LpOlT2ne+Ix+9+CRG1MNLlyZ4GjQ==}
 
@@ -1637,14 +1642,14 @@ snapshots:
       require-from-string: 2.0.2
       uri-js-replace: 1.0.1
 
-  '@redocly/cli@2.3.1(@opentelemetry/api@1.9.0)(ajv@8.17.1)(core-js@3.45.1)':
+  '@redocly/cli@2.4.0(@opentelemetry/api@1.9.0)(ajv@8.17.1)(core-js@3.45.1)':
     dependencies:
       '@opentelemetry/exporter-trace-otlp-http': 0.202.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-node': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.34.0
-      '@redocly/openapi-core': 2.3.1(ajv@8.17.1)
-      '@redocly/respect-core': 2.3.1(ajv@8.17.1)
+      '@redocly/openapi-core': 2.4.0(ajv@8.17.1)
+      '@redocly/respect-core': 2.4.0(ajv@8.17.1)
       abort-controller: 3.0.0
       chokidar: 3.6.0
       colorette: 1.4.0
@@ -1659,7 +1664,7 @@ snapshots:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
       redoc: 2.5.1(core-js@3.45.1)(mobx@6.15.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(styled-components@6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
-      semver: 7.7.2
+      semver: 7.7.3
       set-cookie-parser: 2.7.1
       simple-websocket: 9.1.0
       styled-components: 6.1.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1695,7 +1700,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@redocly/openapi-core@2.3.1(ajv@8.17.1)':
+  '@redocly/openapi-core@2.4.0(ajv@8.17.1)':
     dependencies:
       '@redocly/ajv': 8.11.3
       '@redocly/config': 0.31.0
@@ -1709,12 +1714,12 @@ snapshots:
     transitivePeerDependencies:
       - ajv
 
-  '@redocly/respect-core@2.3.1(ajv@8.17.1)':
+  '@redocly/respect-core@2.4.0(ajv@8.17.1)':
     dependencies:
       '@faker-js/faker': 7.6.0
       '@noble/hashes': 1.8.0
       '@redocly/ajv': 8.11.2
-      '@redocly/openapi-core': 2.3.1(ajv@8.17.1)
+      '@redocly/openapi-core': 2.4.0(ajv@8.17.1)
       better-ajv-errors: 1.2.0(ajv@8.17.1)
       colorette: 2.0.20
       jest-matcher-utils: 29.7.0
@@ -2007,7 +2012,7 @@ snapshots:
       '@one-ini/wasm': 0.1.1
       commander: 10.0.1
       minimatch: 9.0.1
-      semver: 7.7.2
+      semver: 7.7.3
 
   emoji-regex@8.0.0: {}
 
@@ -2928,6 +2933,8 @@ snapshots:
   scheduler@0.27.0: {}
 
   semver@7.7.2: {}
+
+  semver@7.7.3: {}
 
   set-cookie-parser@2.7.1: {}
 
