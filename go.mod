@@ -13,7 +13,7 @@ require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/uuid v1.6.0
 	github.com/ogen-go/ogen v1.16.0
-	github.com/samber/lo v1.51.0
+	github.com/samber/lo v1.52.0
 	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.15
 	github.com/uptrace/bun/driver/pgdriver v1.2.15
