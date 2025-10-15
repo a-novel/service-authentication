@@ -92,8 +92,8 @@ github.com/OpenPeeDeeP/depguard/v2 v2.2.1 h1:vckeWVESWp6Qog7UZSARNqfu/cZqvki8zsu
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1/go.mod h1:q4DKzC4UcVaAvcfd41CZh0PWpGgzrVxUYBlgKNGquUo=
 github.com/a-novel-kit/jwt v1.1.8 h1:773R9xzbQ8XLNtbFOx3dX7TNMe4JTF+ooORL3WOyNBU=
 github.com/a-novel-kit/jwt v1.1.8/go.mod h1:vnKtv+WNjuPRnfLVOgkfy0bCqo30f3D+gO+TGeMRKi8=
-github.com/a-novel/golib v0.10.11 h1:ViulrRxsAmoGIoRbXSmUA24SNtrXlo1j63aeEoWQx0M=
-github.com/a-novel/golib v0.10.11/go.mod h1:VT1Y6aX+rzPKyTpDeQupKi2mhhIVGVwMsjgmN5lCXU4=
+github.com/a-novel/golib v0.10.12 h1:LZglDwVwnOee+93T7B0UYyv7Dc7xOm3wuH0rClm1HVM=
+github.com/a-novel/golib v0.10.12/go.mod h1:hZVu/NFYOTNyHst26pjWRFGJIO69y77OiGtyf4dpFKM=
 github.com/a-novel/service-json-keys v1.3.14 h1:tiefe1fM40BeObMiRAnMug1llMpAt2W/w+KbZkVSwDs=
 github.com/a-novel/service-json-keys v1.3.14/go.mod h1:Lvhd2r7f72NECR2a8uUWsufIYGm3gyTNXyhxyC5hKSk=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
@@ -219,10 +219,10 @@ github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/fzipp/gocyclo v0.6.0 h1:lsblElZG7d3ALtGMx9fmxeTKZaLLpU8mET09yN4BBLo=
 github.com/fzipp/gocyclo v0.6.0/go.mod h1:rXPyn8fnlpa0R2csP/31uerbiVBugk5whMdlyaLkLoA=
-github.com/getsentry/sentry-go v0.35.3 h1:u5IJaEqZyPdWqe/hKlBKBBnMTSxB/HenCqF3QLabeds=
-github.com/getsentry/sentry-go v0.35.3/go.mod h1:mdL49ixwT2yi57k5eh7mpnDyPybixPzlzEJFu0Z76QA=
-github.com/getsentry/sentry-go/otel v0.35.3 h1:Lxrr34GMczsOdzybI0F+EfwmcJiAe3Gne7BOriQd6bo=
-github.com/getsentry/sentry-go/otel v0.35.3/go.mod h1:B4u1bV41L3vbTAGTEZXKSj8c5u6yRIVrRVyR4br4MTs=
+github.com/getsentry/sentry-go v0.36.0 h1:UkCk0zV28PiGf+2YIONSSYiYhxwlERE5Li3JPpZqEns=
+github.com/getsentry/sentry-go v0.36.0/go.mod h1:p5Im24mJBeruET8Q4bbcMfCQ+F+Iadc4L48tB1apo2c=
+github.com/getsentry/sentry-go/otel v0.36.0 h1:VjQY0RcMmwEYnYLx+NCpn+KWSFvwCHM1egb6ct3noiw=
+github.com/getsentry/sentry-go/otel v0.36.0/go.mod h1:wR0u6FhtWMu2+xzoYrW4UeYyyrCZUpl0xz/qxjq6rkU=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/ghostiam/protogetter v0.3.16 h1:UkrisuJBYLnZW6FcYUNBDJOqY3X22RtoYMlCsiNlFFA=
