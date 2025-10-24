@@ -94,8 +94,8 @@ github.com/a-novel-kit/jwt v1.1.8 h1:773R9xzbQ8XLNtbFOx3dX7TNMe4JTF+ooORL3WOyNBU
 github.com/a-novel-kit/jwt v1.1.8/go.mod h1:vnKtv+WNjuPRnfLVOgkfy0bCqo30f3D+gO+TGeMRKi8=
 github.com/a-novel/golib v0.10.13 h1:UGwacdJPuLDhy/mCYR8k/YS4G4pdjPPMx6T8/h+95Jk=
 github.com/a-novel/golib v0.10.13/go.mod h1:eZctU3GJTal9yGTIbkic1pK7ot1EYl+40FzDinSEjXQ=
-github.com/a-novel/service-json-keys v1.3.16 h1:dAMqwuvK0IoUz5XkE1x6G5VxLwGUCogynhXxwgtcLLk=
-github.com/a-novel/service-json-keys v1.3.16/go.mod h1:E1bmxl90qdAfiPz5jRkz0qOxXRmTW8tHPkolh2h23yo=
+github.com/a-novel/service-json-keys v1.3.17 h1:K058NS1ZcBkoZ0gGlIQZtoRoC92EDKh8i/K6WLSoCy4=
+github.com/a-novel/service-json-keys v1.3.17/go.mod h1:CI0IqUKG5G6qtwKkDmrEI5uBx2DIzeTi1+yTfcttevw=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
 github.com/alecthomas/assert/v2 v2.11.0/go.mod h1:Bze95FyfUr7x34QZrjL+XP+0qgp/zg8yS+TtBj1WA3k=
 github.com/alecthomas/chroma/v2 v2.20.0 h1:sfIHpxPyR07/Oylvmcai3X/exDlE8+FA820NTz+9sGw=
