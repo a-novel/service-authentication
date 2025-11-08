@@ -1,0 +1,45 @@
+<mjml>
+  <!-- prettier-ignore -->
+  <mj-raw position="file-start">
+Subject: Demande de mise à jour du courriel.
+MIME-version: 1.0;
+Content-Type: text/html; charset="UTF-8";
+
+<!-- Mail starts here -->
+    </mj-raw>
+  <mj-head>
+    <mj-title>Demande de mise à jour du courriel.</mj-title>
+    <mj-preview>Mise à jour de ton courriel Agora Storyverse.</mj-preview>
+
+    <mj-style>
+      strong {
+        color: #ffab33 !important;
+        font-weight: bold !important;
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#000">
+    <mj-include path="../mj-header.mjml" />
+
+    <mj-section>
+      <mj-column>
+        <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
+          Tu as récemment émis une demande de <strong>mise à jour de ton courriel</strong> Agora Storyverse. Valides ton
+          nouveau courriel en cliquant sur le lien ci-dessous pour que la mise à jour soit effective. <br /><br />
+          Si tu n'es pas à l'origine de cette demande, tu peux ignorer ce message.
+          <br /><br />
+          Ce lien est valable pour une durée de <strong>{{.Duration}}h</strong> seulement, alors fais vite!
+        </mj-text>
+
+        <mj-button
+          font-family="Helvetica"
+          background-color="#ffab33"
+          color="white"
+          href="{{.URL}}?shortCode={{.ShortCode}}&target={{.Target}}"
+        >
+          Mettre à jour
+        </mj-button>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

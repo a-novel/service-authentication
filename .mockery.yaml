@@ -1,0 +1,19 @@
+packages:
+  github.com/a-novel/service-authentication/internal/services:
+    config:
+      all: true
+      pkgname: servicesmocks
+      dir: internal/services/mocks
+      filename: mocks.go
+  github.com/a-novel/service-authentication/internal/handlers:
+    config:
+      all: true
+      pkgname: handlersmocks
+      dir: internal/handlers/mocks
+      filename: mocks.go
+  github.com/a-novel/service-authentication/internal/handlers/middlewares:
+    config:
+      all: true
+      pkgname: middlewaresmocks
+      dir: internal/handlers/middlewares/mocks
+      filename: mocks.go

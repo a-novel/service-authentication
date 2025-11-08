@@ -1,0 +1,325 @@
+name: main
+
+on:
+  push:
+    tags-ignore:
+      - "**"
+    branches:
+      - "**"
+
+jobs:
+  generated-go:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: go generate
+        shell: bash
+        run: go generate ./...
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
+        with:
+          fail_message: go generate definitions are not up-to-date, please run 'go generate ./...' and commit the changes
+
+  generated-pnpm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: latest
+      - name: install pnpm
+        shell: bash
+        run: npm install -g pnpm
+      - name: install dependencies
+        shell: bash
+        run: pnpm i --frozen-lockfile
+      - name: pnpm
+        shell: bash
+        run: pnpm generate
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@master
+        with:
+          fail_message: pnpm definitions are not up-to-date, please run 'pnpm generate' and commit the changes
+
+  lint-go:
+    runs-on: ubuntu-latest
+    needs: [generated-go]
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/go-actions/lint-go@master
+
+  test:
+    needs: [generated-go, database-build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres-json-keys:
+        image: ghcr.io/a-novel/service-json-keys/database:v1.3.17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      json-keys:
+        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.17
+        ports:
+          - "4001:8080"
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
+    env:
+      POSTGRES_DSN_TEST: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      JSON_KEYS_SERVICE_TEST_URL: http://0.0.0.0:4001/v1
+      AUTH_PLATFORM_URL: http://localhost:6001
+      DEBUG: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/run-migrations
+      - uses: a-novel-kit/workflows/go-actions/test-go@master
+        with:
+          ignore_patterns: /mocks,/test,/models/api,/cmd
+          skip_setup: true
+
+  report-codecov:
+    runs-on: ubuntu-latest
+    needs: [test]
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/codecov@master
+        with:
+          codecov_token: ${{ secrets.CODECOV_TOKEN }}
+
+  report-grc:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && success()
+    needs: [test]
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/go-actions/go-report-card@master
+        if: github.ref == 'refs/heads/master' && success()
+
+  database-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      digest: ${{ steps.database_build.outputs.digest }}
+    env:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+    steps:
+      - uses: a-novel-kit/workflows/build-actions/docker@master
+        id: database_build
+        with:
+          file: builds/database.Dockerfile
+          image_name: ${{ github.repository }}/database
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: >-
+            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" 
+            -e POSTGRES_USER="${POSTGRES_USER}" 
+            -e POSTGRES_DB="${POSTGRES_DB}"
+            -e POSTGRES_HOST_AUTH_METHOD="${POSTGRES_HOST_AUTH_METHOD}"
+            -e POSTGRES_INITDB_ARGS="${POSTGRES_INITDB_ARGS}"
+
+  migrations-build:
+    runs-on: ubuntu-latest
+    needs: [database-build]
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    services:
+      postgres:
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+    steps:
+      - uses: a-novel-kit/workflows/build-actions/docker-job@master
+        with:
+          file: builds/migrations.Dockerfile
+          image_name: ${{ github.repository }}/jobs/migrations
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
+
+  api-build:
+    needs: [test, database-build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    services:
+      postgres:
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+      postgres-json-keys:
+        image: ghcr.io/a-novel/service-json-keys/database:v1.3.17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      json-keys:
+        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.17
+        ports:
+          - "4001:8080"
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
+    env:
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
+      AUTH_PLATFORM_URL: http://localhost:6001
+      DEBUG: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/run-migrations
+      - uses: a-novel-kit/workflows/build-actions/docker@master
+        with:
+          file: builds/rest.Dockerfile
+          image_name: ${{ github.repository }}/api
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: >-
+            -e POSTGRES_DSN="${POSTGRES_DSN}"
+            -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
+            -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
+            -e DEBUG="${DEBUG}"
+
+  standalone-build:
+    needs: [test, database-build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    services:
+      postgres:
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+      postgres-json-keys:
+        image: ghcr.io/a-novel/service-json-keys/database:v1.3.17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      json-keys:
+        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.17
+        ports:
+          - "4001:8080"
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
+    env:
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
+      AUTH_PLATFORM_URL: http://localhost:6001
+      DEBUG: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/run-migrations
+      - uses: a-novel-kit/workflows/build-actions/docker@master
+        with:
+          file: builds/standalone.Dockerfile
+          image_name: ${{ github.repository }}/standalone
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: >-
+            -e POSTGRES_DSN="${POSTGRES_DSN}"
+            -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
+            -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
+            -e DEBUG="${DEBUG}"

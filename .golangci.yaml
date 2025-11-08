@@ -1,0 +1,155 @@
+version: "2"
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard # Standard section: captures all standard packages.
+        - default # Default section: contains all imports that could not be matched to another section type.
+        - prefix(github.com/a-novel-kit)
+        - prefix(github.com/a-novel)
+        - localmodule
+
+linters:
+  default: none
+  enable: # https://golangci-lint.run/docs/configuration/file/
+    #    - arangolint
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    #    - cyclop
+    - decorder
+    #    - depguard
+    #    - dogsled
+    #    - dupl
+    - dupword
+    - durationcheck
+    - embeddedstructfieldcheck
+    #    - err113
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    #    - exhaustive
+    #    - exhaustruct
+    - exptostd
+    - fatcontext
+    - forbidigo
+    - forcetypeassert
+    - funcorder
+    #    - funlen
+    #    - ginkgolinter
+    - gocheckcompilerdirectives
+    #    - gochecknoglobals
+    #    - gochecknoinits
+    - gochecksumtype
+    #    - gocognit
+    - goconst
+    - gocritic
+    #    - gocyclo
+    - godoclint
+    - godot
+    #    - godox
+    - goheader
+    - gomoddirectives
+    #    - gomodguard
+    - goprintffuncname
+    - gosec
+    #    - gosmopolitan
+    - govet
+    - grouper
+    #    - iface
+    - importas
+    - inamedparam
+    - ineffassign
+    #    - interfacebloat
+    - intrange
+    - iotamixing
+    #    - ireturn
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    #    - mnd
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnesserr
+    #    - nilnil
+    - nlreturn
+    - noctx
+    - noinlineerr
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - perfsprint
+    - prealloc
+    - predeclared
+    #    - promlinter
+    #    - protogetter
+    - reassign
+    - recvcheck
+    #    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - tagalign
+    - tagliatelle
+    - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unqueryvet
+    - unused
+    - usestdlibvars
+    - usetesting
+    #    - varnamelen
+    - wastedassign
+    - whitespace
+    #    - wrapcheck
+    #    - wsl
+    - wsl_v5
+    - zerologlint
+
+  settings:
+    tagliatelle:
+      case:
+        rules:
+          json: goCamel
+          yaml: goCamel
+
+  exclusions:
+    paths:
+      - mocks
+    rules:
+      - path: (.+)_test.go
+        linters:
+          - forcetypeassert
+          - maintidx
+          - gocognit
+          - tagliatelle
+          - goconst
+      - path: dao/(.+)_test.go
+        linters:
+          - paralleltest
+      - path: cmd/
+        linters:
+          - paralleltest

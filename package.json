@@ -1,0 +1,26 @@
+{
+  "name": "service-authentication",
+  "version": "1.0.0",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "scripts": {
+    "format": "pnpm run format:prettier",
+    "format:prettier": "prettier --write . --config prettier.config.js",
+    "generate": "pnpm run generate:mjml",
+    "generate:mjml": "for i in `find . -name \"*.mjml\" -type f`; do pnpm mjml $i --config.beautify false --config.minify false -o ${i%.*}.html; done",
+    "lint": "pnpm run lint:prettier && pnpm run lint:mjml",
+    "lint:mjml": "for i in `find . -name \"*.mjml\" -type f`; do pnpm mjml --validate $i; done",
+    "lint:prettier": "prettier --check . --config prettier.config.js",
+    "publish:major": "pnpm version major && git push --follow-tags",
+    "publish:minor": "pnpm version minor && git push --follow-tags",
+    "publish:patch": "pnpm version patch && git push --follow-tags"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.11.0",
+    "mjml": "4.16.1",
+    "prettier": "^3.6.2",
+    "prettier-plugin-packagejson": "^2.5.19",
+    "prettier-plugin-sql": "^0.19.2"
+  },
+  "packageManager": "pnpm@10.20.0"
+}

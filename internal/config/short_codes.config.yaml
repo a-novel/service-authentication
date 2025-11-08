@@ -1,0 +1,8 @@
+size: 12
+usages:
+  requestRegister:
+    ttl: 48h
+  validateMail:
+    ttl: 48h
+  resetPassword:
+    ttl: 2h

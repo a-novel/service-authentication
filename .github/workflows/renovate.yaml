@@ -1,0 +1,26 @@
+name: run renovate
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      statuses: write
+      contents: write
+      issues: write
+      pull-requests: write
+      packages: read
+      actions: read
+      id-token: write
+      security-events: read
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/renovate@master
+        with:
+          allowed_commands: '["^go generate .*", "^go tool .*", "^pnpm i --frozen-lockfile && pnpm generate$"]'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
+          app_id: ${{ vars.DEPENDENCY_BOT_ID }}

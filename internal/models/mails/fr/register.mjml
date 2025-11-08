@@ -1,0 +1,43 @@
+<mjml>
+  <!-- prettier-ignore -->
+  <mj-raw position="file-start">
+Subject: Demande d'inscription.
+MIME-version: 1.0;
+Content-Type: text/html; charset="UTF-8";
+
+<!-- Mail starts here -->
+    </mj-raw>
+  <mj-head>
+    <mj-title>Demande d'inscription.</mj-title>
+    <mj-preview>Ton lien d'inscription Agora Storyverse.</mj-preview>
+
+    <mj-style>
+      strong {
+        color: #ffab33 !important;
+        font-weight: bold !important;
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#000">
+    <mj-include path="../mj-header.mjml" />
+
+    <mj-section>
+      <mj-column>
+        <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
+          Pour <strong>rejoindre la communauté Agora Storyverse</strong>, rempli le formulaire via le lien ci-dessous.
+          <br /><br />
+          Ce lien est valable pour une durée de <strong>{{.Duration}}h</strong> seulement, alors fais vite!
+        </mj-text>
+
+        <mj-button
+          font-family="Helvetica"
+          background-color="#ffab33"
+          color="white"
+          href="{{.URL}}?shortCode={{.ShortCode}}&target={{.Target}}"
+        >
+          Formulaire d'inscription
+        </mj-button>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
