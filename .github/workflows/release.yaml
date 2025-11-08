@@ -76,7 +76,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
 
-  api-build:
+  rest-api-build:
     needs: [database-build]
     runs-on: ubuntu-latest
     permissions:
@@ -131,7 +131,7 @@ jobs:
       - uses: a-novel-kit/workflows/build-actions/docker@master
         with:
           file: builds/rest.Dockerfile
-          image_name: ${{ github.repository }}/api
+          image_name: ${{ github.repository }}/rest-api
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"

@@ -62,33 +62,37 @@ curl http://localhost:4011/healthcheck
 # {""client:postgres":{"status":"up"},...
 ```
 
-> Note: the `run` script handles graceful shutdown and cleanup of the server resources. You can quit the server by 
-> killing it with Ctrl+C / Cmd+C, however beware this will not terminate immediately, and instead trigger the cleanup 
+> Note: the `run` script handles graceful shutdown and cleanup of the server resources. You can quit the server by
+> killing it with Ctrl+C / Cmd+C, however beware this will not terminate immediately, and instead trigger the cleanup
 > script.
 
 ### As Containers
 
 You can build local version of the containers using
+
 ```bash
 make build
 ```
 
-You can then use the `:local` tag and the official image handler 
+You can then use the `:local` tag and the official image handler
 (eg: `ghcr.io/a-novel/service-authentication/standalone:local`)
 
 ## Contribute
 
 Run tests
+
 ```bash
 make test
 ```
 
 Make sure the code complies to our guidelines
+
 ```bash
 make lint # make format
 ```
 
 Keep the code up-to-date
+
 ```bash
 make generate
 ```

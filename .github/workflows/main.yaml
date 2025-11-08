@@ -55,6 +55,17 @@ jobs:
     steps:
       - uses: a-novel-kit/workflows/go-actions/lint-go@master
 
+  lint-node:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/node-actions/lint-node@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
+          app_id: ${{ vars.DEPENDENCY_BOT_ID }}
+
   test:
     needs: [generated-go, database-build]
     runs-on: ubuntu-latest
@@ -112,7 +123,7 @@ jobs:
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/go-actions/test-go@master
         with:
-          ignore_patterns: /mocks,/test,/models/api,/cmd
+          ignore_patterns: /mocks,/test,/cmd
           skip_setup: true
 
   report-codecov:
@@ -198,7 +209,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
 
-  api-build:
+  rest-api-build:
     needs: [test, database-build]
     runs-on: ubuntu-latest
     permissions:
@@ -253,7 +264,7 @@ jobs:
       - uses: a-novel-kit/workflows/build-actions/docker@master
         with:
           file: builds/rest.Dockerfile
-          image_name: ${{ github.repository }}/api
+          image_name: ${{ github.repository }}/rest-api
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
