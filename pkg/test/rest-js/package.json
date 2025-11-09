@@ -1,0 +1,40 @@
+{
+  "name": "service-authentication-rest-test-project",
+  "version": "2.0.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/a-novel/service-authentication.git"
+  },
+  "license": "AGPL-3.0",
+  "type": "module",
+  "devDependencies": {
+    "@a-novel/nodelib-browser": "^1.0.3",
+    "@a-novel/nodelib-test": "^1.0.3",
+    "@a-novel/service-authentication-rest": "workspace:*",
+    "@a-novel/service-authentication-rest-test": "workspace:*",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
+    "@types/jsdom": "^27.0.0",
+    "@types/mailparser": "^3.4.6",
+    "@types/node": "^24.10.0",
+    "@vitest/coverage-v8": "^4.0.8",
+    "globals": "^16.5.0",
+    "jsdom": "^27.1.0",
+    "mailparser": "^3.9.0",
+    "mjml": "4.16.1",
+    "prettier": "^3.6.2",
+    "prettier-plugin-packagejson": "^2.5.19",
+    "prettier-plugin-sql": "^0.19.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.8"
+  },
+  "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": ">=23.11.0",
+    "npm": ">=10.9.2"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

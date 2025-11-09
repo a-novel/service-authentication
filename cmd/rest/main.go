@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 	"net/http"
@@ -191,7 +192,7 @@ func main() {
 		r.Put("/anon", handlerTokenCreateAnon.ServeHTTP)
 
 		withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
-		withAuth(r).Patch("/", handlerTokenRefresh.ServeHTTP)
+		r.Patch("/", handlerTokenRefresh.ServeHTTP)
 	})
 
 	router.Route("/credentials", func(r chi.Router) {
@@ -228,5 +229,8 @@ func main() {
 
 	log.Println("Starting server on " + httpServer.Addr)
 
-	lo.Must0(httpServer.ListenAndServe())
+	err := httpServer.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		panic(err.Error())
+	}
 }

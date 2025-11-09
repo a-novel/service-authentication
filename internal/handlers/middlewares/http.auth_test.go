@@ -194,7 +194,7 @@ func TestAuth(t *testing.T) {
 				},
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus: http.StatusForbidden,
 		},
 		{
 			name: "Error/InvalidSignature",

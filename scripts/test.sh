@@ -3,8 +3,6 @@
 APP_NAME="service-authentication-test"
 PODMAN_FILE="$PWD/builds/podman-compose.test.yaml"
 
-export DEBUG=true
-
 # Ensure containers are properly shut down when the program exits abnormally.
 int_handler()
 {
@@ -13,7 +11,7 @@ int_handler()
 trap int_handler INT
 
 # Setup test containers.
-podman compose --podman-build-args='--format docker' -p "${APP_NAME}" -f "${PODMAN_FILE}" up -d --build --pull-always
+podman compose --podman-build-args='--format docker -q' -p "${APP_NAME}" -f "${PODMAN_FILE}" up -d --build
 
 POSTGRES_DSN=${POSTGRES_DSN_TEST} go run cmd/migrations/main.go
 

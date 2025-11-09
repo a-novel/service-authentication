@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+
+	"github.com/samber/lo"
 
 	"github.com/a-novel/golib/postgres"
 
@@ -11,13 +12,6 @@ import (
 )
 
 func main() {
-	ctx, err := postgres.NewContext(context.Background(), config.PostgresPresetDefault)
-	if err != nil {
-		log.Fatalf("failed to create context: %v", err)
-	}
-
-	err = postgres.RunMigrationsContext(ctx, migrations.Migrations)
-	if err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
-	}
+	ctx := lo.Must(postgres.NewContext(context.Background(), config.PostgresPresetDefault))
+	lo.Must0(postgres.RunMigrationsContext(ctx, migrations.Migrations))
 }

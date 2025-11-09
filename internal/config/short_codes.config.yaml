@@ -1,8 +1,8 @@
 size: 12
 usages:
-  requestRegister:
+  register:
     ttl: 48h
-  validateMail:
+  validateEmail:
     ttl: 48h
   resetPassword:
     ttl: 2h

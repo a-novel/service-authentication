@@ -1,26 +1,65 @@
 {
-  "name": "service-authentication",
+  "name": "service-authentication-project",
   "version": "2.0.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/a-novel/service-authentication.git"
+  },
   "license": "AGPL-3.0",
   "type": "module",
+  "workspaces": [
+    ".",
+    "pkg/rest-js",
+    "pkg/rest-js-test",
+    "pkg/test/rest-js"
+  ],
   "scripts": {
+    "build": "pnpm build:rest && pnpm build:rest-test && pnpm types:rest && pnpm types:rest-test",
+    "build:rest": "rm -rf ./pkg/rest-js/dist && vite build --outDir ./pkg/rest-js/dist -c pkg/rest-js/vite.config.ts",
+    "build:rest-test": "rm -rf ./pkg/rest-js-test/dist && vite build --outDir ./pkg/rest-js-test/dist -c pkg/rest-js-test/vite.config.ts",
     "format": "pnpm run format:prettier",
-    "format:prettier": "prettier --write . --config prettier.config.js",
+    "format:prettier": "prettier --write . --config prettier.config.ts",
     "generate": "pnpm run generate:mjml",
     "generate:mjml": "for i in `find . -name \"*.mjml\" -type f`; do pnpm mjml $i --config.beautify false --config.minify false -o ${i%.*}.html; done",
-    "lint": "pnpm run lint:prettier && pnpm run lint:mjml",
+    "preinstall": "npx only-allow pnpm",
+    "postinstall": "pnpm build",
+    "lint": "pnpm lint:stylecheck && pnpm lint:typecheck && pnpm lint:eslint && pnpm run lint:mjml",
+    "lint:eslint": "pnpm dlx eslint .",
     "lint:mjml": "for i in `find . -name \"*.mjml\" -type f`; do pnpm mjml --validate $i; done",
-    "lint:prettier": "prettier --check . --config prettier.config.js",
-    "publish:major": "pnpm version major && git push --follow-tags",
-    "publish:minor": "pnpm version minor && git push --follow-tags",
-    "publish:patch": "pnpm version patch && git push --follow-tags"
+    "lint:stylecheck": "prettier --check . --config prettier.config.ts",
+    "lint:typecheck": "tsc",
+    "publish:major": "pnpm version major --workspaces --workspaces-update=false --no-git-tag-version && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
+    "publish:minor": "pnpm version minor --workspaces --workspaces-update=false --no-git-tag-version && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
+    "publish:patch": "pnpm version patch --workspaces --workspaces-update=false --no-git-tag-version && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
+    "test": "vitest run -c vitest.config.ts",
+    "types:rest": "tsc --build pkg/rest-js/tsconfig.build.json",
+    "types:rest-test": "tsc --build pkg/rest-js-test/tsconfig.build.json"
   },
   "devDependencies": {
-    "@redocly/cli": "^2.11.0",
+    "@eslint/js": "^9.39.1",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
+    "@vitest/coverage-v8": "^4.0.8",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.5.0",
+    "jsdom": "^27.1.0",
     "mjml": "4.16.1",
     "prettier": "^3.6.2",
     "prettier-plugin-packagejson": "^2.5.19",
-    "prettier-plugin-sql": "^0.19.2"
+    "prettier-plugin-sql": "^0.19.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.8"
   },
-  "packageManager": "pnpm@10.20.0"
+  "packageManager": "pnpm@10.21.0",
+  "engines": {
+    "node": ">=23.11.0",
+    "npm": ">=10.9.2"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
 }

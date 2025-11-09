@@ -1,0 +1,79 @@
+services:
+  mailserver:
+    image: ghcr.io/axllent/mailpit:v1.27.11
+    ports:
+      - "${MAIL_UI_TEST_PORT}:8025"
+    networks:
+      - authentication-integration-test
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SEND_API_AUTH_ACCEPT_ANY: true
+      MP_SMTP_AUTH_ACCEPT_ANY: true
+      MP_SMTP_AUTH_ALLOW_INSECURE: true
+      MP_SENDMAIL_FROM: noreply@agorastoryverse.com
+      MP_DISABLE_WAL: true
+
+  postgres-authentication:
+    build:
+      context: ..
+      dockerfile: ./builds/database.Dockerfile
+    networks:
+      - authentication-integration-test
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+  postgres-json-keys:
+    image: ghcr.io/a-novel/service-json-keys/database:v1.3.20
+    networks:
+      - authentication-integration-test
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: json-keys
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+  # The Master Key is a secure, 32-bit random secret used to encrypt private JSON keys
+  # in the database.
+  # This value is a dummy key used for tests. Use your own random key in production.
+  service-json-keys:
+    image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.20
+    depends_on:
+      - postgres-json-keys
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
+      APP_MASTER_KEY: ${JSON_KEYS_MASTER}
+    networks:
+      - authentication-integration-test
+
+  service-authentication:
+    build:
+      context: ..
+      dockerfile: ./builds/standalone.Dockerfile
+    ports:
+      # Expose the service on port 4001 on the local machine.
+      - "${API_PORT}:8080"
+    depends_on:
+      - postgres-authentication
+      - mailserver
+    environment:
+      POSTGRES_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-authentication:5432/${POSTGRES_DB}?sslmode=disable"
+      JSON_KEYS_SERVICE_URL: "http://service-json-keys:8080/v1"
+      SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
+      SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
+      AUTH_PLATFORM_URL: "${AUTH_PLATFORM_URL}"
+      SMTP_SENDER_DOMAIN: mailserver
+      SMTP_ADDR: mailserver:1025
+      SMTP_SENDER_NAME: Agora Storyverse [noreply]
+      SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
+      SMTP_SENDER_PASSWORD: noreply
+      SMTP_FORCE_UNENCRYPTED: true
+    networks:
+      - authentication-integration-test
+
+networks:
+  authentication-integration-test:

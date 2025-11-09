@@ -19,11 +19,12 @@ const (
 )
 
 var SMTPProd = smtp.ProdSender{
-	Addr:     env.SmtpAddr,
-	Name:     env.SmtpSenderName,
-	Email:    env.SmtpSenderEmail,
-	Password: env.SmtpSenderPassword,
-	Domain:   env.SmtpSenderDomain,
+	Addr:                env.SmtpAddr,
+	Name:                env.SmtpSenderName,
+	Email:               env.SmtpSenderEmail,
+	Password:            env.SmtpSenderPassword,
+	Domain:              env.SmtpSenderDomain,
+	ForceUnencryptedTls: config.LoadEnv(env.SmtpForceUnencrypted, false, config.BoolParser),
 }
 
 var OtelProd = otelpresets.GCloudOtelConfig{

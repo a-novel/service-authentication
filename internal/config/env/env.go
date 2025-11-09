@@ -50,12 +50,13 @@ var (
 
 	JsonKeysServiceUrl = getEnv("JSON_KEYS_SERVICE_URL")
 
-	SmtpAddr           = getEnv("SMTP_ADDR")
-	SmtpSenderName     = getEnv("SMTP_SENDER_NAME")
-	SmtpSenderEmail    = getEnv("SMTP_SENDER_EMAIL")
-	SmtpSenderPassword = getEnv("SMTP_SENDER_PASSWORD")
-	SmtpSenderDomain   = getEnv("SMTP_SENDER_DOMAIN")
-	SmtpTimeout        = getEnv("SMTP_TIMEOUT")
+	SmtpAddr             = getEnv("SMTP_ADDR")
+	SmtpSenderName       = getEnv("SMTP_SENDER_NAME")
+	SmtpSenderEmail      = getEnv("SMTP_SENDER_EMAIL")
+	SmtpSenderPassword   = getEnv("SMTP_SENDER_PASSWORD")
+	SmtpSenderDomain     = getEnv("SMTP_SENDER_DOMAIN")
+	SmtpTimeout          = getEnv("SMTP_TIMEOUT")
+	SmtpForceUnencrypted = getEnv("SMTP_FORCE_UNENCRYPTED")
 
 	AppName                 = getEnv("APP_NAME")
 	ApiPort                 = getEnv("API_PORT")
@@ -72,4 +73,7 @@ var (
 	GcloudProjectId         = getEnv("GCLOUD_PROJECT_ID")
 
 	PrettyConsole = getEnv("PRETTY_CONSOLE")
+
+	SuperAdminEmail    = getEnv("SUPER_ADMIN_EMAIL")
+	SuperAdminPassword = getEnv("SUPER_ADMIN_PASSWORD")
 )

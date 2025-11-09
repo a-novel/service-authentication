@@ -1,4 +1,22 @@
 services:
+  mailserver:
+    image: ghcr.io/axllent/mailpit:v1.27.11
+    ports:
+      - "${MAIL_UI_PORT}:8025"
+    networks:
+      - api
+    restart: unless-stopped
+    volumes:
+      - mailserver-data:/data
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SEND_API_AUTH_ACCEPT_ANY: true
+      MP_SMTP_AUTH_ACCEPT_ANY: true
+      MP_SMTP_AUTH_ALLOW_INSECURE: true
+      MP_SENDMAIL_FROM: noreply@agorastoryverse.com
+      MP_DISABLE_WAL: true
+      MP_VERBOSE: true
+
   authentication-postgres:
     build:
       context: ..
@@ -42,7 +60,31 @@ services:
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@json-keys-postgres:5432/json-keys?sslmode=disable
       APP_MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
-      DEBUG: "${DEBUG}"
+    networks:
+      - api
+
+  service-authentication:
+    build:
+      context: ..
+      dockerfile: ./builds/standalone.Dockerfile
+    ports:
+      # Expose the service on port 4001 on the local machine.
+      - "${API_PORT}:8080"
+    depends_on:
+      - postgres-authentication
+      - mailserver
+    environment:
+      POSTGRES_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-authentication:5432/${POSTGRES_DB}?sslmode=disable"
+      JSON_KEYS_SERVICE_URL: "http://service-json-keys:8080/v1"
+      SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
+      SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
+      SMTP_SENDER_DOMAIN: mailserver
+      AUTH_PLATFORM_URL: "${AUTH_PLATFORM_URL}"
+      SMTP_ADDR: mailserver:1025
+      SMTP_SENDER_NAME: Agora Storyverse [noreply]
+      SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
+      SMTP_SENDER_PASSWORD: noreply
+      SMTP_FORCE_UNENCRYPTED: true
     networks:
       - api
 
@@ -52,3 +94,4 @@ networks:
 volumes:
   authentication-postgres-data:
   json-keys-postgres-data:
+  mailserver-data:

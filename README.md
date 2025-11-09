@@ -28,7 +28,110 @@
   - `https://gnuwin32.sourceforge.net/packages/make.htm` (macOS)
   - [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm)
 
-## Installation
+## Import in other projects
+
+### Go package
+
+You will also need [service JSON-Keys](https://github.com/a-novel/service-json-keys).
+
+```bash
+go get -u github.com/a-novel/service-authentication
+```
+
+```go
+package main
+
+import (
+	"context"
+
+	"github.com/go-chi/chi/v5"
+
+	authpkg "github.com/a-novel/service-authentication/pkg"
+	jkconfig "github.com/a-novel/service-json-keys/models/config"
+	jkpkg "github.com/a-novel/service-json-keys/pkg"
+)
+
+var myPermissions = authpkg.Permissions{
+	Roles: map[string]authpkg.Role{
+		"role1": {
+			Priority: 0,
+			Permissions: []string{"permission1", "permission2"},
+        },
+		"role2": {
+			Priority: 1,
+			Inherits: []string{"role1"},
+			Permissions: []string{"permission3"},
+		},
+		"role3": {
+			Priority: 0,
+			Permissions: []string{"permission4"},
+		},
+    },
+}
+
+func main() {
+	ctx := context.Background()
+
+	jsonKeysClient, _ := jkpkg.NewAPIClient(ctx, "<service-json-keys-url>")
+	claimsVerifier, _ := jkpkg.NewClaimsVerifier[authpkg.Claims](
+		jsonKeysClient,
+		jkconfig.JWKSPresetDefault,
+	)
+
+	// You can now add permission-based authentication to your routes.
+	withAuth := authpkg.NewAuthHandler(claimsVerifier, myPermissions)
+	router := chi.NewRouter()
+
+	// Route only accessible to users with role2.
+	withAuth(router, "permission3").Get(...)
+	// Route accessible to users with role1 or role2.
+	withAuth(router, "permission2").Get(...)
+	// Route accessible to all authenticated users.
+	withAuth(router).Get(...)
+	// Route accessible to users with role2 or role3.
+	withAuth(router, "permission3", "permission4").Get(...)
+}
+```
+
+### Javascript package
+
+The client rest api is exposed through a javascript package. It uses native fetch api, and exposes every type through
+[zod](https://github.com/colinhacks/zod.
+
+> ⚠️ **Warning**: Even though the package is public, GitHub registry requires you to have a Personal Access Token
+> with `repo` and `read:packages` scopes to pull it in your project. See
+> [this issue](https://github.com/orgs/community/discussions/23386#discussioncomment-3240193) for more information.
+
+Make sure you have a `.npmrc` with the following content (in your project or in your home directory):
+
+```ini
+@a-novel:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${YOUR_PERSONAL_ACCESS_TOKEN}
+```
+
+Then, install the package using pnpm:
+
+```bash
+# pnpm config set auto-install-peers true
+#  Or
+# pnpm config set auto-install-peers true --location project
+pnpm add @a-novel/service-authentication
+```
+
+Usage
+
+```typescript
+import { AuthenticationApi, tokenCreateAnon } from "@a-novel/service-authentication/rest";
+
+// API instance can be shared.
+const api = new AuthenticationApi("<base_api_url>");
+
+const token = await tokenCreateAnon(api);
+```
+
+## Development
+
+### Installation
 
 Install dependencies
 
@@ -45,9 +148,9 @@ cp .envrc.template .envrc
 Ask an admin to get the actual values for the placeholders in the new `.envrc` file (indicated by surrounding `[]`
 brackets).
 
-## Run locally
+### Run locally
 
-### As Rest API
+#### As Rest API
 
 ```bash
 make run
@@ -66,7 +169,7 @@ curl http://localhost:4011/healthcheck
 > killing it with Ctrl+C / Cmd+C, however beware this will not terminate immediately, and instead trigger the cleanup
 > script.
 
-### As Containers
+#### As Containers
 
 You can build local version of the containers using
 
@@ -77,7 +180,7 @@ make build
 You can then use the `:local` tag and the official image handler
 (eg: `ghcr.io/a-novel/service-authentication/standalone:local`)
 
-## Contribute
+### Contribute
 
 Run tests
 

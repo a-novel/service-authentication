@@ -109,7 +109,7 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 				if !granted {
 					httpf.HandleError(
 						ctx, w, span,
-						httpf.ErrMap{nil: http.StatusUnauthorized},
+						httpf.ErrMap{nil: http.StatusForbidden},
 						fmt.Errorf("%w: user needs '%s' permission", ErrInvalidAuth, permission),
 					)
 
