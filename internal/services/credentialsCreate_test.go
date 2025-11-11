@@ -209,7 +209,8 @@ func TestCredentialsCreateRequest(t *testing.T) {
 							return assert.Equal(t, testCase.request.Email, data.Email) &&
 								assert.NotEqual(t, uuid.Nil, data.ID) &&
 								assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
-								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password))
+								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
+								assert.Equal(t, config.RoleUser, data.Role)
 						})).
 						Return(
 							testCase.repositoryMock.resp,

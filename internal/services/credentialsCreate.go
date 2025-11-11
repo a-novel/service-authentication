@@ -35,8 +35,8 @@ type CredentialsCreateServiceSignClaims interface {
 
 type CredentialsCreateRequest struct {
 	Email     string `validate:"required,email"`
-	Password  string `validate:"required_without=ShortCode,max=1024"`
-	ShortCode string `validate:"required_without=Password,max=1024"`
+	Password  string `validate:"required,max=1024"`
+	ShortCode string `validate:"required,max=1024"`
 }
 
 type CredentialsCreate struct {

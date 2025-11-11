@@ -8,9 +8,14 @@ import (
 
 	"github.com/a-novel/service-authentication/internal/config"
 	"github.com/a-novel/service-authentication/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/internal/services"
 )
 
+type Role = config.Role
+
 type Permissions = config.Permissions
+
+type Claims = services.AccessTokenClaims
 
 type PermissionsHandler func(r chi.Router, permissions ...string) chi.Router
 

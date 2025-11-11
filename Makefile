@@ -1,6 +1,11 @@
 #  Run tests.
-test:
+test-unit:
 	bash -c "set -m; bash '$(CURDIR)/scripts/test.sh'"
+
+test-integration-js:
+	bash -c "set -m; bash '$(CURDIR)/scripts/test-integration-js.sh'"
+
+test: test-unit test-integration-js
 
 # Check code quality.
 lint:

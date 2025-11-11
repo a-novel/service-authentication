@@ -1,0 +1,45 @@
+{
+  "name": "@a-novel/service-authentication-rest-test",
+  "version": "2.0.0",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/a-novel/service-authentication.git"
+  },
+  "license": "AGPL-3.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.es.js",
+      "types": "./dist/src/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@types/jsdom": "^27.0.0",
+    "@types/mailparser": "^3.4.6",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@a-novel/nodelib-browser": "^1.0.3",
+    "@a-novel/nodelib-test": "^1.0.3",
+    "@a-novel/service-authentication-rest": "workspace:*",
+    "jsdom": "^27.1.0",
+    "mailparser": "^3.9.0",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.8",
+    "zod": "^4.1.12"
+  },
+  "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": ">=23.11.0",
+    "npm": ">=10.9.2"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

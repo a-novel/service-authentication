@@ -1,5 +1,5 @@
 services:
-  authentication-postgres:
+  postgres-authentication:
     build:
       context: ..
       dockerfile: ./builds/database.Dockerfile
@@ -14,7 +14,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
-  json-keys-postgres:
+  postgres-json-keys:
     image: ghcr.io/a-novel/service-json-keys/database:v1.3.20
     networks:
       - authentication-api-test
@@ -34,11 +34,10 @@ services:
       # Expose the service on port 4001 on the local machine.
       - "${JSON_KEYS_SERVICE_TEST_PORT}:8080"
     depends_on:
-      - json-keys-postgres
+      - postgres-json-keys
     environment:
-      POSTGRES_DSN: postgres://postgres:postgres@json-keys-postgres:5432/json-keys?sslmode=disable
+      POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
       APP_MASTER_KEY: ${JSON_KEYS_MASTER}
-      DEBUG: true
     networks:
       - authentication-api-test
 

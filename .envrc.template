@@ -1,9 +1,13 @@
 # App.
 export API_PORT=4011
-export DEBUG=true
+export API_URL="http://localhost:${API_PORT}"
+
+# Init.
+export SUPER_ADMIN_EMAIL=noreply@agorastoryverse.com
+export SUPER_ADMIN_PASSWORD=admin
 
 # Client (frontend).
-export AUTH_PLATFORM_PORT=6001
+export AUTH_PLATFORM_PORT=3001
 export AUTH_PLATFORM_URL="http://localhost:${AUTH_PLATFORM_PORT}"
 
 # Postgres.
@@ -26,4 +30,7 @@ export JSON_KEYS_SERVICE_TEST_PORT=5001
 export JSON_KEYS_SERVICE_TEST_URL="http://localhost:${JSON_KEYS_SERVICE_TEST_PORT}/${JSON_KEYS_API_VERSION}"
 
 # SMTP configuration.
-export SMTP_SANDBOX=true
+export MAIL_UI_PORT=7011
+export MAIL_HOST="http://localhost:${MAIL_UI_PORT}"
+export MAIL_UI_TEST_PORT=7012
+export MAIL_TEST_HOST="http://localhost:${MAIL_UI_TEST_PORT}"

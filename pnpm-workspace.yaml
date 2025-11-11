@@ -1,0 +1,20 @@
+packages:
+  - pkg/rest-js
+  - pkg/rest-js-test
+  - pkg/test/rest-js
+
+autoInstallPeers: true
+
+gitChecks: false
+
+linkWorkspacePackages: true
+prefer-workspace-packages: true
+recursive-install: true
+
+onlyBuiltDependencies:
+  - core-js
+  - esbuild
+  - msw
+  - protobufjs
+
+strictPeerDependencies: false

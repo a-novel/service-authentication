@@ -30,7 +30,6 @@ jobs:
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker@master
-        id: database_build
         with:
           file: builds/database.Dockerfile
           image_name: ${{ github.repository }}/database
@@ -51,7 +50,7 @@ jobs:
       attestations: write
       id-token: write
     services:
-      postgres:
+      postgres-authentication:
         image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
         ports:
           - "5432:5432"
@@ -76,6 +75,47 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
 
+  init-build:
+    runs-on: ubuntu-latest
+    needs: [database-build]
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    services:
+      postgres-authentication:
+        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
+      SUPER_ADMIN_PASSWORD: admin
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/run-migrations
+      - uses: a-novel-kit/workflows/build-actions/docker-job@master
+        with:
+          file: builds/init.Dockerfile
+          image_name: ${{ github.repository }}/jobs/migrations
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: >-
+            -e POSTGRES_DSN="${POSTGRES_DSN}"
+            -e SUPER_ADMIN_EMAIL="${SUPER_ADMIN_EMAIL}"
+            -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD}"
+
   rest-api-build:
     needs: [database-build]
     runs-on: ubuntu-latest
@@ -85,7 +125,7 @@ jobs:
       attestations: write
       id-token: write
     services:
-      postgres:
+      postgres-authentication:
         image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
         ports:
           - "5432:5432"
@@ -110,7 +150,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      json-keys:
+      service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.20
         ports:
           - "4001:8080"
@@ -124,7 +164,6 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
       AUTH_PLATFORM_URL: http://localhost:6001
-      DEBUG: true
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
@@ -137,7 +176,6 @@ jobs:
             -e POSTGRES_DSN="${POSTGRES_DSN}"
             -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
             -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
-            -e DEBUG="${DEBUG}"
 
   standalone-build:
     needs: [database-build]
@@ -148,7 +186,7 @@ jobs:
       attestations: write
       id-token: write
     services:
-      postgres:
+      postgres-authentication:
         image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
         ports:
           - "5432:5432"
@@ -173,7 +211,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      json-keys:
+      service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.20
         ports:
           - "4001:8080"
@@ -187,7 +225,6 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
       AUTH_PLATFORM_URL: http://localhost:6001
-      DEBUG: true
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
@@ -200,4 +237,17 @@ jobs:
             -e POSTGRES_DSN="${POSTGRES_DSN}"
             -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
             -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
-            -e DEBUG="${DEBUG}"
+
+  build-js:
+    needs:
+      - release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: a-novel-kit/workflows/publish-actions/npm@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          app_private_key: ${{ secrets.PUBLISH_BOT_PRIVATE_KEY }}
+          app_id: ${{ vars.PUBLISH_BOT_ID }}

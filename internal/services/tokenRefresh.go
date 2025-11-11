@@ -41,8 +41,8 @@ type TokenRefreshServiceVerifyRefreshClaims interface {
 }
 
 type TokenRefreshRequest struct {
-	AccessToken  string `validate:"required,max=1024,base64rawurl"`
-	RefreshToken string `validate:"required,max=1024,base64rawurl"`
+	AccessToken  string `validate:"required,max=1024"`
+	RefreshToken string `validate:"required,max=1024"`
 }
 
 type TokenRefresh struct {

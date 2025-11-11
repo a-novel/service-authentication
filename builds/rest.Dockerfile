@@ -35,7 +35,7 @@ COPY --from=builder /api /api
 RUN apk --update add curl
 
 HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
-  CMD curl -f http://localhost:8080/healthcheck || exit 1
+  CMD curl -f http://localhost:8080/ping || exit 1
 
 # ======================================================================================================================
 # Finish setup.

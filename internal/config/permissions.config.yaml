@@ -27,4 +27,5 @@ roles:
       - "auth:admin"
     permissions:
       - "credentials:role:patch"
+      # TODO: (#320) move to anon permissions.
       - "shortCode:register"
