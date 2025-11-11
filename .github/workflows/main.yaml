@@ -35,7 +35,7 @@ jobs:
         with:
           app_id: ${{ vars.DEPENDENCY_BOT_ID }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: latest
       - name: install pnpm
