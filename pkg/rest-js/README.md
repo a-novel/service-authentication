@@ -1,4 +1,4 @@
-# Node (browser)
+# Rest client
 
 ## Installation
 

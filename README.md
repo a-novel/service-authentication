@@ -115,13 +115,13 @@ Then, install the package using pnpm:
 # pnpm config set auto-install-peers true
 #  Or
 # pnpm config set auto-install-peers true --location project
-pnpm add @a-novel/service-authentication
+pnpm add @a-novel/service-authentication-rest
 ```
 
 Usage
 
 ```typescript
-import { AuthenticationApi, tokenCreateAnon } from "@a-novel/service-authentication/rest";
+import { AuthenticationApi, tokenCreateAnon } from "@a-novel/service-authentication-rest";
 
 // API instance can be shared.
 const api = new AuthenticationApi("<base_api_url>");

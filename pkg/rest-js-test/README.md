@@ -1,4 +1,4 @@
-# Node (browser)
+# Rest client (tests)
 
 ## Installation
 
@@ -19,5 +19,5 @@ Then, install the package using pnpm:
 # pnpm config set auto-install-peers true
 #  Or
 # pnpm config set auto-install-peers true --location project
-pnpm add @a-novel/service-authentication-rest-test
+pnpm add -D @a-novel/service-authentication-rest-test
 ```
