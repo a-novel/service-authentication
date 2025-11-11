@@ -109,7 +109,7 @@ jobs:
       - uses: a-novel-kit/workflows/build-actions/docker-job@master
         with:
           file: builds/init.Dockerfile
-          image_name: ${{ github.repository }}/jobs/migrations
+          image_name: ${{ github.repository }}/jobs/init
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
