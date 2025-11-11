@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/samber/lo"
+
 	"github.com/a-novel/golib/httpf"
 	"github.com/a-novel/golib/otel"
 	jkmodels "github.com/a-novel/service-json-keys/models"
@@ -91,26 +93,31 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 
 			ctx = SetClaimsContext(ctx, claims)
 
-			// Assign an object with each required permissions, then toggle the permission flag if the user has it.
-			grantedPermissions := map[string]bool{}
+			if len(requiredPermissions) > 0 {
+				// Check if the user has at least one of the required permissions.
+				grantedPermissions := map[string]bool{}
 
-			for _, permission := range requiredPermissions {
-				grantedPermissions[permission] = false
-			}
-
-			for _, role := range claims.Roles {
-				for _, permission := range middleware.permissionsByRole[role] {
+				for _, permission := range requiredPermissions {
 					grantedPermissions[permission] = true
 				}
-			}
 
-			// If a permission remains with status false, it means the user lacks it so we refuse access.
-			for permission, granted := range grantedPermissions {
-				if !granted {
+				var allowed bool
+
+				for _, role := range claims.Roles {
+					if lo.ContainsBy(middleware.permissionsByRole[role], func(item string) bool {
+						return grantedPermissions[item]
+					}) {
+						allowed = true
+
+						break
+					}
+				}
+
+				if !allowed {
 					httpf.HandleError(
 						ctx, w, span,
 						httpf.ErrMap{nil: http.StatusForbidden},
-						fmt.Errorf("%w: user needs '%s' permission", ErrInvalidAuth, permission),
+						fmt.Errorf("%w: user does not have any of the required permissions", ErrInvalidAuth),
 					)
 
 					return
