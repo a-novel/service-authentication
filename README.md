@@ -96,7 +96,7 @@ func main() {
 ### Javascript package
 
 The client rest api is exposed through a javascript package. It uses native fetch api, and exposes every type through
-[zod](https://github.com/colinhacks/zod.
+[zod](https://github.com/colinhacks/zod).
 
 > ⚠️ **Warning**: Even though the package is public, GitHub registry requires you to have a Personal Access Token
 > with `repo` and `read:packages` scopes to pull it in your project. See
