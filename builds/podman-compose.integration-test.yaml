@@ -55,7 +55,6 @@ services:
       context: ..
       dockerfile: ./builds/standalone.Dockerfile
     ports:
-      # Expose the service on port 4001 on the local machine.
       - "${API_PORT}:8080"
     depends_on:
       - postgres-authentication

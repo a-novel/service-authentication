@@ -31,7 +31,6 @@ services:
   json-keys-service:
     image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.21
     ports:
-      # Expose the service on port 4001 on the local machine.
       - "${JSON_KEYS_SERVICE_TEST_PORT}:8080"
     depends_on:
       - postgres-json-keys

@@ -53,7 +53,6 @@ services:
   json-keys-service:
     image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.21
     ports:
-      # Expose the service on port 4001 on the local machine.
       - "${JSON_KEYS_SERVICE_PORT}:8080"
     depends_on:
       - json-keys-postgres
@@ -68,7 +67,6 @@ services:
       context: ..
       dockerfile: ./builds/standalone.Dockerfile
     ports:
-      # Expose the service on port 4001 on the local machine.
       - "${API_PORT}:8080"
     depends_on:
       - postgres-authentication

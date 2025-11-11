@@ -150,6 +150,3 @@ linters:
       - path: dao/(.+)_test.go
         linters:
           - paralleltest
-      - path: cmd/
-        linters:
-          - paralleltest
