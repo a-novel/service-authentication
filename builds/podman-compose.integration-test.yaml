@@ -27,7 +27,7 @@ services:
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
   postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v1.3.20
+    image: ghcr.io/a-novel/service-json-keys/database:v1.3.21
     networks:
       - authentication-integration-test
     environment:
@@ -41,7 +41,7 @@ services:
   # in the database.
   # This value is a dummy key used for tests. Use your own random key in production.
   service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.20
+    image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.21
     depends_on:
       - postgres-json-keys
     environment:
