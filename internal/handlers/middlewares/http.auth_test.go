@@ -49,7 +49,7 @@ func TestAuth(t *testing.T) {
 
 			authHeader: "Bearer token",
 
-			permissions: []string{"read", "write"},
+			permissions: []string{"write"},
 			permissionsByRole: map[string][]string{
 				"role1": {"read", "write"},
 				"role2": {"read"},
@@ -69,7 +69,7 @@ func TestAuth(t *testing.T) {
 			},
 		},
 		{
-			name: "Success/CompositeRole",
+			name: "Success/CompositePermissions",
 
 			authHeader: "Bearer token",
 
@@ -82,14 +82,14 @@ func TestAuth(t *testing.T) {
 				reqToken: "token",
 				resp: &services.AccessTokenClaims{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:  []string{"role1", "role2"},
+					Roles:  []string{"role2"},
 				},
 			},
 
 			expectStatus: http.StatusOK,
 			expectClaims: &services.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Roles:  []string{"role1", "role2"},
+				Roles:  []string{"role2"},
 			},
 		},
 		{
@@ -181,7 +181,7 @@ func TestAuth(t *testing.T) {
 
 			authHeader: "Bearer token",
 
-			permissions: []string{"read", "write"},
+			permissions: []string{"write"},
 			permissionsByRole: map[string][]string{
 				"role1": {"read", "write"},
 				"role2": {"read"},
