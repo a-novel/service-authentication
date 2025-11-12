@@ -90,12 +90,8 @@ github.com/MirrexOne/unqueryvet v1.2.1 h1:M+zdXMq84g+E1YOLa7g7ExN3dWfZQrdDSTCM7g
 github.com/MirrexOne/unqueryvet v1.2.1/go.mod h1:IWwCwMQlSWjAIteW0t+28Q5vouyktfujzYznSIWiuOg=
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1 h1:vckeWVESWp6Qog7UZSARNqfu/cZqvki8zsuj3piCMx4=
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1/go.mod h1:q4DKzC4UcVaAvcfd41CZh0PWpGgzrVxUYBlgKNGquUo=
-github.com/a-novel-kit/jwt v1.1.8 h1:773R9xzbQ8XLNtbFOx3dX7TNMe4JTF+ooORL3WOyNBU=
-github.com/a-novel-kit/jwt v1.1.8/go.mod h1:vnKtv+WNjuPRnfLVOgkfy0bCqo30f3D+gO+TGeMRKi8=
 github.com/a-novel-kit/jwt v1.1.10 h1:N3INyrGfS1PvotuWsTlQyIHDmfLfWHrjgYhEn/sSQeQ=
 github.com/a-novel-kit/jwt v1.1.10/go.mod h1:uD5vvA/MQZHAO6SVJs826OCUAa1PMZmWN+JFIuIZunQ=
-github.com/a-novel/golib v0.11.3 h1:HlAhO1xoLxI0aduQrQ2qMveGlrnyzcyUvGmi3yZu0os=
-github.com/a-novel/golib v0.11.3/go.mod h1:LYV2CsPJBj/I76F5jL1oqJRL81oFhGPGyyQaElaUZXo=
 github.com/a-novel/golib v0.12.1 h1:mryZ0v0VlRj6Alnkr5jmZsVxo1r9E8CW5kJVTaZWIGE=
 github.com/a-novel/golib v0.12.1/go.mod h1:gpQPZH9eGwB7+NogiyYwWNjnjr8aNloV6Xh06K8fGis=
 github.com/a-novel/service-json-keys v1.3.21 h1:BRumUu0V56i6rNqOqcK+ukj6HEWgH64gA1W092lE93g=
@@ -744,8 +740,8 @@ github.com/uudashr/gocognit v1.2.0 h1:3BU9aMr1xbhPlvJLSydKwdLN3tEUUrzPSSM8S4hDYR
 github.com/uudashr/gocognit v1.2.0/go.mod h1:k/DdKPI6XBZO1q7HgoV2juESI2/Ofj9AcHPZhBBdrTU=
 github.com/uudashr/iface v1.4.1 h1:J16Xl1wyNX9ofhpHmQ9h9gk5rnv2A6lX/2+APLTo0zU=
 github.com/uudashr/iface v1.4.1/go.mod h1:pbeBPlbuU2qkNDn0mmfrxP2X+wjPMIQAy+r1MBXSXtg=
-github.com/vektra/mockery/v3 v3.5.5 h1:1ExE+yqz3ytvEOe7pUH5VWIwmsYlSq+FjWPVVLdE8O4=
-github.com/vektra/mockery/v3 v3.5.5/go.mod h1:Oti3Df0WP8wwT31yuVri3QNsDeMUQU5Q4QEg8EabaBw=
+github.com/vektra/mockery/v3 v3.6.0 h1:T4VaJh/o2dqEBT9jzdSQVuSKVXMzB6oTeVENshm7NuU=
+github.com/vektra/mockery/v3 v3.6.0/go.mod h1:Oti3Df0WP8wwT31yuVri3QNsDeMUQU5Q4QEg8EabaBw=
 github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=
 github.com/vmihailenco/msgpack/v5 v5.4.1/go.mod h1:GaZTsDaehaPpQVyxrf5mtQlH+pc21PIudVV/E3rRQok=
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=
