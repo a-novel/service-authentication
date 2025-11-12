@@ -16,7 +16,7 @@ importers:
         version: 6.0.0(prettier@3.6.2)
       '@vitest/coverage-v8':
         specifier: ^4.0.8
-        version: 4.0.8(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.1.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))
+        version: 4.0.8(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))
       eslint:
         specifier: ^9.39.1
         version: 9.39.1
@@ -31,7 +31,7 @@ importers:
         version: 16.5.0
       jsdom:
         specifier: ^27.1.0
-        version: 27.1.0
+        version: 27.2.0
       mjml:
         specifier: 4.16.1
         version: 4.16.1
@@ -55,7 +55,7 @@ importers:
         version: 7.2.2(@types/node@24.10.0)
       vitest:
         specifier: ^4.0.8
-        version: 4.0.8(@types/node@24.10.0)(jsdom@27.1.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
+        version: 4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
 
   pkg/rest-js:
     dependencies:
@@ -117,7 +117,7 @@ importers:
         version: 1.0.3(zod@4.1.12)
       '@a-novel/nodelib-test':
         specifier: ^1.0.3
-        version: 1.0.3(@a-novel/nodelib-browser@1.0.3(zod@4.1.12))(@msw/playwright@0.4.2(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.7(react@19.2.0))(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(playwright@1.56.1)(v8-to-istanbul@9.3.0)(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.1.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))(zod@4.1.12)
+        version: 1.0.3(@a-novel/nodelib-browser@1.0.3(zod@4.1.12))(@msw/playwright@0.4.2(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.7(react@19.2.0))(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(playwright@1.56.1)(v8-to-istanbul@9.3.0)(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))(zod@4.1.12)
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../../rest-js
@@ -138,13 +138,13 @@ importers:
         version: 24.10.0
       '@vitest/coverage-v8':
         specifier: ^4.0.8
-        version: 4.0.8(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.1.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))
+        version: 4.0.8(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))
       globals:
         specifier: ^16.5.0
         version: 16.5.0
       jsdom:
         specifier: ^27.1.0
-        version: 27.1.0
+        version: 27.2.0
       mailparser:
         specifier: ^3.9.0
         version: 3.9.0
@@ -168,7 +168,7 @@ importers:
         version: 7.2.2(@types/node@24.10.0)
       vitest:
         specifier: ^4.0.8
-        version: 4.0.8(@types/node@24.10.0)(jsdom@27.1.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
+        version: 4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
 
 packages:
 
@@ -273,8 +273,8 @@ packages:
     peerDependencies:
       '@csstools/css-tokenizer': ^3.0.4
 
-  '@csstools/css-syntax-patches-for-csstree@1.0.15':
-    resolution: {integrity: sha512-q0p6zkVq2lJnmzZVPR33doA51G7YOja+FBvRdp5ISIthL0MtFCgYHHhR563z9WFGxcOn0WfjSkPDJ5Qig3H3Sw==}
+  '@csstools/css-syntax-patches-for-csstree@1.0.16':
+    resolution: {integrity: sha512-2SpS4/UaWQaGpBINyG5ZuCHnUDeVByOhvbkARwfmnfxDvTaj80yOI1cD8Tw93ICV5Fx4fnyDKWQZI1CDtcWyUg==}
     engines: {node: '>=18'}
 
   '@csstools/css-tokenizer@3.0.4':
@@ -1505,6 +1505,15 @@ packages:
       canvas:
         optional: true
 
+  jsdom@27.2.0:
+    resolution: {integrity: sha512-454TI39PeRDW1LgpyLPyURtB4Zx1tklSr6+OFOipsxGUH1WMTvk6C65JQdrj455+DP2uJ1+veBEHTGFKWVLFoA==}
+    engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
+    peerDependencies:
+      canvas: ^3.0.0
+    peerDependenciesMeta:
+      canvas:
+        optional: true
+
   jsesc@3.1.0:
     resolution: {integrity: sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA==}
     engines: {node: '>=6'}
@@ -2369,6 +2378,21 @@ snapshots:
       vitest: 4.0.8(@types/node@24.10.0)(jsdom@27.1.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
       zod: 4.1.12
 
+  '@a-novel/nodelib-test@1.0.3(@a-novel/nodelib-browser@1.0.3(zod@4.1.12))(@msw/playwright@0.4.2(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.7(react@19.2.0))(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(playwright@1.56.1)(v8-to-istanbul@9.3.0)(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))(zod@4.1.12)':
+    dependencies:
+      '@a-novel/nodelib-browser': 1.0.3(zod@4.1.12)
+      '@msw/playwright': 0.4.2(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
+      '@tanstack/react-query': 5.90.7(react@19.2.0)
+      '@testing-library/react': 16.3.0(@testing-library/dom@10.4.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      get-port-please: 3.2.0
+      globals: 16.5.0
+      lodash-es: 4.17.21
+      msw: 2.12.1(@types/node@24.10.0)(typescript@5.9.3)
+      playwright: 1.56.1
+      v8-to-istanbul: 9.3.0
+      vitest: 4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
+      zod: 4.1.12
+
   '@acemir/cssom@0.9.23': {}
 
   '@asamuzakjp/css-color@4.0.5':
@@ -2458,7 +2482,7 @@ snapshots:
     dependencies:
       '@csstools/css-tokenizer': 3.0.4
 
-  '@csstools/css-syntax-patches-for-csstree@1.0.15': {}
+  '@csstools/css-syntax-patches-for-csstree@1.0.16': {}
 
   '@csstools/css-tokenizer@3.0.4': {}
 
@@ -2941,7 +2965,7 @@ snapshots:
       '@typescript-eslint/types': 8.46.4
       eslint-visitor-keys: 4.2.1
 
-  '@vitest/coverage-v8@4.0.8(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.1.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))':
+  '@vitest/coverage-v8@4.0.8(vitest@4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)))':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.0.8
@@ -2954,7 +2978,7 @@ snapshots:
       magicast: 0.5.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.8(@types/node@24.10.0)(jsdom@27.1.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
+      vitest: 4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
     transitivePeerDependencies:
       - supports-color
 
@@ -3183,7 +3207,7 @@ snapshots:
   cssstyle@5.3.3:
     dependencies:
       '@asamuzakjp/css-color': 4.0.5
-      '@csstools/css-syntax-patches-for-csstree': 1.0.15
+      '@csstools/css-syntax-patches-for-csstree': 1.0.16
       css-tree: 3.1.0
 
   data-urls@6.0.0:
@@ -3636,6 +3660,33 @@ snapshots:
       argparse: 2.0.1
 
   jsdom@27.1.0:
+    dependencies:
+      '@acemir/cssom': 0.9.23
+      '@asamuzakjp/dom-selector': 6.7.4
+      cssstyle: 5.3.3
+      data-urls: 6.0.0
+      decimal.js: 10.6.0
+      html-encoding-sniffer: 4.0.0
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
+      is-potential-custom-element-name: 1.0.1
+      parse5: 8.0.0
+      saxes: 6.0.0
+      symbol-tree: 3.2.4
+      tough-cookie: 6.0.0
+      w3c-xmlserializer: 5.0.0
+      webidl-conversions: 8.0.0
+      whatwg-encoding: 3.1.1
+      whatwg-mimetype: 4.0.0
+      whatwg-url: 15.1.0
+      ws: 8.18.3
+      xml-name-validator: 5.0.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  jsdom@27.2.0:
     dependencies:
       '@acemir/cssom': 0.9.23
       '@asamuzakjp/dom-selector': 6.7.4
@@ -4539,6 +4590,45 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.10.0
       jsdom: 27.1.0
+    transitivePeerDependencies:
+      - jiti
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
+
+  vitest@4.0.8(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)):
+    dependencies:
+      '@vitest/expect': 4.0.8
+      '@vitest/mocker': 4.0.8(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(vite@7.2.2(@types/node@24.10.0))
+      '@vitest/pretty-format': 4.0.8
+      '@vitest/runner': 4.0.8
+      '@vitest/snapshot': 4.0.8
+      '@vitest/spy': 4.0.8
+      '@vitest/utils': 4.0.8
+      debug: 4.4.3
+      es-module-lexer: 1.7.0
+      expect-type: 1.2.2
+      magic-string: 0.30.21
+      pathe: 2.0.3
+      picomatch: 4.0.3
+      std-env: 3.10.0
+      tinybench: 2.9.0
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.15
+      tinyrainbow: 3.0.3
+      vite: 7.2.2(@types/node@24.10.0)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 24.10.0
+      jsdom: 27.2.0
     transitivePeerDependencies:
       - jiti
       - less
