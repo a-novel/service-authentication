@@ -5,10 +5,10 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/a-novel/golib/config"
+	"github.com/a-novel/golib/logging"
+	loggingpresets "github.com/a-novel/golib/logging/presets"
 	"github.com/a-novel/golib/otel"
 	otelpresets "github.com/a-novel/golib/otel/presets"
-	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
 
 	"github.com/a-novel/service-authentication/internal/config/env"
@@ -24,74 +24,64 @@ var SMTPProd = smtp.ProdSender{
 	Email:               env.SmtpSenderEmail,
 	Password:            env.SmtpSenderPassword,
 	Domain:              env.SmtpSenderDomain,
-	ForceUnencryptedTls: config.LoadEnv(env.SmtpForceUnencrypted, false, config.BoolParser),
+	ForceUnencryptedTls: env.SmtpForceUnencrypted,
 }
 
-var OtelProd = otelpresets.GCloudOtelConfig{
+var OtelProd = otelpresets.Gcloud{
 	ProjectID:    env.GcloudProjectId,
 	FlushTimeout: OtelFlushTimeout,
 }
 
-var OtelDev = otelpresets.LocalOtelConfig{
-	PrettyPrint:  config.LoadEnv(env.PrettyConsole, true, config.BoolParser),
+var OtelDev = otelpresets.Local{
 	FlushTimeout: OtelFlushTimeout,
 }
 
-var AppPresetDefault = App[otel.Config, postgres.Config, smtp.Sender]{
+var NoOtel = otelpresets.Disabled{}
+
+var LoggerProd = loggingpresets.HttpGcloud{
+	ProjectId: env.GcloudProjectId,
+}
+
+var LoggerDev = loggingpresets.HttpLocal{}
+
+var AppPresetDefault = App{
 	App: Main{
-		Name: config.LoadEnv(env.AppName, env.AppNameDefault, config.StringParser),
+		Name: env.AppName,
 	},
 	Api: API{
-		Port:           config.LoadEnv(env.ApiPort, env.ApiPortDefault, config.IntParser),
-		MaxRequestSize: config.LoadEnv(env.ApiMaxRequestSize, env.ApiMaxRequestSizeDefault, config.Int64Parser),
+		Port:           env.ApiPort,
+		MaxRequestSize: env.ApiMaxRequestSize,
 		Timeouts: APITimeouts{
-			Read: config.LoadEnv(env.ApiTimeoutRead, env.ApiTimeoutReadDefault, config.DurationParser),
-			ReadHeader: config.LoadEnv(
-				env.ApiTimeoutReadHeader, env.ApiTimeoutReadHeaderDefault, config.DurationParser,
-			),
-			Write:   config.LoadEnv(env.ApiTimeoutWrite, env.ApiTimeoutWriteDefault, config.DurationParser),
-			Idle:    config.LoadEnv(env.ApiTimeoutIdle, env.ApiTimeoutIdleDefault, config.DurationParser),
-			Request: config.LoadEnv(env.ApiTimeoutRequest, env.ApiTimeoutRequestDefault, config.DurationParser),
+			Read:       env.ApiTimeoutRead,
+			ReadHeader: env.ApiTimeoutReadHeader,
+			Write:      env.ApiTimeoutWrite,
+			Idle:       env.ApiTimeoutIdle,
+			Request:    env.ApiTimeoutRequest,
 		},
 		Cors: Cors{
-			AllowedOrigins: config.LoadEnv(
-				env.ApiCorsAllowedOrigins, env.ApiCorsAllowedOriginsDefault, config.SliceParser(config.StringParser),
-			),
-			AllowedHeaders: config.LoadEnv(
-				env.ApiCorsAllowedHeaders, env.ApiCorsAllowedHeadersDefault, config.SliceParser(config.StringParser),
-			),
-			AllowCredentials: config.LoadEnv(
-				env.ApiCorsAllowCredentials, env.ApiCorsAllowCredentialsDefault, config.BoolParser,
-			),
-			MaxAge: config.LoadEnv(env.ApiCorsMaxAge, env.ApiCorsMaxAgeDefault, config.IntParser),
+			AllowedOrigins:   env.CorsAllowedOrigins,
+			AllowedHeaders:   env.CorsAllowedHeaders,
+			AllowCredentials: env.CorsAllowCredentials,
+			MaxAge:           env.CorsMaxAge,
 		},
 	},
 
 	DependenciesConfig: Dependencies{
-		JsonKeysServiceUrl: env.JsonKeysServiceUrl,
+		ServiceJsonKeysUrl: env.ServiceJsonKeysUrl,
 	},
 	Permissions:      PermissionsConfigDefault,
 	ShortCodesConfig: ShortCodesPresetDefault,
 	SmtpUrlsConfig: SmtpUrls{
-		UpdateEmail: config.LoadEnv(
-			env.AuthPlatformUpdateEmailUrl,
-			env.AuthPlatformUrl+"/ext/email/validate",
-			config.StringParser,
-		),
-		UpdatePassword: config.LoadEnv(
-			env.AuthPlatformUpdatePasswordUrl,
-			env.AuthPlatformUrl+"/ext/password/reset",
-			config.StringParser,
-		),
-		Register: config.LoadEnv(
-			env.AuthPlatformRegisterUrl,
-			env.AuthPlatformUrl+"/ext/account/create",
-			config.StringParser,
-		),
-		Timeout: config.LoadEnv(env.SmtpTimeout, env.SmtpTimeoutDefault, config.DurationParser),
+		UpdateEmail:    env.PlatformAuthUpdateEmailUrl,
+		UpdatePassword: env.PlatformAuthUpdatePasswordUrl,
+		Register:       env.PlatformAuthRegisterUrl,
+		Timeout:        env.SmtpTimeout,
 	},
 
-	Smtp:     lo.Ternary[smtp.Sender](env.SmtpAddr == "", smtp.NewDebugSender(nil), &SMTPProd),
-	Otel:     lo.Ternary[otel.Config](env.GcloudProjectId == "", &OtelDev, &OtelProd),
+	Smtp: lo.Ternary[smtp.Sender](env.SmtpAddr == "", smtp.NewDebugSender(nil), &SMTPProd),
+	Otel: lo.If[otel.Config](!env.Otel, &NoOtel).
+		ElseIf(env.GcloudProjectId == "", &OtelDev).
+		Else(&OtelProd),
+	Logger:   lo.Ternary[logging.HttpConfig](env.GcloudProjectId == "", &LoggerDev, &LoggerProd),
 	Postgres: PostgresPresetDefault,
 }

@@ -10,10 +10,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc"
 
+	"github.com/a-novel/golib/grpcf"
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
-	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel-kit/jwt"
 	"github.com/a-novel-kit/jwt/jws"
@@ -30,7 +32,9 @@ type CredentialsCreateServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
 type CredentialsCreateServiceSignClaims interface {
-	SignClaims(ctx context.Context, usage jkmodels.KeyUsage, claims any) (string, error)
+	ClaimsSign(
+		ctx context.Context, req *jkpkg.ClaimsSignRequest, opts ...grpc.CallOption,
+	) (*jkpkg.ClaimsSignResponse, error)
 }
 
 type CredentialsCreateRequest struct {
@@ -109,11 +113,18 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	refreshToken, err := service.serviceSignClaims.SignClaims(
+	refreshTokenPayload, err := grpcf.InterfaceToProtoAny(RefreshTokenClaimsForm{
+		UserID: credentials.ID,
+	})
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("grpcf marshal: %w", err))
+	}
+
+	refreshToken, err := service.serviceSignClaims.ClaimsSign(
 		ctx,
-		jkmodels.KeyUsageRefresh,
-		RefreshTokenClaimsForm{
-			UserID: credentials.ID,
+		&jkpkg.ClaimsSignRequest{
+			Usage:   jkpkg.KeyUsageAuthRefresh,
+			Payload: refreshTokenPayload,
 		},
 	)
 	if err != nil {
@@ -126,19 +137,23 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 
 	var refreshTokenClaims RefreshTokenClaims
 
-	err = refreshTokenRecipient.Consume(ctx, refreshToken, &refreshTokenClaims)
+	err = refreshTokenRecipient.Consume(ctx, refreshToken.GetToken(), &refreshTokenClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("unmarshal refresh token claims: %w", err))
 	}
 
+	accessTokenPayload, err := grpcf.InterfaceToProtoAny(AccessTokenClaims{
+		UserID:         &credentials.ID,
+		Roles:          []string{credentials.Role},
+		RefreshTokenID: refreshTokenClaims.Jti,
+	})
+
 	// Generate a new authentication token.
-	accessToken, err := service.serviceSignClaims.SignClaims(
+	accessToken, err := service.serviceSignClaims.ClaimsSign(
 		ctx,
-		jkmodels.KeyUsageAuth,
-		AccessTokenClaims{
-			UserID:         &credentials.ID,
-			Roles:          []string{credentials.Role},
-			RefreshTokenID: refreshTokenClaims.Jti,
+		&jkpkg.ClaimsSignRequest{
+			Usage:   jkpkg.KeyUsageAuth,
+			Payload: accessTokenPayload,
 		},
 	)
 	if err != nil {
@@ -146,7 +161,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	}
 
 	return otel.ReportSuccess(span, &Token{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken:  accessToken.GetToken(),
+		RefreshToken: refreshToken.GetToken(),
 	}), nil
 }

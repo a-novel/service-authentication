@@ -27,7 +27,7 @@ services:
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
   postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v1.3.22
+    image: ghcr.io/a-novel/service-json-keys/database:v2.0.0
     networks:
       - authentication-integration-test
     environment:
@@ -41,7 +41,7 @@ services:
   # in the database.
   # This value is a dummy key used for tests. Use your own random key in production.
   service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.22
+    image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.0
     depends_on:
       - postgres-json-keys
     environment:
@@ -61,10 +61,10 @@ services:
       - mailserver
     environment:
       POSTGRES_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-authentication:5432/${POSTGRES_DB}?sslmode=disable"
-      JSON_KEYS_SERVICE_URL: "http://service-json-keys:8080/v1"
+      SERVICE_JSON_KEYS_URL: "http://service-json-keys:8080/v1"
       SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
       SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
-      AUTH_PLATFORM_URL: "${AUTH_PLATFORM_URL}"
+      PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
       SMTP_SENDER_DOMAIN: mailserver
       SMTP_ADDR: mailserver:1025
       SMTP_SENDER_NAME: Agora Storyverse [noreply]

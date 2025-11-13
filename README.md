@@ -47,8 +47,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	authpkg "github.com/a-novel/service-authentication/pkg"
-	jkconfig "github.com/a-novel/service-json-keys/models/config"
-	jkpkg "github.com/a-novel/service-json-keys/pkg"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 )
 
 var myPermissions = authpkg.Permissions{
@@ -72,14 +71,11 @@ var myPermissions = authpkg.Permissions{
 func main() {
 	ctx := context.Background()
 
-	jsonKeysClient, _ := jkpkg.NewAPIClient(ctx, "<service-json-keys-url>")
-	claimsVerifier, _ := jkpkg.NewClaimsVerifier[authpkg.Claims](
-		jsonKeysClient,
-		jkconfig.JWKSPresetDefault,
-	)
+	jsonKeysClient, _ := jkpkg.NewClient(ctx, "<service-json-keys-url>")
+	serviceVerifyAccessToken := jkpkg.NewClaimsVerifier[authpkg.Claims](jsonKeysClient)
 
 	// You can now add permission-based authentication to your routes.
-	withAuth := authpkg.NewAuthHandler(claimsVerifier, myPermissions)
+	withAuth := authpkg.NewAuthHandler(serviceVerifyAccessToken, myPermissions)
 	router := chi.NewRouter()
 
 	// Route only accessible to users with role2.

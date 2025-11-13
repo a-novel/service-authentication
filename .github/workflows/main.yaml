@@ -77,7 +77,7 @@ jobs:
           app_id: ${{ vars.DEPENDENCY_BOT_ID }}
 
   test:
-    needs: [generated-go, database-build]
+    needs: [lint-go, build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -85,7 +85,7 @@ jobs:
       artifact-id: ${{ steps.test.outputs.artifact-id }}
     services:
       postgres:
-        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
         ports:
           - "5432:5432"
         env:
@@ -101,7 +101,7 @@ jobs:
           --health-retries 5
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/database:v2.0.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -115,7 +115,7 @@ jobs:
           --health-retries 5
 
       json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.0
         ports:
           - "4001:8080"
         credentials:
@@ -127,8 +127,8 @@ jobs:
     env:
       POSTGRES_DSN_TEST: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      JSON_KEYS_SERVICE_TEST_URL: http://0.0.0.0:4001/v1
-      AUTH_PLATFORM_URL: http://localhost:6001
+      SERVICE_JSON_KEYS_TEST_URL: http://0.0.0.0:4001/v1
+      PLATFORM_AUTH_URL: http://localhost:6001
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
@@ -139,17 +139,100 @@ jobs:
           skip_setup: true
           coverage_artifact: gocover
 
-  report-grc:
+  test-js:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && success()
-    needs: [test]
+    needs: [build-database, build-standalone]
     permissions:
       contents: read
-    steps:
-      - uses: a-novel-kit/workflows/go-actions/go-report-card@master
-        if: github.ref == 'refs/heads/master' && success()
+      packages: read
+    outputs:
+      artifact-id: ${{ steps.test.outputs.artifact-id }}
+    services:
+      mailserver:
+        image: ghcr.io/axllent/mailpit:v1.27.11
+        ports:
+          - "8025:8025"
+        env:
+          MP_MAX_MESSAGES: 5000
+          MP_SEND_API_AUTH_ACCEPT_ANY: true
+          MP_SMTP_AUTH_ACCEPT_ANY: true
+          MP_SMTP_AUTH_ALLOW_INSECURE: true
+          MP_SENDMAIL_FROM: noreply@agorastoryverse.com
+          MP_DISABLE_WAL: true
 
-  database-build:
+      postgres-authentication:
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres-json-keys:
+        image: ghcr.io/a-novel/service-json-keys/database:v2.0.0
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      service-json-keys:
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.0
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
+
+      service-authentication:
+        image: ghcr.io/a-novel/service-authentication/standalone@${{ needs.build-standalone.outputs.digest }}
+        ports:
+          - "4011:8080"
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          POSTGRES_DSN: postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable
+          SERVICE_JSON_KEYS_URL: http://service-json-keys:8080/v1
+          SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
+          SUPER_ADMIN_PASSWORD: admin
+          PLATFORM_AUTH_URL: "http://auth-platform"
+          SMTP_SENDER_DOMAIN: mailserver
+          SMTP_ADDR: mailserver:1025
+          SMTP_SENDER_NAME: Agora Storyverse [noreply]
+          SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
+          SMTP_SENDER_PASSWORD: noreply
+          SMTP_FORCE_UNENCRYPTED: true
+    env:
+      API_URL: http://0.0.0.0:4011
+      SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
+      SUPER_ADMIN_PASSWORD: admin
+      MAIL_TEST_HOST: http://0.0.0.0:8025
+    steps:
+      - uses: a-novel-kit/workflows/node-actions/test-node@master
+        id: test
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
+          app_id: ${{ vars.DEPENDENCY_BOT_ID }}
+          coverage_artifact: jscover
+
+  build-database:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -178,9 +261,9 @@ jobs:
             -e POSTGRES_HOST_AUTH_METHOD="${POSTGRES_HOST_AUTH_METHOD}"
             -e POSTGRES_INITDB_ARGS="${POSTGRES_INITDB_ARGS}"
 
-  migrations-build:
+  build-migrations:
     runs-on: ubuntu-latest
-    needs: [database-build]
+    needs: [build-database]
     permissions:
       contents: read
       packages: write
@@ -188,7 +271,7 @@ jobs:
       id-token: write
     services:
       postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
         ports:
           - "5432:5432"
         env:
@@ -212,9 +295,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
 
-  init-build:
+  build-job-init:
     runs-on: ubuntu-latest
-    needs: [test, database-build]
+    needs: [test, build-database]
     permissions:
       contents: read
       packages: write
@@ -222,7 +305,7 @@ jobs:
       id-token: write
     services:
       postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
         ports:
           - "5432:5432"
         env:
@@ -253,8 +336,8 @@ jobs:
             -e SUPER_ADMIN_EMAIL="${SUPER_ADMIN_EMAIL}"
             -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD}"
 
-  rest-api-build:
-    needs: [test, database-build]
+  build-rest-api:
+    needs: [test, build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -263,7 +346,7 @@ jobs:
       id-token: write
     services:
       postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
         ports:
           - "5432:5432"
         env:
@@ -274,7 +357,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/database:v2.0.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -288,7 +371,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.0
         ports:
           - "4001:8080"
         credentials:
@@ -299,8 +382,8 @@ jobs:
           APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
-      AUTH_PLATFORM_URL: http://localhost:6001
+      SERVICE_JSON_KEYS_URL: http://0.0.0.0:4001/v1
+      PLATFORM_AUTH_URL: http://localhost:6001
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
@@ -311,11 +394,11 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
-            -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
-            -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
+            -e SERVICE_JSON_KEYS_URL="${SERVICE_JSON_KEYS_URL}"
+            -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
-  standalone-build:
-    needs: [test, database-build]
+  build-standalone:
+    needs: [test, build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -326,7 +409,7 @@ jobs:
       digest: ${{ steps.build.outputs.digest }}
     services:
       postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
         ports:
           - "5432:5432"
         env:
@@ -337,7 +420,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/database:v2.0.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -351,7 +434,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.0
         ports:
           - "4001:8080"
         credentials:
@@ -362,8 +445,8 @@ jobs:
           APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
-      AUTH_PLATFORM_URL: http://localhost:6001
+      SERVICE_JSON_KEYS_URL: http://0.0.0.0:4001/v1
+      PLATFORM_AUTH_URL: http://localhost:6001
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
@@ -375,101 +458,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
-            -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
-            -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
-
-  test-js:
-    runs-on: ubuntu-latest
-    needs: [database-build, standalone-build]
-    permissions:
-      contents: read
-      packages: read
-    outputs:
-      artifact-id: ${{ steps.test.outputs.artifact-id }}
-    services:
-      mailserver:
-        image: ghcr.io/axllent/mailpit:v1.27.11
-        ports:
-          - "8025:8025"
-        env:
-          MP_MAX_MESSAGES: 5000
-          MP_SEND_API_AUTH_ACCEPT_ANY: true
-          MP_SMTP_AUTH_ACCEPT_ANY: true
-          MP_SMTP_AUTH_ALLOW_INSECURE: true
-          MP_SENDMAIL_FROM: noreply@agorastoryverse.com
-          MP_DISABLE_WAL: true
-
-      postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database@${{ needs.database-build.outputs.digest }}
-        ports:
-          - "5432:5432"
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.3.22
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.22
-        credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
-          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
-
-      service-authentication:
-        image: ghcr.io/a-novel/service-authentication/standalone@${{ needs.standalone-build.outputs.digest }}
-        ports:
-          - "4011:8080"
-        credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          POSTGRES_DSN: postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable
-          JSON_KEYS_SERVICE_URL: http://service-json-keys:8080/v1
-          SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
-          SUPER_ADMIN_PASSWORD: admin
-          AUTH_PLATFORM_URL: "http://auth-platform"
-          SMTP_SENDER_DOMAIN: mailserver
-          SMTP_ADDR: mailserver:1025
-          SMTP_SENDER_NAME: Agora Storyverse [noreply]
-          SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
-          SMTP_SENDER_PASSWORD: noreply
-          SMTP_FORCE_UNENCRYPTED: true
-    env:
-      API_URL: http://0.0.0.0:4011
-      SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
-      SUPER_ADMIN_PASSWORD: admin
-      MAIL_TEST_HOST: http://0.0.0.0:8025
-    steps:
-      - uses: a-novel-kit/workflows/node-actions/test-node@master
-        id: test
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-          app_id: ${{ vars.DEPENDENCY_BOT_ID }}
-          coverage_artifact: jscover
+            -e SERVICE_JSON_KEYS_URL="${SERVICE_JSON_KEYS_URL}"
+            -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
   build-js:
     needs: [test-js]
@@ -484,6 +474,16 @@ jobs:
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
           app_id: ${{ vars.DEPENDENCY_BOT_ID }}
           build_action: "build:rest"
+
+  report-grc:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && success()
+    needs: [test, test-js]
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/go-actions/go-report-card@master
+        if: github.ref == 'refs/heads/master' && success()
 
   report-codecov:
     runs-on: ubuntu-latest

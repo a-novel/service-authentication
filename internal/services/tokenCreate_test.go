@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	jkmodels "github.com/a-novel/service-json-keys/models"
+	"github.com/a-novel/golib/grpcf"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel/service-authentication/internal/config"
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -32,7 +34,7 @@ func TestTokenCreate(t *testing.T) {
 	}
 
 	type issueTokenMock struct {
-		resp string
+		resp *jkpkg.ClaimsSignResponse
 		err  error
 	}
 
@@ -68,7 +70,9 @@ func TestTokenCreate(t *testing.T) {
 			issueRefreshTokenMock: &issueRefreshTokenMock{},
 
 			issueTokenMock: &issueTokenMock{
-				resp: "access-token",
+				resp: &jkpkg.ClaimsSignResponse{
+					Token: "access_token",
+				},
 			},
 
 			expect: &services.Token{
@@ -92,7 +96,9 @@ func TestTokenCreate(t *testing.T) {
 			issueRefreshTokenMock: &issueRefreshTokenMock{},
 
 			issueTokenMock: &issueTokenMock{
-				resp: "access-token",
+				resp: &jkpkg.ClaimsSignResponse{
+					Token: "access_token",
+				},
 			},
 
 			expect: &services.Token{
@@ -116,7 +122,9 @@ func TestTokenCreate(t *testing.T) {
 			issueRefreshTokenMock: &issueRefreshTokenMock{},
 
 			issueTokenMock: &issueTokenMock{
-				resp: "access-token",
+				resp: &jkpkg.ClaimsSignResponse{
+					Token: "access_token",
+				},
 			},
 
 			expect: &services.Token{
@@ -140,7 +148,9 @@ func TestTokenCreate(t *testing.T) {
 			issueRefreshTokenMock: &issueRefreshTokenMock{},
 
 			issueTokenMock: &issueTokenMock{
-				resp: "access-token",
+				resp: &jkpkg.ClaimsSignResponse{
+					Token: "access_token",
+				},
 			},
 
 			expect: &services.Token{
@@ -235,18 +245,23 @@ func TestTokenCreate(t *testing.T) {
 
 			if testCase.issueRefreshTokenMock != nil {
 				serviceSignClaims.EXPECT().
-					SignClaims(mock.Anything, jkmodels.KeyUsageRefresh, services.RefreshTokenClaimsForm{
-						UserID: testCase.repositoryMock.resp.ID,
+					ClaimsSign(mock.Anything, &jkpkg.ClaimsSignRequest{
+						Usage: jkpkg.KeyUsageAuthRefresh,
+						Payload: lo.Must(grpcf.InterfaceToProtoAny(services.RefreshTokenClaimsForm{
+							UserID: testCase.repositoryMock.resp.ID,
+						})),
 					}).
 					Return(
-						mockUnsignedRefreshToken,
+						&jkpkg.ClaimsSignResponse{
+							Token: mockUnsignedRefreshToken,
+						},
 						testCase.issueRefreshTokenMock.err,
 					)
 			}
 
 			if testCase.issueTokenMock != nil {
 				serviceSignClaims.EXPECT().
-					SignClaims(mock.Anything, jkmodels.KeyUsageAuth,
+					ClaimsSign(mock.Anything, jkpkg.KeyUsageAuth,
 						services.AccessTokenClaims{
 							UserID:         &testCase.repositoryMock.resp.ID,
 							Roles:          []string{testCase.repositoryMock.resp.Role},

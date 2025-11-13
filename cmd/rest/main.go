@@ -15,8 +15,7 @@ import (
 
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
-	jkconfig "github.com/a-novel/service-json-keys/models/config"
-	jkpkg "github.com/a-novel/service-json-keys/pkg"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel/service-authentication/internal/config"
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -31,7 +30,7 @@ func main() {
 
 	otel.SetAppName(cfg.App.Name)
 
-	lo.Must0(otel.InitOtel(cfg.Otel))
+	lo.Must0(otel.Init(cfg.Otel))
 	defer cfg.Otel.Flush()
 
 	// =================================================================================================================
@@ -40,17 +39,10 @@ func main() {
 
 	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
-	jsonKeysClient := lo.Must(jkpkg.NewAPIClient(ctx, cfg.DependenciesConfig.JsonKeysServiceUrl))
-	signer := jkpkg.NewClaimsSigner(jsonKeysClient)
+	jsonKeysClient := lo.Must(jkpkg.NewClient(cfg.DependenciesConfig.ServiceJsonKeysUrl))
 
-	serviceVerifyAccessToken := lo.Must(jkpkg.NewClaimsVerifier[services.AccessTokenClaims](
-		jsonKeysClient,
-		jkconfig.JWKSPresetDefault,
-	))
-	serviceVerifyRefreshToken := lo.Must(jkpkg.NewClaimsVerifier[services.RefreshTokenClaims](
-		jsonKeysClient,
-		jkconfig.JWKSPresetDefault,
-	))
+	serviceVerifyAccessToken := jkpkg.NewClaimsVerifier[services.AccessTokenClaims](jsonKeysClient)
+	serviceVerifyRefreshToken := jkpkg.NewClaimsVerifier[services.RefreshTokenClaims](jsonKeysClient)
 
 	// =================================================================================================================
 	// DAO
@@ -98,7 +90,7 @@ func main() {
 	serviceCredentialsCreate := services.NewCredentialsCreate(
 		repositoryCredentialsInsert,
 		serviceShortCodeConsume,
-		signer,
+		jsonKeysClient,
 	)
 	serviceCredentialsExist := services.NewCredentialsExist(repositoryCredentialsExist)
 	serviceCredentialsGet := services.NewCredentialsGet(repositoryCredentialsSelect)
@@ -117,11 +109,11 @@ func main() {
 		repositoryCredentialsSelect,
 	)
 
-	serviceTokenCreate := services.NewTokenCreate(repositoryCredentialsSelectByEmail, signer)
-	serviceTokenCreateAnon := services.NewTokenCreateAnon(signer)
+	serviceTokenCreate := services.NewTokenCreate(repositoryCredentialsSelectByEmail, jsonKeysClient)
+	serviceTokenCreateAnon := services.NewTokenCreateAnon(jsonKeysClient)
 	serviceTokenRefresh := services.NewTokenRefresh(
 		repositoryCredentialsSelect,
-		signer,
+		jsonKeysClient,
 		serviceVerifyAccessToken,
 		serviceVerifyRefreshToken,
 	)
@@ -168,6 +160,7 @@ func main() {
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Timeout(cfg.Api.Timeouts.Request))
 	router.Use(middleware.RequestSize(cfg.Api.MaxRequestSize))
+	router.Use(cfg.Otel.HttpHandler())
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   cfg.Api.Cors.AllowedOrigins,
 		AllowedHeaders:   cfg.Api.Cors.AllowedHeaders,
@@ -182,7 +175,7 @@ func main() {
 		},
 		MaxAge: cfg.Api.Cors.MaxAge,
 	}))
-	router.Use(cfg.Otel.HTTPHandler())
+	router.Use(cfg.Logger.Logger())
 
 	router.Get("/ping", handlerPing.ServeHTTP)
 	router.Get("/healthcheck", handlerHealth.ServeHTTP)

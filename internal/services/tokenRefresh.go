@@ -6,10 +6,11 @@ import (
 
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc"
 
+	"github.com/a-novel/golib/grpcf"
 	"github.com/a-novel/golib/otel"
-	jkmodels "github.com/a-novel/service-json-keys/models"
-	jkpkg "github.com/a-novel/service-json-keys/pkg"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -27,17 +28,15 @@ type TokenRefreshRepository interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 type TokenRefreshServiceSignClaims interface {
-	SignClaims(ctx context.Context, usage jkmodels.KeyUsage, claims any) (string, error)
+	ClaimsSign(
+		ctx context.Context, req *jkpkg.ClaimsSignRequest, opts ...grpc.CallOption,
+	) (*jkpkg.ClaimsSignResponse, error)
 }
 type TokenRefreshServiceVerifyClaims interface {
-	VerifyClaims(
-		ctx context.Context, usage jkmodels.KeyUsage, accessToken string, options *jkpkg.VerifyClaimsOptions,
-	) (*AccessTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *jkpkg.VerifyClaimsRequest) (*AccessTokenClaims, error)
 }
 type TokenRefreshServiceVerifyRefreshClaims interface {
-	VerifyClaims(
-		ctx context.Context, usage jkmodels.KeyUsage, refreshToken string, options *jkpkg.VerifyClaimsOptions,
-	) (*RefreshTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *jkpkg.VerifyClaimsRequest) (*RefreshTokenClaims, error)
 }
 
 type TokenRefreshRequest struct {
@@ -79,9 +78,11 @@ func (service *TokenRefresh) Exec(
 
 	accessTokenClaims, err := service.serviceVerifyClaims.VerifyClaims(
 		ctx,
-		jkmodels.KeyUsageAuth,
-		request.AccessToken,
-		&jkpkg.VerifyClaimsOptions{IgnoreExpired: true},
+		&jkpkg.VerifyClaimsRequest{
+			Usage:       jkpkg.KeyUsageAuth,
+			AccessToken: request.AccessToken,
+			Options:     &jkpkg.VerifyClaimsOptions{IgnoreExpired: true},
+		},
 	)
 	if err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) {
@@ -93,9 +94,10 @@ func (service *TokenRefresh) Exec(
 
 	refreshTokenClaims, err := service.serviceVerifyRefreshClaims.VerifyClaims(
 		ctx,
-		jkmodels.KeyUsageRefresh,
-		request.RefreshToken,
-		nil,
+		&jkpkg.VerifyClaimsRequest{
+			Usage:       jkpkg.KeyUsageAuthRefresh,
+			AccessToken: request.RefreshToken,
+		},
 	)
 	if err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) {
@@ -131,7 +133,7 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	newAccessToken, err := service.serviceSignClaims.SignClaims(ctx, jkmodels.KeyUsageAuth, &AccessTokenClaims{
+	newAccessTokenClaims, err := grpcf.InterfaceToProtoAny(AccessTokenClaims{
 		UserID:         accessTokenClaims.UserID,
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,
@@ -140,8 +142,19 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
+	newAccessToken, err := service.serviceSignClaims.ClaimsSign(
+		ctx,
+		&jkpkg.ClaimsSignRequest{
+			Usage:   jkpkg.KeyUsageAuth,
+			Payload: newAccessTokenClaims,
+		},
+	)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
 	return otel.ReportSuccess(span, &Token{
-		AccessToken:  newAccessToken,
+		AccessToken:  newAccessToken.GetToken(),
 		RefreshToken: request.RefreshToken, // Refresh token does not change.
 	}), nil
 }

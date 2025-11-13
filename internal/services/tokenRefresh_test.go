@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	jkmodels "github.com/a-novel/service-json-keys/models"
-	jkpkg "github.com/a-novel/service-json-keys/pkg"
+	"github.com/a-novel/golib/grpcf"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -31,7 +31,7 @@ func TestTokenRefresh(t *testing.T) {
 	}
 
 	type signClaimsMock struct {
-		resp string
+		resp *jkpkg.ClaimsSignResponse
 		err  error
 	}
 
@@ -89,7 +89,9 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			signClaimsMock: &signClaimsMock{
-				resp: base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				resp: &jkpkg.ClaimsSignResponse{
+					Token: base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				},
 			},
 
 			expect: &services.Token{
@@ -320,9 +322,11 @@ func TestTokenRefresh(t *testing.T) {
 				serviceVerifyClaims.EXPECT().
 					VerifyClaims(
 						mock.Anything,
-						jkmodels.KeyUsageAuth,
-						testCase.request.AccessToken,
-						&jkpkg.VerifyClaimsOptions{IgnoreExpired: true},
+						&jkpkg.VerifyClaimsRequest{
+							Usage:       jkpkg.KeyUsageAuth,
+							AccessToken: testCase.request.AccessToken,
+							Options:     &jkpkg.VerifyClaimsOptions{IgnoreExpired: true},
+						},
 					).
 					Return(testCase.serviceVerifyClaimsMock.resp, testCase.serviceVerifyClaimsMock.err)
 			}
@@ -331,9 +335,10 @@ func TestTokenRefresh(t *testing.T) {
 				serviceVerifyRefreshClaims.EXPECT().
 					VerifyClaims(
 						mock.Anything,
-						jkmodels.KeyUsageRefresh,
-						testCase.request.RefreshToken,
-						(*jkpkg.VerifyClaimsOptions)(nil),
+						&jkpkg.VerifyClaimsRequest{
+							Usage:       jkpkg.KeyUsageAuthRefresh,
+							AccessToken: testCase.request.RefreshToken,
+						},
 					).
 					Return(testCase.serviceVerifyRefreshClaimsMock.resp, testCase.serviceVerifyRefreshClaimsMock.err)
 			}
@@ -348,13 +353,15 @@ func TestTokenRefresh(t *testing.T) {
 
 			if testCase.signClaimsMock != nil {
 				serviceSignClaims.EXPECT().
-					SignClaims(
+					ClaimsSign(
 						mock.Anything,
-						jkmodels.KeyUsageAuth,
-						&services.AccessTokenClaims{
-							UserID:         testCase.serviceVerifyClaimsMock.resp.UserID,
-							Roles:          []string{testCase.repositoryMock.resp.Role},
-							RefreshTokenID: testCase.serviceVerifyRefreshClaimsMock.resp.Jti,
+						&jkpkg.ClaimsSignRequest{
+							Usage: jkpkg.KeyUsageAuth,
+							Payload: lo.Must(grpcf.InterfaceToProtoAny(&services.AccessTokenClaims{
+								UserID:         testCase.serviceVerifyClaimsMock.resp.UserID,
+								Roles:          []string{testCase.repositoryMock.resp.Role},
+								RefreshTokenID: testCase.serviceVerifyRefreshClaimsMock.resp.Jti,
+							})),
 						},
 					).
 					Return(testCase.signClaimsMock.resp, testCase.signClaimsMock.err)

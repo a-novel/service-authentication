@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/golib/grpcf"
 	"github.com/a-novel/golib/postgres"
-	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel/service-authentication/internal/config"
 	"github.com/a-novel/service-authentication/internal/dao"
@@ -32,7 +34,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 	}
 
 	type issueTokenMock struct {
-		resp string
+		resp *jkpkg.ClaimsSignResponse
 		err  error
 	}
 
@@ -82,7 +84,9 @@ func TestCredentialsCreateRequest(t *testing.T) {
 			serviceSignClaimsMock: &serviceSignClaimsMock{},
 
 			issueTokenMock: &issueTokenMock{
-				resp: "access-token",
+				resp: &jkpkg.ClaimsSignResponse{
+					Token: "access_token",
+				},
 			},
 
 			expect: &services.Token{
@@ -220,23 +224,30 @@ func TestCredentialsCreateRequest(t *testing.T) {
 
 				if testCase.serviceSignClaimsMock != nil {
 					serviceSignClaims.EXPECT().
-						SignClaims(mock.Anything, jkmodels.KeyUsageRefresh, services.RefreshTokenClaimsForm{
-							UserID: testCase.repositoryMock.resp.ID,
+						ClaimsSign(mock.Anything, &jkpkg.ClaimsSignRequest{
+							Usage: jkpkg.KeyUsageAuthRefresh,
+							Payload: lo.Must(grpcf.InterfaceToProtoAny(services.RefreshTokenClaimsForm{
+								UserID: testCase.repositoryMock.resp.ID,
+							})),
 						}).
 						Return(
-							mockUnsignedRefreshToken,
+							&jkpkg.ClaimsSignResponse{
+								Token: mockUnsignedRefreshToken,
+							},
 							testCase.serviceSignClaimsMock.err,
 						)
 				}
 
 				if testCase.issueTokenMock != nil {
 					serviceSignClaims.EXPECT().
-						SignClaims(mock.Anything, jkmodels.KeyUsageAuth,
-							services.AccessTokenClaims{
+						ClaimsSign(mock.Anything, &jkpkg.ClaimsSignRequest{
+							Usage: jkpkg.KeyUsageAuth,
+							Payload: lo.Must(grpcf.InterfaceToProtoAny(services.AccessTokenClaims{
 								UserID:         &testCase.repositoryMock.resp.ID,
 								Roles:          []string{testCase.repositoryMock.resp.Role},
 								RefreshTokenID: mockUnsignedJTI,
-							}).
+							})),
+						}).
 						Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
 				}
 
