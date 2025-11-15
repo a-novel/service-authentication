@@ -17,12 +17,10 @@ services:
       MP_DISABLE_WAL: true
       MP_VERBOSE: true
 
-  authentication-postgres:
+  postgres-authentication:
     build:
       context: ..
       dockerfile: ./builds/database.Dockerfile
-    ports:
-      - "${POSTGRES_PORT}:5432"
     networks:
       - api
     environment:
@@ -34,7 +32,7 @@ services:
     volumes:
       - authentication-postgres-data:/var/lib/postgresql/
 
-  json-keys-postgres:
+  postgres-json-keys:
     image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
     networks:
       - api
@@ -50,14 +48,12 @@ services:
   # The Master Key is a secure, 32-bit random secret used to encrypt private JSON keys
   # in the database.
   # This value is a dummy key used for tests. Use your own random key in production.
-  json-keys-service:
+  service-json-keys:
     image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
-    ports:
-      - "${SERVICE_JSON_KEYS_PORT}:8080"
     depends_on:
-      - json-keys-postgres
+      - postgres-json-keys
     environment:
-      POSTGRES_DSN: postgres://postgres:postgres@json-keys-postgres:5432/json-keys?sslmode=disable
+      POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
       APP_MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
     networks:
       - api
@@ -70,6 +66,7 @@ services:
       - "${API_PORT}:8080"
     depends_on:
       - postgres-authentication
+      - service-json-keys
       - mailserver
     environment:
       POSTGRES_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-authentication:5432/${POSTGRES_DB}?sslmode=disable"

@@ -114,10 +114,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      json-keys:
+      service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
         ports:
-          - "4001:8080"
+          - "4002:8080"
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -127,7 +127,7 @@ jobs:
     env:
       POSTGRES_DSN_TEST: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      SERVICE_JSON_KEYS_TEST_PORT: 4001
+      SERVICE_JSON_KEYS_TEST_PORT: 4002
       SERVICE_JSON_KEYS_TEST_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6001
     steps:
@@ -375,7 +375,7 @@ jobs:
       service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
         ports:
-          - "4001:8080"
+          - "4002:8080"
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -384,7 +384,7 @@ jobs:
           APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      SERVICE_JSON_KEYS_PORT: 4001
+      SERVICE_JSON_KEYS_PORT: 4002
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6001
     steps:
@@ -440,7 +440,7 @@ jobs:
       service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
         ports:
-          - "4001:8080"
+          - "4002:8080"
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -449,7 +449,7 @@ jobs:
           APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      SERVICE_JSON_KEYS_PORT: 4001
+      SERVICE_JSON_KEYS_PORT: 4002
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6001
     steps:

@@ -71,7 +71,7 @@ var myPermissions = authpkg.Permissions{
 func main() {
 	ctx := context.Background()
 
-	jsonKeysClient, _ := jkpkg.NewClient(ctx, "<service-json-keys-url>")
+	jsonKeysClient, _ := jkpkg.NewClient("<service-json-keys-url>")
 	serviceVerifyAccessToken := jkpkg.NewClaimsVerifier[authpkg.Claims](jsonKeysClient)
 
 	// You can now add permission-based authentication to your routes.
