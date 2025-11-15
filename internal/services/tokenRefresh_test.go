@@ -62,7 +62,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "Success",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 
@@ -90,12 +90,12 @@ func TestTokenRefresh(t *testing.T) {
 
 			signClaimsMock: &signClaimsMock{
 				resp: &jkpkg.ClaimsSignResponse{
-					Token: base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+					Token: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				},
 			},
 
 			expect: &services.Token{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 		},
@@ -104,7 +104,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "SignError",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 
@@ -140,7 +140,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "SelectCredentialsError",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 
@@ -169,7 +169,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "VerifyRefreshTokenClaimsError",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 
@@ -191,7 +191,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "VerifyClaimsError",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 
@@ -206,7 +206,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "InvalidRefreshToken",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 
@@ -228,7 +228,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "InvalidAccessToken",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 
@@ -243,7 +243,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "NoRefreshToken",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken: base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 			},
 
 			expectErr: services.ErrInvalidRequest,
@@ -261,7 +261,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "NotSameUser",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 
@@ -286,7 +286,7 @@ func TestTokenRefresh(t *testing.T) {
 			name: "NotSameRefreshToken",
 
 			request: &services.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access_token")),
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
 

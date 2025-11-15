@@ -42,23 +42,23 @@ func TestTokenRefresh(t *testing.T) {
 			name: "Success",
 
 			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access_token",
+				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
 
 			serviceMock: &serviceMock{
 				req: &services.TokenRefreshRequest{
-					AccessToken:  "access_token",
+					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
 				resp: &services.Token{
-					AccessToken:  "new_access_token",
+					AccessToken:  "new-access-token",
 					RefreshToken: "refresh_token",
 				},
 			},
 
 			expectResponse: map[string]any{
-				"accessToken":  "new_access_token",
+				"accessToken":  "new-access-token",
 				"refreshToken": "refresh_token",
 			},
 			expectStatus: http.StatusOK,
@@ -67,13 +67,13 @@ func TestTokenRefresh(t *testing.T) {
 			name: "Error/InvalidAccessToken",
 
 			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access_token",
+				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
 
 			serviceMock: &serviceMock{
 				req: &services.TokenRefreshRequest{
-					AccessToken:  "access_token",
+					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
 				err: services.ErrTokenRefreshInvalidAccessToken,
@@ -85,13 +85,13 @@ func TestTokenRefresh(t *testing.T) {
 			name: "Error/InvalidRefreshToken",
 
 			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access_token",
+				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
 
 			serviceMock: &serviceMock{
 				req: &services.TokenRefreshRequest{
-					AccessToken:  "access_token",
+					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
 				err: services.ErrTokenRefreshInvalidRefreshToken,
@@ -103,13 +103,13 @@ func TestTokenRefresh(t *testing.T) {
 			name: "Error/MismatchClaims",
 
 			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access_token",
+				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
 
 			serviceMock: &serviceMock{
 				req: &services.TokenRefreshRequest{
-					AccessToken:  "access_token",
+					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
 				err: services.ErrTokenRefreshMismatchClaims,
@@ -121,13 +121,13 @@ func TestTokenRefresh(t *testing.T) {
 			name: "Error/MismatchSource",
 
 			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access_token",
+				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
 
 			serviceMock: &serviceMock{
 				req: &services.TokenRefreshRequest{
-					AccessToken:  "access_token",
+					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
 				err: services.ErrTokenRefreshMismatchSource,
@@ -139,13 +139,13 @@ func TestTokenRefresh(t *testing.T) {
 			name: "Error/Internal",
 
 			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access_token",
+				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
 
 			serviceMock: &serviceMock{
 				req: &services.TokenRefreshRequest{
-					AccessToken:  "access_token",
+					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
 				err: errFoo,

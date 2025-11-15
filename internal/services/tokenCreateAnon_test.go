@@ -39,7 +39,7 @@ func TestTokenCreateAnon(t *testing.T) {
 
 			issueTokenMock: &issueTokenMock{
 				resp: &jkpkg.ClaimsSignResponse{
-					Token: "access_token",
+					Token: "access-token",
 				},
 			},
 

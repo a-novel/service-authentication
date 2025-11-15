@@ -71,7 +71,7 @@ func TestTokenCreate(t *testing.T) {
 
 			issueTokenMock: &issueTokenMock{
 				resp: &jkpkg.ClaimsSignResponse{
-					Token: "access_token",
+					Token: "access-token",
 				},
 			},
 
@@ -97,7 +97,7 @@ func TestTokenCreate(t *testing.T) {
 
 			issueTokenMock: &issueTokenMock{
 				resp: &jkpkg.ClaimsSignResponse{
-					Token: "access_token",
+					Token: "access-token",
 				},
 			},
 
@@ -123,7 +123,7 @@ func TestTokenCreate(t *testing.T) {
 
 			issueTokenMock: &issueTokenMock{
 				resp: &jkpkg.ClaimsSignResponse{
-					Token: "access_token",
+					Token: "access-token",
 				},
 			},
 
@@ -149,7 +149,7 @@ func TestTokenCreate(t *testing.T) {
 
 			issueTokenMock: &issueTokenMock{
 				resp: &jkpkg.ClaimsSignResponse{
-					Token: "access_token",
+					Token: "access-token",
 				},
 			},
 
@@ -245,12 +245,15 @@ func TestTokenCreate(t *testing.T) {
 
 			if testCase.issueRefreshTokenMock != nil {
 				serviceSignClaims.EXPECT().
-					ClaimsSign(mock.Anything, &jkpkg.ClaimsSignRequest{
-						Usage: jkpkg.KeyUsageAuthRefresh,
-						Payload: lo.Must(grpcf.InterfaceToProtoAny(services.RefreshTokenClaimsForm{
-							UserID: testCase.repositoryMock.resp.ID,
-						})),
-					}).
+					ClaimsSign(
+						mock.Anything,
+						&jkpkg.ClaimsSignRequest{
+							Usage: jkpkg.KeyUsageAuthRefresh,
+							Payload: lo.Must(grpcf.InterfaceToProtoAny(services.RefreshTokenClaimsForm{
+								UserID: testCase.repositoryMock.resp.ID,
+							})),
+						},
+					).
 					Return(
 						&jkpkg.ClaimsSignResponse{
 							Token: mockUnsignedRefreshToken,
@@ -261,12 +264,17 @@ func TestTokenCreate(t *testing.T) {
 
 			if testCase.issueTokenMock != nil {
 				serviceSignClaims.EXPECT().
-					ClaimsSign(mock.Anything, jkpkg.KeyUsageAuth,
-						services.AccessTokenClaims{
-							UserID:         &testCase.repositoryMock.resp.ID,
-							Roles:          []string{testCase.repositoryMock.resp.Role},
-							RefreshTokenID: mockUnsignedJTI,
-						}).
+					ClaimsSign(
+						mock.Anything,
+						&jkpkg.ClaimsSignRequest{
+							Usage: jkpkg.KeyUsageAuth,
+							Payload: lo.Must(grpcf.InterfaceToProtoAny(services.AccessTokenClaims{
+								UserID:         &testCase.repositoryMock.resp.ID,
+								Roles:          []string{testCase.repositoryMock.resp.Role},
+								RefreshTokenID: mockUnsignedJTI,
+							})),
+						},
+					).
 					Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
 			}
 

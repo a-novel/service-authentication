@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -39,7 +40,12 @@ func main() {
 
 	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
-	jsonKeysClient := lo.Must(jkpkg.NewClient(cfg.DependenciesConfig.ServiceJsonKeysUrl))
+	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
+
+	jsonKeysClient := lo.Must(jkpkg.NewClient(
+		fmt.Sprintf("%s:%d", cfg.DependenciesConfig.ServiceJsonKeysHost, cfg.DependenciesConfig.ServiceJsonKeysPort),
+		jsonKeysCredentials...,
+	))
 
 	serviceVerifyAccessToken := jkpkg.NewClaimsVerifier[services.AccessTokenClaims](jsonKeysClient)
 	serviceVerifyRefreshToken := jkpkg.NewClaimsVerifier[services.RefreshTokenClaims](jsonKeysClient)

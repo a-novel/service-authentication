@@ -1,4 +1,4 @@
-FROM docker.io/library/postgres:18.0
+FROM docker.io/library/postgres:18.1
 
 # ======================================================================================================================
 # Prepare extension scripts.

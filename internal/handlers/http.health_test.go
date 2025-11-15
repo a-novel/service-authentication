@@ -109,7 +109,7 @@ func TestHealth(t *testing.T) {
 
 			if testCase.healthApiJsonKeysMock != nil {
 				healthApiJsonKeys.EXPECT().
-					Status(mock.Anything, new(jkpkg.StatusResponse)).
+					Status(mock.Anything, new(jkpkg.StatusRequest)).
 					Return(testCase.healthApiJsonKeysMock.res, testCase.healthApiJsonKeysMock.err)
 			}
 

@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"github.com/a-novel/golib/grpcf"
 	"github.com/a-novel/golib/logging"
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
@@ -14,7 +15,9 @@ type Main struct {
 }
 
 type Dependencies struct {
-	ServiceJsonKeysUrl string `json:"jsonKeysServiceURL" yaml:"jsonKeysServiceURL"`
+	ServiceJsonKeysHost        string                    `json:"jsonKeysServiceHost" yaml:"jsonKeysServiceHost"`
+	ServiceJsonKeysPort        int                       `json:"jsonKeysServicePort" yaml:"jsonKeysServicePort"`
+	ServiceJsonKeysCredentials grpcf.CredentialsProvider `json:"-"                   yaml:"-"`
 }
 
 type APITimeouts struct {

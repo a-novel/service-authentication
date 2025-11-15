@@ -25,6 +25,9 @@ const (
 
 	AppNameDefault = "service-authentication"
 
+	ServiceJsonKeysHostDefault = "localhost"
+	ServiceJsonKeysPortDefault = 8080
+
 	ApiPortDefault              = 8080
 	ApiTimeoutReadDefault       = 5 * time.Second
 	ApiTimeoutReadHeaderDefault = 3 * time.Second
@@ -50,7 +53,8 @@ var (
 	platformAuthUpdatePasswordUrl = getEnv("PLATFORM_AUTH_URL_UPDATE_PASSWORD")
 	platformAuthRegisterUrl       = getEnv("PLATFORM_AUTH_URL_REGISTER")
 
-	serviceJsonKeysUrl = getEnv("SERVICE_JSON_KEYS_URL")
+	serviceJsonKeysHost = getEnv("SERVICE_JSON_KEYS_HOST")
+	serviceJsonKeysPort = getEnv("SERVICE_JSON_KEYS_PORT")
 
 	smtpAddr             = getEnv("SMTP_ADDR")
 	smtpSenderName       = getEnv("SMTP_SENDER_NAME")
@@ -102,7 +106,8 @@ var (
 		config.StringParser,
 	)
 
-	ServiceJsonKeysUrl = serviceJsonKeysUrl
+	ServiceJsonKeysHost = config.LoadEnv(serviceJsonKeysHost, ServiceJsonKeysHostDefault, config.StringParser)
+	ServiceJsonKeysPort = config.LoadEnv(serviceJsonKeysPort, ServiceJsonKeysPortDefault, config.IntParser)
 
 	SmtpAddr             = smtpAddr
 	SmtpSenderName       = smtpSenderName

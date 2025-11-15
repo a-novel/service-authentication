@@ -35,7 +35,7 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/
 
   json-keys-postgres:
-    image: ghcr.io/a-novel/service-json-keys/database:v2.0.0
+    image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
     networks:
       - api
     environment:
@@ -51,7 +51,7 @@ services:
   # in the database.
   # This value is a dummy key used for tests. Use your own random key in production.
   json-keys-service:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.0
+    image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
     ports:
       - "${SERVICE_JSON_KEYS_PORT}:8080"
     depends_on:
@@ -73,7 +73,8 @@ services:
       - mailserver
     environment:
       POSTGRES_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-authentication:5432/${POSTGRES_DB}?sslmode=disable"
-      SERVICE_JSON_KEYS_URL: "http://service-json-keys:8080/v1"
+      SERVICE_JSON_KEYS_PORT: 8080
+      SERVICE_JSON_KEYS_HOST: service-json-keys
       SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
       SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
       SMTP_SENDER_DOMAIN: mailserver

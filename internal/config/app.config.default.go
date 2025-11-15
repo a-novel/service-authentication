@@ -5,6 +5,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/a-novel/golib/grpcf"
 	"github.com/a-novel/golib/logging"
 	loggingpresets "github.com/a-novel/golib/logging/presets"
 	"github.com/a-novel/golib/otel"
@@ -17,32 +18,6 @@ import (
 const (
 	OtelFlushTimeout = 2 * time.Second
 )
-
-var SMTPProd = smtp.ProdSender{
-	Addr:                env.SmtpAddr,
-	Name:                env.SmtpSenderName,
-	Email:               env.SmtpSenderEmail,
-	Password:            env.SmtpSenderPassword,
-	Domain:              env.SmtpSenderDomain,
-	ForceUnencryptedTls: env.SmtpForceUnencrypted,
-}
-
-var OtelProd = otelpresets.Gcloud{
-	ProjectID:    env.GcloudProjectId,
-	FlushTimeout: OtelFlushTimeout,
-}
-
-var OtelDev = otelpresets.Local{
-	FlushTimeout: OtelFlushTimeout,
-}
-
-var NoOtel = otelpresets.Disabled{}
-
-var LoggerProd = loggingpresets.HttpGcloud{
-	ProjectId: env.GcloudProjectId,
-}
-
-var LoggerDev = loggingpresets.HttpLocal{}
 
 var AppPresetDefault = App{
 	App: Main{
@@ -67,7 +42,15 @@ var AppPresetDefault = App{
 	},
 
 	DependenciesConfig: Dependencies{
-		ServiceJsonKeysUrl: env.ServiceJsonKeysUrl,
+		ServiceJsonKeysPort: env.ServiceJsonKeysPort,
+		ServiceJsonKeysHost: env.ServiceJsonKeysHost,
+		ServiceJsonKeysCredentials: lo.Ternary[grpcf.CredentialsProvider](
+			env.GcloudProjectId == "",
+			&grpcf.LocalCredentialsProvider{},
+			&grpcf.GcloudCredentialsProvider{
+				Host: env.ServiceJsonKeysHost,
+			},
+		),
 	},
 	Permissions:      PermissionsConfigDefault,
 	ShortCodesConfig: ShortCodesPresetDefault,
@@ -78,10 +61,28 @@ var AppPresetDefault = App{
 		Timeout:        env.SmtpTimeout,
 	},
 
-	Smtp: lo.Ternary[smtp.Sender](env.SmtpAddr == "", smtp.NewDebugSender(nil), &SMTPProd),
-	Otel: lo.If[otel.Config](!env.Otel, &NoOtel).
-		ElseIf(env.GcloudProjectId == "", &OtelDev).
-		Else(&OtelProd),
-	Logger:   lo.Ternary[logging.HttpConfig](env.GcloudProjectId == "", &LoggerDev, &LoggerProd),
+	Smtp: lo.Ternary[smtp.Sender](env.SmtpAddr == "", smtp.NewDebugSender(nil), &smtp.ProdSender{
+		Addr:                env.SmtpAddr,
+		Name:                env.SmtpSenderName,
+		Email:               env.SmtpSenderEmail,
+		Password:            env.SmtpSenderPassword,
+		Domain:              env.SmtpSenderDomain,
+		ForceUnencryptedTls: env.SmtpForceUnencrypted,
+	}),
+	Otel: lo.If[otel.Config](!env.Otel, &otelpresets.Disabled{}).
+		ElseIf(env.GcloudProjectId == "", &otelpresets.Local{
+			FlushTimeout: OtelFlushTimeout,
+		}).
+		Else(&otelpresets.Gcloud{
+			ProjectID:    env.GcloudProjectId,
+			FlushTimeout: OtelFlushTimeout,
+		}),
+	Logger: lo.Ternary[logging.HttpConfig](
+		env.GcloudProjectId == "",
+		&loggingpresets.HttpLocal{},
+		&loggingpresets.HttpGcloud{
+			ProjectId: env.GcloudProjectId,
+		},
+	),
 	Postgres: PostgresPresetDefault,
 }
