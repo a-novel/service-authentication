@@ -3,6 +3,8 @@ package config
 import (
 	"time"
 
+	"github.com/a-novel/golib/grpcf"
+	"github.com/a-novel/golib/logging"
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
@@ -13,7 +15,9 @@ type Main struct {
 }
 
 type Dependencies struct {
-	JsonKeysServiceUrl string `json:"jsonKeysServiceURL" yaml:"jsonKeysServiceURL"`
+	ServiceJsonKeysHost        string                    `json:"jsonKeysServiceHost" yaml:"jsonKeysServiceHost"`
+	ServiceJsonKeysPort        int                       `json:"jsonKeysServicePort" yaml:"jsonKeysServicePort"`
+	ServiceJsonKeysCredentials grpcf.CredentialsProvider `json:"-"                   yaml:"-"`
 }
 
 type APITimeouts struct {
@@ -38,7 +42,7 @@ type API struct {
 	Cors           Cors        `json:"cors"           yaml:"cors"`
 }
 
-type App[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender] struct {
+type App struct {
 	App Main `json:"app" yaml:"app"`
 	Api API  `json:"api" yaml:"api"`
 
@@ -47,7 +51,8 @@ type App[Otel otel.Config, Pg postgres.Config, SMTP smtp.Sender] struct {
 	ShortCodesConfig   ShortCodes   `json:"shortCodes"   yaml:"shortCodes"`
 	SmtpUrlsConfig     SmtpUrls     `json:"smtpUrls"     yaml:"smtpUrls"`
 
-	Smtp     SMTP `json:"smtp"     yaml:"smtp"`
-	Otel     Otel `json:"otel"     yaml:"otel"`
-	Postgres Pg   `json:"postgres" yaml:"postgres"`
+	Smtp     smtp.Sender        `json:"smtp"     yaml:"smtp"`
+	Otel     otel.Config        `json:"otel"     yaml:"otel"`
+	Logger   logging.HttpConfig `json:"logger"   yaml:"logger"`
+	Postgres postgres.Config    `json:"postgres" yaml:"postgres"`
 }

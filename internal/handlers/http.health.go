@@ -2,17 +2,17 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/samber/lo"
 	"github.com/uptrace/bun"
+	"google.golang.org/grpc"
 
 	"github.com/a-novel/golib/httpf"
 	"github.com/a-novel/golib/otel"
 	"github.com/a-novel/golib/postgres"
 	"github.com/a-novel/golib/smtp"
-	jkApiModels "github.com/a-novel/service-json-keys/models/api"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 )
 
 const (
@@ -40,7 +40,7 @@ func NewHealthStatus(err error) *HeathStatus {
 type HealthClientSmtp = smtp.Sender
 
 type HealthApiJsonkeys interface {
-	Ping(ctx context.Context) (jkApiModels.PingRes, error)
+	Status(ctx context.Context, req *jkpkg.StatusRequest, opts ...grpc.CallOption) (*jkpkg.StatusResponse, error)
 }
 
 type Health struct {
@@ -98,14 +98,9 @@ func (handler *Health) reportJsonKeys(ctx context.Context) error {
 	ctx, span := otel.Tracer().Start(ctx, "api.Health(reportJsonKeys)")
 	defer span.End()
 
-	rawRes, err := handler.apiJsonKeys.Ping(ctx)
+	_, err := handler.apiJsonKeys.Status(ctx, new(jkpkg.StatusRequest))
 	if err != nil {
 		return otel.ReportError(span, err)
-	}
-
-	_, ok := rawRes.(*jkApiModels.PingOK)
-	if !ok {
-		return otel.ReportError(span, fmt.Errorf("ping JSON keys: unexpected response type %T", rawRes))
 	}
 
 	otel.ReportSuccessNoContent(span)

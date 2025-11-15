@@ -8,8 +8,7 @@ import (
 	"context"
 
 	"github.com/a-novel/service-authentication/internal/services"
-	"github.com/a-novel/service-json-keys/models"
-	"github.com/a-novel/service-json-keys/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -41,8 +40,8 @@ func (_m *MockAuthClaimsVerifier) EXPECT() *MockAuthClaimsVerifier_Expecter {
 }
 
 // VerifyClaims provides a mock function for the type MockAuthClaimsVerifier
-func (_mock *MockAuthClaimsVerifier) VerifyClaims(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions) (*services.AccessTokenClaims, error) {
-	ret := _mock.Called(ctx, usage, accessToken, options)
+func (_mock *MockAuthClaimsVerifier) VerifyClaims(ctx context.Context, req *pkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for VerifyClaims")
@@ -50,18 +49,18 @@ func (_mock *MockAuthClaimsVerifier) VerifyClaims(ctx context.Context, usage mod
 
 	var r0 *services.AccessTokenClaims
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) (*services.AccessTokenClaims, error)); ok {
-		return returnFunc(ctx, usage, accessToken, options)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) *services.AccessTokenClaims); ok {
-		r0 = returnFunc(ctx, usage, accessToken, options)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.VerifyClaimsRequest) *services.AccessTokenClaims); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*services.AccessTokenClaims)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, models.KeyUsage, string, *pkg.VerifyClaimsOptions) error); ok {
-		r1 = returnFunc(ctx, usage, accessToken, options)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.VerifyClaimsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -75,36 +74,24 @@ type MockAuthClaimsVerifier_VerifyClaims_Call struct {
 
 // VerifyClaims is a helper method to define mock.On call
 //   - ctx context.Context
-//   - usage models.KeyUsage
-//   - accessToken string
-//   - options *pkg.VerifyClaimsOptions
-func (_e *MockAuthClaimsVerifier_Expecter) VerifyClaims(ctx interface{}, usage interface{}, accessToken interface{}, options interface{}) *MockAuthClaimsVerifier_VerifyClaims_Call {
-	return &MockAuthClaimsVerifier_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, usage, accessToken, options)}
+//   - req *pkg.VerifyClaimsRequest
+func (_e *MockAuthClaimsVerifier_Expecter) VerifyClaims(ctx interface{}, req interface{}) *MockAuthClaimsVerifier_VerifyClaims_Call {
+	return &MockAuthClaimsVerifier_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, req)}
 }
 
-func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) Run(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions)) *MockAuthClaimsVerifier_VerifyClaims_Call {
+func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) Run(run func(ctx context.Context, req *pkg.VerifyClaimsRequest)) *MockAuthClaimsVerifier_VerifyClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 models.KeyUsage
+		var arg1 *pkg.VerifyClaimsRequest
 		if args[1] != nil {
-			arg1 = args[1].(models.KeyUsage)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 *pkg.VerifyClaimsOptions
-		if args[3] != nil {
-			arg3 = args[3].(*pkg.VerifyClaimsOptions)
+			arg1 = args[1].(*pkg.VerifyClaimsRequest)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -115,7 +102,7 @@ func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) Return(accessTokenClaims *se
 	return _c
 }
 
-func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, usage models.KeyUsage, accessToken string, options *pkg.VerifyClaimsOptions) (*services.AccessTokenClaims, error)) *MockAuthClaimsVerifier_VerifyClaims_Call {
+func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *pkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error)) *MockAuthClaimsVerifier_VerifyClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }

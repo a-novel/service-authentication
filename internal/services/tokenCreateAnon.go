@@ -4,14 +4,27 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/samber/lo"
+	"google.golang.org/grpc"
+
+	"github.com/a-novel/golib/grpcf"
 	"github.com/a-novel/golib/otel"
-	jkmodels "github.com/a-novel/service-json-keys/models"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel/service-authentication/internal/config"
 )
 
+var anonTokenClaims = &jkpkg.ClaimsSignRequest{
+	Usage: jkpkg.KeyUsageAuth,
+	Payload: lo.Must(grpcf.InterfaceToProtoAny(AccessTokenClaims{
+		Roles: []string{config.RoleAnon},
+	})),
+}
+
 type TokenCreateAnonSignClaimsService interface {
-	SignClaims(ctx context.Context, usage jkmodels.KeyUsage, claims any) (string, error)
+	ClaimsSign(
+		ctx context.Context, req *jkpkg.ClaimsSignRequest, opts ...grpc.CallOption,
+	) (*jkpkg.ClaimsSignResponse, error)
 }
 
 type TokenCreateAnon struct {
@@ -28,18 +41,12 @@ func (service *TokenCreateAnon) Exec(ctx context.Context) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "service.TokenCreateAnon")
 	defer span.End()
 
-	accessToken, err := service.signClaimsService.SignClaims(
-		ctx,
-		jkmodels.KeyUsageAuth,
-		AccessTokenClaims{
-			Roles: []string{config.RoleAnon},
-		},
-	)
+	accessToken, err := service.signClaimsService.ClaimsSign(ctx, anonTokenClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("issue accessToken: %w", err))
 	}
 
 	return otel.ReportSuccess(span, &Token{
-		AccessToken: accessToken,
+		AccessToken: accessToken.GetToken(),
 	}), nil
 }

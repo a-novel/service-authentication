@@ -10,8 +10,9 @@ import (
 
 	"github.com/a-novel/golib/smtp"
 	"github.com/a-novel/service-authentication/internal/services"
-	"github.com/a-novel/service-json-keys/models/api"
+	"github.com/a-novel/service-json-keys/v2/pkg"
 	mock "github.com/stretchr/testify/mock"
+	"google.golang.org/grpc"
 )
 
 // NewMockCredentialsCreateService creates a new instance of MockCredentialsCreateService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -939,64 +940,85 @@ func (_m *MockHealthApiJsonkeys) EXPECT() *MockHealthApiJsonkeys_Expecter {
 	return &MockHealthApiJsonkeys_Expecter{mock: &_m.Mock}
 }
 
-// Ping provides a mock function for the type MockHealthApiJsonkeys
-func (_mock *MockHealthApiJsonkeys) Ping(ctx context.Context) (apimodels.PingRes, error) {
-	ret := _mock.Called(ctx)
+// Status provides a mock function for the type MockHealthApiJsonkeys
+func (_mock *MockHealthApiJsonkeys) Status(ctx context.Context, req *pkg.StatusRequest, opts ...grpc.CallOption) (*pkg.StatusResponse, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, req, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, req)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for Ping")
+		panic("no return value specified for Status")
 	}
 
-	var r0 apimodels.PingRes
+	var r0 *pkg.StatusResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (apimodels.PingRes, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.StatusRequest, ...grpc.CallOption) (*pkg.StatusResponse, error)); ok {
+		return returnFunc(ctx, req, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) apimodels.PingRes); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.StatusRequest, ...grpc.CallOption) *pkg.StatusResponse); ok {
+		r0 = returnFunc(ctx, req, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(apimodels.PingRes)
+			r0 = ret.Get(0).(*pkg.StatusResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.StatusRequest, ...grpc.CallOption) error); ok {
+		r1 = returnFunc(ctx, req, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockHealthApiJsonkeys_Ping_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Ping'
-type MockHealthApiJsonkeys_Ping_Call struct {
+// MockHealthApiJsonkeys_Status_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Status'
+type MockHealthApiJsonkeys_Status_Call struct {
 	*mock.Call
 }
 
-// Ping is a helper method to define mock.On call
+// Status is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockHealthApiJsonkeys_Expecter) Ping(ctx interface{}) *MockHealthApiJsonkeys_Ping_Call {
-	return &MockHealthApiJsonkeys_Ping_Call{Call: _e.mock.On("Ping", ctx)}
+//   - req *pkg.StatusRequest
+//   - opts ...grpc.CallOption
+func (_e *MockHealthApiJsonkeys_Expecter) Status(ctx interface{}, req interface{}, opts ...interface{}) *MockHealthApiJsonkeys_Status_Call {
+	return &MockHealthApiJsonkeys_Status_Call{Call: _e.mock.On("Status",
+		append([]interface{}{ctx, req}, opts...)...)}
 }
 
-func (_c *MockHealthApiJsonkeys_Ping_Call) Run(run func(ctx context.Context)) *MockHealthApiJsonkeys_Ping_Call {
+func (_c *MockHealthApiJsonkeys_Status_Call) Run(run func(ctx context.Context, req *pkg.StatusRequest, opts ...grpc.CallOption)) *MockHealthApiJsonkeys_Status_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 *pkg.StatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(*pkg.StatusRequest)
+		}
+		var arg2 []grpc.CallOption
+		var variadicArgs []grpc.CallOption
+		if len(args) > 2 {
+			variadicArgs = args[2].([]grpc.CallOption)
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
+			arg1,
+			arg2...,
 		)
 	})
 	return _c
 }
 
-func (_c *MockHealthApiJsonkeys_Ping_Call) Return(pingRes apimodels.PingRes, err error) *MockHealthApiJsonkeys_Ping_Call {
-	_c.Call.Return(pingRes, err)
+func (_c *MockHealthApiJsonkeys_Status_Call) Return(v *pkg.StatusResponse, err error) *MockHealthApiJsonkeys_Status_Call {
+	_c.Call.Return(v, err)
 	return _c
 }
 
-func (_c *MockHealthApiJsonkeys_Ping_Call) RunAndReturn(run func(ctx context.Context) (apimodels.PingRes, error)) *MockHealthApiJsonkeys_Ping_Call {
+func (_c *MockHealthApiJsonkeys_Status_Call) RunAndReturn(run func(ctx context.Context, req *pkg.StatusRequest, opts ...grpc.CallOption) (*pkg.StatusResponse, error)) *MockHealthApiJsonkeys_Status_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -15,7 +15,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-  database-build:
+  build-database:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,9 +41,9 @@ jobs:
             -e POSTGRES_HOST_AUTH_METHOD="${POSTGRES_HOST_AUTH_METHOD}"
             -e POSTGRES_INITDB_ARGS="${POSTGRES_INITDB_ARGS}"
 
-  migrations-build:
+  build-migrations:
     runs-on: ubuntu-latest
-    needs: [database-build]
+    needs: [build-database]
     permissions:
       contents: read
       packages: write
@@ -75,9 +75,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
 
-  init-build:
+  build-job-init:
     runs-on: ubuntu-latest
-    needs: [database-build]
+    needs: [build-database]
     permissions:
       contents: read
       packages: write
@@ -116,8 +116,8 @@ jobs:
             -e SUPER_ADMIN_EMAIL="${SUPER_ADMIN_EMAIL}"
             -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD}"
 
-  rest-api-build:
-    needs: [database-build]
+  build-rest-api:
+    needs: [build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -137,7 +137,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -151,7 +151,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
         ports:
           - "4001:8080"
         credentials:
@@ -162,8 +162,9 @@ jobs:
           APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
-      AUTH_PLATFORM_URL: http://localhost:6001
+      SERVICE_JSON_KEYS_PORT: 4001
+      SERVICE_JSON_KEYS_HOST: 0.0.0.0
+      PLATFORM_AUTH_URL: http://localhost:6001
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
@@ -174,11 +175,12 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
-            -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
-            -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
+            -e SERVICE_JSON_KEYS_PORT="${SERVICE_JSON_KEYS_PORT}"
+            -e SERVICE_JSON_KEYS_HOST="${SERVICE_JSON_KEYS_HOST}"
+            -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
-  standalone-build:
-    needs: [database-build]
+  build-standalone:
+    needs: [build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -198,7 +200,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -212,7 +214,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v1.3.22
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
         ports:
           - "4001:8080"
         credentials:
@@ -223,8 +225,9 @@ jobs:
           APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      JSON_KEYS_SERVICE_URL: http://0.0.0.0:4001/v1
-      AUTH_PLATFORM_URL: http://localhost:6001
+      SERVICE_JSON_KEYS_PORT: 4001
+      SERVICE_JSON_KEYS_HOST: 0.0.0.0
+      PLATFORM_AUTH_URL: http://localhost:6001
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/run-migrations
@@ -235,8 +238,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
-            -e JSON_KEYS_SERVICE_URL="${JSON_KEYS_SERVICE_URL}"
-            -e AUTH_PLATFORM_URL="${AUTH_PLATFORM_URL}"
+            -e SERVICE_JSON_KEYS_PORT="${SERVICE_JSON_KEYS_PORT}"
+            -e SERVICE_JSON_KEYS_HOST="${SERVICE_JSON_KEYS_HOST}"
+            -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
   build-js:
     needs:

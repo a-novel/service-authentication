@@ -21,7 +21,7 @@ func main() {
 
 	otel.SetAppName(cfg.App.Name)
 
-	lo.Must0(otel.InitOtel(cfg.Otel))
+	lo.Must0(otel.Init(cfg.Otel))
 	defer cfg.Otel.Flush()
 
 	if env.SuperAdminEmail == "" {

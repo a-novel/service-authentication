@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/golib/postgres"
-	jkApiModels "github.com/a-novel/service-json-keys/models/api"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel/service-authentication/internal/config"
 	"github.com/a-novel/service-authentication/internal/handlers"
@@ -27,7 +27,7 @@ func TestHealth(t *testing.T) {
 	}
 
 	type healthApiJsonKeysMock struct {
-		res jkApiModels.PingRes
+		res *jkpkg.StatusResponse
 		err error
 	}
 
@@ -49,7 +49,7 @@ func TestHealth(t *testing.T) {
 
 			healthClientSmtpMock: &healthClientSmtpMock{},
 			healthApiJsonKeysMock: &healthApiJsonKeysMock{
-				res: new(jkApiModels.PingOK),
+				res: new(jkpkg.StatusResponse),
 			},
 
 			expectResponse: map[string]any{
@@ -109,7 +109,7 @@ func TestHealth(t *testing.T) {
 
 			if testCase.healthApiJsonKeysMock != nil {
 				healthApiJsonKeys.EXPECT().
-					Ping(mock.Anything).
+					Status(mock.Anything, new(jkpkg.StatusRequest)).
 					Return(testCase.healthApiJsonKeysMock.res, testCase.healthApiJsonKeysMock.err)
 			}
 

@@ -11,8 +11,7 @@ import (
 
 	"github.com/a-novel/golib/httpf"
 	"github.com/a-novel/golib/otel"
-	jkmodels "github.com/a-novel/service-json-keys/models"
-	jkpkg "github.com/a-novel/service-json-keys/pkg"
+	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -25,9 +24,7 @@ var (
 )
 
 type AuthClaimsVerifier interface {
-	VerifyClaims(
-		ctx context.Context, usage jkmodels.KeyUsage, accessToken string, options *jkpkg.VerifyClaimsOptions,
-	) (*services.AccessTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *jkpkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error)
 }
 
 type Auth struct {
@@ -84,7 +81,10 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 
 			accessToken := authToken[1]
 
-			claims, err := middleware.claimsVerifier.VerifyClaims(ctx, jkmodels.KeyUsageAuth, accessToken, nil)
+			claims, err := middleware.claimsVerifier.VerifyClaims(ctx, &jkpkg.VerifyClaimsRequest{
+				Usage:       jkpkg.KeyUsageAuth,
+				AccessToken: accessToken,
+			})
 			if err != nil {
 				httpf.HandleError(ctx, w, span, map[error]int{jws.ErrInvalidSignature: http.StatusUnauthorized}, err)
 
