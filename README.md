@@ -25,7 +25,7 @@
 - Make
   - `sudo apt-get install build-essential` (apt)
   - `sudo pacman -S make` (arch)
-  - `https://gnuwin32.sourceforge.net/packages/make.htm` (macOS)
+  - `brew install make` (macOS)
   - [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm)
 
 ## Import in other projects
