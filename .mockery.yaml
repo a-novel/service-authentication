@@ -1,17 +1,17 @@
 packages:
-  github.com/a-novel/service-authentication/internal/services:
+  github.com/a-novel/service-authentication/v2/internal/services:
     config:
       all: true
       pkgname: servicesmocks
       dir: internal/services/mocks
       filename: mocks.go
-  github.com/a-novel/service-authentication/internal/handlers:
+  github.com/a-novel/service-authentication/v2/internal/handlers:
     config:
       all: true
       pkgname: handlersmocks
       dir: internal/handlers/mocks
       filename: mocks.go
-  github.com/a-novel/service-authentication/internal/handlers/middlewares:
+  github.com/a-novel/service-authentication/v2/internal/handlers/middlewares:
     config:
       all: true
       pkgname: middlewaresmocks

@@ -10,8 +10,8 @@ import (
 
 	"github.com/a-novel/golib/postgres"
 
-	"github.com/a-novel/service-authentication/internal/config"
-	"github.com/a-novel/service-authentication/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 func TestCredentialsExist(t *testing.T) {

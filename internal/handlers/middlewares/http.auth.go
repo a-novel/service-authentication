@@ -15,7 +15,7 @@ import (
 
 	"github.com/a-novel-kit/jwt/jws"
 
-	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 var (

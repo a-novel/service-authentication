@@ -18,11 +18,11 @@ import (
 	"github.com/a-novel/golib/postgres"
 	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
-	"github.com/a-novel/service-authentication/internal/config"
-	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/handlers"
-	"github.com/a-novel/service-authentication/internal/services"
-	"github.com/a-novel/service-authentication/pkg"
+	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	"github.com/a-novel/service-authentication/v2/internal/services"
+	"github.com/a-novel/service-authentication/v2/pkg"
 )
 
 func main() {

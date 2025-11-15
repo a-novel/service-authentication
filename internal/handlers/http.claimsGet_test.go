@@ -12,9 +12,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/internal/handlers"
-	"github.com/a-novel/service-authentication/internal/handlers/middlewares"
-	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestClaimsGet(t *testing.T) {

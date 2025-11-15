@@ -15,9 +15,9 @@ import (
 
 	"github.com/a-novel-kit/jwt/jws"
 
-	"github.com/a-novel/service-authentication/internal/handlers/middlewares"
-	middlewaresmocks "github.com/a-novel/service-authentication/internal/handlers/middlewares/mocks"
-	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	middlewaresmocks "github.com/a-novel/service-authentication/v2/internal/handlers/middlewares/mocks"
+	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestAuth(t *testing.T) {

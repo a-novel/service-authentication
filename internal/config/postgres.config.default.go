@@ -5,7 +5,7 @@ import (
 
 	postgrespresets "github.com/a-novel/golib/postgres/presets"
 
-	"github.com/a-novel/service-authentication/internal/config/env"
+	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )
 
 var PostgresPresetDefault = postgrespresets.NewDefault(pgdriver.WithDSN(env.PostgresDsn))

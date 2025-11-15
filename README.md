@@ -35,7 +35,7 @@
 You will also need [service JSON-Keys](https://github.com/a-novel/service-json-keys).
 
 ```bash
-go get -u github.com/a-novel/service-authentication
+go get -u github.com/a-novel/service-authentication/v2
 ```
 
 ```go
@@ -46,7 +46,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	authpkg "github.com/a-novel/service-authentication/pkg"
+	authpkg "github.com/a-novel/service-authentication/v2/pkg"
 	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 )
 

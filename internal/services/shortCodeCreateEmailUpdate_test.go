@@ -11,11 +11,11 @@ import (
 
 	"github.com/a-novel/golib/smtp"
 
-	"github.com/a-novel/service-authentication/internal/config"
-	"github.com/a-novel/service-authentication/internal/models/mails"
-	"github.com/a-novel/service-authentication/internal/models/mails/assets"
-	"github.com/a-novel/service-authentication/internal/services"
-	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
+	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/models/mails"
+	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
+	"github.com/a-novel/service-authentication/v2/internal/services"
+	servicesmocks "github.com/a-novel/service-authentication/v2/internal/services/mocks"
 )
 
 func TestShortCodeCreateEmailUpdate(t *testing.T) {

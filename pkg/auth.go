@@ -6,9 +6,9 @@ import (
 
 	"github.com/a-novel/golib/deps"
 
-	"github.com/a-novel/service-authentication/internal/config"
-	"github.com/a-novel/service-authentication/internal/handlers/middlewares"
-	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type Role = config.Role

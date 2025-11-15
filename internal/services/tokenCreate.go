@@ -15,8 +15,8 @@ import (
 	"github.com/a-novel-kit/jwt"
 	"github.com/a-novel-kit/jwt/jws"
 
-	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
 type TokenCreateRepository interface {

@@ -7,7 +7,7 @@ import (
 	"github.com/a-novel/golib/httpf"
 	"github.com/a-novel/golib/otel"
 
-	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type TokenCreateAnonService interface {
