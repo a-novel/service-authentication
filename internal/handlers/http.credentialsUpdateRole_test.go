@@ -15,12 +15,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/internal/config"
-	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/handlers"
-	"github.com/a-novel/service-authentication/internal/handlers/middlewares"
-	handlersmocks "github.com/a-novel/service-authentication/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
+	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestCredentialsUpdateRole(t *testing.T) {

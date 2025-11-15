@@ -12,7 +12,7 @@ import (
 	otelpresets "github.com/a-novel/golib/otel/presets"
 	"github.com/a-novel/golib/smtp"
 
-	"github.com/a-novel/service-authentication/internal/config/env"
+	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )
 
 const (

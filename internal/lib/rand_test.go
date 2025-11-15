@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
 func TestNewRandomURLString(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"github.com/a-novel/golib/otel"
 	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
-	"github.com/a-novel/service-authentication/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
 var anonTokenClaims = &jkpkg.ClaimsSignRequest{

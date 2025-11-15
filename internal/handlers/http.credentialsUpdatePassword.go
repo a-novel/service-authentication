@@ -10,10 +10,10 @@ import (
 	"github.com/a-novel/golib/httpf"
 	"github.com/a-novel/golib/otel"
 
-	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/handlers/middlewares"
-	"github.com/a-novel/service-authentication/internal/lib"
-	"github.com/a-novel/service-authentication/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type CredentialsUpdatePasswordService interface {

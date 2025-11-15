@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"text/template"
 
-	"github.com/a-novel/service-authentication/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
 var (

@@ -6,7 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
-	"github.com/a-novel/service-authentication/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
 type Credentials struct {

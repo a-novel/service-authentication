@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/internal/config"
-	"github.com/a-novel/service-authentication/internal/dao"
-	"github.com/a-novel/service-authentication/internal/services"
-	servicesmocks "github.com/a-novel/service-authentication/internal/services/mocks"
+	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/services"
+	servicesmocks "github.com/a-novel/service-authentication/v2/internal/services/mocks"
 )
 
 func TestCredentialsGet(t *testing.T) {

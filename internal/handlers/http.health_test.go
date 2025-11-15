@@ -14,9 +14,9 @@ import (
 	"github.com/a-novel/golib/postgres"
 	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
-	"github.com/a-novel/service-authentication/internal/config"
-	"github.com/a-novel/service-authentication/internal/handlers"
-	handlersmocks "github.com/a-novel/service-authentication/internal/handlers/mocks"
+	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
 func TestHealth(t *testing.T) {
