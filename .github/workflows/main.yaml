@@ -101,7 +101,7 @@ jobs:
           --health-retries 5
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
+        image: ghcr.io/a-novel/service-json-keys/database:v2.1.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -115,7 +115,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.0
         ports:
           - "4002:8080"
         credentials:
@@ -178,7 +178,7 @@ jobs:
           --health-retries 5
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
+        image: ghcr.io/a-novel/service-json-keys/database:v2.1.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -192,7 +192,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.0
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -359,7 +359,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
+        image: ghcr.io/a-novel/service-json-keys/database:v2.1.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -373,7 +373,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.0
         ports:
           - "4002:8080"
         credentials:
@@ -424,7 +424,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
+        image: ghcr.io/a-novel/service-json-keys/database:v2.1.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -438,7 +438,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
+        image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.0
         ports:
           - "4002:8080"
         credentials:
