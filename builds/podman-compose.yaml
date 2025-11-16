@@ -33,7 +33,7 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/
 
   postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v2.0.2
+    image: ghcr.io/a-novel/service-json-keys/database:v2.1.0
     networks:
       - api
     environment:
@@ -49,7 +49,7 @@ services:
   # in the database.
   # This value is a dummy key used for tests. Use your own random key in production.
   service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v2.0.2
+    image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.0
     depends_on:
       - postgres-json-keys
     environment:
