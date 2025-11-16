@@ -7,23 +7,24 @@ import (
 	"github.com/a-novel/golib/config"
 )
 
-// Prefix allows to set a custom prefix to all configuration environment variables.
+// prefix allows to set a custom prefix to all configuration environment variables.
 // This is useful when importing the package in another project, when env variable names
 // might conflict with the source project.
-var Prefix = os.Getenv("SERVICE_AUTHENTICATION_ENV_PREFIX")
+var prefix = os.Getenv("SERVICE_AUTHENTICATION_ENV_PREFIX")
 
 func getEnv(name string) string {
-	if Prefix != "" {
-		return os.Getenv(Prefix + "_" + name)
-	}
-
-	return os.Getenv(name)
+	return os.Getenv(prefix + name)
 }
 
+// Default values for environment variables, if applicable.
 const (
 	SmtpTimeoutDefault = 20 * time.Second
 
-	AppNameDefault = "service-authentication"
+	platformEmailUpdateUrlDefault   = "/ext/email/validate"
+	platformPasswordResetUrlDefault = "/ext/password/reset"
+	platformAccountCreateUrlDefault = "/ext/account/create"
+
+	appNameDefault = "service-authentication"
 
 	ServiceJsonKeysHostDefault = "localhost"
 	ServiceJsonKeysPortDefault = 8080
@@ -39,11 +40,13 @@ const (
 	CorsMaxAgeDefault           = 3600
 )
 
+// Default values for environment variables, if applicable.
 var (
 	CorsAllowedOriginsDefault = []string{"*"}
 	CorsAllowedHeadersDefault = []string{"*"}
 )
 
+// Raw values for environment variables.
 var (
 	postgresDsn     = getEnv("POSTGRES_DSN")
 	postgresDsnTest = getEnv("POSTGRES_DSN_TEST")
@@ -86,40 +89,78 @@ var (
 )
 
 var (
-	PostgresDsn     = postgresDsn
+	// PostgresDsn is the url used to connect to the postgres database instance.
+	// Typically formatted as:
+	//	postgres://<user>:<password>@<host>:<port>/<database>
+	PostgresDsn = postgresDsn
+	// PostgresDsnTest is the url used to connect to the postgres database test instance.
+	// Typically formatted as:
+	//	postgres://<user>:<password>@<host>:<port>/<database>
 	PostgresDsnTest = postgresDsnTest
 
-	PlatformAuthUrl            = platformAuthUrl
+	// PlatformAuthUrl points to the authentication web client. It is used to insert URLs in emails.
+	PlatformAuthUrl = platformAuthUrl
+	// PlatformAuthUpdateEmailUrl points to a web client page used to complete the email update process.
+	// It is used to insert URLs in emails.
 	PlatformAuthUpdateEmailUrl = config.LoadEnv(
 		platformAuthUpdateEmailUrl,
-		PlatformAuthUrl+"/ext/email/validate",
+		PlatformAuthUrl+platformEmailUpdateUrlDefault,
 		config.StringParser,
 	)
+	// PlatformAuthUpdatePasswordUrl points to a web client page used to complete the password reset process.
+	// It is used to insert URLs in emails.
 	PlatformAuthUpdatePasswordUrl = config.LoadEnv(
 		platformAuthUpdatePasswordUrl,
-		PlatformAuthUrl+"/ext/password/reset",
+		PlatformAuthUrl+platformPasswordResetUrlDefault,
 		config.StringParser,
 	)
+	// PlatformAuthRegisterUrl points to a web client page used to complete the registration process.
+	// It is used to insert URLs in emails.
 	PlatformAuthRegisterUrl = config.LoadEnv(
 		platformAuthRegisterUrl,
-		PlatformAuthUrl+"/ext/account/create",
+		PlatformAuthUrl+platformAccountCreateUrlDefault,
 		config.StringParser,
 	)
 
+	// ServiceJsonKeysHost points to the host name (without protocol / port) on which the JSON Keys Service is hosted.
+	//
+	// See https://github.com/a-novel/service-json-keys
 	ServiceJsonKeysHost = config.LoadEnv(serviceJsonKeysHost, ServiceJsonKeysHostDefault, config.StringParser)
+	// ServiceJsonKeysPort points to the port on which the JSON Keys Service is hosted.
+	//
+	// See https://github.com/a-novel/service-json-keys
 	ServiceJsonKeysPort = config.LoadEnv(serviceJsonKeysPort, ServiceJsonKeysPortDefault, config.IntParser)
 
-	SmtpAddr             = smtpAddr
-	SmtpSenderName       = smtpSenderName
-	SmtpSenderEmail      = smtpSenderEmail
-	SmtpSenderPassword   = smtpSenderPassword
-	SmtpSenderDomain     = smtpSenderDomain
-	SmtpTimeout          = config.LoadEnv(smtpTimeout, SmtpTimeoutDefault, config.DurationParser)
+	// SmtpAddr is the address of the SMTP service used to send mails.
+	//
+	// It should be in the form <domain>:<host>.
+	SmtpAddr = smtpAddr
+	// SmtpSenderName defines the name that will appear as the sender in outgoing emails.
+	SmtpSenderName = smtpSenderName
+	// SmtpSenderEmail is the email used to send outgoing smtp emails.
+	SmtpSenderEmail = smtpSenderEmail
+	// SmtpSenderPassword is the plain password used to connect to the SmtpSenderEmail account. This is a sensitive
+	// value that should be handled appropriately.
+	SmtpSenderPassword = smtpSenderPassword
+	// SmtpSenderDomain is the domain used for sending Smtp emails. It should match the hostname of the SmtpAddr.
+	SmtpSenderDomain = smtpSenderDomain
+	// SmtpTimeout is the timeout value when attempting to send an email.
+	SmtpTimeout = config.LoadEnv(smtpTimeout, SmtpTimeoutDefault, config.DurationParser)
+	// SmtpForceUnencrypted hacks the smtp client into sending plain credentials over any connection. This setting is
+	// used because Go Smtp implementation refuses to send plain credentials over non-TLS connections, except for
+	// localhost. But because we use Docker, localhost is not always the name of our actual local host.
+	//
+	// This setting MUST NEVER be set in production.
 	SmtpForceUnencrypted = config.LoadEnv(smtpForceUnencrypted, false, config.BoolParser)
 
-	AppName = config.LoadEnv(appName, AppNameDefault, config.StringParser)
-	Otel    = config.LoadEnv(otel, false, config.BoolParser)
+	// AppName is the name of the application, as it will appear in logs and tracing.
+	AppName = config.LoadEnv(appName, appNameDefault, config.StringParser)
+	// Otel flag configures whether to use Open Telemetry or not.
+	//
+	// See: https://opentelemetry.io/
+	Otel = config.LoadEnv(otel, false, config.BoolParser)
 
+	// ApiPort is the port on which the rest api server will listen for incoming requests.
 	ApiPort              = config.LoadEnv(apiPort, ApiPortDefault, config.IntParser)
 	ApiMaxRequestSize    = config.LoadEnv(apiMaxRequestSize, ApiMaxRequestSizeDefault, config.Int64Parser)
 	ApiTimeoutRead       = config.LoadEnv(apiTimeoutRead, ApiTimeoutReadDefault, config.DurationParser)
@@ -136,7 +177,13 @@ var (
 	CorsAllowCredentials = config.LoadEnv(corsAllowCredentials, CorsAllowCredentialsDefault, config.BoolParser)
 	CorsMaxAge           = config.LoadEnv(corsMaxAge, CorsMaxAgeDefault, config.IntParser)
 
-	GcloudProjectId    = gcloudProjectId
-	SuperAdminEmail    = superAdminEmail
+	// GcloudProjectId configures the server for Google Cloud environment.
+	//
+	// See: https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
+	GcloudProjectId = gcloudProjectId
+	// SuperAdminEmail sets the email address for the default super-admin on the platform. Unlike other accounts,
+	// its email does not require to be validated.
+	SuperAdminEmail = superAdminEmail
+	// SuperAdminPassword sets the password for the default super-admin on the platform.
 	SuperAdminPassword = superAdminPassword
 )

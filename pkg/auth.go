@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"context"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/samber/lo"
 
@@ -40,4 +42,12 @@ func NewAuthHandler(
 	return func(r chi.Router, permissions ...string) chi.Router {
 		return r.With(middlewareAuth.Middleware(permissions))
 	}
+}
+
+func GetClaimsContext(ctx context.Context) (*Claims, error) {
+	return middlewares.GetClaimsContext(ctx)
+}
+
+func MustGetClaimsContext(ctx context.Context) (*Claims, error) {
+	return middlewares.MustGetClaimsContext(ctx)
 }

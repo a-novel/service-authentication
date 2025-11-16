@@ -22,11 +22,18 @@ var credentialsUpdatePassword string
 var ErrCredentialsUpdatePasswordNotFound = errors.New("credentials not found")
 
 type CredentialsUpdatePasswordRequest struct {
-	ID       uuid.UUID
+	// The ID of the credentials to update.
+	ID uuid.UUID
+	// The new password to use. This value must be securely encrypted using
+	// one-way encryption, so it doesn't get leaked with the database.
 	Password string
-	Now      time.Time
+	// Time used as modification date.
+	Now time.Time
 }
 
+// CredentialsUpdatePassword updates the password used by a set of credentials.
+// Make sure the user identity has been properly validated BEFORE calling this
+// repository.
 type CredentialsUpdatePassword struct{}
 
 func NewCredentialsUpdatePassword() *CredentialsUpdatePassword {
@@ -45,7 +52,6 @@ func (repository *CredentialsUpdatePassword) Exec(
 		attribute.Int64("credentials.now", request.Now.Unix()),
 	)
 
-	// Retrieve a connection to postgres from the context.
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -56,7 +62,7 @@ func (repository *CredentialsUpdatePassword) Exec(
 	err = tx.NewRaw(credentialsUpdatePassword, request.Password, request.Now, request.ID).Scan(ctx, entity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsUpdatePasswordNotFound))
+			err = errors.Join(err, ErrCredentialsUpdatePasswordNotFound)
 		}
 
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))

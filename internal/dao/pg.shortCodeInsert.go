@@ -23,18 +23,28 @@ var shortCodeInsertQuery string
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
 type ShortCodeInsertRequest struct {
-	ID     uuid.UUID
-	Code   string
-	Usage  string
+	// See ShortCode.ID.
+	ID uuid.UUID
+	// See ShortCode.Code.
+	Code string
+	// See ShortCode.Usage.
+	Usage string
+	// See ShortCode.Target.
 	Target string
-	Data   []byte
-
-	Now       time.Time
+	// See ShortCode.Data.
+	Data []byte
+	// Time used for insertion date.
+	Now time.Time
+	// See ShortCode.ExpiresAt.
 	ExpiresAt time.Time
 
+	// By default, the insertion will fail if the new short code does not meet the uniqueness
+	// criteria. When this option is set to true, any conflicting record will be deleted
+	// instead, with the ShortCodeDeleteOverride deletion comment.
 	Override bool
 }
 
+// ShortCodeInsert inserts a new short code in the database.
 type ShortCodeInsert struct{}
 
 func NewShortCodeInsert() *ShortCodeInsert {

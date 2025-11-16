@@ -1,3 +1,4 @@
+# This image runs a job that will apply the latest migrations to a database instance.
 FROM docker.io/library/golang:1.25.4-alpine AS builder
 
 WORKDIR /app
@@ -24,5 +25,5 @@ WORKDIR /
 
 COPY --from=builder /migrations /migrations
 
-# Make sure the migrations are run before the job starts.
+# Applies the migrations to a linked database instance.
 CMD ["/migrations"]

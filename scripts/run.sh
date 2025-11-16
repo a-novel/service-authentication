@@ -14,4 +14,5 @@ trap int_handler INT
 
 podman compose --podman-build-args='--format docker -q' -p "${APP_NAME}" -f "${PODMAN_FILE}" up --build
 
+# Normal execution: containers are shut down.
 podman compose -p "${APP_NAME}" -f "${PODMAN_FILE}" down --volume

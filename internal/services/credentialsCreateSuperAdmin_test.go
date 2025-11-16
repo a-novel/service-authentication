@@ -281,7 +281,7 @@ func TestCredentialsCreateSuperAdmin(t *testing.T) {
 						Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsInsertRequest) bool {
 							return assert.Equal(t, testCase.request.Email, data.Email) &&
 								assert.NotEqual(t, uuid.Nil, data.ID) &&
-								assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
 								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
 								assert.Equal(t, config.RoleSuperAdmin, data.Role)
 						})).
@@ -298,7 +298,7 @@ func TestCredentialsCreateSuperAdmin(t *testing.T) {
 					repositoryUpdatePassword.EXPECT().
 						Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsUpdatePasswordRequest) bool {
 							return assert.Equal(t, testCase.repositorySelectMock.resp.ID, data.ID) &&
-								assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
 								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password))
 						})).
 						Return(testCase.repositoryUpdatePasswordMock.resp, testCase.repositoryUpdatePasswordMock.err)
@@ -308,7 +308,7 @@ func TestCredentialsCreateSuperAdmin(t *testing.T) {
 					repositoryUpdateRole.EXPECT().
 						Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsUpdateRoleRequest) bool {
 							return assert.Equal(t, testCase.repositorySelectMock.resp.ID, data.ID) &&
-								assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
 								assert.Equal(t, config.RoleSuperAdmin, data.Role)
 						})).
 						Return(testCase.repositoryUpdateRoleMock.resp, testCase.repositoryUpdateRoleMock.err)

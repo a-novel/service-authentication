@@ -18,6 +18,9 @@ type CredentialsExistRequest struct {
 	Email string
 }
 
+// CredentialsExist checks whether a user with a given email address exists or not.
+//
+// It does not return an error if the user does not exist, instead it returns a false boolean.
 type CredentialsExist struct{}
 
 func NewCredentialsExist() *CredentialsExist {
@@ -30,7 +33,6 @@ func (repository *CredentialsExist) Exec(ctx context.Context, request *Credentia
 
 	span.SetAttributes(attribute.String("email", request.Email))
 
-	// Retrieve a connection to postgres from the context.
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("get transaction: %w", otel.ReportError(span, err))

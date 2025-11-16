@@ -37,7 +37,6 @@ func (repository *CredentialsSelect) Exec(
 
 	span.SetAttributes(attribute.String("id", request.ID.String()))
 
-	// Retrieve a connection to postgres from the context.
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -47,9 +46,8 @@ func (repository *CredentialsSelect) Exec(
 
 	err = tx.NewRaw(credentialsSelectQuery, request.ID).Scan(ctx, entity)
 	if err != nil {
-		// Parse not found error as a managed error.
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsSelectNotFound))
+			err = errors.Join(err, ErrCredentialsSelectNotFound)
 		}
 
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))

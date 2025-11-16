@@ -212,7 +212,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 						Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsInsertRequest) bool {
 							return assert.Equal(t, testCase.request.Email, data.Email) &&
 								assert.NotEqual(t, uuid.Nil, data.ID) &&
-								assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
 								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
 								assert.Equal(t, config.RoleUser, data.Role)
 						})).

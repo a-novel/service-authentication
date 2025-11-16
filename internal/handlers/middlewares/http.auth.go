@@ -19,8 +19,9 @@ import (
 )
 
 var (
-	ErrMissingAuth = errors.New("missing auth")
-	ErrInvalidAuth = errors.New("invalid authentication")
+	ErrMissingAuth      = errors.New("missing auth")
+	ErrInvalidAuth      = errors.New("invalid authentication")
+	ErrUnexpectedClaims = errors.New("unexpected claims")
 )
 
 type AuthClaimsVerifier interface {
@@ -140,8 +141,10 @@ func GetClaimsContext(ctx context.Context) (*services.AccessTokenClaims, error) 
 	claims, ok := ctx.Value(ClaimsContextKey{}).(*services.AccessTokenClaims)
 	if !ok && claims != nil {
 		return nil, fmt.Errorf(
-			"(GetClaimsContext) extract claims: got type %T, expected %T",
-			ctx.Value(ClaimsContextKey{}), &services.AccessTokenClaims{},
+			"%w: got type %T, expected %T",
+			ErrUnexpectedClaims,
+			ctx.Value(ClaimsContextKey{}),
+			&services.AccessTokenClaims{},
 		)
 	}
 

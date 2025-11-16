@@ -21,11 +21,15 @@ var credentialsUpdateRoleQuery string
 var ErrCredentialsUpdateRoleNotFound = errors.New("credentials not found")
 
 type CredentialsUpdateRoleRequest struct {
-	ID   uuid.UUID
+	// The ID of the credentials to update.
+	ID uuid.UUID
+	// The new Role to assign to the selected credentials.
 	Role string
-	Now  time.Time
+	// Time used as modification date.
+	Now time.Time
 }
 
+// CredentialsUpdateRole assigns a new role to a set of credentials.
 type CredentialsUpdateRole struct{}
 
 func NewCredentialsUpdateRole() *CredentialsUpdateRole {
@@ -44,7 +48,6 @@ func (repository *CredentialsUpdateRole) Exec(
 		attribute.Int64("credentials.now", request.Now.Unix()),
 	)
 
-	// Retrieve a connection to postgres from the context.
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -55,7 +58,7 @@ func (repository *CredentialsUpdateRole) Exec(
 	err = tx.NewRaw(credentialsUpdateRoleQuery, request.Role, request.Now, request.ID).Scan(ctx, entity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsUpdateRoleNotFound))
+			err = errors.Join(err, ErrCredentialsUpdateRoleNotFound)
 		}
 
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))

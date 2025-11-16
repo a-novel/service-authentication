@@ -25,11 +25,16 @@ var (
 )
 
 type CredentialsUpdateEmailRequest struct {
-	ID    uuid.UUID
+	// The ID of the credentials to update.
+	ID uuid.UUID
+	// The new Email value for the selected credentials.
 	Email string
-	Now   time.Time
+	// Time used as modification date.
+	Now time.Time
 }
 
+// CredentialsUpdateEmail updates the email address of a set of credentials. The new address should be validated
+// beforehand.
 type CredentialsUpdateEmail struct{}
 
 func NewCredentialsUpdateEmail() *CredentialsUpdateEmail {
@@ -48,7 +53,6 @@ func (repository *CredentialsUpdateEmail) Exec(
 		attribute.Int64("credentials.now", request.Now.Unix()),
 	)
 
-	// Retrieve a connection to postgres from the context.
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -60,11 +64,10 @@ func (repository *CredentialsUpdateEmail) Exec(
 	if err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsUpdateEmailAlreadyExists))
-		}
-
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsUpdateEmailNotFound))
+			// Can happen if the email was taken by another account during the verification process.
+			err = errors.Join(err, ErrCredentialsUpdateEmailAlreadyExists)
+		} else if errors.Is(err, sql.ErrNoRows) {
+			err = errors.Join(err, ErrCredentialsUpdateEmailNotFound)
 		}
 
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))

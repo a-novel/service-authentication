@@ -1,3 +1,6 @@
+# This image exposes our app as a rest api server.
+#
+# It requires a patched database instance to run properly.
 FROM docker.io/library/golang:1.25.4-alpine AS builder
 
 WORKDIR /app
@@ -40,9 +43,10 @@ HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
 # ======================================================================================================================
 # Finish setup.
 # ======================================================================================================================
+# Make sure the executable uses the default port.
 ENV PORT=8080
 
+# Rest api port.
 EXPOSE 8080
 
-# Make sure the migrations are run before the API starts.
 CMD ["/api"]

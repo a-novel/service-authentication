@@ -1,3 +1,9 @@
+# This image exposes our app as a rest api server.
+#
+# It requires a database instance to run properly. The instance may not be patched.
+#
+# This image will make sure all patches are applied before starting the server. It is a larger
+# version of the base rest image, suited for local development rather than full scale production.
 FROM docker.io/library/golang:1.25.4-alpine AS builder
 
 WORKDIR /app
@@ -46,9 +52,11 @@ HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
 # ======================================================================================================================
 # Finish setup.
 # ======================================================================================================================
+# Make sure the executable uses the default port.
 ENV PORT=8080
 
+# Rest api port.
 EXPOSE 8080
 
-# Make sure the migrations are run before the API starts.
+# Run patches before starting the server.
 CMD ["sh", "-c", "/migrations && /init && /api"]

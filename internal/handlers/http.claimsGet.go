@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/a-novel/golib/httpf"
@@ -20,15 +19,9 @@ func (handler *ClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "handler.ClaimsGet")
 	defer span.End()
 
-	claims, err := middlewares.GetClaimsContext(ctx)
+	claims, err := middlewares.MustGetClaimsContext(ctx)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, nil, err)
-
-		return
-	}
-
-	if claims == nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusForbidden}, errors.New("claims not found"))
+		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusForbidden}, err)
 
 		return
 	}

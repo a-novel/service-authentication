@@ -38,7 +38,6 @@ func (repository *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeS
 		attribute.String("usage", request.Usage),
 	)
 
-	// Retrieve a connection to postgres from the context.
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -49,7 +48,7 @@ func (repository *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeS
 	err = tx.NewRaw(shortCodeSelectQuery, request.Target, request.Usage).Scan(ctx, entity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, otel.ReportError(span, errors.Join(err, ErrShortCodeSelectNotFound))
+			err = errors.Join(err, ErrShortCodeSelectNotFound)
 		}
 
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
