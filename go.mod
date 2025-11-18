@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	github.com/a-novel-kit/jwt v1.1.11
-	github.com/a-novel/golib v0.19.0
+	github.com/a-novel/golib v0.19.1
 	github.com/a-novel/service-json-keys/v2 v2.1.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
@@ -96,8 +96,8 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.11 // indirect
-	github.com/getsentry/sentry-go v0.37.0 // indirect
-	github.com/getsentry/sentry-go/otel v0.37.0 // indirect
+	github.com/getsentry/sentry-go v0.38.0 // indirect
+	github.com/getsentry/sentry-go/otel v0.38.0 // indirect
 	github.com/ghostiam/protogetter v0.3.17 // indirect
 	github.com/go-critic/go-critic v0.14.2 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
