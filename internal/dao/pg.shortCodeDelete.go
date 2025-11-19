@@ -21,20 +21,24 @@ var shortCodeDeleteQuery string
 var ErrShortCodeDeleteNotFound = errors.New("short code not found")
 
 const (
-	// ShortCodeDeleteOverride is the default deletion comment set when a newer version of an active short
+	// ShortCodeDeleteOverride is the deletion comment set when a newer version of an active short
 	// code is saved in the database.
 	ShortCodeDeleteOverride = "override with newer key"
-	// ShortCodeDeleteConsumed is the default deletion comment set when the resource the short code grants access to has
+	// ShortCodeDeleteConsumed is the deletion comment set when the resource the short code grants access to has
 	// been consumed successfully.
 	ShortCodeDeleteConsumed = "key consumed"
 )
 
 type ShortCodeDeleteRequest struct {
-	ID      uuid.UUID
-	Now     time.Time
+	// ID of the short code to delete.
+	ID uuid.UUID
+	// Time used for deletion date.
+	Now time.Time
+	// Indicate a reason for the short code deletion. See ShortCode.DeletedAt.
 	Comment string
 }
 
+// ShortCodeDelete deletes a non-expired short code.
 type ShortCodeDelete struct{}
 
 func NewShortCodeDelete() *ShortCodeDelete {
@@ -61,7 +65,7 @@ func (repository *ShortCodeDelete) Exec(ctx context.Context, request *ShortCodeD
 	err = tx.NewRaw(shortCodeDeleteQuery, request.Now, request.Comment, request.ID).Scan(ctx, entity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, otel.ReportError(span, errors.Join(err, ErrShortCodeDeleteNotFound))
+			err = errors.Join(err, ErrShortCodeDeleteNotFound)
 		}
 
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))

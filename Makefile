@@ -1,31 +1,51 @@
-#  Run tests.
+# ================================================================================
+# Run tests.
+# ================================================================================
 test-unit:
 	bash -c "set -m; bash '$(CURDIR)/scripts/test.sh'"
 
-test-integration-js:
-	bash -c "set -m; bash '$(CURDIR)/scripts/test-integration-js.sh'"
+test-pkg-js:
+	bash -c "set -m; bash '$(CURDIR)/scripts/test.pkg.js.sh'"
 
-test: test-unit test-integration-js
+test: test-unit test-pkg-js
 
-# Check code quality.
-lint:
+# ================================================================================
+# Lint.
+# ================================================================================
+lint-go:
 	go tool golangci-lint run
+
+lint-node:
 	pnpm lint
 
-# Reformat code so it passes the code style lint checks.
-format:
+lint: lint-go lint-node
+
+# ================================================================================
+# Format.
+# ================================================================================
+format-go:
 	go mod tidy
 	go tool golangci-lint run --fix
+
+format-node:
 	pnpm format
 
-# Generate Go code.
+format: format-go format-node
+
+# ================================================================================
+# Generate.
+# ================================================================================
 generate-go:
 	go generate ./...
 
-generate: generate-go
+generate-node:
 	pnpm generate
 
-# Run the rest API
+generate: generate-go generate-node
+
+# ================================================================================
+# Local dev.
+# ================================================================================
 run:
 	bash -c "set -m; bash '$(CURDIR)/scripts/run.sh'"
 

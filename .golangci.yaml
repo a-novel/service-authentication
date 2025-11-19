@@ -29,12 +29,12 @@ linters:
     #    - cyclop
     - decorder
     #    - depguard
-    #    - dogsled
+    - dogsled
     #    - dupl
     - dupword
     - durationcheck
     - embeddedstructfieldcheck
-    #    - err113
+    - err113
     - errcheck
     - errchkjson
     - errname
@@ -55,7 +55,7 @@ linters:
     #    - gocognit
     - goconst
     - gocritic
-    #    - gocyclo
+    - gocyclo
     - godoclint
     - godot
     #    - godox
@@ -63,7 +63,7 @@ linters:
     - gomoddirectives
     #    - gomodguard
     - goprintffuncname
-    - gosec
+    #    - gosec
     #    - gosmopolitan
     - govet
     - grouper
@@ -81,10 +81,10 @@ linters:
     - makezero
     - mirror
     - misspell
-    #    - mnd
+    - mnd
     - musttag
     - nakedret
-    - nestif
+    #    - nestif
     - nilerr
     - nilnesserr
     #    - nilnil
@@ -99,7 +99,7 @@ linters:
     - prealloc
     - predeclared
     #    - promlinter
-    #    - protogetter
+    - protogetter
     - reassign
     - recvcheck
     #    - revive
@@ -145,8 +145,12 @@ linters:
           - forcetypeassert
           - maintidx
           - gocognit
+          - gocyclo
           - tagliatelle
           - goconst
+          - gocritic
+          - err113
       - path: dao/(.+)_test.go
         linters:
           - paralleltest
+          - tparallel

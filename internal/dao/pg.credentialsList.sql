@@ -8,7 +8,7 @@ FROM
   credentials
 WHERE
   (
-    (?2) IS NULL
+    (?2) IS NULL -- If no role is provided (empty array), don't filter on roles.
     OR role IN (?2)
   )
 ORDER BY

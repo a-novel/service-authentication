@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"runtime"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
@@ -17,50 +18,44 @@ var (
 	ErrInvalidHash         = errors.New("the encoded hash is in an invalid format")
 	ErrIncompatibleVersion = errors.New("the encoded hash is using an incompatible version of Argon2")
 	ErrInvalidPassword     = errors.New("the password is invalid")
-
-	ErrGenerateScrypt = errors.New("GenerateScrypt")
-	ErrCompareScrypt  = errors.New("CompareScrypt")
-	ErrDecodeHash     = errors.New("decodeHash")
 )
-
-func NewErrGenerateScrypt(err error) error {
-	return errors.Join(err, ErrGenerateScrypt)
-}
-
-func NewErrCompareScrypt(err error) error {
-	return errors.Join(err, ErrCompareScrypt)
-}
-
-func NewErrDecodeHash(err error) error {
-	return errors.Join(err, ErrDecodeHash)
-}
 
 const (
 	scryptHashLen = 6
+)
+
+// Default parameters for Argon2id, following https://www.rfc-editor.org/rfc/rfc9106.html#section-7.4
+// recommendations.
+//
+// We use the second recommendation for resources optimization.
+const (
+	ScryptIterationsDefault = 3
+	ScryptMemoryDefault     = 64 * 1024
+	ScryptSaltLenDefault    = 32
+	ScryptKeyLenDefault     = 32
 )
 
 // ScryptParams contains the parameters used to generate a hash using the Argon2 algorithm.
 //
 // You can use ScryptParamsDefault unless you have specific requirements.
 type ScryptParams struct {
-	// SaltLength is the length of the salt in bytes.
-	SaltLength uint
-	// Iterations is the number of iterations to use.
-	Iterations uint32
-	// Memory is the amount of memory used by the algorithm.
+	// The amount of memory used by the Argon2 algorithm (in kibibytes).
 	Memory uint32
-	// Parallelism is the number of threads to use.
+	// The number of iterations (or passes) over the memory.
+	Iterations uint32
+	// The number of threads (or lanes) used by the algorithm. Uses the runtime cpus count by default.
 	Parallelism uint8
-	// KeyLength is the length of the derived key.
+	// Length of the random salt. 16 bytes is recommended for password hashing.
+	SaltLength uint
+	// Length of the generated key (or password hash). 16 bytes or more is recommended.
 	KeyLength uint32
 }
 
 var ScryptParamsDefault = ScryptParams{
-	SaltLength:  32, //nolint:mnd
-	Iterations:  1,
-	Memory:      64 * 1024, //nolint:mnd
-	Parallelism: 4,         //nolint:mnd
-	KeyLength:   32,        //nolint:mnd
+	Memory:     ScryptMemoryDefault,
+	Iterations: ScryptIterationsDefault,
+	SaltLength: ScryptSaltLenDefault,
+	KeyLength:  ScryptKeyLenDefault,
 }
 
 // GenerateScrypt is a secure hash method, similar to bcrypt.GenerateFromPassword, but based on the newer
@@ -71,7 +66,18 @@ func GenerateScrypt(password string, params ScryptParams) (string, error) {
 
 	_, err := io.ReadFull(rand.Reader, salt)
 	if err != nil {
-		return "", NewErrGenerateScrypt(fmt.Errorf("generate salt: %w", err))
+		return "", fmt.Errorf("generate salt: %w", err)
+	}
+
+	// Set to number of available CPUs by default.
+	if params.Parallelism == 0 {
+		nCpus := runtime.NumCPU()
+		// Prevent overflow, even though it should hardly happen lol.
+		if nCpus > math.MaxUint8 {
+			nCpus = math.MaxUint8
+		}
+
+		params.Parallelism = uint8(nCpus)
 	}
 
 	// Pass the plaintext password, salt and parameters to the argon2.IDKey
@@ -112,7 +118,7 @@ func CompareScrypt(password, encodedHash string) error {
 	// hash.
 	params, salt, hash, err := decodeHash(encodedHash)
 	if err != nil {
-		return NewErrCompareScrypt(err)
+		return fmt.Errorf("decode hash: %w", err)
 	}
 
 	// Derive the key from the other password using the same parameters.
@@ -132,7 +138,7 @@ func CompareScrypt(password, encodedHash string) error {
 		return nil
 	}
 
-	return NewErrCompareScrypt(ErrInvalidPassword)
+	return ErrInvalidPassword
 }
 
 func decodeHash(encodedHash string) (*ScryptParams, []byte, []byte, error) {
@@ -145,35 +151,43 @@ func decodeHash(encodedHash string) (*ScryptParams, []byte, []byte, error) {
 
 	_, err := fmt.Sscanf(values[2], "v=%d", &version)
 	if err != nil {
-		return nil, nil, nil, NewErrDecodeHash(errors.Join(ErrInvalidHash, fmt.Errorf("parse version: %w", err)))
+		err = errors.Join(ErrInvalidHash, err)
+
+		return nil, nil, nil, fmt.Errorf("parse version: %w", err)
 	}
 
 	if version != argon2.Version {
-		return nil, nil, nil, NewErrDecodeHash(ErrIncompatibleVersion)
+		return nil, nil, nil, ErrIncompatibleVersion
 	}
 
 	params := &ScryptParams{}
 
 	_, err = fmt.Sscanf(values[3], "m=%d,t=%d,p=%d", &params.Memory, &params.Iterations, &params.Parallelism)
 	if err != nil {
-		return nil, nil, nil, NewErrDecodeHash(errors.Join(ErrInvalidHash, fmt.Errorf("parse parameters: %w", err)))
+		err = errors.Join(ErrInvalidHash, err)
+
+		return nil, nil, nil, fmt.Errorf("parse parameters: %w", err)
 	}
 
 	salt, err := base64.RawStdEncoding.Strict().DecodeString(values[4])
 	if err != nil {
-		return nil, nil, nil, NewErrDecodeHash(errors.Join(ErrInvalidHash, fmt.Errorf("decode salt: %w", err)))
+		err = errors.Join(ErrInvalidHash, err)
+
+		return nil, nil, nil, fmt.Errorf("decode salt: %w", err)
 	}
 
 	params.SaltLength = uint(len(salt))
 
 	hash, err := base64.RawStdEncoding.Strict().DecodeString(values[5])
 	if err != nil {
-		return nil, nil, nil, NewErrDecodeHash(errors.Join(ErrInvalidHash, fmt.Errorf("decode hash: %w", err)))
+		err = errors.Join(ErrInvalidHash, err)
+
+		return nil, nil, nil, fmt.Errorf("decode hash: %w", err)
 	}
 
 	rawHashLength := len(hash)
 	if rawHashLength > math.MaxUint32 {
-		return nil, nil, nil, NewErrDecodeHash(fmt.Errorf("%w: hash length: %d", ErrInvalidHash, rawHashLength))
+		return nil, nil, nil, fmt.Errorf("%w: hash length: %d", ErrInvalidHash, rawHashLength)
 	}
 
 	params.KeyLength = uint32(rawHashLength)

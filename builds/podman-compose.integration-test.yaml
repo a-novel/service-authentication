@@ -37,9 +37,6 @@ services:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
-  # The Master Key is a secure, 32-bit random secret used to encrypt private JSON keys
-  # in the database.
-  # This value is a dummy key used for tests. Use your own random key in production.
   service-json-keys:
     image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.0
     depends_on:

@@ -1,3 +1,6 @@
+# This image runs a job that will create / update a default super-admin user.
+#
+# It requires a patched database instance to run properly.
 FROM docker.io/library/golang:1.25.4-alpine AS builder
 
 WORKDIR /app
@@ -27,5 +30,4 @@ WORKDIR /
 
 COPY --from=builder /init /init
 
-# Make sure the migrations are run before the job starts.
 CMD ["/init"]

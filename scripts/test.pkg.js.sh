@@ -10,7 +10,6 @@ int_handler()
 }
 trap int_handler INT
 
-# Setup test containers.
 podman compose --podman-build-args='--format docker -q' -p "${APP_NAME}" -f "${PODMAN_FILE}" up -d --build
 
 pnpm test

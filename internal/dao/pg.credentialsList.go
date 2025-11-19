@@ -18,9 +18,12 @@ var credentialsListQuery string
 type CredentialsListRequest struct {
 	Limit  int
 	Offset int
-	Roles  []string
+	// Filter credentials by role.
+	Roles []string
 }
 
+// CredentialsList returns a set of paginated credentials from the database. Only the public fields are returned,
+// private authentication information is left empty.
 type CredentialsList struct{}
 
 func NewCredentialsList() *CredentialsList {
@@ -40,11 +43,11 @@ func (repository *CredentialsList) Exec(
 	)
 
 	if len(request.Roles) == 0 {
-		// Make sure roles are defined for the query.
+		// Make sure roles are defined in the query, to prevent type error.
+		// An empty array will still ignore roles filter like a nil value is expected to do.
 		request.Roles = []string{}
 	}
 
-	// Retrieve a connection to postgres from the context.
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))

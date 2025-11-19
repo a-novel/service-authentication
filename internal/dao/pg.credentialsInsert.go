@@ -22,13 +22,21 @@ var credentialsInsertQuery string
 var ErrCredentialsInsertAlreadyExists = errors.New("credentials already exists")
 
 type CredentialsInsertRequest struct {
-	ID       uuid.UUID
-	Email    string
+	// See Credentials.ID.
+	ID uuid.UUID
+	// See Credentials.Email.
+	Email string
+	// See Credentials.Password.
 	Password string
-	Role     string
-	Now      time.Time
+	// See Credentials.Role.
+	Role string
+	// Time used for user registration.
+	Now time.Time
 }
 
+// CredentialsInsert inserts a new set of credentials into the database.
+//
+// The new credentials must be unique, otherwise ErrCredentialsInsertAlreadyExists is thrown.
 type CredentialsInsert struct{}
 
 func NewCredentialsInsert() *CredentialsInsert {
@@ -49,7 +57,6 @@ func (repository *CredentialsInsert) Exec(
 		attribute.Int64("credentials.now", request.Now.Unix()),
 	)
 
-	// Retrieve a connection to postgres from the context.
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -69,7 +76,7 @@ func (repository *CredentialsInsert) Exec(
 	if err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsInsertAlreadyExists))
+			err = errors.Join(err, ErrCredentialsInsertAlreadyExists)
 		}
 
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
