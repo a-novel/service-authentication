@@ -104,7 +104,7 @@ jobs:
       SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
       SUPER_ADMIN_PASSWORD: admin
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker-job@master
         with:
@@ -166,7 +166,7 @@ jobs:
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6001
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@master
         with:
@@ -229,7 +229,7 @@ jobs:
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6001
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@master
         with:
