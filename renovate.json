@@ -13,6 +13,14 @@
       }
     },
     {
+      "matchManagers": ["gomod"],
+      "groupName": "uptrace/bun",
+      "postUpgradeTasks": {
+        "commands": ["go get -u github.com/a-novel/golib"],
+        "executionMode": "branch"
+      }
+    },
+    {
       "matchManagers": ["npm"],
       "postUpgradeTasks": {
         "commands": ["pnpm i --frozen-lockfile && pnpm generate"],
