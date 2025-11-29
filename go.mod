@@ -3,8 +3,8 @@ module github.com/a-novel/service-authentication/v2
 go 1.25.4
 
 require (
-	github.com/a-novel-kit/jwt v1.1.13
-	github.com/a-novel/golib v0.19.3
+	github.com/a-novel-kit/jwt v1.1.14
+	github.com/a-novel/golib v0.19.4
 	github.com/a-novel/service-json-keys/v2 v2.1.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
@@ -96,8 +96,8 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.11 // indirect
-	github.com/getsentry/sentry-go v0.39.0 // indirect
-	github.com/getsentry/sentry-go/otel v0.39.0 // indirect
+	github.com/getsentry/sentry-go v0.40.0 // indirect
+	github.com/getsentry/sentry-go/otel v0.40.0 // indirect
 	github.com/ghostiam/protogetter v0.3.17 // indirect
 	github.com/go-critic/go-critic v0.14.2 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -272,7 +272,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
+	go.uber.org/zap v1.27.1 // indirect
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/mod v0.30.0 // indirect
