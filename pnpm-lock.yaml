@@ -52,7 +52,7 @@ importers:
         version: 8.48.0(eslint@9.39.1)(typescript@5.9.3)
       vite:
         specifier: ^7.2.2
-        version: 7.2.4(@types/node@24.10.0)
+        version: 7.2.6(@types/node@24.10.0)
       vitest:
         specifier: ^4.0.8
         version: 4.0.14(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
@@ -71,7 +71,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.2.2
-        version: 7.2.4(@types/node@24.10.0)
+        version: 7.2.6(@types/node@24.10.0)
 
   pkg/rest-js-test:
     dependencies:
@@ -165,7 +165,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.2.2
-        version: 7.2.4(@types/node@24.10.0)
+        version: 7.2.6(@types/node@24.10.0)
       vitest:
         specifier: ^4.0.8
         version: 4.0.14(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))
@@ -2439,8 +2439,8 @@ packages:
       yaml:
         optional: true
 
-  vite@7.2.4:
-    resolution: {integrity: sha512-NL8jTlbo0Tn4dUEXEsUg8KeyG/Lkmc4Fnzb8JXN/Ykm9G4HNImjtABMJgkQoVjOBN/j2WAwDTRytdqJbZsah7w==}
+  vite@7.2.6:
+    resolution: {integrity: sha512-tI2l/nFHC5rLh7+5+o7QjKjSR04ivXDF4jcgV0f/bTQ+OJiITy5S6gaynVsEM+7RqzufMnVbIon6Sr5x1SDYaQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -3341,14 +3341,14 @@ snapshots:
       chai: 6.2.0
       tinyrainbow: 3.0.3
 
-  '@vitest/mocker@4.0.14(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(vite@7.2.4(@types/node@24.10.0))':
+  '@vitest/mocker@4.0.14(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(vite@7.2.6(@types/node@24.10.0))':
     dependencies:
       '@vitest/spy': 4.0.14
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
       msw: 2.12.1(@types/node@24.10.0)(typescript@5.9.3)
-      vite: 7.2.4(@types/node@24.10.0)
+      vite: 7.2.6(@types/node@24.10.0)
 
   '@vitest/mocker@4.0.8(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(vite@7.2.2(@types/node@24.10.0))':
     dependencies:
@@ -5248,7 +5248,7 @@ snapshots:
       '@types/node': 24.10.0
       fsevents: 2.3.3
 
-  vite@7.2.4(@types/node@24.10.0):
+  vite@7.2.6(@types/node@24.10.0):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.3)
@@ -5263,7 +5263,7 @@ snapshots:
   vitest@4.0.14(@types/node@24.10.0)(jsdom@27.2.0)(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3)):
     dependencies:
       '@vitest/expect': 4.0.14
-      '@vitest/mocker': 4.0.14(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(vite@7.2.4(@types/node@24.10.0))
+      '@vitest/mocker': 4.0.14(msw@2.12.1(@types/node@24.10.0)(typescript@5.9.3))(vite@7.2.6(@types/node@24.10.0))
       '@vitest/pretty-format': 4.0.14
       '@vitest/runner': 4.0.14
       '@vitest/snapshot': 4.0.14
@@ -5280,7 +5280,7 @@ snapshots:
       tinyexec: 0.3.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
-      vite: 7.2.4(@types/node@24.10.0)
+      vite: 7.2.6(@types/node@24.10.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.10.0
