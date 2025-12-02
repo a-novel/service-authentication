@@ -55,10 +55,10 @@ github.com/MirrexOne/unqueryvet v1.2.1 h1:M+zdXMq84g+E1YOLa7g7ExN3dWfZQrdDSTCM7g
 github.com/MirrexOne/unqueryvet v1.2.1/go.mod h1:IWwCwMQlSWjAIteW0t+28Q5vouyktfujzYznSIWiuOg=
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1 h1:vckeWVESWp6Qog7UZSARNqfu/cZqvki8zsuj3piCMx4=
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1/go.mod h1:q4DKzC4UcVaAvcfd41CZh0PWpGgzrVxUYBlgKNGquUo=
-github.com/a-novel-kit/jwt v1.1.14 h1:eO4qcHauc06+HBU5DmHZn3wYVWbsJ8CVF029cd4Zjcg=
-github.com/a-novel-kit/jwt v1.1.14/go.mod h1:z83BffHeM5NPwaQxmpzB+7TpNzsMhLJQdD+i4OFfIGY=
-github.com/a-novel/golib v0.19.4 h1:zYN0GfEEwn7MqnMqvCZnd8Vz68sCrq5Y5yXwTvy7KHc=
-github.com/a-novel/golib v0.19.4/go.mod h1:ACQpIO1qBBvrX4DRHP1FtdqsZ29pz3UAGe3erPaqJNY=
+github.com/a-novel-kit/jwt v1.1.15 h1:2Rg0JEGYChpK/JA2Srk+HPKUNT+QXa9Ct8Yr5STSgvI=
+github.com/a-novel-kit/jwt v1.1.15/go.mod h1:z83BffHeM5NPwaQxmpzB+7TpNzsMhLJQdD+i4OFfIGY=
+github.com/a-novel/golib v0.19.5 h1:xp476/Fy6frgiBk0FN5kHT7M8gmVPnSaaZg09E0Ouso=
+github.com/a-novel/golib v0.19.5/go.mod h1:ACQpIO1qBBvrX4DRHP1FtdqsZ29pz3UAGe3erPaqJNY=
 github.com/a-novel/service-json-keys/v2 v2.1.0 h1:BSLdrTCRf1ED9ffl6zkRK3Xkdf2yc+Y7nY9flSxgRBc=
 github.com/a-novel/service-json-keys/v2 v2.1.0/go.mod h1:x3lavndym/K6pNQHItYafWv3Fu0Hi1Gzi87Pa+khjPw=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
