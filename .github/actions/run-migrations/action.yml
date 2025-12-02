@@ -5,7 +5,7 @@ runs:
   steps:
     - uses: actions/setup-go@v6
       with:
-        go-version: stable
+        go-version-file: "go.mod"
     - name: Download Go packages
       shell: bash
       run: go mod download
