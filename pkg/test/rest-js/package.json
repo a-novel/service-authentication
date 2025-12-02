@@ -4,7 +4,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/a-novel/service-authentication.git"
+    "url": "git+https://github.com/a-novel/service-authentication.git"
   },
   "license": "AGPL-3.0",
   "type": "module",
