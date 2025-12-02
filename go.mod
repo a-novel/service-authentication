@@ -3,8 +3,8 @@ module github.com/a-novel/service-authentication/v2
 go 1.25.4
 
 require (
-	github.com/a-novel-kit/jwt v1.1.14
-	github.com/a-novel/golib v0.19.4
+	github.com/a-novel-kit/jwt v1.1.15
+	github.com/a-novel/golib v0.19.5
 	github.com/a-novel/service-json-keys/v2 v2.1.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
