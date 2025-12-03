@@ -33,7 +33,7 @@ RUN go build -o /api cmd/rest/main.go
 RUN go build -o /migrations cmd/migrations/main.go
 RUN go build -o /init cmd/init/main.go
 
-FROM docker.io/library/alpine:3.22.2
+FROM docker.io/library/alpine:3.23.0
 
 WORKDIR /
 

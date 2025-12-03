@@ -19,7 +19,7 @@ RUN go mod download
 # ======================================================================================================================
 RUN go build -o /migrations cmd/migrations/main.go
 
-FROM docker.io/library/alpine:3.22.2
+FROM docker.io/library/alpine:3.23.0
 
 WORKDIR /
 
