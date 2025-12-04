@@ -47,7 +47,7 @@
     "globals": "^16.5.0",
     "js-yaml": "^4.1.1",
     "jsdom": "^27.1.0",
-    "mjml": "4.17.1",
+    "mjml": "4.17.2",
     "nodemailer": "^7.0.11",
     "prettier": "^3.6.2",
     "prettier-plugin-packagejson": "^2.5.19",
