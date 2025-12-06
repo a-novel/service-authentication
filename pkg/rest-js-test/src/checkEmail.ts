@@ -1,8 +1,9 @@
+import { expect, vi } from "vitest";
+
 import { handleHttpResponse } from "@a-novel/nodelib-browser/http";
 
 import { JSDOM } from "jsdom";
 import { type AddressObject, type ParsedMail, simpleParser } from "mailparser";
-import { expect, vi } from "vitest";
 
 export async function checkEmail(mailHost: string, search: string, clear: boolean = true): Promise<ParsedMail> {
   const messageID = await vi.waitFor(
@@ -29,7 +30,10 @@ export async function checkEmail(mailHost: string, search: string, clear: boolea
     await fetch(`${mailHost}/api/v1/messages`, {
       method: "DELETE",
       body: JSON.stringify({ IDs: [messageID] }),
-      headers: { accept: "application/json", "content-type": "application/json" },
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
     }).then(handleHttpResponse);
   }
 

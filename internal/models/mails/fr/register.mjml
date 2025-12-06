@@ -26,7 +26,8 @@ Content-Type: text/html; charset="UTF-8";
         <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
           Pour <strong>rejoindre la communauté Agora Storyverse</strong>, rempli le formulaire via le lien ci-dessous.
           <br /><br />
-          Ce lien est valable pour une durée de <strong>{{.Duration}}h</strong> seulement, alors fais vite!
+          Ce lien est valable pour une durée de
+          <strong>{{.Duration}}h</strong> seulement, alors fais vite!
         </mj-text>
 
         <mj-button

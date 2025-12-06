@@ -1,6 +1,6 @@
-import { AuthenticationApi } from "@a-novel/service-authentication-rest";
-
 import { describe, it, expect } from "vitest";
+
+import { AuthenticationApi } from "@a-novel/service-authentication-rest";
 
 describe("ping", () => {
   it("returns success", async () => {

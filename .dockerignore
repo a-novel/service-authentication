@@ -6,3 +6,4 @@
 scripts
 **/*.ts
 **/*.js
+node_modules

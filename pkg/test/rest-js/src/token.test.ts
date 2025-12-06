@@ -1,3 +1,5 @@
+import { describe, it, expect } from "vitest";
+
 import { expectStatus } from "@a-novel/nodelib-test/http";
 import {
   AuthenticationApi,
@@ -7,8 +9,6 @@ import {
   tokenCreateAnon,
   tokenRefresh,
 } from "@a-novel/service-authentication-rest";
-
-import { describe, it, expect } from "vitest";
 
 describe("tokenCreate", () => {
   it("logs in with correct credentials", async () => {

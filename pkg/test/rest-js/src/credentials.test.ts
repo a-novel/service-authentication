@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import { expectStatus } from "@a-novel/nodelib-test/http";
 import {
   AuthenticationApi,
@@ -25,8 +27,6 @@ import {
   preRegisterUserAsAdmin,
   registerUser,
 } from "@a-novel/service-authentication-rest-test";
-
-import { describe, expect, it } from "vitest";
 
 describe("credentialsCreate", () => {
   describe("admin", () => {
