@@ -1,5 +1,9 @@
 import { checkEmail, getHtmlMail } from "./checkEmail";
 
+import * as crypto from "node:crypto";
+
+import { expect } from "vitest";
+
 import {
   type AuthenticationApi,
   claimsGet,
@@ -9,9 +13,6 @@ import {
   type Token,
   tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
-
-import * as crypto from "node:crypto";
-import { expect } from "vitest";
 
 export function generateRandomMail() {
   return crypto.randomBytes(12).toString("hex") + "@provider.com";

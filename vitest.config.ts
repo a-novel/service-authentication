@@ -1,5 +1,6 @@
 import { builtinModules } from "node:module";
 import { resolve } from "node:path";
+
 import { defineConfig } from "vitest/config";
 
 const NODE_BUILT_IN_MODULES = builtinModules.filter((m) => !m.startsWith("_"));
