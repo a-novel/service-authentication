@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/a-novel-kit/jwt v1.1.16
-	github.com/a-novel/golib v0.19.6
+	github.com/a-novel/golib v0.19.7
 	github.com/a-novel/service-json-keys/v2 v2.1.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
@@ -284,9 +284,9 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
-	google.golang.org/api v0.256.0 // indirect
+	google.golang.org/api v0.257.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
