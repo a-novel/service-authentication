@@ -6,11 +6,11 @@ import { expect } from "vitest";
 
 import {
   type AuthenticationApi,
+  Lang,
+  type Token,
   claimsGet,
   credentialsCreate,
-  Lang,
   shortCodeCreateRegister,
-  type Token,
   tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
 

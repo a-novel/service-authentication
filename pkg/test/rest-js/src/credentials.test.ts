@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import { expectStatus } from "@a-novel/nodelib-test/http";
 import {
   AuthenticationApi,
+  Lang,
+  Role,
+  type Token,
   claimsGet,
   credentialsExists,
   credentialsGet,
@@ -11,11 +14,8 @@ import {
   credentialsUpdateEmail,
   credentialsUpdatePassword,
   credentialsUpdateRole,
-  Lang,
-  Role,
   shortCodeCreateEmailUpdate,
   shortCodeCreatePasswordReset,
-  type Token,
   tokenCreate,
   tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
