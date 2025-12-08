@@ -3,7 +3,7 @@ module github.com/a-novel/service-authentication/v2
 go 1.25.5
 
 require (
-	github.com/a-novel-kit/jwt v1.1.16
+	github.com/a-novel-kit/jwt v1.1.17
 	github.com/a-novel/golib v0.19.7
 	github.com/a-novel/service-json-keys/v2 v2.1.1
 	github.com/go-chi/chi/v5 v5.2.3
