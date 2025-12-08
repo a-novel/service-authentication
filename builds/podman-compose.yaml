@@ -33,7 +33,7 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/
 
   postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v2.1.1
+    image: ghcr.io/a-novel/service-json-keys/database:v2.1.2
     networks:
       - api
     environment:
@@ -46,7 +46,7 @@ services:
       - json-keys-postgres-data:/var/lib/postgresql/
 
   service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.1
+    image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.2
     depends_on:
       - postgres-json-keys
     environment:
