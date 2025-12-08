@@ -45,6 +45,7 @@ jobs:
         shell: bash
         run: |
           pnpm config set "@a-novel:registry" "https://npm.pkg.github.com"
+          pnpm config set "@a-novel-kit:registry" "https://npm.pkg.github.com"
           pnpm config set "//npm.pkg.github.com/:_authToken" "${{ secrets.GITHUB_TOKEN }}"
       - name: install dependencies
         shell: bash

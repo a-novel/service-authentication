@@ -1,7 +1,7 @@
 import type { AuthenticationApi } from "./api";
 import { PasswordSchema } from "./form";
 
-import { HTTP_HEADERS } from "@a-novel/nodelib-browser/http";
+import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
 
 import { z } from "zod";
 

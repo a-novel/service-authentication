@@ -1,4 +1,4 @@
-import { decodeHttpResponse, handleHttpResponse } from "@a-novel/nodelib-browser/http";
+import { decodeHttpResponse, handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
 
 import type { ZodType } from "zod";
 

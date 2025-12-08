@@ -2,7 +2,7 @@ import type { AuthenticationApi } from "./api";
 import { PasswordSchema, RoleSchema, ShortCodeSchema } from "./form";
 import { type Token, TokenSchema } from "./token";
 
-import { HTTP_HEADERS, isHttpStatusError } from "@a-novel/nodelib-browser/http";
+import { HTTP_HEADERS, isHttpStatusError } from "@a-novel-kit/nodelib-browser/http";
 
 import { z } from "zod";
 

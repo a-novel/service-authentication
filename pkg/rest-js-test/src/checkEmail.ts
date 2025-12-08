@@ -1,6 +1,6 @@
 import { expect, vi } from "vitest";
 
-import { handleHttpResponse } from "@a-novel/nodelib-browser/http";
+import { handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
 
 import { JSDOM } from "jsdom";
 import { type AddressObject, type ParsedMail, simpleParser } from "mailparser";

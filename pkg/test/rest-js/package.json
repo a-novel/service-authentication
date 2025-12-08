@@ -9,8 +9,8 @@
   "license": "AGPL-3.0",
   "type": "module",
   "devDependencies": {
-    "@a-novel/nodelib-browser": "^1.0.3",
-    "@a-novel/nodelib-test": "^1.0.3",
+    "@a-novel-kit/nodelib-browser": "^1.3.1",
+    "@a-novel-kit/nodelib-test": "^1.3.1",
     "@a-novel/service-authentication-rest": "workspace:*",
     "@a-novel/service-authentication-rest-test": "workspace:*",
     "@trivago/prettier-plugin-sort-imports": "^6.0.0",

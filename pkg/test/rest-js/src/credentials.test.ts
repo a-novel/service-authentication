@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { expectStatus } from "@a-novel/nodelib-test/http";
+import { expectStatus } from "@a-novel-kit/nodelib-test/http";
 import {
   AuthenticationApi,
   Lang,

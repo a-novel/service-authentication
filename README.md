@@ -102,6 +102,7 @@ Make sure you have a `.npmrc` with the following content (in your project or in 
 
 ```ini
 @a-novel:registry=https://npm.pkg.github.com
+@a-novel-kit:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${YOUR_PERSONAL_ACCESS_TOKEN}
 ```
 
