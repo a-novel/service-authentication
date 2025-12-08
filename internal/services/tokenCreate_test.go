@@ -9,8 +9,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/golib/grpcf"
 	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+
+	"github.com/a-novel-kit/golib/grpcf"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/dao"

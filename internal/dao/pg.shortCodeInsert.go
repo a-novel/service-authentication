@@ -13,8 +13,8 @@ import (
 	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/golib/otel"
-	"github.com/a-novel/golib/postgres"
+	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/golib/postgres"
 )
 
 //go:embed pg.shortCodeInsert.sql

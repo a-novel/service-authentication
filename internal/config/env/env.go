@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/a-novel/golib/config"
+	"github.com/a-novel-kit/golib/config"
 )
 
 // prefix allows to set a custom prefix to all configuration environment variables.

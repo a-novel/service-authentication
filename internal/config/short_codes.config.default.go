@@ -5,7 +5,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 
-	"github.com/a-novel/golib/config"
+	"github.com/a-novel-kit/golib/config"
 )
 
 //go:embed short_codes.config.yaml

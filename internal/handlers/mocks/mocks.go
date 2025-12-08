@@ -8,7 +8,7 @@ import (
 	"context"
 	"text/template"
 
-	"github.com/a-novel/golib/smtp"
+	"github.com/a-novel-kit/golib/smtp"
 	"github.com/a-novel/service-authentication/v2/internal/services"
 	"github.com/a-novel/service-json-keys/v2/pkg"
 	mock "github.com/stretchr/testify/mock"

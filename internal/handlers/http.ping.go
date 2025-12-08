@@ -6,7 +6,7 @@ import (
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/codes"
 
-	"github.com/a-novel/golib/otel"
+	"github.com/a-novel-kit/golib/otel"
 )
 
 type Ping struct{}

@@ -10,8 +10,8 @@ import (
 	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/a-novel/golib/otel"
-	"github.com/a-novel/golib/postgres"
+	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/golib/postgres"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"

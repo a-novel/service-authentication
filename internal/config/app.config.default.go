@@ -5,12 +5,12 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/a-novel/golib/grpcf"
-	"github.com/a-novel/golib/logging"
-	loggingpresets "github.com/a-novel/golib/logging/presets"
-	"github.com/a-novel/golib/otel"
-	otelpresets "github.com/a-novel/golib/otel/presets"
-	"github.com/a-novel/golib/smtp"
+	"github.com/a-novel-kit/golib/grpcf"
+	"github.com/a-novel-kit/golib/logging"
+	loggingpresets "github.com/a-novel-kit/golib/logging/presets"
+	"github.com/a-novel-kit/golib/otel"
+	otelpresets "github.com/a-novel-kit/golib/otel/presets"
+	"github.com/a-novel-kit/golib/smtp"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )

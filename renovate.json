@@ -16,7 +16,7 @@
       "matchManagers": ["gomod"],
       "groupName": "uptrace/bun",
       "postUpgradeTasks": {
-        "commands": ["go get -u github.com/a-novel/golib"],
+        "commands": ["go get -u github.com/a-novel-kit/golib"],
         "executionMode": "branch"
       }
     },

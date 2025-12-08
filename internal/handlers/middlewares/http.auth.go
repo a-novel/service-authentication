@@ -9,10 +9,10 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/a-novel/golib/httpf"
-	"github.com/a-novel/golib/otel"
 	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
+	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/services"

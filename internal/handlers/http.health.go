@@ -8,11 +8,12 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc"
 
-	"github.com/a-novel/golib/httpf"
-	"github.com/a-novel/golib/otel"
-	"github.com/a-novel/golib/postgres"
-	"github.com/a-novel/golib/smtp"
 	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+
+	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/smtp"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/samber/lo"
 
-	"github.com/a-novel/golib/deps"
+	"github.com/a-novel-kit/golib/deps"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"

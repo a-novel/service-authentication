@@ -3,11 +3,11 @@ package config
 import (
 	"time"
 
-	"github.com/a-novel/golib/grpcf"
-	"github.com/a-novel/golib/logging"
-	"github.com/a-novel/golib/otel"
-	"github.com/a-novel/golib/postgres"
-	"github.com/a-novel/golib/smtp"
+	"github.com/a-novel-kit/golib/grpcf"
+	"github.com/a-novel-kit/golib/logging"
+	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/smtp"
 )
 
 type Main struct {

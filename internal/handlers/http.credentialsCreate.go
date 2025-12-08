@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/a-novel/golib/httpf"
-	"github.com/a-novel/golib/otel"
+	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/services"
