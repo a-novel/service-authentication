@@ -34,7 +34,7 @@
     "vitest": "^4.0.8",
     "zod": "^4.1.12"
   },
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.25.0",
   "engines": {
     "node": ">=23.11.0",
     "npm": ">=10.9.2"
