@@ -1,5 +1,5 @@
 import type { AuthenticationApi } from "./api";
-import { PasswordSchema, RoleSchema, ShortCodeSchema } from "./form";
+import { EmailSchema, PasswordSchema, RoleSchema, ShortCodeSchema } from "./form";
 import { type Token, TokenSchema } from "./token";
 
 import { HTTP_HEADERS, isHttpStatusError } from "@a-novel-kit/nodelib-browser/http";
@@ -17,7 +17,7 @@ export const CredentialsSchema = z.object({
 export type Credentials = z.infer<typeof CredentialsSchema>;
 
 export const CredentialsCreateRequestSchema = z.object({
-  email: z.email(),
+  email: EmailSchema,
   password: PasswordSchema,
   shortCode: ShortCodeSchema,
 });
@@ -25,7 +25,7 @@ export const CredentialsCreateRequestSchema = z.object({
 export type CredentialsCreateRequest = z.infer<typeof CredentialsCreateRequestSchema>;
 
 export const CredentialsExistsRequestSchema = z.object({
-  email: z.email(),
+  email: EmailSchema,
 });
 
 export type CredentialsExistsRequest = z.infer<typeof CredentialsExistsRequestSchema>;

@@ -27,7 +27,7 @@ type ShortCodeCreatePasswordResetRepository interface {
 type ShortCodeCreatePasswordResetSmtp = smtp.Sender
 
 type ShortCodeCreatePasswordResetRequest struct {
-	Email string `validate:"required,email"`
+	Email string `validate:"required,email,max=1024"`
 	Lang  string `validate:"required,langs"`
 }
 

@@ -29,7 +29,7 @@ type TokenCreateServiceSignClaims interface {
 }
 
 type TokenCreateRequest struct {
-	Email    string `validate:"required,email"`
+	Email    string `validate:"required,email,max=1024"`
 	Password string `validate:"required,max=1024"`
 }
 
