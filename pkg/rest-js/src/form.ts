@@ -1,8 +1,12 @@
+import { MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH, MAX_SHORT_CODE_LENGTH } from "./const";
+
 import { z } from "zod";
 
-export const PasswordSchema = z.string().max(1024);
+export const EmailSchema = z.email().max(MAX_EMAIL_LENGTH);
 
-export const ShortCodeSchema = z.string().max(1024);
+export const PasswordSchema = z.string().max(MAX_PASSWORD_LENGTH);
+
+export const ShortCodeSchema = z.string().max(MAX_SHORT_CODE_LENGTH);
 
 export enum Role {
   Anon = "auth:anon",

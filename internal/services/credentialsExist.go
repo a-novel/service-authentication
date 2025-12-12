@@ -17,7 +17,7 @@ type CredentialsExistRepository interface {
 }
 
 type CredentialsExistRequest struct {
-	Email string `validate:"required,email"`
+	Email string `validate:"required,email,max=1024"`
 }
 
 type CredentialsExist struct {

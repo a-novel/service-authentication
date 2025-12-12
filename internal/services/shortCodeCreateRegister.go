@@ -23,7 +23,7 @@ type ShortCodeCreateRegisterService interface {
 type ShortCodeCreateRegisterSmtp = smtp.Sender
 
 type ShortCodeCreateRegisterRequest struct {
-	Email string `validate:"required,email"`
+	Email string `validate:"required,email,max=1024"`
 	Lang  string `validate:"required,langs"`
 }
 

@@ -24,7 +24,7 @@ type ShortCodeCreateEmailUpdateSmtp = smtp.Sender
 
 type ShortCodeCreateEmailUpdateRequest struct {
 	ID    uuid.UUID
-	Email string `validate:"required,email"`
+	Email string `validate:"required,email,max=1024"`
 	Lang  string `validate:"required,langs"`
 }
 
