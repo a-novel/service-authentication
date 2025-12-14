@@ -8,6 +8,7 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
@@ -49,7 +50,8 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 	})
 	if err != nil {
 		httpf.HandleError(ctx, w, span, httpf.ErrMap{
-			services.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			services.ErrInvalidRequest:            http.StatusUnprocessableEntity,
+			dao.ErrCredentialsInsertAlreadyExists: http.StatusConflict,
 		}, err)
 
 		return

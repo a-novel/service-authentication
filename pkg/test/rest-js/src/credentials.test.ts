@@ -97,8 +97,7 @@ describe("credentialsCreate", () => {
       await registerUser(api, preRegister1);
 
       // Email already registered by another user.
-      const preRegister2 = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken, email);
-      await expectStatus(registerUser(api, preRegister2), 409);
+      await expectStatus(preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken, email), 409);
     });
   });
 

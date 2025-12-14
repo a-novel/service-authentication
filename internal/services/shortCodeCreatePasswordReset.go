@@ -33,7 +33,7 @@ type ShortCodeCreatePasswordResetRequest struct {
 
 type ShortCodeCreatePasswordReset struct {
 	service          ShortCodeCreatePasswordResetService
-	repository       ShortCodeCreatePasswordResetRepository
+	selectRepository ShortCodeCreatePasswordResetRepository
 	smtp             smtp.Sender
 	shortCodesConfig config.ShortCodes
 	smtpConfig       config.SmtpUrls
@@ -43,14 +43,14 @@ type ShortCodeCreatePasswordReset struct {
 
 func NewShortCodeCreatePasswordReset(
 	service ShortCodeCreatePasswordResetService,
-	repository ShortCodeCreatePasswordResetRepository,
+	selectRepository ShortCodeCreatePasswordResetRepository,
 	smtp smtp.Sender,
 	shortCodesConfig config.ShortCodes,
 	smtpConfig config.SmtpUrls,
 ) *ShortCodeCreatePasswordReset {
 	return &ShortCodeCreatePasswordReset{
 		service:          service,
-		repository:       repository,
+		selectRepository: selectRepository,
 		smtp:             smtp,
 		shortCodesConfig: shortCodesConfig,
 		smtpConfig:       smtpConfig,
@@ -77,7 +77,7 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	credentials, err := service.repository.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
+	credentials, err := service.selectRepository.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
 		Email: request.Email,
 	})
 	if err != nil {

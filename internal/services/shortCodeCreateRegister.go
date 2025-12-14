@@ -13,6 +13,7 @@ import (
 	"github.com/a-novel-kit/golib/smtp"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
@@ -20,6 +21,11 @@ import (
 type ShortCodeCreateRegisterService interface {
 	Exec(ctx context.Context, request *ShortCodeCreateRequest) (*ShortCode, error)
 }
+
+type ShortCodeCreateRegisterRepository interface {
+	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
+}
+
 type ShortCodeCreateRegisterSmtp = smtp.Sender
 
 type ShortCodeCreateRegisterRequest struct {
@@ -29,6 +35,7 @@ type ShortCodeCreateRegisterRequest struct {
 
 type ShortCodeCreateRegister struct {
 	service          ShortCodeCreateRegisterService
+	selectRepository ShortCodeCreateRegisterRepository
 	smtp             smtp.Sender
 	shortCodesConfig config.ShortCodes
 	smtpConfig       config.SmtpUrls
@@ -38,12 +45,14 @@ type ShortCodeCreateRegister struct {
 
 func NewShortCodeCreateRegister(
 	service ShortCodeCreateRegisterService,
+	selectRepository ShortCodeCreateRegisterRepository,
 	smtp smtp.Sender,
 	shortCodesConfig config.ShortCodes,
 	smtpConfig config.SmtpUrls,
 ) *ShortCodeCreateRegister {
 	return &ShortCodeCreateRegister{
 		service:          service,
+		selectRepository: selectRepository,
 		smtp:             smtp,
 		shortCodesConfig: shortCodesConfig,
 		smtpConfig:       smtpConfig,
@@ -68,6 +77,17 @@ func (service *ShortCodeCreateRegister) Exec(
 	err := validate.Struct(request)
 	if err != nil {
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+	}
+
+	_, err = service.selectRepository.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
+		Email: request.Email,
+	})
+	if err == nil {
+		return nil, otel.ReportError(span, dao.ErrCredentialsInsertAlreadyExists)
+	}
+
+	if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
 	// Create a new short code.

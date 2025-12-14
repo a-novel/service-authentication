@@ -76,6 +76,7 @@ func main() {
 	serviceShortCodeCreate := services.NewShortCodeCreate(repositoryShortCodeInsert, cfg.ShortCodesConfig)
 	serviceShortCodeCreateEmailUpdate := services.NewShortCodeCreateEmailUpdate(
 		serviceShortCodeCreate,
+		repositoryCredentialsSelectByEmail,
 		cfg.Smtp,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
@@ -89,6 +90,7 @@ func main() {
 	)
 	serviceShortCodeCreateRegister := services.NewShortCodeCreateRegister(
 		serviceShortCodeCreate,
+		repositoryCredentialsSelectByEmail,
 		cfg.Smtp,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
