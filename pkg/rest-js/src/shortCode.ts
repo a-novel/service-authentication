@@ -1,26 +1,26 @@
 import type { AuthenticationApi } from "./api";
-import { LangSchema } from "./form";
+import { EmailSchema, LangSchema } from "./form";
 
 import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
 
 import { z } from "zod";
 
 export const ShortCodeCreateEmailUpdateRequestSchema = z.object({
-  email: z.email(),
+  email: EmailSchema,
   lang: LangSchema,
 });
 
 export type ShortCodeCreateEmailUpdateRequest = z.infer<typeof ShortCodeCreateEmailUpdateRequestSchema>;
 
 export const ShortCodeCreatePasswordResetRequestSchema = z.object({
-  email: z.email(),
+  email: EmailSchema,
   lang: LangSchema,
 });
 
 export type ShortCodeCreatePasswordResetRequest = z.infer<typeof ShortCodeCreatePasswordResetRequestSchema>;
 
 export const ShortCodeCreateRegisterRequestSchema = z.object({
-  email: z.email(),
+  email: EmailSchema,
   lang: LangSchema,
 });
 

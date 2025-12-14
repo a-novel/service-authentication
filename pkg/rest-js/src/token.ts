@@ -1,5 +1,5 @@
 import type { AuthenticationApi } from "./api";
-import { PasswordSchema } from "./form";
+import { EmailSchema, PasswordSchema } from "./form";
 
 import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
 
@@ -13,7 +13,7 @@ export const TokenSchema = z.object({
 export type Token = z.infer<typeof TokenSchema>;
 
 export const TokenCreateRequestSchema = z.object({
-  email: z.email(),
+  email: EmailSchema,
   password: PasswordSchema,
 });
 
