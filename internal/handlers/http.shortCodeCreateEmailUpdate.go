@@ -10,6 +10,7 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/services"
 )
@@ -60,7 +61,8 @@ func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *h
 	})
 	if err != nil {
 		httpf.HandleError(ctx, w, span, httpf.ErrMap{
-			services.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			services.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
+			dao.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
 		}, err)
 
 		return

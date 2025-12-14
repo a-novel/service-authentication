@@ -12,6 +12,7 @@ import (
 	"github.com/a-novel-kit/golib/smtp"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -30,13 +31,18 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		err  error
 	}
 
+	type repositorySelectMock struct {
+		err error
+	}
+
 	testCases := []struct {
 		name string
 
 		request *services.ShortCodeCreateEmailUpdateRequest
 
-		serviceCreateMock *serviceCreateMock
-		sendMail          bool
+		serviceCreateMock    *serviceCreateMock
+		repositorySelectMock *repositorySelectMock
+		sendMail             bool
 
 		expectErr error
 	}{
@@ -61,10 +67,14 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 				},
 			},
 
+			repositorySelectMock: &repositorySelectMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+
 			sendMail: true,
 		},
 		{
-			name: "CreateShortCodeError",
+			name: "Error/CreateShortCode",
 
 			request: &services.ShortCodeCreateEmailUpdateRequest{
 				Lang:  config.LangFR,
@@ -73,6 +83,40 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			},
 
 			serviceCreateMock: &serviceCreateMock{
+				err: errFoo,
+			},
+
+			repositorySelectMock: &repositorySelectMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+
+			expectErr: errFoo,
+		},
+		{
+			name: "Error/EmailAlreadyTaken",
+
+			request: &services.ShortCodeCreateEmailUpdateRequest{
+				Lang:  config.LangFR,
+				Email: "user@provider.com",
+				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			},
+
+			repositorySelectMock: &repositorySelectMock{
+				err: nil,
+			},
+
+			expectErr: dao.ErrCredentialsUpdateEmailAlreadyExists,
+		},
+		{
+			name: "Error/Repository",
+
+			request: &services.ShortCodeCreateEmailUpdateRequest{
+				Lang:  config.LangFR,
+				Email: "user@provider.com",
+				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			},
+
+			repositorySelectMock: &repositorySelectMock{
 				err: errFoo,
 			},
 
@@ -85,6 +129,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			t.Parallel()
 
 			serviceCreate := servicesmocks.NewMockShortCodeCreateEmailUpdateService(t)
+			repositorySelect := servicesmocks.NewMockShortCodeCreateEmailUpdateRepository(t)
 			smtpService := servicesmocks.NewMockShortCodeCreateEmailUpdateSmtp(t)
 
 			if testCase.serviceCreateMock != nil {
@@ -97,6 +142,14 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 						Override: true,
 					}).
 					Return(testCase.serviceCreateMock.resp, testCase.serviceCreateMock.err)
+			}
+
+			if testCase.repositorySelectMock != nil {
+				repositorySelect.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{
+						Email: testCase.request.Email,
+					}).
+					Return(nil, testCase.repositorySelectMock.err)
 			}
 
 			if testCase.sendMail {
@@ -120,7 +173,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			}
 
 			service := services.NewShortCodeCreateEmailUpdate(
-				serviceCreate, smtpService, config.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, repositorySelect, smtpService, config.ShortCodesPresetDefault, smtpConfig,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
@@ -135,6 +188,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			}
 
 			serviceCreate.AssertExpectations(t)
+			repositorySelect.AssertExpectations(t)
 			smtpService.AssertExpectations(t)
 		})
 	}
