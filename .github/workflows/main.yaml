@@ -137,7 +137,7 @@ jobs:
       - uses: a-novel-kit/workflows/go-actions/test-go@master
         id: test
         with:
-          ignore_patterns: /mocks,/test,/cmd
+          filter_extra_patterns: " | grep -v /cmd"
           skip_setup: true
           coverage_artifact: gocover
 
