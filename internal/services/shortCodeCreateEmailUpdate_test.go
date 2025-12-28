@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"encoding/base64"
 	"errors"
 	"testing"
 	"time"
@@ -161,6 +162,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 						map[string]any{
 							"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
 							"Target":    testCase.request.ID.String(),
+							"Source":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
 							"URL":       smtpConfig.UpdateEmail,
 							"Duration": config.ShortCodesPresetDefault.
 								Usages[services.ShortCodeUsageValidateEmail].

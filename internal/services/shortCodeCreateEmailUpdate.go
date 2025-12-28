@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"sync"
@@ -135,6 +136,7 @@ func (service *ShortCodeCreateEmailUpdate) sendMail(
 		map[string]any{
 			"ShortCode": shortCode.PlainCode,
 			"Target":    request.ID.String(),
+			"Source":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 			"URL":       service.smtpConfig.UpdateEmail,
 			"Duration":  service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL.Hours(),
 			"Banner":    assets.BannerBase64,

@@ -35,7 +35,7 @@ Content-Type: text/html; charset="UTF-8";
           font-family="Helvetica"
           background-color="#ffab33"
           color="white"
-          href="{{.URL}}?shortCode={{.ShortCode}}&target={{.Target}}"
+          href="{{.URL}}?shortCode={{.ShortCode}}&target={{.Target}}&source={{.Source}}"
         >
           Update
         </mj-button>
