@@ -7,7 +7,7 @@ export SUPER_ADMIN_EMAIL=noreply@agorastoryverse.com
 export SUPER_ADMIN_PASSWORD=admin
 
 # Client (frontend).
-export PLATFORM_AUTH_PORT=6001
+export PLATFORM_AUTH_PORT=6000
 export PLATFORM_AUTH_URL="http://localhost:${PLATFORM_AUTH_PORT}"
 
 # Postgres.
