@@ -130,7 +130,7 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       SERVICE_JSON_KEYS_TEST_PORT: 4002
       SERVICE_JSON_KEYS_TEST_HOST: 0.0.0.0
-      PLATFORM_AUTH_URL: http://localhost:6001
+      PLATFORM_AUTH_URL: http://localhost:6000
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/run-migrations
@@ -387,7 +387,7 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       SERVICE_JSON_KEYS_PORT: 4002
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
-      PLATFORM_AUTH_URL: http://localhost:6001
+      PLATFORM_AUTH_URL: http://localhost:6000
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/run-migrations
@@ -452,7 +452,7 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       SERVICE_JSON_KEYS_PORT: 4002
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
-      PLATFORM_AUTH_URL: http://localhost:6001
+      PLATFORM_AUTH_URL: http://localhost:6000
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/run-migrations
