@@ -33,9 +33,10 @@
     "lint:typecheck:rest-js": "pnpm tsc --p ./pkg/rest-js/tsconfig.json --noEmit",
     "lint:typecheck:rest-js-test": "pnpm tsc --p ./pkg/rest-js-test/tsconfig.json --noEmit",
     "lint:typecheck:test:rest-js": "pnpm tsc --p ./pkg/test/rest-js/tsconfig.json --noEmit",
-    "publish:major": "pnpm version major --workspaces --workspaces-update=false --no-git-tag-version && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
-    "publish:minor": "pnpm version minor --workspaces --workspaces-update=false --no-git-tag-version && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
-    "publish:patch": "pnpm version patch --workspaces --workspaces-update=false --no-git-tag-version && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
+    "prepublish:doc": "sed -Ei \"s|(a-novel/service-authentication/[^/]+)v[0-9.]+|\\1v$(node -p -e \"require('./package.json').version\")|g\" README.md",
+    "publish:major": "pnpm version major --workspaces --workspaces-update=false --no-git-tag-version && pnpm prepublish:doc && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
+    "publish:minor": "pnpm version minor --workspaces --workspaces-update=false --no-git-tag-version && pnpm prepublish:doc && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
+    "publish:patch": "pnpm version patch --workspaces --workspaces-update=false --no-git-tag-version && pnpm prepublish:doc && git add -A && git commit -m \"$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
     "test": "vitest run -c vitest.config.ts",
     "types:rest": "tsc --build pkg/rest-js/tsconfig.build.json",
     "types:rest-test": "tsc --build pkg/rest-js-test/tsconfig.build.json"
