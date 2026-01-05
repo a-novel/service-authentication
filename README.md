@@ -132,11 +132,11 @@ variables. Below is a list of available configurations:
 
 **Required variables**
 
-| Name                   | Description                                                          | Images                                                |
-| ---------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
-| POSTGRES_DSN           | The Postgres Data Source Name (DSN) used to connect to the database. | `standalone`<br/>`rest`<br/>`init`<br/>`translations` |
-| SERVICE_JSON_KEYS_PORT | Port where service-json-keys is running                              | `standalone`<br/>`rest`                               |
-| SERVICE_JSON_KEYS_HOST | URL to a running service-json-keys instance                          | `standalone`<br/>`rest`                               |
+| Name                   | Description                                                          | Images                                              |
+| ---------------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
+| POSTGRES_DSN           | The Postgres Data Source Name (DSN) used to connect to the database. | `standalone`<br/>`rest`<br/>`init`<br/>`migrations` |
+| SERVICE_JSON_KEYS_PORT | Port where service-json-keys is running                              | `standalone`<br/>`rest`                             |
+| SERVICE_JSON_KEYS_HOST | URL to a running service-json-keys instance                          | `standalone`<br/>`rest`                             |
 
 This service requires a running instance of the [JSON Keys service](https://github.com/a-novel/service-json-keys). Note
 that the authentication and json keys service share sensitive data, they should communicate over a secure, unexposed
