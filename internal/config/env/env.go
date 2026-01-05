@@ -30,11 +30,11 @@ const (
 	ServiceJsonKeysPortDefault = 8080
 
 	ApiPortDefault              = 8080
-	ApiTimeoutReadDefault       = 5 * time.Second
+	ApiTimeoutReadDefault       = 15 * time.Second
 	ApiTimeoutReadHeaderDefault = 3 * time.Second
-	ApiTimeoutWriteDefault      = 10 * time.Second
-	ApiTimeoutIdleDefault       = 30 * time.Second
-	ApiTimeoutRequestDefault    = 15 * time.Second
+	ApiTimeoutWriteDefault      = 30 * time.Second
+	ApiTimeoutIdleDefault       = 60 * time.Second
+	ApiTimeoutRequestDefault    = 60 * time.Second
 	ApiMaxRequestSizeDefault    = 2 << 20 // 2 MiB
 	CorsAllowCredentialsDefault = false
 	CorsMaxAgeDefault           = 3600
@@ -133,11 +133,11 @@ var (
 
 	// SmtpAddr is the address of the SMTP service used to send mails.
 	//
-	// It should be in the form <domain>:<host>.
+	// It should be in the form domain:port.
 	SmtpAddr = smtpAddr
 	// SmtpSenderName defines the name that will appear as the sender in outgoing emails.
 	SmtpSenderName = smtpSenderName
-	// SmtpSenderEmail is the email used to send outgoing smtp emails.
+	// SmtpSenderEmail is the email address used to send outgoing smtp emails.
 	SmtpSenderEmail = smtpSenderEmail
 	// SmtpSenderPassword is the plain password used to connect to the SmtpSenderEmail account. This is a sensitive
 	// value that should be handled appropriately.
