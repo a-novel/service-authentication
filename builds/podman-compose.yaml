@@ -1,6 +1,6 @@
 services:
   mailserver:
-    image: ghcr.io/axllent/mailpit:v1.28.1
+    image: ghcr.io/axllent/mailpit:v1.28.2
     ports:
       - "${MAIL_UI_PORT}:8025"
     networks:
