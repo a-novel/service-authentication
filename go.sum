@@ -61,6 +61,8 @@ github.com/a-novel-kit/golib v0.19.11 h1:MulhTDIKE8KT7P6GmnwpfznfaF2GwmXLP/5cZ1r
 github.com/a-novel-kit/golib v0.19.11/go.mod h1:PZHTBwUHuMK8Gd0kKuZUqrzXIvwpJpQ7AwFEzk0S8eI=
 github.com/a-novel-kit/jwt v1.1.26 h1:jx3UKMaNE8QVukiWsAMs75uyjY6Yw4l+iaWCFlvdp4Q=
 github.com/a-novel-kit/jwt v1.1.26/go.mod h1:aywOj2uCoBS7kpccR+lMXpm6ip0x6twWwSHk8nLtIlY=
+github.com/a-novel-kit/jwt v1.1.27 h1:gePb1d+d50DrzjyacqnlxgwPfcZCUbDEP3PYByyno7s=
+github.com/a-novel-kit/jwt v1.1.27/go.mod h1:tUBI29iQDWizpKtYlM9dDRW/Jx3FLNqRE4KAkG8taB8=
 github.com/a-novel/service-json-keys/v2 v2.1.3 h1:veRGZr10+rL1YIb6RxN9OGuJgn3n+zq0fe7BTt7y30Y=
 github.com/a-novel/service-json-keys/v2 v2.1.3/go.mod h1:lJOnaL0E+EaBRrc9UUqIuZn9rn9kH7AsbTnQbAVoALU=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
@@ -575,6 +577,7 @@ github.com/uudashr/iface v1.4.1 h1:J16Xl1wyNX9ofhpHmQ9h9gk5rnv2A6lX/2+APLTo0zU=
 github.com/uudashr/iface v1.4.1/go.mod h1:pbeBPlbuU2qkNDn0mmfrxP2X+wjPMIQAy+r1MBXSXtg=
 github.com/vektra/mockery/v3 v3.6.1 h1:YyqAXihdNML8y6SJnvPKYr+2HAHvBjdvqFu/fMYlX8g=
 github.com/vektra/mockery/v3 v3.6.1/go.mod h1:Oti3Df0WP8wwT31yuVri3QNsDeMUQU5Q4QEg8EabaBw=
+github.com/vektra/mockery/v3 v3.6.2/go.mod h1:kh58mpWIghfUCfFkNCP72TJmuJUR/dKnrqBZ3HspVq8=
 github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=
 github.com/vmihailenco/msgpack/v5 v5.4.1/go.mod h1:GaZTsDaehaPpQVyxrf5mtQlH+pc21PIudVV/E3rRQok=
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=

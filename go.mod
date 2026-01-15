@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/a-novel-kit/golib v0.19.11
-	github.com/a-novel-kit/jwt v1.1.26
+	github.com/a-novel-kit/jwt v1.1.27
 	github.com/a-novel/service-json-keys/v2 v2.1.3
 	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-chi/cors v1.2.2
@@ -244,7 +244,7 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.2.16 // indirect
 	github.com/uudashr/gocognit v1.2.0 // indirect
 	github.com/uudashr/iface v1.4.1 // indirect
-	github.com/vektra/mockery/v3 v3.6.1 // indirect
+	github.com/vektra/mockery/v3 v3.6.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
