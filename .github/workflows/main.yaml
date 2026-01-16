@@ -503,3 +503,16 @@ jobs:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
           coverage_files: coverage.txt,coverage/*
           coverage_artifact_ids: ${{ needs.test.outputs.artifact-id }},${{ needs.test-js.outputs.artifact-id }}
+
+  publish-docs:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && success()
+    needs: [build-js]
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: a-novel-kit/workflows/github-pages-actions/publish-static@master
+        with:
+          build: openapi.html

@@ -14,7 +14,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-var ErrShortCodeConsumeInvalid = errors.New("invalid shortcode")
+var ErrShortCodeConsumeInvalid = errors.New("invalid short code")
 
 type ShortCodeConsumeRepositorySelect interface {
 	Exec(ctx context.Context, request *dao.ShortCodeSelectRequest) (*dao.ShortCode, error)
