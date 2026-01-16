@@ -8,16 +8,15 @@ info:
   title: Authentication API
   summary: User authentication & account management.
   description: |
-    This service primarly manages user accounts, from creation to authentication. A user account is a credential,
-    which contains both private (*access data*) and public (*identifiers*) information.
+    This service primarily manages user accounts, from creation to authentication. A user account is a credential, which
+    contains both private (*access data*) and public (*identifiers*) information.
 
     ## Access tokens
 
-    Most routes require an access token for simplier permission management. Thus, most call should expect at least
-    an anonymous token, i.e. a token that grants less rights, but can be created on-the-fly without any plain
-    credentials.
+    Most routes require an access token for simpler permission management. Thus, most call should expect at least an 
+    anonymous token, i.e. a token that grants less rights, but can be created on-the-fly without any plain credentials.
 
-    Authenticated users can refresh their session using a refresh token. This tokne has a longer expiry date, and can
+    Authenticated users can refresh their session using a refresh token. This token has a longer expiry date, and can
     be used to create new access tokens on-demand. There is no way to refresh a refresh token, so once it expires, the
     user must log in again.
 
@@ -25,8 +24,7 @@ info:
 
     For some secure operations, users can receive a short code on a secure channel: this acts as a temporary, single-use
     password. This code is NEVER returned by the API, the user is expected to retrieve it itself then complete the
-    operation with the information it was provided with. Usually, the nessage will contain a link for this very
-    purpose.
+    operation with the information it was provided with. Usually, the message will contain a link for this very purpose.
   version: 2.1.7
   license:
     name: AGPL-3.0
@@ -40,7 +38,7 @@ paths:
       description: |
         A simple endpoint to check if the server is up and running. It always returns the same response.
 
-        Note this **DOES NOT** gives information about the server dependencies. To get more information about the server
+        Note this **DOES NOT** give information about the server dependencies. To get more information about the server
         actual health, please use the `/healthcheck` endpoint.
       tags: [health]
       security: []
@@ -73,8 +71,7 @@ paths:
       operationId: claimsGet
       summary: Returns the claims of an authenticated user.
       description: |
-        Validate a user token, and extract the claims is contains. This route also works for
-        anonymous tokens.
+        Validate a user token, and extract the claims it contains. This route also works for anonymous tokens.
       tags: [session]
       security:
         - BearerAuth: []
@@ -89,8 +86,8 @@ paths:
       operationId: tokenRefresh
       summary: Retrieve a new access token for the user.
       description: |
-        Use the refresh token of a user to retrieve a new access token. This allows the user to extend its 
-        session without logging in again. A refresh token cannot be refreshed once it expires.
+        Use the refresh token of a user to retrieve a new access token. This allows the user to extend its session 
+        without logging in again. A refresh token cannot be refreshed once it expires.
       tags: [session]
       security: []
       requestBody:
@@ -149,8 +146,8 @@ paths:
       operationId: credentialsExists
       summary: Check if a given email is registered in the database.
       description: |
-        Returns a success status if the email matches a registered user in the database, throws
-        a not found (404) error otherwise.
+        Returns a success status if the email matches a registered user in the database, throws a not found (404) error
+        otherwise.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:exist"]
@@ -173,8 +170,7 @@ paths:
       operationId: credentialsGet
       summary: Retrieve the public credentials of a user.
       description: |
-        Retrieve public information about a user. This is meant for discovery and does not contain
-        sensitive data.
+        Retrieve public information about a user. This is meant for discovery and does not contain sensitive data.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:get"]
@@ -197,8 +193,8 @@ paths:
       operationId: credentialsCreate
       summary: Register a new user.
       description: |
-        Create a new user account. The user must have a short-code available, generated during
-        pre-registration. If not, use `[PUT] /short-code/register` first.
+        Create a new user account. The user must have a short-code available, generated during pre-registration. If not, 
+        use `[PUT] /short-code/register` first.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:create"]
@@ -248,8 +244,8 @@ paths:
       operationId: emailUpdate
       summary: Update the user email.
       description: |
-        Completes the email update process. The user must have a short-code available, generated during
-        the initial phase. If not, use `[PUT] /short-code/update-email` first.
+        Completes the email update process. The user must have a short-code available, generated during the initial 
+        phase. If not, use `[PUT] /short-code/update-email` first.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:email:patch"]
@@ -299,8 +295,8 @@ paths:
       operationId: passwordReset
       summary: Reset the user password.
       description: |
-        Completes the password reset process. The user must have a short-code available, generated during
-        the initial phase. If not, use `[PUT] /short-code/update-password` first.
+        Completes the password reset process. The user must have a short-code available, generated during the initial 
+        phase. If not, use `[PUT] /short-code/update-password` first.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:password:reset"]
@@ -323,9 +319,9 @@ paths:
       operationId: roleUpdate
       summary: Update the user role.
       description: |
-        Update the role of a user. The role of the user performing the action, in addition to having the required permissions,
-        **MUST BE** higher in the hierarchy than the initial target user role, and **CANNOT** grant privileges higher than its
-        own.
+        Update the role of a user. The role of the user performing the action, in addition to having the required 
+        permissions, **MUST BE** higher in the hierarchy than the initial target user role, and **CANNOT** grant 
+        privileges higher than its own.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:role:patch"]
@@ -350,9 +346,9 @@ paths:
       operationId: registerInit
       summary: Start the registration process.
       description: |
-        Start the registration process, by sending a link with a unique short code to the user email. If the user manages
-        to open the link, it means the email is valid and no further validation is required. It can proceed to complete its
-        account safely.
+        Start the registration process, by sending a link with a unique short code to the user email. If the user 
+        manages to open the link, it means the email is valid and no further validation is required. It can proceed to 
+        complete its account safely.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:register"]
@@ -377,8 +373,9 @@ paths:
       operationId: emailUpdateInit
       summary: Start the email update process.
       description: |
-        Start the email update process, by sending a link with a unique short code to the user new email. If the user manages
-        to open the link, it means the email is valid and no further validation is required. The email can be changed safely.
+        Start the email update process, by sending a link with a unique short code to the user new email. If the user 
+        manages to open the link, it means the email is valid and no further validation is required. The email can be 
+        changed safely.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:email:update"]
@@ -485,14 +482,14 @@ components:
     credentialsGet:
       description: The public credentials of the target user.
       content:
-        applciation/json:
+        application/json:
           schema:
             $ref: "#/components/schemas/publicCredentials"
 
     credentialsList:
       description: The list of public credentials.
       content:
-        applciation/json:
+        application/json:
           schema:
             type: array
             items:
@@ -620,9 +617,10 @@ components:
       format: jwt
       examples:
         - >-
-          eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiIsImtpZCI6IjQ0ZGU3Y2Q3YWZmMWU2YzQ0MjA3NGU4MzQxZDc5MmM3In0.eyJ1c2VySUQiOiI5ZGNlMGZhMi1mOTNiLTQ2YTktYWE2Yi1hNzFiZjBiMWVlODAiLCJyb2xlcyI6ImF1dGg6dXNlciIsI
-          nJlZnJlc2hUb2tlbklEIjoiM2Q1M2JkNWMtMTZmNi00N2ExLWE0YTYtN2MyZWUxNzkzNjY0In0.AW10XXvH337pXozTnOPDGjftGSKEzt1fP8iSxGsX76c02uamyM-aJ-0UQyKe3kZctwe6ezCmRmmh2Fu7qZatesChALRlZ7
-          PF9QiDtDf-ESNWfdqm1fUypXjn1spHIpRsgWglXvVgO0nbFoOwoBkkyRvB9GBCHOBJ6o2Y5OGc6TXu_yL5
+          eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiIsImtpZCI6IjQ0ZGU3Y2Q3YWZmMWU2YzQ0MjA3NGU4MzQxZDc5MmM3In0.eyJ1c2VySUQiOiI5ZG
+          NlMGZhMi1mOTNiLTQ2YTktYWE2Yi1hNzFiZjBiMWVlODAiLCJyb2xlcyI6ImF1dGg6dXNlciIsInJlZnJlc2hUb2tlbklEIjoiM2Q1M2JkNWMt
+          MTZmNi00N2ExLWE0YTYtN2MyZWUxNzkzNjY0In0.AW10XXvH337pXozTnOPDGjftGSKEzt1fP8iSxGsX76c02uamyM-aJ-0UQyKe3kZctwe6ez
+          CmRmmh2Fu7qZatesChALRlZ7PF9QiDtDf-ESNWfdqm1fUypXjn1spHIpRsgWglXvVgO0nbFoOwoBkkyRvB9GBCHOBJ6o2Y5OGc6TXu_yL5
 
     refreshToken:
       type: string
@@ -630,10 +628,10 @@ components:
       format: jwt
       examples:
         - >-
-          eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiIsImtpZCI6IjQ0ZGU3Y2Q3YWZmMWU2YzQ0MjA3NGU4MzQxZDc5MmM3In0.eyJ1c2VySUQiOiI5ZGNlMGZhMi1mOTNiLTQ2YTktYWE2Yi1hNzFiZjBiMWVlODAiLCJqdGkiOiIzZDUzYmQ1Yy0xNmY
-          2LTQ3YTEtYTRhNi03YzJlZTE3OTM2NjQifQ.AMTi8QCCO5B8QYorveMHoGXfRO8QUP9ru381lIKHOMn-cO4g3yL9Xxb
-          h2YDCAWgRalqiLTE1C-JLMRfHeumgOL1ZAaChGMUdM_BYu0eXpnyqjbius4_ThFO_-DSaQhJciDtGYJQQP1pkCMqmL
-          5EWi-ic55pUmb_tX3dClrgccNT6k0bL
+          eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiIsImtpZCI6IjQ0ZGU3Y2Q3YWZmMWU2YzQ0MjA3NGU4MzQxZDc5MmM3In0.eyJ1c2VySUQiOiI5ZG
+          NlMGZhMi1mOTNiLTQ2YTktYWE2Yi1hNzFiZjBiMWVlODAiLCJqdGkiOiIzZDUzYmQ1Yy0xNmY2LTQ3YTEtYTRhNi03YzJlZTE3OTM2NjQifQ.A
+          MTi8QCCO5B8QYorveMHoGXfRO8QUP9ru381lIKHOMn-cO4g3yL9Xxbh2YDCAWgRalqiLTE1C-JLMRfHeumgOL1ZAaChGMUdM_BYu0eXpnyqjbi
+          us4_ThFO_-DSaQhJciDtGYJQQP1pkCMqmL5EWi-ic55pUmb_tX3dClrgccNT6k0bL
 
     email:
       type: string

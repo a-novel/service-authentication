@@ -511,6 +511,7 @@ jobs:
     permissions:
       contents: read
       pages: write
+      id-token: write
     steps:
       - uses: a-novel-kit/workflows/github-pages-actions/publish-static@master
         with:
