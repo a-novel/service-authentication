@@ -1,23 +1,25 @@
 <!doctype html>
-<html lang="en" class="dark-mode">
+<html>
   <head>
+    <title>Scalar API Reference</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="SwaggerUI" />
-    <title>SwaggerUI</title>
-    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.31.0/swagger-ui.css" />
   </head>
   <body>
-    <div id="swagger-ui"></div>
-    <script src="https://unpkg.com/swagger-ui-dist@5.31.0/swagger-ui-bundle.js" crossorigin></script>
-    <script src="https://unpkg.com/swagger-ui-dist@5.31.0/swagger-ui-standalone-preset.js" crossorigin></script>
+    <div id="app"></div>
+    <!-- Load the Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.43.5/dist/browser/standalone.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.43.5/dist/style.min.css" rel="stylesheet" />
+    <!-- Initialize the Scalar API Reference -->
     <script>
-      window.onload = () => {
-        window.ui = SwaggerUIBundle({
-          url: "./openapi.yaml",
-          dom_id: "#swagger-ui",
-        });
-      };
+      Scalar.createApiReference("#app", {
+        // The URL of the OpenAPI/Swagger document
+        url: "./openapi.yaml",
+        proxyUrl: "https://proxy.scalar.com",
+        darkMode: true,
+        layout: "modern",
+        theme: "elysiajs",
+      });
     </script>
   </body>
 </html>
