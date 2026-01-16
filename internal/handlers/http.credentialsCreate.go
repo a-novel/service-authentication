@@ -19,7 +19,7 @@ type CredentialsCreateService interface {
 type CredentialsCreateRequest struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
-	ShortCode string `json:"shortcode"`
+	ShortCode string `json:"shortCode"`
 }
 
 type CredentialsCreate struct {

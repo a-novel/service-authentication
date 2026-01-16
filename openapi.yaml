@@ -1,0 +1,857 @@
+# Created with https://editor.swagger.io/
+openapi: 3.1.0
+
+servers:
+  - url: http://127.0.0.1:4011
+
+info:
+  title: Authentication API
+  summary: User authentication & account management.
+  description: |
+    This service primarly manages user accounts, from creation to authentication. A user account is a credential,
+    which contains both private (*access data*) and public (*identifiers*) information.
+
+    ## Access tokens
+
+    Most routes require an access token for simplier permission management. Thus, most call should expect at least
+    an anonymous token, i.e. a token that grants less rights, but can be created on-the-fly without any plain
+    credentials.
+
+    Authenticated users can refresh their session using a refresh token. This tokne has a longer expiry date, and can
+    be used to create new access tokens on-demand. There is no way to refresh a refresh token, so once it expires, the
+    user must log in again.
+
+    ## Short codes
+
+    For some secure operations, users can receive a short code on a secure channel: this acts as a temporary, single-use
+    password. This code is NEVER returned by the API, the user is expected to retrieve it itself then complete the
+    operation with the information it was provided with. Usually, the nessage will contain a link for this very
+    purpose.
+  version: 2.1.7
+  license:
+    name: AGPL-3.0
+    url: "https://raw.githubusercontent.com/a-novel/service-authentication/refs/heads/master/LICENSE"
+
+paths:
+  /ping:
+    get:
+      operationId: ping
+      summary: Ping the server.
+      description: |
+        A simple endpoint to check if the server is up and running. It always returns the same response.
+
+        Note this **DOES NOT** gives information about the server dependencies. To get more information about the server
+        actual health, please use the `/healthcheck` endpoint.
+      tags: [health]
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/pong"
+        "418":
+          $ref: "#/components/responses/teapot"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /healthcheck:
+    get:
+      operationId: healthcheck
+      summary: Health diagnosis of the server.
+      description: |
+        Performs a complete health diagnosis of the server dependencies, by trying to reach them each.
+      tags: [health]
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/health"
+        "418":
+          $ref: "#/components/responses/teapot"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /session:
+    get:
+      operationId: claimsGet
+      summary: Returns the claims of an authenticated user.
+      description: |
+        Validate a user token, and extract the claims is contains. This route also works for
+        anonymous tokens.
+      tags: [session]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/claimsGet"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        default:
+          $ref: "#/components/responses/internalError"
+    patch:
+      operationId: tokenRefresh
+      summary: Retrieve a new access token for the user.
+      description: |
+        Use the refresh token of a user to retrieve a new access token. This allows the user to extend its 
+        session without logging in again. A refresh token cannot be refreshed once it expires.
+      tags: [session]
+      security: []
+      requestBody:
+        $ref: "#/components/requestBodies/tokenRefresh"
+      responses:
+        "200":
+          $ref: "#/components/responses/tokenRefresh"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+    put:
+      operationId: tokenCreate
+      summary: Create a new access token from plain credentials.
+      description: |
+        Trade a user's plain credentials for a safe token it can use to authenticate against the API.
+      tags: [session]
+      security: []
+      requestBody:
+        $ref: "#/components/requestBodies/credentials"
+      responses:
+        "200":
+          $ref: "#/components/responses/tokenCreate"
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /session/anon:
+    put:
+      operationId: tokenCreateAnon
+      summary: Create a new anonymous access token.
+      description: |
+        Create an anonymous token to authenticate against the API without credentials.
+        Anonymous tokens bear less rights than plain authenticated users.
+      tags: [session]
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/tokenCreate"
+        "418":
+          $ref: "#/components/responses/teapot"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /credentials:
+    head:
+      operationId: credentialsExists
+      summary: Check if a given email is registered in the database.
+      description: |
+        Returns a success status if the email matches a registered user in the database, throws
+        a not found (404) error otherwise.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:exist"]
+      parameters:
+        - $ref: "#/components/parameters/email"
+      responses:
+        "204":
+          description: The email is used by a registered user.
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+    get:
+      operationId: credentialsGet
+      summary: Retrieve the public credentials of a user.
+      description: |
+        Retrieve public information about a user. This is meant for discovery and does not contain
+        sensitive data.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:get"]
+      parameters:
+        - $ref: "#/components/parameters/userID"
+      responses:
+        "200":
+          $ref: "#/components/responses/credentialsGet"
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+    put:
+      operationId: credentialsCreate
+      summary: Register a new user.
+      description: |
+        Create a new user account. The user must have a short-code available, generated during
+        pre-registration. If not, use `[PUT] /short-code/register` first.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:create"]
+      requestBody:
+        $ref: "#/components/requestBodies/credentialsCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/tokenCreate"
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "409":
+          $ref: "#/components/responses/conflict"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /credentials/all:
+    get:
+      operationId: credentialsList
+      summary: Browse public credentials.
+      description: |
+        Browse public user credentials from the platform.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:list"]
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/userRoles"
+      responses:
+        "200":
+          $ref: "#/components/responses/credentialsList"
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /credentials/email:
+    patch:
+      operationId: emailUpdate
+      summary: Update the user email.
+      description: |
+        Completes the email update process. The user must have a short-code available, generated during
+        the initial phase. If not, use `[PUT] /short-code/update-email` first.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:email:patch"]
+      requestBody:
+        $ref: "#/components/requestBodies/emailUpdate"
+      responses:
+        "200":
+          $ref: "#/components/responses/credentialsGet"
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "409":
+          $ref: "#/components/responses/conflict"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /credentials/password:
+    patch:
+      operationId: passwordUpdate
+      summary: Update the user password.
+      description: |
+        Update the password of a user. The current password **MUST BE** provided for extra security.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:password:patch"]
+      requestBody:
+        $ref: "#/components/requestBodies/passwordUpdate"
+      responses:
+        "200":
+          $ref: "#/components/responses/credentialsGet"
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+    put:
+      operationId: passwordReset
+      summary: Reset the user password.
+      description: |
+        Completes the password reset process. The user must have a short-code available, generated during
+        the initial phase. If not, use `[PUT] /short-code/update-password` first.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:password:reset"]
+      requestBody:
+        $ref: "#/components/requestBodies/passwordReset"
+      responses:
+        "200":
+          $ref: "#/components/responses/credentialsGet"
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /credentials/role:
+    patch:
+      operationId: roleUpdate
+      summary: Update the user role.
+      description: |
+        Update the role of a user. The role of the user performing the action, in addition to having the required permissions,
+        **MUST BE** higher in the hierarchy than the initial target user role, and **CANNOT** grant privileges higher than its
+        own.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:role:patch"]
+      requestBody:
+        $ref: "#/components/requestBodies/roleUpdate"
+      responses:
+        "200":
+          $ref: "#/components/responses/credentialsGet"
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /short-code/register:
+    put:
+      operationId: registerInit
+      summary: Start the registration process.
+      description: |
+        Start the registration process, by sending a link with a unique short code to the user email. If the user manages
+        to open the link, it means the email is valid and no further validation is required. It can proceed to complete its
+        account safely.
+      tags: [shortCode]
+      security:
+        - BearerAuth: ["shortCode:register"]
+      requestBody:
+        $ref: "#/components/requestBodies/registerInit"
+      responses:
+        "204":
+          description: The registration link has been sent successfully.
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "409":
+          $ref: "#/components/responses/conflict"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /short-code/update-email:
+    put:
+      operationId: emailUpdateInit
+      summary: Start the email update process.
+      description: |
+        Start the email update process, by sending a link with a unique short code to the user new email. If the user manages
+        to open the link, it means the email is valid and no further validation is required. The email can be changed safely.
+      tags: [shortCode]
+      security:
+        - BearerAuth: ["shortCode:email:update"]
+      requestBody:
+        $ref: "#/components/requestBodies/emailUpdateInit"
+      responses:
+        "204":
+          description: The email update link has been sent successfully.
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "409":
+          $ref: "#/components/responses/conflict"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /short-code/update-password:
+    put:
+      operationId: passwordResetInit
+      summary: Start the password reset process.
+      description: |
+        Start the password reset process, by sending a link with a unique short code to the user email.
+      tags: [shortCode]
+      security:
+        - BearerAuth: ["shortCode:password:reset"]
+      requestBody:
+        $ref: "#/components/requestBodies/passwordResetInit"
+      responses:
+        "204":
+          description: The password reset link has been sent successfully.
+        "401":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        default:
+          $ref: "#/components/responses/internalError"
+
+components:
+  responses:
+    pong:
+      description: "101100001100101011001010"
+      content:
+        text/plain:
+          schema:
+            type: string
+            examples: [pong]
+
+    health:
+      description: Summary of the server dependencies.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: ["client:postgres", "client:smtp", "api:jsonKeys"]
+            properties:
+              "client:postgres":
+                $ref: "#/components/schemas/healthStatus"
+              "client:smtp":
+                $ref: "#/components/schemas/healthStatus"
+              "api:jsonKeys":
+                $ref: "#/components/schemas/healthStatus"
+            examples:
+              - {
+                  "client:postgres": { "status": "up" },
+                  "client:smtp": { "status": "up" },
+                  "api:jsonKeys": { "status": "up" },
+                }
+              - {
+                  "client:postgres": { "status": "up" },
+                  "client:smtp": { "status": "up" },
+                  "api:jsonKeys": { "status": "down", "err": "Connection to host refused" },
+                }
+
+    claimsGet:
+      description: The decoded content of a JWT token payload, in JSON format.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/claims"
+
+    tokenRefresh:
+      description: |
+        The tokens set used by a user to authenticate against the API, without plain credentials.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/token"
+
+    tokenCreate:
+      description: |
+        The tokens set used by a user to authenticate against the API, without plain credentials.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/token"
+
+    credentialsGet:
+      description: The public credentials of the target user.
+      content:
+        applciation/json:
+          schema:
+            $ref: "#/components/schemas/publicCredentials"
+
+    credentialsList:
+      description: The list of public credentials.
+      content:
+        applciation/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/publicCredentials"
+
+    forbidden:
+      description: |
+        The user was authenticated successfully, but its current access rights don't grant permission for 
+        this operation.
+
+    unprocessableEntity:
+      description: |
+        The request was understood by the server, but cannot be processed because the data did not pass
+        required validation.
+
+    notFound:
+      description: |
+        The requested data was not found on the server.
+
+    badRequest:
+      description: |
+        The request sent to the server could not be parsed.
+
+    conflict:
+      description: |
+        The record already exists.
+
+    internalError:
+      description: Something unexpected happened.
+
+    teapot:
+      description: I'm a teapot!
+
+  schemas:
+    healthStatus:
+      type: object
+      description: Summary of a server's dependencies status.
+      required: [status]
+      examples:
+        - { "status": "up" }
+        - { "status": "down", "err": "Connection to host refused" }
+      properties:
+        status:
+          type: string
+          description: Exposes whether the server managed to connect to the dependency.
+          enum: [up, down]
+        err:
+          type: string
+          description: The error message returned by the dependency, if any.
+
+    claims:
+      type: object
+      description: |
+        The claims of an authenticated user, contained in its JSON Web Token payload.
+        The user can be anonymous, meaning it is not linked to any existing user ID.
+      examples:
+        - {
+            "userID": "9dce0fa2-f93b-46a9-aa6b-a71bf0b1ee80",
+            "roles": "auth:user",
+            "refreshTokenID": "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664",
+          }
+        - { "roles": "auth:anon" }
+      properties:
+        userID:
+          $ref: "#/components/schemas/userID"
+        roles:
+          $ref: "#/components/schemas/userRole"
+        refreshTokenID:
+          $ref: "#/components/schemas/refreshTokenID"
+
+    publicCredentials:
+      type: object
+      description: Exposed credentials. Do not contain obfuscated data (password, etc.).
+      required: [id, email, role, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/userID"
+        email:
+          $ref: "#/components/schemas/email"
+        role:
+          $ref: "#/components/schemas/userRole"
+        createdAt:
+          type: string
+          format: date-time
+          examples: [2009-11-10T23:00:00Z]
+        updatedAt:
+          type: string
+          format: date-time
+          examples: [2009-11-10T23:00:00Z]
+
+    token:
+      type: object
+      description: |
+        The tokens set used by a user to authenticate against the API, without plain credentials.
+      required: [accessToken, refreshToken]
+      properties:
+        accessToken:
+          $ref: "#/components/schemas/accessToken"
+        refreshToken:
+          $ref: "#/components/schemas/refreshToken"
+
+    userID:
+      type: string
+      description: The unique identifier of a user in the database.
+      format: uuid
+      examples:
+        - "9dce0fa2-f93b-46a9-aa6b-a71bf0b1ee80"
+
+    userRole:
+      type: string
+      description: |
+        The role grants certain access rights to the user bearing the token.
+      enum: ["auth:anon", "auth:user", "auth:admin", "auth:superadmin"]
+
+    refreshTokenID:
+      type: string
+      description: Identifies a refresh token the user can use to renew its main access token.
+      format: uuid
+      examples:
+        - "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664"
+
+    accessToken:
+      type: string
+      description: A JSON Web Token (JWT) that can be used to authenticate a user on the platform.
+      format: jwt
+      examples:
+        - >-
+          eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiIsImtpZCI6IjQ0ZGU3Y2Q3YWZmMWU2YzQ0MjA3NGU4MzQxZDc5MmM3In0.eyJ1c2VySUQiOiI5ZGNlMGZhMi1mOTNiLTQ2YTktYWE2Yi1hNzFiZjBiMWVlODAiLCJyb2xlcyI6ImF1dGg6dXNlciIsI
+          nJlZnJlc2hUb2tlbklEIjoiM2Q1M2JkNWMtMTZmNi00N2ExLWE0YTYtN2MyZWUxNzkzNjY0In0.AW10XXvH337pXozTnOPDGjftGSKEzt1fP8iSxGsX76c02uamyM-aJ-0UQyKe3kZctwe6ezCmRmmh2Fu7qZatesChALRlZ7
+          PF9QiDtDf-ESNWfdqm1fUypXjn1spHIpRsgWglXvVgO0nbFoOwoBkkyRvB9GBCHOBJ6o2Y5OGc6TXu_yL5
+
+    refreshToken:
+      type: string
+      description: A JSON Web Token (JWT) that can be used to refresh the access token of a user.
+      format: jwt
+      examples:
+        - >-
+          eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiIsImtpZCI6IjQ0ZGU3Y2Q3YWZmMWU2YzQ0MjA3NGU4MzQxZDc5MmM3In0.eyJ1c2VySUQiOiI5ZGNlMGZhMi1mOTNiLTQ2YTktYWE2Yi1hNzFiZjBiMWVlODAiLCJqdGkiOiIzZDUzYmQ1Yy0xNmY
+          2LTQ3YTEtYTRhNi03YzJlZTE3OTM2NjQifQ.AMTi8QCCO5B8QYorveMHoGXfRO8QUP9ru381lIKHOMn-cO4g3yL9Xxb
+          h2YDCAWgRalqiLTE1C-JLMRfHeumgOL1ZAaChGMUdM_BYu0eXpnyqjbius4_ThFO_-DSaQhJciDtGYJQQP1pkCMqmL
+          5EWi-ic55pUmb_tX3dClrgccNT6k0bL
+
+    email:
+      type: string
+      format: email
+      maxLength: 1024
+      examples: [john.doe@gmail.com]
+
+    password:
+      type: string
+      maxLength: 1024
+      examples: [hackthenasa]
+
+    shortCode:
+      type: string
+      maxLength: 1024
+      examples: [abcdef123456]
+
+    limit:
+      type: number
+      format: int
+      minimum: 1
+      maximum: 100
+
+    offset:
+      type: number
+      format: int
+      minimum: 0
+
+    lang:
+      type: string
+      format: ISO-639
+      enum: [en, fr]
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    userID:
+      name: id
+      in: query
+      description: The ID of the credentials to retrieve.
+      required: true
+      schema:
+        $ref: "#/components/schemas/userID"
+
+    email:
+      name: email
+      in: query
+      description: The email of a registered user.
+      required: true
+      schema:
+        $ref: "#/components/schemas/email"
+
+    limit:
+      name: limit
+      in: query
+      description: Limit the number of results.
+      required: true
+      schema:
+        $ref: "#/components/schemas/limit"
+
+    offset:
+      name: offset
+      in: query
+      description: Skip results for pagination.
+      required: false
+      schema:
+        $ref: "#/components/schemas/offset"
+
+    userRoles:
+      name: roles
+      in: query
+      description: Filter users on roles.
+      required: false
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/userRole"
+
+  requestBodies:
+    tokenRefresh:
+      description: The tokens set to refresh.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/token"
+
+    credentials:
+      description: |
+        The plain credentials of the user. A new JWT will be created using those.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email:
+                $ref: "#/components/schemas/email"
+              password:
+                $ref: "#/components/schemas/password"
+
+    credentialsCreate:
+      description: |
+        The plain credentials of the user. Both a new account and JWT will be created using those.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email:
+                $ref: "#/components/schemas/email"
+              password:
+                $ref: "#/components/schemas/password"
+              shortCode:
+                $ref: "#/components/schemas/shortCode"
+
+    emailUpdate:
+      description: Update the email of a user.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [userID, shortCode]
+            properties:
+              userID:
+                $ref: "#/components/schemas/userID"
+              shortCode:
+                $ref: "#/components/schemas/shortCode"
+
+    passwordUpdate:
+      description: Update the password of a user.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [password, currentPassword]
+            properties:
+              password:
+                $ref: "#/components/schemas/password"
+              currentPassword:
+                $ref: "#/components/schemas/password"
+
+    passwordReset:
+      description: Reset the password of a user.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [password, shortCode, userID]
+            properties:
+              userID:
+                $ref: "#/components/schemas/userID"
+              password:
+                $ref: "#/components/schemas/password"
+              shortCode:
+                $ref: "#/components/schemas/shortCode"
+
+    roleUpdate:
+      description: Update the role of a user.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [role, userID]
+            properties:
+              userID:
+                $ref: "#/components/schemas/userID"
+              role:
+                $ref: "#/components/schemas/userRole"
+
+    registerInit:
+      description: Start the registration process.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [lang, email]
+            properties:
+              lang:
+                $ref: "#/components/schemas/lang"
+              email:
+                $ref: "#/components/schemas/email"
+
+    emailUpdateInit:
+      description: Start the email update process.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [lang, email]
+            properties:
+              lang:
+                $ref: "#/components/schemas/lang"
+              email:
+                $ref: "#/components/schemas/email"
+
+    passwordResetInit:
+      description: Start the password reset process.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [lang, email]
+            properties:
+              lang:
+                $ref: "#/components/schemas/lang"
+              email:
+                $ref: "#/components/schemas/email"
