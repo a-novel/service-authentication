@@ -113,7 +113,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/tokenCreate"
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -156,7 +156,7 @@ paths:
       responses:
         "204":
           description: The email is used by a registered user.
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -179,7 +179,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/credentialsGet"
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -203,7 +203,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/tokenCreate"
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -230,7 +230,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/credentialsList"
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -254,7 +254,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/credentialsGet"
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -281,7 +281,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/credentialsGet"
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -305,7 +305,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/credentialsGet"
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -330,7 +330,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/credentialsGet"
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -357,7 +357,7 @@ paths:
       responses:
         "204":
           description: The registration link has been sent successfully.
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -384,7 +384,7 @@ paths:
       responses:
         "204":
           description: The email update link has been sent successfully.
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -409,7 +409,7 @@ paths:
       responses:
         "204":
           description: The password reset link has been sent successfully.
-        "401":
+        "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
@@ -548,15 +548,17 @@ components:
       examples:
         - {
             "userID": "9dce0fa2-f93b-46a9-aa6b-a71bf0b1ee80",
-            "roles": "auth:user",
+            "roles": ["auth:user"],
             "refreshTokenID": "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664",
           }
-        - { "roles": "auth:anon" }
+        - { "roles": ["auth:anon"] }
       properties:
         userID:
           $ref: "#/components/schemas/userID"
         roles:
-          $ref: "#/components/schemas/userRole"
+          type: array
+          items:
+            $ref: "#/components/schemas/userRole"
         refreshTokenID:
           $ref: "#/components/schemas/refreshTokenID"
 
