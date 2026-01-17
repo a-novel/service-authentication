@@ -56,13 +56,5 @@ func (handler *CredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	httpf.SendJSON(ctx, w, span, lo.Map(res, func(item *services.Credentials, index int) Credentials {
-		return Credentials{
-			ID:        item.ID,
-			Email:     item.Email,
-			Role:      item.Role,
-			CreatedAt: item.CreatedAt,
-			UpdatedAt: item.UpdatedAt,
-		}
-	}))
+	httpf.SendJSON(ctx, w, span, lo.Map(res, loadCredentialsMap))
 }

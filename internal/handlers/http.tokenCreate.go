@@ -59,8 +59,5 @@ func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpf.SendJSON(ctx, w, span, Token{
-		AccessToken:  res.AccessToken,
-		RefreshToken: res.RefreshToken,
-	})
+	httpf.SendJSON(ctx, w, span, loadToken(res))
 }

@@ -62,11 +62,5 @@ func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	httpf.SendJSON(ctx, w, span, Credentials{
-		ID:        res.ID,
-		Email:     res.Email,
-		Role:      res.Role,
-		CreatedAt: res.CreatedAt,
-		UpdatedAt: res.UpdatedAt,
-	})
+	httpf.SendJSON(ctx, w, span, loadCredentials(res))
 }
