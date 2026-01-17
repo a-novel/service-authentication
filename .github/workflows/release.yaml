@@ -125,17 +125,6 @@ jobs:
       attestations: write
       id-token: write
     services:
-      postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
-        ports:
-          - "5432:5432"
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-
       postgres-json-keys:
         image: ghcr.io/a-novel/service-json-keys/database:v2.1.3
         env:
@@ -149,6 +138,17 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+      postgres-authentication:
+        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.3
@@ -164,7 +164,7 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       SERVICE_JSON_KEYS_PORT: 4002
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
-      PLATFORM_AUTH_URL: http://localhost:6000
+      PLATFORM_AUTH_URL: http://localhost:6010
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/run-migrations
@@ -188,17 +188,6 @@ jobs:
       attestations: write
       id-token: write
     services:
-      postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
-        ports:
-          - "5432:5432"
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-
       postgres-json-keys:
         image: ghcr.io/a-novel/service-json-keys/database:v2.1.3
         env:
@@ -212,6 +201,17 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+      postgres-authentication:
+        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.3
@@ -227,7 +227,7 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       SERVICE_JSON_KEYS_PORT: 4002
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
-      PLATFORM_AUTH_URL: http://localhost:6000
+      PLATFORM_AUTH_URL: http://localhost:6010
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/run-migrations

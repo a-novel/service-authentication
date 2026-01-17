@@ -7,7 +7,7 @@ export SUPER_ADMIN_EMAIL=noreply@agorastoryverse.com
 export SUPER_ADMIN_PASSWORD=admin
 
 # Client (frontend).
-export PLATFORM_AUTH_PORT=6000
+export PLATFORM_AUTH_PORT=6010
 export PLATFORM_AUTH_URL="http://localhost:${PLATFORM_AUTH_PORT}"
 
 # Postgres.
@@ -24,9 +24,6 @@ export POSTGRES_DSN_TEST="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POS
 # Dependencies.
 export SERVICE_JSON_KEYS_PORT=4002
 export SERVICE_JSON_KEYS_HOST=localhost
-export JSON_KEYS_MASTER="fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
-export SERVICE_JSON_KEYS_TEST_PORT=5002
-export SERVICE_JSON_KEYS_TEST_HOST=localhost
 
 # SMTP configuration.
 export MAIL_UI_PORT=4014

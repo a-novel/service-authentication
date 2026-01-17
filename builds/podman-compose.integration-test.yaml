@@ -55,7 +55,7 @@ services:
       - postgres-json-keys
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
-      APP_MASTER_KEY: ${JSON_KEYS_MASTER}
+      APP_MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
     networks:
       - authentication-integration-test
 
@@ -74,7 +74,7 @@ services:
       SERVICE_JSON_KEYS_HOST: service-json-keys
       SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
       SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
-      PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
+      PLATFORM_AUTH_URL: http://localhost:7010
       SMTP_SENDER_DOMAIN: mailserver
       SMTP_ADDR: mailserver:1025
       SMTP_SENDER_NAME: Agora Storyverse [noreply]
