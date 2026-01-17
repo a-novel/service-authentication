@@ -44,6 +44,10 @@ func NewAuthHandler(
 	}
 }
 
+func SetClaimsContext(ctx context.Context, claims *Claims) context.Context {
+	return middlewares.SetClaimsContext(ctx, claims)
+}
+
 func GetClaimsContext(ctx context.Context) (*Claims, error) {
 	return middlewares.GetClaimsContext(ctx)
 }
