@@ -107,8 +107,6 @@ paths:
       description: |
         Trade a user's plain credentials for a safe token it can use to authenticate against the API.
 
-        This endpoint is rate-limited to 5 requests per minute per IP address.
-
         **Security note:** This endpoint returns the same 401 status for both invalid email and invalid password
         to prevent email enumeration attacks.
       tags: [session]
@@ -153,8 +151,6 @@ paths:
       description: |
         Returns a success status if the email matches a registered user in the database, throws a not found (404) error
         otherwise.
-
-        This endpoint is rate-limited to 10 requests per minute per IP address.
 
         **Security note:** This endpoint intentionally reveals whether an email is registered and is restricted
         to authenticated users with the `credentials:exist` permission. It should only be granted to trusted
@@ -363,8 +359,6 @@ paths:
         manages to open the link, it means the email is valid and no further validation is required. It can proceed to
         complete its account safely.
 
-        This endpoint is rate-limited to 3 requests per minute per IP address.
-
         **Security note:** This endpoint always returns 202 regardless of whether the email is already registered,
         to prevent email enumeration attacks. If the email is already registered, no email will be sent.
       tags: [shortCode]
@@ -395,8 +389,6 @@ paths:
         Start the email update process, by sending a link with a unique short code to the user new email. If the user
         manages to open the link, it means the email is valid and no further validation is required. The email can be
         changed safely.
-
-        This endpoint is rate-limited to 3 requests per minute per IP address.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:email:update"]
@@ -424,8 +416,6 @@ paths:
       summary: Start the password reset process.
       description: |
         Start the password reset process, by sending a link with a unique short code to the user email.
-
-        This endpoint is rate-limited to 3 requests per minute per IP address.
 
         **Security note:** This endpoint always returns 202 regardless of whether the email is registered,
         to prevent email enumeration attacks. If the email is not registered, no email will be sent.

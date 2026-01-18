@@ -469,12 +469,10 @@ describe("credentialsGet", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const anonToken = await tokenCreateAnon(api);
-
     const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
-    const credentials = await credentialsGet(api, anonToken.accessToken, {
+    const credentials = await credentialsGet(api, superAdminToken.accessToken, {
       id: user.claims.userID!,
     });
 
@@ -486,10 +484,13 @@ describe("credentialsGet", () => {
   it("does not get non-existing credentials", async () => {
     const api = new AuthenticationApi(process.env.API_URL!);
 
-    const anonToken = await tokenCreateAnon(api);
+    const superAdminToken = await tokenCreate(api, {
+      email: process.env.SUPER_ADMIN_EMAIL!,
+      password: process.env.SUPER_ADMIN_PASSWORD!,
+    });
 
     await expectStatus(
-      credentialsGet(api, anonToken.accessToken, {
+      credentialsGet(api, superAdminToken.accessToken, {
         id: crypto.randomUUID(),
       }),
       404
@@ -506,12 +507,10 @@ describe("credentialsExists", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const anonToken = await tokenCreateAnon(api);
-
     const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
-    const exists = await credentialsExists(api, anonToken.accessToken, {
+    const exists = await credentialsExists(api, superAdminToken.accessToken, {
       email: user.email,
     });
 
@@ -521,9 +520,12 @@ describe("credentialsExists", () => {
   it("does not get non-existing credentials", async () => {
     const api = new AuthenticationApi(process.env.API_URL!);
 
-    const anonToken = await tokenCreateAnon(api);
+    const superAdminToken = await tokenCreate(api, {
+      email: process.env.SUPER_ADMIN_EMAIL!,
+      password: process.env.SUPER_ADMIN_PASSWORD!,
+    });
 
-    const exists = await credentialsExists(api, anonToken.accessToken, {
+    const exists = await credentialsExists(api, superAdminToken.accessToken, {
       email: "fake@provider.com",
     });
 

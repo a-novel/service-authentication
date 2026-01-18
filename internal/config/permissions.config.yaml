@@ -2,8 +2,6 @@ roles:
   "auth:anon":
     priority: 0
     permissions:
-      - "credentials:get"
-      - "credentials:exist"
       - "credentials:create"
       - "credentials:email:patch"
       - "credentials:password:reset"
@@ -21,6 +19,8 @@ roles:
     inherits:
       - "auth:user"
     permissions:
+      - "credentials:get"
+      - "credentials:exist"
       - "credentials:list"
   "auth:superadmin":
     priority: 3
