@@ -32,7 +32,7 @@ type CredentialsUpdatePasswordServiceShortCodeConsume interface {
 }
 
 type CredentialsUpdatePasswordRequest struct {
-	Password        string `validate:"required,max=1024"`
+	Password        string `validate:"required,min=4,max=1024"`
 	CurrentPassword string `validate:"required_without=ShortCode,max=1024"`
 	ShortCode       string `validate:"required_without=CurrentPassword,max=1024"`
 	UserID          uuid.UUID
@@ -70,19 +70,22 @@ func (service *CredentialsUpdatePassword) Exec(
 	}
 
 	// Encrypt the new password.
-	encryptedPassword, err := lib.GenerateScrypt(request.Password, lib.ScryptParamsDefault)
+	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
 	}
 
 	var credentials *dao.Credentials
 
+	// Password update supports two authentication paths, running within a transaction
+	// to ensure atomicity of verification and update.
 	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
 		switch {
-		// If using a password reset, user does not have access to its original password. It should have issued a short
-		// code to reset its password.
+		// Path 1: Password Reset Flow
+		// Used when the user forgot their password and requested a reset via email.
+		// The short code proves the user owns the email address associated with this account.
+		// This path does NOT require knowing the current password.
 		case request.ShortCode != "":
-			// Consume short code.
 			_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
 				Usage:  ShortCodeUsageResetPassword,
 				Target: request.UserID.String(),
@@ -91,6 +94,11 @@ func (service *CredentialsUpdatePassword) Exec(
 			if err != nil {
 				return fmt.Errorf("consume short code: %w", err)
 			}
+
+		// Path 2: Authenticated Password Change
+		// Used when a logged-in user wants to change their password.
+		// Requires the current password as proof of identity, preventing
+		// attackers with session access from locking out the legitimate user.
 		case request.CurrentPassword != "":
 			credentials, err = service.repositoryCredentialsSelect.Exec(
 				ctx,
@@ -100,14 +108,13 @@ func (service *CredentialsUpdatePassword) Exec(
 				return fmt.Errorf("select credentials: %w", err)
 			}
 
-			// Check if the current password is correct.
-			err = lib.CompareScrypt(request.CurrentPassword, credentials.Password)
+			err = lib.CompareArgon2(request.CurrentPassword, credentials.Password)
 			if err != nil {
 				return fmt.Errorf("compare current password: %w", err)
 			}
 		}
 
-		// Update password.
+		// Update the password with the new Argon2 hash.
 		credentials, err = service.repository.Exec(ctx, &dao.CredentialsUpdatePasswordRequest{
 			ID:       request.UserID,
 			Password: encryptedPassword,

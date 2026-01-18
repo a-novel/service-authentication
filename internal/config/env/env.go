@@ -20,11 +20,11 @@ func getEnv(name string) string {
 const (
 	SmtpTimeoutDefault = 20 * time.Second
 
-	platformEmailUpdateUrlDefault   = "/ext/email/validate"
-	platformPasswordResetUrlDefault = "/ext/password/reset"
-	platformAccountCreateUrlDefault = "/ext/account/create"
+	PlatformEmailUpdateUrlDefault   = "/ext/email/validate"
+	PlatformPasswordResetUrlDefault = "/ext/password/reset"
+	PlatformAccountCreateUrlDefault = "/ext/account/create"
 
-	appNameDefault = "service-authentication"
+	AppNameDefault = "service-authentication"
 
 	ServiceJsonKeysHostDefault = "localhost"
 	ServiceJsonKeysPortDefault = 8080
@@ -104,21 +104,21 @@ var (
 	// It is used to insert URLs in emails.
 	PlatformAuthUpdateEmailUrl = config.LoadEnv(
 		platformAuthUpdateEmailUrl,
-		PlatformAuthUrl+platformEmailUpdateUrlDefault,
+		PlatformAuthUrl+PlatformEmailUpdateUrlDefault,
 		config.StringParser,
 	)
 	// PlatformAuthUpdatePasswordUrl points to a web client page used to complete the password reset process.
 	// It is used to insert URLs in emails.
 	PlatformAuthUpdatePasswordUrl = config.LoadEnv(
 		platformAuthUpdatePasswordUrl,
-		PlatformAuthUrl+platformPasswordResetUrlDefault,
+		PlatformAuthUrl+PlatformPasswordResetUrlDefault,
 		config.StringParser,
 	)
 	// PlatformAuthRegisterUrl points to a web client page used to complete the registration process.
 	// It is used to insert URLs in emails.
 	PlatformAuthRegisterUrl = config.LoadEnv(
 		platformAuthRegisterUrl,
-		PlatformAuthUrl+platformAccountCreateUrlDefault,
+		PlatformAuthUrl+PlatformAccountCreateUrlDefault,
 		config.StringParser,
 	)
 
@@ -147,14 +147,14 @@ var (
 	// SmtpTimeout is the timeout value when attempting to send an email.
 	SmtpTimeout = config.LoadEnv(smtpTimeout, SmtpTimeoutDefault, config.DurationParser)
 	// SmtpForceUnencrypted hacks the smtp client into sending plain credentials over any connection. This setting is
-	// used because Go Smtp implementation refuses to send plain credentials over non-TLS connections, except for
+	// used because the Go Smtp implementation refuses to send plain credentials over non-TLS connections, except for
 	// localhost. But because we use Docker, localhost is not always the name of our actual local host.
 	//
 	// This setting MUST NEVER be set in production.
 	SmtpForceUnencrypted = config.LoadEnv(smtpForceUnencrypted, false, config.BoolParser)
 
 	// AppName is the name of the application, as it will appear in logs and tracing.
-	AppName = config.LoadEnv(appName, appNameDefault, config.StringParser)
+	AppName = config.LoadEnv(appName, AppNameDefault, config.StringParser)
 	// Otel flag configures whether to use Open Telemetry or not.
 	//
 	// See: https://opentelemetry.io/

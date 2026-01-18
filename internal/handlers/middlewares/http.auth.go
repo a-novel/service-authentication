@@ -19,16 +19,24 @@ import (
 )
 
 var (
-	ErrMissingAuth      = errors.New("missing auth")
-	ErrInvalidAuth      = errors.New("invalid authentication")
+	// ErrMissingAuth indicates no authentication token was provided when one is required.
+	ErrMissingAuth = errors.New("missing auth")
+	// ErrInvalidAuth indicates the authentication token is invalid or the user lacks permissions.
+	ErrInvalidAuth = errors.New("invalid authentication")
+	// ErrUnexpectedClaims indicates the claims in the context have an unexpected type.
 	ErrUnexpectedClaims = errors.New("unexpected claims")
 )
 
+// AuthClaimsVerifier validates JWT access tokens and extracts claims.
 type AuthClaimsVerifier interface {
 	VerifyClaims(ctx context.Context, req *jkpkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error)
 }
 
+// Auth provides JWT-based authentication and role-based authorization middleware.
+// It verifies access tokens and checks that the user has at least one of the required permissions.
 type Auth struct {
+	// permissionsByRole maps role names to their granted permissions.
+	// A user with a role gains all permissions listed for that role.
 	permissionsByRole map[string][]string
 
 	claimsVerifier AuthClaimsVerifier
@@ -44,6 +52,16 @@ func NewAuth(
 	}
 }
 
+// Middleware returns an HTTP middleware that enforces authentication and authorization.
+//
+// Permission checking works as follows:
+//  1. If requiredPermissions is empty, the endpoint is accessible to all authenticated users
+//  2. The user's roles are retrieved from the JWT claims
+//  3. For each role, the middleware checks if any of its permissions match the required ones
+//  4. Access is granted if at least one permission matches (OR logic, not AND)
+//
+// The validated claims are stored in the request context and can be retrieved
+// using GetClaimsContext or MustGetClaimsContext.
 func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,12 +149,18 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 	}
 }
 
+// ClaimsContextKey is the context key for storing authenticated user claims.
 type ClaimsContextKey struct{}
 
+// SetClaimsContext stores the authenticated user's claims in the context.
+// This is called by the Auth middleware after successful token verification.
 func SetClaimsContext(ctx context.Context, claims *services.AccessTokenClaims) context.Context {
 	return context.WithValue(ctx, ClaimsContextKey{}, claims)
 }
 
+// GetClaimsContext retrieves the authenticated user's claims from the context.
+// Returns nil claims with no error if no authentication was provided (for optional auth endpoints).
+// Returns an error if the claims have an unexpected type.
 func GetClaimsContext(ctx context.Context) (*services.AccessTokenClaims, error) {
 	claims, ok := ctx.Value(ClaimsContextKey{}).(*services.AccessTokenClaims)
 	if !ok && claims != nil {
@@ -151,6 +175,9 @@ func GetClaimsContext(ctx context.Context) (*services.AccessTokenClaims, error) 
 	return claims, nil
 }
 
+// MustGetClaimsContext retrieves the authenticated user's claims from the context.
+// Unlike GetClaimsContext, this returns an error if no claims are present,
+// making it suitable for endpoints that require authentication.
 func MustGetClaimsContext(ctx context.Context) (*services.AccessTokenClaims, error) {
 	claims, err := GetClaimsContext(ctx)
 	if err != nil {

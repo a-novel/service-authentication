@@ -50,9 +50,10 @@ func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Password: request.Password,
 	})
 	if err != nil {
+		// Both "email not found" and "invalid password" return 401 to prevent email enumeration.
 		httpf.HandleError(ctx, w, span, httpf.ErrMap{
-			dao.ErrCredentialsSelectByEmailNotFound: http.StatusNotFound,
-			lib.ErrInvalidPassword:                  http.StatusForbidden,
+			dao.ErrCredentialsSelectByEmailNotFound: http.StatusUnauthorized,
+			lib.ErrInvalidPassword:                  http.StatusUnauthorized,
 			services.ErrInvalidRequest:              http.StatusUnprocessableEntity,
 		}, err)
 

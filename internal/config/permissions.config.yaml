@@ -4,11 +4,11 @@ roles:
     permissions:
       - "credentials:get"
       - "credentials:exist"
-      - "credentials:list"
       - "credentials:create"
       - "credentials:email:patch"
       - "credentials:password:reset"
       - "shortCode:password:reset"
+      - "shortCode:register"
   "auth:user":
     priority: 1
     inherits:
@@ -20,12 +20,11 @@ roles:
     priority: 2
     inherits:
       - "auth:user"
-    permissions: []
+    permissions:
+      - "credentials:list"
   "auth:superadmin":
     priority: 3
     inherits:
       - "auth:admin"
     permissions:
       - "credentials:role:patch"
-      # TODO: (#320) move to anon permissions.
-      - "shortCode:register"

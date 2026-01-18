@@ -203,10 +203,14 @@ func main() {
 		withAuth(r, "credentials:list").Get("/all", handlerCredentialsList.ServeHTTP)
 
 		withAuth(r, "credentials:create").Put("/", handlerCredentialsCreate.ServeHTTP)
-		withAuth(r, "credentials:email:patch").Patch("/email", handlerCredentialsUpdateEmail.ServeHTTP)
-		withAuth(r, "credentials:password:patch").Patch("/password", handlerCredentialsUpdatePassword.ServeHTTP)
-		withAuth(r, "credentials:password:reset").Put("/password", handlerCredentialsResetPassword.ServeHTTP)
-		withAuth(r, "credentials:role:patch").Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
+		withAuth(r, "credentials:email:patch").
+			Patch("/email", handlerCredentialsUpdateEmail.ServeHTTP)
+		withAuth(r, "credentials:password:patch").
+			Patch("/password", handlerCredentialsUpdatePassword.ServeHTTP)
+		withAuth(r, "credentials:password:reset").
+			Put("/password", handlerCredentialsResetPassword.ServeHTTP)
+		withAuth(r, "credentials:role:patch").
+			Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
 	})
 
 	router.Route("/short-code", func(r chi.Router) {

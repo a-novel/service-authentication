@@ -65,7 +65,7 @@ func (service *ShortCodeCreate) Exec(
 	}
 
 	// Encrypt the short code in the database.
-	encrypted, err := lib.GenerateScrypt(plainCode, lib.ScryptParamsDefault)
+	encrypted, err := lib.GenerateArgon2(plainCode, lib.Argon2ParamsDefault)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt short code: %w", err))
 	}

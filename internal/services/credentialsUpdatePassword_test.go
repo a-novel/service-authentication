@@ -26,7 +26,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	passwordRaw := "password"
-	passwordScrypted, err := lib.GenerateScrypt(passwordRaw, lib.ScryptParamsDefault)
+	passwordArgon2ed, err := lib.GenerateArgon2(passwordRaw, lib.Argon2ParamsDefault)
 	require.NoError(t, err)
 
 	type serviceShortCodeConsumeMock struct {
@@ -83,7 +83,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 
 			repositoryCredentialsSelectMock: &repositoryCredentialsSelectMock{
 				resp: &dao.Credentials{
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 				},
 			},
 
@@ -151,7 +151,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 
 			repositoryCredentialsSelectMock: &repositoryCredentialsSelectMock{
 				resp: &dao.Credentials{
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 				},
 			},
 
@@ -165,6 +165,34 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 			},
 
 			expectErr: services.ErrInvalidRequest,
+		},
+		{
+			name: "Error/PasswordTooShort",
+
+			request: &services.CredentialsUpdatePasswordRequest{
+				UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				Password:  "abc", // 3 characters, minimum is 4
+				ShortCode: "short-code",
+			},
+
+			expectErr: services.ErrInvalidRequest,
+		},
+		{
+			name: "Success/PasswordAtMinLength",
+
+			request: &services.CredentialsUpdatePasswordRequest{
+				UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				Password:  "abcd", // exactly 4 characters
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
+				resp: &services.ShortCode{},
+			},
+
+			repositoryMock: &repositoryMock{
+				resp: &dao.Credentials{},
+			},
 		},
 	}
 
@@ -205,8 +233,8 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 						Exec(
 							mock.Anything,
 							mock.MatchedBy(func(data *dao.CredentialsUpdatePasswordRequest) bool {
-								return assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
-									assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+								return assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
+									assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
 									assert.Equal(t, testCase.request.UserID, data.ID)
 							}),
 						).

@@ -124,7 +124,7 @@ func TestShortCodeCreate(t *testing.T) {
 				require.Equal(t, testCase.request.Usage, resp.Usage)
 				require.Equal(t, testCase.request.Target, resp.Target)
 
-				require.NoError(t, lib.CompareScrypt(resp.PlainCode, encryptedShortCode))
+				require.NoError(t, lib.CompareArgon2(resp.PlainCode, encryptedShortCode))
 			}
 
 			repository.AssertExpectations(t)

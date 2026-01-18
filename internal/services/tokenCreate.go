@@ -19,20 +19,29 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
+// TokenCreateRepository provides access to credentials lookup by email.
 type TokenCreateRepository interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
+
+// TokenCreateServiceSignClaims provides JWT signing capabilities.
 type TokenCreateServiceSignClaims interface {
 	ClaimsSign(
 		ctx context.Context, req *jkpkg.ClaimsSignRequest, opts ...grpc.CallOption,
 	) (*jkpkg.ClaimsSignResponse, error)
 }
 
+// TokenCreateRequest contains the credentials for user authentication.
 type TokenCreateRequest struct {
-	Email    string `validate:"required,email,max=1024"`
+	// Email is the user's email address used for authentication.
+	Email string `validate:"required,email,max=1024"`
+	// Password is the plaintext password to verify against the stored hash.
 	Password string `validate:"required,max=1024"`
 }
 
+// TokenCreate implements the authentication service using a two-token system.
+// It issues both an access token (short-lived, for API authorization) and
+// a refresh token (long-lived, for obtaining new access tokens).
 type TokenCreate struct {
 	repository        TokenCreateRepository
 	serviceSignClaims TokenCreateServiceSignClaims
@@ -48,6 +57,16 @@ func NewTokenCreate(
 	}
 }
 
+// Exec authenticates a user and returns a token pair.
+//
+// The two-token system works as follows:
+//   - Access Token: Short-lived JWT containing user ID, roles, and a reference to the refresh token.
+//     Used for API authorization via the Authorization header.
+//   - Refresh Token: Long-lived JWT used to obtain new access tokens without re-authentication.
+//     Contains only the user ID and is bound to the access token via its JTI.
+//
+// Returns ErrInvalidPassword if the password doesn't match, or dao.ErrCredentialsSelectByEmailNotFound
+// if the email is not registered.
 func (service *TokenCreate) Exec(
 	ctx context.Context, request *TokenCreateRequest,
 ) (*Token, error) {
@@ -75,7 +94,7 @@ func (service *TokenCreate) Exec(
 	)
 
 	// Validate password.
-	err = lib.CompareScrypt(request.Password, credentials.Password)
+	err = lib.CompareArgon2(request.Password, credentials.Password)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}

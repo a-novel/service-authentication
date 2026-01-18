@@ -185,6 +185,52 @@ func TestCredentialsCreateRequest(t *testing.T) {
 
 			expectErr: errFoo,
 		},
+		{
+			name: "Error/PasswordTooShort",
+
+			request: &services.CredentialsCreateRequest{
+				Email:     "user@provider.com",
+				Password:  "abc", // 3 characters, minimum is 4
+				ShortCode: "short-code",
+			},
+
+			expectErr: services.ErrInvalidRequest,
+		},
+		{
+			name: "Success/PasswordAtMinLength",
+
+			request: &services.CredentialsCreateRequest{
+				Email:     "user@provider.com",
+				Password:  "abcd", // exactly 4 characters
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+
+			repositoryMock: &repositoryMock{
+				resp: &dao.Credentials{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Email:     "user@provider.com",
+					Password:  "abcd-hashed",
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					Role:      config.RoleUser,
+				},
+			},
+
+			serviceSignClaimsMock: &serviceSignClaimsMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &jkpkg.ClaimsSignResponse{
+					Token: "access-token",
+				},
+			},
+
+			expect: &services.Token{
+				AccessToken:  "access-token",
+				RefreshToken: mockUnsignedRefreshToken,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -214,7 +260,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 							return assert.Equal(t, testCase.request.Email, data.Email) &&
 								assert.NotEqual(t, uuid.Nil, data.ID) &&
 								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
-								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
+								assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
 								assert.Equal(t, config.RoleUser, data.Role)
 						})).
 						Return(

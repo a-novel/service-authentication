@@ -3,7 +3,7 @@ module github.com/a-novel/service-authentication/v2
 go 1.25.6
 
 require (
-	github.com/a-novel-kit/golib v0.19.11
+	github.com/a-novel-kit/golib v0.19.12
 	github.com/a-novel-kit/jwt v1.1.28
 	github.com/a-novel/service-json-keys/v2 v2.1.3
 	github.com/go-chi/chi/v5 v5.2.4
@@ -97,8 +97,8 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
-	github.com/getsentry/sentry-go v0.40.0 // indirect
-	github.com/getsentry/sentry-go/otel v0.40.0 // indirect
+	github.com/getsentry/sentry-go v0.41.0 // indirect
+	github.com/getsentry/sentry-go/otel v0.41.0 // indirect
 	github.com/ghostiam/protogetter v0.3.18 // indirect
 	github.com/go-critic/go-critic v0.14.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect

@@ -27,7 +27,7 @@ export interface PreRegisterData {
   shortCode: string;
 }
 
-export async function preRegisterUserAsAdmin(
+export async function preRegisterUser(
   api: AuthenticationApi,
   mailHost: string,
   superAdminToken: Token,
