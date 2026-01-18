@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.3
-        version: 1.3.4(a11c049fc4925b3ee435f9b86f6127ca)
+        version: 1.3.4(46163b0faf3bdfbed8dd198ee99c6f3b)
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.2
@@ -58,7 +58,7 @@ importers:
         version: 3.8.0
       prettier-plugin-packagejson:
         specifier: ^2.5.20
-        version: 2.5.21(prettier@3.8.0)
+        version: 2.5.22(prettier@3.8.0)
       prettier-plugin-sql:
         specifier: ^0.19.2
         version: 0.19.2(prettier@3.8.0)
@@ -174,7 +174,7 @@ importers:
         version: 3.8.0
       prettier-plugin-packagejson:
         specifier: ^2.5.19
-        version: 2.5.21(prettier@3.8.0)
+        version: 2.5.22(prettier@3.8.0)
       prettier-plugin-sql:
         specifier: ^0.19.2
         version: 0.19.2(prettier@3.8.0)
@@ -217,19 +217,6 @@ packages:
       prettier-plugin-svelte: ^3.4.0
       typescript: ^5.8.3
       typescript-eslint: ^8.38.0
-    peerDependenciesMeta:
-      '@sveltejs/kit':
-        optional: true
-      eslint-plugin-storybook:
-        optional: true
-      eslint-plugin-svelte:
-        optional: true
-      prettier-plugin-css-order:
-        optional: true
-      prettier-plugin-sql:
-        optional: true
-      prettier-plugin-svelte:
-        optional: true
 
   '@a-novel-kit/nodelib-test@1.3.3':
     resolution: {integrity: sha512-g9f6TEJx7k8L8MvHleQW8xm99oLjis0WGFW4+rla5paIKHbekVdHHZ+R4T4y0RjKqa89ZpkZgwo5QiT+pLhiyA==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/1.3.3/b44dfbf196cae62c6ec53d9fd6c4022ea22cbbd4}
@@ -1700,8 +1687,8 @@ packages:
   detect-node@2.1.0:
     resolution: {integrity: sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==}
 
-  devalue@5.6.1:
-    resolution: {integrity: sha512-jDwizj+IlEZBunHcOuuFVBnIMPAEHvTsJj0BcIp94xYguLRVBcXO853px/MyIJvbVzWdsGvrRweIUWJw8hBP7A==}
+  devalue@5.6.2:
+    resolution: {integrity: sha512-nPRkjWzzDQlsejL1WVifk5rvcFi/y1onBRxjaFMjZeR9mFpqu2gmAZ9xUB9/IEanEP/vBtGeGganC/GO1fmufg==}
 
   discontinuous-range@1.0.0:
     resolution: {integrity: sha512-c68LpLbO+7kP/b1Hr1qs8/BJ09F5khZGTxqxZuhzxpmwJKOgRFHJWIb9/KmqnqHhLdO55aOxFH/EGBvUQbL/RQ==}
@@ -1975,8 +1962,8 @@ packages:
   get-port-please@3.2.0:
     resolution: {integrity: sha512-I9QVvBw5U/hw3RmWpYKRumUeaDgxTPd401x364rLmWBJcOQ753eov1eTgzDqRG9bqFIfDc7gfzcQEWrUri3o1A==}
 
-  git-hooks-list@4.1.1:
-    resolution: {integrity: sha512-cmP497iLq54AZnv4YRAEMnEyQ1eIn4tGKbmswqwmFV4GBnAqE8NLtWxxdXa++AalfgL5EBH4IxTPyquEuGY/jA==}
+  git-hooks-list@4.2.1:
+    resolution: {integrity: sha512-WNvqJjOxxs/8ZP9+DWdwWJ7cDsd60NHf39XnD82pDVrKO5q7xfPqpkK6hwEAmBa/ZSEE4IOoR75EzbbIuwGlMw==}
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -2818,8 +2805,8 @@ packages:
     peerDependencies:
       prettier: 3.x
 
-  prettier-plugin-packagejson@2.5.21:
-    resolution: {integrity: sha512-d9ivsysb1SeRaKDhjf6Hi7jBGnP4TVsh7DeVi8N5HtHJ5vwD7YHcQIuy6jRkr2qGW/VKbrEVDWVMODuqcZuz8Q==}
+  prettier-plugin-packagejson@2.5.22:
+    resolution: {integrity: sha512-G6WalmoUssKF8ZXkni0+n4324K+gG143KPysSQNW+FrR0XyNb3BdRxchGC/Q1FE/F702p7/6KU7r4mv0WSWbzA==}
     peerDependencies:
       prettier: '>= 1.16.0'
     peerDependenciesMeta:
@@ -3049,8 +3036,8 @@ packages:
   sort-object-keys@2.1.0:
     resolution: {integrity: sha512-SOiEnthkJKPv2L6ec6HMwhUcN0/lppkeYuN1x63PbyPRrgSPIuBJCiYxYyvWRTtjMlOi14vQUCGUJqS6PLVm8g==}
 
-  sort-package-json@3.5.0:
-    resolution: {integrity: sha512-moY4UtptUuP5sPuu9H9dp8xHNel7eP5/Kz/7+90jTvC0IOiPH2LigtRM/aSFSxreaWoToHUVUpEV4a2tAs2oKQ==}
+  sort-package-json@3.6.0:
+    resolution: {integrity: sha512-fyJsPLhWvY7u2KsKPZn1PixbXp+1m7V8NWqU8CvgFRbMEX41Ffw1kD8n0CfJiGoaSfoAvbrqRRl/DcHO8omQOQ==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -3611,26 +3598,25 @@ snapshots:
     dependencies:
       zod: 4.2.1
 
-  '@a-novel-kit/nodelib-config@1.3.4(a11c049fc4925b3ee435f9b86f6127ca)':
+  '@a-novel-kit/nodelib-config@1.3.4(46163b0faf3bdfbed8dd198ee99c6f3b)':
     dependencies:
       '@eslint/compat': 2.0.0(eslint@9.39.2(jiti@2.6.1))
       '@eslint/js': 9.39.2
+      '@sveltejs/kit': 2.49.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1)))(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1))
       '@trivago/prettier-plugin-sort-imports': 6.0.2(prettier-plugin-svelte@3.4.1(prettier@3.8.0)(svelte@5.46.0))(prettier@3.8.0)(svelte@5.46.0)
       '@types/node': 24.10.4
       eslint: 9.39.2(jiti@2.6.1)
       eslint-config-prettier: 10.1.8(eslint@9.39.2(jiti@2.6.1))
       eslint-plugin-prettier: 5.5.5(eslint-config-prettier@10.1.8(eslint@9.39.2(jiti@2.6.1)))(eslint@9.39.2(jiti@2.6.1))(prettier@3.8.0)
-      prettier: 3.8.0
-      prettier-plugin-packagejson: 2.5.21(prettier@3.8.0)
-      typescript: 5.9.3
-      typescript-eslint: 8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-    optionalDependencies:
-      '@sveltejs/kit': 2.49.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1)))(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1))
       eslint-plugin-storybook: 10.1.10(eslint@9.39.2(jiti@2.6.1))(storybook@10.1.10(@testing-library/dom@10.4.1)(prettier@3.8.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)
       eslint-plugin-svelte: 3.13.1(eslint@9.39.2(jiti@2.6.1))(svelte@5.46.0)
+      prettier: 3.8.0
       prettier-plugin-css-order: 2.1.2(postcss@8.5.6)(prettier@3.8.0)
+      prettier-plugin-packagejson: 2.5.22(prettier@3.8.0)
       prettier-plugin-sql: 0.19.2(prettier@3.8.0)
       prettier-plugin-svelte: 3.4.1(prettier@3.8.0)(svelte@5.46.0)
+      typescript: 5.9.3
+      typescript-eslint: 8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
 
   '@a-novel-kit/nodelib-test@1.3.3(@a-novel-kit/nodelib-browser@1.3.3(zod@4.2.1))(@msw/playwright@0.4.2(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3)))(@tanstack/react-query@5.90.12(react@19.2.3))(@testing-library/react@16.3.1(@testing-library/dom@10.4.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3))(playwright@1.57.0)(v8-to-istanbul@9.3.0)(vitest@4.0.16(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(jiti@2.6.1)(jsdom@27.3.0)(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3)))(zod@4.2.1)':
     dependencies:
@@ -3666,8 +3652,7 @@ snapshots:
 
   '@acemir/cssom@0.9.30': {}
 
-  '@adobe/css-tools@4.4.4':
-    optional: true
+  '@adobe/css-tools@4.4.4': {}
 
   '@asamuzakjp/css-color@4.1.1':
     dependencies:
@@ -3986,7 +3971,6 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
-    optional: true
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
@@ -4115,8 +4099,7 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
-  '@polka/url@1.0.0-next.29':
-    optional: true
+  '@polka/url@1.0.0-next.29': {}
 
   '@protobufjs/aspromise@1.1.2': {}
 
@@ -4382,19 +4365,16 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@storybook/global@5.0.0':
-    optional: true
+  '@storybook/global@5.0.0': {}
 
   '@storybook/icons@2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-    optional: true
 
   '@sveltejs/acorn-typescript@1.0.8(acorn@8.15.0)':
     dependencies:
       acorn: 8.15.0
-    optional: true
 
   '@sveltejs/kit@2.49.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1)))(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1))':
     dependencies:
@@ -4404,7 +4384,7 @@ snapshots:
       '@types/cookie': 0.6.0
       acorn: 8.15.0
       cookie: 0.6.0
-      devalue: 5.6.1
+      devalue: 5.6.2
       esm-env: 1.2.2
       kleur: 4.1.5
       magic-string: 0.30.21
@@ -4416,7 +4396,6 @@ snapshots:
       vite: 7.3.1(@types/node@24.10.4)(jiti@2.6.1)
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
-    optional: true
 
   '@sveltejs/vite-plugin-svelte-inspector@5.0.2(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1)))(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1))':
     dependencies:
@@ -4424,7 +4403,6 @@ snapshots:
       obug: 2.1.1
       svelte: 5.46.0
       vite: 7.3.1(@types/node@24.10.4)(jiti@2.6.1)
-    optional: true
 
   '@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1))':
     dependencies:
@@ -4437,7 +4415,6 @@ snapshots:
       vitefu: 1.1.1(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   '@tanstack/query-core@5.90.12': {}
 
@@ -4465,7 +4442,6 @@ snapshots:
       dom-accessibility-api: 0.6.3
       picocolors: 1.1.1
       redent: 3.0.0
-    optional: true
 
   '@testing-library/react@16.3.1(@testing-library/dom@10.4.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -4477,7 +4453,6 @@ snapshots:
   '@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1)':
     dependencies:
       '@testing-library/dom': 10.4.1
-    optional: true
 
   '@trivago/prettier-plugin-sort-imports@6.0.2(prettier-plugin-svelte@3.4.1(prettier@3.8.0)(svelte@5.46.0))(prettier@3.8.0)(svelte@5.46.0)':
     dependencies:
@@ -4503,8 +4478,7 @@ snapshots:
       '@types/deep-eql': 4.0.2
       assertion-error: 2.0.1
 
-  '@types/cookie@0.6.0':
-    optional: true
+  '@types/cookie@0.6.0': {}
 
   '@types/deep-eql@4.0.2': {}
 
@@ -4652,7 +4626,6 @@ snapshots:
       '@vitest/utils': 3.2.4
       chai: 5.3.3
       tinyrainbow: 2.0.0
-    optional: true
 
   '@vitest/expect@4.0.16':
     dependencies:
@@ -4693,7 +4666,6 @@ snapshots:
   '@vitest/pretty-format@3.2.4':
     dependencies:
       tinyrainbow: 2.0.0
-    optional: true
 
   '@vitest/pretty-format@4.0.16':
     dependencies:
@@ -4728,7 +4700,6 @@ snapshots:
   '@vitest/spy@3.2.4':
     dependencies:
       tinyspy: 4.0.4
-    optional: true
 
   '@vitest/spy@4.0.16': {}
 
@@ -4739,7 +4710,6 @@ snapshots:
       '@vitest/pretty-format': 3.2.4
       loupe: 3.2.1
       tinyrainbow: 2.0.0
-    optional: true
 
   '@vitest/utils@4.0.16':
     dependencies:
@@ -4807,15 +4777,13 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  aria-query@5.3.2:
-    optional: true
+  aria-query@5.3.2: {}
 
   assertion-error@2.0.1: {}
 
   ast-types@0.16.1:
     dependencies:
       tslib: 2.8.1
-    optional: true
 
   ast-v8-to-istanbul@0.3.10:
     dependencies:
@@ -4823,8 +4791,7 @@ snapshots:
       estree-walker: 3.0.3
       js-tokens: 9.0.1
 
-  axobject-query@4.1.0:
-    optional: true
+  axobject-query@4.1.0: {}
 
   balanced-match@1.0.2: {}
 
@@ -4863,7 +4830,6 @@ snapshots:
   bundle-name@4.1.0:
     dependencies:
       run-applescript: 7.1.0
-    optional: true
 
   call-me-maybe@1.0.2: {}
 
@@ -4883,7 +4849,6 @@ snapshots:
       deep-eql: 5.0.2
       loupe: 3.2.1
       pathval: 2.0.1
-    optional: true
 
   chai@6.2.1: {}
 
@@ -4894,8 +4859,7 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  check-error@2.1.3:
-    optional: true
+  check-error@2.1.3: {}
 
   cheerio-select@2.1.0:
     dependencies:
@@ -4975,8 +4939,7 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  cookie@0.6.0:
-    optional: true
+  cookie@0.6.0: {}
 
   cookie@0.7.2: {}
 
@@ -4995,7 +4958,6 @@ snapshots:
   css-declaration-sorter@7.3.1(postcss@8.5.6):
     dependencies:
       postcss: 8.5.6
-    optional: true
 
   css-select@5.2.2:
     dependencies:
@@ -5018,11 +4980,9 @@ snapshots:
 
   css-what@6.2.2: {}
 
-  css.escape@1.5.1:
-    optional: true
+  css.escape@1.5.1: {}
 
-  cssesc@3.0.0:
-    optional: true
+  cssesc@3.0.0: {}
 
   cssstyle@5.3.5:
     dependencies:
@@ -5045,24 +5005,20 @@ snapshots:
 
   decko@1.2.0: {}
 
-  deep-eql@5.0.2:
-    optional: true
+  deep-eql@5.0.2: {}
 
   deep-is@0.1.4: {}
 
   deepmerge@4.3.1: {}
 
-  default-browser-id@5.0.1:
-    optional: true
+  default-browser-id@5.0.1: {}
 
   default-browser@5.4.0:
     dependencies:
       bundle-name: 4.1.0
       default-browser-id: 5.0.1
-    optional: true
 
-  define-lazy-prop@3.0.0:
-    optional: true
+  define-lazy-prop@3.0.0: {}
 
   dequal@2.0.3: {}
 
@@ -5072,15 +5028,13 @@ snapshots:
 
   detect-node@2.1.0: {}
 
-  devalue@5.6.1:
-    optional: true
+  devalue@5.6.2: {}
 
   discontinuous-range@1.0.0: {}
 
   dom-accessibility-api@0.5.16: {}
 
-  dom-accessibility-api@0.6.3:
-    optional: true
+  dom-accessibility-api@0.6.3: {}
 
   dom-serializer@1.4.1:
     dependencies:
@@ -5207,7 +5161,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
-    optional: true
 
   eslint-plugin-svelte@3.13.1(eslint@9.39.2(jiti@2.6.1))(svelte@5.46.0):
     dependencies:
@@ -5226,7 +5179,6 @@ snapshots:
       svelte: 5.46.0
     transitivePeerDependencies:
       - ts-node
-    optional: true
 
   eslint-scope@8.4.0:
     dependencies:
@@ -5278,8 +5230,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  esm-env@1.2.2:
-    optional: true
+  esm-env@1.2.2: {}
 
   espree@10.4.0:
     dependencies:
@@ -5287,8 +5238,7 @@ snapshots:
       acorn-jsx: 5.3.2(acorn@8.15.0)
       eslint-visitor-keys: 4.2.1
 
-  esprima@4.0.1:
-    optional: true
+  esprima@4.0.1: {}
 
   esquery@1.6.0:
     dependencies:
@@ -5297,7 +5247,6 @@ snapshots:
   esrap@2.2.1:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
-    optional: true
 
   esrecurse@4.3.0:
     dependencies:
@@ -5374,7 +5323,7 @@ snapshots:
 
   get-port-please@3.2.0: {}
 
-  git-hooks-list@4.1.1: {}
+  git-hooks-list@4.2.1: {}
 
   glob-parent@5.1.2:
     dependencies:
@@ -5517,8 +5466,7 @@ snapshots:
 
   imurmurhash@0.1.4: {}
 
-  indent-string@4.0.0:
-    optional: true
+  indent-string@4.0.0: {}
 
   inherits@2.0.4: {}
 
@@ -5528,8 +5476,7 @@ snapshots:
     dependencies:
       binary-extensions: 2.3.0
 
-  is-docker@3.0.0:
-    optional: true
+  is-docker@3.0.0: {}
 
   is-extglob@2.1.1: {}
 
@@ -5542,7 +5489,6 @@ snapshots:
   is-inside-container@1.0.0:
     dependencies:
       is-docker: 3.0.0
-    optional: true
 
   is-node-process@1.2.0: {}
 
@@ -5555,12 +5501,10 @@ snapshots:
   is-reference@3.0.3:
     dependencies:
       '@types/estree': 1.0.8
-    optional: true
 
   is-wsl@3.1.0:
     dependencies:
       is-inside-container: 1.0.0
-    optional: true
 
   isexe@2.0.0: {}
 
@@ -5706,11 +5650,9 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  kleur@4.1.5:
-    optional: true
+  kleur@4.1.5: {}
 
-  known-css-properties@0.37.0:
-    optional: true
+  known-css-properties@0.37.0: {}
 
   leac@0.6.0: {}
 
@@ -5732,15 +5674,13 @@ snapshots:
 
   libqp@2.1.1: {}
 
-  lilconfig@2.1.0:
-    optional: true
+  lilconfig@2.1.0: {}
 
   linkify-it@5.0.0:
     dependencies:
       uc.micro: 2.1.0
 
-  locate-character@3.0.0:
-    optional: true
+  locate-character@3.0.0: {}
 
   locate-path@6.0.0:
     dependencies:
@@ -5758,8 +5698,7 @@ snapshots:
     dependencies:
       js-tokens: 4.0.0
 
-  loupe@3.2.1:
-    optional: true
+  loupe@3.2.1: {}
 
   lower-case@1.1.4: {}
 
@@ -5808,8 +5747,7 @@ snapshots:
 
   mime@2.6.0: {}
 
-  min-indent@1.0.1:
-    optional: true
+  min-indent@1.0.1: {}
 
   minimatch@10.1.1:
     dependencies:
@@ -6152,11 +6090,9 @@ snapshots:
 
   moo@0.5.2: {}
 
-  mri@1.2.0:
-    optional: true
+  mri@1.2.0: {}
 
-  mrmime@2.0.1:
-    optional: true
+  mrmime@2.0.1: {}
 
   ms@2.1.3: {}
 
@@ -6276,7 +6212,6 @@ snapshots:
       define-lazy-prop: 3.0.0
       is-inside-container: 1.0.0
       wsl-utils: 0.1.0
-    optional: true
 
   openapi-sampler@1.6.2:
     dependencies:
@@ -6359,8 +6294,7 @@ snapshots:
 
   pathe@2.0.3: {}
 
-  pathval@2.0.1:
-    optional: true
+  pathval@2.0.1: {}
 
   peberminta@0.9.0: {}
 
@@ -6389,7 +6323,6 @@ snapshots:
   postcss-less@6.0.0(postcss@8.5.6):
     dependencies:
       postcss: 8.5.6
-    optional: true
 
   postcss-load-config@3.1.4(postcss@8.5.6):
     dependencies:
@@ -6397,23 +6330,19 @@ snapshots:
       yaml: 1.10.2
     optionalDependencies:
       postcss: 8.5.6
-    optional: true
 
   postcss-safe-parser@7.0.1(postcss@8.5.6):
     dependencies:
       postcss: 8.5.6
-    optional: true
 
   postcss-scss@4.0.9(postcss@8.5.6):
     dependencies:
       postcss: 8.5.6
-    optional: true
 
   postcss-selector-parser@7.1.1:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
-    optional: true
 
   postcss-value-parser@4.2.0: {}
 
@@ -6443,11 +6372,10 @@ snapshots:
       prettier: 3.8.0
     transitivePeerDependencies:
       - postcss
-    optional: true
 
-  prettier-plugin-packagejson@2.5.21(prettier@3.8.0):
+  prettier-plugin-packagejson@2.5.22(prettier@3.8.0):
     dependencies:
-      sort-package-json: 3.5.0
+      sort-package-json: 3.6.0
     optionalDependencies:
       prettier: 3.8.0
 
@@ -6463,7 +6391,6 @@ snapshots:
     dependencies:
       prettier: 3.8.0
       svelte: 5.46.0
-    optional: true
 
   prettier@3.8.0: {}
 
@@ -6549,13 +6476,11 @@ snapshots:
       source-map: 0.6.1
       tiny-invariant: 1.3.3
       tslib: 2.8.1
-    optional: true
 
   redent@3.0.0:
     dependencies:
       indent-string: 4.0.0
       strip-indent: 3.0.0
-    optional: true
 
   redoc@2.5.1(core-js@3.47.0)(mobx@6.15.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(styled-components@6.3.8(react-dom@19.2.3(react@19.2.3))(react@19.2.3)):
     dependencies:
@@ -6663,13 +6588,11 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.55.1
       fsevents: 2.3.3
 
-  run-applescript@7.1.0:
-    optional: true
+  run-applescript@7.1.0: {}
 
   sade@1.8.1:
     dependencies:
       mri: 1.2.0
-    optional: true
 
   safe-buffer@5.2.1: {}
 
@@ -6744,7 +6667,6 @@ snapshots:
       '@polka/url': 1.0.0-next.29
       mrmime: 2.0.1
       totalist: 3.0.1
-    optional: true
 
   slick@1.12.2: {}
 
@@ -6752,11 +6674,11 @@ snapshots:
 
   sort-object-keys@2.1.0: {}
 
-  sort-package-json@3.5.0:
+  sort-package-json@3.6.0:
     dependencies:
       detect-indent: 7.0.2
       detect-newline: 4.0.1
-      git-hooks-list: 4.1.1
+      git-hooks-list: 4.2.1
       is-plain-obj: 4.1.0
       semver: 7.7.3
       sort-object-keys: 2.1.0
@@ -6801,7 +6723,6 @@ snapshots:
       - react
       - react-dom
       - utf-8-validate
-    optional: true
 
   strict-event-emitter@0.5.1: {}
 
@@ -6832,7 +6753,6 @@ snapshots:
   strip-indent@3.0.0:
     dependencies:
       min-indent: 1.0.1
-    optional: true
 
   strip-json-comments@3.1.1: {}
 
@@ -6869,7 +6789,6 @@ snapshots:
       postcss-selector-parser: 7.1.1
     optionalDependencies:
       svelte: 5.46.0
-    optional: true
 
   svelte@5.46.0:
     dependencies:
@@ -6881,14 +6800,13 @@ snapshots:
       aria-query: 5.3.2
       axobject-query: 4.1.0
       clsx: 2.1.1
-      devalue: 5.6.1
+      devalue: 5.6.2
       esm-env: 1.2.2
       esrap: 2.2.1
       is-reference: 3.0.3
       locate-character: 3.0.0
       magic-string: 0.30.21
       zimmerframe: 1.1.4
-    optional: true
 
   swagger2openapi@7.0.8:
     dependencies:
@@ -6914,8 +6832,7 @@ snapshots:
 
   tagged-tag@1.0.0: {}
 
-  tiny-invariant@1.3.3:
-    optional: true
+  tiny-invariant@1.3.3: {}
 
   tinybench@2.9.0: {}
 
@@ -6926,13 +6843,11 @@ snapshots:
       fdir: 6.5.0(picomatch@4.0.3)
       picomatch: 4.0.3
 
-  tinyrainbow@2.0.0:
-    optional: true
+  tinyrainbow@2.0.0: {}
 
   tinyrainbow@3.0.3: {}
 
-  tinyspy@4.0.4:
-    optional: true
+  tinyspy@4.0.4: {}
 
   tlds@1.261.0: {}
 
@@ -6946,8 +6861,7 @@ snapshots:
     dependencies:
       is-number: 7.0.0
 
-  totalist@3.0.1:
-    optional: true
+  totalist@3.0.1: {}
 
   tough-cookie@6.0.0:
     dependencies:
@@ -7051,7 +6965,6 @@ snapshots:
   vitefu@1.1.1(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1)):
     optionalDependencies:
       vite: 7.3.1(@types/node@24.10.4)(jiti@2.6.1)
-    optional: true
 
   vitest@4.0.16(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(jiti@2.6.1)(jsdom@27.3.0)(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3)):
     dependencies:
@@ -7201,13 +7114,11 @@ snapshots:
 
   ws@8.18.3: {}
 
-  ws@8.19.0:
-    optional: true
+  ws@8.19.0: {}
 
   wsl-utils@0.1.0:
     dependencies:
       is-wsl: 3.1.0
-    optional: true
 
   xml-name-validator@5.0.0: {}
 
@@ -7247,7 +7158,6 @@ snapshots:
 
   yoctocolors-cjs@2.1.3: {}
 
-  zimmerframe@1.1.4:
-    optional: true
+  zimmerframe@1.1.4: {}
 
   zod@4.2.1: {}
