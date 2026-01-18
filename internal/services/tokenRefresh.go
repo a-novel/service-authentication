@@ -76,6 +76,9 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
+	// Step 1: Verify the access token signature.
+	// We allow expired tokens here because the whole point of refresh is to get a new access token
+	// after the old one expires. However, the signature must still be valid to prevent forgery.
 	accessTokenClaims, err := service.serviceVerifyClaims.VerifyClaims(
 		ctx,
 		&jkpkg.VerifyClaimsRequest{
@@ -92,6 +95,8 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
+	// Step 2: Verify the refresh token signature and expiration.
+	// Unlike access tokens, refresh tokens must not be expired.
 	refreshTokenClaims, err := service.serviceVerifyRefreshClaims.VerifyClaims(
 		ctx,
 		&jkpkg.VerifyClaimsRequest{
@@ -112,6 +117,8 @@ func (service *TokenRefresh) Exec(
 		attribute.String("refreshTokenClaims.userID", refreshTokenClaims.UserID.String()),
 	)
 
+	// Step 3: Verify that both tokens belong to the same user.
+	// This prevents an attacker from using a stolen refresh token with a different user's access token.
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchClaims)
 	}
@@ -121,6 +128,11 @@ func (service *TokenRefresh) Exec(
 		attribute.String("refreshTokenClaims.jti", refreshTokenClaims.Jti),
 	)
 
+	// Step 4: Verify that the access token was issued from this specific refresh token.
+	// Each access token stores the JTI of the refresh token that created it.
+	// This binding ensures that:
+	//   - An access token can only be refreshed using its original refresh token
+	//   - Revoking a refresh token effectively revokes all access tokens derived from it
 	if accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchSource)
 	}

@@ -262,6 +262,46 @@ func TestCredentialsCreateSuperAdmin(t *testing.T) {
 
 			expectErr: errFoo,
 		},
+		{
+			name: "Error/PasswordTooShort",
+
+			request: &services.CredentialsCreateSuperAdminRequest{
+				Email:    "superadmin@provider.com",
+				Password: "abc", // 3 characters, minimum is 4
+			},
+
+			expectErr: services.ErrInvalidRequest,
+		},
+		{
+			name: "Success/PasswordAtMinLength",
+
+			request: &services.CredentialsCreateSuperAdminRequest{
+				Email:    "superadmin@provider.com",
+				Password: "abcd", // exactly 4 characters
+			},
+
+			repositorySelectMock: &repositorySelectMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+			repositoryMock: &repositoryMock{
+				resp: &dao.Credentials{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Email:     "superadmin@provider.com",
+					Password:  "abcd",
+					Role:      config.RoleSuperAdmin,
+					CreatedAt: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+
+			expect: &services.Credentials{
+				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				Email:     "superadmin@provider.com",
+				Role:      config.RoleSuperAdmin,
+				CreatedAt: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				UpdatedAt: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -282,7 +322,7 @@ func TestCredentialsCreateSuperAdmin(t *testing.T) {
 							return assert.Equal(t, testCase.request.Email, data.Email) &&
 								assert.NotEqual(t, uuid.Nil, data.ID) &&
 								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
-								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password)) &&
+								assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
 								assert.Equal(t, config.RoleSuperAdmin, data.Role)
 						})).
 						Return(testCase.repositoryMock.resp, testCase.repositoryMock.err)
@@ -299,7 +339,7 @@ func TestCredentialsCreateSuperAdmin(t *testing.T) {
 						Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsUpdatePasswordRequest) bool {
 							return assert.Equal(t, testCase.repositorySelectMock.resp.ID, data.ID) &&
 								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
-								assert.NoError(t, lib.CompareScrypt(testCase.request.Password, data.Password))
+								assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password))
 						})).
 						Return(testCase.repositoryUpdatePasswordMock.resp, testCase.repositoryUpdatePasswordMock.err)
 				}

@@ -81,7 +81,8 @@ func TestTokenCreate(t *testing.T) {
 				err: dao.ErrCredentialsSelectByEmailNotFound,
 			},
 
-			expectStatus: http.StatusNotFound,
+			// Returns 401 to prevent email enumeration.
+			expectStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "Error/PasswordInvalid",
@@ -99,7 +100,8 @@ func TestTokenCreate(t *testing.T) {
 				err: lib.ErrInvalidPassword,
 			},
 
-			expectStatus: http.StatusForbidden,
+			// Returns 401 to prevent email enumeration.
+			expectStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "Error/Internal",

@@ -21,8 +21,11 @@ func TestShortCodeConsume(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	futureTime := time.Now().Add(time.Hour).Truncate(time.Second)
+	pastTime := time.Now().Add(-time.Hour).Truncate(time.Second)
+
 	shortCode := "test-code"
-	encrypted, err := lib.GenerateScrypt(shortCode, lib.ScryptParamsDefault)
+	encrypted, err := lib.GenerateArgon2(shortCode, lib.Argon2ParamsDefault)
 	require.NoError(t, err)
 
 	type repositorySelectMock struct {
@@ -62,7 +65,7 @@ func TestShortCodeConsume(t *testing.T) {
 					Target:    "test-target",
 					Data:      []byte("test-data"),
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					ExpiresAt: futureTime,
 				},
 			},
 
@@ -74,7 +77,7 @@ func TestShortCodeConsume(t *testing.T) {
 				Target:    "test-target",
 				Data:      []byte("test-data"),
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				ExpiresAt: futureTime,
 				PlainCode: shortCode,
 			},
 		},
@@ -95,11 +98,34 @@ func TestShortCodeConsume(t *testing.T) {
 					Target:    "test-target",
 					Data:      []byte("test-data"),
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					ExpiresAt: futureTime,
 				},
 			},
 
 			expectErr: services.ErrShortCodeConsumeInvalid,
+		},
+		{
+			name: "ExpiredCode",
+
+			request: &services.ShortCodeConsumeRequest{
+				Target: "test-target",
+				Usage:  services.ShortCodeUsageValidateEmail,
+				Code:   shortCode,
+			},
+
+			repositorySelectMock: &repositorySelectMock{
+				resp: &dao.ShortCode{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Code:      encrypted,
+					Usage:     services.ShortCodeUsageValidateEmail,
+					Target:    "test-target",
+					Data:      []byte("test-data"),
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					ExpiresAt: pastTime,
+				},
+			},
+
+			expectErr: services.ErrShortCodeConsumeExpired,
 		},
 		{
 			name: "NoCode",
@@ -143,7 +169,7 @@ func TestShortCodeConsume(t *testing.T) {
 					Target:    "test-target",
 					Data:      []byte("test-data"),
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					ExpiresAt: futureTime,
 				},
 			},
 

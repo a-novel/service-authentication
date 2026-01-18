@@ -24,84 +24,51 @@ import {
   generateRandomMail,
   generateRandomPassword,
   getHtmlMail,
-  preRegisterUserAsAdmin,
+  preRegisterUser,
   registerUser,
 } from "@a-novel/service-authentication-rest-test";
 
 describe("credentialsCreate", () => {
-  describe("admin", () => {
-    it("registers the user", async () => {
-      const api = new AuthenticationApi(process.env.API_URL!);
+  it("registers the user", async () => {
+    const api = new AuthenticationApi(process.env.API_URL!);
 
-      const superAdminToken = await tokenCreate(api, {
-        email: process.env.SUPER_ADMIN_EMAIL!,
-        password: process.env.SUPER_ADMIN_PASSWORD!,
-      });
+    const anonToken = await tokenCreateAnon(api);
 
-      const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
-      await registerUser(api, preRegister);
-    });
-
-    it("does not register with wrong link", async () => {
-      const api = new AuthenticationApi(process.env.API_URL!);
-
-      const superAdminToken = await tokenCreate(api, {
-        email: process.env.SUPER_ADMIN_EMAIL!,
-        password: process.env.SUPER_ADMIN_PASSWORD!,
-      });
-
-      const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
-      await expectStatus(registerUser(api, { ...preRegister, shortCode: "invalid" }), 403);
-    });
-
-    it("only registers once", async () => {
-      const api = new AuthenticationApi(process.env.API_URL!);
-
-      const superAdminToken = await tokenCreate(api, {
-        email: process.env.SUPER_ADMIN_EMAIL!,
-        password: process.env.SUPER_ADMIN_PASSWORD!,
-      });
-
-      const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
-      await registerUser(api, preRegister);
-      await expectStatus(registerUser(api, preRegister), 403);
-    });
-
-    it("only takes into account the latest attempt", async () => {
-      const api = new AuthenticationApi(process.env.API_URL!);
-
-      const email = generateRandomMail();
-
-      const superAdminToken = await tokenCreate(api, {
-        email: process.env.SUPER_ADMIN_EMAIL!,
-        password: process.env.SUPER_ADMIN_PASSWORD!,
-      });
-
-      const preRegister1 = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken, email);
-      const preRegister2 = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken, email);
-      await expectStatus(registerUser(api, preRegister1), 403);
-      await registerUser(api, preRegister2);
-    });
-
-    it("does not override previously created accounts", async () => {
-      const api = new AuthenticationApi(process.env.API_URL!);
-
-      const email = generateRandomMail();
-
-      const superAdminToken = await tokenCreate(api, {
-        email: process.env.SUPER_ADMIN_EMAIL!,
-        password: process.env.SUPER_ADMIN_PASSWORD!,
-      });
-
-      const preRegister1 = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken, email);
-      await registerUser(api, preRegister1);
-
-      // Email already registered by another user.
-      await expectStatus(preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken, email), 409);
-    });
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, anonToken);
+    await registerUser(api, preRegister);
   });
 
-  // TODO: (#320) add anon registration tests.
+  it("does not register with wrong link", async () => {
+    const api = new AuthenticationApi(process.env.API_URL!);
+
+    const anonToken = await tokenCreateAnon(api);
+
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, anonToken);
+    await expectStatus(registerUser(api, { ...preRegister, shortCode: "invalid" }), 403);
+  });
+
+  it("only registers once", async () => {
+    const api = new AuthenticationApi(process.env.API_URL!);
+
+    const anonToken = await tokenCreateAnon(api);
+
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, anonToken);
+    await registerUser(api, preRegister);
+    await expectStatus(registerUser(api, preRegister), 403);
+  });
+
+  it("only takes into account the latest attempt", async () => {
+    const api = new AuthenticationApi(process.env.API_URL!);
+
+    const email = generateRandomMail();
+
+    const anonToken = await tokenCreateAnon(api);
+
+    const preRegister1 = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, anonToken, email);
+    const preRegister2 = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, anonToken, email);
+    await expectStatus(registerUser(api, preRegister1), 403);
+    await registerUser(api, preRegister2);
+  });
 });
 
 async function requestEmailUpdate(api: AuthenticationApi, token: Token, newEmail: string = generateRandomMail()) {
@@ -143,7 +110,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -165,7 +132,7 @@ describe("credentialsUpdateEmail", () => {
         email: user.email,
         password: user.password,
       }),
-      404
+      401
     );
 
     await tokenCreate(api, {
@@ -184,7 +151,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -215,7 +182,7 @@ describe("credentialsUpdateEmail", () => {
         email: user.email,
         password: user.password,
       }),
-      404
+      401
     );
 
     await tokenCreate(api, {
@@ -234,7 +201,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -245,7 +212,7 @@ describe("credentialsUpdateEmail", () => {
     const { shortCode, target, newEmail } = await requestEmailUpdate(api, userToken);
 
     // Register new email before updating it.
-    const preRegister2 = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken, newEmail);
+    const preRegister2 = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken, newEmail);
     await registerUser(api, preRegister2);
 
     await expectStatus(
@@ -267,7 +234,7 @@ describe("credentialsUpdatePassword", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -287,7 +254,7 @@ describe("credentialsUpdatePassword", () => {
         email: user.email,
         password: user.password,
       }),
-      403
+      401
     );
 
     await tokenCreate(api, {
@@ -304,7 +271,7 @@ describe("credentialsUpdatePassword", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -327,7 +294,7 @@ describe("credentialsUpdatePassword", () => {
         email: user.email,
         password: newPassword,
       }),
-      403
+      401
     );
 
     await tokenCreate(api, {
@@ -375,7 +342,7 @@ describe("credentialsResetPassword", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const { shortCode, target } = await requestPasswordReset(api, anonToken, user.email);
@@ -393,7 +360,7 @@ describe("credentialsResetPassword", () => {
         email: user.email,
         password: user.password,
       }),
-      403
+      401
     );
 
     await tokenCreate(api, {
@@ -412,7 +379,7 @@ describe("credentialsResetPassword", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const requestPasswordReset1 = await requestPasswordReset(api, anonToken, user.email);
@@ -446,7 +413,7 @@ describe("credentialsUpdateRole", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     expect(user.claims.roles).toStrictEqual([Role.User]);
@@ -475,7 +442,7 @@ describe("credentialsUpdateRole", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -504,7 +471,7 @@ describe("credentialsGet", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const credentials = await credentialsGet(api, anonToken.accessToken, {
@@ -541,7 +508,7 @@ describe("credentialsExists", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
     const exists = await credentialsExists(api, anonToken.accessToken, {
@@ -573,12 +540,10 @@ describe("credentialsList", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const anonToken = await tokenCreateAnon(api);
-
-    const preRegister = await preRegisterUserAsAdmin(api, process.env.MAIL_TEST_HOST!, superAdminToken);
+    const preRegister = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, superAdminToken);
     const user = await registerUser(api, preRegister);
 
-    const credentials = await credentialsList(api, anonToken.accessToken, {});
+    const credentials = await credentialsList(api, superAdminToken.accessToken, {});
 
     expect(credentials.length).toBeGreaterThan(0);
     expect(credentials.some((item) => item.id === user.claims.userID)).toBeTruthy();

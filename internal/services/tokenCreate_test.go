@@ -26,7 +26,7 @@ func TestTokenCreate(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	passwordRaw := "password"
-	passwordScrypted, err := lib.GenerateScrypt(passwordRaw, lib.ScryptParamsDefault)
+	passwordArgon2ed, err := lib.GenerateArgon2(passwordRaw, lib.Argon2ParamsDefault)
 	require.NoError(t, err)
 
 	type repositoryMock struct {
@@ -63,7 +63,7 @@ func TestTokenCreate(t *testing.T) {
 			repositoryMock: &repositoryMock{
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 					Role:     config.RoleUser,
 				},
 			},
@@ -89,7 +89,7 @@ func TestTokenCreate(t *testing.T) {
 			repositoryMock: &repositoryMock{
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 					Role:     config.RoleUser,
 				},
 			},
@@ -115,7 +115,7 @@ func TestTokenCreate(t *testing.T) {
 			repositoryMock: &repositoryMock{
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 					Role:     config.RoleAdmin,
 				},
 			},
@@ -141,7 +141,7 @@ func TestTokenCreate(t *testing.T) {
 			repositoryMock: &repositoryMock{
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 					Role:     config.RoleSuperAdmin,
 				},
 			},
@@ -167,7 +167,7 @@ func TestTokenCreate(t *testing.T) {
 			repositoryMock: &repositoryMock{
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 					Role:     config.RoleUser,
 				},
 			},
@@ -182,7 +182,7 @@ func TestTokenCreate(t *testing.T) {
 			repositoryMock: &repositoryMock{
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 					Role:     config.RoleUser,
 				},
 			},
@@ -203,7 +203,7 @@ func TestTokenCreate(t *testing.T) {
 			repositoryMock: &repositoryMock{
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Password: passwordScrypted,
+					Password: passwordArgon2ed,
 					Role:     config.RoleUser,
 				},
 			},

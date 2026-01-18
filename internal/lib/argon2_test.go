@@ -8,12 +8,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-func TestScrypt(t *testing.T) {
+func TestArgon2(t *testing.T) {
 	t.Parallel()
 
 	password := "password"
 
-	encrypted, err := lib.GenerateScrypt(password, lib.ScryptParamsDefault)
+	encrypted, err := lib.GenerateArgon2(password, lib.Argon2ParamsDefault)
 	require.NoError(t, err)
 	require.NotEmpty(t, encrypted)
 
@@ -53,7 +53,7 @@ func TestScrypt(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			err = lib.CompareScrypt(testCase.password, testCase.encrypted)
+			err = lib.CompareArgon2(testCase.password, testCase.encrypted)
 			require.ErrorIs(t, err, testCase.expectErr)
 		})
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -60,7 +61,26 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				},
 			},
 
-			expectStatus: http.StatusNoContent,
+			expectStatus: http.StatusAccepted,
+		},
+		{
+			name: "Success/AlreadyExists",
+
+			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+				"email": "existing_user@provider.com",
+				"lang": "fr"
+			}`)),
+
+			serviceMock: &serviceMock{
+				req: &services.ShortCodeCreateRegisterRequest{
+					Email: "existing_user@provider.com",
+					Lang:  "fr",
+				},
+				err: dao.ErrCredentialsInsertAlreadyExists,
+			},
+
+			// Returns 202 to prevent email enumeration.
+			expectStatus: http.StatusAccepted,
 		},
 		{
 			name: "Error/Internal",

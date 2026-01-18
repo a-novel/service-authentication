@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
@@ -49,7 +50,7 @@ func (service *CredentialsList) Exec(
 		Roles:  request.Roles,
 	})
 	if err != nil {
-		return nil, otel.ReportError(span, err)
+		return nil, otel.ReportError(span, fmt.Errorf("list credentials: %w", err))
 	}
 
 	span.SetAttributes(attribute.Int("response.count", len(entities)))

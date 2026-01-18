@@ -30,7 +30,7 @@ describe("tokenCreate", () => {
     });
   });
 
-  it("returns not found when email does not exist", async () => {
+  it("returns unauthorized when email does not exist", async () => {
     const api = new AuthenticationApi(process.env.API_URL!);
 
     await expectStatus(
@@ -38,11 +38,11 @@ describe("tokenCreate", () => {
         email: "does-not-exist@gmail.com",
         password: process.env.SUPER_ADMIN_PASSWORD!,
       }),
-      404
+      401
     );
   });
 
-  it("returns forbidden when password is incorrect", async () => {
+  it("returns unauthorized when password is incorrect", async () => {
     const api = new AuthenticationApi(process.env.API_URL!);
 
     await expectStatus(
@@ -50,7 +50,7 @@ describe("tokenCreate", () => {
         email: process.env.SUPER_ADMIN_EMAIL!,
         password: "incorrect-password",
       }),
-      403
+      401
     );
   });
 });

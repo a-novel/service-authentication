@@ -14,7 +14,10 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-var ErrShortCodeConsumeInvalid = errors.New("invalid short code")
+var (
+	ErrShortCodeConsumeInvalid = errors.New("invalid short code")
+	ErrShortCodeConsumeExpired = errors.New("short code expired")
+)
 
 type ShortCodeConsumeRepositorySelect interface {
 	Exec(ctx context.Context, request *dao.ShortCodeSelectRequest) (*dao.ShortCode, error)
@@ -65,8 +68,13 @@ func (service *ShortCodeConsume) Exec(
 
 	span.SetAttributes(attribute.String("shortCode.id", entity.ID.String()))
 
+	// Explicit expiration check as defense-in-depth (SQL already filters expired codes).
+	if entity.ExpiresAt.Before(time.Now()) {
+		return nil, otel.ReportError(span, ErrShortCodeConsumeExpired)
+	}
+
 	// Compare the encrypted code with the plain code of the request.
-	err = lib.CompareScrypt(request.Code, entity.Code)
+	err = lib.CompareArgon2(request.Code, entity.Code)
 	if err != nil {
 		return nil, otel.ReportError(span, errors.Join(
 			fmt.Errorf("compare short code: %w", err),

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
@@ -39,7 +40,7 @@ func (service *CredentialsGet) Exec(
 
 	entity, err := service.repository.Exec(ctx, &dao.CredentialsSelectRequest{ID: request.ID})
 	if err != nil {
-		return nil, otel.ReportError(span, err)
+		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
 	span.SetAttributes(

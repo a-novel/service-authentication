@@ -32,7 +32,7 @@ type CredentialsCreateSuperAdminRepositoryUpdateRole interface {
 
 type CredentialsCreateSuperAdminRequest struct {
 	Email    string `validate:"required,email,max=1024"`
-	Password string `validate:"required,max=1024"`
+	Password string `validate:"required,min=4,max=1024"`
 }
 
 type CredentialsCreateSuperAdmin struct {
@@ -67,7 +67,7 @@ func (service *CredentialsCreateSuperAdmin) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	encryptedPassword, err := lib.GenerateScrypt(request.Password, lib.ScryptParamsDefault)
+	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
 	}
