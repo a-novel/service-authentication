@@ -27,7 +27,7 @@
     "lint": "pnpm lint:stylecheck && pnpm lint:typecheck && pnpm lint:eslint && pnpm run lint:mjml && pnpm run lint:openapi",
     "lint:eslint": "eslint .",
     "lint:mjml": "for i in `find . -name \"*.mjml\" -type f`; do pnpm mjml --validate $i; done",
-    "lint:openapi": "pnpm exec redocly lint openapi.yaml",
+    "lint:openapi": "pnpm redocly lint openapi.yaml",
     "lint:stylecheck": "prettier --check . --config prettier.config.ts",
     "lint:typecheck": "pnpm lint:typecheck:base && pnpm lint:typecheck:rest-js && pnpm lint:typecheck:rest-js-test && pnpm lint:typecheck:test:rest-js",
     "lint:typecheck:base": "tsc --noEmit",
