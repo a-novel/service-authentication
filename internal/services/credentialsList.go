@@ -18,7 +18,7 @@ type CredentialsListRepository interface {
 }
 
 type CredentialsListRequest struct {
-	Limit  int      `validate:"required,max=100"`
+	Limit  int      `validate:"required,min=1,max=100"`
 	Offset int      `validate:"min=0"`
 	Roles  []string `validate:"min=0,max=10,dive,role"`
 }
