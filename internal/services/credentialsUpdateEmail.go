@@ -26,7 +26,7 @@ type CredentialsUpdateEmailServiceShortCodeConsume interface {
 
 type CredentialsUpdateEmailRequest struct {
 	UserID    uuid.UUID
-	ShortCode string `validate:"required,max=512"`
+	ShortCode string `validate:"required,max=1024"`
 }
 
 type CredentialsUpdateEmail struct {
