@@ -7,7 +7,6 @@ import { expect } from "vitest";
 import {
   type AuthenticationApi,
   Lang,
-  type Token,
   claimsGet,
   credentialsCreate,
   shortCodeCreateRegister,
@@ -30,10 +29,11 @@ export interface PreRegisterData {
 export async function preRegisterUser(
   api: AuthenticationApi,
   mailHost: string,
-  superAdminToken: Token,
   userEmail: string = generateRandomMail()
 ) {
-  await shortCodeCreateRegister(api, superAdminToken.accessToken, {
+  const anonToken = await tokenCreateAnon(api);
+
+  await shortCodeCreateRegister(api, anonToken.accessToken, {
     email: userEmail,
     lang: Lang.En,
   });
@@ -79,5 +79,6 @@ export async function registerUser(api: AuthenticationApi, data: PreRegisterData
     email: data.email,
     password: userPassword,
     claims: claims,
+    token,
   };
 }
