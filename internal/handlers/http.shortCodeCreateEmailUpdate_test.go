@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -67,7 +68,29 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 				},
 			},
 
-			expectStatus: http.StatusNoContent,
+			expectStatus: http.StatusAccepted,
+		},
+		{
+			name: "Success/EmailAlreadyExists",
+
+			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+				"email": "new_user@provider.com",
+				"lang": "fr"
+			}`)),
+			claims: &services.AccessTokenClaims{
+				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			},
+
+			serviceMock: &serviceMock{
+				req: &services.ShortCodeCreateEmailUpdateRequest{
+					Email: "new_user@provider.com",
+					Lang:  "fr",
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
+				err: dao.ErrCredentialsUpdateEmailAlreadyExists,
+			},
+
+			expectStatus: http.StatusAccepted,
 		},
 		{
 			name: "Error/Internal",

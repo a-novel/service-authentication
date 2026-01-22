@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/samber/lo"
@@ -60,14 +61,17 @@ func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *h
 		ID:    lo.FromPtr(claims.UserID),
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
-			services.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
-			dao.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
-		}, err)
+		// Silently succeed if email already exists to prevent email enumeration.
+		// The user won't receive an email, but they won't know if the email was registered.
+		if !errors.Is(err, dao.ErrCredentialsUpdateEmailAlreadyExists) {
+			httpf.HandleError(ctx, w, span, httpf.ErrMap{
+				services.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			}, err)
 
-		return
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusAccepted)
 }

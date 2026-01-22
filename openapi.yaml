@@ -368,6 +368,9 @@ paths:
         "202":
           description: |
             The request was accepted. If the email is not already registered, a registration link will be sent.
+
+            **Security note:** This endpoint always returns 202 regardless of whether the email is registered,
+            to prevent email enumeration attacks. If the email is already registered, no email will be sent.
         "400":
           $ref: "#/components/responses/badRequest"
         "403":
@@ -391,14 +394,16 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/emailUpdateInit"
       responses:
-        "204":
-          description: The email update link has been sent successfully.
+        "202":
+          description: |
+            The request was accepted. If the email is not already registered, an email update link will be sent.
+
+            **Security note:** This endpoint always returns 202 regardless of whether the email is registered,
+            to prevent email enumeration attacks. If the email is already registered, no email will be sent.
         "400":
           $ref: "#/components/responses/badRequest"
         "403":
           $ref: "#/components/responses/forbidden"
-        "409":
-          $ref: "#/components/responses/conflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
         default:
