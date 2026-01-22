@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.3
-        version: 1.3.4(2d7cb204a5358c113814ca166d2e5c82)
+        version: 1.3.6(2d7cb204a5358c113814ca166d2e5c82)
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.2
@@ -194,8 +194,8 @@ packages:
     peerDependencies:
       zod: ^4.1.12
 
-  '@a-novel-kit/nodelib-config@1.3.4':
-    resolution: {integrity: sha512-swtVhHV1Dmk3nWLx6NxevRrNcmEYfMfDgpQF491WrAn7wRClQYW4S9BU0V7n18iHsPkRvYAMew6YFSN+Rc5BJQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/1.3.4/6ff4aef2e614ad3f6f2997b6a301ea755f2ed163}
+  '@a-novel-kit/nodelib-config@1.3.6':
+    resolution: {integrity: sha512-MsiH5azr3pJZTyjX2Kpf6l/iYZqFU5mpMgKwhMqTzDOOf1tV2CxB3XFpTKM7eh+GFm5DNeT9uabA6oJD9aIjyg==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/1.3.6/b4f8bb706b7c1cdc478b0fdb06967848d541331f}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@eslint/compat': ^2.0.0
@@ -210,7 +210,7 @@ packages:
       eslint-plugin-svelte: ^3.13.1
       prettier: ^3.7.4
       prettier-plugin-css-order: ^2.1.2
-      prettier-plugin-packagejson: ^2.5.20
+      prettier-plugin-packagejson: ^2.5.20 || ^3.0.0
       prettier-plugin-sql: ^0.19.2
       prettier-plugin-svelte: ^3.4.0
       typescript: ^5.8.3
@@ -3540,7 +3540,7 @@ snapshots:
     dependencies:
       zod: 4.3.5
 
-  '@a-novel-kit/nodelib-config@1.3.4(2d7cb204a5358c113814ca166d2e5c82)':
+  '@a-novel-kit/nodelib-config@1.3.6(2d7cb204a5358c113814ca166d2e5c82)':
     dependencies:
       '@eslint/compat': 2.0.0(eslint@9.39.2(jiti@2.6.1))
       '@eslint/js': 9.39.2
