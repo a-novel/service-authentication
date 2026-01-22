@@ -40,7 +40,7 @@
     "mailparser": "^3.9.1",
     "vite": "^7.3.1",
     "vitest": "^4.0.18",
-    "zod": "^4.1.12"
+    "zod": "^4.3.6"
   },
   "packageManager": "pnpm@10.28.1",
   "engines": {
