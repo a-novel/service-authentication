@@ -173,7 +173,7 @@ describe("credentialsUpdateEmail", () => {
     });
   });
 
-  it("refuses update if email has been taken", async () => {
+  it("accepts update if email has been taken", async () => {
     const api = new AuthenticationApi(process.env.API_URL!);
 
     const anonToken = await tokenCreateAnon(api);
@@ -188,7 +188,7 @@ describe("credentialsUpdateEmail", () => {
 
     const { shortCode, target, newEmail } = await requestEmailUpdate(api, userToken);
 
-    // Register new email before updating it.
+    // Register a new email before updating it.
     const preRegister2 = await preRegisterUser(api, process.env.MAIL_TEST_HOST!, newEmail);
     await registerUser(api, preRegister2);
 
