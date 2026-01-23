@@ -22,7 +22,6 @@ jobs:
         with:
           allowed_commands: |
             [
-              "^CI=true pnpm i$",
               "^pnpm format$", 
               "^go mod download$", 
               "^go generate .*", 
