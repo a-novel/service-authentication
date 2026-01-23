@@ -8,14 +8,14 @@
     {
       "matchManagers": ["gomod"],
       "postUpgradeTasks": {
-        "commands": ["go mod tidy", "go generate ./...", "go tool golangci-lint run ./... --fix"],
+        "commands": ["go mod download", "go generate ./...", "go tool golangci-lint run ./... --fix"],
         "executionMode": "branch"
       }
     },
     {
       "matchManagers": ["npm"],
       "postUpgradeTasks": {
-        "commands": ["pnpm i", "pnpm build", "pnpm i", "pnpm format"],
+        "commands": ["CI=true pnpm i", "pnpm format"],
         "executionMode": "branch"
       }
     },
