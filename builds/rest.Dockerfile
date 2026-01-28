@@ -26,7 +26,7 @@ RUN go mod download
 # ======================================================================================================================
 RUN go build -o /api cmd/rest/main.go
 
-FROM docker.io/library/alpine:3.23.2
+FROM docker.io/library/alpine:3.23.3
 
 WORKDIR /
 
