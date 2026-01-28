@@ -37,7 +37,7 @@
     "@a-novel-kit/nodelib-test": "^1.3.8",
     "@a-novel/service-authentication-rest": "workspace:*",
     "jsdom": "^27.4.0",
-    "mailparser": "^3.9.2",
+    "mailparser": "^3.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18",
     "zod": "^4.3.6"
