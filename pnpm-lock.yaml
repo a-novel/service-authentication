@@ -112,7 +112,7 @@ importers:
         version: 27.4.0(@noble/hashes@1.8.0)
       mailparser:
         specifier: ^3.9.0
-        version: 3.9.2
+        version: 3.9.3
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -163,7 +163,7 @@ importers:
         version: 27.4.0(@noble/hashes@1.8.0)
       mailparser:
         specifier: ^3.9.0
-        version: 3.9.2
+        version: 3.9.3
       mjml:
         specifier: 4.18.0
         version: 4.18.0
@@ -2185,8 +2185,8 @@ packages:
   magicast@0.5.1:
     resolution: {integrity: sha512-xrHS24IxaLrvuo613F719wvOIv9xPHFWQHuvGUBmPnCA/3MQxKI3b+r7n1jAoDHmsbC5bRhTZYR77invLAxVnw==}
 
-  mailparser@3.9.2:
-    resolution: {integrity: sha512-dl/PdfovVPLS7h5TviaN0S6P2Kq5gywR1s03CA/2uopspTsy5gHoJDAgFXnLltt27Q/pJdJbjXYzEtJ7pz2JNA==}
+  mailparser@3.9.3:
+    resolution: {integrity: sha512-AnB0a3zROum6fLaa52L+/K2SoRJVyFDk78Ea6q1D0ofcZLxWEWDtsS1+OrVqKbV7r5dulKL/AwYQccFGAPpuYQ==}
 
   make-dir@4.0.0:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
@@ -5398,7 +5398,7 @@ snapshots:
       '@babel/types': 7.28.6
       source-map-js: 1.2.1
 
-  mailparser@3.9.2:
+  mailparser@3.9.3:
     dependencies:
       '@zone-eu/mailsplit': 5.4.8
       encoding-japanese: 2.2.0
