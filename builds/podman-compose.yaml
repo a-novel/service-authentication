@@ -25,6 +25,19 @@ services:
   # DATABASES
   # ====================================================================================================================
 
+  postgres-json-keys:
+    image: ghcr.io/a-novel/service-json-keys/database:v2.1.4
+    networks:
+      - api
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: json-keys
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+    volumes:
+      - json-keys-postgres-data:/var/lib/postgresql/
+
   postgres-authentication:
     build:
       context: ..
@@ -39,19 +52,6 @@ services:
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
       - authentication-postgres-data:/var/lib/postgresql/
-
-  postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v2.1.4
-    networks:
-      - api
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: json-keys
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-    volumes:
-      - json-keys-postgres-data:/var/lib/postgresql/
 
   # ====================================================================================================================
   # SERVICES
@@ -90,6 +90,7 @@ services:
       SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
       SMTP_SENDER_PASSWORD: noreply
       SMTP_FORCE_UNENCRYPTED: true
+      TERM: xterm-color
     networks:
       - api
 

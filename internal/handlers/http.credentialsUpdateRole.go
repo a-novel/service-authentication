@@ -9,6 +9,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -27,10 +28,11 @@ type CredentialsUpdateRoleRequest struct {
 
 type CredentialsUpdateRole struct {
 	service CredentialsUpdateRoleService
+	logger  logging.Log
 }
 
-func NewCredentialsUpdateRole(service CredentialsUpdateRoleService) *CredentialsUpdateRole {
-	return &CredentialsUpdateRole{service: service}
+func NewCredentialsUpdateRole(service CredentialsUpdateRoleService, logger logging.Log) *CredentialsUpdateRole {
+	return &CredentialsUpdateRole{service: service, logger: logger}
 }
 
 func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -43,14 +45,14 @@ func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
 
 	claims, err := middlewares.MustGetClaimsContext(ctx)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, nil, err)
+		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
 
 		return
 	}
@@ -61,7 +63,7 @@ func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.R
 		Role:          request.Role,
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsUpdateRoleNotFound:               http.StatusNotFound,
 			services.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
 			services.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,

@@ -169,7 +169,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewCredentialsResetPassword(service)
+			handler := handlers.NewCredentialsResetPassword(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, testCase.request)

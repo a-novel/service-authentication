@@ -1,8 +1,11 @@
 package config
 
 import (
+	"os"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/golib/grpcf"
@@ -18,6 +21,15 @@ import (
 const (
 	OtelFlushTimeout = 2 * time.Second
 )
+
+var LoggerDev = &loggingpresets.LogLocal{
+	Out:      os.Stdout,
+	Renderer: lipgloss.NewRenderer(os.Stdout, termenv.WithTTY(true)),
+}
+
+var LoggerProd = &loggingpresets.LogGcloud{
+	ProjectId: env.GcloudProjectId,
+}
 
 var AppPresetDefault = App{
 	App: Main{
@@ -77,11 +89,14 @@ var AppPresetDefault = App{
 			ProjectID:    env.GcloudProjectId,
 			FlushTimeout: OtelFlushTimeout,
 		}),
-	Logger: lo.Ternary[logging.HttpConfig](
+	Logger: lo.Ternary[logging.Log](env.GcloudProjectId == "", LoggerDev, LoggerProd),
+	HttpLogger: lo.Ternary[logging.HttpConfig](
 		env.GcloudProjectId == "",
-		&loggingpresets.HttpLocal{},
+		&loggingpresets.HttpLocal{
+			BaseLogger: LoggerDev,
+		},
 		&loggingpresets.HttpGcloud{
-			ProjectId: env.GcloudProjectId,
+			BaseLogger: LoggerProd,
 		},
 	),
 	Postgres: PostgresPresetDefault,

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -25,10 +26,11 @@ type CredentialsUpdateEmailRequest struct {
 
 type CredentialsUpdateEmail struct {
 	service CredentialsUpdateEmailService
+	logger  logging.Log
 }
 
-func NewCredentialsUpdateEmail(service CredentialsUpdateEmailService) *CredentialsUpdateEmail {
-	return &CredentialsUpdateEmail{service: service}
+func NewCredentialsUpdateEmail(service CredentialsUpdateEmailService, logger logging.Log) *CredentialsUpdateEmail {
+	return &CredentialsUpdateEmail{service: service, logger: logger}
 }
 
 func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +43,7 @@ func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -51,7 +53,7 @@ func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.
 		ShortCode: request.ShortCode,
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsUpdateEmailNotFound:      http.StatusNotFound,
 			dao.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
 			dao.ErrShortCodeSelectNotFound:             http.StatusForbidden,

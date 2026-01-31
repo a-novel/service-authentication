@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -24,10 +25,11 @@ type TokenCreateRequest struct {
 
 type TokenCreate struct {
 	service TokenCreateService
+	logger  logging.Log
 }
 
-func NewTokenCreate(service TokenCreateService) *TokenCreate {
-	return &TokenCreate{service: service}
+func NewTokenCreate(service TokenCreateService, logger logging.Log) *TokenCreate {
+	return &TokenCreate{service: service, logger: logger}
 }
 
 func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +42,7 @@ func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -51,7 +53,7 @@ func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		// Both "email not found" and "invalid password" return 401 to prevent email enumeration.
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsSelectByEmailNotFound: http.StatusUnauthorized,
 			lib.ErrInvalidPassword:                  http.StatusUnauthorized,
 			services.ErrInvalidRequest:              http.StatusUnprocessableEntity,

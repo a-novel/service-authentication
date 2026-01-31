@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -23,10 +24,11 @@ type CredentialsGetRequest struct {
 
 type CredentialsGet struct {
 	service CredentialsGetService
+	logger  logging.Log
 }
 
-func NewCredentialsGet(service CredentialsGetService) *CredentialsGet {
-	return &CredentialsGet{service: service}
+func NewCredentialsGet(service CredentialsGetService, logger logging.Log) *CredentialsGet {
+	return &CredentialsGet{service: service, logger: logger}
 }
 
 func (handler *CredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +39,7 @@ func (handler *CredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	err := muxDecoder.Decode(&request, r.URL.Query())
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -46,7 +48,7 @@ func (handler *CredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		ID: request.ID,
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsSelectNotFound: http.StatusNotFound,
 			services.ErrInvalidRequest:       http.StatusUnprocessableEntity,
 		}, err)

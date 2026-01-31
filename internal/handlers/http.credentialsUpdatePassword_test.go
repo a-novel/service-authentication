@@ -161,7 +161,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewCredentialsUpdatePassword(service)
+			handler := handlers.NewCredentialsUpdatePassword(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()

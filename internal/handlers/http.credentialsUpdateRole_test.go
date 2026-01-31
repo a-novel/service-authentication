@@ -204,7 +204,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewCredentialsUpdateRole(service)
+			handler := handlers.NewCredentialsUpdateRole(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()

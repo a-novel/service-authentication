@@ -24,14 +24,18 @@ func main() {
 	lo.Must0(otel.Init(cfg.Otel))
 	defer cfg.Otel.Flush()
 
+	if env.GcloudProjectId == "" {
+		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
+	}
+
 	if env.SuperAdminEmail == "" {
-		log.Println("admin email not set, aborting")
+		cfg.Logger.Warn(ctx, "admin email not set, aborting")
 
 		return
 	}
 
 	if env.SuperAdminPassword == "" {
-		log.Println("admin password not set, aborting")
+		cfg.Logger.Warn(ctx, "admin password not set, aborting")
 
 		return
 	}

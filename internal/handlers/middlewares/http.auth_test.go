@@ -15,6 +15,7 @@ import (
 
 	"github.com/a-novel-kit/jwt/jws"
 
+	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	middlewaresmocks "github.com/a-novel/service-authentication/v2/internal/handlers/middlewares/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -248,7 +249,7 @@ func TestAuth(t *testing.T) {
 					Return(testCase.verifyClaimsMock.resp, testCase.verifyClaimsMock.err)
 			}
 
-			middleware := middlewares.NewAuth(service, testCase.permissionsByRole)
+			middleware := middlewares.NewAuth(service, testCase.permissionsByRole, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			ctxClaims := new(*services.AccessTokenClaims)

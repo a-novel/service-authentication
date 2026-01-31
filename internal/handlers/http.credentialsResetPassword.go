@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -26,10 +27,13 @@ type CredentialsResetPasswordRequest struct {
 
 type CredentialsResetPassword struct {
 	service CredentialsResetPasswordService
+	logger  logging.Log
 }
 
-func NewCredentialsResetPassword(service CredentialsResetPasswordService) *CredentialsResetPassword {
-	return &CredentialsResetPassword{service: service}
+func NewCredentialsResetPassword(
+	service CredentialsResetPasswordService, logger logging.Log,
+) *CredentialsResetPassword {
+	return &CredentialsResetPassword{service: service, logger: logger}
 }
 
 func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +46,7 @@ func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *htt
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -53,7 +57,7 @@ func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *htt
 		UserID:    request.UserID,
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
 			dao.ErrShortCodeSelectNotFound:           http.StatusForbidden,
 			services.ErrShortCodeConsumeInvalid:      http.StatusForbidden,

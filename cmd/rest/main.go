@@ -20,6 +20,7 @@ import (
 	"github.com/a-novel-kit/golib/postgres"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/env"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -34,6 +35,10 @@ func main() {
 
 	lo.Must0(otel.Init(cfg.Otel))
 	defer cfg.Otel.Flush()
+
+	if env.GcloudProjectId == "" {
+		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
+	}
 
 	// =================================================================================================================
 	// DEPENDENCIES
@@ -131,7 +136,7 @@ func main() {
 	// MIDDLEWARES
 	// =================================================================================================================
 
-	withAuth := pkg.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions)
+	withAuth := pkg.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
 
 	// =================================================================================================================
 	// HANDLERS
@@ -140,24 +145,45 @@ func main() {
 	handlerPing := handlers.NewPing()
 	handlerHealth := handlers.NewHealth(jsonKeysClient, cfg.Smtp)
 
-	handlerClaimsGet := handlers.NewClaimsGet()
+	handlerClaimsGet := handlers.NewClaimsGet(cfg.Logger)
 
-	handlerCredentialsCreate := handlers.NewCredentialsCreate(serviceCredentialsCreate)
-	handlerCredentialsExist := handlers.NewCredentialsExist(serviceCredentialsExist)
-	handlerCredentialsGet := handlers.NewCredentialsGet(serviceCredentialsGet)
-	handlerCredentialsList := handlers.NewCredentialsList(serviceCredentialsList)
-	handlerCredentialsResetPassword := handlers.NewCredentialsResetPassword(serviceCredentialsUpdatePassword)
-	handlerCredentialsUpdatePassword := handlers.NewCredentialsUpdatePassword(serviceCredentialsUpdatePassword)
-	handlerCredentialsUpdateEmail := handlers.NewCredentialsUpdateEmail(serviceCredentialsUpdateEmail)
-	handlerCredentialsUpdateRole := handlers.NewCredentialsUpdateRole(serviceCredentialsUpdateRole)
+	handlerCredentialsCreate := handlers.NewCredentialsCreate(serviceCredentialsCreate, cfg.Logger)
+	handlerCredentialsExist := handlers.NewCredentialsExist(serviceCredentialsExist, cfg.Logger)
+	handlerCredentialsGet := handlers.NewCredentialsGet(serviceCredentialsGet, cfg.Logger)
+	handlerCredentialsList := handlers.NewCredentialsList(serviceCredentialsList, cfg.Logger)
+	handlerCredentialsResetPassword := handlers.NewCredentialsResetPassword(
+		serviceCredentialsUpdatePassword,
+		cfg.Logger,
+	)
+	handlerCredentialsUpdatePassword := handlers.NewCredentialsUpdatePassword(
+		serviceCredentialsUpdatePassword,
+		cfg.Logger,
+	)
+	handlerCredentialsUpdateEmail := handlers.NewCredentialsUpdateEmail(
+		serviceCredentialsUpdateEmail,
+		cfg.Logger,
+	)
+	handlerCredentialsUpdateRole := handlers.NewCredentialsUpdateRole(
+		serviceCredentialsUpdateRole,
+		cfg.Logger,
+	)
 
-	handlerShortCodeCreateEmailUpdate := handlers.NewShortCodeCreateEmailUpdate(serviceShortCodeCreateEmailUpdate)
-	handlerShortCodeCreatePasswordReset := handlers.NewShortCodeCreatePasswordReset(serviceShortCodeCreatePasswordReset)
-	handlerShortCodeCreateRegister := handlers.NewShortCodeCreateRegister(serviceShortCodeCreateRegister)
+	handlerShortCodeCreateEmailUpdate := handlers.NewShortCodeCreateEmailUpdate(
+		serviceShortCodeCreateEmailUpdate,
+		cfg.Logger,
+	)
+	handlerShortCodeCreatePasswordReset := handlers.NewShortCodeCreatePasswordReset(
+		serviceShortCodeCreatePasswordReset,
+		cfg.Logger,
+	)
+	handlerShortCodeCreateRegister := handlers.NewShortCodeCreateRegister(
+		serviceShortCodeCreateRegister,
+		cfg.Logger,
+	)
 
-	handlerTokenCreate := handlers.NewTokenCreate(serviceTokenCreate)
-	handlerTokenCreateAnon := handlers.NewTokenCreateAnon(serviceTokenCreateAnon)
-	handlerTokenRefresh := handlers.NewTokenRefresh(serviceTokenRefresh)
+	handlerTokenCreate := handlers.NewTokenCreate(serviceTokenCreate, cfg.Logger)
+	handlerTokenCreateAnon := handlers.NewTokenCreateAnon(serviceTokenCreateAnon, cfg.Logger)
+	handlerTokenRefresh := handlers.NewTokenRefresh(serviceTokenRefresh, cfg.Logger)
 
 	// =================================================================================================================
 	// ROUTER
@@ -184,7 +210,7 @@ func main() {
 		},
 		MaxAge: cfg.Api.Cors.MaxAge,
 	}))
-	router.Use(cfg.Logger.Logger())
+	router.Use(cfg.HttpLogger.Logger())
 
 	router.Get("/ping", handlerPing.ServeHTTP)
 	router.Get("/healthcheck", handlerHealth.ServeHTTP)

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -16,10 +17,11 @@ type TokenCreateAnonService interface {
 
 type TokenCreateAnon struct {
 	service TokenCreateAnonService
+	logger  logging.Log
 }
 
-func NewTokenCreateAnon(service TokenCreateAnonService) *TokenCreateAnon {
-	return &TokenCreateAnon{service: service}
+func NewTokenCreateAnon(service TokenCreateAnonService, logger logging.Log) *TokenCreateAnon {
+	return &TokenCreateAnon{service: service, logger: logger}
 }
 
 func (handler *TokenCreateAnon) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +30,7 @@ func (handler *TokenCreateAnon) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	res, err := handler.service.Exec(ctx)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, nil, err)
+		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
 
 		return
 	}

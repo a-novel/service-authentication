@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -24,10 +25,13 @@ type ShortCodeCreatePasswordResetRequest struct {
 
 type ShortCodeCreatePasswordReset struct {
 	service ShortCodeCreatePasswordResetService
+	logger  logging.Log
 }
 
-func NewShortCodeCreatePasswordReset(service ShortCodeCreatePasswordResetService) *ShortCodeCreatePasswordReset {
-	return &ShortCodeCreatePasswordReset{service: service}
+func NewShortCodeCreatePasswordReset(
+	service ShortCodeCreatePasswordResetService, logger logging.Log,
+) *ShortCodeCreatePasswordReset {
+	return &ShortCodeCreatePasswordReset{service: service, logger: logger}
 }
 
 func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +44,7 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -53,7 +57,7 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 		// Silently succeed if email not found to prevent email enumeration.
 		// The user won't receive an email, but they won't know if the email was registered.
 		if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
-			httpf.HandleError(ctx, w, span, httpf.ErrMap{
+			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 				services.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			}, err)
 
