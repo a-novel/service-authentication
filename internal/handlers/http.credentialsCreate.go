@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -24,10 +25,11 @@ type CredentialsCreateRequest struct {
 
 type CredentialsCreate struct {
 	service CredentialsCreateService
+	logger  logging.Log
 }
 
-func NewCredentialsCreate(service CredentialsCreateService) *CredentialsCreate {
-	return &CredentialsCreate{service: service}
+func NewCredentialsCreate(service CredentialsCreateService, logger logging.Log) *CredentialsCreate {
+	return &CredentialsCreate{service: service, logger: logger}
 }
 
 func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +42,7 @@ func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -51,7 +53,7 @@ func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		ShortCode: request.ShortCode,
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsInsertAlreadyExists: http.StatusConflict,
 			dao.ErrShortCodeSelectNotFound:        http.StatusForbidden,
 			services.ErrShortCodeConsumeInvalid:   http.StatusForbidden,

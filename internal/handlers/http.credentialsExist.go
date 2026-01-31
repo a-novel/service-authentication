@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -20,10 +21,11 @@ type CredentialsExistRequest struct {
 
 type CredentialsExist struct {
 	service CredentialsExistService
+	logger  logging.Log
 }
 
-func NewCredentialsExist(service CredentialsExistService) *CredentialsExist {
-	return &CredentialsExist{service: service}
+func NewCredentialsExist(service CredentialsExistService, logger logging.Log) *CredentialsExist {
+	return &CredentialsExist{service: service, logger: logger}
 }
 
 func (handler *CredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -34,14 +36,14 @@ func (handler *CredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	err := muxDecoder.Decode(&request, r.URL.Query())
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
 
 	ok, err := handler.service.Exec(ctx, &services.CredentialsExistRequest{Email: request.Email})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			services.ErrInvalidRequest: http.StatusUnprocessableEntity,
 		}, err)
 

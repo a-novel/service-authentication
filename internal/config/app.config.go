@@ -51,8 +51,9 @@ type App struct {
 	ShortCodesConfig   ShortCodes   `json:"shortCodes"   yaml:"shortCodes"`
 	SmtpUrlsConfig     SmtpUrls     `json:"smtpUrls"     yaml:"smtpUrls"`
 
-	Smtp     smtp.Sender        `json:"smtp"     yaml:"smtp"`
-	Otel     otel.Config        `json:"otel"     yaml:"otel"`
-	Logger   logging.HttpConfig `json:"logger"   yaml:"logger"`
-	Postgres postgres.Config    `json:"postgres" yaml:"postgres"`
+	Smtp       smtp.Sender        `json:"smtp"       yaml:"smtp"`
+	Otel       otel.Config        `json:"otel"       yaml:"otel"`
+	Logger     logging.Log        `json:"logger"     yaml:"logger"`
+	HttpLogger logging.HttpConfig `json:"httplogger" yaml:"httplogger"`
+	Postgres   postgres.Config    `json:"postgres"   yaml:"postgres"`
 }

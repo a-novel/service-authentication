@@ -8,6 +8,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -27,10 +28,13 @@ type CredentialsUpdatePasswordRequest struct {
 
 type CredentialsUpdatePassword struct {
 	service CredentialsUpdatePasswordService
+	logger  logging.Log
 }
 
-func NewCredentialsUpdatePassword(service CredentialsUpdatePasswordService) *CredentialsUpdatePassword {
-	return &CredentialsUpdatePassword{service: service}
+func NewCredentialsUpdatePassword(
+	service CredentialsUpdatePasswordService, logger logging.Log,
+) *CredentialsUpdatePassword {
+	return &CredentialsUpdatePassword{service: service, logger: logger}
 }
 
 func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -43,14 +47,14 @@ func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *ht
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
 
 	claims, err := middlewares.MustGetClaimsContext(ctx)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, nil, err)
+		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
 
 		return
 	}
@@ -61,7 +65,7 @@ func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *ht
 		UserID:          lo.FromPtr(claims.UserID),
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
 			lib.ErrInvalidPassword:                   http.StatusForbidden,
 			services.ErrInvalidRequest:               http.StatusUnprocessableEntity,

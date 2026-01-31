@@ -9,6 +9,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -27,10 +28,13 @@ type ShortCodeCreateEmailUpdateRequest struct {
 
 type ShortCodeCreateEmailUpdate struct {
 	service ShortCodeCreateEmailUpdateService
+	logger  logging.Log
 }
 
-func NewShortCodeCreateEmailUpdate(service ShortCodeCreateEmailUpdateService) *ShortCodeCreateEmailUpdate {
-	return &ShortCodeCreateEmailUpdate{service: service}
+func NewShortCodeCreateEmailUpdate(
+	service ShortCodeCreateEmailUpdateService, logger logging.Log,
+) *ShortCodeCreateEmailUpdate {
+	return &ShortCodeCreateEmailUpdate{service: service, logger: logger}
 }
 
 func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -43,14 +47,14 @@ func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *h
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
 
 	claims, err := middlewares.MustGetClaimsContext(ctx)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, nil, err)
+		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
 
 		return
 	}
@@ -64,7 +68,7 @@ func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *h
 		// Silently succeed if email already exists to prevent email enumeration.
 		// The user won't receive an email, but they won't know if the email was registered.
 		if !errors.Is(err, dao.ErrCredentialsUpdateEmailAlreadyExists) {
-			httpf.HandleError(ctx, w, span, httpf.ErrMap{
+			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 				services.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			}, err)
 

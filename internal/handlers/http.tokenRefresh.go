@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -22,10 +23,11 @@ type TokenRefreshRequest struct {
 
 type TokenRefresh struct {
 	service TokenRefreshService
+	logger  logging.Log
 }
 
-func NewTokenRefresh(service TokenRefreshService) *TokenRefresh {
-	return &TokenRefresh{service: service}
+func NewTokenRefresh(service TokenRefreshService, logger logging.Log) *TokenRefresh {
+	return &TokenRefresh{service: service, logger: logger}
 }
 
 func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +40,7 @@ func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -48,7 +50,7 @@ func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: request.RefreshToken,
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			services.ErrTokenRefreshInvalidAccessToken:  http.StatusForbidden,
 			services.ErrTokenRefreshInvalidRefreshToken: http.StatusForbidden,
 			services.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,

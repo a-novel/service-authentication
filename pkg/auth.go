@@ -7,6 +7,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/golib/deps"
+	"github.com/a-novel-kit/golib/logging"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
@@ -24,6 +25,7 @@ type PermissionsHandler func(r chi.Router, permissions ...string) chi.Router
 func NewAuthHandler(
 	claimsVerifier middlewares.AuthClaimsVerifier,
 	permissions Permissions,
+	logger logging.Log,
 ) PermissionsHandler {
 	permissionsByRole := lo.Must(deps.ResolveDependants[string, string](
 		lo.MapEntries(
@@ -37,7 +39,7 @@ func NewAuthHandler(
 		}),
 	))
 
-	middlewareAuth := middlewares.NewAuth(claimsVerifier, permissionsByRole)
+	middlewareAuth := middlewares.NewAuth(claimsVerifier, permissionsByRole, logger)
 
 	return func(r chi.Router, permissions ...string) chi.Router {
 		return r.With(middlewareAuth.Middleware(permissions))

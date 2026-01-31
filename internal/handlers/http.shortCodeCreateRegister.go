@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -24,10 +25,11 @@ type ShortCodeCreateRegisterRequest struct {
 
 type ShortCodeCreateRegister struct {
 	service ShortCodeCreateRegisterService
+	logger  logging.Log
 }
 
-func NewShortCodeCreateRegister(service ShortCodeCreateRegisterService) *ShortCodeCreateRegister {
-	return &ShortCodeCreateRegister{service: service}
+func NewShortCodeCreateRegister(service ShortCodeCreateRegisterService, logger logging.Log) *ShortCodeCreateRegister {
+	return &ShortCodeCreateRegister{service: service, logger: logger}
 }
 
 func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +42,7 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 
 	err := decoder.Decode(&request)
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -53,7 +55,7 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 		// Silently succeed if email already exists to prevent email enumeration.
 		// The user won't receive an email, but they won't know if the email was registered.
 		if !errors.Is(err, dao.ErrCredentialsInsertAlreadyExists) {
-			httpf.HandleError(ctx, w, span, httpf.ErrMap{
+			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 				services.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			}, err)
 

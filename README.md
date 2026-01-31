@@ -306,6 +306,7 @@ package main
 import (
 	"context"
 
+	loggingpresets "github.com/a-novel-kit/golib/logging/presets"
 	"github.com/go-chi/chi/v5"
 
 	authpkg "github.com/a-novel/service-authentication/v2/pkg"
@@ -325,19 +326,19 @@ import (
 var myPermissions = authpkg.Permissions{
 	Roles: map[string]authpkg.Role{
 		"role1": {
-			Priority: 0,
+			Priority:    0,
 			Permissions: []string{"permission1", "permission2"},
-        },
+		},
 		"role2": {
-			Priority: 1,
-			Inherits: []string{"role1"},
+			Priority:    1,
+			Inherits:    []string{"role1"},
 			Permissions: []string{"permission3"},
 		},
 		"role3": {
-			Priority: 0,
+			Priority:    0,
 			Permissions: []string{"permission4"},
 		},
-    },
+	},
 }
 
 func main() {
@@ -346,8 +347,10 @@ func main() {
 	jsonKeysClient, _ := jkpkg.NewClient("<service-json-keys-url>")
 	serviceVerifyAccessToken := jkpkg.NewClaimsVerifier[authpkg.Claims](jsonKeysClient)
 
+	logger := config.LoggerDev
+
 	// You can now add permission-based authentication to your routes.
-	withAuth := authpkg.NewAuthHandler(serviceVerifyAccessToken, myPermissions)
+	withAuth := authpkg.NewAuthHandler(serviceVerifyAccessToken, myPermissions, logger)
 	router := chi.NewRouter()
 
 	// Route only accessible to users with role2.

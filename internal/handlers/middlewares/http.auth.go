@@ -12,6 +12,7 @@ import (
 	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -40,15 +41,19 @@ type Auth struct {
 	permissionsByRole map[string][]string
 
 	claimsVerifier AuthClaimsVerifier
+
+	logger logging.Log
 }
 
 func NewAuth(
 	claimsVerifier AuthClaimsVerifier,
 	permissionsByRole map[string][]string,
+	logger logging.Log,
 ) *Auth {
 	return &Auth{
 		permissionsByRole: permissionsByRole,
 		claimsVerifier:    claimsVerifier,
+		logger:            logger,
 	}
 }
 
@@ -79,7 +84,7 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 
 			if token == "" {
 				httpf.HandleError(
-					ctx, w, span,
+					ctx, middleware.logger, w, span,
 					httpf.ErrMap{nil: http.StatusUnauthorized},
 					fmt.Errorf("%w: missing authorization header", ErrInvalidAuth),
 				)
@@ -90,7 +95,7 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 			authToken := strings.Split(token, " ")
 			if len(authToken) != 2 || authToken[0] != "Bearer" {
 				httpf.HandleError(
-					ctx, w, span,
+					ctx, middleware.logger, w, span,
 					httpf.ErrMap{nil: http.StatusUnauthorized},
 					fmt.Errorf("%w: invalid authorization header", ErrInvalidAuth),
 				)
@@ -105,7 +110,11 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 				AccessToken: accessToken,
 			})
 			if err != nil {
-				httpf.HandleError(ctx, w, span, map[error]int{jws.ErrInvalidSignature: http.StatusUnauthorized}, err)
+				httpf.HandleError(
+					ctx, middleware.logger, w, span,
+					httpf.ErrMap{jws.ErrInvalidSignature: http.StatusUnauthorized},
+					err,
+				)
 
 				return
 			}
@@ -134,7 +143,7 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 
 				if !allowed {
 					httpf.HandleError(
-						ctx, w, span,
+						ctx, middleware.logger, w, span,
 						httpf.ErrMap{nil: http.StatusForbidden},
 						fmt.Errorf("%w: user does not have any of the required permissions", ErrInvalidAuth),
 					)

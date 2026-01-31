@@ -7,6 +7,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -24,10 +25,11 @@ type CredentialsListRequest struct {
 
 type CredentialsList struct {
 	service CredentialsListService
+	logger  logging.Log
 }
 
-func NewCredentialsList(service CredentialsListService) *CredentialsList {
-	return &CredentialsList{service: service}
+func NewCredentialsList(service CredentialsListService, logger logging.Log) *CredentialsList {
+	return &CredentialsList{service: service, logger: logger}
 }
 
 func (handler *CredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +40,7 @@ func (handler *CredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	err := muxDecoder.Decode(&request, r.URL.Query())
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
 		return
 	}
@@ -49,7 +51,7 @@ func (handler *CredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request
 		Roles:  request.Roles,
 	})
 	if err != nil {
-		httpf.HandleError(ctx, w, span, httpf.ErrMap{
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			services.ErrInvalidRequest: http.StatusUnprocessableEntity,
 		}, err)
 
