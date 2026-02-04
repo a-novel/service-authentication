@@ -1,5 +1,5 @@
 # This image runs a job that will apply the latest migrations to a database instance.
-FROM docker.io/library/golang:1.25.6-alpine AS builder
+FROM docker.io/library/golang:1.25.7-alpine AS builder
 
 WORKDIR /app
 
