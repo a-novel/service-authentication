@@ -4,7 +4,7 @@
 #
 # This image will make sure all patches are applied before starting the server. It is a larger
 # version of the base rest image, suited for local development rather than full scale production.
-FROM docker.io/library/golang:1.25.7-alpine AS builder
+FROM docker.io/library/golang:1.26.0-alpine AS builder
 
 WORKDIR /app
 
