@@ -3,7 +3,7 @@
 #
 # Note: this image does not run the migrations from the main image, make sure to call the appropriate
 # patch for this.
-FROM docker.io/library/postgres:18.1
+FROM docker.io/library/postgres:18.2
 
 # ======================================================================================================================
 # Prepare extension scripts.
