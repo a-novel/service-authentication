@@ -80,6 +80,12 @@ curl http://localhost:4011/healthcheck
 Get an anonymous token (required for most interactions).
 
 ```bash
+# For simplicity, define the following variables in your shell.
+USER=<USER_EMAIL>
+PASSWORD=<PASSWORD>
+```
+
+```bash
 ACCESS_TOKEN=$(curl -X PUT http://localhost:4011/session/anon | jq -r '.accessToken')
 
 # Verify session.
@@ -88,14 +94,14 @@ curl -X GET http://localhost:4011/session \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
-Register an account.
+##### Register
 
 ```bash
 # Create short code.
 curl -X PUT http://localhost:4011/short-code/register \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"email": "newuser@example.com", "lang": "en"}'
+  -d "{\"email\": \"$USER\", \"lang\": \"en\"}"
 
 # Retrieve email
 EMAIL_ID=$(curl -s http://localhost:4014/api/v1/messages | jq -r '.messages[0].ID')
@@ -110,13 +116,26 @@ TOKEN=$(
   curl -X PUT http://localhost:4011/credentials \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{\"email\": \"newuser@example.com\", \"password\": \"securepassword\", \"shortCode\": \"$SHORT_CODE\"}"
+    -d "{\"email\": \"$USER\", \"password\": \"$PASSWORD\", \"shortCode\": \"$SHORT_CODE\"}"
 )
 ACCESS_TOKEN=$(echo $TOKEN | jq -r '.accessToken')
 REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 ```
 
-Refresh token on expiration.
+##### Login
+
+```bash
+TOKEN=$(
+  curl -X PUT http://localhost:4011/session \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\": \"$USER\", \"password\": \"$PASSWORD\"}"
+)
+ACCESS_TOKEN=$(echo $TOKEN | jq -r '.accessToken')
+REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
+```
+
+##### Refresh expired token
 
 ```bash
 # Refresh an expired access token
