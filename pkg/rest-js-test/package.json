@@ -36,7 +36,7 @@
     "@a-novel-kit/nodelib-browser": "^1.3.13",
     "@a-novel-kit/nodelib-test": "^1.3.13",
     "@a-novel/service-authentication-rest": "workspace:*",
-    "jsdom": "^28.0.0",
+    "jsdom": "^28.1.0",
     "mailparser": "^3.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18",
