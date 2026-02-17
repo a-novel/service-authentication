@@ -22,7 +22,7 @@ services:
   # ====================================================================================================================
 
   postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v2.1.4
+    image: ghcr.io/a-novel/service-json-keys/database:v2.1.5
     networks:
       - authentication-integration-test
     environment:
@@ -50,7 +50,7 @@ services:
   # ====================================================================================================================
 
   service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.4
+    image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.5
     depends_on:
       - postgres-json-keys
     environment:
