@@ -57,8 +57,8 @@ github.com/MirrexOne/unqueryvet v1.5.3 h1:LpT3rsH+IY3cQddWF9bg4C7jsbASdGnrOSofY8
 github.com/MirrexOne/unqueryvet v1.5.3/go.mod h1:fs9Zq6eh1LRIhsDIsxf9PONVUjYdFHdtkHIgZdJnyPU=
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1 h1:vckeWVESWp6Qog7UZSARNqfu/cZqvki8zsuj3piCMx4=
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1/go.mod h1:q4DKzC4UcVaAvcfd41CZh0PWpGgzrVxUYBlgKNGquUo=
-github.com/a-novel-kit/golib v0.20.7 h1:4VtLR6+nZBghF7kvflxFrTNVlGzNEI77xKuARgeTrEM=
-github.com/a-novel-kit/golib v0.20.7/go.mod h1:rWtOzAUMAmzPDjFBtAkhLyU315XyVcZNlwMk3vzRklg=
+github.com/a-novel-kit/golib v0.20.8 h1:LWFeXb6znxnr+HUV6the1AXpEjDK5NHoWrn3QjkXrBc=
+github.com/a-novel-kit/golib v0.20.8/go.mod h1:wdinugafVeAQ1FRHi4F2GIpBziRzaUyVz+G2P7wP+UA=
 github.com/a-novel-kit/jwt v1.1.35 h1:jqs1riC6MZ4CfWr6qouicYQk+2RX/9u1Weq7WKo4y5s=
 github.com/a-novel-kit/jwt v1.1.35/go.mod h1:TCw4C37m4xcx2G+eLY6vqM1r7yG1gzA4UDuGF4g5od0=
 github.com/a-novel/service-json-keys/v2 v2.1.5 h1:VcNr5luGevGiUIUif3ugWarGDBRNhhuPZx4FT39GLYo=
@@ -764,8 +764,8 @@ golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8T
 golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 gonum.org/v1/gonum v0.16.0 h1:5+ul4Swaf3ESvrOnidPp4GZbzf0mxVQpDCYUQE7OJfk=
 gonum.org/v1/gonum v0.16.0/go.mod h1:fef3am4MQ93R2HHpKnLk4/Tbh/s0+wqD5nfa6Pnwy4E=
-google.golang.org/api v0.266.0 h1:hco+oNCf9y7DmLeAtHJi/uBAY7n/7XC9mZPxu1ROiyk=
-google.golang.org/api v0.266.0/go.mod h1:Jzc0+ZfLnyvXma3UtaTl023TdhZu6OMBP9tJ+0EmFD0=
+google.golang.org/api v0.267.0 h1:w+vfWPMPYeRs8qH1aYYsFX68jMls5acWl/jocfLomwE=
+google.golang.org/api v0.267.0/go.mod h1:Jzc0+ZfLnyvXma3UtaTl023TdhZu6OMBP9tJ+0EmFD0=
 google.golang.org/genproto v0.0.0-20260128011058-8636f8732409 h1:VQZ/yAbAtjkHgH80teYd2em3xtIkkHd7ZhqfH2N9CsM=
 google.golang.org/genproto v0.0.0-20260128011058-8636f8732409/go.mod h1:rxKD3IEILWEu3P44seeNOAwZN4SaoKaQ/2eTg4mM6EM=
 google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 h1:merA0rdPeUV3YIIfHHcH4qBkiQAc1nfCKSI7lB4cV2M=

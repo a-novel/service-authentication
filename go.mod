@@ -3,7 +3,7 @@ module github.com/a-novel/service-authentication/v2
 go 1.26.0
 
 require (
-	github.com/a-novel-kit/golib v0.20.7
+	github.com/a-novel-kit/golib v0.20.8
 	github.com/a-novel-kit/jwt v1.1.35
 	github.com/a-novel/service-json-keys/v2 v2.1.5
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -285,7 +285,7 @@ require (
 	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.42.0 // indirect
-	google.golang.org/api v0.266.0 // indirect
+	google.golang.org/api v0.267.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260203192932-546029d2fa20 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
