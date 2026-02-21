@@ -16,8 +16,8 @@ require (
 	github.com/muesli/termenv v0.16.0
 	github.com/samber/lo v1.52.0
 	github.com/stretchr/testify v1.11.1
-	github.com/uptrace/bun v1.2.16
-	github.com/uptrace/bun/driver/pgdriver v1.2.16
+	github.com/uptrace/bun v1.2.17
+	github.com/uptrace/bun/driver/pgdriver v1.2.17
 	go.opentelemetry.io/otel v1.40.0
 	golang.org/x/crypto v0.48.0
 	google.golang.org/grpc v1.79.1
