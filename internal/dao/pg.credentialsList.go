@@ -59,7 +59,7 @@ func (repository *CredentialsList) Exec(
 		credentialsListQuery,
 		bun.NullZero(request.Limit),
 		request.Offset,
-		bun.In(request.Roles),
+		bun.List(request.Roles),
 	).Scan(ctx, &entities)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
