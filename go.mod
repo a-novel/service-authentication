@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/a-novel-kit/golib v0.20.8
-	github.com/a-novel-kit/jwt v1.1.35
+	github.com/a-novel-kit/jwt v1.1.36
 	github.com/a-novel/service-json-keys/v2 v2.1.5
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/go-chi/chi/v5 v5.2.5
