@@ -308,7 +308,7 @@ import (
 	"os"
 
 	loggingpresets "github.com/a-novel-kit/golib/logging/presets"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/go-chi/chi/v5"
 	"github.com/muesli/termenv"
 
