@@ -241,7 +241,7 @@ require (
 	github.com/tommy-muehle/go-mnd/v2 v2.5.1 // indirect
 	github.com/ultraware/funlen v0.2.0 // indirect
 	github.com/ultraware/whitespace v0.2.0 // indirect
-	github.com/uptrace/bun/dialect/pgdialect v1.2.16 // indirect
+	github.com/uptrace/bun/dialect/pgdialect v1.2.17 // indirect
 	github.com/uudashr/gocognit v1.2.0 // indirect
 	github.com/uudashr/iface v1.4.1 // indirect
 	github.com/vektra/mockery/v3 v3.6.4 // indirect

@@ -560,8 +560,8 @@ github.com/ultraware/whitespace v0.2.0 h1:TYowo2m9Nfj1baEQBjuHzvMRbp19i+RCcRYrSW
 github.com/ultraware/whitespace v0.2.0/go.mod h1:XcP1RLD81eV4BW8UhQlpaR+SDc2givTvyI8a586WjW8=
 github.com/uptrace/bun v1.2.17 h1:3AV30/MrgVIL8haNbIQ7Z4I/eQGmaSlfK2T8W8ZprhM=
 github.com/uptrace/bun v1.2.17/go.mod h1:wNltaKJk4JtOt4SG5I5zmA7v0/Mzjh1+/S906Rayd3Y=
-github.com/uptrace/bun/dialect/pgdialect v1.2.16 h1:KFNZ0LxAyczKNfK/IJWMyaleO6eI9/Z5tUv3DE1NVL4=
-github.com/uptrace/bun/dialect/pgdialect v1.2.16/go.mod h1:IJdMeV4sLfh0LDUZl7TIxLI0LipF1vwTK3hBC7p5qLo=
+github.com/uptrace/bun/dialect/pgdialect v1.2.17 h1:DFmhOollvbYHvooxoS8ZIbiGC0wXIzstKeFUmWs+TP4=
+github.com/uptrace/bun/dialect/pgdialect v1.2.17/go.mod h1:ej8ZDsvLETvyELlRDfUtIoA57sWnATv1GhOEVsuVG/k=
 github.com/uptrace/bun/driver/pgdriver v1.2.17 h1:mKpkdAd31tT5tIJYdLENoFYjgU8mXHE1DFgqsx+Shas=
 github.com/uptrace/bun/driver/pgdriver v1.2.17/go.mod h1:NUq7hv9dndVNFTKYzb+WRt4UORL0AglQ65Ezz7fcr+A=
 github.com/uudashr/gocognit v1.2.0 h1:3BU9aMr1xbhPlvJLSydKwdLN3tEUUrzPSSM8S4hDYRA=
