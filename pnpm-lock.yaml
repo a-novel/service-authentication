@@ -5,7 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  cookie@<0.7.0: '>=0.7.0'
   fast-xml-parser@<5.3.8: '>=5.3.8'
+  js-yaml@>=4.0.0 <4.1.1: '>=4.1.1'
   lodash@>=4.0.0 <=4.17.22: '>=4.17.23'
   minimatch@>=10.0.0 <10.2.3: '>=10.2.3'
   minimatch@>=5.0.0 <5.1.8: '>=5.1.8'
@@ -24,7 +26,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.18
-        version: 1.3.18(1643b4faa2fd21a8d3fa16181cf1e107)
+        version: 1.3.18(6a28c0c440b7c4bd1c379d775d63d4dc)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.0.2(jiti@2.6.1))
@@ -237,6 +239,21 @@ packages:
       svelte: ^5.53.5
       typescript: ^5.9.3
       typescript-eslint: ^8.56.1
+    peerDependenciesMeta:
+      '@sveltejs/kit':
+        optional: true
+      eslint-plugin-storybook:
+        optional: true
+      eslint-plugin-svelte:
+        optional: true
+      prettier-plugin-css-order:
+        optional: true
+      prettier-plugin-sql:
+        optional: true
+      prettier-plugin-svelte:
+        optional: true
+      svelte:
+        optional: true
 
   '@a-novel-kit/nodelib-test@1.3.18':
     resolution: {integrity: sha512-pNBzVkCLOuD+3bwkz4vzp508tOii0S44p7pwKlPJLN7M1gG0RhfCPLsBmHuKcznVpuPlGzZ6nzSbkUjjzD66XQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/1.3.18/18dd55fbe9118ba32dc197871d6996085e73e899}
@@ -1057,7 +1074,7 @@ packages:
       prettier: 2.x - 3.x
       prettier-plugin-ember-template-tag: '>= 2.0.0'
       prettier-plugin-svelte: 3.x
-      svelte: '>=5.46.4'
+      svelte: '>=5.51.5'
     peerDependenciesMeta:
       '@vue/compiler-sfc':
         optional: true
@@ -1443,10 +1460,6 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
-
-  cookie@0.6.0:
-    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
-    engines: {node: '>= 0.6'}
 
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
@@ -2061,10 +2074,6 @@ packages:
 
   js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
-
-  js-yaml@4.1.0:
-    resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
-    hasBin: true
 
   js-yaml@4.1.1:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
@@ -3375,27 +3384,27 @@ snapshots:
     dependencies:
       zod: 4.3.6
 
-  '@a-novel-kit/nodelib-config@1.3.18(1643b4faa2fd21a8d3fa16181cf1e107)':
+  '@a-novel-kit/nodelib-config@1.3.18(6a28c0c440b7c4bd1c379d775d63d4dc)':
     dependencies:
       '@eslint/compat': 2.0.0(eslint@10.0.2(jiti@2.6.1))
       '@eslint/js': 10.0.1(eslint@10.0.2(jiti@2.6.1))
-      '@sveltejs/kit': 2.53.3(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.46.0)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1)))(svelte@5.46.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1))
       '@trivago/prettier-plugin-sort-imports': 6.0.2(prettier-plugin-svelte@3.4.1(prettier@3.8.1)(svelte@5.46.0))(prettier@3.8.1)(svelte@5.46.0)
       '@types/node': 25.3.2
       eslint: 10.0.2(jiti@2.6.1)
       eslint-config-prettier: 10.1.8(eslint@10.0.2(jiti@2.6.1))
       eslint-plugin-prettier: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.0.2(jiti@2.6.1)))(eslint@10.0.2(jiti@2.6.1))(prettier@3.8.1)
-      eslint-plugin-storybook: 10.2.13(eslint@10.0.2(jiti@2.6.1))(storybook@10.1.10(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
-      eslint-plugin-svelte: 3.15.0(eslint@10.0.2(jiti@2.6.1))(svelte@5.46.0)
       prettier: 3.8.1
-      prettier-plugin-css-order: 2.2.0(postcss@8.5.6)(prettier@3.8.1)
       prettier-plugin-packagejson: 3.0.0(prettier@3.8.1)
-      prettier-plugin-sql: 0.19.2(prettier@3.8.1)
-      prettier-plugin-svelte: 3.4.1(prettier@3.8.1)(svelte@5.46.0)
       storybook: 10.1.10(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      svelte: 5.46.0
       typescript: 5.9.3
       typescript-eslint: 8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3)
+    optionalDependencies:
+      '@sveltejs/kit': 2.53.3(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.46.0)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1)))(svelte@5.46.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1))
+      eslint-plugin-storybook: 10.2.13(eslint@10.0.2(jiti@2.6.1))(storybook@10.1.10(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+      eslint-plugin-svelte: 3.15.0(eslint@10.0.2(jiti@2.6.1))(svelte@5.46.0)
+      prettier-plugin-css-order: 2.2.0(postcss@8.5.6)(prettier@3.8.1)
+      prettier-plugin-sql: 0.19.2(prettier@3.8.1)
+      svelte: 5.46.0
 
   '@a-novel-kit/nodelib-test@1.3.18(@a-novel-kit/nodelib-browser@1.3.18(zod@4.3.6))(@msw/playwright@0.4.2(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3)))(@tanstack/react-query@5.90.12(react@19.2.4))(@testing-library/react@16.3.1(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3))(playwright@1.57.0)(v8-to-istanbul@9.3.0)(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3)))(zod@4.3.6)':
     dependencies:
@@ -3743,6 +3752,7 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
+    optional: true
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
@@ -3877,7 +3887,8 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
-  '@polka/url@1.0.0-next.29': {}
+  '@polka/url@1.0.0-next.29':
+    optional: true
 
   '@protobufjs/aspromise@1.1.2': {}
 
@@ -3968,7 +3979,7 @@ snapshots:
       colorette: 1.4.0
       https-proxy-agent: 7.0.6
       js-levenshtein: 1.1.6
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       minimatch: 10.2.4
       pluralize: 8.0.0
       yaml-ast-parser: 0.0.43
@@ -4095,6 +4106,7 @@ snapshots:
   '@sveltejs/acorn-typescript@1.0.9(acorn@8.16.0)':
     dependencies:
       acorn: 8.16.0
+    optional: true
 
   '@sveltejs/kit@2.53.3(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.46.0)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1)))(svelte@5.46.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1))':
     dependencies:
@@ -4103,7 +4115,7 @@ snapshots:
       '@sveltejs/vite-plugin-svelte': 6.2.4(svelte@5.46.0)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1))
       '@types/cookie': 0.6.0
       acorn: 8.16.0
-      cookie: 0.6.0
+      cookie: 1.1.1
       devalue: 5.6.3
       esm-env: 1.2.2
       kleur: 4.1.5
@@ -4116,6 +4128,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       typescript: 5.9.3
+    optional: true
 
   '@sveltejs/vite-plugin-svelte-inspector@5.0.2(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.46.0)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1)))(svelte@5.46.0)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1))':
     dependencies:
@@ -4123,6 +4136,7 @@ snapshots:
       obug: 2.1.1
       svelte: 5.46.0
       vite: 7.3.1(@types/node@25.3.2)(jiti@2.6.1)
+    optional: true
 
   '@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.46.0)(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1))':
     dependencies:
@@ -4133,6 +4147,7 @@ snapshots:
       svelte: 5.46.0
       vite: 7.3.1(@types/node@25.3.2)(jiti@2.6.1)
       vitefu: 1.1.2(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1))
+    optional: true
 
   '@tanstack/query-core@5.90.12': {}
 
@@ -4196,7 +4211,8 @@ snapshots:
       '@types/deep-eql': 4.0.2
       assertion-error: 2.0.1
 
-  '@types/cookie@0.6.0': {}
+  '@types/cookie@0.6.0':
+    optional: true
 
   '@types/deep-eql@4.0.2': {}
 
@@ -4505,7 +4521,8 @@ snapshots:
       estree-walker: 3.0.3
       js-tokens: 9.0.1
 
-  axobject-query@4.1.0: {}
+  axobject-query@4.1.0:
+    optional: true
 
   balanced-match@4.0.4: {}
 
@@ -4642,8 +4659,6 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  cookie@0.6.0: {}
-
   cookie@0.7.2: {}
 
   cookie@1.1.1: {}
@@ -4661,6 +4676,7 @@ snapshots:
   css-declaration-sorter@7.3.1(postcss@8.5.6):
     dependencies:
       postcss: 8.5.6
+    optional: true
 
   css-select@5.2.2:
     dependencies:
@@ -4746,7 +4762,8 @@ snapshots:
 
   detect-node@2.1.0: {}
 
-  devalue@5.6.3: {}
+  devalue@5.6.3:
+    optional: true
 
   discontinuous-range@1.0.0: {}
 
@@ -4953,7 +4970,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  esm-env@1.2.2: {}
+  esm-env@1.2.2:
+    optional: true
 
   espree@10.4.0:
     dependencies:
@@ -4976,6 +4994,7 @@ snapshots:
   esrap@2.2.3:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
+    optional: true
 
   esrecurse@4.3.0:
     dependencies:
@@ -5213,6 +5232,7 @@ snapshots:
   is-reference@3.0.3:
     dependencies:
       '@types/estree': 1.0.8
+    optional: true
 
   is-wsl@3.1.1:
     dependencies:
@@ -5258,10 +5278,6 @@ snapshots:
   js-tokens@4.0.0: {}
 
   js-tokens@9.0.1: {}
-
-  js-yaml@4.1.0:
-    dependencies:
-      argparse: 2.0.1
 
   js-yaml@4.1.1:
     dependencies:
@@ -5362,7 +5378,8 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  kleur@4.1.5: {}
+  kleur@4.1.5:
+    optional: true
 
   known-css-properties@0.37.0: {}
 
@@ -5392,7 +5409,8 @@ snapshots:
     dependencies:
       uc.micro: 2.1.0
 
-  locate-character@3.0.0: {}
+  locate-character@3.0.0:
+    optional: true
 
   locate-path@6.0.0:
     dependencies:
@@ -5784,7 +5802,8 @@ snapshots:
 
   moo@0.5.2: {}
 
-  mrmime@2.0.1: {}
+  mrmime@2.0.1:
+    optional: true
 
   ms@2.1.3: {}
 
@@ -6036,6 +6055,7 @@ snapshots:
   postcss-less@6.0.0(postcss@8.5.6):
     dependencies:
       postcss: 8.5.6
+    optional: true
 
   postcss-load-config@3.1.4(postcss@8.5.6):
     dependencies:
@@ -6085,6 +6105,7 @@ snapshots:
       prettier: 3.8.1
     transitivePeerDependencies:
       - postcss
+    optional: true
 
   prettier-plugin-packagejson@2.5.22(prettier@3.8.1):
     dependencies:
@@ -6110,6 +6131,7 @@ snapshots:
     dependencies:
       prettier: 3.8.1
       svelte: 5.46.0
+    optional: true
 
   prettier@3.8.1: {}
 
@@ -6297,7 +6319,8 @@ snapshots:
 
   set-cookie-parser@2.7.2: {}
 
-  set-cookie-parser@3.0.1: {}
+  set-cookie-parser@3.0.1:
+    optional: true
 
   shallowequal@1.1.0: {}
 
@@ -6354,6 +6377,7 @@ snapshots:
       '@polka/url': 1.0.0-next.29
       mrmime: 2.0.1
       totalist: 3.0.1
+    optional: true
 
   slick@1.12.2: {}
 
@@ -6493,6 +6517,7 @@ snapshots:
       locate-character: 3.0.0
       magic-string: 0.30.21
       zimmerframe: 1.1.4
+    optional: true
 
   swagger2openapi@7.0.8:
     dependencies:
@@ -6547,7 +6572,8 @@ snapshots:
     dependencies:
       is-number: 7.0.0
 
-  totalist@3.0.1: {}
+  totalist@3.0.1:
+    optional: true
 
   tough-cookie@6.0.0:
     dependencies:
@@ -6659,6 +6685,7 @@ snapshots:
   vitefu@1.1.2(vite@7.3.1(@types/node@25.3.2)(jiti@2.6.1)):
     optionalDependencies:
       vite: 7.3.1(@types/node@25.3.2)(jiti@2.6.1)
+    optional: true
 
   vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3)):
     dependencies:
@@ -6856,6 +6883,7 @@ snapshots:
 
   yoctocolors-cjs@2.1.3: {}
 
-  zimmerframe@1.1.4: {}
+  zimmerframe@1.1.4:
+    optional: true
 
   zod@4.3.6: {}
