@@ -15,6 +15,20 @@ onlyBuiltDependencies:
   - msw
   - protobufjs
 
+overrides:
+  fast-xml-parser@<5.3.8: ">=5.3.8"
+  lodash@>=4.0.0 <=4.17.22: ">=4.17.23"
+  minimatch@>=10.0.0 <10.2.3: ">=10.2.3"
+  minimatch@>=5.0.0 <5.1.8: ">=5.1.8"
+  minimatch@>=9.0.0 <9.0.6: ">=9.0.6"
+  minimatch@>=9.0.0 <9.0.7: ">=9.0.7"
+  rollup@>=4.0.0 <4.59.0: ">=4.59.0"
+  storybook@>=10.0.0-beta.0 <10.2.10: ">=10.2.10"
+  svelte@<=5.51.4: ">=5.51.5"
+  svelte@<=5.53.4: ">=5.53.5"
+  svelte@>=5.39.3 <5.51.5: ">=5.51.5"
+  svelte@>=5.46.0 <=5.46.3: ">=5.46.4"
+
 prefer-workspace-packages: true
 
 recursive-install: true
