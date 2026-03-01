@@ -59,8 +59,8 @@ github.com/OpenPeeDeeP/depguard/v2 v2.2.1 h1:vckeWVESWp6Qog7UZSARNqfu/cZqvki8zsu
 github.com/OpenPeeDeeP/depguard/v2 v2.2.1/go.mod h1:q4DKzC4UcVaAvcfd41CZh0PWpGgzrVxUYBlgKNGquUo=
 github.com/a-novel-kit/golib v0.20.11 h1:RwLL6SECFR19L3o89opcLL+jvVKqeJRcS3vU/irxfxg=
 github.com/a-novel-kit/golib v0.20.11/go.mod h1:9E6+STkhToFbAZf/7IKdeDGThupopILXKW6oG3X6WfM=
-github.com/a-novel-kit/jwt v1.1.37 h1:LVE8HKSJeshsf8hViF4MJIo5iDW725v1uZWqPjnpEiE=
-github.com/a-novel-kit/jwt v1.1.37/go.mod h1:TCw4C37m4xcx2G+eLY6vqM1r7yG1gzA4UDuGF4g5od0=
+github.com/a-novel-kit/jwt v1.1.38 h1:XV9r+Stekn5PtTo4vwO0hab91SJP56mO+cpTlTxt2ds=
+github.com/a-novel-kit/jwt v1.1.38/go.mod h1:TCw4C37m4xcx2G+eLY6vqM1r7yG1gzA4UDuGF4g5od0=
 github.com/a-novel/service-json-keys/v2 v2.1.5 h1:VcNr5luGevGiUIUif3ugWarGDBRNhhuPZx4FT39GLYo=
 github.com/a-novel/service-json-keys/v2 v2.1.5/go.mod h1:rx4uPnupgx/WNRy7ispX7rCpeoHZxgFyB+LrPUiGt6g=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
