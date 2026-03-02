@@ -3,7 +3,7 @@ module github.com/a-novel/service-authentication/v2
 go 1.26.0
 
 require (
-	github.com/a-novel-kit/golib v0.20.11
+	github.com/a-novel-kit/golib v0.20.12
 	github.com/a-novel-kit/jwt v1.1.38
 	github.com/a-novel/service-json-keys/v2 v2.1.5
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -16,8 +16,8 @@ require (
 	github.com/muesli/termenv v0.16.0
 	github.com/samber/lo v1.52.0
 	github.com/stretchr/testify v1.11.1
-	github.com/uptrace/bun v1.2.17
-	github.com/uptrace/bun/driver/pgdriver v1.2.17
+	github.com/uptrace/bun v1.2.18
+	github.com/uptrace/bun/driver/pgdriver v1.2.18
 	go.opentelemetry.io/otel v1.40.0
 	golang.org/x/crypto v0.48.0
 	google.golang.org/grpc v1.79.1
@@ -240,7 +240,7 @@ require (
 	github.com/tommy-muehle/go-mnd/v2 v2.5.1 // indirect
 	github.com/ultraware/funlen v0.2.0 // indirect
 	github.com/ultraware/whitespace v0.2.0 // indirect
-	github.com/uptrace/bun/dialect/pgdialect v1.2.17 // indirect
+	github.com/uptrace/bun/dialect/pgdialect v1.2.18 // indirect
 	github.com/uudashr/gocognit v1.2.0 // indirect
 	github.com/uudashr/iface v1.4.1 // indirect
 	github.com/vektra/mockery/v3 v3.6.4 // indirect
