@@ -26,7 +26,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.18
-        version: 1.3.19(3820a8b8bef38c89ac2698d985894096)
+        version: 1.3.19(188fed0cdc3259c5d5d06283bdb756bf)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.0.2(jiti@2.6.1))
@@ -80,7 +80,7 @@ importers:
         version: 3.8.1
       prettier-plugin-packagejson:
         specifier: ^3.0.0
-        version: 3.0.0(prettier@3.8.1)
+        version: 3.0.1(prettier@3.8.1)
       prettier-plugin-sql:
         specifier: ^0.19.2
         version: 0.19.2(prettier@3.8.1)
@@ -1889,8 +1889,8 @@ packages:
     resolution: {integrity: sha512-hjrNztw/VajQwOLsMNT1cbJiH2muO3OROCHnbehc8eY5JyD2gqz4AcMHPqgaOR59DjgUjYAYLeH699g/eWi2jw==}
     engines: {node: '>=18'}
 
-  graphql@16.13.0:
-    resolution: {integrity: sha512-uSisMYERbaB9bkA9M4/4dnqyktaEkf1kMHNKq/7DHyxVeWqHQ2mBmVqm5u6/FVHwF3iCNalKcg82Zfl+tffWoA==}
+  graphql@16.13.1:
+    resolution: {integrity: sha512-gGgrVCoDKlIZ8fIqXBBb0pPKqDgki0Z/FSKNiQzSGj2uEYHr1tq5wmBegGwJx6QB5S5cM0khSBpi/JFHMCvsmQ==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
   handlebars@4.7.8:
@@ -2670,8 +2670,8 @@ packages:
       prettier:
         optional: true
 
-  prettier-plugin-packagejson@3.0.0:
-    resolution: {integrity: sha512-z8/QmPSqx/ANvvQMWJSkSq1+ihBXeuwDEYdjX3ZjRJ5Ty1k7vGbFQfhzk2eDe0rwS/TNyRjWK/qnjJEStAOtDw==}
+  prettier-plugin-packagejson@3.0.1:
+    resolution: {integrity: sha512-dGMMVROGzziTdLlFNoOhJyDafp29ynxWLam7WPFX8O/iR0osRedi7ZAAz+Hy2//pXhLUrB9QvIQZjxpynQJzsw==}
     peerDependencies:
       prettier: ^3
     peerDependenciesMeta:
@@ -3379,7 +3379,7 @@ snapshots:
     dependencies:
       zod: 4.3.6
 
-  '@a-novel-kit/nodelib-config@1.3.19(3820a8b8bef38c89ac2698d985894096)':
+  '@a-novel-kit/nodelib-config@1.3.19(188fed0cdc3259c5d5d06283bdb756bf)':
     dependencies:
       '@eslint/compat': 2.0.0(eslint@10.0.2(jiti@2.6.1))
       '@eslint/js': 10.0.1(eslint@10.0.2(jiti@2.6.1))
@@ -3393,7 +3393,7 @@ snapshots:
       eslint-plugin-svelte: 3.15.0(eslint@10.0.2(jiti@2.6.1))(svelte@5.46.0)
       prettier: 3.8.1
       prettier-plugin-css-order: 2.2.0(postcss@8.5.6)(prettier@3.8.1)
-      prettier-plugin-packagejson: 3.0.0(prettier@3.8.1)
+      prettier-plugin-packagejson: 3.0.1(prettier@3.8.1)
       prettier-plugin-sql: 0.19.2(prettier@3.8.1)
       prettier-plugin-svelte: 3.4.1(prettier@3.8.1)(svelte@5.46.0)
       storybook: 10.1.10(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -5092,7 +5092,7 @@ snapshots:
 
   globals@17.4.0: {}
 
-  graphql@16.13.0: {}
+  graphql@16.13.1: {}
 
   handlebars@4.7.8:
     dependencies:
@@ -5803,7 +5803,7 @@ snapshots:
       '@open-draft/deferred-promise': 2.2.0
       '@types/statuses': 2.0.6
       cookie: 1.1.1
-      graphql: 16.13.0
+      graphql: 16.13.1
       headers-polyfill: 4.0.3
       is-node-process: 1.2.0
       outvariant: 1.4.3
@@ -5828,7 +5828,7 @@ snapshots:
       '@open-draft/deferred-promise': 2.2.0
       '@types/statuses': 2.0.6
       cookie: 1.1.1
-      graphql: 16.13.0
+      graphql: 16.13.1
       headers-polyfill: 4.0.3
       is-node-process: 1.2.0
       outvariant: 1.4.3
@@ -6100,7 +6100,7 @@ snapshots:
     optionalDependencies:
       prettier: 3.8.1
 
-  prettier-plugin-packagejson@3.0.0(prettier@3.8.1):
+  prettier-plugin-packagejson@3.0.1(prettier@3.8.1):
     dependencies:
       sort-package-json: 3.6.0
     optionalDependencies:
