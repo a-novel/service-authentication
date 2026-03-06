@@ -2,9 +2,9 @@
 openapi: 3.1.0
 
 servers:
-  - url: http://127.0.0.1:${SERVICE_AUTHENTICATION_REST_PORT}
+  - url: http://127.0.0.1:{rest_port}
     variables:
-      SERVICE_AUTHENTICATION_REST_PORT:
+      rest_port:
         default: "8080"
 
 info:
