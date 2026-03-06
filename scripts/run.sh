@@ -12,6 +12,8 @@ int_handler()
 }
 trap int_handler INT
 
+. "$PWD/scripts/setup-env.sh"
+
 podman compose --podman-build-args='--format docker -q' -p "${APP_NAME}" -f "${PODMAN_FILE}" up --build
 
 # Normal execution: containers are shut down.

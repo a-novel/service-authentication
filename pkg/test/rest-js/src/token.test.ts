@@ -12,7 +12,7 @@ import {
 
 describe("tokenCreate", () => {
   it("logs in with correct credentials", async () => {
-    const api = new AuthenticationApi(process.env.API_URL!);
+    const api = new AuthenticationApi(process.env.REST_URL!);
 
     const res = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -31,7 +31,7 @@ describe("tokenCreate", () => {
   });
 
   it("returns unauthorized when email does not exist", async () => {
-    const api = new AuthenticationApi(process.env.API_URL!);
+    const api = new AuthenticationApi(process.env.REST_URL!);
 
     await expectStatus(
       tokenCreate(api, {
@@ -43,7 +43,7 @@ describe("tokenCreate", () => {
   });
 
   it("returns unauthorized when password is incorrect", async () => {
-    const api = new AuthenticationApi(process.env.API_URL!);
+    const api = new AuthenticationApi(process.env.REST_URL!);
 
     await expectStatus(
       tokenCreate(api, {
@@ -57,7 +57,7 @@ describe("tokenCreate", () => {
 
 describe("tokenCreateAnon", () => {
   it("logs in with generic credentials", async () => {
-    const api = new AuthenticationApi(process.env.API_URL!);
+    const api = new AuthenticationApi(process.env.REST_URL!);
 
     const res = await tokenCreateAnon(api);
 
@@ -73,7 +73,7 @@ describe("tokenCreateAnon", () => {
 
 describe("tokenRefresh", () => {
   it("refreshes token once", async () => {
-    const api = new AuthenticationApi(process.env.API_URL!);
+    const api = new AuthenticationApi(process.env.REST_URL!);
 
     const token = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -100,7 +100,7 @@ describe("tokenRefresh", () => {
   });
 
   it("refreshes token twice", async () => {
-    const api = new AuthenticationApi(process.env.API_URL!);
+    const api = new AuthenticationApi(process.env.REST_URL!);
 
     const token = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -128,7 +128,7 @@ describe("tokenRefresh", () => {
   });
 
   it("can only use refresh token issued with original access token", async () => {
-    const api = new AuthenticationApi(process.env.API_URL!);
+    const api = new AuthenticationApi(process.env.REST_URL!);
 
     const token = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,

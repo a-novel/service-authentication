@@ -16,7 +16,7 @@ func NewPing() *Ping {
 }
 
 func (handler *Ping) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	_, span := otel.Tracer().Start(r.Context(), "api.Ping")
+	_, span := otel.Tracer().Start(r.Context(), "rest.Ping")
 	defer span.End()
 
 	w.Header().Set("Content-Type", "text/plain")

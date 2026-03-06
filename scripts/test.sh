@@ -10,9 +10,9 @@ int_handler()
 }
 trap int_handler INT
 
-podman compose --podman-build-args='--format docker -q' -p "${APP_NAME}" -f "${PODMAN_FILE}" up -d --build
+. "$PWD/scripts/setup-env.sh"
 
-POSTGRES_DSN=${POSTGRES_DSN_TEST} go run cmd/migrations/main.go
+podman compose --podman-build-args='--format docker -q' -p "${APP_NAME}" -f "${PODMAN_FILE}" up -d --build
 
 # shellcheck disable=SC2046
 PACKAGES="$(go list ./... | grep -v /mocks | grep -v /test)"

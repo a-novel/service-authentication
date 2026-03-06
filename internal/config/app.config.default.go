@@ -35,15 +35,15 @@ var AppPresetDefault = App{
 	App: Main{
 		Name: env.AppName,
 	},
-	Api: API{
-		Port:           env.ApiPort,
-		MaxRequestSize: env.ApiMaxRequestSize,
-		Timeouts: APITimeouts{
-			Read:       env.ApiTimeoutRead,
-			ReadHeader: env.ApiTimeoutReadHeader,
-			Write:      env.ApiTimeoutWrite,
-			Idle:       env.ApiTimeoutIdle,
-			Request:    env.ApiTimeoutRequest,
+	Rest: Rest{
+		Port:           env.RestPort,
+		MaxRequestSize: env.RestMaxRequestSize,
+		Timeouts: RestTimeouts{
+			Read:       env.RestTimeoutRead,
+			ReadHeader: env.RestTimeoutReadHeader,
+			Write:      env.RestTimeoutWrite,
+			Idle:       env.RestTimeoutIdle,
+			Request:    env.RestTimeoutRequest,
 		},
 		Cors: Cors{
 			AllowedOrigins:   env.CorsAllowedOrigins,

@@ -20,7 +20,7 @@ type Dependencies struct {
 	ServiceJsonKeysCredentials grpcf.CredentialsProvider `json:"-"                   yaml:"-"`
 }
 
-type APITimeouts struct {
+type RestTimeouts struct {
 	Read       time.Duration `json:"read"       yaml:"read"`
 	ReadHeader time.Duration `json:"readHeader" yaml:"readHeader"`
 	Write      time.Duration `json:"write"      yaml:"write"`
@@ -35,16 +35,16 @@ type Cors struct {
 	MaxAge           int      `json:"maxAge"           yaml:"maxAge"`
 }
 
-type API struct {
-	Port           int         `json:"port"           yaml:"port"`
-	Timeouts       APITimeouts `json:"timeouts"       yaml:"timeouts"`
-	MaxRequestSize int64       `json:"maxRequestSize" yaml:"maxRequestSize"`
-	Cors           Cors        `json:"cors"           yaml:"cors"`
+type Rest struct {
+	Port           int          `json:"port"           yaml:"port"`
+	Timeouts       RestTimeouts `json:"timeouts"       yaml:"timeouts"`
+	MaxRequestSize int64        `json:"maxRequestSize" yaml:"maxRequestSize"`
+	Cors           Cors         `json:"cors"           yaml:"cors"`
 }
 
 type App struct {
-	App Main `json:"app" yaml:"app"`
-	Api API  `json:"api" yaml:"api"`
+	App  Main `json:"app"  yaml:"app"`
+	Rest Rest `json:"rest" yaml:"rest"`
 
 	DependenciesConfig Dependencies `json:"dependencies" yaml:"dependencies"`
 	Permissions        Permissions  `json:"permissions"  yaml:"permissions"`

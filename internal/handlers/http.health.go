@@ -17,61 +17,61 @@ import (
 )
 
 const (
-	HealthStatusUp   = "up"
-	HealthStatusDown = "down"
+	RestHealthStatusUp   = "up"
+	RestHealthStatusDown = "down"
 )
 
-type HeathStatus struct {
+type RestHealthStatus struct {
 	Status string `json:"status"`
 	Err    string `json:"err,omitempty"`
 }
 
-func NewHealthStatus(err error) *HeathStatus {
+func NewRestHealthStatus(err error) *RestHealthStatus {
 	errMsg := ""
 	if err != nil {
 		errMsg = err.Error()
 	}
 
-	return &HeathStatus{
-		Status: lo.Ternary(err == nil, HealthStatusUp, HealthStatusDown),
+	return &RestHealthStatus{
+		Status: lo.Ternary(err == nil, RestHealthStatusUp, RestHealthStatusDown),
 		Err:    errMsg,
 	}
 }
 
-type HealthClientSmtp = smtp.Sender
+type RestHealthClientSmtp = smtp.Sender
 
-type HealthApiJsonkeys interface {
+type RestHealthApiJsonKeys interface {
 	Status(ctx context.Context, req *jkpkg.StatusRequest, opts ...grpc.CallOption) (*jkpkg.StatusResponse, error)
 }
 
-type Health struct {
-	apiJsonKeys HealthApiJsonkeys
-	clientSmtp  HealthClientSmtp
+type RestHealth struct {
+	apiJsonKeys RestHealthApiJsonKeys
+	clientSmtp  RestHealthClientSmtp
 }
 
-func NewHealth(
-	apiJsonKeys HealthApiJsonkeys,
-	clientSmtp HealthClientSmtp,
-) *Health {
-	return &Health{
+func NewRestHealth(
+	apiJsonKeys RestHealthApiJsonKeys,
+	clientSmtp RestHealthClientSmtp,
+) *RestHealth {
+	return &RestHealth{
 		apiJsonKeys: apiJsonKeys,
 		clientSmtp:  clientSmtp,
 	}
 }
 
-func (handler *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "api.Health")
+func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.RestHealth")
 	defer span.End()
 
 	httpf.SendJSON(ctx, w, span, map[string]any{
-		"client:postgres": NewHealthStatus(handler.reportPostgres(ctx)),
-		"client:smtp":     NewHealthStatus(handler.reportSmtp(ctx)),
-		"api:jsonKeys":    NewHealthStatus(handler.reportJsonKeys(ctx)),
+		"client:postgres": NewRestHealthStatus(handler.reportPostgres(ctx)),
+		"client:smtp":     NewRestHealthStatus(handler.reportSmtp(ctx)),
+		"api:jsonKeys":    NewRestHealthStatus(handler.reportJsonKeys(ctx)),
 	})
 }
 
-func (handler *Health) reportPostgres(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "api.Health(reportPostgres)")
+func (handler *RestHealth) reportPostgres(ctx context.Context) error {
+	ctx, span := otel.Tracer().Start(ctx, "rest.RestHealth(reportPostgres)")
 	defer span.End()
 
 	pg, err := postgres.GetContext(ctx)
@@ -95,8 +95,8 @@ func (handler *Health) reportPostgres(ctx context.Context) error {
 	return nil
 }
 
-func (handler *Health) reportJsonKeys(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "api.Health(reportJsonKeys)")
+func (handler *RestHealth) reportJsonKeys(ctx context.Context) error {
+	ctx, span := otel.Tracer().Start(ctx, "rest.RestHealth(reportJsonKeys)")
 	defer span.End()
 
 	_, err := handler.apiJsonKeys.Status(ctx, new(jkpkg.StatusRequest))
@@ -109,8 +109,8 @@ func (handler *Health) reportJsonKeys(ctx context.Context) error {
 	return nil
 }
 
-func (handler *Health) reportSmtp(ctx context.Context) error {
-	_, span := otel.Tracer().Start(ctx, "api.Health(reportSmtp)")
+func (handler *RestHealth) reportSmtp(ctx context.Context) error {
+	_, span := otel.Tracer().Start(ctx, "rest.RestHealth(reportSmtp)")
 	defer span.End()
 
 	err := handler.clientSmtp.Ping()
