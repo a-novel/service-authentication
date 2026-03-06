@@ -21,6 +21,10 @@
 
 Run the service as a containerized application (the below examples use docker-compose syntax).
 
+#### REST
+
+> Set the SERVICE_AUTHENTICATION_REST_PORT env variable to whatever port you want to use for the service.
+
 ```yaml
 services:
   postgres-authentication:
@@ -39,7 +43,7 @@ services:
   service-authentication:
     image: ghcr.io/a-novel/service-authentication/standalone:v2.3.1
     ports:
-      - "4011:8080"
+      - "${SERVICE_AUTHENTICATION_REST_PORT}:8080"
     depends_on:
       postgres-authentication:
         condition: service_healthy
@@ -105,7 +109,7 @@ services:
   service-authentication:
     image: ghcr.io/a-novel/service-authentication/rest:v2.3.1
     ports:
-      - "4011:8080"
+      - "${SERVICE_AUTHENTICATION_REST_PORT}:8080"
     depends_on:
       postgres-authentication:
         condition: service_healthy
@@ -177,18 +181,18 @@ as emails contain sensitive information (eg short codes).
 While you should not need to change these values in most cases, the following variables allow you to
 customize the API behavior.
 
-| Name                       | Description                                 | Default value    | Images                  |
-| -------------------------- | ------------------------------------------- | ---------------- | ----------------------- |
-| API_MAX_REQUEST_SIZE       | Maximum size of incoming requests in bytes  | `2097152` (2MiB) | `standalone`<br/>`rest` |
-| API_TIMEOUT_READ           | Timeout for read operations                 | `15s`            | `standalone`<br/>`rest` |
-| API_TIMEOUT_READ_HEADER    | Timeout for header reading operations       | `3s`             | `standalone`<br/>`rest` |
-| API_TIMEOUT_WRITE          | Timeout for write operations                | `30s`            | `standalone`<br/>`rest` |
-| API_TIMEOUT_IDLE           | Idle timeout                                | `60s`            | `standalone`<br/>`rest` |
-| API_TIMEOUT_REQUEST        | Timeout for api requests                    | `60s`            | `standalone`<br/>`rest` |
-| API_CORS_ALLOWED_ORIGINS   | CORS allowed origins (allow all by default) | `*`              | `standalone`<br/>`rest` |
-| API_CORS_ALLOWED_HEADERS   | CORS allowed headers (allow all by default) | `*`              | `standalone`<br/>`rest` |
-| API_CORS_ALLOW_CREDENTIALS | CORS allow credentials                      | `false`          | `standalone`<br/>`rest` |
-| API_CORS_MAX_AGE           | CORS max age                                | `3600`           | `standalone`<br/>`rest` |
+| Name                        | Description                                 | Default value    | Images                  |
+| --------------------------- | ------------------------------------------- | ---------------- | ----------------------- |
+| REST_MAX_REQUEST_SIZE       | Maximum size of incoming requests in bytes  | `2097152` (2MiB) | `standalone`<br/>`rest` |
+| REST_TIMEOUT_READ           | Timeout for read operations                 | `15s`            | `standalone`<br/>`rest` |
+| REST_TIMEOUT_READ_HEADER    | Timeout for header reading operations       | `3s`             | `standalone`<br/>`rest` |
+| REST_TIMEOUT_WRITE          | Timeout for write operations                | `30s`            | `standalone`<br/>`rest` |
+| REST_TIMEOUT_IDLE           | Idle timeout                                | `60s`            | `standalone`<br/>`rest` |
+| REST_TIMEOUT_REQUEST        | Timeout for api requests                    | `60s`            | `standalone`<br/>`rest` |
+| REST_CORS_ALLOWED_ORIGINS   | CORS allowed origins (allow all by default) | `*`              | `standalone`<br/>`rest` |
+| REST_CORS_ALLOWED_HEADERS   | CORS allowed headers (allow all by default) | `*`              | `standalone`<br/>`rest` |
+| REST_CORS_ALLOW_CREDENTIALS | CORS allow credentials                      | `false`          | `standalone`<br/>`rest` |
+| REST_CORS_MAX_AGE           | CORS max age                                | `3600`           | `standalone`<br/>`rest` |
 
 **Logs & Tracing**
 

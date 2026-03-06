@@ -55,13 +55,13 @@ func TestHealth(t *testing.T) {
 
 			expectResponse: map[string]any{
 				"client:postgres": map[string]any{
-					"status": handlers.HealthStatusUp,
+					"status": handlers.RestHealthStatusUp,
 				},
 				"client:smtp": map[string]any{
-					"status": handlers.HealthStatusUp,
+					"status": handlers.RestHealthStatusUp,
 				},
 				"api:jsonKeys": map[string]any{
-					"status": handlers.HealthStatusUp,
+					"status": handlers.RestHealthStatusUp,
 				},
 			},
 			expectStatus: http.StatusOK,
@@ -80,14 +80,14 @@ func TestHealth(t *testing.T) {
 
 			expectResponse: map[string]any{
 				"client:postgres": map[string]any{
-					"status": handlers.HealthStatusUp,
+					"status": handlers.RestHealthStatusUp,
 				},
 				"client:smtp": map[string]any{
-					"status": handlers.HealthStatusDown,
+					"status": handlers.RestHealthStatusDown,
 					"err":    "error smtp",
 				},
 				"api:jsonKeys": map[string]any{
-					"status": handlers.HealthStatusDown,
+					"status": handlers.RestHealthStatusDown,
 					"err":    "error json keys",
 				},
 			},
@@ -99,8 +99,8 @@ func TestHealth(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			healthClientSmtp := handlersmocks.NewMockHealthClientSmtp(t)
-			healthApiJsonKeys := handlersmocks.NewMockHealthApiJsonkeys(t)
+			healthClientSmtp := handlersmocks.NewMockRestHealthClientSmtp(t)
+			healthApiJsonKeys := handlersmocks.NewMockRestHealthApiJsonKeys(t)
 
 			if testCase.healthClientSmtpMock != nil {
 				healthClientSmtp.EXPECT().
@@ -114,7 +114,7 @@ func TestHealth(t *testing.T) {
 					Return(testCase.healthApiJsonKeysMock.res, testCase.healthApiJsonKeysMock.err)
 			}
 
-			handler := handlers.NewHealth(healthApiJsonKeys, healthClientSmtp)
+			handler := handlers.NewRestHealth(healthApiJsonKeys, healthClientSmtp)
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()

@@ -6,9 +6,9 @@ services:
   mailserver:
     image: ghcr.io/axllent/mailpit:v1.29.2
     ports:
-      - "${MAIL_UI_TEST_PORT}:8025"
+      - "${MAIL_UI_PORT}:8025"
     networks:
-      - authentication-integration-test
+      - authentication-integration-rest-test
     environment:
       MP_MAX_MESSAGES: 5000
       MP_SEND_API_AUTH_ACCEPT_ANY: true
@@ -24,7 +24,7 @@ services:
   postgres-json-keys:
     image: ghcr.io/a-novel/service-json-keys/database:v2.2.0
     networks:
-      - authentication-integration-test
+      - authentication-integration-rest-test
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
@@ -37,7 +37,7 @@ services:
       context: ..
       dockerfile: ./builds/database.Dockerfile
     networks:
-      - authentication-integration-test
+      - authentication-integration-rest-test
     environment:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_USER: "${POSTGRES_USER}"
@@ -50,21 +50,21 @@ services:
   # ====================================================================================================================
 
   service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone:v2.1.5
+    image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.2.0
     depends_on:
       - postgres-json-keys
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
       APP_MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
     networks:
-      - authentication-integration-test
+      - authentication-integration-rest-test
 
   service-authentication:
     build:
       context: ..
-      dockerfile: ./builds/standalone.Dockerfile
+      dockerfile: ./builds/standalone.rest.Dockerfile
     ports:
-      - "${API_PORT}:8080"
+      - "${REST_PORT}:8080"
     depends_on:
       - postgres-authentication
       - mailserver
@@ -82,7 +82,7 @@ services:
       SMTP_SENDER_PASSWORD: noreply
       SMTP_FORCE_UNENCRYPTED: true
     networks:
-      - authentication-integration-test
+      - authentication-integration-rest-test
 
 networks:
-  authentication-integration-test:
+  authentication-integration-rest-test:

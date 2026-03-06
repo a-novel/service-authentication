@@ -63,16 +63,18 @@ make install
 
 ### Interacting with the Service
 
-Once the service is running (`make run`), you can interact with it using `curl` or any HTTP client.
+Once the service is running (`make run`), you can interact with it using:
+
+- `curl` or any HTTP client (REST API).
 
 #### Health Checks
 
 ```bash
 # Simple ping (is the server up?)
-curl http://localhost:4011/ping
+curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/ping
 
 # Detailed health check (checks database, dependencies)
-curl http://localhost:4011/healthcheck
+curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/healthcheck
 ```
 
 #### Authentication
@@ -86,10 +88,10 @@ PASSWORD=<PASSWORD>
 ```
 
 ```bash
-ACCESS_TOKEN=$(curl -X PUT http://localhost:4011/session/anon | jq -r '.accessToken')
+ACCESS_TOKEN=$(curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session/anon | jq -r '.accessToken')
 
 # Verify session.
-curl -X GET http://localhost:4011/session \
+curl -X GET http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
@@ -98,22 +100,22 @@ curl -X GET http://localhost:4011/session \
 
 ```bash
 # Create short code.
-curl -X PUT http://localhost:4011/short-code/register \
+curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/short-code/register \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d "{\"email\": \"$USER\", \"lang\": \"en\"}"
 
 # Retrieve email
-EMAIL_ID=$(curl -s http://localhost:4014/api/v1/messages | jq -r '.messages[0].ID')
+EMAIL_ID=$(curl -s http://localhost:${MAIL_UI_PORT}/api/v1/messages | jq -r '.messages[0].ID')
 SHORT_CODE=$(
-  curl -s "http://localhost:4014/api/v1/message/$EMAIL_ID" | \
+  curl -s "http://localhost:${MAIL_UI_PORT}/api/v1/message/$EMAIL_ID" | \
     grep -oP '(?<=shortCode\=)[a-zA-Z0-9]+' | \
     head -1
 )
 
 # Complete registration with the code
 TOKEN=$(
-  curl -X PUT http://localhost:4011/credentials \
+  curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/credentials \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"email\": \"$USER\", \"password\": \"$PASSWORD\", \"shortCode\": \"$SHORT_CODE\"}"
@@ -126,7 +128,7 @@ REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 
 ```bash
 TOKEN=$(
-  curl -X PUT http://localhost:4011/session \
+  curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"email\": \"$USER\", \"password\": \"$PASSWORD\"}"
@@ -140,7 +142,7 @@ REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 ```bash
 # Refresh an expired access token
 TOKEN=$(
-  curl -X PATCH http://localhost:4011/session \
+  curl -X PATCH http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session \
     -H "Content-Type: application/json" \
     -d "{\"accessToken\": \"$ACCESS_TOKEN\", \"refreshToken\": \"$REFRESH_TOKEN\"}"
 )
@@ -153,7 +155,7 @@ REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 [MailPit](https://mailpit.axllent.org/) captures all emails sent by the service during local development. No emails
 are actually sent to real addresses.
 
-**Access the UI:** http://localhost:4014
+**Access the UI:** http://localhost:${MAIL_UI_PORT}
 
 **Documentation:**
 
@@ -165,16 +167,16 @@ are actually sent to real addresses.
 
 ```bash
 # List all captured emails
-curl http://localhost:4014/api/v1/messages
+curl http://localhost:${MAIL_UI_PORT}/api/v1/messages
 
 # Get the latest email (useful for testing)
-curl http://localhost:4014/api/v1/messages | jq '.messages[0]'
+curl http://localhost:${MAIL_UI_PORT}/api/v1/messages | jq '.messages[0]'
 
 # Delete all emails (clean slate for testing)
-curl -X DELETE http://localhost:4014/api/v1/messages
+curl -X DELETE http://localhost:${MAIL_UI_PORT}/api/v1/messages
 
 # Search for emails by recipient
-curl "http://localhost:4014/api/v1/search?query=to:user@example.com"
+curl "http://localhost:${MAIL_UI_PORT}/api/v1/search?query=to:user@example.com"
 ```
 
 ---

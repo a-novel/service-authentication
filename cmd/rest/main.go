@@ -7,7 +7,10 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -143,7 +146,7 @@ func main() {
 	// =================================================================================================================
 
 	handlerPing := handlers.NewPing()
-	handlerHealth := handlers.NewHealth(jsonKeysClient, cfg.Smtp)
+	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.Smtp)
 
 	handlerClaimsGet := handlers.NewClaimsGet(cfg.Logger)
 
@@ -193,13 +196,13 @@ func main() {
 
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RealIP)
-	router.Use(middleware.Timeout(cfg.Api.Timeouts.Request))
-	router.Use(middleware.RequestSize(cfg.Api.MaxRequestSize))
+	router.Use(middleware.Timeout(cfg.Rest.Timeouts.Request))
+	router.Use(middleware.RequestSize(cfg.Rest.MaxRequestSize))
 	router.Use(cfg.Otel.HttpHandler())
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   cfg.Api.Cors.AllowedOrigins,
-		AllowedHeaders:   cfg.Api.Cors.AllowedHeaders,
-		AllowCredentials: cfg.Api.Cors.AllowCredentials,
+		AllowedOrigins:   cfg.Rest.Cors.AllowedOrigins,
+		AllowedHeaders:   cfg.Rest.Cors.AllowedHeaders,
+		AllowCredentials: cfg.Rest.Cors.AllowCredentials,
 		AllowedMethods: []string{
 			http.MethodHead,
 			http.MethodGet,
@@ -208,7 +211,7 @@ func main() {
 			http.MethodPatch,
 			http.MethodDelete,
 		},
-		MaxAge: cfg.Api.Cors.MaxAge,
+		MaxAge: cfg.Rest.Cors.MaxAge,
 	}))
 	router.Use(cfg.HttpLogger.Logger())
 
@@ -250,19 +253,35 @@ func main() {
 	// =================================================================================================================
 
 	httpServer := &http.Server{
-		Addr:              ":" + strconv.Itoa(cfg.Api.Port),
+		Addr:              ":" + strconv.Itoa(cfg.Rest.Port),
 		Handler:           router,
-		ReadTimeout:       cfg.Api.Timeouts.Read,
-		ReadHeaderTimeout: cfg.Api.Timeouts.ReadHeader,
-		WriteTimeout:      cfg.Api.Timeouts.Write,
-		IdleTimeout:       cfg.Api.Timeouts.Idle,
+		ReadTimeout:       cfg.Rest.Timeouts.Read,
+		ReadHeaderTimeout: cfg.Rest.Timeouts.ReadHeader,
+		WriteTimeout:      cfg.Rest.Timeouts.Write,
+		IdleTimeout:       cfg.Rest.Timeouts.Idle,
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
-	log.Println("Starting server on " + httpServer.Addr)
+	log.Println("Starting REST server on " + httpServer.Addr)
 
-	err := httpServer.ListenAndServe()
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		panic(err.Error())
+	go func() {
+		err := httpServer.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			panic(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down REST server...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.Rest.Timeouts.Request)
+	defer cancel()
+
+	err := httpServer.Shutdown(shutdownCtx)
+	if err != nil {
+		panic(err)
 	}
 }

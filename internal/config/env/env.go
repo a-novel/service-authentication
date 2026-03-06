@@ -29,15 +29,15 @@ const (
 	ServiceJsonKeysHostDefault = "localhost"
 	ServiceJsonKeysPortDefault = 8080
 
-	ApiPortDefault              = 8080
-	ApiTimeoutReadDefault       = 15 * time.Second
-	ApiTimeoutReadHeaderDefault = 3 * time.Second
-	ApiTimeoutWriteDefault      = 30 * time.Second
-	ApiTimeoutIdleDefault       = 60 * time.Second
-	ApiTimeoutRequestDefault    = 60 * time.Second
-	ApiMaxRequestSizeDefault    = 2 << 20 // 2 MiB
-	CorsAllowCredentialsDefault = false
-	CorsMaxAgeDefault           = 3600
+	RestPortDefault              = 8080
+	RestTimeoutReadDefault       = 15 * time.Second
+	RestTimeoutReadHeaderDefault = 3 * time.Second
+	RestTimeoutWriteDefault      = 30 * time.Second
+	RestTimeoutIdleDefault       = 60 * time.Second
+	RestTimeoutRequestDefault    = 60 * time.Second
+	RestMaxRequestSizeDefault    = 2 << 20 // 2 MiB
+	CorsAllowCredentialsDefault  = false
+	CorsMaxAgeDefault            = 3600
 )
 
 // Default values for environment variables, if applicable.
@@ -48,8 +48,7 @@ var (
 
 // Raw values for environment variables.
 var (
-	postgresDsn     = getEnv("POSTGRES_DSN")
-	postgresDsnTest = getEnv("POSTGRES_DSN_TEST")
+	postgresDsn = getEnv("POSTGRES_DSN")
 
 	platformAuthUrl               = getEnv("PLATFORM_AUTH_URL")
 	platformAuthUpdateEmailUrl    = getEnv("PLATFORM_AUTH_URL_UPDATE_EMAIL")
@@ -70,17 +69,17 @@ var (
 	appName = getEnv("APP_NAME")
 	otel    = getEnv("OTEL")
 
-	apiPort              = getEnv("API_PORT")
-	apiMaxRequestSize    = getEnv("API_MAX_REQUEST_SIZE")
-	apiTimeoutRead       = getEnv("API_TIMEOUT_READ")
-	apiTimeoutReadHeader = getEnv("API_TIMEOUT_READ_HEADER")
-	apiTimeoutWrite      = getEnv("API_TIMEOUT_WRITE")
-	apiTimeoutIdle       = getEnv("API_TIMEOUT_IDLE")
-	apiTimeoutRequest    = getEnv("API_TIMEOUT_REQUEST")
-	corsAllowedOrigins   = getEnv("API_CORS_ALLOWED_ORIGINS")
-	corsAllowedHeaders   = getEnv("API_CORS_ALLOWED_HEADERS")
-	corsAllowCredentials = getEnv("API_CORS_ALLOW_CREDENTIALS")
-	corsMaxAge           = getEnv("API_CORS_MAX_AGE")
+	restPort              = getEnv("REST_PORT")
+	restMaxRequestSize    = getEnv("REST_MAX_REQUEST_SIZE")
+	restTimeoutRead       = getEnv("REST_TIMEOUT_READ")
+	restTimeoutReadHeader = getEnv("REST_TIMEOUT_READ_HEADER")
+	restTimeoutWrite      = getEnv("REST_TIMEOUT_WRITE")
+	restTimeoutIdle       = getEnv("REST_TIMEOUT_IDLE")
+	restTimeoutRequest    = getEnv("REST_TIMEOUT_REQUEST")
+	corsAllowedOrigins    = getEnv("REST_CORS_ALLOWED_ORIGINS")
+	corsAllowedHeaders    = getEnv("REST_CORS_ALLOWED_HEADERS")
+	corsAllowCredentials  = getEnv("REST_CORS_ALLOW_CREDENTIALS")
+	corsMaxAge            = getEnv("REST_CORS_MAX_AGE")
 
 	gcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
 
@@ -93,10 +92,6 @@ var (
 	// Typically formatted as:
 	//	postgres://<user>:<password>@<host>:<port>/<database>
 	PostgresDsn = postgresDsn
-	// PostgresDsnTest is the url used to connect to the postgres database test instance.
-	// Typically formatted as:
-	//	postgres://<user>:<password>@<host>:<port>/<database>
-	PostgresDsnTest = postgresDsnTest
 
 	// PlatformAuthUrl points to the authentication web client. It is used to insert URLs in emails.
 	PlatformAuthUrl = platformAuthUrl
@@ -160,15 +155,15 @@ var (
 	// See: https://opentelemetry.io/
 	Otel = config.LoadEnv(otel, false, config.BoolParser)
 
-	// ApiPort is the port on which the rest api server will listen for incoming requests.
-	ApiPort              = config.LoadEnv(apiPort, ApiPortDefault, config.IntParser)
-	ApiMaxRequestSize    = config.LoadEnv(apiMaxRequestSize, ApiMaxRequestSizeDefault, config.Int64Parser)
-	ApiTimeoutRead       = config.LoadEnv(apiTimeoutRead, ApiTimeoutReadDefault, config.DurationParser)
-	ApiTimeoutReadHeader = config.LoadEnv(apiTimeoutReadHeader, ApiTimeoutReadHeaderDefault, config.DurationParser)
-	ApiTimeoutWrite      = config.LoadEnv(apiTimeoutWrite, ApiTimeoutWriteDefault, config.DurationParser)
-	ApiTimeoutIdle       = config.LoadEnv(apiTimeoutIdle, ApiTimeoutIdleDefault, config.DurationParser)
-	ApiTimeoutRequest    = config.LoadEnv(apiTimeoutRequest, ApiTimeoutRequestDefault, config.DurationParser)
-	CorsAllowedOrigins   = config.LoadEnv(
+	// RestPort is the port on which the rest server will listen for incoming requests.
+	RestPort              = config.LoadEnv(restPort, RestPortDefault, config.IntParser)
+	RestMaxRequestSize    = config.LoadEnv(restMaxRequestSize, RestMaxRequestSizeDefault, config.Int64Parser)
+	RestTimeoutRead       = config.LoadEnv(restTimeoutRead, RestTimeoutReadDefault, config.DurationParser)
+	RestTimeoutReadHeader = config.LoadEnv(restTimeoutReadHeader, RestTimeoutReadHeaderDefault, config.DurationParser)
+	RestTimeoutWrite      = config.LoadEnv(restTimeoutWrite, RestTimeoutWriteDefault, config.DurationParser)
+	RestTimeoutIdle       = config.LoadEnv(restTimeoutIdle, RestTimeoutIdleDefault, config.DurationParser)
+	RestTimeoutRequest    = config.LoadEnv(restTimeoutRequest, RestTimeoutRequestDefault, config.DurationParser)
+	CorsAllowedOrigins    = config.LoadEnv(
 		corsAllowedOrigins, CorsAllowedOriginsDefault, config.SliceParser(config.StringParser),
 	)
 	CorsAllowedHeaders = config.LoadEnv(

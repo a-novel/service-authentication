@@ -1,32 +1,12 @@
-# App.
-export API_PORT=4011
-export API_URL="http://localhost:${API_PORT}"
-
 # Init.
 export SUPER_ADMIN_EMAIL=noreply@agorastoryverse.com
 export SUPER_ADMIN_PASSWORD=admin
-
-# Client (frontend).
-export PLATFORM_AUTH_PORT=6010
-export PLATFORM_AUTH_URL="http://localhost:${PLATFORM_AUTH_PORT}"
 
 # Postgres.
 export POSTGRES_USER="postgres"
 export POSTGRES_PASSWORD="postgres"
 export POSTGRES_DB="authentication"
-export POSTGRES_PORT=4013
-export POSTGRES_TEST_PORT=5013
 export POSTGRES_HOST="0.0.0.0"
 
-export POSTGRES_DSN="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
-export POSTGRES_DSN_TEST="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_TEST_PORT}/${POSTGRES_DB}?sslmode=disable"
-
 # Dependencies.
-export SERVICE_JSON_KEYS_PORT=4002
 export SERVICE_JSON_KEYS_HOST=localhost
-
-# SMTP configuration.
-export MAIL_UI_PORT=4014
-export MAIL_HOST="http://localhost:${MAIL_UI_PORT}"
-export MAIL_UI_TEST_PORT=5014
-export MAIL_TEST_HOST="http://localhost:${MAIL_UI_TEST_PORT}"

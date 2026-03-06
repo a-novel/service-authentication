@@ -19,5 +19,5 @@ podman build --format docker \
   -f ./builds/rest.Dockerfile \
   -t ghcr.io/a-novel/service-authentication/rest:local .
 podman build --format docker \
-  -f ./builds/standalone.Dockerfile \
-  -t ghcr.io/a-novel/service-authentication/standalone:local .
+  -f ./builds/standalone.rest.Dockerfile \
+  -t ghcr.io/a-novel/service-authentication/standalone-rest:local .
