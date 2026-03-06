@@ -136,7 +136,7 @@ jobs:
           MP_DISABLE_WAL: true
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.1.5
+        image: ghcr.io/a-novel/service-json-keys/database:v2.2.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -322,7 +322,7 @@ jobs:
       id-token: write
     services:
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.1.5
+        image: ghcr.io/a-novel/service-json-keys/database:v2.2.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -387,7 +387,7 @@ jobs:
       digest: ${{ steps.build.outputs.digest }}
     services:
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.1.5
+        image: ghcr.io/a-novel/service-json-keys/database:v2.2.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
