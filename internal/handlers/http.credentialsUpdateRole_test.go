@@ -48,7 +48,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
@@ -83,7 +83,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		{
 			name: "Error/CredentialsNotFound",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
@@ -105,7 +105,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		{
 			name: "Error/RoleToHigher",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
@@ -127,7 +127,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		{
 			name: "Error/DowngradeSuperior",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
@@ -149,7 +149,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		{
 			name: "Error/UpdateSelf",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
@@ -171,7 +171,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),

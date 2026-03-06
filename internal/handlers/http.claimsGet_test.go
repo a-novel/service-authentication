@@ -33,7 +33,7 @@ func TestClaimsGet(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
 			claims: &services.AccessTokenClaims{
 				UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Roles:          []string{"user"},
@@ -50,7 +50,7 @@ func TestClaimsGet(t *testing.T) {
 		{
 			name: "NoClaims",
 
-			request: httptest.NewRequest(http.MethodPost, "/", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
 
 			expectStatus: http.StatusForbidden,
 		},

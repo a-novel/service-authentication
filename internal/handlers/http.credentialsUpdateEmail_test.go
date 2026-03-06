@@ -45,7 +45,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		{
 			name: "Success/UserID",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000001"
 			}`)),
 
@@ -74,7 +74,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		{
 			name: "Success/ShortCode",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"shortCode": "abcdef"
 			}`)),
 
@@ -103,7 +103,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		{
 			name: "Error/CredentialsNotFound",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000001"
 			}`)),
 
@@ -119,7 +119,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		{
 			name: "Error/CredentialsAlreadyExists",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000001"
 			}`)),
 
@@ -135,7 +135,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		{
 			name: "Error/ShortCodeNotFound",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000001"
 			}`)),
 
@@ -151,7 +151,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		{
 			name: "Error/ShortCodeInvalid",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000001"
 			}`)),
 
@@ -167,7 +167,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"userID": "00000000-0000-0000-0000-000000000001"
 			}`)),
 

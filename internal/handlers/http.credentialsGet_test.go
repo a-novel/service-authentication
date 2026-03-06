@@ -44,7 +44,12 @@ func TestCredentialsGet(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodGet, "/?id=00000000-0000-0000-0000-000000000001", nil),
+			request: httptest.NewRequestWithContext(
+				t.Context(),
+				http.MethodGet,
+				"/?id=00000000-0000-0000-0000-000000000001",
+				nil,
+			),
 
 			serviceMock: &serviceMock{
 				req: &services.CredentialsGetRequest{
@@ -71,7 +76,12 @@ func TestCredentialsGet(t *testing.T) {
 		{
 			name: "Error/NotFound",
 
-			request: httptest.NewRequest(http.MethodGet, "/?id=00000000-0000-0000-0000-000000000001", nil),
+			request: httptest.NewRequestWithContext(
+				t.Context(),
+				http.MethodGet,
+				"/?id=00000000-0000-0000-0000-000000000001",
+				nil,
+			),
 
 			serviceMock: &serviceMock{
 				req: &services.CredentialsGetRequest{
@@ -85,7 +95,12 @@ func TestCredentialsGet(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodGet, "/?id=00000000-0000-0000-0000-000000000001", nil),
+			request: httptest.NewRequestWithContext(
+				t.Context(),
+				http.MethodGet,
+				"/?id=00000000-0000-0000-0000-000000000001",
+				nil,
+			),
 
 			serviceMock: &serviceMock{
 				req: &services.CredentialsGetRequest{

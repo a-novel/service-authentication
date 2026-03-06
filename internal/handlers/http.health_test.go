@@ -46,7 +46,7 @@ func TestHealth(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
 
 			healthClientSmtpMock: &healthClientSmtpMock{},
 			healthApiJsonKeysMock: &healthApiJsonKeysMock{
@@ -69,7 +69,7 @@ func TestHealth(t *testing.T) {
 		{
 			name: "Error",
 
-			request: httptest.NewRequest(http.MethodPost, "/", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
 
 			healthClientSmtpMock: &healthClientSmtpMock{
 				err: errors.New("error smtp"),

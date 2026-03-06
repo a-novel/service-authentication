@@ -45,7 +45,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"shortCode": "abcdef",
 				"userID": "00000000-0000-0000-0000-000000000001"
@@ -78,7 +78,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 		{
 			name: "Error/CredentialsNotFound",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"shortCode": "abcdef",
 				"userID": "00000000-0000-0000-0000-000000000001"
@@ -98,7 +98,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 		{
 			name: "Error/ShortCodeNotFound",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"shortCode": "abcdef",
 				"userID": "00000000-0000-0000-0000-000000000001"
@@ -118,7 +118,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 		{
 			name: "Error/ShortCodeInvalid",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"shortCode": "abcdef",
 				"userID": "00000000-0000-0000-0000-000000000001"
@@ -138,7 +138,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"shortCode": "abcdef",
 				"userID": "00000000-0000-0000-0000-000000000001"

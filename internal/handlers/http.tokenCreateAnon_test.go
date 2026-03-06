@@ -40,7 +40,7 @@ func TestTokenCreateAnon(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
 
 			serviceMock: &serviceMock{
 				resp: &services.Token{
@@ -58,7 +58,7 @@ func TestTokenCreateAnon(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodPost, "/", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
 
 			serviceMock: &serviceMock{
 				err: errFoo,

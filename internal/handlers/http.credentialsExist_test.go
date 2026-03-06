@@ -41,7 +41,7 @@ func TestCredentialsExist(t *testing.T) {
 		{
 			name: "Exists",
 
-			request: httptest.NewRequest(http.MethodGet, "/?email=user@provider.com", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
 
 			serviceMock: &serviceMock{
 				req:  &services.CredentialsExistRequest{Email: "user@provider.com"},
@@ -53,7 +53,7 @@ func TestCredentialsExist(t *testing.T) {
 		{
 			name: "NotFound",
 
-			request: httptest.NewRequest(http.MethodGet, "/?email=user@provider.com", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
 
 			serviceMock: &serviceMock{
 				req:  &services.CredentialsExistRequest{Email: "user@provider.com"},
@@ -65,7 +65,7 @@ func TestCredentialsExist(t *testing.T) {
 		{
 			name: "Error",
 
-			request: httptest.NewRequest(http.MethodGet, "/?email=user@provider.com", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
 
 			serviceMock: &serviceMock{
 				req: &services.CredentialsExistRequest{Email: "user@provider.com"},

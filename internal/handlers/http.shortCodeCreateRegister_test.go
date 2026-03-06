@@ -44,7 +44,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"email": "new_user@provider.com",
 				"lang": "fr"
 			}`)),
@@ -67,7 +67,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		{
 			name: "Success/AlreadyExists",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"email": "existing_user@provider.com",
 				"lang": "fr"
 			}`)),
@@ -86,7 +86,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"email": "new_user@provider.com",
 				"lang": "fr"
 			}`)),

@@ -42,7 +42,7 @@ func TestTokenRefresh(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
@@ -67,7 +67,7 @@ func TestTokenRefresh(t *testing.T) {
 		{
 			name: "Error/InvalidAccessToken",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
@@ -85,7 +85,7 @@ func TestTokenRefresh(t *testing.T) {
 		{
 			name: "Error/InvalidRefreshToken",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
@@ -103,7 +103,7 @@ func TestTokenRefresh(t *testing.T) {
 		{
 			name: "Error/MismatchClaims",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
@@ -121,7 +121,7 @@ func TestTokenRefresh(t *testing.T) {
 		{
 			name: "Error/MismatchSource",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),
@@ -139,7 +139,7 @@ func TestTokenRefresh(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"accessToken": "access-token",
 				"refreshToken": "refresh_token"
 			}`)),

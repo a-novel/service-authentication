@@ -49,7 +49,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
@@ -84,7 +84,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Error/CredentialsNotFound",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
@@ -106,7 +106,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Error/Pasword",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
@@ -128,7 +128,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),

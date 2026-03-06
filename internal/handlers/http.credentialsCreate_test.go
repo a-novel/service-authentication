@@ -43,7 +43,7 @@ func TestCredentialsCreate(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"email": "user@provider.com",
 				"password": "Louvre",
 				"shortCode": "abcdef"
@@ -70,7 +70,7 @@ func TestCredentialsCreate(t *testing.T) {
 		{
 			name: "Error/CredentialsAlreadyExists",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"email": "user@provider.com",
 				"password": "Louvre",
 				"shortCode": "abcdef"
@@ -90,7 +90,7 @@ func TestCredentialsCreate(t *testing.T) {
 		{
 			name: "Error/ShortCodeNotFound",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"email": "user@provider.com",
 				"password": "Louvre",
 				"shortCode": "abcdef"
@@ -110,7 +110,7 @@ func TestCredentialsCreate(t *testing.T) {
 		{
 			name: "Error/ShortCodeInvalid",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"email": "user@provider.com",
 				"password": "Louvre",
 				"shortCode": "abcdef"
@@ -130,7 +130,7 @@ func TestCredentialsCreate(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
 				"email": "user@provider.com",
 				"password": "Louvre",
 				"shortCode": "abcdef"

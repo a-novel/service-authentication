@@ -43,7 +43,7 @@ func TestCredentialsList(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequest(http.MethodGet, "/?limit=10&offset=2", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&offset=2", nil),
 
 			serviceMock: &serviceMock{
 				req: &services.CredentialsListRequest{
@@ -103,7 +103,7 @@ func TestCredentialsList(t *testing.T) {
 		{
 			name: "Success/Roles",
 
-			request: httptest.NewRequest(http.MethodGet, "/?limit=10&roles=role1&roles=role2", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&roles=role1&roles=role2", nil),
 
 			serviceMock: &serviceMock{
 				req: &services.CredentialsListRequest{
@@ -135,7 +135,7 @@ func TestCredentialsList(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequest(http.MethodGet, "/?limit=10&offset=2", nil),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&offset=2", nil),
 
 			serviceMock: &serviceMock{
 				req: &services.CredentialsListRequest{
