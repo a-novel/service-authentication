@@ -8,7 +8,7 @@ int_handler()
 {
     podman compose -p "${APP_NAME}" -f "${PODMAN_FILE}" down --volume
 }
-trap int_handler INT
+trap int_handler INT EXIT ERR
 
 . "$PWD/scripts/setup-env.sh"
 
