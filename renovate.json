@@ -1,28 +1,54 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "postUpdateOptions": ["gomodTidy", "pnpmDedupe"],
   "docker-compose": {
     "managerFilePatterns": ["/(^|/)(?:podman-)?compose[^/]*\\.ya?ml$/"]
+  },
+  "gomod": {
+    "managerFilePatterns": ["/(^|/)go\\.mod$/", "/(^|/)golangci-lint\\.mod$/", "/(^|/)gotestsum\\.mod$/"]
   },
   "packageRules": [
     {
       "matchManagers": ["gomod"],
+      "matchFileNames": ["!go.mod"],
+      "goGetDirs": ["."]
+    },
+    {
+      "matchFileNames": ["golangci-lint.mod"],
       "postUpgradeTasks": {
-        "commands": ["go mod download", "go generate ./...", "go tool golangci-lint run ./... --fix"],
+        "commands": [
+          "rm -f golangci-lint.sum",
+          "go get -modfile=golangci-lint.mod -tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint",
+          "go tool -modfile=golangci-lint.mod golangci-lint run ./... --fix"
+        ],
         "executionMode": "branch"
       }
     },
     {
+      "matchFileNames": ["gotestsum.mod"],
+      "postUpgradeTasks": {
+        "commands": ["rm -f gotestsum.sum", "go get -modfile=gotestsum.mod -tool gotest.tools/gotestsum"],
+        "executionMode": "branch"
+      }
+    },
+    {
+      "matchFileNames": ["go.mod"],
+      "matchPackageNames": ["github.com/vektra/mockery/v3"],
+      "postUpgradeTasks": {
+        "commands": ["go tool mockery"],
+        "executionMode": "branch"
+      }
+    },
+    {
+      "matchFileNames": ["go.mod"],
+      "postUpdateOptions": ["gomodTidy"]
+    },
+    {
       "matchManagers": ["npm"],
+      "postUpdateOptions": ["pnpmDedupe"],
       "postUpgradeTasks": {
         "commands": ["pnpm format"],
         "executionMode": "branch"
       }
-    },
-    {
-      "matchDepTypes": ["peerDependencies"],
-      "rangeStrategy": "bump",
-      "enabled": true
     }
   ],
   "extends": ["config:recommended"]

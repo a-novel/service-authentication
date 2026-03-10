@@ -112,6 +112,7 @@ jobs:
           filter_extra_patterns: " | grep -v /cmd"
           skip_setup: true
           coverage_artifact: gocover
+          modfile: gotestsum.mod
 
   test-pkg-js:
     runs-on: ubuntu-latest
