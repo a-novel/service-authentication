@@ -10,14 +10,14 @@
   "type": "module",
   "workspaces": [
     ".",
-    "pkg/rest-js",
-    "pkg/rest-js-test",
-    "pkg/test/rest-js"
+    "pkg/js/rest",
+    "pkg/js/rest-test",
+    "pkg/js/test/rest"
   ],
   "scripts": {
     "build": "pnpm build:rest && pnpm build:rest-test && pnpm types:rest && pnpm types:rest-test",
-    "build:rest": "rm -rf ./pkg/rest-js/dist && vite build --outDir ./pkg/rest-js/dist -c pkg/rest-js/vite.config.ts",
-    "build:rest-test": "rm -rf ./pkg/rest-js-test/dist && vite build --outDir ./pkg/rest-js-test/dist -c pkg/rest-js-test/vite.config.ts",
+    "build:rest": "rm -rf ./pkg/js/rest/dist && vite build --outDir ./pkg/js/rest/dist -c pkg/js/rest/vite.config.ts",
+    "build:rest-test": "rm -rf ./pkg/js/rest-test/dist && vite build --outDir ./pkg/js/rest-test/dist -c pkg/js/rest-test/vite.config.ts",
     "format": "pnpm run format:prettier",
     "format:prettier": "prettier --write . --config prettier.config.ts",
     "generate": "pnpm run generate:mjml",
@@ -29,11 +29,11 @@
     "lint:mjml": "for i in `find . -name \"*.mjml\" -type f`; do pnpm mjml --validate $i; done",
     "lint:openapi": "pnpm redocly lint openapi.yaml",
     "lint:stylecheck": "prettier --check . --config prettier.config.ts",
-    "lint:typecheck": "pnpm lint:typecheck:base && pnpm lint:typecheck:rest-js && pnpm lint:typecheck:rest-js-test && pnpm lint:typecheck:test:rest-js",
+    "lint:typecheck": "pnpm lint:typecheck:base && pnpm lint:typecheck:rest && pnpm lint:typecheck:rest-test && pnpm lint:typecheck:test:rest",
     "lint:typecheck:base": "tsc --noEmit",
-    "lint:typecheck:rest-js": "pnpm tsc --p ./pkg/rest-js/tsconfig.json --noEmit",
-    "lint:typecheck:rest-js-test": "pnpm tsc --p ./pkg/rest-js-test/tsconfig.json --noEmit",
-    "lint:typecheck:test:rest-js": "pnpm tsc --p ./pkg/test/rest-js/tsconfig.json --noEmit",
+    "lint:typecheck:rest": "pnpm tsc --p ./pkg/js/rest/tsconfig.json --noEmit",
+    "lint:typecheck:rest-test": "pnpm tsc --p ./pkg/js/rest-test/tsconfig.json --noEmit",
+    "lint:typecheck:test:rest": "pnpm tsc --p ./pkg/js/test/rest/tsconfig.json --noEmit",
     "prepublish:doc": "pnpm prepublish:doc:readme && pnpm prepublish:doc:openapi",
     "prepublish:doc:openapi": "bash scripts/prepublish-version.sh 'version: ' openapi.yaml",
     "prepublish:doc:readme": "bash scripts/prepublish-version.sh 'a-novel/service-authentication/[^/]+' README.md",
@@ -41,8 +41,8 @@
     "publish:minor": "bash scripts/publish.sh minor",
     "publish:patch": "bash scripts/publish.sh patch",
     "test": "vitest run -c vitest.config.ts",
-    "types:rest": "tsc --build pkg/rest-js/tsconfig.build.json",
-    "types:rest-test": "tsc --build pkg/rest-js-test/tsconfig.build.json"
+    "types:rest": "tsc --build pkg/js/rest/tsconfig.build.json",
+    "types:rest-test": "tsc --build pkg/js/rest-test/tsconfig.build.json"
   },
   "devDependencies": {
     "@a-novel-kit/nodelib-config": "^1.3.18",

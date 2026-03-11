@@ -9,7 +9,7 @@ import (
 
 	"github.com/samber/lo"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/logging"
@@ -30,7 +30,7 @@ var (
 
 // AuthClaimsVerifier validates JWT access tokens and extracts claims.
 type AuthClaimsVerifier interface {
-	VerifyClaims(ctx context.Context, req *jkpkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*services.AccessTokenClaims, error)
 }
 
 // Auth provides JWT-based authentication and role-based authorization middleware.
@@ -105,8 +105,8 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 
 			accessToken := authToken[1]
 
-			claims, err := middleware.claimsVerifier.VerifyClaims(ctx, &jkpkg.VerifyClaimsRequest{
-				Usage:       jkpkg.KeyUsageAuth,
+			claims, err := middleware.claimsVerifier.VerifyClaims(ctx, &servicejsonkeys.VerifyClaimsRequest{
+				Usage:       servicejsonkeys.KeyUsageAuth,
 				AccessToken: accessToken,
 			})
 			if err != nil {

@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
@@ -29,14 +29,14 @@ type TokenRefreshRepository interface {
 }
 type TokenRefreshServiceSignClaims interface {
 	ClaimsSign(
-		ctx context.Context, req *jkpkg.ClaimsSignRequest, opts ...grpc.CallOption,
-	) (*jkpkg.ClaimsSignResponse, error)
+		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
+	) (*servicejsonkeys.ClaimsSignResponse, error)
 }
 type TokenRefreshServiceVerifyClaims interface {
-	VerifyClaims(ctx context.Context, req *jkpkg.VerifyClaimsRequest) (*AccessTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*AccessTokenClaims, error)
 }
 type TokenRefreshServiceVerifyRefreshClaims interface {
-	VerifyClaims(ctx context.Context, req *jkpkg.VerifyClaimsRequest) (*RefreshTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*RefreshTokenClaims, error)
 }
 
 type TokenRefreshRequest struct {
@@ -81,10 +81,10 @@ func (service *TokenRefresh) Exec(
 	// after the old one expires. However, the signature must still be valid to prevent forgery.
 	accessTokenClaims, err := service.serviceVerifyClaims.VerifyClaims(
 		ctx,
-		&jkpkg.VerifyClaimsRequest{
-			Usage:       jkpkg.KeyUsageAuth,
+		&servicejsonkeys.VerifyClaimsRequest{
+			Usage:       servicejsonkeys.KeyUsageAuth,
 			AccessToken: request.AccessToken,
-			Options:     &jkpkg.VerifyClaimsOptions{IgnoreExpired: true},
+			Options:     &servicejsonkeys.VerifyClaimsOptions{IgnoreExpired: true},
 		},
 	)
 	if err != nil {
@@ -99,8 +99,8 @@ func (service *TokenRefresh) Exec(
 	// Unlike access tokens, refresh tokens must not be expired.
 	refreshTokenClaims, err := service.serviceVerifyRefreshClaims.VerifyClaims(
 		ctx,
-		&jkpkg.VerifyClaimsRequest{
-			Usage:       jkpkg.KeyUsageAuthRefresh,
+		&servicejsonkeys.VerifyClaimsRequest{
+			Usage:       servicejsonkeys.KeyUsageAuthRefresh,
 			AccessToken: request.RefreshToken,
 		},
 	)
@@ -156,8 +156,8 @@ func (service *TokenRefresh) Exec(
 
 	newAccessToken, err := service.serviceSignClaims.ClaimsSign(
 		ctx,
-		&jkpkg.ClaimsSignRequest{
-			Usage:   jkpkg.KeyUsageAuth,
+		&servicejsonkeys.ClaimsSignRequest{
+			Usage:   servicejsonkeys.KeyUsageAuth,
 			Payload: newAccessTokenClaims,
 		},
 	)

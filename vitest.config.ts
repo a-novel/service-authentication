@@ -20,8 +20,8 @@ export default defineConfig({
       globalConfigValue: true,
     },
     alias: {
-      "@a-novel/service-authentication-rest": resolve("./pkg/rest-js/src/index"),
-      "@a-novel/service-authentication-rest-test": resolve("./pkg/rest-js-test/src/index"),
+      "@a-novel/service-authentication-rest": resolve("./pkg/js/rest/src/index"),
+      "@a-novel/service-authentication-rest-test": resolve("./pkg/js/rest-test/src/index"),
     },
     coverage: {
       enabled: true,
@@ -29,12 +29,12 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
       reportsDirectory: "coverage",
-      include: ["pkg/rest-js/src/**/*.{ts,tsx}"],
+      include: ["pkg/js/rest/src/**/*.{ts,tsx}"],
       allowExternal: true,
     },
     projects: [
       {
-        root: "pkg/test/rest-js",
+        root: "pkg/js/test/rest",
         extends: true,
       },
     ],

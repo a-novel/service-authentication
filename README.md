@@ -315,8 +315,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/muesli/termenv"
 
-	authpkg "github.com/a-novel/service-authentication/v2/pkg"
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-authentication/v2/pkg/go"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 )
 
 // Define roles for your application (required).
@@ -329,8 +329,8 @@ import (
 // The priority argument serves as a hierarchy indicator between roles, and is
 // used by some custom access checks to grant permission for an operation between
 // 2 users, based on their relative roles priorities.
-var myPermissions = authpkg.Permissions{
-	Roles: map[string]authpkg.Role{
+var myPermissions = serviceauthentication.Permissions{
+	Roles: map[string]serviceauthentication.Role{
 		"role1": {
 			Priority:    0,
 			Permissions: []string{"permission1", "permission2"},
@@ -350,15 +350,15 @@ var myPermissions = authpkg.Permissions{
 func main() {
 	ctx := context.Background()
 
-	jsonKeysClient, _ := jkpkg.NewClient("<service-json-keys-url>")
-	serviceVerifyAccessToken := jkpkg.NewClaimsVerifier[authpkg.Claims](jsonKeysClient)
+	jsonKeysClient, _ := servicejsonkeys.NewClient("<service-json-keys-url>")
+	serviceVerifyAccessToken := servicejsonkeys.NewClaimsVerifier[serviceauthentication.Claims](jsonKeysClient)
 
 	logger := &loggingpresets.LogLocal{
 		Out:      os.Stdout,
 	}
 
 	// You can now add permission-based authentication to your routes.
-	withAuth := authpkg.NewAuthHandler(serviceVerifyAccessToken, myPermissions, logger)
+	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, myPermissions, logger)
 	router := chi.NewRouter()
 
 	// Route only accessible to users with role2.

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
 
@@ -23,7 +23,7 @@ func TestTokenCreateAnon(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type issueTokenMock struct {
-		resp *jkpkg.ClaimsSignResponse
+		resp *servicejsonkeys.ClaimsSignResponse
 		err  error
 	}
 
@@ -39,7 +39,7 @@ func TestTokenCreateAnon(t *testing.T) {
 			name: "Success",
 
 			issueTokenMock: &issueTokenMock{
-				resp: &jkpkg.ClaimsSignResponse{
+				resp: &servicejsonkeys.ClaimsSignResponse{
 					Token: "access-token",
 				},
 			},
@@ -67,8 +67,8 @@ func TestTokenCreateAnon(t *testing.T) {
 
 			if testCase.issueTokenMock != nil {
 				signClaimsService.EXPECT().
-					ClaimsSign(mock.Anything, &jkpkg.ClaimsSignRequest{
-						Usage: jkpkg.KeyUsageAuth,
+					ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
+						Usage: servicejsonkeys.KeyUsageAuth,
 						Payload: lo.Must(grpcf.InterfaceToProtoAny(services.AccessTokenClaims{
 							Roles: []string{config.RoleAnon},
 						})),

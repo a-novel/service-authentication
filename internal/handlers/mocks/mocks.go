@@ -10,7 +10,7 @@ import (
 
 	"github.com/a-novel-kit/golib/smtp"
 	"github.com/a-novel/service-authentication/v2/internal/services"
-	"github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
@@ -941,7 +941,7 @@ func (_m *MockRestHealthApiJsonKeys) EXPECT() *MockRestHealthApiJsonKeys_Expecte
 }
 
 // Status provides a mock function for the type MockRestHealthApiJsonKeys
-func (_mock *MockRestHealthApiJsonKeys) Status(ctx context.Context, req *pkg.StatusRequest, opts ...grpc.CallOption) (*pkg.StatusResponse, error) {
+func (_mock *MockRestHealthApiJsonKeys) Status(ctx context.Context, req *servicejsonkeys.StatusRequest, opts ...grpc.CallOption) (*servicejsonkeys.StatusResponse, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, req, opts)
@@ -954,19 +954,19 @@ func (_mock *MockRestHealthApiJsonKeys) Status(ctx context.Context, req *pkg.Sta
 		panic("no return value specified for Status")
 	}
 
-	var r0 *pkg.StatusResponse
+	var r0 *servicejsonkeys.StatusResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.StatusRequest, ...grpc.CallOption) (*pkg.StatusResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.StatusRequest, ...grpc.CallOption) (*servicejsonkeys.StatusResponse, error)); ok {
 		return returnFunc(ctx, req, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.StatusRequest, ...grpc.CallOption) *pkg.StatusResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.StatusRequest, ...grpc.CallOption) *servicejsonkeys.StatusResponse); ok {
 		r0 = returnFunc(ctx, req, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkg.StatusResponse)
+			r0 = ret.Get(0).(*servicejsonkeys.StatusResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.StatusRequest, ...grpc.CallOption) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.StatusRequest, ...grpc.CallOption) error); ok {
 		r1 = returnFunc(ctx, req, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -981,22 +981,22 @@ type MockRestHealthApiJsonKeys_Status_Call struct {
 
 // Status is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *pkg.StatusRequest
+//   - req *servicejsonkeys.StatusRequest
 //   - opts ...grpc.CallOption
 func (_e *MockRestHealthApiJsonKeys_Expecter) Status(ctx interface{}, req interface{}, opts ...interface{}) *MockRestHealthApiJsonKeys_Status_Call {
 	return &MockRestHealthApiJsonKeys_Status_Call{Call: _e.mock.On("Status",
 		append([]interface{}{ctx, req}, opts...)...)}
 }
 
-func (_c *MockRestHealthApiJsonKeys_Status_Call) Run(run func(ctx context.Context, req *pkg.StatusRequest, opts ...grpc.CallOption)) *MockRestHealthApiJsonKeys_Status_Call {
+func (_c *MockRestHealthApiJsonKeys_Status_Call) Run(run func(ctx context.Context, req *servicejsonkeys.StatusRequest, opts ...grpc.CallOption)) *MockRestHealthApiJsonKeys_Status_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *pkg.StatusRequest
+		var arg1 *servicejsonkeys.StatusRequest
 		if args[1] != nil {
-			arg1 = args[1].(*pkg.StatusRequest)
+			arg1 = args[1].(*servicejsonkeys.StatusRequest)
 		}
 		var arg2 []grpc.CallOption
 		var variadicArgs []grpc.CallOption
@@ -1013,12 +1013,12 @@ func (_c *MockRestHealthApiJsonKeys_Status_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockRestHealthApiJsonKeys_Status_Call) Return(v *pkg.StatusResponse, err error) *MockRestHealthApiJsonKeys_Status_Call {
+func (_c *MockRestHealthApiJsonKeys_Status_Call) Return(v *servicejsonkeys.StatusResponse, err error) *MockRestHealthApiJsonKeys_Status_Call {
 	_c.Call.Return(v, err)
 	return _c
 }
 
-func (_c *MockRestHealthApiJsonKeys_Status_Call) RunAndReturn(run func(ctx context.Context, req *pkg.StatusRequest, opts ...grpc.CallOption) (*pkg.StatusResponse, error)) *MockRestHealthApiJsonKeys_Status_Call {
+func (_c *MockRestHealthApiJsonKeys_Status_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.StatusRequest, opts ...grpc.CallOption) (*servicejsonkeys.StatusResponse, error)) *MockRestHealthApiJsonKeys_Status_Call {
 	_c.Call.Return(run)
 	return _c
 }

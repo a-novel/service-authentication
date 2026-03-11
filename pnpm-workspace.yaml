@@ -1,7 +1,7 @@
 packages:
-  - pkg/rest-js
-  - pkg/rest-js-test
-  - pkg/test/rest-js
+  - pkg/js/rest
+  - pkg/js/rest-test
+  - pkg/js/test/rest
 
 autoInstallPeers: true
 

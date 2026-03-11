@@ -7,7 +7,7 @@ import (
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
@@ -15,8 +15,8 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
-var anonTokenClaims = &jkpkg.ClaimsSignRequest{
-	Usage: jkpkg.KeyUsageAuth,
+var anonTokenClaims = &servicejsonkeys.ClaimsSignRequest{
+	Usage: servicejsonkeys.KeyUsageAuth,
 	Payload: lo.Must(grpcf.InterfaceToProtoAny(AccessTokenClaims{
 		Roles: []string{config.RoleAnon},
 	})),
@@ -24,8 +24,8 @@ var anonTokenClaims = &jkpkg.ClaimsSignRequest{
 
 type TokenCreateAnonSignClaimsService interface {
 	ClaimsSign(
-		ctx context.Context, req *jkpkg.ClaimsSignRequest, opts ...grpc.CallOption,
-	) (*jkpkg.ClaimsSignResponse, error)
+		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
+	) (*servicejsonkeys.ClaimsSignResponse, error)
 }
 
 type TokenCreateAnon struct {
