@@ -12,7 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
@@ -38,8 +38,8 @@ type CredentialsCreateServiceShortCodeConsume interface {
 // CredentialsCreateServiceSignClaims provides JWT signing capabilities.
 type CredentialsCreateServiceSignClaims interface {
 	ClaimsSign(
-		ctx context.Context, req *jkpkg.ClaimsSignRequest, opts ...grpc.CallOption,
-	) (*jkpkg.ClaimsSignResponse, error)
+		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
+	) (*servicejsonkeys.ClaimsSignResponse, error)
 }
 
 // CredentialsCreateRequest contains the data required to register a new user.
@@ -145,8 +145,8 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 
 	refreshToken, err := service.serviceSignClaims.ClaimsSign(
 		ctx,
-		&jkpkg.ClaimsSignRequest{
-			Usage:   jkpkg.KeyUsageAuthRefresh,
+		&servicejsonkeys.ClaimsSignRequest{
+			Usage:   servicejsonkeys.KeyUsageAuthRefresh,
 			Payload: refreshTokenPayload,
 		},
 	)
@@ -177,8 +177,8 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	// Generate a new authentication token.
 	accessToken, err := service.serviceSignClaims.ClaimsSign(
 		ctx,
-		&jkpkg.ClaimsSignRequest{
-			Usage:   jkpkg.KeyUsageAuth,
+		&servicejsonkeys.ClaimsSignRequest{
+			Usage:   servicejsonkeys.KeyUsageAuth,
 			Payload: accessTokenPayload,
 		},
 	)

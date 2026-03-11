@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/jwt/jws"
 
@@ -241,8 +241,8 @@ func TestAuth(t *testing.T) {
 			if testCase.verifyClaimsMock != nil {
 				service.EXPECT().
 					VerifyClaims(
-						mock.Anything, &jkpkg.VerifyClaimsRequest{
-							Usage:       jkpkg.KeyUsageAuth,
+						mock.Anything, &servicejsonkeys.VerifyClaimsRequest{
+							Usage:       servicejsonkeys.KeyUsageAuth,
 							AccessToken: testCase.verifyClaimsMock.reqToken,
 						},
 					).

@@ -8,7 +8,7 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/otel"
@@ -41,7 +41,11 @@ func NewRestHealthStatus(err error) *RestHealthStatus {
 type RestHealthClientSmtp = smtp.Sender
 
 type RestHealthApiJsonKeys interface {
-	Status(ctx context.Context, req *jkpkg.StatusRequest, opts ...grpc.CallOption) (*jkpkg.StatusResponse, error)
+	Status(
+		ctx context.Context,
+		req *servicejsonkeys.StatusRequest,
+		opts ...grpc.CallOption,
+	) (*servicejsonkeys.StatusResponse, error)
 }
 
 type RestHealth struct {
@@ -99,7 +103,7 @@ func (handler *RestHealth) reportJsonKeys(ctx context.Context) error {
 	ctx, span := otel.Tracer().Start(ctx, "rest.RestHealth(reportJsonKeys)")
 	defer span.End()
 
-	_, err := handler.apiJsonKeys.Status(ctx, new(jkpkg.StatusRequest))
+	_, err := handler.apiJsonKeys.Status(ctx, new(servicejsonkeys.StatusRequest))
 	if err != nil {
 		return otel.ReportError(span, err)
 	}

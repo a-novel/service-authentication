@@ -11,7 +11,7 @@ import (
 	"github.com/a-novel-kit/golib/smtp"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/services"
-	"github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
@@ -234,7 +234,7 @@ func (_m *MockCredentialsCreateServiceSignClaims) EXPECT() *MockCredentialsCreat
 }
 
 // ClaimsSign provides a mock function for the type MockCredentialsCreateServiceSignClaims
-func (_mock *MockCredentialsCreateServiceSignClaims) ClaimsSign(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption) (*pkg.ClaimsSignResponse, error) {
+func (_mock *MockCredentialsCreateServiceSignClaims) ClaimsSign(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, req, opts)
@@ -247,19 +247,19 @@ func (_mock *MockCredentialsCreateServiceSignClaims) ClaimsSign(ctx context.Cont
 		panic("no return value specified for ClaimsSign")
 	}
 
-	var r0 *pkg.ClaimsSignResponse
+	var r0 *servicejsonkeys.ClaimsSignResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) (*pkg.ClaimsSignResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error)); ok {
 		return returnFunc(ctx, req, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) *pkg.ClaimsSignResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) *servicejsonkeys.ClaimsSignResponse); ok {
 		r0 = returnFunc(ctx, req, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkg.ClaimsSignResponse)
+			r0 = ret.Get(0).(*servicejsonkeys.ClaimsSignResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) error); ok {
 		r1 = returnFunc(ctx, req, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -274,22 +274,22 @@ type MockCredentialsCreateServiceSignClaims_ClaimsSign_Call struct {
 
 // ClaimsSign is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *pkg.ClaimsSignRequest
+//   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
 func (_e *MockCredentialsCreateServiceSignClaims_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
 	return &MockCredentialsCreateServiceSignClaims_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
 		append([]interface{}{ctx, req}, opts...)...)}
 }
 
-func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption)) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
+func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *pkg.ClaimsSignRequest
+		var arg1 *servicejsonkeys.ClaimsSignRequest
 		if args[1] != nil {
-			arg1 = args[1].(*pkg.ClaimsSignRequest)
+			arg1 = args[1].(*servicejsonkeys.ClaimsSignRequest)
 		}
 		var arg2 []grpc.CallOption
 		var variadicArgs []grpc.CallOption
@@ -306,12 +306,12 @@ func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Return(v *pkg.ClaimsSignResponse, err error) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
+func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Return(v, err)
 	return _c
 }
 
-func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) RunAndReturn(run func(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption) (*pkg.ClaimsSignResponse, error)) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
+func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error)) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3042,7 +3042,7 @@ func (_m *MockTokenCreateServiceSignClaims) EXPECT() *MockTokenCreateServiceSign
 }
 
 // ClaimsSign provides a mock function for the type MockTokenCreateServiceSignClaims
-func (_mock *MockTokenCreateServiceSignClaims) ClaimsSign(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption) (*pkg.ClaimsSignResponse, error) {
+func (_mock *MockTokenCreateServiceSignClaims) ClaimsSign(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, req, opts)
@@ -3055,19 +3055,19 @@ func (_mock *MockTokenCreateServiceSignClaims) ClaimsSign(ctx context.Context, r
 		panic("no return value specified for ClaimsSign")
 	}
 
-	var r0 *pkg.ClaimsSignResponse
+	var r0 *servicejsonkeys.ClaimsSignResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) (*pkg.ClaimsSignResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error)); ok {
 		return returnFunc(ctx, req, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) *pkg.ClaimsSignResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) *servicejsonkeys.ClaimsSignResponse); ok {
 		r0 = returnFunc(ctx, req, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkg.ClaimsSignResponse)
+			r0 = ret.Get(0).(*servicejsonkeys.ClaimsSignResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) error); ok {
 		r1 = returnFunc(ctx, req, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -3082,22 +3082,22 @@ type MockTokenCreateServiceSignClaims_ClaimsSign_Call struct {
 
 // ClaimsSign is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *pkg.ClaimsSignRequest
+//   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
 func (_e *MockTokenCreateServiceSignClaims_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
 	return &MockTokenCreateServiceSignClaims_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
 		append([]interface{}{ctx, req}, opts...)...)}
 }
 
-func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
+func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *pkg.ClaimsSignRequest
+		var arg1 *servicejsonkeys.ClaimsSignRequest
 		if args[1] != nil {
-			arg1 = args[1].(*pkg.ClaimsSignRequest)
+			arg1 = args[1].(*servicejsonkeys.ClaimsSignRequest)
 		}
 		var arg2 []grpc.CallOption
 		var variadicArgs []grpc.CallOption
@@ -3114,12 +3114,12 @@ func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Return(v *pkg.ClaimsSignResponse, err error) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
+func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Return(v, err)
 	return _c
 }
 
-func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) RunAndReturn(run func(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption) (*pkg.ClaimsSignResponse, error)) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
+func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error)) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3152,7 +3152,7 @@ func (_m *MockTokenCreateAnonSignClaimsService) EXPECT() *MockTokenCreateAnonSig
 }
 
 // ClaimsSign provides a mock function for the type MockTokenCreateAnonSignClaimsService
-func (_mock *MockTokenCreateAnonSignClaimsService) ClaimsSign(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption) (*pkg.ClaimsSignResponse, error) {
+func (_mock *MockTokenCreateAnonSignClaimsService) ClaimsSign(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, req, opts)
@@ -3165,19 +3165,19 @@ func (_mock *MockTokenCreateAnonSignClaimsService) ClaimsSign(ctx context.Contex
 		panic("no return value specified for ClaimsSign")
 	}
 
-	var r0 *pkg.ClaimsSignResponse
+	var r0 *servicejsonkeys.ClaimsSignResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) (*pkg.ClaimsSignResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error)); ok {
 		return returnFunc(ctx, req, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) *pkg.ClaimsSignResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) *servicejsonkeys.ClaimsSignResponse); ok {
 		r0 = returnFunc(ctx, req, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkg.ClaimsSignResponse)
+			r0 = ret.Get(0).(*servicejsonkeys.ClaimsSignResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) error); ok {
 		r1 = returnFunc(ctx, req, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -3192,22 +3192,22 @@ type MockTokenCreateAnonSignClaimsService_ClaimsSign_Call struct {
 
 // ClaimsSign is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *pkg.ClaimsSignRequest
+//   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
 func (_e *MockTokenCreateAnonSignClaimsService_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
 	return &MockTokenCreateAnonSignClaimsService_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
 		append([]interface{}{ctx, req}, opts...)...)}
 }
 
-func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Run(run func(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
+func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *pkg.ClaimsSignRequest
+		var arg1 *servicejsonkeys.ClaimsSignRequest
 		if args[1] != nil {
-			arg1 = args[1].(*pkg.ClaimsSignRequest)
+			arg1 = args[1].(*servicejsonkeys.ClaimsSignRequest)
 		}
 		var arg2 []grpc.CallOption
 		var variadicArgs []grpc.CallOption
@@ -3224,12 +3224,12 @@ func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Return(v *pkg.ClaimsSignResponse, err error) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
+func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
 	_c.Call.Return(v, err)
 	return _c
 }
 
-func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) RunAndReturn(run func(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption) (*pkg.ClaimsSignResponse, error)) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
+func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error)) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3357,7 +3357,7 @@ func (_m *MockTokenRefreshServiceSignClaims) EXPECT() *MockTokenRefreshServiceSi
 }
 
 // ClaimsSign provides a mock function for the type MockTokenRefreshServiceSignClaims
-func (_mock *MockTokenRefreshServiceSignClaims) ClaimsSign(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption) (*pkg.ClaimsSignResponse, error) {
+func (_mock *MockTokenRefreshServiceSignClaims) ClaimsSign(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, req, opts)
@@ -3370,19 +3370,19 @@ func (_mock *MockTokenRefreshServiceSignClaims) ClaimsSign(ctx context.Context, 
 		panic("no return value specified for ClaimsSign")
 	}
 
-	var r0 *pkg.ClaimsSignResponse
+	var r0 *servicejsonkeys.ClaimsSignResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) (*pkg.ClaimsSignResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error)); ok {
 		return returnFunc(ctx, req, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) *pkg.ClaimsSignResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) *servicejsonkeys.ClaimsSignResponse); ok {
 		r0 = returnFunc(ctx, req, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkg.ClaimsSignResponse)
+			r0 = ret.Get(0).(*servicejsonkeys.ClaimsSignResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.ClaimsSignRequest, ...grpc.CallOption) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.ClaimsSignRequest, ...grpc.CallOption) error); ok {
 		r1 = returnFunc(ctx, req, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -3397,22 +3397,22 @@ type MockTokenRefreshServiceSignClaims_ClaimsSign_Call struct {
 
 // ClaimsSign is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *pkg.ClaimsSignRequest
+//   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
 func (_e *MockTokenRefreshServiceSignClaims_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
 	return &MockTokenRefreshServiceSignClaims_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
 		append([]interface{}{ctx, req}, opts...)...)}
 }
 
-func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
+func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *pkg.ClaimsSignRequest
+		var arg1 *servicejsonkeys.ClaimsSignRequest
 		if args[1] != nil {
-			arg1 = args[1].(*pkg.ClaimsSignRequest)
+			arg1 = args[1].(*servicejsonkeys.ClaimsSignRequest)
 		}
 		var arg2 []grpc.CallOption
 		var variadicArgs []grpc.CallOption
@@ -3429,12 +3429,12 @@ func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Return(v *pkg.ClaimsSignResponse, err error) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
+func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Return(v, err)
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) RunAndReturn(run func(ctx context.Context, req *pkg.ClaimsSignRequest, opts ...grpc.CallOption) (*pkg.ClaimsSignResponse, error)) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
+func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption) (*servicejsonkeys.ClaimsSignResponse, error)) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3467,7 +3467,7 @@ func (_m *MockTokenRefreshServiceVerifyClaims) EXPECT() *MockTokenRefreshService
 }
 
 // VerifyClaims provides a mock function for the type MockTokenRefreshServiceVerifyClaims
-func (_mock *MockTokenRefreshServiceVerifyClaims) VerifyClaims(ctx context.Context, req *pkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error) {
+func (_mock *MockTokenRefreshServiceVerifyClaims) VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*services.AccessTokenClaims, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -3476,17 +3476,17 @@ func (_mock *MockTokenRefreshServiceVerifyClaims) VerifyClaims(ctx context.Conte
 
 	var r0 *services.AccessTokenClaims
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) (*services.AccessTokenClaims, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.VerifyClaimsRequest) *services.AccessTokenClaims); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) *services.AccessTokenClaims); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*services.AccessTokenClaims)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.VerifyClaimsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -3501,20 +3501,20 @@ type MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call struct {
 
 // VerifyClaims is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *pkg.VerifyClaimsRequest
+//   - req *servicejsonkeys.VerifyClaimsRequest
 func (_e *MockTokenRefreshServiceVerifyClaims_Expecter) VerifyClaims(ctx interface{}, req interface{}) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
 	return &MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, req)}
 }
 
-func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) Run(run func(ctx context.Context, req *pkg.VerifyClaimsRequest)) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
+func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) Run(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest)) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *pkg.VerifyClaimsRequest
+		var arg1 *servicejsonkeys.VerifyClaimsRequest
 		if args[1] != nil {
-			arg1 = args[1].(*pkg.VerifyClaimsRequest)
+			arg1 = args[1].(*servicejsonkeys.VerifyClaimsRequest)
 		}
 		run(
 			arg0,
@@ -3529,7 +3529,7 @@ func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) Return(accessTo
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *pkg.VerifyClaimsRequest) (*services.AccessTokenClaims, error)) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
+func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*services.AccessTokenClaims, error)) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3562,7 +3562,7 @@ func (_m *MockTokenRefreshServiceVerifyRefreshClaims) EXPECT() *MockTokenRefresh
 }
 
 // VerifyClaims provides a mock function for the type MockTokenRefreshServiceVerifyRefreshClaims
-func (_mock *MockTokenRefreshServiceVerifyRefreshClaims) VerifyClaims(ctx context.Context, req *pkg.VerifyClaimsRequest) (*services.RefreshTokenClaims, error) {
+func (_mock *MockTokenRefreshServiceVerifyRefreshClaims) VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*services.RefreshTokenClaims, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -3571,17 +3571,17 @@ func (_mock *MockTokenRefreshServiceVerifyRefreshClaims) VerifyClaims(ctx contex
 
 	var r0 *services.RefreshTokenClaims
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.VerifyClaimsRequest) (*services.RefreshTokenClaims, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) (*services.RefreshTokenClaims, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pkg.VerifyClaimsRequest) *services.RefreshTokenClaims); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) *services.RefreshTokenClaims); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*services.RefreshTokenClaims)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pkg.VerifyClaimsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -3596,20 +3596,20 @@ type MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call struct {
 
 // VerifyClaims is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *pkg.VerifyClaimsRequest
+//   - req *servicejsonkeys.VerifyClaimsRequest
 func (_e *MockTokenRefreshServiceVerifyRefreshClaims_Expecter) VerifyClaims(ctx interface{}, req interface{}) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
 	return &MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, req)}
 }
 
-func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) Run(run func(ctx context.Context, req *pkg.VerifyClaimsRequest)) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
+func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) Run(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest)) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *pkg.VerifyClaimsRequest
+		var arg1 *servicejsonkeys.VerifyClaimsRequest
 		if args[1] != nil {
-			arg1 = args[1].(*pkg.VerifyClaimsRequest)
+			arg1 = args[1].(*servicejsonkeys.VerifyClaimsRequest)
 		}
 		run(
 			arg0,
@@ -3624,7 +3624,7 @@ func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) Return(r
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *pkg.VerifyClaimsRequest) (*services.RefreshTokenClaims, error)) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
+func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*services.RefreshTokenClaims, error)) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }

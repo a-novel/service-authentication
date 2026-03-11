@@ -17,7 +17,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/samber/lo"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
@@ -27,7 +27,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/services"
-	"github.com/a-novel/service-authentication/v2/pkg"
+	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
 func main() {
@@ -51,13 +51,13 @@ func main() {
 
 	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
 
-	jsonKeysClient := lo.Must(jkpkg.NewClient(
+	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(
 		fmt.Sprintf("%s:%d", cfg.DependenciesConfig.ServiceJsonKeysHost, cfg.DependenciesConfig.ServiceJsonKeysPort),
 		jsonKeysCredentials...,
 	))
 
-	serviceVerifyAccessToken := jkpkg.NewClaimsVerifier[services.AccessTokenClaims](jsonKeysClient)
-	serviceVerifyRefreshToken := jkpkg.NewClaimsVerifier[services.RefreshTokenClaims](jsonKeysClient)
+	serviceVerifyAccessToken := servicejsonkeys.NewClaimsVerifier[services.AccessTokenClaims](jsonKeysClient)
+	serviceVerifyRefreshToken := servicejsonkeys.NewClaimsVerifier[services.RefreshTokenClaims](jsonKeysClient)
 
 	// =================================================================================================================
 	// DAO
@@ -139,7 +139,7 @@ func main() {
 	// MIDDLEWARES
 	// =================================================================================================================
 
-	withAuth := pkg.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
+	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
 
 	// =================================================================================================================
 	// HANDLERS

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	jkpkg "github.com/a-novel/service-json-keys/v2/pkg"
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/jwt/jws"
@@ -31,7 +31,7 @@ func TestTokenRefresh(t *testing.T) {
 	}
 
 	type signClaimsMock struct {
-		resp *jkpkg.ClaimsSignResponse
+		resp *servicejsonkeys.ClaimsSignResponse
 		err  error
 	}
 
@@ -89,7 +89,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			signClaimsMock: &signClaimsMock{
-				resp: &jkpkg.ClaimsSignResponse{
+				resp: &servicejsonkeys.ClaimsSignResponse{
 					Token: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				},
 			},
@@ -322,10 +322,10 @@ func TestTokenRefresh(t *testing.T) {
 				serviceVerifyClaims.EXPECT().
 					VerifyClaims(
 						mock.Anything,
-						&jkpkg.VerifyClaimsRequest{
-							Usage:       jkpkg.KeyUsageAuth,
+						&servicejsonkeys.VerifyClaimsRequest{
+							Usage:       servicejsonkeys.KeyUsageAuth,
 							AccessToken: testCase.request.AccessToken,
-							Options:     &jkpkg.VerifyClaimsOptions{IgnoreExpired: true},
+							Options:     &servicejsonkeys.VerifyClaimsOptions{IgnoreExpired: true},
 						},
 					).
 					Return(testCase.serviceVerifyClaimsMock.resp, testCase.serviceVerifyClaimsMock.err)
@@ -335,8 +335,8 @@ func TestTokenRefresh(t *testing.T) {
 				serviceVerifyRefreshClaims.EXPECT().
 					VerifyClaims(
 						mock.Anything,
-						&jkpkg.VerifyClaimsRequest{
-							Usage:       jkpkg.KeyUsageAuthRefresh,
+						&servicejsonkeys.VerifyClaimsRequest{
+							Usage:       servicejsonkeys.KeyUsageAuthRefresh,
 							AccessToken: testCase.request.RefreshToken,
 						},
 					).
@@ -355,8 +355,8 @@ func TestTokenRefresh(t *testing.T) {
 				serviceSignClaims.EXPECT().
 					ClaimsSign(
 						mock.Anything,
-						&jkpkg.ClaimsSignRequest{
-							Usage: jkpkg.KeyUsageAuth,
+						&servicejsonkeys.ClaimsSignRequest{
+							Usage: servicejsonkeys.KeyUsageAuth,
 							Payload: lo.Must(grpcf.InterfaceToProtoAny(&services.AccessTokenClaims{
 								UserID:         testCase.serviceVerifyClaimsMock.resp.UserID,
 								Roles:          []string{testCase.repositoryMock.resp.Role},
