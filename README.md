@@ -28,7 +28,7 @@ Run the service as a containerized application (the below examples use docker-co
 ```yaml
 services:
   postgres-authentication:
-    image: ghcr.io/a-novel/service-authentication/database:v2.4.1
+    image: ghcr.io/a-novel/service-authentication/database:v2.4.2
     networks:
       - api
     environment:
@@ -41,7 +41,7 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/
 
   service-authentication:
-    image: ghcr.io/a-novel/service-authentication/standalone:v2.4.1
+    image: ghcr.io/a-novel/service-authentication/standalone:v2.4.2
     ports:
       - "${SERVICE_AUTHENTICATION_REST_PORT}:8080"
     depends_on:
@@ -68,7 +68,7 @@ production deployments. Instead, consider using the separate, optimized images f
 ```yaml
 services:
   postgres-authentication:
-    image: ghcr.io/a-novel/service-authentication/database:v2.4.1
+    image: ghcr.io/a-novel/service-authentication/database:v2.4.2
     networks:
       - api
     environment:
@@ -81,7 +81,7 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/
 
   migrations-authentication:
-    image: ghcr.io/a-novel/service-authentication/migrations:v2.4.1
+    image: ghcr.io/a-novel/service-authentication/migrations:v2.4.2
     depends_on:
       postgres-authentication:
         condition: service_healthy
@@ -92,7 +92,7 @@ services:
 
   # Optional job, used to inject base data into a freshly initialized database.
   init-authentication:
-    image: ghcr.io/a-novel/service-authentication/init:v2.4.1
+    image: ghcr.io/a-novel/service-authentication/init:v2.4.2
     depends_on:
       postgres-authentication:
         condition: service_healthy
@@ -107,7 +107,7 @@ services:
       - api
 
   service-authentication:
-    image: ghcr.io/a-novel/service-authentication/rest:v2.4.1
+    image: ghcr.io/a-novel/service-authentication/rest:v2.4.2
     ports:
       - "${SERVICE_AUTHENTICATION_REST_PORT}:8080"
     depends_on:
