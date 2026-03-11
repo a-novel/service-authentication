@@ -312,7 +312,6 @@ import (
 	"os"
 
 	loggingpresets "github.com/a-novel-kit/golib/logging/presets"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/go-chi/chi/v5"
 	"github.com/muesli/termenv"
 
@@ -356,7 +355,6 @@ func main() {
 
 	logger := &loggingpresets.LogLocal{
 		Out:      os.Stdout,
-		Renderer: lipgloss.NewRenderer(os.Stdout, termenv.WithTTY(true)),
 	}
 
 	// You can now add permission-based authentication to your routes.
