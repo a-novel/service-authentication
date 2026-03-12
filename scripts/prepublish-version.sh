@@ -9,6 +9,6 @@ case "$OSTYPE" in
     ;;
   *)
     echo "Using GNU sed style"
-    sed -i -E "s|\($1\)v[0-9.]+|\1v$(node -p -e "require('./package.json').version")|g" $2
+    sed -i -E "s|($1)v[0-9.]+|\1v$(node -p -e "require('./package.json').version")|g" $2
     ;;
 esac
