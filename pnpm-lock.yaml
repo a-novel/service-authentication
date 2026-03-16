@@ -31,7 +31,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.18
-        version: 1.3.22(2bf2f083603af3254c0d8a2a87081c7b)
+        version: 1.3.23(2bf2f083603af3254c0d8a2a87081c7b)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.0.3(jiti@2.6.1))
@@ -109,7 +109,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.3.22(zod@4.3.6)
+        version: 1.3.23(zod@4.3.6)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -124,10 +124,10 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.3.22(zod@4.3.6)
+        version: 1.3.23(zod@4.3.6)
       '@a-novel-kit/nodelib-test':
         specifier: ^1.3.18
-        version: 1.3.22(@a-novel-kit/nodelib-browser@1.3.22(zod@4.3.6))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.4))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(jsdom@29.0.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))(vite@8.0.0(@types/node@25.4.0)(esbuild@0.27.4)(jiti@2.6.1)))(zod@4.3.6)
+        version: 1.3.23(@a-novel-kit/nodelib-browser@1.3.23(zod@4.3.6))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.4))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(jsdom@29.0.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))(vite@8.0.0(@types/node@25.4.0)(esbuild@0.27.4)(jiti@2.6.1)))(zod@4.3.6)
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../rest
@@ -160,10 +160,10 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.3.22(zod@4.3.6)
+        version: 1.3.23(zod@4.3.6)
       '@a-novel-kit/nodelib-test':
         specifier: ^1.3.18
-        version: 1.3.22(@a-novel-kit/nodelib-browser@1.3.22(zod@4.3.6))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.4))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@24.12.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.1(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.32.0)))(zod@4.3.6)
+        version: 1.3.23(@a-novel-kit/nodelib-browser@1.3.23(zod@4.3.6))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.4))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@24.12.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.1(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.32.0)))(zod@4.3.6)
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../../rest
@@ -218,14 +218,14 @@ importers:
 
 packages:
 
-  '@a-novel-kit/nodelib-browser@1.3.22':
-    resolution: {integrity: sha512-aGr7DDs+lVdBChIEhbgYHNxNaL6sluWZrC6ZgC4M1DgPWmrao4cL6KdTZJTDKALzuWKETueRBkcYYFCLO5YrvQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-browser/1.3.22/2765bb25b07835df232e20e21ffacbe37323158b}
+  '@a-novel-kit/nodelib-browser@1.3.23':
+    resolution: {integrity: sha512-RDK1MfMbzxat+Qr9F4PdCwUf1FcyeN6Y4W1odcUUwt7FmX0Pe+Xk+xSfJqkZb5dtu8zuz6zp5AnMKCPaFP3RMQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-browser/1.3.23/6bf0570a2db62c8e1d405b21b988fda3b4d7de62}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       zod: ^4.3.6
 
-  '@a-novel-kit/nodelib-config@1.3.22':
-    resolution: {integrity: sha512-tZ44zhTq5Eo6Z1Xb9jk8eVS8navzCjD/r4LPinUpl4LTAXMHUcpyc57GLgSLbh6bMN0LMVNBtwv46YmlAQ8jbw==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/1.3.22/8a6525e0e49a1dda348bdd07b9c8925514a83828}
+  '@a-novel-kit/nodelib-config@1.3.23':
+    resolution: {integrity: sha512-pdwG2pixEi1/b3Z62/UCC9kG7Vve5uxTM3OL1/M7j8T424uiFXaKkyU7LPUUjuIyAJqW963fsuZ6NwPX5cEOOA==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/1.3.23/18272e10652da14a8f921ba30ac2ef574ac21784}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@eslint/compat': ^2.0.3
@@ -236,20 +236,20 @@ packages:
       eslint: ^10.0.3
       eslint-config-prettier: ^10.1.8
       eslint-plugin-prettier: ^5.5.5
-      eslint-plugin-storybook: ^10.2.17
+      eslint-plugin-storybook: ^10.2.19
       eslint-plugin-svelte: ^3.15.2
       prettier: ^3.8.1
       prettier-plugin-css-order: ^2.2.0
       prettier-plugin-packagejson: ^2.5.20 || ^3.0.0
       prettier-plugin-sql: ^0.19.2
       prettier-plugin-svelte: ^3.5.1
-      storybook: ^10.2.17
-      svelte: ^5.53.11
+      storybook: ^10.2.19
+      svelte: ^5.53.12
       typescript: ^5.9.3
       typescript-eslint: ^8.57.0
 
-  '@a-novel-kit/nodelib-test@1.3.22':
-    resolution: {integrity: sha512-Q13Z86jY9hhz4U8vNoOHUuf3p5ii8w6Dfg8axj4kfq7cXFT1xsu8uMZ+Q16Y6vpqi7lgZuLzAKdrQFNHOz1Z5g==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/1.3.22/06b6b8466e6d649adfecda21ea2c253bc8a088cd}
+  '@a-novel-kit/nodelib-test@1.3.23':
+    resolution: {integrity: sha512-1gHvvIBTMGxMJdAfHd1JLcj6l9h33nF6zNJnt84GGgXVII2tA+PjD/3wIE/2WCNUo5FoeeNfOHyzln9y/47L6w==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/1.3.23/f7d77059d5c43251f62a794e25c3a78b1f24969b}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@a-novel-kit/nodelib-browser': '*'
@@ -259,7 +259,7 @@ packages:
       msw: ^2.10.4
       playwright: ^1.54.1
       v8-to-istanbul: ^9.3.0
-      vitest: ^3.2.4 || ^4.0.0
+      vitest: ^4.0.0
       zod: ^4.1.12
 
   '@acemir/cssom@0.9.31':
@@ -3636,11 +3636,11 @@ packages:
 
 snapshots:
 
-  '@a-novel-kit/nodelib-browser@1.3.22(zod@4.3.6)':
+  '@a-novel-kit/nodelib-browser@1.3.23(zod@4.3.6)':
     dependencies:
       zod: 4.3.6
 
-  '@a-novel-kit/nodelib-config@1.3.22(2bf2f083603af3254c0d8a2a87081c7b)':
+  '@a-novel-kit/nodelib-config@1.3.23(2bf2f083603af3254c0d8a2a87081c7b)':
     dependencies:
       '@eslint/compat': 2.0.3(eslint@10.0.3(jiti@2.6.1))
       '@eslint/js': 10.0.1(eslint@10.0.3(jiti@2.6.1))
@@ -3662,9 +3662,9 @@ snapshots:
       typescript: 5.9.3
       typescript-eslint: 8.57.0(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3)
 
-  '@a-novel-kit/nodelib-test@1.3.22(@a-novel-kit/nodelib-browser@1.3.22(zod@4.3.6))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.4))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@24.12.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.1(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.32.0)))(zod@4.3.6)':
+  '@a-novel-kit/nodelib-test@1.3.23(@a-novel-kit/nodelib-browser@1.3.23(zod@4.3.6))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.4))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@24.12.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.1(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.32.0)))(zod@4.3.6)':
     dependencies:
-      '@a-novel-kit/nodelib-browser': 1.3.22(zod@4.3.6)
+      '@a-novel-kit/nodelib-browser': 1.3.23(zod@4.3.6)
       '@msw/playwright': 0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))
       '@tanstack/react-query': 5.90.21(react@19.2.4)
       '@testing-library/react': 16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -3677,9 +3677,9 @@ snapshots:
       vitest: 4.1.0(@opentelemetry/api@1.9.0)(@types/node@24.12.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.1(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.32.0))
       zod: 4.3.6
 
-  '@a-novel-kit/nodelib-test@1.3.22(@a-novel-kit/nodelib-browser@1.3.22(zod@4.3.6))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.4))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(jsdom@29.0.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))(vite@8.0.0(@types/node@25.4.0)(esbuild@0.27.4)(jiti@2.6.1)))(zod@4.3.6)':
+  '@a-novel-kit/nodelib-test@1.3.23(@a-novel-kit/nodelib-browser@1.3.23(zod@4.3.6))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.4))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(jsdom@29.0.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))(vite@8.0.0(@types/node@25.4.0)(esbuild@0.27.4)(jiti@2.6.1)))(zod@4.3.6)':
     dependencies:
-      '@a-novel-kit/nodelib-browser': 1.3.22(zod@4.3.6)
+      '@a-novel-kit/nodelib-browser': 1.3.23(zod@4.3.6)
       '@msw/playwright': 0.4.5(msw@2.12.10(@types/node@25.4.0)(typescript@5.9.3))
       '@tanstack/react-query': 5.90.21(react@19.2.4)
       '@testing-library/react': 16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
