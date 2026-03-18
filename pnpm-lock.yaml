@@ -37,7 +37,7 @@ importers:
         version: 10.0.1(eslint@10.0.3(jiti@2.6.1))
       '@redocly/cli':
         specifier: ^2.14.5
-        version: 2.22.1(@opentelemetry/api@1.9.0)(core-js@3.48.0)
+        version: 2.23.0(@opentelemetry/api@1.9.0)(core-js@3.48.0)
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
         version: 6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.1)(svelte@5.53.10))(prettier@3.8.1)(svelte@5.53.10)
@@ -310,8 +310,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  '@babel/runtime@7.28.6':
-    resolution: {integrity: sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==}
+  '@babel/runtime@7.29.2':
+    resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.28.6':
@@ -842,8 +842,8 @@ packages:
   '@redocly/ajv@8.18.0':
     resolution: {integrity: sha512-F+LMD2IDIXuHxgpLJh3nkLj9+tSaEzoUWd+7fONGq5pe2169FUDjpEkOfEpoGLz1sbZni/69p07OsecNfAOpqA==}
 
-  '@redocly/cli@2.22.1':
-    resolution: {integrity: sha512-oW3k/IN0ydS1CfyTF6Ozcn4gIHDmlJ9GG9MUPjSxH0w5ZKqIU0kzxD/s08+noPjP5AYBANDcl3cJn0nPcFNEHw==}
+  '@redocly/cli@2.23.0':
+    resolution: {integrity: sha512-pxKTyy/M98PvCoPOnwOSdu/DeIaVRS6YStqjz2HhbrG8+3305vkGBeuqJD5+TwtOLnY56W/X+UC9KoAe4r+f2Q==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
@@ -857,12 +857,12 @@ packages:
     resolution: {integrity: sha512-V09ayfnb5GyysmvARbt+voFZAjGcf7hSYxOYxSkCc4fbH/DTfq5YWoec8cflvmHHqyIFbqvmGKmYFzqhr9zxDg==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@redocly/openapi-core@2.22.1':
-    resolution: {integrity: sha512-sb3QYpqJZq4U31x6LRuYXgaA4byNFoTMGVLCvq8o8Om1GGv6O0/oMu6EpPZoDAYDxIsTRDPC04Lu6MLVU6D/ag==}
+  '@redocly/openapi-core@2.23.0':
+    resolution: {integrity: sha512-8oqafQ5cEnUZ35+53fHwWp0AYgfhuHTe2SWLotS5fn3r96ihVFrV9MPI8k3wwJIGORQqdrCjLjlCUk2JJp2Rmg==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
-  '@redocly/respect-core@2.22.1':
-    resolution: {integrity: sha512-aYfiAyqmMJ6Sa8LcAewwyvya6g+oxsvVCfDJhtFeZZnO7JMnr8hmEYqQf2iCCqUGMbPdL0VcPABex15i4WYQVQ==}
+  '@redocly/respect-core@2.23.0':
+    resolution: {integrity: sha512-2g7wxZXxTZBgb+UogZpU/gy2C1w+UfQTy+Tmhyj3rpvUvszXz/L7iNTHw9WdMafp2rOzxSLWcJUlSz1KUYbohQ==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.9':
@@ -3758,7 +3758,7 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.0
 
-  '@babel/runtime@7.28.6': {}
+  '@babel/runtime@7.29.2': {}
 
   '@babel/template@7.28.6':
     dependencies:
@@ -4230,14 +4230,14 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  '@redocly/cli@2.22.1(@opentelemetry/api@1.9.0)(core-js@3.48.0)':
+  '@redocly/cli@2.23.0(@opentelemetry/api@1.9.0)(core-js@3.48.0)':
     dependencies:
       '@opentelemetry/exporter-trace-otlp-http': 0.202.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-node': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.34.0
-      '@redocly/openapi-core': 2.22.1
-      '@redocly/respect-core': 2.22.1
+      '@redocly/openapi-core': 2.23.0
+      '@redocly/respect-core': 2.23.0
       abort-controller: 3.0.0
       ajv: '@redocly/ajv@8.18.0'
       ajv-formats: 3.0.1(@redocly/ajv@8.18.0)
@@ -4289,7 +4289,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@redocly/openapi-core@2.22.1':
+  '@redocly/openapi-core@2.23.0':
     dependencies:
       '@redocly/ajv': 8.18.0
       '@redocly/config': 0.44.1
@@ -4302,12 +4302,12 @@ snapshots:
       pluralize: 8.0.0
       yaml-ast-parser: 0.0.43
 
-  '@redocly/respect-core@2.22.1':
+  '@redocly/respect-core@2.23.0':
     dependencies:
       '@faker-js/faker': 7.6.0
       '@noble/hashes': 1.8.0
       '@redocly/ajv': 8.18.0
-      '@redocly/openapi-core': 2.22.1
+      '@redocly/openapi-core': 2.23.0
       ajv: '@redocly/ajv@8.18.0'
       better-ajv-errors: 1.2.0(@redocly/ajv@8.18.0)
       colorette: 2.0.20
@@ -4499,7 +4499,7 @@ snapshots:
   '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.29.0
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
@@ -4518,7 +4518,7 @@ snapshots:
 
   '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@testing-library/dom': 10.4.1
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
@@ -5693,7 +5693,7 @@ snapshots:
 
   json-schema-to-ts@2.7.2:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@types/json-schema': 7.0.15
       ts-algebra: 1.2.2
 
@@ -5883,7 +5883,7 @@ snapshots:
 
   mjml-accordion@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5891,7 +5891,7 @@ snapshots:
 
   mjml-body@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5899,7 +5899,7 @@ snapshots:
 
   mjml-button@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5907,7 +5907,7 @@ snapshots:
 
   mjml-carousel@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5915,7 +5915,7 @@ snapshots:
 
   mjml-cli@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       chokidar: 3.6.0
       glob: 10.5.0
       html-minifier: 4.0.0
@@ -5932,7 +5932,7 @@ snapshots:
 
   mjml-column@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5940,7 +5940,7 @@ snapshots:
 
   mjml-core@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       cheerio: 1.0.0-rc.12
       detect-node: 2.1.0
       html-minifier: 4.0.0
@@ -5955,7 +5955,7 @@ snapshots:
 
   mjml-divider@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5963,7 +5963,7 @@ snapshots:
 
   mjml-group@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5971,7 +5971,7 @@ snapshots:
 
   mjml-head-attributes@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5979,7 +5979,7 @@ snapshots:
 
   mjml-head-breakpoint@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5987,7 +5987,7 @@ snapshots:
 
   mjml-head-font@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -5995,7 +5995,7 @@ snapshots:
 
   mjml-head-html-attributes@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6003,7 +6003,7 @@ snapshots:
 
   mjml-head-preview@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6011,7 +6011,7 @@ snapshots:
 
   mjml-head-style@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6019,7 +6019,7 @@ snapshots:
 
   mjml-head-title@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6027,7 +6027,7 @@ snapshots:
 
   mjml-head@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6035,7 +6035,7 @@ snapshots:
 
   mjml-hero@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6043,7 +6043,7 @@ snapshots:
 
   mjml-image@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6051,7 +6051,7 @@ snapshots:
 
   mjml-migrate@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       js-beautify: 1.15.4
       lodash: 4.17.23
       mjml-core: 4.18.0
@@ -6062,7 +6062,7 @@ snapshots:
 
   mjml-navbar@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6070,14 +6070,14 @@ snapshots:
 
   mjml-parser-xml@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       detect-node: 2.1.0
       htmlparser2: 9.1.0
       lodash: 4.17.23
 
   mjml-preset-core@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       mjml-accordion: 4.18.0
       mjml-body: 4.18.0
       mjml-button: 4.18.0
@@ -6108,7 +6108,7 @@ snapshots:
 
   mjml-raw@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6116,7 +6116,7 @@ snapshots:
 
   mjml-section@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6124,7 +6124,7 @@ snapshots:
 
   mjml-social@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6132,7 +6132,7 @@ snapshots:
 
   mjml-spacer@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6140,7 +6140,7 @@ snapshots:
 
   mjml-table@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6148,7 +6148,7 @@ snapshots:
 
   mjml-text@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
     transitivePeerDependencies:
@@ -6156,11 +6156,11 @@ snapshots:
 
   mjml-validator@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
 
   mjml-wrapper@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       lodash: 4.17.23
       mjml-core: 4.18.0
       mjml-section: 4.18.0
@@ -6169,7 +6169,7 @@ snapshots:
 
   mjml@4.18.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       mjml-cli: 4.18.0
       mjml-core: 4.18.0
       mjml-migrate: 4.18.0
@@ -6445,7 +6445,7 @@ snapshots:
 
   polished@4.3.1:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
 
   postcss-less@6.0.0(postcss@8.5.8):
     dependencies:
