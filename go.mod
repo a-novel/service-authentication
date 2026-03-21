@@ -5,7 +5,7 @@ go 1.26.1
 tool github.com/vektra/mockery/v3
 
 require (
-	github.com/a-novel-kit/golib v0.20.17
+	github.com/a-novel-kit/golib v0.20.18
 	github.com/a-novel-kit/jwt v1.1.43
 	github.com/a-novel/service-json-keys/v2 v2.2.5
 	github.com/go-chi/chi/v5 v5.2.5
@@ -43,7 +43,7 @@ require (
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/fatih/color v1.18.0 // indirect
+	github.com/fatih/color v1.19.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
