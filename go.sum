@@ -23,8 +23,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapp
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.55.0/go.mod h1:Mf6O40IAyB9zR/1J8nGDDPirZQQPbYJni8Yisy7NTMc=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.55.0 h1:0G1Faw/W6OirxOw2Kgz303+JuUgifQXYS5J21NtZxog=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.55.0/go.mod h1:8W5IW/jylevlBQKSWkh5ZMP2oy7yT9Pnfug6Y6W/9D8=
-github.com/a-novel-kit/golib v0.20.17 h1:WXe/1Gv7gHKGddNlcb7VGbWCK86/8gxXIaz22SQ1uwY=
-github.com/a-novel-kit/golib v0.20.17/go.mod h1:5Mf3aFK4hL4d/0KGJVip6KAR+oroZn85dkS9COZXa9c=
+github.com/a-novel-kit/golib v0.20.18 h1:3F8XkZpwnRFJvQABqZRddibPvxT7LfgIhpV4DnjJ5QI=
+github.com/a-novel-kit/golib v0.20.18/go.mod h1:MRdkNYYGP76KH9504NIPnWljg5aE89MyUw/wk97hrlU=
 github.com/a-novel-kit/jwt v1.1.43 h1:UVNcsErJbt5tVM/dsIBsyc0UgPv8RWvQqJQHdp87gIY=
 github.com/a-novel-kit/jwt v1.1.43/go.mod h1:XhzCt8jPkazLQtBVT2U5meOLiaCQH6FIlmqx0il6tpc=
 github.com/a-novel/service-json-keys/v2 v2.2.5 h1:DmlzFEl5jAxpnd6XHsQg6r391i4jnzN/u2QdGJh8gyU=
@@ -61,8 +61,8 @@ github.com/envoyproxy/go-control-plane/envoy v1.36.0 h1:yg/JjO5E7ubRyKX3m07GF3re
 github.com/envoyproxy/go-control-plane/envoy v1.36.0/go.mod h1:ty89S1YCCVruQAm9OtKeEkQLTb+Lkz0k8v9W0Oxsv98=
 github.com/envoyproxy/protoc-gen-validate v1.3.0 h1:TvGH1wof4H33rezVKWSpqKz5NXWg5VPuZ0uONDT6eb4=
 github.com/envoyproxy/protoc-gen-validate v1.3.0/go.mod h1:HvYl7zwPa5mffgyeTUHA9zHIH36nmrm7oCbo4YKoSWA=
-github.com/fatih/color v1.18.0 h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=
-github.com/fatih/color v1.18.0/go.mod h1:4FelSpRwEGDpQ12mAdzqdOukCy4u8WUtOY6lkT/6HfU=
+github.com/fatih/color v1.19.0 h1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=
+github.com/fatih/color v1.19.0/go.mod h1:zNk67I0ZUT1bEGsSGyCZYZNrHuTkJJB+r6Q9VuMi0LE=
 github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
