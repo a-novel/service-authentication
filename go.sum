@@ -23,8 +23,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapp
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.55.0/go.mod h1:Mf6O40IAyB9zR/1J8nGDDPirZQQPbYJni8Yisy7NTMc=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.55.0 h1:0G1Faw/W6OirxOw2Kgz303+JuUgifQXYS5J21NtZxog=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.55.0/go.mod h1:8W5IW/jylevlBQKSWkh5ZMP2oy7yT9Pnfug6Y6W/9D8=
-github.com/a-novel-kit/golib v0.20.18 h1:3F8XkZpwnRFJvQABqZRddibPvxT7LfgIhpV4DnjJ5QI=
-github.com/a-novel-kit/golib v0.20.18/go.mod h1:MRdkNYYGP76KH9504NIPnWljg5aE89MyUw/wk97hrlU=
+github.com/a-novel-kit/golib v0.20.19 h1:BTSFBd89v0WL9BAIS4cYB2U/JVyIrtKzMTcCoSLSINk=
+github.com/a-novel-kit/golib v0.20.19/go.mod h1:MRdkNYYGP76KH9504NIPnWljg5aE89MyUw/wk97hrlU=
 github.com/a-novel-kit/jwt v1.1.44 h1:pcJ6dvIZWrRF0lpC4VUGzwLMtrJ/0m6Z7tGUcg4dTro=
 github.com/a-novel-kit/jwt v1.1.44/go.mod h1:XhzCt8jPkazLQtBVT2U5meOLiaCQH6FIlmqx0il6tpc=
 github.com/a-novel/service-json-keys/v2 v2.2.5 h1:DmlzFEl5jAxpnd6XHsQg6r391i4jnzN/u2QdGJh8gyU=
