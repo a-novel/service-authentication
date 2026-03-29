@@ -25,8 +25,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.55.0 h1
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.55.0/go.mod h1:8W5IW/jylevlBQKSWkh5ZMP2oy7yT9Pnfug6Y6W/9D8=
 github.com/a-novel-kit/golib v0.20.20 h1:sgxXlljY0X9QOLX/2Sf0raMs8K6yL5i9Q/uG1osU0j4=
 github.com/a-novel-kit/golib v0.20.20/go.mod h1:PtA3OXM4s+4SpqTO0l15BXtIAjaXwyLN3yrXwrw0fTs=
-github.com/a-novel-kit/jwt v1.1.45 h1:OANSfyse3nr+WuqI9up0GuAyeD8PV/pxgbazTP55WpU=
-github.com/a-novel-kit/jwt v1.1.45/go.mod h1:XhzCt8jPkazLQtBVT2U5meOLiaCQH6FIlmqx0il6tpc=
+github.com/a-novel-kit/jwt v1.1.46 h1:6kWTNMsta89ZfJ5RSLfcynEoOHdsUQwd3wq0JWXA2Yg=
+github.com/a-novel-kit/jwt v1.1.46/go.mod h1:XhzCt8jPkazLQtBVT2U5meOLiaCQH6FIlmqx0il6tpc=
 github.com/a-novel/service-json-keys/v2 v2.2.5 h1:DmlzFEl5jAxpnd6XHsQg6r391i4jnzN/u2QdGJh8gyU=
 github.com/a-novel/service-json-keys/v2 v2.2.5/go.mod h1:EkBGMBffNrxj2RW7zNlwPSdgKj7GFRo+qfNaNwDbPWE=
 github.com/brunoga/deep v1.3.1 h1:bSrL6FhAZa6JlVv4vsi7Hg8SLwroDb1kgDERRVipBCo=
