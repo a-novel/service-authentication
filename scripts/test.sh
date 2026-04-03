@@ -14,6 +14,8 @@ trap int_handler INT EXIT ERR
 
 podman compose --podman-build-args='--format docker -q' -p "${APP_NAME}" -f "${PODMAN_FILE}" up -d --build
 
+go run cmd/migrations/main.go
+
 # shellcheck disable=SC2046
 PACKAGES="$(go list ./... | grep -v /mocks | grep -v /test)"
 go tool -modfile=gotestsum.mod gotestsum --format pkgname -- -count=1 -cover $PACKAGES
