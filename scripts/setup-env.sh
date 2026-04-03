@@ -17,8 +17,8 @@ export SUPER_ADMIN_EMAIL="${SUPER_ADMIN_EMAIL:="noreply@agorastoryverse.com"}"
 export SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD:="admin"}"
 
 export REST_URL="${REST_URL:="http://localhost:${REST_PORT}"}"
-export MAIL_HOST=${MAIL_HOST:="http://localhost:${MAIL_UI_PORT}"}
-export PLATFORM_AUTH_URL=""${PLATFORM_AUTH_URL:="http://localhost:${PLATFORM_AUTH_PORT}"}""
+export MAIL_HOST="${MAIL_HOST:="http://localhost:${MAIL_UI_PORT}"}"
+export PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL:="http://localhost:${PLATFORM_AUTH_PORT}"}"
 
 export POSTGRES_USER="${POSTGRES_USER:="postgres"}"
 export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:="postgres"}"
