@@ -90,7 +90,7 @@ importers:
         version: 4.18.0
       nodemailer:
         specifier: ^8.0.0
-        version: 8.0.4
+        version: 8.0.5
       prettier:
         specifier: ^3.7.4
         version: 3.8.1
@@ -2664,6 +2664,10 @@ packages:
 
   nodemailer@8.0.4:
     resolution: {integrity: sha512-k+jf6N8PfQJ0Fe8ZhJlgqU5qJU44Lpvp2yvidH3vp1lPnVQMgi4yEEMPXg5eJS1gFIJTVq1NHBk7Ia9ARdSBdQ==}
+    engines: {node: '>=6.0.0'}
+
+  nodemailer@8.0.5:
+    resolution: {integrity: sha512-0PF8Yb1yZuQfQbq+5/pZJrtF6WQcjTd5/S4JOHs9PGFxuTqoB/icwuB44pOdURHJbRKX1PPoJZtY7R4VUoCC8w==}
     engines: {node: '>=6.0.0'}
 
   nopt@7.2.1:
@@ -6297,6 +6301,8 @@ snapshots:
       big-integer: 1.6.52
 
   nodemailer@8.0.4: {}
+
+  nodemailer@8.0.5: {}
 
   nopt@7.2.1:
     dependencies:
