@@ -1,7 +1,7 @@
 # This image exposes our app as a rest api server.
 #
 # It requires a patched database instance to run properly.
-FROM docker.io/library/golang:1.26.1-alpine AS builder
+FROM docker.io/library/golang:1.26.2-alpine AS builder
 
 WORKDIR /app
 
