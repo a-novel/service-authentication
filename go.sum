@@ -23,8 +23,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapp
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.56.0/go.mod h1:6ZZMQhZKDvUvkJw2rc+oDP90tMMzuU/J+5HG1ZmPOmE=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.56.0 h1:uYhkFf0DtbxOa5f2o2BqwMNWzAAhzHn67jukamPtWIA=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.56.0/go.mod h1:sKE2BdlsRRPL7ONGioxJnjUhEA1NbF484vFq8LX6znI=
-github.com/a-novel-kit/golib v0.20.23 h1:duNhs19slnT/vluPssTWBuVxlV+imofR5d/z+eVzKao=
-github.com/a-novel-kit/golib v0.20.23/go.mod h1:q9BqsuAWdAphmdJ5s+Uqb14ZLIJRGhD9qDhIUeZE4ho=
+github.com/a-novel-kit/golib v0.20.24 h1:varOnoc1AjB0ogpthmlAbzWmlneHw/pQCz57Tf1VhNg=
+github.com/a-novel-kit/golib v0.20.24/go.mod h1:ijcNg45eQGbRVyBSSBLFWU95qGaB8QB6dLBi75lvJxI=
 github.com/a-novel-kit/jwt v1.1.49 h1:p1TPPBo6VRURW95WDXfIqchyet8sEKU80PNiM7YhJaA=
 github.com/a-novel-kit/jwt v1.1.49/go.mod h1:pRK3dLCUDA74IS6cSHkB3A8+yVAvL2HM5MzVuB2fuwc=
 github.com/a-novel/service-json-keys/v2 v2.2.5 h1:DmlzFEl5jAxpnd6XHsQg6r391i4jnzN/u2QdGJh8gyU=
@@ -71,10 +71,10 @@ github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/gabriel-vasile/mimetype v1.4.13 h1:46nXokslUBsAJE/wMsp5gtO500a4F3Nkz9Ufpk2AcUM=
 github.com/gabriel-vasile/mimetype v1.4.13/go.mod h1:d+9Oxyo1wTzWdyVUPMmXFvp4F9tea18J8ufA774AB3s=
-github.com/getsentry/sentry-go v0.44.1 h1:/cPtrA5qB7uMRrhgSn9TYtcEF36auGP3Y6+ThvD/yaI=
-github.com/getsentry/sentry-go v0.44.1/go.mod h1:XDotiNZbgf5U8bPDUAfvcFmOnMQQceESxyKaObSssW0=
-github.com/getsentry/sentry-go/otel v0.44.1 h1:RV2zUHEvGHJmCCpMaJ52tZZAlcbMgvtasQn/g3CcKKc=
-github.com/getsentry/sentry-go/otel v0.44.1/go.mod h1:CfzTxocQJ6JX4SLFvnBrGULBAARFAd1fHmbJCTQlOP4=
+github.com/getsentry/sentry-go v0.45.0 h1:/ZlbfGcaOzG4QkCACCfxrbuABemjem7UnY5o+V5HmeM=
+github.com/getsentry/sentry-go v0.45.0/go.mod h1:XDotiNZbgf5U8bPDUAfvcFmOnMQQceESxyKaObSssW0=
+github.com/getsentry/sentry-go/otel v0.45.0 h1:9K5M3cbTIYPBsZxK9P4vWW9LShQxSab6Efh2yJ/c+sI=
+github.com/getsentry/sentry-go/otel v0.45.0/go.mod h1:ticFOxaDiHMTRAoGq2QLYXLoCt4RSkeNhF5qeoX1HyY=
 github.com/go-chi/chi/v5 v5.2.5 h1:Eg4myHZBjyvJmAFjFvWgrqDTXFyOzjj7YIm3L3mu6Ug=
 github.com/go-chi/chi/v5 v5.2.5/go.mod h1:X7Gx4mteadT3eDOMTsXzmI4/rwUpOwBHLpAfupzFJP0=
 github.com/go-chi/cors v1.2.2 h1:Jmey33TE+b+rB7fT8MUy1u0I4L+NARQlK6LhzKPSyQE=
