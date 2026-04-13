@@ -137,7 +137,7 @@ jobs:
           MP_DISABLE_WAL: true
 
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.2.5
+        image: ghcr.io/a-novel/service-json-keys/database:v2.2.6
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -167,7 +167,7 @@ jobs:
           --health-retries 5
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.2.5
+        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.2.6
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -324,7 +324,7 @@ jobs:
       id-token: write
     services:
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.2.5
+        image: ghcr.io/a-novel/service-json-keys/database:v2.2.6
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -349,7 +349,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.2.5
+        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.2.6
         ports:
           - "4000:8080"
         credentials:
@@ -389,7 +389,7 @@ jobs:
       digest: ${{ steps.build.outputs.digest }}
     services:
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.2.5
+        image: ghcr.io/a-novel/service-json-keys/database:v2.2.6
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -414,7 +414,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.2.5
+        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.2.6
         ports:
           - "4000:8080"
         credentials:
