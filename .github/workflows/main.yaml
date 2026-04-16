@@ -125,7 +125,7 @@ jobs:
       artifact-id: ${{ steps.test.outputs.artifact-id }}
     services:
       mailserver:
-        image: ghcr.io/axllent/mailpit:v1.29.6
+        image: ghcr.io/axllent/mailpit:v1.29.7
         ports:
           - "8025:8025"
         env:
