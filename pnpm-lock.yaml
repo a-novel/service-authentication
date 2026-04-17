@@ -42,7 +42,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.18
-        version: 1.3.30(950020c275d6677ff70c2b57217c050a)
+        version: 1.3.30(c17a841cfe159ef8375f8ec738c3af13)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.2.0(jiti@2.6.1))
@@ -51,7 +51,7 @@ importers:
         version: 2.26.0(@opentelemetry/api@1.9.1)(core-js@3.48.0)
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
-        version: 6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1)))(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
+        version: 6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1)))(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
       '@vitest/coverage-v8':
         specifier: ^4.0.16
         version: 4.1.4(vitest@4.1.4)
@@ -63,10 +63,10 @@ importers:
         version: 10.1.8(eslint@10.2.0(jiti@2.6.1))
       eslint-plugin-prettier:
         specifier: ^5.5.5
-        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.2.0(jiti@2.6.1)))(eslint@10.2.0(jiti@2.6.1))(prettier@3.8.2)
+        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.2.0(jiti@2.6.1)))(eslint@10.2.0(jiti@2.6.1))(prettier@3.8.3)
       eslint-plugin-storybook:
         specifier: ^10.2.13
-        version: 10.3.5(eslint@10.2.0(jiti@2.6.1))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3)
+        version: 10.3.5(eslint@10.2.0(jiti@2.6.1))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3)
       eslint-plugin-svelte:
         specifier: ^3.15.0
         version: 3.17.0(eslint@10.2.0(jiti@2.6.1))(svelte@5.53.10(@typescript-eslint/types@8.58.1))
@@ -96,13 +96,13 @@ importers:
         version: 8.0.5
       prettier:
         specifier: ^3.7.4
-        version: 3.8.2
+        version: 3.8.3
       prettier-plugin-packagejson:
         specifier: ^3.0.0
-        version: 3.0.2(prettier@3.8.2)
+        version: 3.0.2(prettier@3.8.3)
       prettier-plugin-sql:
         specifier: ^0.20.0
-        version: 0.20.0(prettier@3.8.2)
+        version: 0.20.0(prettier@3.8.3)
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -183,7 +183,7 @@ importers:
         version: link:../../rest-test
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
-        version: 6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1)))(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
+        version: 6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1)))(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
       '@types/jsdom':
         specifier: ^27.0.0
         version: 27.0.0
@@ -210,13 +210,13 @@ importers:
         version: 4.18.0
       prettier:
         specifier: ^3.6.2
-        version: 3.8.2
+        version: 3.8.3
       prettier-plugin-packagejson:
         specifier: ^2.5.19
-        version: 2.5.22(prettier@3.8.2)
+        version: 2.5.22(prettier@3.8.3)
       prettier-plugin-sql:
         specifier: ^0.19.2
-        version: 0.19.2(prettier@3.8.2)
+        version: 0.19.2(prettier@3.8.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -2922,8 +2922,8 @@ packages:
       prettier: ^3.0.0
       svelte: '>=5.46.4'
 
-  prettier@3.8.2:
-    resolution: {integrity: sha512-8c3mgTe0ASwWAJK+78dpviD+A8EqhndQPUBpNUIPt6+xWlIigCwfN01lWr9MAede4uqXGTEKeQWTvzb3vjia0Q==}
+  prettier@3.8.3:
+    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -3680,24 +3680,24 @@ snapshots:
     dependencies:
       zod: 4.3.6
 
-  '@a-novel-kit/nodelib-config@1.3.30(950020c275d6677ff70c2b57217c050a)':
+  '@a-novel-kit/nodelib-config@1.3.30(c17a841cfe159ef8375f8ec738c3af13)':
     dependencies:
       '@eslint/compat': 2.0.3(eslint@10.2.0(jiti@2.6.1))
       '@eslint/js': 10.0.1(eslint@10.2.0(jiti@2.6.1))
       '@sveltejs/kit': 2.57.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.0.0(svelte@5.53.10(@typescript-eslint/types@8.58.1))(vite@8.0.8(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1)))(svelte@5.53.10(@typescript-eslint/types@8.58.1))(typescript@6.0.3)(vite@8.0.8(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1))
-      '@trivago/prettier-plugin-sort-imports': 6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1)))(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
+      '@trivago/prettier-plugin-sort-imports': 6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1)))(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
       '@types/node': 25.5.2
       eslint: 10.2.0(jiti@2.6.1)
       eslint-config-prettier: 10.1.8(eslint@10.2.0(jiti@2.6.1))
-      eslint-plugin-prettier: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.2.0(jiti@2.6.1)))(eslint@10.2.0(jiti@2.6.1))(prettier@3.8.2)
-      eslint-plugin-storybook: 10.3.5(eslint@10.2.0(jiti@2.6.1))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3)
+      eslint-plugin-prettier: 5.5.5(eslint-config-prettier@10.1.8(eslint@10.2.0(jiti@2.6.1)))(eslint@10.2.0(jiti@2.6.1))(prettier@3.8.3)
+      eslint-plugin-storybook: 10.3.5(eslint@10.2.0(jiti@2.6.1))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3)
       eslint-plugin-svelte: 3.17.0(eslint@10.2.0(jiti@2.6.1))(svelte@5.53.10(@typescript-eslint/types@8.58.1))
-      prettier: 3.8.2
-      prettier-plugin-css-order: 2.2.0(postcss@8.5.9)(prettier@3.8.2)
-      prettier-plugin-packagejson: 3.0.2(prettier@3.8.2)
-      prettier-plugin-sql: 0.20.0(prettier@3.8.2)
-      prettier-plugin-svelte: 3.5.1(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
-      storybook: 10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      prettier: 3.8.3
+      prettier-plugin-css-order: 2.2.0(postcss@8.5.9)(prettier@3.8.3)
+      prettier-plugin-packagejson: 3.0.2(prettier@3.8.3)
+      prettier-plugin-sql: 0.20.0(prettier@3.8.3)
+      prettier-plugin-svelte: 3.5.1(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
+      storybook: 10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       svelte: 5.53.10(@typescript-eslint/types@8.58.1)
       typescript: 6.0.3
       typescript-eslint: 8.58.1(eslint@10.2.0(jiti@2.6.1))(typescript@6.0.3)
@@ -4566,7 +4566,7 @@ snapshots:
     dependencies:
       '@testing-library/dom': 10.4.1
 
-  '@trivago/prettier-plugin-sort-imports@6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1)))(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1))':
+  '@trivago/prettier-plugin-sort-imports@6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1)))(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1))':
     dependencies:
       '@babel/generator': 7.29.1
       '@babel/parser': 7.29.2
@@ -4576,9 +4576,9 @@ snapshots:
       lodash-es: 4.18.1
       minimatch: 10.2.5
       parse-imports-exports: 0.2.4
-      prettier: 3.8.2
+      prettier: 3.8.3
     optionalDependencies:
-      prettier-plugin-svelte: 3.5.1(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
+      prettier-plugin-svelte: 3.5.1(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1))
       svelte: 5.53.10(@typescript-eslint/types@8.58.1)
     transitivePeerDependencies:
       - supports-color
@@ -5243,20 +5243,20 @@ snapshots:
     dependencies:
       eslint: 10.2.0(jiti@2.6.1)
 
-  eslint-plugin-prettier@5.5.5(eslint-config-prettier@10.1.8(eslint@10.2.0(jiti@2.6.1)))(eslint@10.2.0(jiti@2.6.1))(prettier@3.8.2):
+  eslint-plugin-prettier@5.5.5(eslint-config-prettier@10.1.8(eslint@10.2.0(jiti@2.6.1)))(eslint@10.2.0(jiti@2.6.1))(prettier@3.8.3):
     dependencies:
       eslint: 10.2.0(jiti@2.6.1)
-      prettier: 3.8.2
+      prettier: 3.8.3
       prettier-linter-helpers: 1.0.1
       synckit: 0.11.12
     optionalDependencies:
       eslint-config-prettier: 10.1.8(eslint@10.2.0(jiti@2.6.1))
 
-  eslint-plugin-storybook@10.3.5(eslint@10.2.0(jiti@2.6.1))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3):
+  eslint-plugin-storybook@10.3.5(eslint@10.2.0(jiti@2.6.1))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3):
     dependencies:
       '@typescript-eslint/utils': 8.58.1(eslint@10.2.0(jiti@2.6.1))(typescript@6.0.3)
       eslint: 10.2.0(jiti@2.6.1)
-      storybook: 10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      storybook: 10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -6518,49 +6518,49 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
-  prettier-plugin-css-order@2.2.0(postcss@8.5.9)(prettier@3.8.2):
+  prettier-plugin-css-order@2.2.0(postcss@8.5.9)(prettier@3.8.3):
     dependencies:
       css-declaration-sorter: 7.4.0(postcss@8.5.9)
       postcss-less: 6.0.0(postcss@8.5.9)
       postcss-scss: 4.0.9(postcss@8.5.9)
-      prettier: 3.8.2
+      prettier: 3.8.3
     transitivePeerDependencies:
       - postcss
 
-  prettier-plugin-packagejson@2.5.22(prettier@3.8.2):
+  prettier-plugin-packagejson@2.5.22(prettier@3.8.3):
     dependencies:
       sort-package-json: 3.6.0
     optionalDependencies:
-      prettier: 3.8.2
+      prettier: 3.8.3
 
-  prettier-plugin-packagejson@3.0.2(prettier@3.8.2):
+  prettier-plugin-packagejson@3.0.2(prettier@3.8.3):
     dependencies:
       sort-package-json: 3.6.1
     optionalDependencies:
-      prettier: 3.8.2
+      prettier: 3.8.3
 
-  prettier-plugin-sql@0.19.2(prettier@3.8.2):
+  prettier-plugin-sql@0.19.2(prettier@3.8.3):
     dependencies:
       jsox: 1.2.125
       node-sql-parser: 5.4.0
-      prettier: 3.8.2
+      prettier: 3.8.3
       sql-formatter: 15.7.2
       tslib: 2.8.1
 
-  prettier-plugin-sql@0.20.0(prettier@3.8.2):
+  prettier-plugin-sql@0.20.0(prettier@3.8.3):
     dependencies:
       jsox: 1.2.125
       node-sql-parser: 5.4.0
-      prettier: 3.8.2
+      prettier: 3.8.3
       sql-formatter: 15.7.2
       tslib: 2.8.1
 
-  prettier-plugin-svelte@3.5.1(prettier@3.8.2)(svelte@5.53.10(@typescript-eslint/types@8.58.1)):
+  prettier-plugin-svelte@3.5.1(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.58.1)):
     dependencies:
-      prettier: 3.8.2
+      prettier: 3.8.3
       svelte: 5.53.10(@typescript-eslint/types@8.58.1)
 
-  prettier@3.8.2: {}
+  prettier@3.8.3: {}
 
   pretty-format@27.5.1:
     dependencies:
@@ -6868,7 +6868,7 @@ snapshots:
 
   stickyfill@1.1.1: {}
 
-  storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/icons': 2.0.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -6883,7 +6883,7 @@ snapshots:
       use-sync-external-store: 1.6.0(react@19.2.4)
       ws: 8.20.0
     optionalDependencies:
-      prettier: 3.8.2
+      prettier: 3.8.3
     transitivePeerDependencies:
       - '@testing-library/dom'
       - bufferutil
