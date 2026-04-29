@@ -49,7 +49,7 @@ importers:
         version: 10.0.1(eslint@10.2.1(jiti@2.6.1))
       '@redocly/cli':
         specifier: ^2.14.5
-        version: 2.30.2(@opentelemetry/api@1.9.1)(core-js@3.48.0)
+        version: 2.30.3(@opentelemetry/api@1.9.1)(core-js@3.48.0)
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
         version: 6.0.2(prettier-plugin-svelte@3.5.1(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.59.1)))(prettier@3.8.3)(svelte@5.53.10(@typescript-eslint/types@8.59.1))
@@ -715,8 +715,8 @@ packages:
     resolution: {integrity: sha512-EFd6cVbHsgLa6wa4RljGj6Wk75qoHxUSyc5asLyyPSyuhIcdS2Q3Phw6ImS1q+CkALthJRShiYfKANcQMuMqsQ==}
     engines: {node: '>=18'}
 
-  '@mswjs/interceptors@0.41.6':
-    resolution: {integrity: sha512-qmDvJIjcNsZ6tXWy2G9yuCgMPTTn35GMA3dPpSLm7QJVpbQzYdw0ALy1bKoivXnEM3U93/OrK+/M719b+fg84Q==}
+  '@mswjs/interceptors@0.41.7':
+    resolution: {integrity: sha512-D0nkS5+sx87mYpxFqASImCineYoEl9wGlUPrzkuS0ohzG8wfophLpE+I76qGJ0slLAVI19do5SI9pWJNCVf4fg==}
     engines: {node: '>=18'}
 
   '@napi-rs/wasm-runtime@1.1.4':
@@ -830,14 +830,14 @@ packages:
   '@redocly/ajv@8.11.2':
     resolution: {integrity: sha512-io1JpnwtIcvojV7QKDUSIuMN/ikdOUd1ReEnUnMKGfDVridQZ31J0MmIuqwuRjWDZfmvr+Q0MqCcfHM2gTivOg==}
 
-  '@redocly/ajv@8.18.0':
-    resolution: {integrity: sha512-F+LMD2IDIXuHxgpLJh3nkLj9+tSaEzoUWd+7fONGq5pe2169FUDjpEkOfEpoGLz1sbZni/69p07OsecNfAOpqA==}
+  '@redocly/ajv@8.18.1':
+    resolution: {integrity: sha512-Ifm/pP/tul1qmAecpbVxCBluVE32rKfjf8gYXH4xI2gCv9mRWFhJMHzkPDM4TXlxwPQYIFegymlsy8lXz7optA==}
 
   '@redocly/cli-otel@0.1.2':
     resolution: {integrity: sha512-Bg7BoO5t1x3lVK+KhA5aGPmeXpQmdf6WtTYHhelKJCsQ+tRMiJoFAQoKHoBHAoNxXrhlS3K9lKFLHGmtxsFQfA==}
 
-  '@redocly/cli@2.30.2':
-    resolution: {integrity: sha512-DWTydfVgEJkqDMcriRuy+MX+IYaEPU0AvV/nKuT1/1ajTugofkxlClHfZOK8Kwv47qAHvZ9w3oF+WCP/fVyW2g==}
+  '@redocly/cli@2.30.3':
+    resolution: {integrity: sha512-z2T4+v4qwyEl1Cb2bRS77sK3jiYDOnIVZUYF8/3OWA1N+4znGIvs85xm5pAqQE0kltoIJuisekqERMvhdG6Z4w==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
@@ -851,12 +851,12 @@ packages:
     resolution: {integrity: sha512-4Tm4ysZkexx6ZTX7knqSZTqPlNgIvXc7Ha0pd30I694/GD0KtJE2xrElycfPds0vCLFAqoKyIzBtOF1xrLo8KA==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@redocly/openapi-core@2.30.2':
-    resolution: {integrity: sha512-J1UB/I1s9eRpirIVgzH/B1Jj+hYQHYExruLk+edPOqneFIlFc38wKiTRkj/TVpwcmzRHJNu5SSI6NTrrfPa4BA==}
+  '@redocly/openapi-core@2.30.3':
+    resolution: {integrity: sha512-roSwxkitl+JY3LajLEg6n9ujaFkCB4cqtjgrjXxedgk57Qde5t0Vn4HBYkOomw1bHOI7W+Ux2qfPQOpzK7BnLg==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
-  '@redocly/respect-core@2.30.2':
-    resolution: {integrity: sha512-4dVg57ItG19MGsLWDPmbUid81kHEbGqLcSSp1Q/8wHGJVzxmFgX9JOkqEw059/dwCYjP+txPhcMDORh0pK9ivQ==}
+  '@redocly/respect-core@2.30.3':
+    resolution: {integrity: sha512-9bEETk86ECE6n/0g/6MEQ3RryamTOv6mdZ0WDmHUmO3PfVUzHKFRgNcFnvyTWEC2nApdO9GbnYLjZcwyPwUdOw==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.17':
@@ -1457,9 +1457,9 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  better-ajv-errors@1.2.0:
-    resolution: {integrity: sha512-UW+IsFycygIo7bclP9h5ugkNH8EjCSgqyFB/yQ4Hqqa1OEYDtb0uFIkYE0b6+CjkgJYVM5UKI/pJPxjYe9EZlA==}
-    engines: {node: '>= 12.13.0'}
+  better-ajv-errors@2.0.3:
+    resolution: {integrity: sha512-t1vxUP+vYKsaYi/BbKo2K98nEAZmfi4sjwvmRT8aOPDzPJeAtLurfoIDazVkLILxO4K+Sw4YrLYnBQ46l6pePg==}
+    engines: {node: '>= 18.20.6'}
     peerDependencies:
       ajv: 4.11.8 - 8
 
@@ -4497,7 +4497,7 @@ snapshots:
       outvariant: 1.4.3
       strict-event-emitter: 0.5.1
 
-  '@mswjs/interceptors@0.41.6':
+  '@mswjs/interceptors@0.41.7':
     dependencies:
       '@open-draft/deferred-promise': 2.2.0
       '@open-draft/logger': 0.3.0
@@ -4619,7 +4619,7 @@ snapshots:
       require-from-string: 2.0.2
       uri-js-replace: 1.0.1
 
-  '@redocly/ajv@8.18.0':
+  '@redocly/ajv@8.18.1':
     dependencies:
       fast-deep-equal: 3.1.3
       fast-uri: 3.1.0
@@ -4630,17 +4630,17 @@ snapshots:
     dependencies:
       ulid: 2.4.0
 
-  '@redocly/cli@2.30.2(@opentelemetry/api@1.9.1)(core-js@3.48.0)':
+  '@redocly/cli@2.30.3(@opentelemetry/api@1.9.1)(core-js@3.48.0)':
     dependencies:
       '@opentelemetry/exporter-trace-otlp-http': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-node': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
       '@redocly/cli-otel': 0.1.2
-      '@redocly/openapi-core': 2.30.2
-      '@redocly/respect-core': 2.30.2
-      ajv: '@redocly/ajv@8.18.0'
-      ajv-formats: 3.0.1(@redocly/ajv@8.18.0)
+      '@redocly/openapi-core': 2.30.3
+      '@redocly/respect-core': 2.30.3
+      ajv: '@redocly/ajv@8.18.1'
+      ajv-formats: 3.0.1(@redocly/ajv@8.18.1)
       colorette: 1.4.0
       cookie: 0.7.2
       dotenv: 16.4.7
@@ -4689,12 +4689,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@redocly/openapi-core@2.30.2':
+  '@redocly/openapi-core@2.30.3':
     dependencies:
-      '@redocly/ajv': 8.18.0
+      '@redocly/ajv': 8.18.1
       '@redocly/config': 0.48.1
-      ajv: '@redocly/ajv@8.18.0'
-      ajv-formats: 3.0.1(@redocly/ajv@8.18.0)
+      ajv: '@redocly/ajv@8.18.1'
+      ajv-formats: 3.0.1(@redocly/ajv@8.18.1)
       colorette: 1.4.0
       js-levenshtein: 1.1.6
       js-yaml: 4.1.1
@@ -4702,14 +4702,14 @@ snapshots:
       pluralize: 8.0.0
       yaml-ast-parser: 0.0.43
 
-  '@redocly/respect-core@2.30.2':
+  '@redocly/respect-core@2.30.3':
     dependencies:
       '@faker-js/faker': 7.6.0
       '@noble/hashes': 1.8.0
-      '@redocly/ajv': 8.18.0
-      '@redocly/openapi-core': 2.30.2
-      ajv: '@redocly/ajv@8.18.0'
-      better-ajv-errors: 1.2.0(@redocly/ajv@8.18.0)
+      '@redocly/ajv': 8.18.1
+      '@redocly/openapi-core': 2.30.3
+      ajv: '@redocly/ajv@8.18.1'
+      better-ajv-errors: 2.0.3(@redocly/ajv@8.18.1)
       colorette: 2.0.20
       json-pointer: 0.6.2
       jsonpath-rfc9535: 1.3.0
@@ -5200,9 +5200,9 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ajv-formats@3.0.1(@redocly/ajv@8.18.0):
+  ajv-formats@3.0.1(@redocly/ajv@8.18.1):
     optionalDependencies:
-      ajv: '@redocly/ajv@8.18.0'
+      ajv: '@redocly/ajv@8.18.1'
 
   ajv@6.14.0:
     dependencies:
@@ -5258,11 +5258,11 @@ snapshots:
 
   baseline-browser-mapping@2.10.20: {}
 
-  better-ajv-errors@1.2.0(@redocly/ajv@8.18.0):
+  better-ajv-errors@2.0.3(@redocly/ajv@8.18.1):
     dependencies:
       '@babel/code-frame': 7.29.0
       '@humanwhocodes/momoa': 2.0.4
-      ajv: '@redocly/ajv@8.18.0'
+      ajv: '@redocly/ajv@8.18.1'
       chalk: 4.1.2
       jsonpointer: 5.0.1
       leven: 3.1.0
@@ -7336,7 +7336,7 @@ snapshots:
   msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3):
     dependencies:
       '@inquirer/confirm': 5.1.21(@types/node@24.12.0)
-      '@mswjs/interceptors': 0.41.6
+      '@mswjs/interceptors': 0.41.7
       '@open-draft/deferred-promise': 2.2.0
       '@types/statuses': 2.0.6
       cookie: 1.1.1
@@ -7361,7 +7361,7 @@ snapshots:
   msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3):
     dependencies:
       '@inquirer/confirm': 5.1.21(@types/node@25.6.0)
-      '@mswjs/interceptors': 0.41.6
+      '@mswjs/interceptors': 0.41.7
       '@open-draft/deferred-promise': 2.2.0
       '@types/statuses': 2.0.6
       cookie: 1.1.1
