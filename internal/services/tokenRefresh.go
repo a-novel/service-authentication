@@ -68,7 +68,7 @@ func NewTokenRefresh(
 func (service *TokenRefresh) Exec(
 	ctx context.Context, request *TokenRefreshRequest,
 ) (*Token, error) {
-	ctx, span := otel.Tracer().Start(ctx, "services.TokenRefresh")
+	ctx, span := otel.Tracer().Start(ctx, "service.TokenRefresh")
 	defer span.End()
 
 	err := validate.Struct(request)
