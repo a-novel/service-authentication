@@ -48,7 +48,7 @@ type ShortCodeInsertRequest struct {
 type ShortCodeInsert struct{}
 
 func NewShortCodeInsert() *ShortCodeInsert {
-	return new(ShortCodeInsert)
+	return &ShortCodeInsert{}
 }
 
 func (repository *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRequest) (*ShortCode, error) {

@@ -64,7 +64,7 @@ func NewRestHealth(
 }
 
 func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "rest.RestHealth")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.Health")
 	defer span.End()
 
 	httpf.SendJSON(ctx, w, span, map[string]any{
@@ -75,7 +75,7 @@ func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *RestHealth) reportPostgres(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "rest.RestHealth(reportPostgres)")
+	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportPostgres)")
 	defer span.End()
 
 	pg, err := postgres.GetContext(ctx)
@@ -100,7 +100,7 @@ func (handler *RestHealth) reportPostgres(ctx context.Context) error {
 }
 
 func (handler *RestHealth) reportJsonKeys(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "rest.RestHealth(reportJsonKeys)")
+	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportJsonKeys)")
 	defer span.End()
 
 	_, err := handler.apiJsonKeys.Status(ctx, new(servicejsonkeys.StatusRequest))
@@ -114,7 +114,7 @@ func (handler *RestHealth) reportJsonKeys(ctx context.Context) error {
 }
 
 func (handler *RestHealth) reportSmtp(ctx context.Context) error {
-	_, span := otel.Tracer().Start(ctx, "rest.RestHealth(reportSmtp)")
+	_, span := otel.Tracer().Start(ctx, "rest.Health(reportSmtp)")
 	defer span.End()
 
 	err := handler.clientSmtp.Ping()

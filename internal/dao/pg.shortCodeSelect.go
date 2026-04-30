@@ -26,7 +26,7 @@ type ShortCodeSelectRequest struct {
 type ShortCodeSelect struct{}
 
 func NewShortCodeSelect() *ShortCodeSelect {
-	return new(ShortCodeSelect)
+	return &ShortCodeSelect{}
 }
 
 func (repository *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRequest) (*ShortCode, error) {

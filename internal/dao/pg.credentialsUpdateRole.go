@@ -33,7 +33,7 @@ type CredentialsUpdateRoleRequest struct {
 type CredentialsUpdateRole struct{}
 
 func NewCredentialsUpdateRole() *CredentialsUpdateRole {
-	return new(CredentialsUpdateRole)
+	return &CredentialsUpdateRole{}
 }
 
 func (repository *CredentialsUpdateRole) Exec(

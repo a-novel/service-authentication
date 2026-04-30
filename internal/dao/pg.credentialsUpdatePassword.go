@@ -37,7 +37,7 @@ type CredentialsUpdatePasswordRequest struct {
 type CredentialsUpdatePassword struct{}
 
 func NewCredentialsUpdatePassword() *CredentialsUpdatePassword {
-	return new(CredentialsUpdatePassword)
+	return &CredentialsUpdatePassword{}
 }
 
 func (repository *CredentialsUpdatePassword) Exec(

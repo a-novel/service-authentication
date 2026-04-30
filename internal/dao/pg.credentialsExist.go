@@ -12,7 +12,7 @@ import (
 )
 
 //go:embed pg.credentialsExist.sql
-var credentialsExistQQuery string
+var credentialsExistQuery string
 
 type CredentialsExistRequest struct {
 	Email string
@@ -24,7 +24,7 @@ type CredentialsExistRequest struct {
 type CredentialsExist struct{}
 
 func NewCredentialsExist() *CredentialsExist {
-	return new(CredentialsExist)
+	return &CredentialsExist{}
 }
 
 func (repository *CredentialsExist) Exec(ctx context.Context, request *CredentialsExistRequest) (bool, error) {
@@ -35,10 +35,10 @@ func (repository *CredentialsExist) Exec(ctx context.Context, request *Credentia
 
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
-		return false, fmt.Errorf("get transaction: %w", otel.ReportError(span, err))
+		return false, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	res, err := tx.NewRaw(credentialsExistQQuery, request.Email).Exec(ctx)
+	res, err := tx.NewRaw(credentialsExistQuery, request.Email).Exec(ctx)
 	if err != nil {
 		return false, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}

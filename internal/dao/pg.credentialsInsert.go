@@ -40,7 +40,7 @@ type CredentialsInsertRequest struct {
 type CredentialsInsert struct{}
 
 func NewCredentialsInsert() *CredentialsInsert {
-	return new(CredentialsInsert)
+	return &CredentialsInsert{}
 }
 
 func (repository *CredentialsInsert) Exec(

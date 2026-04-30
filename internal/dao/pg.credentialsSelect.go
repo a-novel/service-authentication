@@ -26,7 +26,7 @@ type CredentialsSelectRequest struct {
 type CredentialsSelect struct{}
 
 func NewCredentialsSelect() *CredentialsSelect {
-	return new(CredentialsSelect)
+	return &CredentialsSelect{}
 }
 
 func (repository *CredentialsSelect) Exec(
