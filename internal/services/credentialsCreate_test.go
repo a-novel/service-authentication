@@ -18,6 +18,7 @@ import (
 	"github.com/a-novel-kit/golib/postgres"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/services"
@@ -237,7 +238,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			postgres.RunTransactionalTest(t, config.PostgresPresetTest, func(ctx context.Context, t *testing.T) {
+			postgres.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
 				repository := servicesmocks.NewMockCredentialsCreateRepository(t)
