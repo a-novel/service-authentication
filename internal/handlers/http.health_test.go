@@ -15,7 +15,7 @@ import (
 
 	"github.com/a-novel-kit/golib/postgres"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
@@ -118,7 +118,7 @@ func TestHealth(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()
-			rCtx, err := postgres.NewContext(rCtx, config.PostgresPresetTest)
+			rCtx, err := postgres.NewContext(rCtx, configtest.PostgresPreset)
 			require.NoError(t, err)
 
 			handler.ServeHTTP(w, testCase.request.WithContext(rCtx))
