@@ -11,13 +11,10 @@
 package configtest
 
 import (
-	"github.com/uptrace/bun/driver/pgdriver"
-
-	postgrespresets "github.com/a-novel-kit/golib/postgres/presets"
-
-	"github.com/a-novel/service-authentication/v2/internal/config/env"
+	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
-// PostgresPreset is the PostgreSQL configuration used in integration tests, populated from
-// environment variables.
-var PostgresPreset = postgrespresets.NewDefault(pgdriver.WithDSN(env.PostgresDsn))
+// PostgresPreset is the PostgreSQL configuration used in integration tests. It aliases
+// config.PostgresPresetDefault so tests inherit any future change to the production preset
+// (timeouts, retry policy, additional dial options) without a parallel update here.
+var PostgresPreset = config.PostgresPresetDefault
