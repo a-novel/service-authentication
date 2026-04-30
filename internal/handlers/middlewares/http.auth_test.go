@@ -1,6 +1,7 @@
 package middlewares_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -281,4 +282,45 @@ func TestAuth(t *testing.T) {
 			require.Equal(t, testCase.expectClaims, *ctxClaims)
 		})
 	}
+}
+
+func TestGetClaimsContext(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Success/NoClaimsSet", func(t *testing.T) {
+		t.Parallel()
+
+		// No value stored under ClaimsContextKey — optional-auth path: returns
+		// (nil, nil) so endpoints that allow unauthenticated access can keep working.
+		claims, err := middlewares.GetClaimsContext(t.Context())
+		require.NoError(t, err)
+		require.Nil(t, claims)
+	})
+
+	t.Run("Success/ValidClaims", func(t *testing.T) {
+		t.Parallel()
+
+		want := &services.AccessTokenClaims{
+			UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			Roles:  []string{"user"},
+		}
+		ctx := middlewares.SetClaimsContext(t.Context(), want)
+
+		got, err := middlewares.GetClaimsContext(ctx)
+		require.NoError(t, err)
+		require.Equal(t, want, got)
+	})
+
+	t.Run("Error/UnexpectedClaims", func(t *testing.T) {
+		t.Parallel()
+
+		// A wrong type stored under ClaimsContextKey must surface as
+		// ErrUnexpectedClaims rather than silently returning nil claims (which
+		// would let an endpoint that only checks `claims == nil` fail open).
+		ctx := context.WithValue(t.Context(), middlewares.ClaimsContextKey{}, "not-claims")
+
+		claims, err := middlewares.GetClaimsContext(ctx)
+		require.ErrorIs(t, err, middlewares.ErrUnexpectedClaims)
+		require.Nil(t, claims)
+	})
 }
