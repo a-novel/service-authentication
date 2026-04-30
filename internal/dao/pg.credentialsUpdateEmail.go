@@ -38,7 +38,7 @@ type CredentialsUpdateEmailRequest struct {
 type CredentialsUpdateEmail struct{}
 
 func NewCredentialsUpdateEmail() *CredentialsUpdateEmail {
-	return new(CredentialsUpdateEmail)
+	return &CredentialsUpdateEmail{}
 }
 
 func (repository *CredentialsUpdateEmail) Exec(

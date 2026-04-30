@@ -25,7 +25,7 @@ type CredentialsSelectByEmailRequest struct {
 type CredentialsSelectByEmail struct{}
 
 func NewCredentialsSelectByEmail() *CredentialsSelectByEmail {
-	return new(CredentialsSelectByEmail)
+	return &CredentialsSelectByEmail{}
 }
 
 func (repository *CredentialsSelectByEmail) Exec(

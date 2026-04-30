@@ -42,7 +42,7 @@ type ShortCodeDeleteRequest struct {
 type ShortCodeDelete struct{}
 
 func NewShortCodeDelete() *ShortCodeDelete {
-	return new(ShortCodeDelete)
+	return &ShortCodeDelete{}
 }
 
 func (repository *ShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDeleteRequest) (*ShortCode, error) {

@@ -27,7 +27,7 @@ type CredentialsListRequest struct {
 type CredentialsList struct{}
 
 func NewCredentialsList() *CredentialsList {
-	return new(CredentialsList)
+	return &CredentialsList{}
 }
 
 func (repository *CredentialsList) Exec(
