@@ -169,14 +169,19 @@ func SetClaimsContext(ctx context.Context, claims *services.AccessTokenClaims) c
 
 // GetClaimsContext retrieves the authenticated user's claims from the context.
 // Returns nil claims with no error if no authentication was provided (for optional auth endpoints).
-// Returns an error if the claims have an unexpected type.
+// Returns an error if the value stored under [ClaimsContextKey] has an unexpected type.
 func GetClaimsContext(ctx context.Context) (*services.AccessTokenClaims, error) {
-	claims, ok := ctx.Value(ClaimsContextKey{}).(*services.AccessTokenClaims)
-	if !ok && claims != nil {
+	raw := ctx.Value(ClaimsContextKey{})
+	if raw == nil {
+		return nil, nil
+	}
+
+	claims, ok := raw.(*services.AccessTokenClaims)
+	if !ok {
 		return nil, fmt.Errorf(
 			"%w: got type %T, expected %T",
 			ErrUnexpectedClaims,
-			ctx.Value(ClaimsContextKey{}),
+			raw,
 			&services.AccessTokenClaims{},
 		)
 	}
