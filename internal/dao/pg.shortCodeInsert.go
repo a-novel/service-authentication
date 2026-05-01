@@ -153,7 +153,7 @@ func (repository *ShortCodeInsert) checkConflicts(
 	}
 
 	if n == 1 {
-		return otel.ReportError(span, ErrShortCodeInsertAlreadyExists)
+		return ErrShortCodeInsertAlreadyExists
 	}
 
 	otel.ReportSuccessNoContent(span)

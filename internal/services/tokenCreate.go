@@ -77,7 +77,7 @@ func (service *TokenCreate) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	// Retrieve credentials.
@@ -96,6 +96,13 @@ func (service *TokenCreate) Exec(
 	// Validate password.
 	err = lib.CompareArgon2(request.Password, credentials.Password)
 	if err != nil {
+		if errors.Is(err, lib.ErrInvalidPassword) {
+			// Wrong password is the expected user-facing outcome — don't mark the span as
+			// failed. The handler maps lib.ErrInvalidPassword to 401 downstream.
+			return nil, fmt.Errorf("compare password: %w", err)
+		}
+		// Other CompareArgon2 errors (lib.ErrInvalidHash, lib.ErrIncompatibleVersion) mean
+		// the stored hash itself is malformed — operational failure worth reporting.
 		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}
 

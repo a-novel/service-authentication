@@ -66,12 +66,12 @@ func (service *CredentialsUpdateRole) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	// No self-update allowed.
 	if request.CurrentUserID == request.TargetUserID {
-		return nil, otel.ReportError(span, ErrCredentialsUpdateRoleSelfUpdate)
+		return nil, ErrCredentialsUpdateRoleSelfUpdate
 	}
 
 	newTargetRoleImportance := config.PermissionsConfigDefault.Roles[request.Role].Priority
