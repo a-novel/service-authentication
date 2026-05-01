@@ -134,13 +134,13 @@ func (service *ShortCodeCreateEmailUpdate) sendMail(
 		mails.Mails.EmailUpdate,
 		request.Lang,
 		map[string]any{
-			"ShortCode": shortCode.PlainCode,
-			"Target":    request.ID.String(),
-			"Source":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-			"URL":       service.smtpConfig.UpdateEmail,
-			"Duration":  service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL.Hours(),
-			"Banner":    assets.BannerBase64,
-			"_Purpose":  "email-update",
+			mails.TemplateVarShortCode: shortCode.PlainCode,
+			mails.TemplateVarTarget:    request.ID.String(),
+			"Source":                   base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+			mails.TemplateVarURL:       service.smtpConfig.UpdateEmail,
+			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL.Hours(),
+			mails.TemplateVarBanner:    assets.BannerBase64,
+			mails.TemplateVarPurpose:   "email-update",
 		},
 	)
 	if err != nil {

@@ -130,12 +130,12 @@ func (service *ShortCodeCreateRegister) sendMail(
 		mails.Mails.Register,
 		request.Lang,
 		map[string]any{
-			"ShortCode": shortCode.PlainCode,
-			"Target":    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-			"URL":       service.smtpConfig.Register,
-			"Duration":  service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL.Hours(),
-			"Banner":    assets.BannerBase64,
-			"_Purpose":  "register",
+			mails.TemplateVarShortCode: shortCode.PlainCode,
+			mails.TemplateVarTarget:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+			mails.TemplateVarURL:       service.smtpConfig.Register,
+			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL.Hours(),
+			mails.TemplateVarBanner:    assets.BannerBase64,
+			mails.TemplateVarPurpose:   "register",
 		},
 	)
 	if err != nil {

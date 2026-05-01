@@ -124,12 +124,12 @@ func (service *ShortCodeCreatePasswordReset) sendMail(
 		mails.Mails.PasswordReset,
 		request.Lang,
 		map[string]any{
-			"ShortCode": shortCode.PlainCode,
-			"Target":    userID.String(),
-			"URL":       service.smtpConfig.UpdatePassword,
-			"Duration":  service.shortCodesConfig.Usages[ShortCodeUsageResetPassword].TTL.Hours(),
-			"Banner":    assets.BannerBase64,
-			"_Purpose":  "password-reset",
+			mails.TemplateVarShortCode: shortCode.PlainCode,
+			mails.TemplateVarTarget:    userID.String(),
+			mails.TemplateVarURL:       service.smtpConfig.UpdatePassword,
+			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageResetPassword].TTL.Hours(),
+			mails.TemplateVarBanner:    assets.BannerBase64,
+			mails.TemplateVarPurpose:   "password-reset",
 		},
 	)
 	if err != nil {
