@@ -76,10 +76,17 @@ func (service *ShortCodeConsume) Exec(
 	// Compare the encrypted code with the plain code of the request.
 	err = lib.CompareArgon2(request.Code, entity.Code)
 	if err != nil {
-		return nil, errors.Join(
+		joined := errors.Join(
 			fmt.Errorf("compare short code: %w", err),
 			ErrShortCodeConsumeInvalid,
 		)
+		if errors.Is(err, lib.ErrInvalidPassword) {
+			// Wrong code is the expected user-facing outcome (mistyped code, stale request).
+			return nil, joined
+		}
+		// Other CompareArgon2 errors (lib.ErrInvalidHash, lib.ErrIncompatibleVersion) mean
+		// the stored short-code hash itself is malformed — operational failure worth reporting.
+		return nil, otel.ReportError(span, joined)
 	}
 
 	// Delete the short code from the database. It has been consumed.
