@@ -154,6 +154,11 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		return nil, otel.ReportError(span, fmt.Errorf("issue refresh token: %w", err))
 	}
 
+	// Parse the refresh token's claims without verifying the signature: we just signed it
+	// ourselves on the previous line, so the issuer is trusted by construction. We only
+	// need the JTI to embed in the access token below; the access token's signature is
+	// what binds the pair end-to-end. NewInsecureVerifier is safe here precisely because
+	// the input did not come from an external party.
 	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{
 		Plugins: []jwt.RecipientPlugin{jws.NewInsecureVerifier()},
 	})
