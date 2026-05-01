@@ -10,10 +10,7 @@ import (
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
-	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/jwt"
-	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
@@ -99,59 +96,10 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}
 
-	refreshTokenPayload, err := grpcf.InterfaceToProtoAny(RefreshTokenClaimsForm{
-		UserID: credentials.ID,
-	})
+	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("grpcf marshal: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}
 
-	refreshToken, err := service.serviceSignClaims.ClaimsSign(
-		ctx,
-		&servicejsonkeys.ClaimsSignRequest{
-			Usage:   servicejsonkeys.KeyUsageAuthRefresh,
-			Payload: refreshTokenPayload,
-		},
-	)
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("issue refresh token: %w", err))
-	}
-
-	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{
-		Plugins: []jwt.RecipientPlugin{jws.NewInsecureVerifier()},
-	})
-
-	var refreshTokenClaims RefreshTokenClaims
-
-	err = refreshTokenRecipient.Consume(ctx, refreshToken.GetToken(), &refreshTokenClaims)
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("unmarshal refresh token claims: %w", err))
-	}
-
-	// Generate a new authentication token.
-	accessTokenPayload, err := grpcf.InterfaceToProtoAny(AccessTokenClaims{
-		UserID:         &credentials.ID,
-		Roles:          []string{credentials.Role},
-		RefreshTokenID: refreshTokenClaims.Jti,
-	})
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("grpcf marshal: %w", err))
-	}
-
-	// Generate a new authentication token.
-	accessToken, err := service.serviceSignClaims.ClaimsSign(
-		ctx,
-		&servicejsonkeys.ClaimsSignRequest{
-			Usage:   servicejsonkeys.KeyUsageAuth,
-			Payload: accessTokenPayload,
-		},
-	)
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("issue accessToken: %w", err))
-	}
-
-	return otel.ReportSuccess(span, &Token{
-		AccessToken:  accessToken.GetToken(),
-		RefreshToken: refreshToken.GetToken(),
-	}), nil
+	return otel.ReportSuccess(span, tokens), nil
 }
