@@ -72,9 +72,9 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("request.id", request.ID.String()),
-		attribute.String("request.email", request.Email),
-		attribute.String("request.lang", request.Lang),
+		attribute.String("user.id", request.ID.String()),
+		attribute.String("user.email", request.Email),
+		attribute.String("email.lang", request.Lang),
 	)
 
 	err := validate.Struct(request)
@@ -122,8 +122,8 @@ func (service *ShortCodeCreateEmailUpdate) sendMail(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("request.email", request.Email),
-		attribute.String("request.lang", request.Lang),
+		attribute.String("user.email", request.Email),
+		attribute.String("email.lang", request.Lang),
 		attribute.String("short_code.target", shortCode.Target),
 	)
 
