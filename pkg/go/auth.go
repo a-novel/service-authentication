@@ -30,9 +30,10 @@ type Permissions = config.Permissions
 // stored in the request context by the auth middleware.
 type Claims = services.AccessTokenClaims
 
-// PermissionsHandler returns a chi sub-router that enforces authentication and (optionally)
-// the listed permissions for the routes mounted on it. Pass zero permissions to require
-// authentication only.
+// PermissionsHandler returns a chi sub-router that enforces the listed permissions for the
+// routes mounted on it. Pass zero permissions for optional authentication: the request is
+// allowed through without an Authorization header, and a valid bearer token (if present)
+// still populates [Claims] in the request context for handlers that branch on identity.
 type PermissionsHandler func(r chi.Router, permissions ...string) chi.Router
 
 // NewAuthHandler constructs a [PermissionsHandler] backed by the given claims verifier and
