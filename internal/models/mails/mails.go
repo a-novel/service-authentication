@@ -25,6 +25,18 @@ var (
 	registerEn string
 )
 
+// Template variable names. The mail templates expect these exact keys in the data map
+// passed to SendMail. Defined here so the three send-mail call sites (register, password
+// reset, email update) and the templates themselves stay in sync from a single source.
+const (
+	TemplateVarShortCode = "ShortCode"
+	TemplateVarTarget    = "Target"
+	TemplateVarURL       = "URL"
+	TemplateVarDuration  = "Duration"
+	TemplateVarBanner    = "Banner"
+	TemplateVarPurpose   = "_Purpose"
+)
+
 type MailTemplates struct {
 	EmailUpdate   *template.Template
 	PasswordReset *template.Template
