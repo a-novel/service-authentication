@@ -55,7 +55,7 @@ func (service *ShortCodeCreate) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	// Generate a new random code.

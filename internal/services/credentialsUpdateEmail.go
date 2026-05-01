@@ -54,7 +54,7 @@ func (service *CredentialsUpdateEmail) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	var credentials *dao.Credentials

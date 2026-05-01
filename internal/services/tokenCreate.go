@@ -77,7 +77,7 @@ func (service *TokenCreate) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	// Retrieve credentials.
@@ -96,7 +96,7 @@ func (service *TokenCreate) Exec(
 	// Validate password.
 	err = lib.CompareArgon2(request.Password, credentials.Password)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
+		return nil, fmt.Errorf("compare password: %w", err)
 	}
 
 	refreshTokenPayload, err := grpcf.InterfaceToProtoAny(RefreshTokenClaimsForm{

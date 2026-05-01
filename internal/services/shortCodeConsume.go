@@ -55,7 +55,7 @@ func (service *ShortCodeConsume) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	entity, err := service.repositorySelect.Exec(ctx, &dao.ShortCodeSelectRequest{
@@ -70,16 +70,16 @@ func (service *ShortCodeConsume) Exec(
 
 	// Explicit expiration check as defense-in-depth (SQL already filters expired codes).
 	if entity.ExpiresAt.Before(time.Now()) {
-		return nil, otel.ReportError(span, ErrShortCodeConsumeExpired)
+		return nil, ErrShortCodeConsumeExpired
 	}
 
 	// Compare the encrypted code with the plain code of the request.
 	err = lib.CompareArgon2(request.Code, entity.Code)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(
+		return nil, errors.Join(
 			fmt.Errorf("compare short code: %w", err),
 			ErrShortCodeConsumeInvalid,
-		))
+		)
 	}
 
 	// Delete the short code from the database. It has been consumed.
