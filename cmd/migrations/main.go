@@ -1,3 +1,5 @@
+// Command migrations applies pending SQL migrations to the authentication database.
+// Run this once on first deploy and after each schema change.
 package main
 
 import (

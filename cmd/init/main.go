@@ -1,3 +1,14 @@
+// Command init bootstraps the super-admin credentials from environment variables. It is
+// idempotent and safe to run on every deploy:
+//
+//   - If no account exists for SUPER_ADMIN_EMAIL, a new one is created with the super-admin
+//     role and the configured password.
+//   - If an account exists with a different password, the password is updated.
+//   - If an account exists with a non-super-admin role, the role is upgraded.
+//
+// If either SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD is empty, the command logs a warning
+// and exits cleanly without attempting any database changes — useful for environments where
+// the bootstrap step is intentionally disabled.
 package main
 
 import (
@@ -40,7 +51,7 @@ func main() {
 		return
 	}
 
-	ctx = lo.Must(postgres.NewContext(ctx, config.PostgresPresetDefault))
+	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
 	repositoryCredentialsInsert := dao.NewCredentialsInsert()
 	repositoryCredentialsSelectByEmail := dao.NewCredentialsSelectByEmail()
