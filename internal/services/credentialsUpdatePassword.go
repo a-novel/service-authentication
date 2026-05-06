@@ -62,7 +62,7 @@ func (service *CredentialsUpdatePassword) Exec(
 	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsUpdatePassword")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("request.userID", request.UserID.String()))
+	span.SetAttributes(attribute.String("user.id", request.UserID.String()))
 
 	err := validate.Struct(request)
 	if err != nil {

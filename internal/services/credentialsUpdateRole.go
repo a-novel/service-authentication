@@ -59,9 +59,9 @@ func (service *CredentialsUpdateRole) Exec(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("request.targetUserID", request.TargetUserID.String()),
-		attribute.String("request.currentUserID", request.CurrentUserID.String()),
-		attribute.String("request.role", request.Role),
+		attribute.String("target.id", request.TargetUserID.String()),
+		attribute.String("actor.id", request.CurrentUserID.String()),
+		attribute.String("target.role", request.Role),
 	)
 
 	err := validate.Struct(request)

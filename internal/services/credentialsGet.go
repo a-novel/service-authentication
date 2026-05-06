@@ -36,7 +36,7 @@ func (service *CredentialsGet) Exec(
 	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsGet")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("request.userID", request.ID.String()))
+	span.SetAttributes(attribute.String("user.id", request.ID.String()))
 
 	entity, err := service.repository.Exec(ctx, &dao.CredentialsSelectRequest{ID: request.ID})
 	if err != nil {
