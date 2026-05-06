@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -89,8 +88,9 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	defer span.End()
 
 	span.SetAttributes(attribute.String("email", request.Email))
-	span.SetAttributes(attribute.String("password", strings.Repeat("*", len(request.Password))))
-	span.SetAttributes(attribute.String("shortCode", strings.Repeat("*", len(request.ShortCode))))
+	// Do not record the password or short code on the span, even redacted: a "*****"
+	// of the same length still leaks the input length over every trace, which is
+	// partial credential information an attacker reading traces could correlate.
 
 	err := validate.Struct(request)
 	if err != nil {
