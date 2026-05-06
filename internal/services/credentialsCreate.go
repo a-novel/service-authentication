@@ -94,7 +94,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	// Encrypt the password.

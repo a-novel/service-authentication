@@ -64,7 +64,7 @@ func (service *CredentialsCreateSuperAdmin) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
