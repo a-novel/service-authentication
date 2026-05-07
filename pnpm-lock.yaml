@@ -43,7 +43,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.18
-        version: 1.3.37(2e08edb646e776a78e29cfe13647f3f7)
+        version: 1.3.38(2e08edb646e776a78e29cfe13647f3f7)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.3.0(jiti@2.7.0))
@@ -121,7 +121,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.3.37(zod@4.4.3)
+        version: 1.3.38(zod@4.4.3)
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -136,10 +136,10 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.3.37(zod@4.4.3)
+        version: 1.3.38(zod@4.4.3)
       '@a-novel-kit/nodelib-test':
         specifier: ^1.3.18
-        version: 1.3.37(@a-novel-kit/nodelib-browser@1.3.37(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3)))(@tanstack/react-query@5.90.21(react@19.2.5))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.5)(zod@4.4.3)
+        version: 1.3.38(@a-novel-kit/nodelib-browser@1.3.38(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3)))(@tanstack/react-query@5.90.21(react@19.2.5))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.5)(zod@4.4.3)
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../rest
@@ -172,10 +172,10 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.3.37(zod@4.4.3)
+        version: 1.3.38(zod@4.4.3)
       '@a-novel-kit/nodelib-test':
         specifier: ^1.3.18
-        version: 1.3.37(@a-novel-kit/nodelib-browser@1.3.37(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.5))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.5)(zod@4.4.3)
+        version: 1.3.38(@a-novel-kit/nodelib-browser@1.3.38(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.5))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.5)(zod@4.4.3)
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../../rest
@@ -230,19 +230,19 @@ importers:
 
 packages:
 
-  '@a-novel-kit/nodelib-browser@1.3.37':
-    resolution: {integrity: sha512-6KPoExzDWyWMa2XhzgUpdXX0x2TcKqD3CIv5Lu3+ulBfDgKha/viDjId+Fo2Tk09xpMrCeVdm/fueE2Qw0Xy9w==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-browser/1.3.37/5ed4c7ed8d0242487f8b07a8590ca3d99e7b5718}
+  '@a-novel-kit/nodelib-browser@1.3.38':
+    resolution: {integrity: sha512-flz6N7o9HcIYU9Uu1/KLJGbQjN9w6VExuu64/pwZUj3oDxXvPy/5aHBJ1Oz4QbL3JC95VCySK8ho/7MbfeoYJw==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-browser/1.3.38/aacaff5c63689fc1b0350685cf021926b4662411}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
-      zod: ^4.4.2
+      zod: ^4.4.3
 
-  '@a-novel-kit/nodelib-config@1.3.37':
-    resolution: {integrity: sha512-9Hv9/Mjl4s33RHIGRpeP1nh43nI3xR49ev6ku8V7GA2HTHIN3Sb8v7mYqxNaqLIGsrLWabH0uEnyaz8rY04G5Q==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/1.3.37/f74549aa59f5e1fa028f85f5b6b6577e327b761a}
+  '@a-novel-kit/nodelib-config@1.3.38':
+    resolution: {integrity: sha512-ApMTcmZPshEtOtRxUC+DxOhyft/KiRNbzrfNZFMouvU86rNvfL1iXq5sxlUBnyIbWFM5DfAOc22R5+rISFj9CA==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/1.3.38/ed6faaa80f0b4620e9ddb313c07c362a3e499749}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@eslint/compat': ^2.0.5
       '@eslint/js': ^10.0.1
-      '@sveltejs/kit': ^2.59.0
+      '@sveltejs/kit': ^2.59.1
       '@trivago/prettier-plugin-sort-imports': ^6.0.2
       '@types/node': ^24.12.2
       eslint: ^10.3.0
@@ -258,10 +258,10 @@ packages:
       storybook: ^10.3.6
       svelte: ^5.55.5
       typescript: ^6.0.3
-      typescript-eslint: ^8.59.1
+      typescript-eslint: ^8.59.2
 
-  '@a-novel-kit/nodelib-test@1.3.37':
-    resolution: {integrity: sha512-24Xl2sXLxfmVACs2NcYbPoAxzDNLC+RN9GSw6L0Wj/NLfImzpQryoctcEHMtaCY9hCYEXM49q0eLK9xSmhI2Bg==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/1.3.37/2902dc2bbef01cf0e38efa579526f1c4adedd28a}
+  '@a-novel-kit/nodelib-test@1.3.38':
+    resolution: {integrity: sha512-0zLD8g44RfcxIhai2iOT8IjrePv7pf6kMg3nZxgbE9/V4IUVgUDeuPzKjwp4sva+EBT2n86yUad3CUK5KtNNiQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/1.3.38/7483f990f9522272cb5ca6589c6b8d5327d826e5}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@a-novel-kit/nodelib-browser': '*'
@@ -1219,6 +1219,9 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@types/estree@1.0.9':
+    resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
+
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
 
@@ -2085,8 +2088,8 @@ packages:
     resolution: {integrity: sha512-sepffkT8stwnIYbsMBpoCHJuJM5l98FUF2AnE07hfvE0m/qp3R586hw4jF4uadbhvg1ooIdzuu7CsfD2jzCaNA==}
     engines: {node: '>=18'}
 
-  graphql@16.13.2:
-    resolution: {integrity: sha512-5bJ+nf/UCpAjHM8i06fl7eLyVC9iuNAjm9qzkiu2ZGhM0VscSvS6WDPfAwkdkBuoXGM9FJSbKl6wylMwP9Ktig==}
+  graphql@16.14.0:
+    resolution: {integrity: sha512-BBvQ/406p+4CZbTpCbVPSxfzrZrbnuWSP1ELYgyS6B+hNeKzgrdB4JczCa5VZUBQrDa9hUngm0KnexY6pJRN5Q==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
   handlebars@4.7.9:
@@ -4058,11 +4061,11 @@ packages:
 
 snapshots:
 
-  '@a-novel-kit/nodelib-browser@1.3.37(zod@4.4.3)':
+  '@a-novel-kit/nodelib-browser@1.3.38(zod@4.4.3)':
     dependencies:
       zod: 4.4.3
 
-  '@a-novel-kit/nodelib-config@1.3.37(2e08edb646e776a78e29cfe13647f3f7)':
+  '@a-novel-kit/nodelib-config@1.3.38(2e08edb646e776a78e29cfe13647f3f7)':
     dependencies:
       '@eslint/compat': 2.0.3(eslint@10.3.0(jiti@2.7.0))
       '@eslint/js': 10.0.1(eslint@10.3.0(jiti@2.7.0))
@@ -4084,9 +4087,9 @@ snapshots:
       typescript: 6.0.3
       typescript-eslint: 8.59.2(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3)
 
-  '@a-novel-kit/nodelib-test@1.3.37(@a-novel-kit/nodelib-browser@1.3.37(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.5))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.5)(zod@4.4.3)':
+  '@a-novel-kit/nodelib-test@1.3.38(@a-novel-kit/nodelib-browser@1.3.38(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.5))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.5)(zod@4.4.3)':
     dependencies:
-      '@a-novel-kit/nodelib-browser': 1.3.37(zod@4.4.3)
+      '@a-novel-kit/nodelib-browser': 1.3.38(zod@4.4.3)
       '@msw/playwright': 0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))
       '@tanstack/react-query': 5.90.21(react@19.2.5)
       '@testing-library/react': 16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -4099,9 +4102,9 @@ snapshots:
       vitest: 4.1.5(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(@vitest/coverage-v8@4.1.5)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.2(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0))
       zod: 4.4.3
 
-  '@a-novel-kit/nodelib-test@1.3.37(@a-novel-kit/nodelib-browser@1.3.37(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3)))(@tanstack/react-query@5.90.21(react@19.2.5))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.5)(zod@4.4.3)':
+  '@a-novel-kit/nodelib-test@1.3.38(@a-novel-kit/nodelib-browser@1.3.38(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3)))(@tanstack/react-query@5.90.21(react@19.2.5))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.5)(zod@4.4.3)':
     dependencies:
-      '@a-novel-kit/nodelib-browser': 1.3.37(zod@4.4.3)
+      '@a-novel-kit/nodelib-browser': 1.3.38(zod@4.4.3)
       '@msw/playwright': 0.4.5(msw@2.12.10(@types/node@25.6.0)(typescript@6.0.3))
       '@tanstack/react-query': 5.90.21(react@19.2.5)
       '@testing-library/react': 16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -4975,6 +4978,8 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
+  '@types/estree@1.0.9': {}
+
   '@types/istanbul-lib-coverage@2.0.6': {}
 
   '@types/jsdom@27.0.0':
@@ -5755,7 +5760,7 @@ snapshots:
   eslint-scope@9.1.2:
     dependencies:
       '@types/esrecurse': 4.3.1
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       esrecurse: 4.3.0
       estraverse: 5.3.0
 
@@ -5776,7 +5781,7 @@ snapshots:
       '@humanfs/node': 0.16.8
       '@humanwhocodes/module-importer': 1.0.1
       '@humanwhocodes/retry': 0.4.3
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       ajv: 6.15.0
       cross-spawn: 7.0.6
       debug: 4.4.3
@@ -5836,7 +5841,7 @@ snapshots:
 
   estree-walker@3.0.3:
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
 
   esutils@2.0.3: {}
 
@@ -5937,7 +5942,7 @@ snapshots:
 
   globals@17.6.0: {}
 
-  graphql@16.13.2: {}
+  graphql@16.14.0: {}
 
   handlebars@4.7.9:
     dependencies:
@@ -6090,7 +6095,7 @@ snapshots:
 
   is-reference@3.0.3:
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
 
   is-wsl@3.1.1:
     dependencies:
@@ -7349,7 +7354,7 @@ snapshots:
       '@open-draft/deferred-promise': 2.2.0
       '@types/statuses': 2.0.6
       cookie: 1.1.1
-      graphql: 16.13.2
+      graphql: 16.14.0
       headers-polyfill: 4.0.3
       is-node-process: 1.2.0
       outvariant: 1.4.3
@@ -7374,7 +7379,7 @@ snapshots:
       '@open-draft/deferred-promise': 2.2.0
       '@types/statuses': 2.0.6
       cookie: 1.1.1
-      graphql: 16.13.2
+      graphql: 16.14.0
       headers-polyfill: 4.0.3
       is-node-process: 1.2.0
       outvariant: 1.4.3
@@ -8238,7 +8243,7 @@ snapshots:
       '@jridgewell/remapping': 2.3.5
       '@jridgewell/sourcemap-codec': 1.5.5
       '@sveltejs/acorn-typescript': 1.0.9(acorn@8.16.0)
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       '@types/trusted-types': 2.0.7
       acorn: 8.16.0
       aria-query: 5.3.1
