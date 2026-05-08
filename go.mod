@@ -5,7 +5,7 @@ go 1.26.3
 tool github.com/vektra/mockery/v3
 
 require (
-	github.com/a-novel-kit/golib v0.20.30
+	github.com/a-novel-kit/golib v0.20.31
 	github.com/a-novel-kit/jwt v1.1.57
 	github.com/a-novel/service-json-keys/v2 v2.3.0
 	github.com/go-chi/chi/v5 v5.2.5
@@ -48,8 +48,8 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
-	github.com/getsentry/sentry-go v0.46.1 // indirect
-	github.com/getsentry/sentry-go/otel v0.46.1 // indirect
+	github.com/getsentry/sentry-go v0.46.2 // indirect
+	github.com/getsentry/sentry-go/otel v0.46.2 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -116,7 +116,7 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
-	google.golang.org/api v0.277.0 // indirect
+	google.golang.org/api v0.278.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260427160629-7cedc36a6bc4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
