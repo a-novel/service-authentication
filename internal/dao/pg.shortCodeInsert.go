@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/driver/pgdriver"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
@@ -31,6 +32,14 @@ var shortCodeInsertQuery string
 // conflict check is a plain SELECT (not SELECT ... FOR UPDATE), so two
 // transactions racing on the same pair can both observe no conflict and both
 // insert; this sentinel does not protect against that race.
+// ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when an
+// active short code already covers the same (target, usage) pair. Detection
+// runs in two layers: an in-transaction conflict check on the Override=false
+// path that short-circuits with this sentinel, and the database's partial
+// unique index (target, usage) WHERE deleted_at IS NULL, which catches any
+// race that slips past the check by mapping the resulting SQLSTATE 23505 onto
+// the same sentinel. Callers branch on it with errors.Is regardless of which
+// layer caught the conflict.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
 // ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The repository
@@ -107,6 +116,15 @@ func (repository *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeI
 			request.ExpiresAt,
 		).Scan(ctx, entity)
 		if err != nil {
+			// The partial unique index (target, usage) WHERE deleted_at IS NULL
+			// catches any conflict that the in-transaction check missed under
+			// concurrent inserts. Map the SQLSTATE 23505 onto the same sentinel
+			// callers already use so they don't need to distinguish the layer.
+			var pgErr pgdriver.Error
+			if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
+				err = errors.Join(err, ErrShortCodeInsertAlreadyExists)
+			}
+
 			return fmt.Errorf("execute query: %w", err)
 		}
 
