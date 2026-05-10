@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -48,7 +47,9 @@ func (repository *CredentialsUpdatePassword) Exec(
 
 	span.SetAttributes(
 		attribute.String("credentials.id", request.ID.String()),
-		attribute.String("credentials.password", strings.Repeat("*", len(request.Password))),
+		// Do not record the password on the span, even redacted: a "*****" of the
+		// same length leaks the input length over every trace, which is partial
+		// credential information an attacker reading traces could correlate.
 		attribute.Int64("credentials.now", request.Now.Unix()),
 	)
 
