@@ -20,16 +20,26 @@ import (
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
 
-// ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when an
-// active short code already covers the same (Usage, Target) pair and Override
-// is false. Set [ShortCodeInsertRequest.Override] to true to retire the existing
-// code (with the [ShortCodeDeleteOverride] comment) and insert the new one in
-// the same transaction.
+// ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when
+// the conflict-check query observes an active short code for the same
+// (Usage, Target) pair and Override is false. Set
+// [ShortCodeInsertRequest.Override] to true to retire the existing code (with
+// the [ShortCodeDeleteOverride] comment) and insert the new one in the same
+// transaction.
+//
+// The schema does not declare a unique constraint on (target, usage), and the
+// conflict check is a plain SELECT (not SELECT ... FOR UPDATE), so two
+// transactions racing on the same pair can both observe no conflict and both
+// insert; this sentinel does not protect against that race.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
 // ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The repository
-// runs at REPEATABLE READ isolation so the conflict check and the insert are
-// atomic with respect to concurrent inserts on the same (Usage, Target) pair.
+// runs at REPEATABLE READ isolation, which gives each transaction a stable
+// snapshot of the table, but the conflict check and the insert are not
+// lock-protected. Concurrent inserts on the same (Usage, Target) pair can
+// both pass the check and both succeed — uniqueness is not guaranteed by the
+// dao layer today. Callers that need it must serialize at a higher level or
+// accept that duplicates may briefly exist.
 type ShortCodeInsertRequest struct {
 	// See ShortCode.ID.
 	ID uuid.UUID
