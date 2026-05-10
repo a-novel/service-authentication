@@ -21,17 +21,6 @@ import (
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
 
-// ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when
-// the conflict-check query observes an active short code for the same
-// (Usage, Target) pair and Override is false. Set
-// [ShortCodeInsertRequest.Override] to true to retire the existing code (with
-// the [ShortCodeDeleteOverride] comment) and insert the new one in the same
-// transaction.
-//
-// The schema does not declare a unique constraint on (target, usage), and the
-// conflict check is a plain SELECT (not SELECT ... FOR UPDATE), so two
-// transactions racing on the same pair can both observe no conflict and both
-// insert; this sentinel does not protect against that race.
 // ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when an
 // active short code already covers the same (target, usage) pair. Detection
 // runs in two layers: an in-transaction conflict check on the Override=false
@@ -43,12 +32,10 @@ var shortCodeInsertQuery string
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
 // ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The repository
-// runs at REPEATABLE READ isolation, which gives each transaction a stable
-// snapshot of the table, but the conflict check and the insert are not
-// lock-protected. Concurrent inserts on the same (Usage, Target) pair can
-// both pass the check and both succeed — uniqueness is not guaranteed by the
-// dao layer today. Callers that need it must serialize at a higher level or
-// accept that duplicates may briefly exist.
+// runs at REPEATABLE READ isolation; uniqueness on (target, usage) for the
+// active subset is enforced by the partial unique index added in the
+// 20260510140000 migration, so concurrent inserts cannot produce duplicates
+// (the loser sees [ErrShortCodeInsertAlreadyExists]).
 type ShortCodeInsertRequest struct {
 	// See ShortCode.ID.
 	ID uuid.UUID
@@ -98,7 +85,17 @@ func (repository *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeI
 		if request.Override {
 			err = repository.discardConflicts(ctx, tx, request)
 		} else {
-			err = repository.checkConflicts(ctx, tx, request)
+			// Soft-delete any naturally-expired-but-not-yet-deleted row first.
+			// Without this, the partial unique index (target, usage) WHERE
+			// deleted_at IS NULL would block a fresh insert against an expired
+			// stale row, even though the application contract is that expired
+			// codes don't reserve their slot. With this, the active-conflict
+			// check below sees a clean slate and the index only fires on real
+			// active conflicts.
+			err = repository.discardExpired(ctx, tx, request)
+			if err == nil {
+				err = repository.checkConflicts(ctx, tx, request)
+			}
 		}
 
 		if err != nil {
@@ -157,6 +154,31 @@ func (repository *ShortCodeInsert) discardConflicts(
 		// older. This is usually enough to prevent any issue.
 		lo.ToPtr(request.Now.Add(-time.Second)),
 		lo.ToPtr(ShortCodeDeleteOverride),
+		request.Target,
+		request.Usage,
+	).Exec(ctx)
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
+	}
+
+	otel.ReportSuccessNoContent(span)
+
+	return nil
+}
+
+//go:embed pg.shortCodeInsert.discardExpired.sql
+var shortCodeInsertDiscardExpiredQuery string
+
+func (repository *ShortCodeInsert) discardExpired(
+	ctx context.Context, tx bun.IDB, request *ShortCodeInsertRequest,
+) error {
+	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(discardExpired)")
+	defer span.End()
+
+	_, err := tx.NewRaw(
+		shortCodeInsertDiscardExpiredQuery,
+		request.Now,
+		"expired before insert",
 		request.Target,
 		request.Usage,
 	).Exec(ctx)
