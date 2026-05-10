@@ -14,7 +14,9 @@ import (
 //go:embed pg.credentialsExist.sql
 var credentialsExistQuery string
 
+// CredentialsExistRequest is the input to [CredentialsExist.Exec].
 type CredentialsExistRequest struct {
+	// Email to check for an existing registration. Comparison is case-sensitive.
 	Email string
 }
 

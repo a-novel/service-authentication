@@ -18,14 +18,20 @@ import (
 //go:embed pg.credentialsUpdateRole.sql
 var credentialsUpdateRoleQuery string
 
+// ErrCredentialsUpdateRoleNotFound is returned by [CredentialsUpdateRole.Exec]
+// when no row matches the requested ID. It is joined onto the underlying
+// sql.ErrNoRows so callers can branch on it with errors.Is.
 var ErrCredentialsUpdateRoleNotFound = errors.New("credentials not found")
 
+// CredentialsUpdateRoleRequest is the input to [CredentialsUpdateRole.Exec].
 type CredentialsUpdateRoleRequest struct {
-	// The ID of the credentials to update.
+	// ID of the credentials to update.
 	ID uuid.UUID
-	// The new Role to assign to the selected credentials.
+	// Role is the new role name to assign. The repository does not validate the
+	// value against the configured permission map; that check belongs to the
+	// service layer.
 	Role string
-	// Time used as modification date.
+	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 

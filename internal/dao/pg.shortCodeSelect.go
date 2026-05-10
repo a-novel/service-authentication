@@ -16,13 +16,29 @@ import (
 //go:embed pg.shortCodeSelect.sql
 var shortCodeSelectQuery string
 
+// ErrShortCodeSelectNotFound is returned by [ShortCodeSelect.Exec] when no
+// active short code matches the (Usage, Target) pair. The query filters expired
+// and deleted rows directly in its WHERE clause (deleted_at IS NULL AND
+// expires_at > CURRENT_TIMESTAMP), so this sentinel covers three on-disk states
+// the dao layer can't distinguish: never-issued, expired, and already-consumed.
 var ErrShortCodeSelectNotFound = errors.New("short code not found")
 
+// ShortCodeSelectRequest is the input to [ShortCodeSelect.Exec]. The application
+// flow assumes at most one active short code exists per (Usage, Target) pair,
+// but the database does not enforce this — only a non-unique index is in place
+// and [ShortCodeInsert] guards duplicates with a check-then-insert that is racy
+// under concurrent writes (see [ShortCodeInsert] for details). When duplicates
+// exist, this query returns whichever row Postgres surfaces first.
 type ShortCodeSelectRequest struct {
-	Usage  string
+	// Usage selects which flow this code is valid for; matches [ShortCode.Usage].
+	Usage string
+	// Target identifies the subject of the operation (e.g. the email address);
+	// matches [ShortCode.Target].
 	Target string
 }
 
+// ShortCodeSelect fetches an active short code matching a (Usage, Target) pair,
+// if any.
 type ShortCodeSelect struct{}
 
 func NewShortCodeSelect() *ShortCodeSelect {

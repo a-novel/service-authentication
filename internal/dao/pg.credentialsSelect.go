@@ -17,12 +17,19 @@ import (
 //go:embed pg.credentialsSelect.sql
 var credentialsSelectQuery string
 
+// ErrCredentialsSelectNotFound is returned by [CredentialsSelect.Exec] when no
+// row matches the requested ID. It is joined onto the underlying sql.ErrNoRows
+// so callers can branch on it with errors.Is.
 var ErrCredentialsSelectNotFound = errors.New("credentials not found")
 
+// CredentialsSelectRequest is the input to [CredentialsSelect.Exec].
 type CredentialsSelectRequest struct {
+	// ID of the credentials to fetch.
 	ID uuid.UUID
 }
 
+// CredentialsSelect fetches a single credentials row by ID. Use
+// [CredentialsSelectByEmail] to look up by email instead.
 type CredentialsSelect struct{}
 
 func NewCredentialsSelect() *CredentialsSelect {
