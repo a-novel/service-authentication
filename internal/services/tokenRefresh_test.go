@@ -13,8 +13,8 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
-	"github.com/a-novel-kit/jwt/jws"
 	"github.com/a-novel-kit/jwt/jwp"
+	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/services"
