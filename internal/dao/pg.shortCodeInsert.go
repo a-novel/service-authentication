@@ -80,20 +80,18 @@ func (repository *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeI
 	txOptions := &sql.TxOptions{Isolation: sql.LevelRepeatableRead}
 
 	err := postgres.RunInTx(ctx, txOptions, func(ctx context.Context, tx bun.IDB) error {
-		var err error
-
-		if request.Override {
-			err = repository.discardConflicts(ctx, tx, request)
-		} else {
-			// Soft-delete any naturally-expired-but-not-yet-deleted row first.
-			// Without this, the partial unique index (target, usage) WHERE
-			// deleted_at IS NULL would block a fresh insert against an expired
-			// stale row, even though the application contract is that expired
-			// codes don't reserve their slot. With this, the active-conflict
-			// check below sees a clean slate and the index only fires on real
-			// active conflicts.
-			err = repository.discardExpired(ctx, tx, request)
-			if err == nil {
+		// Soft-delete any naturally-expired-but-not-yet-deleted row first, on
+		// both paths. Without this, the partial unique index
+		// (target, usage) WHERE deleted_at IS NULL would block a fresh insert
+		// against an expired stale row that discardConflicts (Override=true) or
+		// checkConflicts (Override=false) would otherwise ignore — both queries
+		// gate on `expires_at > now()`, so naturally-expired rows are invisible
+		// to them but still live in the partial index.
+		err := repository.discardExpired(ctx, tx, request)
+		if err == nil {
+			if request.Override {
+				err = repository.discardConflicts(ctx, tx, request)
+			} else {
 				err = repository.checkConflicts(ctx, tx, request)
 			}
 		}

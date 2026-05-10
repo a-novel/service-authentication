@@ -18,7 +18,8 @@ WITH
           target,
           usage
         ORDER BY
-          created_at DESC
+          created_at DESC,
+          id DESC
       ) AS rank
     FROM
       short_codes
@@ -42,12 +43,10 @@ WHERE
 /*
 Postgres requires partial-index predicates to be IMMUTABLE, so the predicate
 can't include `expires_at > now()` directly. The (deleted_at IS NULL) form
-covers concurrent active inserts because every production caller passes
-Override=true on ShortCodeInsert, which always sets deleted_at on
-pre-existing matching rows before inserting. Naturally-expired-but-not-yet-
-deleted rows are still in the partial index, but a subsequent insert with
-Override=true will mark them deleted before its own insert, so the
-constraint isn't a barrier in any production path.
+covers active conflicts; naturally-expired-but-not-yet-deleted rows are also
+in the partial index, but the dao always runs a discardExpired soft-delete
+step before either the Override=true or Override=false conflict path, so
+those stale rows never block a fresh insert.
 */
 CREATE UNIQUE INDEX short_codes_active_target_usage_uniq ON short_codes (target, usage)
 WHERE
