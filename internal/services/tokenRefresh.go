@@ -18,10 +18,28 @@ import (
 )
 
 var (
-	ErrTokenRefreshInvalidAccessToken  = errors.New("invalid access token")
+	// ErrTokenRefreshInvalidAccessToken is returned by [TokenRefresh.Exec] when the
+	// access token's signature is invalid. Expiry is intentionally ignored on the
+	// access token (refresh exists precisely to renew an expired one), so this
+	// signals forgery or key rotation, not staleness.
+	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
+	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when
+	// the refresh token's signature is invalid; the sentinel is joined onto the
+	// underlying jws.ErrInvalidSignature error. Other verifier failures
+	// (malformed token, expiry, audience mismatch, etc.) currently surface as
+	// the raw verifier error and are reported on the span as infrastructure
+	// failures rather than user-facing outcomes.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
-	ErrTokenRefreshMismatchClaims      = errors.New("refresh token claims don't match access token")
-	ErrTokenRefreshMismatchSource      = errors.New("refresh token not issued from access token")
+	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the
+	// access and refresh tokens are individually valid but encode different user
+	// IDs. This typically indicates an attacker pairing a stolen refresh token
+	// with someone else's access token.
+	ErrTokenRefreshMismatchClaims = errors.New("refresh token claims don't match access token")
+	// ErrTokenRefreshMismatchSource is returned by [TokenRefresh.Exec] when the
+	// access token's RefreshTokenID claim does not match the refresh token's JTI.
+	// This breaks the access/refresh binding — an access token can only be renewed
+	// using the very refresh token that originally minted it.
+	ErrTokenRefreshMismatchSource = errors.New("refresh token not issued from access token")
 )
 
 type TokenRefreshRepository interface {

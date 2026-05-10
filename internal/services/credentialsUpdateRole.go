@@ -16,9 +16,17 @@ import (
 )
 
 var (
-	ErrCredentialsUpdateRoleSelfUpdate        = errors.New("user is not allowed to update its own role")
-	ErrCredentialsUpdateRoleDowngradeSuperior = errors.New("user cam only downgrade users from a lower role")
-	ErrCredentialsUpdateRoleToHigher          = errors.New(
+	// ErrCredentialsUpdateRoleSelfUpdate is returned by [CredentialsUpdateRole.Exec]
+	// when the actor and the target are the same user. Self-promotion or
+	// self-demotion is never allowed, even for super-admins.
+	ErrCredentialsUpdateRoleSelfUpdate = errors.New("user is not allowed to update its own role")
+	// ErrCredentialsUpdateRoleDowngradeSuperior is returned by
+	// [CredentialsUpdateRole.Exec] when the actor tries to demote a user whose
+	// current role is equal to or higher than the actor's own.
+	ErrCredentialsUpdateRoleDowngradeSuperior = errors.New("user can only downgrade users from a lower role")
+	// ErrCredentialsUpdateRoleToHigher is returned by [CredentialsUpdateRole.Exec]
+	// when the actor tries to promote a user to a role above the actor's own.
+	ErrCredentialsUpdateRoleToHigher = errors.New(
 		"user is not allowed to upgrade users to a higher role than its own",
 	)
 )
@@ -107,21 +115,17 @@ func (service *CredentialsUpdateRole) Exec(
 
 	// User can only upgrade users up to its own role.
 	if newTargetRoleImportance >= targetRoleIImportance && newTargetRoleImportance > currentRoleIImportance {
-		return nil, otel.ReportError(span,
-			fmt.Errorf(
-				"%w: upgrade from %s to %s",
-				ErrCredentialsUpdateRoleToHigher, currentCredentials.Role, request.Role,
-			),
+		return nil, fmt.Errorf(
+			"%w: upgrade from %s to %s",
+			ErrCredentialsUpdateRoleToHigher, currentCredentials.Role, request.Role,
 		)
 	}
 
 	// User can only downgrade users from a lower role.
 	if newTargetRoleImportance <= targetRoleIImportance && targetRoleIImportance >= currentRoleIImportance {
-		return nil, otel.ReportError(span,
-			fmt.Errorf(
-				"%w: downgrade from %s to %s",
-				ErrCredentialsUpdateRoleDowngradeSuperior, currentCredentials.Role, request.Role,
-			),
+		return nil, fmt.Errorf(
+			"%w: downgrade from %s to %s",
+			ErrCredentialsUpdateRoleDowngradeSuperior, currentCredentials.Role, request.Role,
 		)
 	}
 

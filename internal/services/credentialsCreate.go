@@ -70,16 +70,11 @@ func NewCredentialsCreate(
 	}
 }
 
-// Exec registers a new user and returns authentication tokens.
-//
-// The registration process runs within a database transaction to ensure atomicity:
-//  1. Validates the short code matches the target email
-//  2. Consumes (deletes) the short code to prevent reuse
-//  3. Hashes the password using Argon2id
-//  4. Inserts the new credentials with the default user role
-//  5. Generates and returns access and refresh tokens
-//
-// If any step fails, the transaction is rolled back and no user is created.
+// Exec atomically registers a new user with the supplied email and password,
+// gated by a one-time registration short code, and returns a fresh access/refresh
+// token pair. The password is hashed with Argon2id before storage. If the short
+// code is invalid or the credentials cannot be inserted (for example because the
+// email is already taken), the transaction is rolled back and no user is created.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsCreate")
 	defer span.End()

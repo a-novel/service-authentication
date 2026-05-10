@@ -15,9 +15,19 @@ import (
 )
 
 var (
-	ErrInvalidHash         = errors.New("the encoded hash is in an invalid format")
+	// ErrInvalidHash is returned by [CompareArgon2] when the stored hash does not
+	// have the encoded shape produced by [GenerateArgon2]. It signals a malformed
+	// stored value (the row in the database is corrupted), not a failed comparison.
+	ErrInvalidHash = errors.New("the encoded hash is in an invalid format")
+	// ErrIncompatibleVersion is returned by [CompareArgon2] when the stored hash
+	// was produced with an Argon2 version this binary cannot verify. Re-hashing
+	// the password (after authenticating the user by some other means) is required
+	// to recover.
 	ErrIncompatibleVersion = errors.New("the encoded hash is using an incompatible version of Argon2")
-	ErrInvalidPassword     = errors.New("the password is invalid")
+	// ErrInvalidPassword is returned by [CompareArgon2] when the stored hash is
+	// well-formed but the supplied password does not match. This is the expected
+	// "wrong password" outcome — callers typically map it to a 401 response.
+	ErrInvalidPassword = errors.New("the password is invalid")
 )
 
 const (
@@ -51,6 +61,8 @@ type Argon2Params struct {
 	KeyLength uint32
 }
 
+// Argon2ParamsDefault is the parameter set passed to [GenerateArgon2] for password
+// hashing. Parallelism is left unset and resolved to the host CPU count at hash time.
 var Argon2ParamsDefault = Argon2Params{
 	Memory:     Argon2MemoryDefault,
 	Iterations: Argon2IterationsDefault,
