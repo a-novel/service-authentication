@@ -68,13 +68,13 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("request.email", request.Email),
-		attribute.String("request.lang", request.Lang),
+		attribute.String("user.email", request.Email),
+		attribute.String("email.lang", request.Lang),
 	)
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	credentials, err := service.selectRepository.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
@@ -112,8 +112,8 @@ func (service *ShortCodeCreatePasswordReset) sendMail(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("request.email", request.Email),
-		attribute.String("request.lang", request.Lang),
+		attribute.String("user.email", request.Email),
+		attribute.String("email.lang", request.Lang),
 		attribute.String("short_code.target", shortCode.Target),
 	)
 

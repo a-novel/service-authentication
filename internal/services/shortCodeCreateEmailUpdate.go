@@ -72,21 +72,21 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("request.id", request.ID.String()),
-		attribute.String("request.email", request.Email),
-		attribute.String("request.lang", request.Lang),
+		attribute.String("user.id", request.ID.String()),
+		attribute.String("user.email", request.Email),
+		attribute.String("email.lang", request.Lang),
 	)
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	_, err = service.selectRepository.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
 		Email: request.Email,
 	})
 	if err == nil {
-		return nil, otel.ReportError(span, dao.ErrCredentialsUpdateEmailAlreadyExists)
+		return nil, dao.ErrCredentialsUpdateEmailAlreadyExists
 	}
 
 	if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
@@ -122,8 +122,8 @@ func (service *ShortCodeCreateEmailUpdate) sendMail(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("request.email", request.Email),
-		attribute.String("request.lang", request.Lang),
+		attribute.String("user.email", request.Email),
+		attribute.String("email.lang", request.Lang),
 		attribute.String("short_code.target", shortCode.Target),
 	)
 

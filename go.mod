@@ -1,12 +1,12 @@
 module github.com/a-novel/service-authentication/v2
 
-go 1.26.2
+go 1.26.3
 
 tool github.com/vektra/mockery/v3
 
 require (
-	github.com/a-novel-kit/golib v0.20.29
-	github.com/a-novel-kit/jwt v1.1.55
+	github.com/a-novel-kit/golib v0.20.31
+	github.com/a-novel-kit/jwt v1.1.58
 	github.com/a-novel/service-json-keys/v2 v2.3.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
@@ -19,8 +19,8 @@ require (
 	github.com/uptrace/bun v1.2.18
 	github.com/uptrace/bun/driver/pgdriver v1.2.18
 	go.opentelemetry.io/otel v1.43.0
-	golang.org/x/crypto v0.50.0
-	google.golang.org/grpc v1.80.0
+	golang.org/x/crypto v0.51.0
+	google.golang.org/grpc v1.81.0
 )
 
 require (
@@ -48,8 +48,8 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
-	github.com/getsentry/sentry-go v0.46.1 // indirect
-	github.com/getsentry/sentry-go/otel v0.46.1 // indirect
+	github.com/getsentry/sentry-go v0.46.2 // indirect
+	github.com/getsentry/sentry-go/otel v0.46.2 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -111,12 +111,12 @@ require (
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/term v0.42.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/term v0.43.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
-	google.golang.org/api v0.277.0 // indirect
+	google.golang.org/api v0.278.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260427160629-7cedc36a6bc4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect

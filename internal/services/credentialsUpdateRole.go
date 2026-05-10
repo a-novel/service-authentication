@@ -59,19 +59,19 @@ func (service *CredentialsUpdateRole) Exec(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("request.targetUserID", request.TargetUserID.String()),
-		attribute.String("request.currentUserID", request.CurrentUserID.String()),
-		attribute.String("request.role", request.Role),
+		attribute.String("target.id", request.TargetUserID.String()),
+		attribute.String("actor.id", request.CurrentUserID.String()),
+		attribute.String("target.role", request.Role),
 	)
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return nil, errors.Join(err, ErrInvalidRequest)
 	}
 
 	// No self-update allowed.
 	if request.CurrentUserID == request.TargetUserID {
-		return nil, otel.ReportError(span, ErrCredentialsUpdateRoleSelfUpdate)
+		return nil, ErrCredentialsUpdateRoleSelfUpdate
 	}
 
 	newTargetRoleImportance := config.PermissionsConfigDefault.Roles[request.Role].Priority
