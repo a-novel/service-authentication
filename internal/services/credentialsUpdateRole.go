@@ -115,21 +115,17 @@ func (service *CredentialsUpdateRole) Exec(
 
 	// User can only upgrade users up to its own role.
 	if newTargetRoleImportance >= targetRoleIImportance && newTargetRoleImportance > currentRoleIImportance {
-		return nil, otel.ReportError(span,
-			fmt.Errorf(
-				"%w: upgrade from %s to %s",
-				ErrCredentialsUpdateRoleToHigher, currentCredentials.Role, request.Role,
-			),
+		return nil, fmt.Errorf(
+			"%w: upgrade from %s to %s",
+			ErrCredentialsUpdateRoleToHigher, currentCredentials.Role, request.Role,
 		)
 	}
 
 	// User can only downgrade users from a lower role.
 	if newTargetRoleImportance <= targetRoleIImportance && targetRoleIImportance >= currentRoleIImportance {
-		return nil, otel.ReportError(span,
-			fmt.Errorf(
-				"%w: downgrade from %s to %s",
-				ErrCredentialsUpdateRoleDowngradeSuperior, currentCredentials.Role, request.Role,
-			),
+		return nil, fmt.Errorf(
+			"%w: downgrade from %s to %s",
+			ErrCredentialsUpdateRoleDowngradeSuperior, currentCredentials.Role, request.Role,
 		)
 	}
 
