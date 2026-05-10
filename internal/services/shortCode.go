@@ -46,17 +46,18 @@ const (
 )
 
 // KnownShortCodeUsages enumerates every valid value for [ShortCode.Usage]. It
-// backs the "short_code_usage" validator registered on the package validator
-// instance.
+// backs the "usage" validator tag registered on the package validator instance
+// (see [ValidateShortCodeUsage]).
 var KnownShortCodeUsages = []string{
 	ShortCodeUsageValidateEmail,
 	ShortCodeUsageResetPassword,
 	ShortCodeUsageRegister,
 }
 
-// ValidateShortCodeUsage is a go-playground/validator field-level validator that
-// accepts any value listed in [KnownShortCodeUsages]. Register it under a tag
-// (e.g. "short_code_usage") to validate request fields that carry a usage value.
+// ValidateShortCodeUsage is the go-playground/validator field-level validator
+// that accepts any value listed in [KnownShortCodeUsages]. The package's init()
+// registers it under the "usage" tag, so request structs gate this with
+// `validate:"required,usage"`.
 func ValidateShortCodeUsage(fl validator.FieldLevel) bool {
 	val := fl.Field().String()
 	for _, usage := range KnownShortCodeUsages {

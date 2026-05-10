@@ -24,9 +24,11 @@ var (
 	// signals forgery or key rotation, not staleness.
 	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when
-	// the refresh token's signature is invalid. Unlike the access token, the
-	// refresh token's expiry is enforced; an expired refresh token also surfaces
-	// here via the underlying verifier error.
+	// the refresh token's signature is invalid; the sentinel is joined onto the
+	// underlying jws.ErrInvalidSignature error. Other verifier failures
+	// (malformed token, expiry, audience mismatch, etc.) currently surface as
+	// the raw verifier error and are reported on the span as infrastructure
+	// failures rather than user-facing outcomes.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the
 	// access and refresh tokens are individually valid but encode different user
