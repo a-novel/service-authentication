@@ -20,16 +20,27 @@ import (
 var credentialsUpdateEmailQuery string
 
 var (
+	// ErrCredentialsUpdateEmailAlreadyExists is returned by
+	// [CredentialsUpdateEmail.Exec] when the new email is already registered to
+	// another user. It is detected from the Postgres unique-violation SQLSTATE
+	// (23505) and joined onto the driver error so callers can branch on it.
+	// This race can occur when a different account claims the email between
+	// short-code issuance and consumption.
 	ErrCredentialsUpdateEmailAlreadyExists = errors.New("credentials already exists")
-	ErrCredentialsUpdateEmailNotFound      = errors.New("credentials not found")
+	// ErrCredentialsUpdateEmailNotFound is returned by [CredentialsUpdateEmail.Exec]
+	// when no row matches the requested ID. It is joined onto the underlying
+	// sql.ErrNoRows.
+	ErrCredentialsUpdateEmailNotFound = errors.New("credentials not found")
 )
 
+// CredentialsUpdateEmailRequest is the input to [CredentialsUpdateEmail.Exec].
 type CredentialsUpdateEmailRequest struct {
-	// The ID of the credentials to update.
+	// ID of the credentials to update.
 	ID uuid.UUID
-	// The new Email value for the selected credentials.
+	// Email is the new address to assign. Caller must verify ownership (typically
+	// via a short code emailed to this address) before invoking the repository.
 	Email string
-	// Time used as modification date.
+	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 

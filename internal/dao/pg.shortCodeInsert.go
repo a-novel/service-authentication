@@ -20,8 +20,16 @@ import (
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
 
+// ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when an
+// active short code already covers the same (Usage, Target) pair and Override
+// is false. Set [ShortCodeInsertRequest.Override] to true to retire the existing
+// code (with the [ShortCodeDeleteOverride] comment) and insert the new one in
+// the same transaction.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
+// ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The repository
+// runs at REPEATABLE READ isolation so the conflict check and the insert are
+// atomic with respect to concurrent inserts on the same (Usage, Target) pair.
 type ShortCodeInsertRequest struct {
 	// See ShortCode.ID.
 	ID uuid.UUID

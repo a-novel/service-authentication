@@ -19,15 +19,22 @@ import (
 //go:embed pg.credentialsUpdatePassword.sql
 var credentialsUpdatePassword string
 
+// ErrCredentialsUpdatePasswordNotFound is returned by
+// [CredentialsUpdatePassword.Exec] when no row matches the requested ID. It is
+// joined onto the underlying sql.ErrNoRows so callers can branch on it with
+// errors.Is.
 var ErrCredentialsUpdatePasswordNotFound = errors.New("credentials not found")
 
+// CredentialsUpdatePasswordRequest is the input to [CredentialsUpdatePassword.Exec].
 type CredentialsUpdatePasswordRequest struct {
-	// The ID of the credentials to update.
+	// ID of the credentials to update.
 	ID uuid.UUID
-	// The new password to use. This value must be securely encrypted using
-	// one-way encryption, so it doesn't get leaked with the database.
+	// Password is the Argon2id hash to persist, not the plaintext. Plaintext
+	// must be hashed by the caller (typically via lib.GenerateArgon2) before
+	// reaching this layer; storing the hash means a database leak does not
+	// reveal usable credentials.
 	Password string
-	// Time used as modification date.
+	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 

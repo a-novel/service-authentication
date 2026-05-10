@@ -15,10 +15,14 @@ import (
 //go:embed pg.credentialsList.sql
 var credentialsListQuery string
 
+// CredentialsListRequest is the input to [CredentialsList.Exec]. Pagination uses
+// limit/offset; an empty Roles slice disables the role filter and returns
+// credentials of every role.
 type CredentialsListRequest struct {
 	Limit  int
 	Offset int
-	// Filter credentials by role.
+	// Roles, if non-empty, restricts the result to credentials whose role is in
+	// the slice. An empty slice returns credentials of every role.
 	Roles []string
 }
 

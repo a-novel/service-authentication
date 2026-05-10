@@ -29,12 +29,17 @@ const (
 	ShortCodeDeleteConsumed = "key consumed"
 )
 
+// ShortCodeDeleteRequest is the input to [ShortCodeDelete.Exec]. Comment should
+// usually be one of the [ShortCodeDeleteOverride] / [ShortCodeDeleteConsumed]
+// constants, but any value is accepted and persisted on the deleted row for
+// later auditing.
 type ShortCodeDeleteRequest struct {
 	// ID of the short code to delete.
 	ID uuid.UUID
-	// Time used for deletion date.
+	// Now is the timestamp recorded as the row's deletion time.
 	Now time.Time
-	// Indicate a reason for the short code deletion. See ShortCode.DeletedAt.
+	// Comment records the reason for the deletion; persisted on the row's
+	// deleted_comment column. See [ShortCode.DeletedAt] for the lifecycle.
 	Comment string
 }
 
