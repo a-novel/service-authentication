@@ -29,10 +29,10 @@ type TokenCreateAnonSignClaimsService interface {
 }
 
 type TokenCreateAnon struct {
-	signClaimsService TokenCreateServiceSignClaims
+	signClaimsService TokenCreateAnonSignClaimsService
 }
 
-func NewTokenCreateAnon(signClaimsService TokenCreateServiceSignClaims) *TokenCreateAnon {
+func NewTokenCreateAnon(signClaimsService TokenCreateAnonSignClaimsService) *TokenCreateAnon {
 	return &TokenCreateAnon{
 		signClaimsService: signClaimsService,
 	}
