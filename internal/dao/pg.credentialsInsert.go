@@ -19,6 +19,10 @@ import (
 //go:embed pg.credentialsInsert.sql
 var credentialsInsertQuery string
 
+// ErrCredentialsInsertAlreadyExists is returned by [CredentialsInsert.Exec] when
+// the email is already registered. It is detected from the Postgres unique-violation
+// SQLSTATE (23505) and joined onto the underlying driver error so callers can
+// branch on it with errors.Is.
 var ErrCredentialsInsertAlreadyExists = errors.New("credentials already exists")
 
 type CredentialsInsertRequest struct {
@@ -34,9 +38,8 @@ type CredentialsInsertRequest struct {
 	Now time.Time
 }
 
-// CredentialsInsert inserts a new set of credentials into the database.
-//
-// The new credentials must be unique, otherwise ErrCredentialsInsertAlreadyExists is thrown.
+// CredentialsInsert inserts a new set of credentials into the database. The email
+// must be unique; a duplicate returns [ErrCredentialsInsertAlreadyExists].
 type CredentialsInsert struct{}
 
 func NewCredentialsInsert() *CredentialsInsert {

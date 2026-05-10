@@ -15,7 +15,14 @@ import (
 )
 
 var (
+	// ErrShortCodeConsumeInvalid is returned by [ShortCodeConsume.Exec] when the
+	// supplied code does not match the stored hash for the (Usage, Target) pair.
+	// This is the expected "wrong code" outcome a caller maps to a 4xx response.
 	ErrShortCodeConsumeInvalid = errors.New("invalid short code")
+	// ErrShortCodeConsumeExpired is returned by [ShortCodeConsume.Exec] when the
+	// stored code's expiry has already passed. The SQL select also filters expired
+	// rows; this check is defense-in-depth against clock skew between the database
+	// and the service.
 	ErrShortCodeConsumeExpired = errors.New("short code expired")
 )
 

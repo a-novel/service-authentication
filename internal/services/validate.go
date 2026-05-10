@@ -10,8 +10,15 @@ import (
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
+// ErrInvalidRequest is returned by every Exec entry point in this package when
+// the request fails struct-level validation. It is joined onto the underlying
+// validator error so callers can branch on it with errors.Is and surface the
+// detailed validation message at the same time.
 var ErrInvalidRequest = errors.New("invalid request")
 
+// ValidateLang is a go-playground/validator field-level validator that accepts
+// any language code listed in config.KnownLangs. It is registered under the
+// "langs" tag at package init.
 func ValidateLang(fl validator.FieldLevel) bool {
 	val := fl.Field().String()
 	for _, lang := range config.KnownLangs {

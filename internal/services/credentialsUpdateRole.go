@@ -16,9 +16,17 @@ import (
 )
 
 var (
-	ErrCredentialsUpdateRoleSelfUpdate        = errors.New("user is not allowed to update its own role")
-	ErrCredentialsUpdateRoleDowngradeSuperior = errors.New("user cam only downgrade users from a lower role")
-	ErrCredentialsUpdateRoleToHigher          = errors.New(
+	// ErrCredentialsUpdateRoleSelfUpdate is returned by [CredentialsUpdateRole.Exec]
+	// when the actor and the target are the same user. Self-promotion or
+	// self-demotion is never allowed, even for super-admins.
+	ErrCredentialsUpdateRoleSelfUpdate = errors.New("user is not allowed to update its own role")
+	// ErrCredentialsUpdateRoleDowngradeSuperior is returned by
+	// [CredentialsUpdateRole.Exec] when the actor tries to demote a user whose
+	// current role is equal to or higher than the actor's own.
+	ErrCredentialsUpdateRoleDowngradeSuperior = errors.New("user can only downgrade users from a lower role")
+	// ErrCredentialsUpdateRoleToHigher is returned by [CredentialsUpdateRole.Exec]
+	// when the actor tries to promote a user to a role above the actor's own.
+	ErrCredentialsUpdateRoleToHigher = errors.New(
 		"user is not allowed to upgrade users to a higher role than its own",
 	)
 )

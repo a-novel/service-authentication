@@ -57,16 +57,15 @@ func NewAuth(
 	}
 }
 
-// Middleware returns an HTTP middleware that enforces authentication and authorization.
+// Middleware returns an HTTP middleware that authenticates the request and gates
+// it on the supplied permission set. With no required permissions, an authenticated
+// user is admitted and an unauthenticated request passes through with no claims on
+// the context (use this for optional-auth endpoints). With one or more required
+// permissions, the request is admitted when at least one of the user's role-granted
+// permissions is in the required set.
 //
-// Permission checking works as follows:
-//  1. If requiredPermissions is empty, the endpoint is accessible to all authenticated users
-//  2. The user's roles are retrieved from the JWT claims
-//  3. For each role, the middleware checks if any of its permissions match the required ones
-//  4. Access is granted if at least one permission matches (OR logic, not AND)
-//
-// The validated claims are stored in the request context and can be retrieved
-// using GetClaimsContext or MustGetClaimsContext.
+// Verified claims are stored on the request context for downstream handlers; use
+// [GetClaimsContext] or [MustGetClaimsContext] to retrieve them.
 func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
