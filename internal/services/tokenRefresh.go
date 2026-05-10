@@ -12,6 +12,7 @@ import (
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/jwt/jwp"
 	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -19,16 +20,17 @@ import (
 
 var (
 	// ErrTokenRefreshInvalidAccessToken is returned by [TokenRefresh.Exec] when the
-	// access token's signature is invalid. Expiry is intentionally ignored on the
-	// access token (refresh exists precisely to renew an expired one), so this
-	// signals forgery or key rotation, not staleness.
+	// access token fails verification with a user-input failure: a bad signature
+	// (jws.ErrInvalidSignature) or a failed claim check (jwp.ErrInvalidClaims —
+	// audience, issuer, or subject mismatch; expiry is intentionally ignored on the
+	// access token because refresh exists precisely to renew an expired one). The
+	// sentinel is joined onto the underlying verifier error.
 	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when
-	// the refresh token's signature is invalid; the sentinel is joined onto the
-	// underlying jws.ErrInvalidSignature error. Other verifier failures
-	// (malformed token, expiry, audience mismatch, etc.) currently surface as
-	// the raw verifier error and are reported on the span as infrastructure
-	// failures rather than user-facing outcomes.
+	// the refresh token fails verification with a user-input failure: a bad
+	// signature (jws.ErrInvalidSignature) or a failed claim check
+	// (jwp.ErrInvalidClaims — expiry, audience, issuer, or subject mismatch).
+	// The sentinel is joined onto the underlying verifier error.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the
 	// access and refresh tokens are individually valid but encode different user
@@ -106,7 +108,7 @@ func (service *TokenRefresh) Exec(
 		},
 	)
 	if err != nil {
-		if errors.Is(err, jws.ErrInvalidSignature) {
+		if errors.Is(err, jws.ErrInvalidSignature) || errors.Is(err, jwp.ErrInvalidClaims) {
 			return nil, errors.Join(err, ErrTokenRefreshInvalidAccessToken)
 		}
 
@@ -123,7 +125,7 @@ func (service *TokenRefresh) Exec(
 		},
 	)
 	if err != nil {
-		if errors.Is(err, jws.ErrInvalidSignature) {
+		if errors.Is(err, jws.ErrInvalidSignature) || errors.Is(err, jwp.ErrInvalidClaims) {
 			return nil, errors.Join(err, ErrTokenRefreshInvalidRefreshToken)
 		}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
+	"github.com/a-novel-kit/jwt/jwp"
 	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -237,6 +238,46 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			expectErr: services.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			// Audience/issuer/subject mismatch on the access token surfaces as
+			// jwp.ErrInvalidClaims. (Expiry is ignored on the access token.)
+			name: "InvalidAccessTokenClaims",
+
+			request: &services.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				err: jwp.ErrInvalidClaims,
+			},
+
+			expectErr: services.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			// Refresh-token expiry, audience, issuer or subject mismatch all
+			// surface through the verifier as jwp.ErrInvalidClaims.
+			name: "InvalidRefreshTokenClaims",
+
+			request: &services.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &services.AccessTokenClaims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				err: jwp.ErrInvalidClaims,
+			},
+
+			expectErr: services.ErrTokenRefreshInvalidRefreshToken,
 		},
 
 		{
