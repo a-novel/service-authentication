@@ -6,4 +6,4 @@ WHERE
   target = ?2
   AND usage = ?3
   AND deleted_at IS NULL
-  AND expires_at <= ?0;
+  AND expires_at <= CURRENT_TIMESTAMP;

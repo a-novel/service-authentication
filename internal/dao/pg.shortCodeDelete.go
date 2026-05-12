@@ -27,6 +27,10 @@ const (
 	// ShortCodeDeleteConsumed is the deletion comment set when the resource the short code grants access to has
 	// been consumed successfully.
 	ShortCodeDeleteConsumed = "key consumed"
+	// ShortCodeDeleteExpired is the deletion comment set when a naturally-expired
+	// but not-yet-deleted row is retired before inserting a fresh code for the
+	// same (target, usage) pair (see [ShortCodeInsert]).
+	ShortCodeDeleteExpired = "expired before insert"
 )
 
 // ShortCodeDeleteRequest is the input to [ShortCodeDelete.Exec]. Comment should

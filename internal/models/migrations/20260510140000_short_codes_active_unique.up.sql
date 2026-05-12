@@ -44,9 +44,10 @@ WHERE
 Postgres requires partial-index predicates to be IMMUTABLE, so the predicate
 can't include `expires_at > now()` directly. The (deleted_at IS NULL) form
 covers active conflicts; naturally-expired-but-not-yet-deleted rows are also
-in the partial index, but the dao always runs a discardExpired soft-delete
-step before either the Override=true or Override=false conflict path, so
-those stale rows never block a fresh insert.
+in the partial index, but the dao retires them before every insert — the
+Override=true path's discardConflicts soft-deletes every not-yet-deleted row
+for the pair, and the Override=false path runs a dedicated discardExpired
+step — so those stale rows never block a fresh insert.
 */
 CREATE UNIQUE INDEX short_codes_active_target_usage_uniq ON short_codes (target, usage)
 WHERE

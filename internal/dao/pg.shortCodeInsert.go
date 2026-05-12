@@ -55,6 +55,12 @@ type ShortCodeInsertRequest struct {
 	// By default, the insertion will fail if the new short code does not meet the uniqueness
 	// criteria. When this option is set to true, any conflicting record will be deleted
 	// instead, with the ShortCodeDeleteOverride deletion comment.
+	//
+	// Override only retires rows visible to this transaction; a concurrent
+	// insert on the same (Target, Usage) pair that commits first can still make
+	// this call return [ErrShortCodeInsertAlreadyExists] (the partial unique
+	// index rejects the loser). Callers that must always win have to serialize
+	// at a higher level.
 	Override bool
 }
 
@@ -176,8 +182,11 @@ func (repository *ShortCodeInsert) discardExpired(
 
 	_, err := tx.NewRaw(
 		shortCodeInsertDiscardExpiredQuery,
-		request.Now,
-		"expired before insert",
+		// Same Go/Postgres clock-skew guard as discardConflicts: backdate the
+		// deletion timestamp so a later `deleted_at > CURRENT_TIMESTAMP` check
+		// (e.g. checkConflicts) never re-surfaces the row as active.
+		lo.ToPtr(request.Now.Add(-time.Second)),
+		lo.ToPtr(ShortCodeDeleteExpired),
 		request.Target,
 		request.Usage,
 	).Exec(ctx)
