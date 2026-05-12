@@ -71,13 +71,10 @@ func (service *ShortCodeConsume) Exec(
 	})
 	if err != nil {
 		if errors.Is(err, dao.ErrShortCodeSelectNotFound) {
-			// No active code for this (usage, target) — never issued, expired, or
-			// already consumed. Expected user outcome; don't mark the span. Burn an
-			// Argon2id verification so the miss costs the same as a wrong-code outcome
-			// below and doesn't reveal whether a code is in flight for the target.
+			// Burn an Argon2id verification so a missing code costs the same as a
+			// wrong code — closes the timing channel that would otherwise reveal
+			// whether a code is in flight for the target.
 			lib.DummyCompareArgon2(request.Code)
-
-			return nil, err
 		}
 
 		return nil, otel.ReportError(span, err)

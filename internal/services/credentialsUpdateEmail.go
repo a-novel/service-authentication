@@ -94,9 +94,7 @@ func (service *CredentialsUpdateEmail) Exec(
 		return nil
 	})
 	if err != nil {
-		// The transaction surfaces user-facing sentinels too (bad short code, new
-		// email already taken) — reportUnexpected keeps those off the span.
-		return nil, reportUnexpected(span, fmt.Errorf("run transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
 	return otel.ReportSuccess(span, &Credentials{
