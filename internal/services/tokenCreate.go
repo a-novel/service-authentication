@@ -82,6 +82,16 @@ func (service *TokenCreate) Exec(
 		Email: request.Email,
 	})
 	if err != nil {
+		if errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+			// Unknown email is an expected user outcome (the handler maps it to 401,
+			// same as a wrong password). Burn an Argon2id verification anyway so the
+			// response time matches the wrong-password path below and doesn't reveal
+			// whether the email is registered — and don't mark the span failed.
+			lib.DummyCompareArgon2(request.Password)
+
+			return nil, err
+		}
+
 		return nil, otel.ReportError(span, err)
 	}
 

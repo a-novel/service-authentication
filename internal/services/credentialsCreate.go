@@ -125,7 +125,9 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		return nil
 	})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
+		// The transaction surfaces user-facing sentinels too (bad short code, email
+		// already taken) — reportUnexpected keeps those off the span.
+		return nil, reportUnexpected(span, fmt.Errorf("run transaction: %w", err))
 	}
 
 	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials)

@@ -127,7 +127,9 @@ func (service *CredentialsUpdatePassword) Exec(
 		return nil
 	})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
+		// The transaction surfaces user-facing sentinels too (wrong current password,
+		// bad reset short code) — reportUnexpected keeps those off the span.
+		return nil, reportUnexpected(span, fmt.Errorf("run transaction: %w", err))
 	}
 
 	otel.ReportSuccessNoContent(span)
