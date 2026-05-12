@@ -70,6 +70,13 @@ func (service *ShortCodeConsume) Exec(
 		Usage:  request.Usage,
 	})
 	if err != nil {
+		if errors.Is(err, dao.ErrShortCodeSelectNotFound) {
+			// Burn an Argon2id verification so a missing code costs the same as a
+			// wrong code — closes the timing channel that would otherwise reveal
+			// whether a code is in flight for the target.
+			lib.DummyCompareArgon2(request.Code)
+		}
+
 		return nil, otel.ReportError(span, err)
 	}
 
@@ -100,7 +107,7 @@ func (service *ShortCodeConsume) Exec(
 	_, err = service.repositoryDelete.Exec(ctx, &dao.ShortCodeDeleteRequest{
 		ID:      entity.ID,
 		Now:     time.Now(),
-		Comment: "key consumed",
+		Comment: dao.ShortCodeDeleteConsumed,
 	})
 	if err != nil {
 		return nil, otel.ReportError(span, err)

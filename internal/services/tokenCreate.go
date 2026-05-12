@@ -82,6 +82,13 @@ func (service *TokenCreate) Exec(
 		Email: request.Email,
 	})
 	if err != nil {
+		if errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+			// Burn an Argon2id verification so an unknown email costs the same as a
+			// wrong password (both map to 401 downstream) — closes the timing channel
+			// that would otherwise reveal whether the email is registered.
+			lib.DummyCompareArgon2(request.Password)
+		}
+
 		return nil, otel.ReportError(span, err)
 	}
 

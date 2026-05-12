@@ -152,6 +152,28 @@ func CompareArgon2(password, encodedHash string) error {
 	return ErrInvalidPassword
 }
 
+// dummyArgon2Hash is a throwaway Argon2id hash generated once at init with
+// Argon2ParamsDefault. [DummyCompareArgon2] verifies against it so the "subject
+// not found" branch of an authentication flow costs the same as a real
+// [CompareArgon2] call.
+var dummyArgon2Hash = func() string {
+	hash, err := GenerateArgon2("not-a-real-password", Argon2ParamsDefault)
+	if err != nil {
+		panic(fmt.Sprintf("generate dummy argon2 hash: %v", err))
+	}
+
+	return hash
+}()
+
+// DummyCompareArgon2 runs a full Argon2id verification of password against a
+// throwaway hash and discards the result. Call it on the "subject not found"
+// branch of an authentication flow (unknown email, missing short code) so the
+// response time does not reveal whether the subject exists — the lookup miss
+// then costs the same as a wrong-password / wrong-code outcome.
+func DummyCompareArgon2(password string) {
+	_ = CompareArgon2(password, dummyArgon2Hash)
+}
+
 func decodeHash(encodedHash string) (*Argon2Params, []byte, []byte, error) {
 	values := strings.Split(encodedHash, "$")
 	if len(values) != argon2HashLen {
