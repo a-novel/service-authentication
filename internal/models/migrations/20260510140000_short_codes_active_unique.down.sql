@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS short_codes_active_target_usage_uniq;

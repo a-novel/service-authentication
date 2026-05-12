@@ -5,7 +5,5 @@ SET
 WHERE
   target = ?2
   AND usage = ?3
-  AND (
-    deleted_at IS NULL
-    OR deleted_at > CURRENT_TIMESTAMP
-  );
+  AND deleted_at IS NULL
+  AND expires_at <= ?0;
