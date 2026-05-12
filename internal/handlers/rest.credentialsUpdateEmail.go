@@ -34,7 +34,7 @@ func NewCredentialsUpdateEmail(service CredentialsUpdateEmailService, logger log
 }
 
 func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.CredentialsUpdateEmail")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsUpdateEmail")
 	defer span.End()
 
 	decoder := json.NewDecoder(r.Body)

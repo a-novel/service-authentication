@@ -31,7 +31,7 @@ func NewTokenRefresh(service TokenRefreshService, logger logging.Log) *TokenRefr
 }
 
 func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.TokenRefresh")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.TokenRefresh")
 	defer span.End()
 
 	decoder := json.NewDecoder(r.Body)

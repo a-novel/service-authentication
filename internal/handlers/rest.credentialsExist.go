@@ -29,7 +29,7 @@ func NewCredentialsExist(service CredentialsExistService, logger logging.Log) *C
 }
 
 func (handler *CredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.CredentialsExist")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsExist")
 	defer span.End()
 
 	var request CredentialsExistRequest

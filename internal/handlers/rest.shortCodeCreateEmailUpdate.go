@@ -38,7 +38,7 @@ func NewShortCodeCreateEmailUpdate(
 }
 
 func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.ShortCodeCreateEmailUpdate")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.ShortCodeCreateEmailUpdate")
 	defer span.End()
 
 	decoder := json.NewDecoder(r.Body)

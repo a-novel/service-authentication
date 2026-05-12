@@ -33,7 +33,7 @@ func NewShortCodeCreateRegister(service ShortCodeCreateRegisterService, logger l
 }
 
 func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.ShortCodeCreateRegister")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.ShortCodeCreateRegister")
 	defer span.End()
 
 	decoder := json.NewDecoder(r.Body)

@@ -33,7 +33,7 @@ func NewTokenCreate(service TokenCreateService, logger logging.Log) *TokenCreate
 }
 
 func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.TokenCreate")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.TokenCreate")
 	defer span.End()
 
 	decoder := json.NewDecoder(r.Body)

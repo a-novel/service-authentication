@@ -33,7 +33,7 @@ func NewCredentialsCreate(service CredentialsCreateService, logger logging.Log) 
 }
 
 func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.CredentialsCreate")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsCreate")
 	defer span.End()
 
 	decoder := json.NewDecoder(r.Body)

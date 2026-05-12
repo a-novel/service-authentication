@@ -25,7 +25,7 @@ func NewTokenCreateAnon(service TokenCreateAnonService, logger logging.Log) *Tok
 }
 
 func (handler *TokenCreateAnon) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.TokenCreateAnon")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.TokenCreateAnon")
 	defer span.End()
 
 	res, err := handler.service.Exec(ctx)
