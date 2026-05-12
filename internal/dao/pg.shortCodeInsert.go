@@ -80,18 +80,21 @@ func (repository *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeI
 	txOptions := &sql.TxOptions{Isolation: sql.LevelRepeatableRead}
 
 	err := postgres.RunInTx(ctx, txOptions, func(ctx context.Context, tx bun.IDB) error {
-		// Soft-delete any naturally-expired-but-not-yet-deleted row first, on
-		// both paths. Without this, the partial unique index
-		// (target, usage) WHERE deleted_at IS NULL would block a fresh insert
-		// against an expired stale row that discardConflicts (Override=true) or
-		// checkConflicts (Override=false) would otherwise ignore — both queries
-		// gate on `expires_at > now()`, so naturally-expired rows are invisible
-		// to them but still live in the partial index.
-		err := repository.discardExpired(ctx, tx, request)
-		if err == nil {
-			if request.Override {
-				err = repository.discardConflicts(ctx, tx, request)
-			} else {
+		var err error
+
+		if request.Override {
+			// Retire every not-yet-effectively-deleted row for the pair in a
+			// single UPDATE — active and naturally expired alike — so the
+			// partial unique index (target, usage) WHERE deleted_at IS NULL is
+			// clear before the insert.
+			err = repository.discardConflicts(ctx, tx, request)
+		} else {
+			// checkConflicts gates on `expires_at > now()`, so a naturally
+			// expired but not-yet-deleted row is invisible to it — yet that row
+			// still lives in the partial unique index and would make the insert
+			// fail with a unique violation. Soft-delete it first.
+			err = repository.discardExpired(ctx, tx, request)
+			if err == nil {
 				err = repository.checkConflicts(ctx, tx, request)
 			}
 		}
@@ -143,13 +146,11 @@ func (repository *ShortCodeInsert) discardConflicts(
 
 	_, err := tx.NewRaw(
 		shortCodeInsertDiscardConflictQuery,
-		// So as we switch between Go/Pg timestamps, and transactions / views / triggers,
-		// there is a mismatch when comparing dates which can sometimes lead Postgres to
-		// believe this (expired) row is still part of the active short codes view.
-		//
-		// To make sure any conflicting short code is considered expired by the time
-		// we perform the insertion, we cheat and make the deletion date one second
-		// older. This is usually enough to prevent any issue.
+		// Go and Postgres can disagree on "now" by a small margin across the
+		// driver/connection boundary; backdating the deletion timestamp by one
+		// second keeps the row firmly in the past for any later predicate that
+		// compares deleted_at against CURRENT_TIMESTAMP (e.g. the active
+		// short-codes view), so it never re-surfaces as active.
 		lo.ToPtr(request.Now.Add(-time.Second)),
 		lo.ToPtr(ShortCodeDeleteOverride),
 		request.Target,
