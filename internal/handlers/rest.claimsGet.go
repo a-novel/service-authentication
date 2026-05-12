@@ -19,7 +19,7 @@ func NewClaimsGet(logger logging.Log) *ClaimsGet {
 }
 
 func (handler *ClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.ClaimsGet")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.ClaimsGet")
 	defer span.End()
 
 	claims, err := middlewares.MustGetClaimsContext(ctx)

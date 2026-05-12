@@ -35,7 +35,7 @@ func NewShortCodeCreatePasswordReset(
 }
 
 func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.ShortCodeCreatePasswordReset")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.ShortCodeCreatePasswordReset")
 	defer span.End()
 
 	decoder := json.NewDecoder(r.Body)

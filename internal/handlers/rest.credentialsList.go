@@ -33,7 +33,7 @@ func NewCredentialsList(service CredentialsListService, logger logging.Log) *Cre
 }
 
 func (handler *CredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.CredentialsList")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsList")
 	defer span.End()
 
 	var request CredentialsListRequest

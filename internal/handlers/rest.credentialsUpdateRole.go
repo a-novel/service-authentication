@@ -36,7 +36,7 @@ func NewCredentialsUpdateRole(service CredentialsUpdateRoleService, logger loggi
 }
 
 func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "handler.CredentialsUpdateRole")
+	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsUpdateRole")
 	defer span.End()
 
 	decoder := json.NewDecoder(r.Body)
