@@ -74,12 +74,12 @@ func (service *CredentialsUpdateRole) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, errors.Join(err, ErrInvalidRequest)
+		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
 	// No self-update allowed.
 	if request.CurrentUserID == request.TargetUserID {
-		return nil, ErrCredentialsUpdateRoleSelfUpdate
+		return nil, otel.ReportError(span, ErrCredentialsUpdateRoleSelfUpdate)
 	}
 
 	newTargetRoleImportance := config.PermissionsConfigDefault.Roles[request.Role].Priority
@@ -115,18 +115,18 @@ func (service *CredentialsUpdateRole) Exec(
 
 	// User can only upgrade users up to its own role.
 	if newTargetRoleImportance >= targetRoleIImportance && newTargetRoleImportance > currentRoleIImportance {
-		return nil, fmt.Errorf(
+		return nil, otel.ReportError(span, fmt.Errorf(
 			"%w: upgrade from %s to %s",
 			ErrCredentialsUpdateRoleToHigher, currentCredentials.Role, request.Role,
-		)
+		))
 	}
 
 	// User can only downgrade users from a lower role.
 	if newTargetRoleImportance <= targetRoleIImportance && targetRoleIImportance >= currentRoleIImportance {
-		return nil, fmt.Errorf(
+		return nil, otel.ReportError(span, fmt.Errorf(
 			"%w: downgrade from %s to %s",
 			ErrCredentialsUpdateRoleDowngradeSuperior, currentCredentials.Role, request.Role,
-		)
+		))
 	}
 
 	// If new role is equal to the current role, return the target credentials (noop).
