@@ -20,7 +20,7 @@ require (
 	github.com/uptrace/bun/driver/pgdriver v1.2.18
 	go.opentelemetry.io/otel v1.43.0
 	golang.org/x/crypto v0.51.0
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
 )
 
 require (
