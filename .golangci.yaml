@@ -150,7 +150,3 @@ linters:
           - goconst
           - gocritic
           - err113
-      - path: dao/(.+)_test.go
-        linters:
-          - paralleltest
-          - tparallel

@@ -13,9 +13,12 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/models/migrations"
 )
 
 func TestShortCodeInsert(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now().UTC().Round(time.Second)
 	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
 	hourLater := time.Now().Add(time.Hour).UTC().Round(time.Second)
@@ -285,7 +288,9 @@ func TestShortCodeInsert(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			postgres.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
+			t.Parallel()
+
+			postgres.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
 				db, err := postgres.GetContext(ctx)
