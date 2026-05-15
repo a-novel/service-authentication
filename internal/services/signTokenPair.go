@@ -36,7 +36,7 @@ type tokenPairSigner interface {
 func signTokenPair(
 	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials,
 ) (*Token, error) {
-	refreshTokenPayload, err := grpcf.InterfaceToProtoAny(RefreshTokenClaimsForm{
+	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(RefreshTokenClaimsForm{
 		UserID: credentials.ID,
 	})
 	if err != nil {
@@ -67,7 +67,7 @@ func signTokenPair(
 		return nil, fmt.Errorf("parse refresh token: %w", err)
 	}
 
-	accessTokenPayload, err := grpcf.InterfaceToProtoAny(AccessTokenClaims{
+	accessTokenPayload, err := grpcf.MarshalJSONAsAny(AccessTokenClaims{
 		UserID:         &credentials.ID,
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,

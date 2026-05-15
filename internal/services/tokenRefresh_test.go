@@ -398,7 +398,7 @@ func TestTokenRefresh(t *testing.T) {
 						mock.Anything,
 						&servicejsonkeys.ClaimsSignRequest{
 							Usage: servicejsonkeys.KeyUsageAuth,
-							Payload: lo.Must(grpcf.InterfaceToProtoAny(&services.AccessTokenClaims{
+							Payload: lo.Must(grpcf.MarshalJSONAsAny(&services.AccessTokenClaims{
 								UserID:         testCase.serviceVerifyClaimsMock.resp.UserID,
 								Roles:          []string{testCase.repositoryMock.resp.Role},
 								RefreshTokenID: testCase.serviceVerifyRefreshClaimsMock.resp.Jti,

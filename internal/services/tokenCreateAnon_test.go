@@ -69,7 +69,7 @@ func TestTokenCreateAnon(t *testing.T) {
 				signClaimsService.EXPECT().
 					ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
 						Usage: servicejsonkeys.KeyUsageAuth,
-						Payload: lo.Must(grpcf.InterfaceToProtoAny(services.AccessTokenClaims{
+						Payload: lo.Must(grpcf.MarshalJSONAsAny(services.AccessTokenClaims{
 							Roles: []string{config.RoleAnon},
 						})),
 					}).

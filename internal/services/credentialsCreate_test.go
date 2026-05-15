@@ -274,7 +274,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 					serviceSignClaims.EXPECT().
 						ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
 							Usage: servicejsonkeys.KeyUsageAuthRefresh,
-							Payload: lo.Must(grpcf.InterfaceToProtoAny(services.RefreshTokenClaimsForm{
+							Payload: lo.Must(grpcf.MarshalJSONAsAny(services.RefreshTokenClaimsForm{
 								UserID: testCase.repositoryMock.resp.ID,
 							})),
 						}).
@@ -290,7 +290,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 					serviceSignClaims.EXPECT().
 						ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
 							Usage: servicejsonkeys.KeyUsageAuth,
-							Payload: lo.Must(grpcf.InterfaceToProtoAny(services.AccessTokenClaims{
+							Payload: lo.Must(grpcf.MarshalJSONAsAny(services.AccessTokenClaims{
 								UserID:         &testCase.repositoryMock.resp.ID,
 								Roles:          []string{testCase.repositoryMock.resp.Role},
 								RefreshTokenID: mockUnsignedJTI,

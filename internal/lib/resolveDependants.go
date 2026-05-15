@@ -45,10 +45,21 @@ func printDepsGraph[Mod comparable](deps map[Mod]map[Mod]bool) string {
 // grep consumers first") for the bar; this consumer was below it.
 func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[Mod][]Mod) (map[Mod][]Deps, error) {
 	// Reference: https://dnaeon.github.io/dependency-graph-resolution-algorithm-in-go/
-	// Convert dependencies to a map. The algorithm performs better using maps behavior.
+	// Seed every mod from `mods` into depsGraph as a leaf (no parents). This is what
+	// lets callers omit empty entries from `deps` — e.g. `deps = {mod2: [mod1]}` without
+	// an explicit `mod1: []` — and have the algorithm still find a depth-0 root to start
+	// from. Without it, a mod that appears only as a *parent* in `deps` is never added
+	// to depsGraph, the loop never finds a leaf to resolve, and the function
+	// incorrectly reports a circular dependency.
 	depsGraph := map[Mod]map[Mod]bool{}
-	for mod, localDeps := range deps {
+	for mod := range mods {
 		depsGraph[mod] = map[Mod]bool{}
+	}
+
+	for mod, localDeps := range deps {
+		if _, exists := depsGraph[mod]; !exists {
+			depsGraph[mod] = map[Mod]bool{}
+		}
 
 		for _, dep := range localDeps {
 			depsGraph[mod][dep] = true
@@ -62,7 +73,7 @@ func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[M
 	var resolvedMods []Mod
 
 	// We're going to resolve dependencies in rounds, unwrapping a single dependency depth at a time. Once the map
-	// of dependencies ie empty, this means we resolved everything, and can return the result.
+	// of dependencies is empty, this means we resolved everything, and can return the result.
 	for len(depsGraph) > 0 {
 		// A given depth n+1 must resolve to at least one node of depth n (because each level of depth depends on
 		// the previous one). If we can't find any node of depth n, then we have a circular dependency.
@@ -79,7 +90,7 @@ func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[M
 			delete(depsGraph, mod)
 			resolvedMods = append(resolvedMods, mod)
 
-			// Remove the resolve dependencies from the dependants of other nodes in the graph.
+			// Remove the resolved dependencies from the dependants of other nodes in the graph.
 			for _, dependantMod := range depsGraph {
 				delete(dependantMod, mod)
 			}

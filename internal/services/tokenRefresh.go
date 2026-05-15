@@ -165,7 +165,7 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	newAccessTokenClaims, err := grpcf.InterfaceToProtoAny(AccessTokenClaims{
+	newAccessTokenClaims, err := grpcf.MarshalJSONAsAny(AccessTokenClaims{
 		UserID:         accessTokenClaims.UserID,
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,

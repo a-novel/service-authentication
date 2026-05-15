@@ -17,7 +17,7 @@ import (
 
 var anonTokenClaims = &servicejsonkeys.ClaimsSignRequest{
 	Usage: servicejsonkeys.KeyUsageAuth,
-	Payload: lo.Must(grpcf.InterfaceToProtoAny(AccessTokenClaims{
+	Payload: lo.Must(grpcf.MarshalJSONAsAny(AccessTokenClaims{
 		Roles: []string{config.RoleAnon},
 	})),
 }

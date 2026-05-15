@@ -70,6 +70,25 @@ func TestResolveDependants(t *testing.T) {
 			},
 		},
 		{
+			// The original golib code required every mod to be explicitly listed in `deps`,
+			// even as `[]`. Migrated callers should be able to omit leaf entries — matching
+			// the function's doc example (`mods = {mod1: [...]}, deps = {mod2: [mod1]}`).
+			name: "OmittedLeafEntries",
+
+			mods: map[string][]string{
+				"mod:1": {"dep:1", "dep:2"},
+				"mod:2": {"dep:3"},
+			},
+			deps: map[string][]string{
+				"mod:2": {"mod:1"},
+			},
+
+			expect: map[string][]string{
+				"mod:1": {"dep:1", "dep:2"},
+				"mod:2": {"dep:3", "dep:1", "dep:2"},
+			},
+		},
+		{
 			name: "Circular/Direct",
 
 			mods: map[string][]string{
