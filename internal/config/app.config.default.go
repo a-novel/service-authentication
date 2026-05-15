@@ -87,12 +87,12 @@ var AppPresetDefault = App{
 			FlushTimeout: OtelFlushTimeout,
 		}),
 	Logger: lo.Ternary[logging.Log](env.GcloudProjectId == "", LoggerDev, LoggerProd),
-	HttpLogger: lo.Ternary[logging.HttpConfig](
+	HttpLogger: lo.Ternary[logging.HTTPConfig](
 		env.GcloudProjectId == "",
-		&loggingpresets.HttpLocal{
+		&loggingpresets.HTTPLocal{
 			BaseLogger: LoggerDev,
 		},
-		&loggingpresets.HttpGcloud{
+		&loggingpresets.HTTPGcloud{
 			BaseLogger: LoggerProd,
 		},
 	),
