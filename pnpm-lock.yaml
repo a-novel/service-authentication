@@ -3315,8 +3315,8 @@ packages:
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
 
-  protobufjs@8.2.1:
-    resolution: {integrity: sha512-qD8KPh/2Zj/Kpx6nxhbCZ9TrXVhVBVkC/UNBVA2AWADc1JewcwIhNKUo+j0kiA6PqzTje8Ojc3D+hhmzy2+jkQ==}
+  protobufjs@8.3.0:
+    resolution: {integrity: sha512-JpJpFaR7yKNb6WqKvJJ1MLbiuIQWQnbUUb06nDtf2/i8YWYYLEfP6xf9BwSJoJQg1wAy61EQB8dssQg64oX4aA==}
     engines: {node: '>=12.0.0'}
 
   punycode.js@2.3.1:
@@ -4598,7 +4598,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-metrics': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 2.6.1(@opentelemetry/api@1.9.1)
-      protobufjs: 8.2.1
+      protobufjs: 8.3.0
 
   '@opentelemetry/resources@2.6.1(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -7902,9 +7902,8 @@ snapshots:
 
   proto-list@1.2.4: {}
 
-  protobufjs@8.2.1:
+  protobufjs@8.3.0:
     dependencies:
-      '@types/node': 24.12.0
       long: 5.3.2
 
   punycode.js@2.3.1: {}
