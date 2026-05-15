@@ -103,6 +103,29 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectStatus: http.StatusNotFound,
 		},
 		{
+			name: "Error/TargetNotFound",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
+				"userID": "00000000-0000-0000-0000-000000000002",
+				"role": "auth:admin"
+			}`)),
+			claims: &services.AccessTokenClaims{
+				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			},
+
+			serviceMock: &serviceMock{
+				req: &services.CredentialsUpdateRoleRequest{
+					Role:          config.RoleAdmin,
+					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
+				// A missing target user is surfaced by the credentials select, not the update.
+				err: dao.ErrCredentialsSelectNotFound,
+			},
+
+			expectStatus: http.StatusNotFound,
+		},
+		{
 			name: "Error/RoleToHigher",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{

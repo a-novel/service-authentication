@@ -93,7 +93,7 @@ func (service *TokenRefresh) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, errors.Join(err, ErrInvalidRequest)
+		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
 	// Step 1: Verify the access token signature.
@@ -109,7 +109,7 @@ func (service *TokenRefresh) Exec(
 	)
 	if err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) || errors.Is(err, jwp.ErrInvalidClaims) {
-			return nil, errors.Join(err, ErrTokenRefreshInvalidAccessToken)
+			return nil, otel.ReportError(span, errors.Join(err, ErrTokenRefreshInvalidAccessToken))
 		}
 
 		return nil, otel.ReportError(span, err)
@@ -126,7 +126,7 @@ func (service *TokenRefresh) Exec(
 	)
 	if err != nil {
 		if errors.Is(err, jws.ErrInvalidSignature) || errors.Is(err, jwp.ErrInvalidClaims) {
-			return nil, errors.Join(err, ErrTokenRefreshInvalidRefreshToken)
+			return nil, otel.ReportError(span, errors.Join(err, ErrTokenRefreshInvalidRefreshToken))
 		}
 
 		return nil, otel.ReportError(span, err)
@@ -140,7 +140,7 @@ func (service *TokenRefresh) Exec(
 	// Step 3: Verify that both tokens belong to the same user.
 	// This prevents an attacker from using a stolen refresh token with a different user's access token.
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
-		return nil, ErrTokenRefreshMismatchClaims
+		return nil, otel.ReportError(span, ErrTokenRefreshMismatchClaims)
 	}
 
 	span.SetAttributes(
@@ -154,7 +154,7 @@ func (service *TokenRefresh) Exec(
 	//   - An access token can only be refreshed using its original refresh token
 	//   - Revoking a refresh token effectively revokes all access tokens derived from it
 	if accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
-		return nil, ErrTokenRefreshMismatchSource
+		return nil, otel.ReportError(span, ErrTokenRefreshMismatchSource)
 	}
 
 	// Retrieve updated credentials.

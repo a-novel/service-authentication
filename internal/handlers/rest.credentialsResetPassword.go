@@ -61,6 +61,7 @@ func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *htt
 			dao.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
 			dao.ErrShortCodeSelectNotFound:           http.StatusForbidden,
 			services.ErrShortCodeConsumeInvalid:      http.StatusForbidden,
+			services.ErrShortCodeConsumeExpired:      http.StatusForbidden,
 			services.ErrInvalidRequest:               http.StatusUnprocessableEntity,
 		}, err)
 

@@ -76,7 +76,7 @@ func (service *ShortCodeCreateRegister) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, errors.Join(err, ErrInvalidRequest)
+		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
 	_, err = service.selectRepository.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
