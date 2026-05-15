@@ -12,11 +12,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/samber/lo"
 
-	"github.com/a-novel-kit/golib/deps"
 	"github.com/a-novel-kit/golib/logging"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
@@ -45,7 +45,7 @@ func NewAuthHandler(
 	permissions Permissions,
 	logger logging.Log,
 ) PermissionsHandler {
-	permissionsByRole := lo.Must(deps.ResolveDependants[string, string](
+	permissionsByRole := lo.Must(lib.ResolveDependants[string, string](
 		lo.MapEntries(
 			permissions.Roles,
 			func(key string, value config.Role) (string, []string) {
