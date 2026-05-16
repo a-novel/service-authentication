@@ -7,7 +7,7 @@ tool github.com/vektra/mockery/v3
 require (
 	github.com/a-novel-kit/golib v0.22.0
 	github.com/a-novel-kit/jwt v1.1.59
-	github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260515223604-9b9e50a9ecb7
+	github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260516012613-22050d853e47
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
 	github.com/go-playground/validator/v10 v10.30.2
