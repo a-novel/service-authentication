@@ -173,7 +173,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
         env:
           POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
-          APP_MASTER_KEY: "${SERVICE_JSON_KEYS_APP_MASTER_KEY}"
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
 
       service-authentication:
         image: ghcr.io/a-novel/service-authentication/standalone-rest@${{ needs.build-standalone-rest.outputs.digest }}
@@ -357,7 +357,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
         env:
           POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
-          APP_MASTER_KEY: "${SERVICE_JSON_KEYS_APP_MASTER_KEY}"
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       SERVICE_JSON_KEYS_PORT: 4000
@@ -422,7 +422,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
         env:
           POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
-          APP_MASTER_KEY: "${SERVICE_JSON_KEYS_APP_MASTER_KEY}"
+          APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       SERVICE_JSON_KEYS_PORT: 4000
