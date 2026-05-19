@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_NAME="service-authentication-integration-test"
-PODMAN_FILE="$PWD/builds/podman-compose.integration-test.rest.yaml"
+PODMAN_FILE="$PWD/builds/podman-compose.pnpm.test.yaml"
 
 # Ensure containers are properly shut down when the program exits abnormally.
 int_handler()
