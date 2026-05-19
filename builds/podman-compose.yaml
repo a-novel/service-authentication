@@ -63,11 +63,18 @@ services:
       - postgres-json-keys
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
-      APP_MASTER_KEY: fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca
+      APP_MASTER_KEY: "${SERVICE_JSON_KEYS_APP_MASTER_KEY}"
     networks:
       - api
 
+  # Profiled so a plain `podman compose up` does NOT start it: `a-novel run`
+  # brings this file up only for dependencies (postgres-*, mailserver, the
+  # sibling service-json-keys) and runs THIS service locally (go run). A
+  # containerised copy on the same host ${REST_PORT} would collide
+  # ("bind: address already in use"). `--profile rest` opts into the
+  # dockerised copy instead.
   service-authentication:
+    profiles: ["rest"]
     build:
       context: ..
       dockerfile: ./builds/standalone.rest.Dockerfile
