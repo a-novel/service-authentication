@@ -23,12 +23,12 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapp
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.56.0/go.mod h1:6ZZMQhZKDvUvkJw2rc+oDP90tMMzuU/J+5HG1ZmPOmE=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.56.0 h1:uYhkFf0DtbxOa5f2o2BqwMNWzAAhzHn67jukamPtWIA=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.56.0/go.mod h1:sKE2BdlsRRPL7ONGioxJnjUhEA1NbF484vFq8LX6znI=
-github.com/a-novel-kit/golib v0.22.0 h1:vUIC6eal/lzmiyM5Cb4jpc0EhLWyNbhb6CAEgktLrSA=
-github.com/a-novel-kit/golib v0.22.0/go.mod h1:kpQ/AzbFg7DrAqFeXObxCI8bCd5O/pG8y4t8tSdO0Yo=
+github.com/a-novel-kit/golib v0.22.1 h1:zhYCQKDBLdcZCOPByLHKD3W9Zuh96mgJjTenCjirVZk=
+github.com/a-novel-kit/golib v0.22.1/go.mod h1:kpQ/AzbFg7DrAqFeXObxCI8bCd5O/pG8y4t8tSdO0Yo=
 github.com/a-novel-kit/jwt v1.1.60 h1:QCbJm43bUnWoYzKGx496HDlE7UWd2F0GeuxJQm1RyEg=
 github.com/a-novel-kit/jwt v1.1.60/go.mod h1:C8vBO63pmAh1afGl7B+0KExZ1X0d/Dwn/erB8I6Vhw8=
-github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260518173431-2e819044d545 h1:FyyFzZBl1NoDpzvkKQqoa8y3WKsy69YDpJWmTvV0Vmc=
-github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260518173431-2e819044d545/go.mod h1:orUIRQce0kqVRtCIVduArJLGrJXXzNxkfGtHsPSY/Xc=
+github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260519110513-390bbe514ac3 h1:lgvgXNoX04jmB1Sn/T98ou1kuSJY0MtUWJfZSH94sjg=
+github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260519110513-390bbe514ac3/go.mod h1:3OZg5D/XgHfF05C4tfMCAn31QbSCPKr2LkI8yDlLvnU=
 github.com/brunoga/deep v1.3.1 h1:bSrL6FhAZa6JlVv4vsi7Hg8SLwroDb1kgDERRVipBCo=
 github.com/brunoga/deep v1.3.1/go.mod h1:GDV6dnXqn80ezsLSZ5Wlv1PdKAWAO4L5PnKYtv2dgaI=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

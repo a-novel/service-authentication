@@ -5,9 +5,9 @@ go 1.26.3
 tool github.com/vektra/mockery/v3
 
 require (
-	github.com/a-novel-kit/golib v0.22.0
+	github.com/a-novel-kit/golib v0.22.1
 	github.com/a-novel-kit/jwt v1.1.60
-	github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260518173431-2e819044d545
+	github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260519110513-390bbe514ac3
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
 	github.com/go-playground/validator/v10 v10.30.2
