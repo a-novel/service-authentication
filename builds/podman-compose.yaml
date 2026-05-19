@@ -67,7 +67,14 @@ services:
     networks:
       - api
 
+  # Profiled so a plain `podman compose up` does NOT start it: `a-novel run`
+  # brings this file up only for dependencies (postgres-*, mailserver, the
+  # sibling service-json-keys) and runs THIS service locally (go run). A
+  # containerised copy on the same host ${REST_PORT} would collide
+  # ("bind: address already in use"). `--profile rest` opts into the
+  # dockerised copy instead.
   service-authentication:
+    profiles: ["rest"]
     build:
       context: ..
       dockerfile: ./builds/standalone.rest.Dockerfile
