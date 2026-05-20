@@ -27,8 +27,8 @@ github.com/a-novel-kit/golib v0.22.1 h1:zhYCQKDBLdcZCOPByLHKD3W9Zuh96mgJjTenCjir
 github.com/a-novel-kit/golib v0.22.1/go.mod h1:kpQ/AzbFg7DrAqFeXObxCI8bCd5O/pG8y4t8tSdO0Yo=
 github.com/a-novel-kit/jwt v1.1.61 h1:qbXux0UJDZIANaZ7500VVtknap7fl8LizobsZnSPW0o=
 github.com/a-novel-kit/jwt v1.1.61/go.mod h1:C8vBO63pmAh1afGl7B+0KExZ1X0d/Dwn/erB8I6Vhw8=
-github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260519211448-517109b97ceb h1:rYxK3UKqVX6+mJkLTlJ56orktmUyltvizUZ23ysdfAY=
-github.com/a-novel/service-json-keys/v2 v2.3.1-0.20260519211448-517109b97ceb/go.mod h1:3OZg5D/XgHfF05C4tfMCAn31QbSCPKr2LkI8yDlLvnU=
+github.com/a-novel/service-json-keys/v2 v2.3.1 h1:SqsKBLsoFP6fAdckS4l66WcBYy21xW4i2RL7NNfjWZA=
+github.com/a-novel/service-json-keys/v2 v2.3.1/go.mod h1:JRHn42C/RMaw3soHRLyvoB/hbMx3MicoE3oDmg/tpXA=
 github.com/brunoga/deep v1.3.1 h1:bSrL6FhAZa6JlVv4vsi7Hg8SLwroDb1kgDERRVipBCo=
 github.com/brunoga/deep v1.3.1/go.mod h1:GDV6dnXqn80ezsLSZ5Wlv1PdKAWAO4L5PnKYtv2dgaI=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
