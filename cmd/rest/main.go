@@ -195,7 +195,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.Recoverer)
-	router.Use(middleware.RealIP)
+	router.Use(middleware.ClientIPFromRemoteAddr)
 	router.Use(middleware.Timeout(cfg.Rest.Timeouts.Request))
 	router.Use(middleware.RequestSize(cfg.Rest.MaxRequestSize))
 	router.Use(cfg.Otel.HttpHandler())
