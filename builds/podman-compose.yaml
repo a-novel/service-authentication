@@ -22,21 +22,15 @@ services:
       MP_VERBOSE: true
 
   # ====================================================================================================================
-  # DATABASES
+  # DATABASE
   # ====================================================================================================================
 
-  postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v2.3.1
-    networks:
-      - api
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: json-keys
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-    volumes:
-      - json-keys-postgres-data:/var/lib/postgresql/
+  # NOTE: postgres-json-keys (sibling service's database) is NOT declared
+  # here. The new `a-novel run` model treats service-json-keys as a separate
+  # service whose own daemon-managed lifecycle the user/agent owns; this
+  # production compose only describes its OWN infra. The test compose
+  # variants (podman-compose.go.test.yaml etc.) keep an isolated placeholder
+  # so each test run has fully-isolated infra.
 
   postgres-authentication:
     build:
@@ -45,35 +39,74 @@ services:
     networks:
       - api
     environment:
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_USER: "${POSTGRES_USER}"
-      POSTGRES_DB: "${POSTGRES_DB}"
+      # Spec §12.1: inline test-default credentials. Daemon owns dynamic
+      # env (ports, derived URLs, cross-service refs) but NOT constants.
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
       - authentication-postgres-data:/var/lib/postgresql/
 
   # ====================================================================================================================
-  # SERVICES
+  # ONE-SHOT TARGETS (run on infra-up, exit when done)
   # ====================================================================================================================
 
-  service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.3.1
+  # init: provisions initial seed data / configuration. Runs first
+  # (depends_on postgres only).
+  service-authentication-init:
+    profiles: ["init"]
+    build:
+      context: ..
+      dockerfile: ./builds/init.Dockerfile
     depends_on:
-      - postgres-json-keys
+      postgres-authentication:
+        condition: service_healthy
     environment:
-      POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
-      APP_MASTER_KEY: "${SERVICE_JSON_KEYS_APP_MASTER_KEY}"
+      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
     networks:
       - api
 
+  # migrations: applies the schema. Depends on init (some migrations may
+  # rely on init-provisioned rows).
+  service-authentication-migrations:
+    profiles: ["migrations"]
+    build:
+      context: ..
+      dockerfile: ./builds/migrations.Dockerfile
+    depends_on:
+      postgres-authentication:
+        condition: service_healthy
+      service-authentication-init:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+    networks:
+      - api
+
+  # ====================================================================================================================
+  # LONG-RUNNER TARGETS
+  # ====================================================================================================================
+
+  # NOTE: service-json-keys placeholder removed — see DATABASES note above.
+  # The daemon resolves cross-service references via the spec §6.4
+  # env-wiring convention (e.g., ${SERVICE_JSON_KEYS_GRPC_PORT} resolves
+  # to service-json-keys' allocated GRPC_PORT). FOLLOW-UP: the Go code
+  # currently reads SERVICE_JSON_KEYS_PORT/HOST (without the _GRPC_
+  # segment). To fully consume daemon-resolved cross-service env, rename
+  # the Go-side env var reads to SERVICE_JSON_KEYS_GRPC_PORT/HOST/URL.
+  # Until that lands, the entries below stay as in-container literals
+  # (the daemon doesn't manage them) — go-exec mode for this service
+  # against a live service-json-keys won't resolve correctly without a
+  # manual export.
+
   # Profiled so a plain `podman compose up` does NOT start it: `a-novel run`
-  # brings this file up only for dependencies (postgres-*, mailserver, the
-  # sibling service-json-keys) and runs THIS service locally (go run). A
-  # containerised copy on the same host ${REST_PORT} would collide
-  # ("bind: address already in use"). `--profile rest` opts into the
-  # dockerised copy instead.
-  service-authentication:
+  # brings this file up only for the local infra (postgres-authentication,
+  # mailserver) and runs THIS service locally (go run). A containerised copy
+  # on the same host ${REST_PORT} would collide ("bind: address already in
+  # use"). `--profile rest` opts into the dockerised copy instead.
+  service-authentication-rest:
     profiles: ["rest"]
     build:
       context: ..
@@ -81,17 +114,27 @@ services:
     ports:
       - "${REST_PORT}:8080"
     depends_on:
-      - postgres-authentication
-      - service-json-keys
-      - mailserver
+      postgres-authentication:
+        condition: service_healthy
+      mailserver:
+        condition: service_started
+      service-authentication-init:
+        condition: service_completed_successfully
+      service-authentication-migrations:
+        condition: service_completed_successfully
     environment:
-      POSTGRES_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-authentication:5432/${POSTGRES_DB}?sslmode=disable"
+      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+      # Cross-service: in-container literals until the Go code is renamed
+      # per the NOTE above.
       SERVICE_JSON_KEYS_PORT: 8080
       SERVICE_JSON_KEYS_HOST: service-json-keys
+      # Operator-supplied (intentional ${VAR} — these vary per local
+      # operator and are not daemon-managed).
       SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
       SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
-      SMTP_SENDER_DOMAIN: mailserver
       PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
+      # Mail / SMTP (constants — local mailpit defaults).
+      SMTP_SENDER_DOMAIN: mailserver
       SMTP_ADDR: mailserver:1025
       SMTP_SENDER_NAME: Agora Storyverse [noreply]
       SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
@@ -106,5 +149,4 @@ networks:
 
 volumes:
   authentication-postgres-data:
-  json-keys-postgres-data:
   mailserver-data:
