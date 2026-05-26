@@ -301,8 +301,8 @@ packages:
   '@asamuzakjp/nwsapi@2.3.9':
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
 
-  '@babel/code-frame@7.29.0':
-    resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
+  '@babel/code-frame@7.29.7':
+    resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/generator@7.29.1':
@@ -317,8 +317,8 @@ packages:
     resolution: {integrity: sha512-qMlSxKbpRlAridDExk92nSobyDdpPijUq2DW6oDnUqd0iOGxmQjyqhMIihI9+zv4LPyZdRje2cavWPbCbWm3eA==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/helper-validator-identifier@7.28.5':
-    resolution: {integrity: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==}
+  '@babel/helper-validator-identifier@7.29.7':
+    resolution: {integrity: sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==}
     engines: {node: '>=6.9.0'}
 
   '@babel/parser@7.29.3':
@@ -326,8 +326,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  '@babel/runtime@7.29.2':
-    resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
+  '@babel/runtime@7.29.7':
+    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.28.6':
@@ -4180,9 +4180,9 @@ snapshots:
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
-  '@babel/code-frame@7.29.0':
+  '@babel/code-frame@7.29.7':
     dependencies:
-      '@babel/helper-validator-identifier': 7.28.5
+      '@babel/helper-validator-identifier': 7.29.7
       js-tokens: 4.0.0
       picocolors: 1.1.1
 
@@ -4198,23 +4198,23 @@ snapshots:
 
   '@babel/helper-string-parser@7.27.1': {}
 
-  '@babel/helper-validator-identifier@7.28.5': {}
+  '@babel/helper-validator-identifier@7.29.7': {}
 
   '@babel/parser@7.29.3':
     dependencies:
       '@babel/types': 7.29.0
 
-  '@babel/runtime@7.29.2': {}
+  '@babel/runtime@7.29.7': {}
 
   '@babel/template@7.28.6':
     dependencies:
-      '@babel/code-frame': 7.29.0
+      '@babel/code-frame': 7.29.7
       '@babel/parser': 7.29.3
       '@babel/types': 7.29.0
 
   '@babel/traverse@7.29.0':
     dependencies:
-      '@babel/code-frame': 7.29.0
+      '@babel/code-frame': 7.29.7
       '@babel/generator': 7.29.1
       '@babel/helper-globals': 7.28.0
       '@babel/parser': 7.29.3
@@ -4227,7 +4227,7 @@ snapshots:
   '@babel/types@7.29.0':
     dependencies:
       '@babel/helper-string-parser': 7.27.1
-      '@babel/helper-validator-identifier': 7.28.5
+      '@babel/helper-validator-identifier': 7.29.7
 
   '@bcoe/v8-coverage@1.0.2': {}
 
@@ -4934,8 +4934,8 @@ snapshots:
 
   '@testing-library/dom@10.4.1':
     dependencies:
-      '@babel/code-frame': 7.29.0
-      '@babel/runtime': 7.29.2
+      '@babel/code-frame': 7.29.7
+      '@babel/runtime': 7.29.7
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
@@ -4954,7 +4954,7 @@ snapshots:
 
   '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       '@testing-library/dom': 10.4.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
@@ -5296,7 +5296,7 @@ snapshots:
 
   better-ajv-errors@2.0.3(@redocly/ajv@8.18.1):
     dependencies:
-      '@babel/code-frame': 7.29.0
+      '@babel/code-frame': 7.29.7
       '@humanwhocodes/momoa': 2.0.4
       ajv: '@redocly/ajv@8.18.1'
       chalk: 4.1.2
@@ -6240,7 +6240,7 @@ snapshots:
 
   json-schema-to-ts@2.7.2:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       '@types/json-schema': 7.0.15
       ts-algebra: 1.2.2
 
@@ -6444,7 +6444,7 @@ snapshots:
 
   mjml-accordion@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6458,7 +6458,7 @@ snapshots:
 
   mjml-accordion@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6472,7 +6472,7 @@ snapshots:
 
   mjml-body@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6486,7 +6486,7 @@ snapshots:
 
   mjml-body@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6500,7 +6500,7 @@ snapshots:
 
   mjml-button@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6514,7 +6514,7 @@ snapshots:
 
   mjml-button@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6528,7 +6528,7 @@ snapshots:
 
   mjml-carousel@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6542,7 +6542,7 @@ snapshots:
 
   mjml-carousel@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6556,7 +6556,7 @@ snapshots:
 
   mjml-cli@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       chokidar: 3.6.0
       glob: 10.5.0
       lodash: 4.18.1
@@ -6577,7 +6577,7 @@ snapshots:
 
   mjml-cli@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       chokidar: 3.6.0
       glob: 10.5.0
       lodash: 4.18.1
@@ -6598,7 +6598,7 @@ snapshots:
 
   mjml-column@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6612,7 +6612,7 @@ snapshots:
 
   mjml-column@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6626,7 +6626,7 @@ snapshots:
 
   mjml-core@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       cheerio: 1.0.0
       cssnano: 7.1.7(postcss@8.5.15)
       cssnano-preset-lite: 4.0.5(postcss@8.5.15)
@@ -6649,7 +6649,7 @@ snapshots:
 
   mjml-core@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       cheerio: 1.0.0
       cssnano: 7.1.7(postcss@8.5.15)
       cssnano-preset-lite: 4.0.5(postcss@8.5.15)
@@ -6672,7 +6672,7 @@ snapshots:
 
   mjml-divider@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6686,7 +6686,7 @@ snapshots:
 
   mjml-divider@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6700,7 +6700,7 @@ snapshots:
 
   mjml-group@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6714,7 +6714,7 @@ snapshots:
 
   mjml-group@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6728,7 +6728,7 @@ snapshots:
 
   mjml-head-attributes@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6742,7 +6742,7 @@ snapshots:
 
   mjml-head-attributes@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6756,7 +6756,7 @@ snapshots:
 
   mjml-head-breakpoint@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6770,7 +6770,7 @@ snapshots:
 
   mjml-head-breakpoint@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6784,7 +6784,7 @@ snapshots:
 
   mjml-head-font@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6798,7 +6798,7 @@ snapshots:
 
   mjml-head-font@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6812,7 +6812,7 @@ snapshots:
 
   mjml-head-html-attributes@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6826,7 +6826,7 @@ snapshots:
 
   mjml-head-html-attributes@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6840,7 +6840,7 @@ snapshots:
 
   mjml-head-preview@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6854,7 +6854,7 @@ snapshots:
 
   mjml-head-preview@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6868,7 +6868,7 @@ snapshots:
 
   mjml-head-style@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6882,7 +6882,7 @@ snapshots:
 
   mjml-head-style@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6896,7 +6896,7 @@ snapshots:
 
   mjml-head-title@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6910,7 +6910,7 @@ snapshots:
 
   mjml-head-title@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6924,7 +6924,7 @@ snapshots:
 
   mjml-head@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6938,7 +6938,7 @@ snapshots:
 
   mjml-head@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6952,7 +6952,7 @@ snapshots:
 
   mjml-hero@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6966,7 +6966,7 @@ snapshots:
 
   mjml-hero@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6980,7 +6980,7 @@ snapshots:
 
   mjml-image@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -6994,7 +6994,7 @@ snapshots:
 
   mjml-image@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -7008,7 +7008,7 @@ snapshots:
 
   mjml-navbar@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -7022,7 +7022,7 @@ snapshots:
 
   mjml-navbar@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -7036,21 +7036,21 @@ snapshots:
 
   mjml-parser-xml@5.0.0:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       detect-node: 2.1.0
       htmlparser2: 9.1.0
       lodash: 4.18.1
 
   mjml-parser-xml@5.2.2:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       detect-node: 2.1.0
       htmlparser2: 9.1.0
       lodash: 4.18.1
 
   mjml-preset-core@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       mjml-accordion: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
       mjml-body: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
       mjml-button: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
@@ -7087,7 +7087,7 @@ snapshots:
 
   mjml-preset-core@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       mjml-accordion: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
       mjml-body: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
       mjml-button: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
@@ -7124,7 +7124,7 @@ snapshots:
 
   mjml-raw@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -7138,7 +7138,7 @@ snapshots:
 
   mjml-raw@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -7152,7 +7152,7 @@ snapshots:
 
   mjml-section@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -7166,7 +7166,7 @@ snapshots:
 
   mjml-section@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -7180,7 +7180,7 @@ snapshots:
 
   mjml-social@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -7194,7 +7194,7 @@ snapshots:
 
   mjml-social@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -7208,7 +7208,7 @@ snapshots:
 
   mjml-spacer@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -7222,7 +7222,7 @@ snapshots:
 
   mjml-spacer@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -7236,7 +7236,7 @@ snapshots:
 
   mjml-table@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -7250,7 +7250,7 @@ snapshots:
 
   mjml-table@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -7264,7 +7264,7 @@ snapshots:
 
   mjml-text@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
     transitivePeerDependencies:
@@ -7278,7 +7278,7 @@ snapshots:
 
   mjml-text@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -7292,15 +7292,15 @@ snapshots:
 
   mjml-validator@5.0.0:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
 
   mjml-validator@5.2.2:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
 
   mjml-wrapper@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
       mjml-section: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
@@ -7315,7 +7315,7 @@ snapshots:
 
   mjml-wrapper@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       lodash: 4.18.1
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
       mjml-section: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
@@ -7330,7 +7330,7 @@ snapshots:
 
   mjml@5.0.0(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       mjml-cli: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
       mjml-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
       mjml-preset-core: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
@@ -7346,7 +7346,7 @@ snapshots:
 
   mjml@5.2.2(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       mjml-cli: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
       mjml-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
       mjml-preset-core: 5.2.2(svgo@4.0.1)(typescript@6.0.3)
@@ -7563,7 +7563,7 @@ snapshots:
 
   parse-json@5.2.0:
     dependencies:
-      '@babel/code-frame': 7.29.0
+      '@babel/code-frame': 7.29.7
       error-ex: 1.3.4
       json-parse-even-better-errors: 2.3.1
       lines-and-columns: 1.2.4
@@ -7638,7 +7638,7 @@ snapshots:
 
   polished@4.3.1:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
 
   postcss-calc@10.1.1(postcss@8.5.15):
     dependencies:
