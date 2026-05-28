@@ -6,6 +6,12 @@ services:
   mailserver:
     image: ghcr.io/axllent/mailpit:v1.30.0
     ports:
+      # Two host-port publishes: the SMTP listener (1025) is what go-exec
+      # service-authentication-rest talks to, the UI listener (8025) is
+      # what the operator opens in a browser. Without the SMTP publish the
+      # rest binary running on the host can't reach the mailpit container's
+      # internal port, and /healthcheck reports "client:smtp down".
+      - "${SMTP_PORT}:1025"
       - "${MAIL_UI_PORT}:8025"
     networks:
       - api
@@ -36,6 +42,8 @@ services:
     build:
       context: ..
       dockerfile: ./builds/database.Dockerfile
+    ports:
+      - "${POSTGRES_PORT}:5432"
     networks:
       - api
     environment:
@@ -91,15 +99,15 @@ services:
 
   # NOTE: service-json-keys placeholder removed — see DATABASES note above.
   # The daemon resolves cross-service references via the spec §6.4
-  # env-wiring convention (e.g., ${SERVICE_JSON_KEYS_GRPC_PORT} resolves
-  # to service-json-keys' allocated GRPC_PORT). FOLLOW-UP: the Go code
-  # currently reads SERVICE_JSON_KEYS_PORT/HOST (without the _GRPC_
-  # segment). To fully consume daemon-resolved cross-service env, rename
-  # the Go-side env var reads to SERVICE_JSON_KEYS_GRPC_PORT/HOST/URL.
-  # Until that lands, the entries below stay as in-container literals
-  # (the daemon doesn't manage them) — go-exec mode for this service
-  # against a live service-json-keys won't resolve correctly without a
-  # manual export.
+  # env-wiring convention: `${SERVICE_JSON_KEYS_GRPC_PORT}` allocates
+  # against service-json-keys' grpc long-runner and `_GRPC_HOST` derives
+  # to `localhost`. The KEY the daemon allocates is
+  # SERVICE_JSON_KEYS_GRPC_PORT (the `_GRPC_` segment names which target
+  # of service-json-keys), and the VALUE service-authentication's Go
+  # code reads is SERVICE_JSON_KEYS_HOST / SERVICE_JSON_KEYS_PORT. The
+  # adapter is the env block below: each Go-facing var is assigned to
+  # the daemon-facing `${...}` reference so the Go code keeps reading
+  # its existing names while the daemon owns the values.
 
   # Profiled so a plain `podman compose up` does NOT start it: `a-novel run`
   # brings this file up only for the local infra (postgres-authentication,
@@ -124,18 +132,26 @@ services:
         condition: service_completed_successfully
     environment:
       POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
-      # Cross-service: in-container literals until the Go code is renamed
-      # per the NOTE above.
-      SERVICE_JSON_KEYS_PORT: 8080
-      SERVICE_JSON_KEYS_HOST: service-json-keys
+      # Cross-service adapter: Go code reads SERVICE_JSON_KEYS_HOST /
+      # SERVICE_JSON_KEYS_PORT; the daemon allocates against
+      # SERVICE_JSON_KEYS_GRPC_PORT and derives SERVICE_JSON_KEYS_GRPC_HOST.
+      # The ${...} substitution bridges the two.
+      SERVICE_JSON_KEYS_HOST: "${SERVICE_JSON_KEYS_GRPC_HOST}"
+      SERVICE_JSON_KEYS_PORT: "${SERVICE_JSON_KEYS_GRPC_PORT}"
       # Operator-supplied (intentional ${VAR} — these vary per local
       # operator and are not daemon-managed).
       SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
       SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
       PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
-      # Mail / SMTP (constants — local mailpit defaults).
-      SMTP_SENDER_DOMAIN: mailserver
-      SMTP_ADDR: mailserver:1025
+      # SMTP: mailserver publishes ${SMTP_PORT}:1025 above, so
+      # ${SMTP_HOST}=localhost and ${SMTP_PORT}=<allocated> in go-exec
+      # mode. SMTP_SENDER_DOMAIN must match the host portion of
+      # SMTP_ADDR (Go's net/smtp PlainAuth.Start rejects the auth when
+      # the AUTH `host` arg differs from the connection's serverName —
+      # a MITM-prevention check). Bind to ${SMTP_HOST} so it tracks
+      # SMTP_ADDR through any network-plane change.
+      SMTP_SENDER_DOMAIN: "${SMTP_HOST}"
+      SMTP_ADDR: "${SMTP_HOST}:${SMTP_PORT}"
       SMTP_SENDER_NAME: Agora Storyverse [noreply]
       SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
       SMTP_SENDER_PASSWORD: noreply
