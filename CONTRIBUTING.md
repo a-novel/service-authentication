@@ -31,23 +31,24 @@ The following must be installed on your system.
 Install the dependencies:
 
 ```bash
-make install
+go mod download
+pnpm i --frozen-lockfile
 ```
 
 ### Common Commands
 
-| Command         | Description                  |
-| --------------- | ---------------------------- |
-| `make run`      | Start all services locally   |
-| `make test`     | Run all tests                |
-| `make lint`     | Run all linters              |
-| `make format`   | Format all code              |
-| `make build`    | Build Docker images locally  |
-| `make generate` | Generate mocks and templates |
+| Command                                          | Description                            |
+| ------------------------------------------------ | -------------------------------------- |
+| `a-novel run start service-authentication/rest`  | Start the service locally (daemon)     |
+| `a-novel test -y`                                | Run all tests                          |
+| `pnpm lint:go` / `pnpm lint:proto` / `pnpm lint` | Run the linters (Go / proto / node)    |
+| `pnpm format:go` / `pnpm format`                 | Format the code (Go / everything else) |
+| `a-novel build -y`                               | Build Docker images locally            |
+| `pnpm generate`                                  | Generate mocks and templates           |
 
 ### Interacting with the Service
 
-Once the service is running (`make run`), you can interact with it using:
+Once the service is running (`a-novel run start service-authentication/rest`), you can interact with it using:
 
 - `curl` or any HTTP client (REST API).
 

@@ -71,9 +71,6 @@ importers:
       eslint-plugin-svelte:
         specifier: ^3.15.0
         version: 3.17.1(eslint@10.4.0(jiti@2.7.0))(svelte@5.55.5(@typescript-eslint/types@8.59.4))
-      get-port-please:
-        specifier: ^3.2.0
-        version: 3.2.0
       glob:
         specifier: ^13.0.0
         version: 13.0.6
