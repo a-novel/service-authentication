@@ -6,11 +6,9 @@ services:
   mailserver:
     image: ghcr.io/axllent/mailpit:v1.30.1
     ports:
-      # Two host-port publishes: the SMTP listener (1025) is what go-exec
-      # service-authentication-rest talks to, the UI listener (8025) is
-      # what the operator opens in a browser. Without the SMTP publish the
-      # rest binary running on the host can't reach the mailpit container's
-      # internal port, and /healthcheck reports "client:smtp down".
+      # SMTP listener for the rest target, UI for the operator's browser.
+      # Without the SMTP publish, a rest process running on the host cannot
+      # reach mailpit and /healthcheck reports "client:smtp down".
       - "${SMTP_PORT}:1025"
       - "${MAIL_UI_PORT}:8025"
     networks:
@@ -31,12 +29,6 @@ services:
   # DATABASE
   # ====================================================================================================================
 
-  # The sibling service-json-keys database is not declared here: the daemon
-  # treats service-json-keys as a separate service with its own managed
-  # lifecycle, so this compose describes only this service's own infra. The
-  # test compose variants (podman-compose.go.test.yaml etc.) keep an isolated
-  # postgres placeholder so each test run gets fully-isolated infra.
-
   postgres-authentication:
     build:
       context: ..
@@ -46,9 +38,6 @@ services:
     networks:
       - api
     environment:
-      # Inline test-default credentials. The daemon owns dynamic env (ports,
-      # derived URLs, cross-service refs); constants like these belong to the
-      # service.
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
@@ -60,14 +49,7 @@ services:
   # ====================================================================================================================
   # ONE-SHOT TARGETS
   # ====================================================================================================================
-  # The a-novel daemon runs these on infra-up (`a-novel run service infra
-  # start`, or implicitly when a target that depends on them starts); they
-  # exit when done. Profiled out of a plain `podman compose up` on purpose —
-  # the daemon orchestrates them via `depends_on`, not Compose's profile
-  # cascade.
 
-  # init: provisions initial seed data / configuration. Runs first
-  # (depends_on postgres only).
   service-authentication-init:
     profiles: ["init"]
     build:
@@ -81,8 +63,7 @@ services:
     networks:
       - api
 
-  # migrations: applies the schema. Depends on init (some migrations may
-  # rely on init-provisioned rows).
+  # Migrations depend on init: some migrations rely on init-provisioned rows.
   service-authentication-migrations:
     profiles: ["migrations"]
     build:
@@ -102,16 +83,6 @@ services:
   # LONG-RUNNER TARGETS
   # ====================================================================================================================
 
-  # service-json-keys is consumed over the network but not declared here: the
-  # daemon owns cross-service resolution and port allocation. The env block on
-  # the rest target below adapts the daemon's allocated names to the names this
-  # service's Go code reads.
-
-  # Profiled so a plain `podman compose up` does not start it: the daemon
-  # brings this file up only for the local infra (postgres-authentication,
-  # mailserver) and runs this service locally (go run). A containerised copy
-  # on the same host ${REST_PORT} would collide ("bind: address already in
-  # use"). `--profile rest` opts into the dockerised copy instead.
   service-authentication-rest:
     profiles: ["rest"]
     build:
@@ -130,24 +101,17 @@ services:
         condition: service_completed_successfully
     environment:
       POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
-      # Cross-service adapter: Go code reads SERVICE_JSON_KEYS_HOST /
-      # SERVICE_JSON_KEYS_PORT; the daemon allocates against
-      # SERVICE_JSON_KEYS_GRPC_PORT and derives SERVICE_JSON_KEYS_GRPC_HOST.
-      # The ${...} substitution bridges the two.
+      # The Go config reads SERVICE_JSON_KEYS_HOST/PORT; bridge them to the
+      # allocated SERVICE_JSON_KEYS_GRPC_* values.
       SERVICE_JSON_KEYS_HOST: "${SERVICE_JSON_KEYS_GRPC_HOST}"
       SERVICE_JSON_KEYS_PORT: "${SERVICE_JSON_KEYS_GRPC_PORT}"
-      # Operator-supplied (intentional ${VAR} — these vary per local
-      # operator and are not daemon-managed).
+      # Operator-supplied values; vary per local setup.
       SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
       SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
       PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
-      # SMTP: mailserver publishes ${SMTP_PORT}:1025 above, so
-      # ${SMTP_HOST}=localhost and ${SMTP_PORT}=<allocated> in go-exec
-      # mode. SMTP_SENDER_DOMAIN must match the host portion of
-      # SMTP_ADDR (Go's net/smtp PlainAuth.Start rejects the auth when
-      # the AUTH `host` arg differs from the connection's serverName —
-      # a MITM-prevention check). Bind to ${SMTP_HOST} so it tracks
-      # SMTP_ADDR through any network-plane change.
+      # SMTP_SENDER_DOMAIN must match the host portion of SMTP_ADDR: Go's
+      # net/smtp PlainAuth rejects auth when the AUTH host differs from the
+      # connection's serverName (MITM prevention).
       SMTP_SENDER_DOMAIN: "${SMTP_HOST}"
       SMTP_ADDR: "${SMTP_HOST}:${SMTP_PORT}"
       SMTP_SENDER_NAME: Agora Storyverse [noreply]
