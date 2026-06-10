@@ -31,12 +31,11 @@ services:
   # DATABASE
   # ====================================================================================================================
 
-  # NOTE: postgres-json-keys (sibling service's database) is NOT declared
-  # here. The new `a-novel run` model treats service-json-keys as a separate
-  # service whose own daemon-managed lifecycle the user/agent owns; this
-  # production compose only describes its OWN infra. The test compose
-  # variants (podman-compose.go.test.yaml etc.) keep an isolated placeholder
-  # so each test run has fully-isolated infra.
+  # The sibling service-json-keys database is not declared here: the daemon
+  # treats service-json-keys as a separate service with its own managed
+  # lifecycle, so this compose describes only this service's own infra. The
+  # test compose variants (podman-compose.go.test.yaml etc.) keep an isolated
+  # postgres placeholder so each test run gets fully-isolated infra.
 
   postgres-authentication:
     build:
@@ -47,8 +46,9 @@ services:
     networks:
       - api
     environment:
-      # Spec §12.1: inline test-default credentials. Daemon owns dynamic
-      # env (ports, derived URLs, cross-service refs) but NOT constants.
+      # Inline test-default credentials. The daemon owns dynamic env (ports,
+      # derived URLs, cross-service refs); constants like these belong to the
+      # service.
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
@@ -102,21 +102,14 @@ services:
   # LONG-RUNNER TARGETS
   # ====================================================================================================================
 
-  # NOTE: service-json-keys placeholder removed — see DATABASE note above.
-  # The daemon resolves cross-service references via the spec §6.4
-  # env-wiring convention: `${SERVICE_JSON_KEYS_GRPC_PORT}` allocates
-  # against service-json-keys' grpc long-runner and `_GRPC_HOST` derives
-  # to `localhost`. The KEY the daemon allocates is
-  # SERVICE_JSON_KEYS_GRPC_PORT (the `_GRPC_` segment names which target
-  # of service-json-keys), and the VALUE service-authentication's Go
-  # code reads is SERVICE_JSON_KEYS_HOST / SERVICE_JSON_KEYS_PORT. The
-  # adapter is the env block below: each Go-facing var is assigned to
-  # the daemon-facing `${...}` reference so the Go code keeps reading
-  # its existing names while the daemon owns the values.
+  # service-json-keys is consumed over the network but not declared here: the
+  # daemon owns cross-service resolution and port allocation. The env block on
+  # the rest target below adapts the daemon's allocated names to the names this
+  # service's Go code reads.
 
-  # Profiled so a plain `podman compose up` does NOT start it: `a-novel run`
+  # Profiled so a plain `podman compose up` does not start it: the daemon
   # brings this file up only for the local infra (postgres-authentication,
-  # mailserver) and runs THIS service locally (go run). A containerised copy
+  # mailserver) and runs this service locally (go run). A containerised copy
   # on the same host ${REST_PORT} would collide ("bind: address already in
   # use"). `--profile rest` opts into the dockerised copy instead.
   service-authentication-rest:
