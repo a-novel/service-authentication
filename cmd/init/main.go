@@ -14,6 +14,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/samber/lo"
 
@@ -27,6 +28,11 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
+	log.SetPrefix("init: ")
+
+	start := time.Now()
+
 	cfg := config.AppPresetDefault
 	ctx := context.Background()
 
@@ -40,16 +46,22 @@ func main() {
 	}
 
 	if env.SuperAdminEmail == "" {
-		cfg.Logger.Warn(ctx, "admin email not set, aborting")
+		cfg.Logger.Warn(ctx, "SUPER_ADMIN_EMAIL not set — skipping super-admin bootstrap")
+		log.Printf("done — skipped (no SUPER_ADMIN_EMAIL), completed in %s",
+			time.Since(start).Round(time.Millisecond))
 
 		return
 	}
 
 	if env.SuperAdminPassword == "" {
-		cfg.Logger.Warn(ctx, "admin password not set, aborting")
+		cfg.Logger.Warn(ctx, "SUPER_ADMIN_PASSWORD not set — skipping super-admin bootstrap")
+		log.Printf("done — skipped (no SUPER_ADMIN_PASSWORD), completed in %s",
+			time.Since(start).Round(time.Millisecond))
 
 		return
 	}
+
+	log.Println("connecting to database...")
 
 	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
@@ -65,8 +77,12 @@ func main() {
 		repositoryCredentialsUpdateRole,
 	)
 
+	log.Printf("ensuring super-admin credentials for %s", env.SuperAdminEmail)
 	_ = lo.Must(service.Exec(ctx, &services.CredentialsCreateSuperAdminRequest{
 		Email:    env.SuperAdminEmail,
 		Password: env.SuperAdminPassword,
 	}))
+
+	log.Printf("done — super-admin %s is created or up-to-date, completed in %s",
+		env.SuperAdminEmail, time.Since(start).Round(time.Millisecond))
 }

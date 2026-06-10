@@ -6,6 +6,12 @@ services:
   mailserver:
     image: ghcr.io/axllent/mailpit:v1.30.1
     ports:
+      # Two host-port publishes: the SMTP listener (1025) is what go-exec
+      # service-authentication-rest talks to, the UI listener (8025) is
+      # what the operator opens in a browser. Without the SMTP publish the
+      # rest binary running on the host can't reach the mailpit container's
+      # internal port, and /healthcheck reports "client:smtp down".
+      - "${SMTP_PORT}:1025"
       - "${MAIL_UI_PORT}:8025"
     networks:
       - api
@@ -22,58 +28,91 @@ services:
       MP_VERBOSE: true
 
   # ====================================================================================================================
-  # DATABASES
+  # DATABASE
   # ====================================================================================================================
 
-  postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v2.3.1
-    networks:
-      - api
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: json-keys
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-    volumes:
-      - json-keys-postgres-data:/var/lib/postgresql/
+  # The sibling service-json-keys database is not declared here: the daemon
+  # treats service-json-keys as a separate service with its own managed
+  # lifecycle, so this compose describes only this service's own infra. The
+  # test compose variants (podman-compose.go.test.yaml etc.) keep an isolated
+  # postgres placeholder so each test run gets fully-isolated infra.
 
   postgres-authentication:
     build:
       context: ..
       dockerfile: ./builds/database.Dockerfile
+    ports:
+      - "${POSTGRES_PORT}:5432"
     networks:
       - api
     environment:
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_USER: "${POSTGRES_USER}"
-      POSTGRES_DB: "${POSTGRES_DB}"
+      # Inline test-default credentials. The daemon owns dynamic env (ports,
+      # derived URLs, cross-service refs); constants like these belong to the
+      # service.
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
       - authentication-postgres-data:/var/lib/postgresql/
 
   # ====================================================================================================================
-  # SERVICES
+  # ONE-SHOT TARGETS
   # ====================================================================================================================
+  # The a-novel daemon runs these on infra-up (`a-novel run service infra
+  # start`, or implicitly when a target that depends on them starts); they
+  # exit when done. Profiled out of a plain `podman compose up` on purpose —
+  # the daemon orchestrates them via `depends_on`, not Compose's profile
+  # cascade.
 
-  service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.3.1
+  # init: provisions initial seed data / configuration. Runs first
+  # (depends_on postgres only).
+  service-authentication-init:
+    profiles: ["init"]
+    build:
+      context: ..
+      dockerfile: ./builds/init.Dockerfile
     depends_on:
-      - postgres-json-keys
+      postgres-authentication:
+        condition: service_healthy
     environment:
-      POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/json-keys?sslmode=disable
-      APP_MASTER_KEY: "${SERVICE_JSON_KEYS_APP_MASTER_KEY}"
+      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
     networks:
       - api
 
-  # Profiled so a plain `podman compose up` does NOT start it: `a-novel run`
-  # brings this file up only for dependencies (postgres-*, mailserver, the
-  # sibling service-json-keys) and runs THIS service locally (go run). A
-  # containerised copy on the same host ${REST_PORT} would collide
-  # ("bind: address already in use"). `--profile rest` opts into the
-  # dockerised copy instead.
-  service-authentication:
+  # migrations: applies the schema. Depends on init (some migrations may
+  # rely on init-provisioned rows).
+  service-authentication-migrations:
+    profiles: ["migrations"]
+    build:
+      context: ..
+      dockerfile: ./builds/migrations.Dockerfile
+    depends_on:
+      postgres-authentication:
+        condition: service_healthy
+      service-authentication-init:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+    networks:
+      - api
+
+  # ====================================================================================================================
+  # LONG-RUNNER TARGETS
+  # ====================================================================================================================
+
+  # service-json-keys is consumed over the network but not declared here: the
+  # daemon owns cross-service resolution and port allocation. The env block on
+  # the rest target below adapts the daemon's allocated names to the names this
+  # service's Go code reads.
+
+  # Profiled so a plain `podman compose up` does not start it: the daemon
+  # brings this file up only for the local infra (postgres-authentication,
+  # mailserver) and runs this service locally (go run). A containerised copy
+  # on the same host ${REST_PORT} would collide ("bind: address already in
+  # use"). `--profile rest` opts into the dockerised copy instead.
+  service-authentication-rest:
     profiles: ["rest"]
     build:
       context: ..
@@ -81,18 +120,36 @@ services:
     ports:
       - "${REST_PORT}:8080"
     depends_on:
-      - postgres-authentication
-      - service-json-keys
-      - mailserver
+      postgres-authentication:
+        condition: service_healthy
+      mailserver:
+        condition: service_started
+      service-authentication-init:
+        condition: service_completed_successfully
+      service-authentication-migrations:
+        condition: service_completed_successfully
     environment:
-      POSTGRES_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-authentication:5432/${POSTGRES_DB}?sslmode=disable"
-      SERVICE_JSON_KEYS_PORT: 8080
-      SERVICE_JSON_KEYS_HOST: service-json-keys
+      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+      # Cross-service adapter: Go code reads SERVICE_JSON_KEYS_HOST /
+      # SERVICE_JSON_KEYS_PORT; the daemon allocates against
+      # SERVICE_JSON_KEYS_GRPC_PORT and derives SERVICE_JSON_KEYS_GRPC_HOST.
+      # The ${...} substitution bridges the two.
+      SERVICE_JSON_KEYS_HOST: "${SERVICE_JSON_KEYS_GRPC_HOST}"
+      SERVICE_JSON_KEYS_PORT: "${SERVICE_JSON_KEYS_GRPC_PORT}"
+      # Operator-supplied (intentional ${VAR} — these vary per local
+      # operator and are not daemon-managed).
       SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
       SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
-      SMTP_SENDER_DOMAIN: mailserver
       PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
-      SMTP_ADDR: mailserver:1025
+      # SMTP: mailserver publishes ${SMTP_PORT}:1025 above, so
+      # ${SMTP_HOST}=localhost and ${SMTP_PORT}=<allocated> in go-exec
+      # mode. SMTP_SENDER_DOMAIN must match the host portion of
+      # SMTP_ADDR (Go's net/smtp PlainAuth.Start rejects the auth when
+      # the AUTH `host` arg differs from the connection's serverName —
+      # a MITM-prevention check). Bind to ${SMTP_HOST} so it tracks
+      # SMTP_ADDR through any network-plane change.
+      SMTP_SENDER_DOMAIN: "${SMTP_HOST}"
+      SMTP_ADDR: "${SMTP_HOST}:${SMTP_PORT}"
       SMTP_SENDER_NAME: Agora Storyverse [noreply]
       SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
       SMTP_SENDER_PASSWORD: noreply
@@ -106,5 +163,4 @@ networks:
 
 volumes:
   authentication-postgres-data:
-  json-keys-postgres-data:
   mailserver-data:
