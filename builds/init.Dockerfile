@@ -1,7 +1,7 @@
 # This image runs a job that will create / update a default super-admin user.
 #
 # It requires a patched database instance to run properly.
-FROM docker.io/library/golang:1.26.3-alpine AS builder
+FROM docker.io/library/golang:1.26.4-alpine AS builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN go mod download
 # ======================================================================================================================
 RUN go build -o /init cmd/init/main.go
 
-FROM docker.io/library/alpine:3.23.4
+FROM docker.io/library/alpine:3.24.0
 
 WORKDIR /
 
