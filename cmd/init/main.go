@@ -30,6 +30,7 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
 	log.SetPrefix("init: ")
+
 	start := time.Now()
 
 	cfg := config.AppPresetDefault
@@ -61,6 +62,7 @@ func main() {
 	}
 
 	log.Println("connecting to database...")
+
 	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
 	repositoryCredentialsInsert := dao.NewCredentialsInsert()

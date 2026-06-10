@@ -30,11 +30,13 @@ func main() {
 	// stable approximation).
 	discovered := listUpMigrations(migrations.Migrations)
 	log.Printf("discovered %d migration(s) in models/migrations", len(discovered))
+
 	for _, name := range discovered {
 		log.Printf("  · %s", name)
 	}
 
 	log.Println("connecting to database...")
+
 	ctx := lo.Must(postgres.NewContext(context.Background(), config.PostgresPresetDefault))
 
 	log.Println("applying pending migrations...")
@@ -51,14 +53,24 @@ func main() {
 // migrator does that against the schema_migrations table.
 func listUpMigrations(f fs.FS) []string {
 	var out []string
+
 	_ = fs.WalkDir(f, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+		if err != nil {
+			// Propagating aborts the walk; the caller discards the error —
+			// the inventory is best-effort logging, not a gate.
+			return err
+		}
+
+		if d.IsDir() {
 			return nil
 		}
+
 		if strings.HasSuffix(path, ".up.sql") {
 			out = append(out, strings.TrimSuffix(path, ".up.sql"))
 		}
+
 		return nil
 	})
+
 	return out
 }
