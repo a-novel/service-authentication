@@ -58,8 +58,13 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/
 
   # ====================================================================================================================
-  # ONE-SHOT TARGETS (run on infra-up, exit when done)
+  # ONE-SHOT TARGETS
   # ====================================================================================================================
+  # The a-novel daemon runs these on infra-up (`a-novel run service infra
+  # start`, or implicitly when a target that depends on them starts); they
+  # exit when done. Profiled out of a plain `podman compose up` on purpose —
+  # the daemon orchestrates them via `depends_on`, not Compose's profile
+  # cascade.
 
   # init: provisions initial seed data / configuration. Runs first
   # (depends_on postgres only).
@@ -97,7 +102,7 @@ services:
   # LONG-RUNNER TARGETS
   # ====================================================================================================================
 
-  # NOTE: service-json-keys placeholder removed — see DATABASES note above.
+  # NOTE: service-json-keys placeholder removed — see DATABASE note above.
   # The daemon resolves cross-service references via the spec §6.4
   # env-wiring convention: `${SERVICE_JSON_KEYS_GRPC_PORT}` allocates
   # against service-json-keys' grpc long-runner and `_GRPC_HOST` derives
