@@ -78,7 +78,7 @@ type MockCredentialsCreateService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.CredentialsCreateRequest
-func (_e *MockCredentialsCreateService_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsCreateService_Exec_Call {
+func (_e *MockCredentialsCreateService_Expecter) Exec(ctx any, request any) *MockCredentialsCreateService_Exec_Call {
 	return &MockCredentialsCreateService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -171,7 +171,7 @@ type MockCredentialsExistService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.CredentialsExistRequest
-func (_e *MockCredentialsExistService_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsExistService_Exec_Call {
+func (_e *MockCredentialsExistService_Expecter) Exec(ctx any, request any) *MockCredentialsExistService_Exec_Call {
 	return &MockCredentialsExistService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -266,7 +266,7 @@ type MockCredentialsGetService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.CredentialsGetRequest
-func (_e *MockCredentialsGetService_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsGetService_Exec_Call {
+func (_e *MockCredentialsGetService_Expecter) Exec(ctx any, request any) *MockCredentialsGetService_Exec_Call {
 	return &MockCredentialsGetService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -361,7 +361,7 @@ type MockCredentialsListService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.CredentialsListRequest
-func (_e *MockCredentialsListService_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsListService_Exec_Call {
+func (_e *MockCredentialsListService_Expecter) Exec(ctx any, request any) *MockCredentialsListService_Exec_Call {
 	return &MockCredentialsListService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -456,7 +456,7 @@ type MockCredentialsResetPasswordService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.CredentialsUpdatePasswordRequest
-func (_e *MockCredentialsResetPasswordService_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsResetPasswordService_Exec_Call {
+func (_e *MockCredentialsResetPasswordService_Expecter) Exec(ctx any, request any) *MockCredentialsResetPasswordService_Exec_Call {
 	return &MockCredentialsResetPasswordService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -551,7 +551,7 @@ type MockCredentialsUpdateEmailService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.CredentialsUpdateEmailRequest
-func (_e *MockCredentialsUpdateEmailService_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdateEmailService_Exec_Call {
+func (_e *MockCredentialsUpdateEmailService_Expecter) Exec(ctx any, request any) *MockCredentialsUpdateEmailService_Exec_Call {
 	return &MockCredentialsUpdateEmailService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -646,7 +646,7 @@ type MockCredentialsUpdatePasswordService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.CredentialsUpdatePasswordRequest
-func (_e *MockCredentialsUpdatePasswordService_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdatePasswordService_Exec_Call {
+func (_e *MockCredentialsUpdatePasswordService_Expecter) Exec(ctx any, request any) *MockCredentialsUpdatePasswordService_Exec_Call {
 	return &MockCredentialsUpdatePasswordService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -741,7 +741,7 @@ type MockCredentialsUpdateRoleService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.CredentialsUpdateRoleRequest
-func (_e *MockCredentialsUpdateRoleService_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdateRoleService_Exec_Call {
+func (_e *MockCredentialsUpdateRoleService_Expecter) Exec(ctx any, request any) *MockCredentialsUpdateRoleService_Exec_Call {
 	return &MockCredentialsUpdateRoleService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -871,7 +871,7 @@ type MockRestHealthClientSmtp_SendMail_Call struct {
 //   - t *template.Template
 //   - tName string
 //   - data any
-func (_e *MockRestHealthClientSmtp_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockRestHealthClientSmtp_SendMail_Call {
+func (_e *MockRestHealthClientSmtp_Expecter) SendMail(to any, t any, tName any, data any) *MockRestHealthClientSmtp_SendMail_Call {
 	return &MockRestHealthClientSmtp_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
@@ -983,9 +983,9 @@ type MockRestHealthApiJsonKeys_Status_Call struct {
 //   - ctx context.Context
 //   - req *servicejsonkeys.StatusRequest
 //   - opts ...grpc.CallOption
-func (_e *MockRestHealthApiJsonKeys_Expecter) Status(ctx interface{}, req interface{}, opts ...interface{}) *MockRestHealthApiJsonKeys_Status_Call {
+func (_e *MockRestHealthApiJsonKeys_Expecter) Status(ctx any, req any, opts ...any) *MockRestHealthApiJsonKeys_Status_Call {
 	return &MockRestHealthApiJsonKeys_Status_Call{Call: _e.mock.On("Status",
-		append([]interface{}{ctx, req}, opts...)...)}
+		append([]any{ctx, req}, opts...)...)}
 }
 
 func (_c *MockRestHealthApiJsonKeys_Status_Call) Run(run func(ctx context.Context, req *servicejsonkeys.StatusRequest, opts ...grpc.CallOption)) *MockRestHealthApiJsonKeys_Status_Call {
@@ -1086,7 +1086,7 @@ type MockShortCodeCreateEmailUpdateService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeCreateEmailUpdateRequest
-func (_e *MockShortCodeCreateEmailUpdateService_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreateEmailUpdateService_Exec_Call {
+func (_e *MockShortCodeCreateEmailUpdateService_Expecter) Exec(ctx any, request any) *MockShortCodeCreateEmailUpdateService_Exec_Call {
 	return &MockShortCodeCreateEmailUpdateService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1181,7 +1181,7 @@ type MockShortCodeCreatePasswordResetService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeCreatePasswordResetRequest
-func (_e *MockShortCodeCreatePasswordResetService_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreatePasswordResetService_Exec_Call {
+func (_e *MockShortCodeCreatePasswordResetService_Expecter) Exec(ctx any, request any) *MockShortCodeCreatePasswordResetService_Exec_Call {
 	return &MockShortCodeCreatePasswordResetService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1276,7 +1276,7 @@ type MockShortCodeCreateRegisterService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeCreateRegisterRequest
-func (_e *MockShortCodeCreateRegisterService_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreateRegisterService_Exec_Call {
+func (_e *MockShortCodeCreateRegisterService_Expecter) Exec(ctx any, request any) *MockShortCodeCreateRegisterService_Exec_Call {
 	return &MockShortCodeCreateRegisterService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1371,7 +1371,7 @@ type MockTokenCreateService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.TokenCreateRequest
-func (_e *MockTokenCreateService_Expecter) Exec(ctx interface{}, request interface{}) *MockTokenCreateService_Exec_Call {
+func (_e *MockTokenCreateService_Expecter) Exec(ctx any, request any) *MockTokenCreateService_Exec_Call {
 	return &MockTokenCreateService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1465,7 +1465,7 @@ type MockTokenCreateAnonService_Exec_Call struct {
 
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockTokenCreateAnonService_Expecter) Exec(ctx interface{}) *MockTokenCreateAnonService_Exec_Call {
+func (_e *MockTokenCreateAnonService_Expecter) Exec(ctx any) *MockTokenCreateAnonService_Exec_Call {
 	return &MockTokenCreateAnonService_Exec_Call{Call: _e.mock.On("Exec", ctx)}
 }
 
@@ -1555,7 +1555,7 @@ type MockTokenRefreshService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.TokenRefreshRequest
-func (_e *MockTokenRefreshService_Expecter) Exec(ctx interface{}, request interface{}) *MockTokenRefreshService_Exec_Call {
+func (_e *MockTokenRefreshService_Expecter) Exec(ctx any, request any) *MockTokenRefreshService_Exec_Call {
 	return &MockTokenRefreshService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 

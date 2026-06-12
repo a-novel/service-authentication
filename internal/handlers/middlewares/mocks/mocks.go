@@ -75,7 +75,7 @@ type MockAuthClaimsVerifier_VerifyClaims_Call struct {
 // VerifyClaims is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *servicejsonkeys.VerifyClaimsRequest
-func (_e *MockAuthClaimsVerifier_Expecter) VerifyClaims(ctx interface{}, req interface{}) *MockAuthClaimsVerifier_VerifyClaims_Call {
+func (_e *MockAuthClaimsVerifier_Expecter) VerifyClaims(ctx any, req any) *MockAuthClaimsVerifier_VerifyClaims_Call {
 	return &MockAuthClaimsVerifier_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, req)}
 }
 
