@@ -43,16 +43,16 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.18
-        version: 1.3.38(51453aa8d417b774640249f873df21a6)
+        version: 1.3.38(56fd2f09559f0ff2d70fcdf50b50dae6)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.4.1(jiti@2.7.0))
       '@redocly/cli':
         specifier: ^2.14.5
-        version: 2.31.6(@opentelemetry/api@1.9.1)(core-js@3.48.0)
+        version: 2.32.0(@opentelemetry/api@1.9.1)(core-js@3.48.0)
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
-        version: 6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0)))(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
+        version: 6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0)))(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
       '@vitest/coverage-v8':
         specifier: ^4.0.16
         version: 4.1.8(vitest@4.1.8)
@@ -64,10 +64,10 @@ importers:
         version: 10.1.8(eslint@10.4.1(jiti@2.7.0))
       eslint-plugin-prettier:
         specifier: ^5.5.5
-        version: 5.5.6(eslint-config-prettier@10.1.8(eslint@10.4.1(jiti@2.7.0)))(eslint@10.4.1(jiti@2.7.0))(prettier@3.8.3)
+        version: 5.5.6(eslint-config-prettier@10.1.8(eslint@10.4.1(jiti@2.7.0)))(eslint@10.4.1(jiti@2.7.0))(prettier@3.8.4)
       eslint-plugin-storybook:
         specifier: ^10.2.13
-        version: 10.4.2(eslint@10.4.1(jiti@2.7.0))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@6.0.3)
+        version: 10.4.2(eslint@10.4.1(jiti@2.7.0))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@6.0.3)
       eslint-plugin-svelte:
         specifier: ^3.15.0
         version: 3.19.0(eslint@10.4.1(jiti@2.7.0))(svelte@5.55.5(@typescript-eslint/types@8.61.0))
@@ -94,13 +94,13 @@ importers:
         version: 8.0.10
       prettier:
         specifier: ^3.7.4
-        version: 3.8.3
+        version: 3.8.4
       prettier-plugin-packagejson:
         specifier: ^3.0.0
-        version: 3.0.2(prettier@3.8.3)
+        version: 3.0.2(prettier@3.8.4)
       prettier-plugin-sql:
         specifier: ^0.20.0
-        version: 0.20.0(prettier@3.8.3)
+        version: 0.20.0(prettier@3.8.4)
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -181,7 +181,7 @@ importers:
         version: link:../../rest-test
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
-        version: 6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0)))(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
+        version: 6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0)))(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
       '@types/jsdom':
         specifier: ^27.0.0
         version: 27.0.0
@@ -208,13 +208,13 @@ importers:
         version: 5.0.0(svgo@4.0.1)(typescript@5.9.3)
       prettier:
         specifier: ^3.6.2
-        version: 3.8.3
+        version: 3.8.4
       prettier-plugin-packagejson:
         specifier: ^2.5.19
-        version: 2.5.22(prettier@3.8.3)
+        version: 2.5.22(prettier@3.8.4)
       prettier-plugin-sql:
         specifier: ^0.19.2
-        version: 0.19.2(prettier@3.8.3)
+        version: 0.19.2(prettier@3.8.4)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -838,8 +838,8 @@ packages:
   '@redocly/cli-otel@0.3.1':
     resolution: {integrity: sha512-TbC4bK2zLtU/O9I2pszHPP0rtJOvFhQmEwQ/FHxERPu71fgKG8POUDP2jSiGmsXE7NdGSHBKqnf+y9Acn2jq5g==}
 
-  '@redocly/cli@2.31.6':
-    resolution: {integrity: sha512-OQ7t/kDlewWIqYlo0jnNTUIkhmAuZx6P2OQmuZlaxghdRXbu/k+MevXSjR5uD2RGw4GLYsasGjUWPUonp6liTQ==}
+  '@redocly/cli@2.32.0':
+    resolution: {integrity: sha512-VlSAXxNKw8EtMXo3SPZ1Lb6tyGcd1NFjCBQhB1qhiN0O+A6l32TW38ReDU4N3yXLlo1WgD9yv7GOY+ZcmIFu0g==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
@@ -853,12 +853,12 @@ packages:
     resolution: {integrity: sha512-HAwCnNyKcs5XGQqms+9t7OdAPM/5TDstmhF+0i7tdCFato2QKuYIlyWETwkXd8c5zbltr1oB+6y9NTeQLr2d6Q==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@redocly/openapi-core@2.31.6':
-    resolution: {integrity: sha512-h+zh6UQ4e5oRspUZUaNl1XRXwMf0ENHbGLKIDFAjhV6JACpqUrcBxkPKHY/uCXGdJSCzxVP3twCrnOWB0iMVuw==}
+  '@redocly/openapi-core@2.32.0':
+    resolution: {integrity: sha512-B4CsuuokMc3vgNh9e+eFX8FAbjMTWUVgYtBvPXm0X2pwBs9nO2v+m6ARp7lEpg1P42B6XztIdI08BGMqUAerJQ==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
-  '@redocly/respect-core@2.31.6':
-    resolution: {integrity: sha512-xLsbP+jRVTaYKMnx44nx4p9UqVGjZGqyq6bsYlQQWeLem83OrU4EPE7vKKIdWTuwtQkEQ1ousEuenW7lqeqFnA==}
+  '@redocly/respect-core@2.32.0':
+    resolution: {integrity: sha512-CYRyleK+xOQtd8K6JuZbJr/yD+EVscipAtst/e5x66wyoG04vzUQWX1tzTibNQhl8OI/FMy9BnlFrHCaA8BiHg==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
   '@rolldown/binding-android-arm64@1.0.3':
@@ -1424,6 +1424,9 @@ packages:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
+  anynum@1.0.0:
+    resolution: {integrity: sha512-xjR9/zBVnUOP6ztMIIgShjsxui80nQUQH+5xJnvrYLs+90bF25/KJqaAi8mk+B4RDtX1Nspi6fmp4YTEts8SfA==}
+
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
@@ -1785,8 +1788,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.4.8:
-    resolution: {integrity: sha512-yb1cEmaOum7wFvOCSQxyfgVlv5D47Rc30iZWoMpbDIWTnJ6grDDQyu2KFJzB2k7u0pMuJcQ1zphH//fFnw2tjQ==}
+  dompurify@3.4.9:
+    resolution: {integrity: sha512-4dPSRMRDqHvs0V4YDFCsaIZo4if5u0xM+llyxiM2fwuZFdKArUBAF3VtI2+n8NKg9P870WMdYk0UhqQNoWXbfQ==}
 
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
@@ -2819,8 +2822,8 @@ packages:
       react-native:
         optional: true
 
-  mobx@6.15.4:
-    resolution: {integrity: sha512-do+2UsEKRVT70W/QqP2F2sju2x4p2xZo+5/azXqKjXgTk2jfmzsLjzwW0YI8CBEjy4ZUdU8EunXocXXwJdCrtw==}
+  mobx@6.16.1:
+    resolution: {integrity: sha512-syNcDdX3KT+Jq3je6eGjBhuc24Z68td2VG0zNFqRswaE433D9SNH5VRy/xrGbJsUixfppLLccXhAW9JSf6n+SQ==}
 
   moo@0.5.3:
     resolution: {integrity: sha512-m2fmM2dDm7GZQsY7KK2cme8agi+AAljILjQnof7p1ZMDe6dQ4bdnSMx0cPppudoeNv5hEFQirN6u+O4fDE0IWA==}
@@ -3312,8 +3315,8 @@ packages:
       prettier: ^3.0.0
       svelte: '>=5.46.4'
 
-  prettier@3.8.3:
-    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
+  prettier@3.8.4:
+    resolution: {integrity: sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -3331,8 +3334,8 @@ packages:
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
 
-  protobufjs@8.5.0:
-    resolution: {integrity: sha512-df1jWDPA5VIBNRtuAHjqr09f2qN5D4Vke1wYqOQg1XJ7ZDpA7BD6L7E4tyChgGRLB5hqk2m79Zsy0WHwV9a84A==}
+  protobufjs@8.6.3:
+    resolution: {integrity: sha512-alQyzT0j401LGBtwsqu6uprjR6pfNH1UJf9N6GBFMjIcd+HzTe0/HrjAbFCqun+zvnfLarrxAtMM2xvZ+kFZ5A==}
     engines: {node: '>=12.0.0'}
 
   punycode.js@2.3.1:
@@ -3593,8 +3596,8 @@ packages:
     resolution: {integrity: sha512-laJTa3Jb+VQpaC6DseHhF7dXVqHTfJPCRDaEbid/drOhgitgYku/letMUqOXFoWV0zIIUbjpdH2t+tYj4bQMRQ==}
     engines: {node: '>=8'}
 
-  strnum@2.3.0:
-    resolution: {integrity: sha512-ums3KNd42PGyx5xaoVTO1mjU1bH3NpY4vsrVlnv9PNGqQj8wd7rJ6nEypLrJ7z5vxK5RP0yMLo6J/Gsm62DI5Q==}
+  strnum@2.4.0:
+    resolution: {integrity: sha512-sHrVyWWdq28RbhjuJdZsA1SnGRJV6NiXbk6AXBxDOsgAcA+lmpUZCYjOdLBxkXMwis6RRe7dlZt4VlIWFVzkmg==}
 
   styled-components@6.4.2:
     resolution: {integrity: sha512-xZBhBJsMtGqb+aKcwKgaT+BtuFums9VynX2JRvXJGTx5UfZzN12rk5r4nVdhXYvRw+hE7yiYxVrOqJZaK2+Txg==}
@@ -4108,24 +4111,24 @@ snapshots:
     dependencies:
       zod: 4.4.3
 
-  '@a-novel-kit/nodelib-config@1.3.38(51453aa8d417b774640249f873df21a6)':
+  '@a-novel-kit/nodelib-config@1.3.38(56fd2f09559f0ff2d70fcdf50b50dae6)':
     dependencies:
       '@eslint/compat': 2.0.3(eslint@10.4.1(jiti@2.7.0))
       '@eslint/js': 10.0.1(eslint@10.4.1(jiti@2.7.0))
       '@sveltejs/kit': 2.59.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.55.5(@typescript-eslint/types@8.61.0))(vite@8.0.16(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)))(svelte@5.55.5(@typescript-eslint/types@8.61.0))(typescript@6.0.3)(vite@8.0.16(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))
-      '@trivago/prettier-plugin-sort-imports': 6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0)))(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
+      '@trivago/prettier-plugin-sort-imports': 6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0)))(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
       '@types/node': 25.7.0
       eslint: 10.4.1(jiti@2.7.0)
       eslint-config-prettier: 10.1.8(eslint@10.4.1(jiti@2.7.0))
-      eslint-plugin-prettier: 5.5.6(eslint-config-prettier@10.1.8(eslint@10.4.1(jiti@2.7.0)))(eslint@10.4.1(jiti@2.7.0))(prettier@3.8.3)
-      eslint-plugin-storybook: 10.4.2(eslint@10.4.1(jiti@2.7.0))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@6.0.3)
+      eslint-plugin-prettier: 5.5.6(eslint-config-prettier@10.1.8(eslint@10.4.1(jiti@2.7.0)))(eslint@10.4.1(jiti@2.7.0))(prettier@3.8.4)
+      eslint-plugin-storybook: 10.4.2(eslint@10.4.1(jiti@2.7.0))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@6.0.3)
       eslint-plugin-svelte: 3.19.0(eslint@10.4.1(jiti@2.7.0))(svelte@5.55.5(@typescript-eslint/types@8.61.0))
-      prettier: 3.8.3
-      prettier-plugin-css-order: 2.2.0(postcss@8.5.15)(prettier@3.8.3)
-      prettier-plugin-packagejson: 3.0.2(prettier@3.8.3)
-      prettier-plugin-sql: 0.20.0(prettier@3.8.3)
-      prettier-plugin-svelte: 3.5.2(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
-      storybook: 10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      prettier: 3.8.4
+      prettier-plugin-css-order: 2.2.0(postcss@8.5.15)(prettier@3.8.4)
+      prettier-plugin-packagejson: 3.0.2(prettier@3.8.4)
+      prettier-plugin-sql: 0.20.0(prettier@3.8.4)
+      prettier-plugin-svelte: 3.5.2(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
+      storybook: 10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       svelte: 5.55.5(@typescript-eslint/types@8.61.0)
       typescript: 6.0.3
       typescript-eslint: 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
@@ -4620,7 +4623,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-metrics': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 2.6.1(@opentelemetry/api@1.9.1)
-      protobufjs: 8.5.0
+      protobufjs: 8.6.3
 
   '@opentelemetry/resources@2.6.1(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -4685,15 +4688,15 @@ snapshots:
     dependencies:
       ulid: 2.4.0
 
-  '@redocly/cli@2.31.6(@opentelemetry/api@1.9.1)(core-js@3.48.0)':
+  '@redocly/cli@2.32.0(@opentelemetry/api@1.9.1)(core-js@3.48.0)':
     dependencies:
       '@opentelemetry/exporter-trace-otlp-http': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-node': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
       '@redocly/cli-otel': 0.3.1
-      '@redocly/openapi-core': 2.31.6
-      '@redocly/respect-core': 2.31.6
+      '@redocly/openapi-core': 2.32.0
+      '@redocly/respect-core': 2.32.0
       ajv: '@redocly/ajv@8.18.1'
       ajv-formats: 3.0.1(@redocly/ajv@8.18.1)
       colorette: 1.4.0
@@ -4702,12 +4705,12 @@ snapshots:
       glob: 13.0.6
       handlebars: 4.7.9
       https-proxy-agent: 7.0.6
-      mobx: 6.15.4
+      mobx: 6.16.1
       picomatch: 4.0.4
       pluralize: 8.0.0
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
-      redoc: 2.5.3(core-js@3.48.0)(mobx@6.15.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(styled-components@6.4.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
+      redoc: 2.5.3(core-js@3.48.0)(mobx@6.16.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(styled-components@6.4.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
       semver: 7.8.4
       set-cookie-parser: 2.7.2
       simple-websocket: 9.1.0
@@ -4745,7 +4748,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@redocly/openapi-core@2.31.6':
+  '@redocly/openapi-core@2.32.0':
     dependencies:
       '@redocly/ajv': 8.18.1
       '@redocly/config': 0.49.0
@@ -4758,12 +4761,12 @@ snapshots:
       pluralize: 8.0.0
       yaml-ast-parser: 0.0.43
 
-  '@redocly/respect-core@2.31.6':
+  '@redocly/respect-core@2.32.0':
     dependencies:
       '@faker-js/faker': 7.6.0
       '@noble/hashes': 1.8.0
       '@redocly/ajv': 8.18.1
-      '@redocly/openapi-core': 2.31.6
+      '@redocly/openapi-core': 2.32.0
       ajv: '@redocly/ajv@8.18.1'
       better-ajv-errors: 2.0.3(@redocly/ajv@8.18.1)
       colorette: 2.0.20
@@ -4986,7 +4989,7 @@ snapshots:
     dependencies:
       '@testing-library/dom': 10.4.1
 
-  '@trivago/prettier-plugin-sort-imports@6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0)))(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0))':
+  '@trivago/prettier-plugin-sort-imports@6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0)))(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0))':
     dependencies:
       '@babel/generator': 7.29.1
       '@babel/parser': 7.29.7
@@ -4996,9 +4999,9 @@ snapshots:
       lodash-es: 4.18.1
       minimatch: 10.2.5
       parse-imports-exports: 0.2.4
-      prettier: 3.8.3
+      prettier: 3.8.4
     optionalDependencies:
-      prettier-plugin-svelte: 3.5.2(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
+      prettier-plugin-svelte: 3.5.2(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0))
       svelte: 5.55.5(@typescript-eslint/types@8.61.0)
     transitivePeerDependencies:
       - supports-color
@@ -5286,6 +5289,8 @@ snapshots:
     dependencies:
       normalize-path: 3.0.0
       picomatch: 2.3.2
+
+  anynum@1.0.0: {}
 
   argparse@2.0.1: {}
 
@@ -5668,7 +5673,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.4.8:
+  dompurify@3.4.9:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -5769,20 +5774,20 @@ snapshots:
     dependencies:
       eslint: 10.4.1(jiti@2.7.0)
 
-  eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@10.4.1(jiti@2.7.0)))(eslint@10.4.1(jiti@2.7.0))(prettier@3.8.3):
+  eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@10.4.1(jiti@2.7.0)))(eslint@10.4.1(jiti@2.7.0))(prettier@3.8.4):
     dependencies:
       eslint: 10.4.1(jiti@2.7.0)
-      prettier: 3.8.3
+      prettier: 3.8.4
       prettier-linter-helpers: 1.0.1
       synckit: 0.11.13
     optionalDependencies:
       eslint-config-prettier: 10.1.8(eslint@10.4.1(jiti@2.7.0))
 
-  eslint-plugin-storybook@10.4.2(eslint@10.4.1(jiti@2.7.0))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@6.0.3):
+  eslint-plugin-storybook@10.4.2(eslint@10.4.1(jiti@2.7.0))(storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@6.0.3):
     dependencies:
       '@typescript-eslint/utils': 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
       eslint: 10.4.1(jiti@2.7.0)
-      storybook: 10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      storybook: 10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -5924,7 +5929,7 @@ snapshots:
       '@nodable/entities': 2.1.1
       fast-xml-builder: 1.2.0
       path-expression-matcher: 1.5.0
-      strnum: 2.3.0
+      strnum: 2.4.0
       xml-naming: 0.1.0
 
   fdir@6.5.0(picomatch@4.0.4):
@@ -6674,7 +6679,7 @@ snapshots:
       mjml-parser-xml: 5.0.0
       mjml-validator: 5.0.0
       postcss: 8.5.15
-      prettier: 3.8.3
+      prettier: 3.8.4
     transitivePeerDependencies:
       - purgecss
       - relateurl
@@ -7397,23 +7402,23 @@ snapshots:
       - typescript
       - uncss
 
-  mobx-react-lite@4.1.1(mobx@6.15.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  mobx-react-lite@4.1.1(mobx@6.16.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
-      mobx: 6.15.4
+      mobx: 6.16.1
       react: 19.2.7
       use-sync-external-store: 1.6.0(react@19.2.7)
     optionalDependencies:
       react-dom: 19.2.7(react@19.2.7)
 
-  mobx-react@9.2.0(mobx@6.15.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  mobx-react@9.2.0(mobx@6.16.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
-      mobx: 6.15.4
-      mobx-react-lite: 4.1.1(mobx@6.15.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      mobx: 6.16.1
+      mobx-react-lite: 4.1.1(mobx@6.16.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react: 19.2.7
     optionalDependencies:
       react-dom: 19.2.7(react@19.2.7)
 
-  mobx@6.15.4: {}
+  mobx@6.16.1: {}
 
   moo@0.5.3: {}
 
@@ -7877,49 +7882,49 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
-  prettier-plugin-css-order@2.2.0(postcss@8.5.15)(prettier@3.8.3):
+  prettier-plugin-css-order@2.2.0(postcss@8.5.15)(prettier@3.8.4):
     dependencies:
       css-declaration-sorter: 7.4.0(postcss@8.5.15)
       postcss-less: 6.0.0(postcss@8.5.15)
       postcss-scss: 4.0.9(postcss@8.5.15)
-      prettier: 3.8.3
+      prettier: 3.8.4
     transitivePeerDependencies:
       - postcss
 
-  prettier-plugin-packagejson@2.5.22(prettier@3.8.3):
+  prettier-plugin-packagejson@2.5.22(prettier@3.8.4):
     dependencies:
       sort-package-json: 3.6.0
     optionalDependencies:
-      prettier: 3.8.3
+      prettier: 3.8.4
 
-  prettier-plugin-packagejson@3.0.2(prettier@3.8.3):
+  prettier-plugin-packagejson@3.0.2(prettier@3.8.4):
     dependencies:
       sort-package-json: 3.6.1
     optionalDependencies:
-      prettier: 3.8.3
+      prettier: 3.8.4
 
-  prettier-plugin-sql@0.19.2(prettier@3.8.3):
+  prettier-plugin-sql@0.19.2(prettier@3.8.4):
     dependencies:
       jsox: 1.2.125
       node-sql-parser: 5.4.0
-      prettier: 3.8.3
+      prettier: 3.8.4
       sql-formatter: 15.7.2
       tslib: 2.8.1
 
-  prettier-plugin-sql@0.20.0(prettier@3.8.3):
+  prettier-plugin-sql@0.20.0(prettier@3.8.4):
     dependencies:
       jsox: 1.2.125
       node-sql-parser: 5.4.0
-      prettier: 3.8.3
+      prettier: 3.8.4
       sql-formatter: 15.7.2
       tslib: 2.8.1
 
-  prettier-plugin-svelte@3.5.2(prettier@3.8.3)(svelte@5.55.5(@typescript-eslint/types@8.61.0)):
+  prettier-plugin-svelte@3.5.2(prettier@3.8.4)(svelte@5.55.5(@typescript-eslint/types@8.61.0)):
     dependencies:
-      prettier: 3.8.3
+      prettier: 3.8.4
       svelte: 5.55.5(@typescript-eslint/types@8.61.0)
 
-  prettier@3.8.3: {}
+  prettier@3.8.4: {}
 
   pretty-format@27.5.1:
     dependencies:
@@ -7937,7 +7942,7 @@ snapshots:
 
   proto-list@1.2.4: {}
 
-  protobufjs@8.5.0:
+  protobufjs@8.6.3:
     dependencies:
       long: 5.3.2
 
@@ -8000,20 +8005,20 @@ snapshots:
       indent-string: 4.0.0
       strip-indent: 3.0.0
 
-  redoc@2.5.3(core-js@3.48.0)(mobx@6.15.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(styled-components@6.4.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)):
+  redoc@2.5.3(core-js@3.48.0)(mobx@6.16.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(styled-components@6.4.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)):
     dependencies:
       '@redocly/openapi-core': 1.34.15
       classnames: 2.5.1
       core-js: 3.48.0
       decko: 1.2.0
-      dompurify: 3.4.8
+      dompurify: 3.4.9
       eventemitter3: 5.0.4
       json-pointer: 0.6.2
       lunr: 2.3.9
       mark.js: 8.11.1
       marked: 4.3.0
-      mobx: 6.15.4
-      mobx-react: 9.2.0(mobx@6.15.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      mobx: 6.16.1
+      mobx-react: 9.2.0(mobx@6.16.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       openapi-sampler: 1.7.4
       path-browserify: 1.0.1
       perfect-scrollbar: 1.5.6
@@ -8218,7 +8223,7 @@ snapshots:
 
   stickyfill@1.1.1: {}
 
-  storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  storybook@10.2.17(@testing-library/dom@10.4.1)(prettier@3.8.4)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/icons': 2.0.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -8233,7 +8238,7 @@ snapshots:
       use-sync-external-store: 1.6.0(react@19.2.7)
       ws: 8.21.0
     optionalDependencies:
-      prettier: 3.8.3
+      prettier: 3.8.4
     transitivePeerDependencies:
       - '@testing-library/dom'
       - bufferutil
@@ -8271,7 +8276,9 @@ snapshots:
     dependencies:
       min-indent: 1.0.1
 
-  strnum@2.3.0: {}
+  strnum@2.4.0:
+    dependencies:
+      anynum: 1.0.0
 
   styled-components@6.4.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
