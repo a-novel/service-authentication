@@ -79,7 +79,7 @@ type MockCredentialsCreateRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsInsertRequest
-func (_e *MockCredentialsCreateRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsCreateRepository_Exec_Call {
+func (_e *MockCredentialsCreateRepository_Expecter) Exec(ctx any, request any) *MockCredentialsCreateRepository_Exec_Call {
 	return &MockCredentialsCreateRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -174,7 +174,7 @@ type MockCredentialsCreateServiceShortCodeConsume_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeConsumeRequest
-func (_e *MockCredentialsCreateServiceShortCodeConsume_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsCreateServiceShortCodeConsume_Exec_Call {
+func (_e *MockCredentialsCreateServiceShortCodeConsume_Expecter) Exec(ctx any, request any) *MockCredentialsCreateServiceShortCodeConsume_Exec_Call {
 	return &MockCredentialsCreateServiceShortCodeConsume_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -276,9 +276,9 @@ type MockCredentialsCreateServiceSignClaims_ClaimsSign_Call struct {
 //   - ctx context.Context
 //   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
-func (_e *MockCredentialsCreateServiceSignClaims_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
+func (_e *MockCredentialsCreateServiceSignClaims_Expecter) ClaimsSign(ctx any, req any, opts ...any) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
 	return &MockCredentialsCreateServiceSignClaims_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
-		append([]interface{}{ctx, req}, opts...)...)}
+		append([]any{ctx, req}, opts...)...)}
 }
 
 func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
@@ -379,7 +379,7 @@ type MockCredentialsCreateSuperAdminRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsInsertRequest
-func (_e *MockCredentialsCreateSuperAdminRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsCreateSuperAdminRepository_Exec_Call {
+func (_e *MockCredentialsCreateSuperAdminRepository_Expecter) Exec(ctx any, request any) *MockCredentialsCreateSuperAdminRepository_Exec_Call {
 	return &MockCredentialsCreateSuperAdminRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -474,7 +474,7 @@ type MockCredentialsCreateSuperAdminRepositorySelect_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectByEmailRequest
-func (_e *MockCredentialsCreateSuperAdminRepositorySelect_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsCreateSuperAdminRepositorySelect_Exec_Call {
+func (_e *MockCredentialsCreateSuperAdminRepositorySelect_Expecter) Exec(ctx any, request any) *MockCredentialsCreateSuperAdminRepositorySelect_Exec_Call {
 	return &MockCredentialsCreateSuperAdminRepositorySelect_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -569,7 +569,7 @@ type MockCredentialsCreateSuperAdminRepositoryUpdatePassword_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsUpdatePasswordRequest
-func (_e *MockCredentialsCreateSuperAdminRepositoryUpdatePassword_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsCreateSuperAdminRepositoryUpdatePassword_Exec_Call {
+func (_e *MockCredentialsCreateSuperAdminRepositoryUpdatePassword_Expecter) Exec(ctx any, request any) *MockCredentialsCreateSuperAdminRepositoryUpdatePassword_Exec_Call {
 	return &MockCredentialsCreateSuperAdminRepositoryUpdatePassword_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -664,7 +664,7 @@ type MockCredentialsCreateSuperAdminRepositoryUpdateRole_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsUpdateRoleRequest
-func (_e *MockCredentialsCreateSuperAdminRepositoryUpdateRole_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsCreateSuperAdminRepositoryUpdateRole_Exec_Call {
+func (_e *MockCredentialsCreateSuperAdminRepositoryUpdateRole_Expecter) Exec(ctx any, request any) *MockCredentialsCreateSuperAdminRepositoryUpdateRole_Exec_Call {
 	return &MockCredentialsCreateSuperAdminRepositoryUpdateRole_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -757,7 +757,7 @@ type MockCredentialsExistRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsExistRequest
-func (_e *MockCredentialsExistRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsExistRepository_Exec_Call {
+func (_e *MockCredentialsExistRepository_Expecter) Exec(ctx any, request any) *MockCredentialsExistRepository_Exec_Call {
 	return &MockCredentialsExistRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -852,7 +852,7 @@ type MockCredentialsGetRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectRequest
-func (_e *MockCredentialsGetRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsGetRepository_Exec_Call {
+func (_e *MockCredentialsGetRepository_Expecter) Exec(ctx any, request any) *MockCredentialsGetRepository_Exec_Call {
 	return &MockCredentialsGetRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -947,7 +947,7 @@ type MockCredentialsListRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsListRequest
-func (_e *MockCredentialsListRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsListRepository_Exec_Call {
+func (_e *MockCredentialsListRepository_Expecter) Exec(ctx any, request any) *MockCredentialsListRepository_Exec_Call {
 	return &MockCredentialsListRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1042,7 +1042,7 @@ type MockCredentialsUpdateEmailRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsUpdateEmailRequest
-func (_e *MockCredentialsUpdateEmailRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdateEmailRepository_Exec_Call {
+func (_e *MockCredentialsUpdateEmailRepository_Expecter) Exec(ctx any, request any) *MockCredentialsUpdateEmailRepository_Exec_Call {
 	return &MockCredentialsUpdateEmailRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1137,7 +1137,7 @@ type MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeConsumeRequest
-func (_e *MockCredentialsUpdateEmailServiceShortCodeConsume_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call {
+func (_e *MockCredentialsUpdateEmailServiceShortCodeConsume_Expecter) Exec(ctx any, request any) *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call {
 	return &MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1232,7 +1232,7 @@ type MockCredentialsUpdatePasswordRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsUpdatePasswordRequest
-func (_e *MockCredentialsUpdatePasswordRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdatePasswordRepository_Exec_Call {
+func (_e *MockCredentialsUpdatePasswordRepository_Expecter) Exec(ctx any, request any) *MockCredentialsUpdatePasswordRepository_Exec_Call {
 	return &MockCredentialsUpdatePasswordRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1327,7 +1327,7 @@ type MockCredentialsUpdatePasswordRepositoryCredentialsSelect_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectRequest
-func (_e *MockCredentialsUpdatePasswordRepositoryCredentialsSelect_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdatePasswordRepositoryCredentialsSelect_Exec_Call {
+func (_e *MockCredentialsUpdatePasswordRepositoryCredentialsSelect_Expecter) Exec(ctx any, request any) *MockCredentialsUpdatePasswordRepositoryCredentialsSelect_Exec_Call {
 	return &MockCredentialsUpdatePasswordRepositoryCredentialsSelect_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1422,7 +1422,7 @@ type MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeConsumeRequest
-func (_e *MockCredentialsUpdatePasswordServiceShortCodeConsume_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call {
+func (_e *MockCredentialsUpdatePasswordServiceShortCodeConsume_Expecter) Exec(ctx any, request any) *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call {
 	return &MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1517,7 +1517,7 @@ type MockCredentialsUpdateRoleRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsUpdateRoleRequest
-func (_e *MockCredentialsUpdateRoleRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdateRoleRepository_Exec_Call {
+func (_e *MockCredentialsUpdateRoleRepository_Expecter) Exec(ctx any, request any) *MockCredentialsUpdateRoleRepository_Exec_Call {
 	return &MockCredentialsUpdateRoleRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1612,7 +1612,7 @@ type MockCredentialsUpdateRoleRepositoryCredentialsSelect_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectRequest
-func (_e *MockCredentialsUpdateRoleRepositoryCredentialsSelect_Expecter) Exec(ctx interface{}, request interface{}) *MockCredentialsUpdateRoleRepositoryCredentialsSelect_Exec_Call {
+func (_e *MockCredentialsUpdateRoleRepositoryCredentialsSelect_Expecter) Exec(ctx any, request any) *MockCredentialsUpdateRoleRepositoryCredentialsSelect_Exec_Call {
 	return &MockCredentialsUpdateRoleRepositoryCredentialsSelect_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1707,7 +1707,7 @@ type MockShortCodeConsumeRepositorySelect_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.ShortCodeSelectRequest
-func (_e *MockShortCodeConsumeRepositorySelect_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeConsumeRepositorySelect_Exec_Call {
+func (_e *MockShortCodeConsumeRepositorySelect_Expecter) Exec(ctx any, request any) *MockShortCodeConsumeRepositorySelect_Exec_Call {
 	return &MockShortCodeConsumeRepositorySelect_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1802,7 +1802,7 @@ type MockShortCodeConsumeRepositoryDelete_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.ShortCodeDeleteRequest
-func (_e *MockShortCodeConsumeRepositoryDelete_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeConsumeRepositoryDelete_Exec_Call {
+func (_e *MockShortCodeConsumeRepositoryDelete_Expecter) Exec(ctx any, request any) *MockShortCodeConsumeRepositoryDelete_Exec_Call {
 	return &MockShortCodeConsumeRepositoryDelete_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1897,7 +1897,7 @@ type MockShortCodeCreateRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.ShortCodeInsertRequest
-func (_e *MockShortCodeCreateRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreateRepository_Exec_Call {
+func (_e *MockShortCodeCreateRepository_Expecter) Exec(ctx any, request any) *MockShortCodeCreateRepository_Exec_Call {
 	return &MockShortCodeCreateRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -1992,7 +1992,7 @@ type MockShortCodeCreateEmailUpdateService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeCreateRequest
-func (_e *MockShortCodeCreateEmailUpdateService_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreateEmailUpdateService_Exec_Call {
+func (_e *MockShortCodeCreateEmailUpdateService_Expecter) Exec(ctx any, request any) *MockShortCodeCreateEmailUpdateService_Exec_Call {
 	return &MockShortCodeCreateEmailUpdateService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -2087,7 +2087,7 @@ type MockShortCodeCreateEmailUpdateRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectByEmailRequest
-func (_e *MockShortCodeCreateEmailUpdateRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreateEmailUpdateRepository_Exec_Call {
+func (_e *MockShortCodeCreateEmailUpdateRepository_Expecter) Exec(ctx any, request any) *MockShortCodeCreateEmailUpdateRepository_Exec_Call {
 	return &MockShortCodeCreateEmailUpdateRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -2217,7 +2217,7 @@ type MockShortCodeCreateEmailUpdateSmtp_SendMail_Call struct {
 //   - t *template.Template
 //   - tName string
 //   - data any
-func (_e *MockShortCodeCreateEmailUpdateSmtp_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockShortCodeCreateEmailUpdateSmtp_SendMail_Call {
+func (_e *MockShortCodeCreateEmailUpdateSmtp_Expecter) SendMail(to any, t any, tName any, data any) *MockShortCodeCreateEmailUpdateSmtp_SendMail_Call {
 	return &MockShortCodeCreateEmailUpdateSmtp_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
@@ -2322,7 +2322,7 @@ type MockShortCodeCreatePasswordResetService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeCreateRequest
-func (_e *MockShortCodeCreatePasswordResetService_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreatePasswordResetService_Exec_Call {
+func (_e *MockShortCodeCreatePasswordResetService_Expecter) Exec(ctx any, request any) *MockShortCodeCreatePasswordResetService_Exec_Call {
 	return &MockShortCodeCreatePasswordResetService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -2417,7 +2417,7 @@ type MockShortCodeCreatePasswordResetRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectByEmailRequest
-func (_e *MockShortCodeCreatePasswordResetRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreatePasswordResetRepository_Exec_Call {
+func (_e *MockShortCodeCreatePasswordResetRepository_Expecter) Exec(ctx any, request any) *MockShortCodeCreatePasswordResetRepository_Exec_Call {
 	return &MockShortCodeCreatePasswordResetRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -2547,7 +2547,7 @@ type MockShortCodeCreatePasswordResetSmtp_SendMail_Call struct {
 //   - t *template.Template
 //   - tName string
 //   - data any
-func (_e *MockShortCodeCreatePasswordResetSmtp_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockShortCodeCreatePasswordResetSmtp_SendMail_Call {
+func (_e *MockShortCodeCreatePasswordResetSmtp_Expecter) SendMail(to any, t any, tName any, data any) *MockShortCodeCreatePasswordResetSmtp_SendMail_Call {
 	return &MockShortCodeCreatePasswordResetSmtp_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
@@ -2652,7 +2652,7 @@ type MockShortCodeCreateRegisterService_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *services.ShortCodeCreateRequest
-func (_e *MockShortCodeCreateRegisterService_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreateRegisterService_Exec_Call {
+func (_e *MockShortCodeCreateRegisterService_Expecter) Exec(ctx any, request any) *MockShortCodeCreateRegisterService_Exec_Call {
 	return &MockShortCodeCreateRegisterService_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -2747,7 +2747,7 @@ type MockShortCodeCreateRegisterRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectByEmailRequest
-func (_e *MockShortCodeCreateRegisterRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockShortCodeCreateRegisterRepository_Exec_Call {
+func (_e *MockShortCodeCreateRegisterRepository_Expecter) Exec(ctx any, request any) *MockShortCodeCreateRegisterRepository_Exec_Call {
 	return &MockShortCodeCreateRegisterRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -2877,7 +2877,7 @@ type MockShortCodeCreateRegisterSmtp_SendMail_Call struct {
 //   - t *template.Template
 //   - tName string
 //   - data any
-func (_e *MockShortCodeCreateRegisterSmtp_Expecter) SendMail(to interface{}, t interface{}, tName interface{}, data interface{}) *MockShortCodeCreateRegisterSmtp_SendMail_Call {
+func (_e *MockShortCodeCreateRegisterSmtp_Expecter) SendMail(to any, t any, tName any, data any) *MockShortCodeCreateRegisterSmtp_SendMail_Call {
 	return &MockShortCodeCreateRegisterSmtp_SendMail_Call{Call: _e.mock.On("SendMail", to, t, tName, data)}
 }
 
@@ -2989,9 +2989,9 @@ type mocktokenPairSigner_ClaimsSign_Call struct {
 //   - ctx context.Context
 //   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
-func (_e *mocktokenPairSigner_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *mocktokenPairSigner_ClaimsSign_Call {
+func (_e *mocktokenPairSigner_Expecter) ClaimsSign(ctx any, req any, opts ...any) *mocktokenPairSigner_ClaimsSign_Call {
 	return &mocktokenPairSigner_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
-		append([]interface{}{ctx, req}, opts...)...)}
+		append([]any{ctx, req}, opts...)...)}
 }
 
 func (_c *mocktokenPairSigner_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *mocktokenPairSigner_ClaimsSign_Call {
@@ -3092,7 +3092,7 @@ type MockTokenCreateRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectByEmailRequest
-func (_e *MockTokenCreateRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockTokenCreateRepository_Exec_Call {
+func (_e *MockTokenCreateRepository_Expecter) Exec(ctx any, request any) *MockTokenCreateRepository_Exec_Call {
 	return &MockTokenCreateRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -3194,9 +3194,9 @@ type MockTokenCreateServiceSignClaims_ClaimsSign_Call struct {
 //   - ctx context.Context
 //   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
-func (_e *MockTokenCreateServiceSignClaims_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
+func (_e *MockTokenCreateServiceSignClaims_Expecter) ClaimsSign(ctx any, req any, opts ...any) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
 	return &MockTokenCreateServiceSignClaims_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
-		append([]interface{}{ctx, req}, opts...)...)}
+		append([]any{ctx, req}, opts...)...)}
 }
 
 func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
@@ -3304,9 +3304,9 @@ type MockTokenCreateAnonSignClaimsService_ClaimsSign_Call struct {
 //   - ctx context.Context
 //   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
-func (_e *MockTokenCreateAnonSignClaimsService_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
+func (_e *MockTokenCreateAnonSignClaimsService_Expecter) ClaimsSign(ctx any, req any, opts ...any) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
 	return &MockTokenCreateAnonSignClaimsService_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
-		append([]interface{}{ctx, req}, opts...)...)}
+		append([]any{ctx, req}, opts...)...)}
 }
 
 func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
@@ -3407,7 +3407,7 @@ type MockTokenRefreshRepository_Exec_Call struct {
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request *dao.CredentialsSelectRequest
-func (_e *MockTokenRefreshRepository_Expecter) Exec(ctx interface{}, request interface{}) *MockTokenRefreshRepository_Exec_Call {
+func (_e *MockTokenRefreshRepository_Expecter) Exec(ctx any, request any) *MockTokenRefreshRepository_Exec_Call {
 	return &MockTokenRefreshRepository_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
@@ -3509,9 +3509,9 @@ type MockTokenRefreshServiceSignClaims_ClaimsSign_Call struct {
 //   - ctx context.Context
 //   - req *servicejsonkeys.ClaimsSignRequest
 //   - opts ...grpc.CallOption
-func (_e *MockTokenRefreshServiceSignClaims_Expecter) ClaimsSign(ctx interface{}, req interface{}, opts ...interface{}) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
+func (_e *MockTokenRefreshServiceSignClaims_Expecter) ClaimsSign(ctx any, req any, opts ...any) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
 	return &MockTokenRefreshServiceSignClaims_ClaimsSign_Call{Call: _e.mock.On("ClaimsSign",
-		append([]interface{}{ctx, req}, opts...)...)}
+		append([]any{ctx, req}, opts...)...)}
 }
 
 func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Run(run func(ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption)) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
@@ -3612,7 +3612,7 @@ type MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call struct {
 // VerifyClaims is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *servicejsonkeys.VerifyClaimsRequest
-func (_e *MockTokenRefreshServiceVerifyClaims_Expecter) VerifyClaims(ctx interface{}, req interface{}) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
+func (_e *MockTokenRefreshServiceVerifyClaims_Expecter) VerifyClaims(ctx any, req any) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
 	return &MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, req)}
 }
 
@@ -3707,7 +3707,7 @@ type MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call struct {
 // VerifyClaims is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *servicejsonkeys.VerifyClaimsRequest
-func (_e *MockTokenRefreshServiceVerifyRefreshClaims_Expecter) VerifyClaims(ctx interface{}, req interface{}) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
+func (_e *MockTokenRefreshServiceVerifyRefreshClaims_Expecter) VerifyClaims(ctx any, req any) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
 	return &MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call{Call: _e.mock.On("VerifyClaims", ctx, req)}
 }
 
