@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
@@ -105,7 +105,7 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       PLATFORM_AUTH_URL: http://localhost:7010
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/go-actions/test-go@master
         id: test
@@ -302,7 +302,7 @@ jobs:
       SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
       SUPER_ADMIN_PASSWORD: admin
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker-job@master
         with:
@@ -364,7 +364,7 @@ jobs:
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6000
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@master
         with:
@@ -429,7 +429,7 @@ jobs:
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6000
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@master
         id: build
@@ -488,7 +488,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: |
           mkdir _site
           mv openapi.html _site/index.html
