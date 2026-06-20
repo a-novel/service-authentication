@@ -11,9 +11,9 @@
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/a-novel/service-authentication/main.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/a-novel/service-authentication)](https://goreportcard.com/report/github.com/a-novel/service-authentication)
-[![codecov](https://codecov.io/gh/a-novel/service-authentication/graph/badge.svg?token=cnSwTJ2q4n)](https://codecov.io/gh/a-novel/service-authentication)
+[![codecov](https://codecov.io/gh/a-novel/service-authentication/graph/badge.svg)](https://codecov.io/gh/a-novel/service-authentication)
 
-![Coverage graph](https://codecov.io/gh/a-novel/service-authentication/graphs/sunburst.svg?token=cnSwTJ2q4n)
+![Coverage graph](https://codecov.io/gh/a-novel/service-authentication/graphs/sunburst.svg)
 
 ## Usage
 
