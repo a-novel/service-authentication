@@ -1,104 +1,63 @@
 # Contributing to service-authentication
 
-Welcome to the authentication service for the A-Novel platform. This guide will help you understand the codebase, set
-up your development environment, and contribute effectively.
+For platform-wide setup (Go, Node, Podman, the `a-novel` CLI) and the day-to-day `a-novel` / `pnpm` commands, see the [developer onboarding guide](https://github.com/a-novel-kit/.github/blob/master/README.md). This file documents what is specific to the authentication service.
 
-Before reading this guide, if you haven't already, please check the
-[generic contribution guidelines](https://github.com/a-novel/.github/blob/master/CONTRIBUTING.md) that are relevant
-to your scope.
+For deployment, configuration, and client-package integration, read the [README](./README.md) first. Contributors are expected to know what the service does and how operators run it before touching the code.
 
 ---
 
-## Quick Start
+## Quick local interactions
 
-### Prerequisites
+Once the service is up (`a-novel run start service-authentication/rest`), the REST server listens on `${SERVICE_AUTHENTICATION_REST_PORT}` and MailPit's UI/API on `${MAIL_UI_PORT}`. Both ports are allocated by the `a-novel` daemon; inject them into your shell with `eval "$(a-novel run env service-authentication)"`.
 
-The following must be installed on your system.
-
-- [Go](https://go.dev/doc/install)
-- [Node.js](https://nodejs.org/en/download)
-  - [pnpm](https://pnpm.io/installation)
-- [Podman](https://podman.io/docs/installation)
-- (optional) [Direnv](https://direnv.net/)
-- Make
-  - `sudo apt-get install build-essential` (apt)
-  - `sudo pacman -S make` (arch)
-  - `brew install make` (macOS)
-  - [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm)
-
-### Bootstrap
-
-Install the dependencies:
+### Health
 
 ```bash
-go mod download
-pnpm i --frozen-lockfile
-```
-
-### Common Commands
-
-| Command                                          | Description                            |
-| ------------------------------------------------ | -------------------------------------- |
-| `a-novel run start service-authentication/rest`  | Start the service locally (daemon)     |
-| `a-novel test -y`                                | Run all tests                          |
-| `pnpm lint:go` / `pnpm lint:proto` / `pnpm lint` | Run the linters (Go / proto / node)    |
-| `pnpm format:go` / `pnpm format`                 | Format the code (Go / everything else) |
-| `a-novel build -y`                               | Build Docker images locally            |
-| `pnpm generate`                                  | Generate mocks and templates           |
-
-### Interacting with the Service
-
-Once the service is running (`a-novel run start service-authentication/rest`), you can interact with it using:
-
-- `curl` or any HTTP client (REST API).
-
-#### Health Checks
-
-```bash
-# Simple ping (is the server up?)
+# Liveness
 curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/ping
 
-# Detailed health check (checks database, dependencies)
+# Dependency check (Postgres, JSON Keys, SMTP)
 curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/healthcheck
 ```
 
-#### Authentication
+### Authentication flows
 
-Get an anonymous token (required for most interactions).
+Most endpoints require a bearer token. Start with an anonymous session, then register, log in, and refresh.
 
 ```bash
-# For simplicity, define the following variables in your shell.
+# For convenience, define the account you will create.
 USER=<USER_EMAIL>
 PASSWORD=<PASSWORD>
 ```
 
 ```bash
+# Anonymous session — the entry point for register / login.
 ACCESS_TOKEN=$(curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session/anon | jq -r '.accessToken')
 
-# Verify session.
+# Inspect the current session.
 curl -X GET http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session \
-  -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
-##### Register
+#### Register
+
+Registration is a two-step, email-verified flow: request a short code, read it from the captured email, then create the account with it.
 
 ```bash
-# Create short code.
+# Request a short code (emailed to the user).
 curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/short-code/register \
-  -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
   -d "{\"email\": \"$USER\", \"lang\": \"en\"}"
 
-# Retrieve email
+# Pull the short code out of the latest captured email (see MailPit below).
 EMAIL_ID=$(curl -s http://localhost:${MAIL_UI_PORT}/api/v1/messages | jq -r '.messages[0].ID')
 SHORT_CODE=$(
-  curl -s "http://localhost:${MAIL_UI_PORT}/api/v1/message/$EMAIL_ID" | \
-    grep -oP '(?<=shortCode\=)[a-zA-Z0-9]+' | \
-    head -1
+  curl -s "http://localhost:${MAIL_UI_PORT}/api/v1/message/$EMAIL_ID" |
+    grep -oP '(?<=shortCode\=)[a-zA-Z0-9]+' | head -1
 )
 
-# Complete registration with the code
+# Complete registration with the code. Returns both tokens.
 TOKEN=$(
   curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/credentials \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
@@ -109,7 +68,7 @@ ACCESS_TOKEN=$(echo $TOKEN | jq -r '.accessToken')
 REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 ```
 
-##### Login
+#### Login
 
 ```bash
 TOKEN=$(
@@ -122,10 +81,9 @@ ACCESS_TOKEN=$(echo $TOKEN | jq -r '.accessToken')
 REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 ```
 
-##### Refresh expired token
+#### Refresh
 
 ```bash
-# Refresh an expired access token
 TOKEN=$(
   curl -X PATCH http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session \
     -H "Content-Type: application/json" \
@@ -135,102 +93,80 @@ ACCESS_TOKEN=$(echo $TOKEN | jq -r '.accessToken')
 REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 ```
 
-### MailPit (Email Testing)
+### MailPit (email testing)
 
-[MailPit](https://mailpit.axllent.org/) captures all emails sent by the service during local development. No emails
-are actually sent to real addresses.
-
-**Access the UI:** http://localhost:${MAIL_UI_PORT}
-
-**Documentation:**
-
-- [MailPit Features](https://mailpit.axllent.org/docs/)
-- [API v1 Reference](https://mailpit.axllent.org/docs/api-v1/view.html)
-- [Integration Testing Guide](https://mailpit.axllent.org/docs/integration/)
-
-#### Quick API Examples
+[MailPit](https://mailpit.axllent.org/) captures every email the service sends during local development — nothing reaches a real inbox. UI: http://localhost:${MAIL_UI_PORT}.
 
 ```bash
-# List all captured emails
-curl http://localhost:${MAIL_UI_PORT}/api/v1/messages
+# Latest captured email (handy for grabbing a short code).
+curl -s http://localhost:${MAIL_UI_PORT}/api/v1/messages | jq '.messages[0]'
 
-# Get the latest email (useful for testing)
-curl http://localhost:${MAIL_UI_PORT}/api/v1/messages | jq '.messages[0]'
-
-# Delete all emails (clean slate for testing)
+# Clean slate.
 curl -X DELETE http://localhost:${MAIL_UI_PORT}/api/v1/messages
 
-# Search for emails by recipient
+# Search by recipient.
 curl "http://localhost:${MAIL_UI_PORT}/api/v1/search?query=to:user@example.com"
 ```
 
+See the [MailPit API v1 reference](https://mailpit.axllent.org/docs/api-v1/view.html) for more.
+
 ---
 
-## Project-Specific Guidelines
+## Service-specific concepts
 
-> This section contains patterns specific to this authentication service.
+### Two-token system
 
-### Two-Token System
+Sessions are a pair of JWTs, both signed and verified through the [JSON Keys service](https://github.com/a-novel/service-json-keys) — this service holds no signing keys of its own.
 
-The service uses a two-token JWT system:
+| Token         | Purpose                         | Lifetime        |
+| ------------- | ------------------------------- | --------------- |
+| Access token  | Authorizes API calls.           | Short (minutes) |
+| Refresh token | Mints a new pair without login. | Long (days)     |
 
-| Token         | Purpose           | Lifetime        |
-| ------------- | ----------------- | --------------- |
-| Access Token  | API authorization | Short (minutes) |
-| Refresh Token | Session extension | Long (days)     |
+A client authenticates once, then uses the access token until it expires and the refresh token to roll a fresh pair (`PATCH /session`) without re-sending credentials.
 
-**Flow:**
+### Short codes
 
-1. User authenticates with email/password
-2. Service returns both tokens
-3. Client uses access token for API calls
-4. When access token expires, client uses refresh token to get new pair
+Single-use, time-limited codes that gate every identity-changing flow, emailed to the user so a session token alone can never complete them. Usages and TTLs live in [`internal/config/short_codes.config.yaml`](./internal/config/short_codes.config.yaml):
 
-### Short Codes
+| Usage           | Flow                       | TTL   |
+| --------------- | -------------------------- | ----- |
+| `register`      | Account creation.          | `48h` |
+| `validateEmail` | Email-change confirmation. | `48h` |
+| `resetPassword` | Password reset.            | `2h`  |
 
-Temporary verification codes for:
+A code is generated, emailed, consumed exactly once, then soft-deleted for the audit trail. The generated string length is the `size` field in the same file.
 
-- Email verification during registration
-- Password reset
-- Email change confirmation
+### Roles and permissions
 
-**Lifecycle:**
+Roles and their permissions are defined in [`internal/config/permissions.config.yaml`](./internal/config/permissions.config.yaml) and modelled by `config.Permissions` in [`internal/config/permissions.config.go`](./internal/config/permissions.config.go). Each role lists explicit permissions and may `inherit` another role's permissions transitively; `priority` ranks roles for checks that compare two users.
 
-1. Generated with expiration time
-2. Sent to user via email
-3. Consumed once (single-use)
-4. Soft-deleted after use for audit trail
+| Role              | Priority | Adds on top of inherited                              |
+| ----------------- | -------- | ----------------------------------------------------- |
+| `auth:anon`       | 0        | Register, request short codes, reset password.        |
+| `auth:user`       | 1        | Patch own password, request email-update short codes. |
+| `auth:admin`      | 2        | Read / list / check existence of credentials.         |
+| `auth:superadmin` | 3        | Patch user roles.                                     |
 
-### Roles and Permissions
+Permissions are checked per route. The shipped Go middleware (`pkg/go.NewAuthHandler`, see the README) resolves inheritance at startup, so route mounts reference only leaf permissions.
 
-| Role         | Description               |
-| ------------ | ------------------------- |
-| `Anon`       | Anonymous/unauthenticated |
-| `User`       | Authenticated user        |
-| `Admin`      | Administrative access     |
-| `SuperAdmin` | Full system access        |
+### Password security
 
-Permissions are defined in `internal/config/permissions.go` and enforced via middleware.
-
-### Password Security
-
-Passwords are hashed using Argon2id (RFC 9106):
+Passwords are hashed with **Argon2id** (RFC 9106). The implementation lives in [`internal/lib/argon2.go`](./internal/lib/argon2.go):
 
 ```go
-// Hashing
-hash, err := lib.GenerateArgon2(password)
+// Hashing — pass the tuning parameters explicitly.
+hash, err := lib.GenerateArgon2(password, lib.Argon2ParamsDefault)
 
-// Verification
-valid := lib.CompareArgon2(password, hash)
+// Verification — returns a non-nil error on mismatch.
+err := lib.CompareArgon2(password, hash)
 ```
 
-Never log, expose, or store plaintext passwords.
+Never log, expose, or store plaintext passwords. The only place a plaintext password legitimately enters the system is `SUPER_ADMIN_PASSWORD` on the `init` job, which hashes it before insert.
 
 ---
 
 ## Questions?
-
-If you have questions or run into issues:
 
 - Open an issue at https://github.com/a-novel/service-authentication/issues
 - Check existing issues for similar problems
