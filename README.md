@@ -38,7 +38,7 @@ The service runs as published OCI images plus a PostgreSQL database. The REST su
 | `service-authentication/jobs/init`       | One-shot bootstrap job; provisions the super-admin from `SUPER_ADMIN_*`. Idempotent. |
 | `service-authentication/database`        | Pre-tuned PostgreSQL image — or bring your own Postgres.                             |
 
-Pin every image to the same release tag (current: `v2.4.2`). A production deployment runs `database`, then `migrations` to completion, then `init` to completion, then any number of `rest` replicas:
+Pin every image to the same release tag — see the [latest release](https://github.com/a-novel/service-authentication/releases/latest). A production deployment runs `database`, then `migrations` to completion, then `init` to completion, then any number of `rest` replicas:
 
 ```yaml
 services:
@@ -94,7 +94,7 @@ volumes:
   authentication-postgres-data:
 ```
 
-The `init` job is optional and idempotent — skip it (or leave `SUPER_ADMIN_*` unset) and it exits without touching the database. Email-bearing flows (registration, password reset, email change) fall back to a debug sender that prints to stdout unless you configure SMTP — see the optional configuration below.
+The `init` job is idempotent — leave `SUPER_ADMIN_*` unset and it exits without touching the database, so it is safe to keep in every deployment. The server is wired to wait on it (`depends_on`), so if you drop the `init` service entirely, remove that dependency from `service-authentication` too or it won't start. Email-bearing flows (registration, password reset, email change) fall back to a debug sender that prints to stdout unless you configure SMTP — see the optional configuration below.
 
 ### Configuration
 
@@ -190,9 +190,11 @@ import (
 // another role's permissions transitively, and `priority` ranks roles for checks
 // that compare two users (e.g. an admin acting on a lower-priority account).
 var myPermissions = serviceauthentication.Permissions{
+	// Keys must be roles your tokens actually carry. service-authentication issues the
+	// built-in auth:* roles; a deployment can define more in its permissions config.
 	Roles: map[string]serviceauthentication.Role{
-		"reader": {Priority: 0, Permissions: []string{"post:read"}},
-		"author": {Priority: 1, Inherits: []string{"reader"}, Permissions: []string{"post:write"}},
+		"auth:user":  {Priority: 0, Permissions: []string{"post:read"}},
+		"auth:admin": {Priority: 1, Inherits: []string{"auth:user"}, Permissions: []string{"post:read", "post:write"}},
 	},
 }
 
@@ -241,7 +243,7 @@ Every method ships [zod](https://github.com/colinhacks/zod) request and response
 
 ## Running locally
 
-For a throwaway instance without the dev toolchain, the **standalone** image bundles the server, migrations, and the init bootstrap in one container. It runs migrations and init on every boot — handy for a quick spin-up, unsafe under multi-replica production restarts.
+For a throwaway instance without the dev toolchain, the **`standalone-rest`** image bundles the server, migrations, and the init bootstrap in one container. It runs migrations and init on every boot — handy for a quick spin-up, unsafe under multi-replica production restarts.
 
 ```yaml
 services:

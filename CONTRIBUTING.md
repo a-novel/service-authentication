@@ -162,7 +162,7 @@ hash, err := lib.GenerateArgon2(password, lib.Argon2ParamsDefault)
 err := lib.CompareArgon2(password, hash)
 ```
 
-Never log, expose, or store plaintext passwords. The only place a plaintext password legitimately enters the system is `SUPER_ADMIN_PASSWORD` on the `init` job, which hashes it before insert.
+Plaintext passwords enter only through request bodies (registration, login, password change) and the `SUPER_ADMIN_PASSWORD` env var on the `init` job; each is hashed with Argon2 before it touches the database. Never log, expose, or persist them in plaintext anywhere else.
 
 ---
 
