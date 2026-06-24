@@ -80,9 +80,6 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.7.0
-      js-yaml:
-        specifier: ^4.1.1
-        version: 4.2.0
       jsdom:
         specifier: ^29.0.0
         version: 29.1.1(@noble/hashes@1.8.0)
