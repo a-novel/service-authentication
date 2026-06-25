@@ -1,5 +1,7 @@
 # Authentication service
 
+Identity and session manager for the A-Novel platform: it owns user credentials, issues and refreshes the access/refresh token pair, and ships a Go middleware so any service can gate its routes on roles and permissions.
+
 [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/agorastoryverse)](https://twitter.com/agorastoryverse)
 [![Discord](https://img.shields.io/discord/1315240114691248138?logo=discord)](https://discord.gg/rp4Qr8cA)
 
@@ -15,62 +17,34 @@
 
 ![Coverage graph](https://codecov.io/gh/a-novel/service-authentication/graphs/sunburst.svg)
 
-## Usage
+## What it does
 
-### Docker
+Authentication owns **user identities** — email/password credentials, hashed with Argon2id — and the **token lifecycle**. Clients trade credentials (or nothing, for an anonymous session) for a short-lived access token and a long-lived refresh token, then refresh the pair without re-authenticating. Every account carries a role (`auth:anon`, `auth:user`, `auth:admin`, `auth:superadmin`); roles map to permissions that downstream services enforce per route.
 
-Run the service as a containerized application (the below examples use docker-compose syntax).
+Identity changes — registration, email change, password reset — are gated by single-use **short codes** emailed to the user, so a stolen session token alone can't take over an account.
 
-#### REST
+It exposes one **public REST API** and signs nothing itself: signing and verification go to [JSON Keys](https://github.com/a-novel/service-json-keys) over that service's private gRPC surface, so the two share a secure, unexposed network. The Go client also ships an auth middleware any service can mount to verify tokens and enforce permissions locally.
 
-> Set the SERVICE_AUTHENTICATION_REST_PORT env variable to whatever port you want to use for the service.
+## Deploying
 
-```yaml
-services:
-  postgres-authentication:
-    image: ghcr.io/a-novel/service-authentication/database:v2.4.2
-    networks:
-      - api
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: postgres
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-    volumes:
-      - authentication-postgres-data:/var/lib/postgresql/
+The service runs as published OCI images plus a PostgreSQL database. The REST surface is stateless, so it scales to as many replicas as you need behind a load balancer; all state lives in Postgres. A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a hard dependency — authentication reaches it over its private gRPC port, and the two share sensitive key material, so keep that link on an unexposed network.
 
-  service-authentication:
-    image: ghcr.io/a-novel/service-authentication/standalone:v2.4.2
-    ports:
-      - "${SERVICE_AUTHENTICATION_REST_PORT}:8080"
-    depends_on:
-      postgres-authentication:
-        condition: service_healthy
-    environment:
-      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
-      SERVICE_JSON_KEYS_PORT: # Port where service-json-keys is running
-      SERVICE_JSON_KEYS_HOST: # URL to a running service-json-keys instance
-    networks:
-      - api
+> **OpenTofu modules are the planned canonical deployment path.** Until they land, deploy the images with any container orchestrator — the composition below is the reference for which images to run, how they wire together, and the environment they expect.
 
-networks:
-  api:
+| Image                                    | Role                                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| `service-authentication/rest`            | Public REST API. The long-running server.                                            |
+| `service-authentication/jobs/migrations` | One-shot schema migration job; runs to completion before `init` and the server.      |
+| `service-authentication/jobs/init`       | One-shot bootstrap job; provisions the super-admin from `SUPER_ADMIN_*`. Idempotent. |
+| `service-authentication/database`        | Pre-tuned PostgreSQL image — or bring your own Postgres.                             |
 
-volumes:
-  authentication-postgres-data:
-```
-
-Note the standalone image is an all-in-one initializer for the application; however, it runs heavy operations such
-as migrations on every launch. Thus, while it comes in handy for local development, it is NOT RECOMMENDED for
-production deployments. Instead, consider using the separate, optimized images for that purpose.
+Pin every image to the same release tag — see the [latest release](https://github.com/a-novel/service-authentication/releases/latest). A production deployment runs `database`, then `migrations` to completion, then `init` to completion, then any number of `rest` replicas:
 
 ```yaml
 services:
   postgres-authentication:
     image: ghcr.io/a-novel/service-authentication/database:v2.4.2
-    networks:
-      - api
+    networks: [api]
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
@@ -81,48 +55,37 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/
 
   migrations-authentication:
-    image: ghcr.io/a-novel/service-authentication/migrations:v2.4.2
+    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.4.2
     depends_on:
-      postgres-authentication:
-        condition: service_healthy
+      postgres-authentication: { condition: service_healthy }
     environment:
       POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
-    networks:
-      - api
+    networks: [api]
 
-  # Optional job, used to inject base data into a freshly initialized database.
+  # Optional: seeds the initial super-admin user. Pass the credentials securely.
   init-authentication:
-    image: ghcr.io/a-novel/service-authentication/init:v2.4.2
+    image: ghcr.io/a-novel/service-authentication/jobs/init:v2.4.2
     depends_on:
-      postgres-authentication:
-        condition: service_healthy
-      migrations-authentication:
-        condition: service_completed_successfully
+      postgres-authentication: { condition: service_healthy }
+      migrations-authentication: { condition: service_completed_successfully }
     environment:
       POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
-      # Create an initial super admin user. Make sure those credentials are passed in a secure manner.
-      SUPER_ADMIN_EMAIL: # Email for the initial super admin user
-      SUPER_ADMIN_PASSWORD: # Unencrypted password for the initial super admin user
-    networks:
-      - api
+      SUPER_ADMIN_EMAIL: "<super-admin-email>"
+      SUPER_ADMIN_PASSWORD: "<super-admin-password>"
+    networks: [api]
 
   service-authentication:
     image: ghcr.io/a-novel/service-authentication/rest:v2.4.2
-    ports:
-      - "${SERVICE_AUTHENTICATION_REST_PORT}:8080"
+    ports: ["${SERVICE_AUTHENTICATION_REST_PORT}:8080"]
     depends_on:
-      postgres-authentication:
-        condition: service_healthy
-      migrations-authentication:
-        condition: service_completed_successfully
-      init-authentication:
-        condition: service_completed_successfully
+      postgres-authentication: { condition: service_healthy }
+      migrations-authentication: { condition: service_completed_successfully }
+      init-authentication: { condition: service_completed_successfully }
     environment:
       POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
-      SERVICE_JSON_KEYS_PORT: # Port where service-json-keys is running
-      SERVICE_JSON_KEYS_HOST: # URL to a running service-json-keys instance
-    networks:
-      - api
+      SERVICE_JSON_KEYS_HOST: "<json-keys-host>"
+      SERVICE_JSON_KEYS_PORT: "<json-keys-grpc-port>"
+    networks: [api]
 
 networks:
   api:
@@ -131,177 +94,82 @@ volumes:
   authentication-postgres-data:
 ```
 
-Above are the minimal required configuration to run the service locally. Configuration is done through environment
-variables. Below is a list of available configurations:
+The `init` job is idempotent — leave `SUPER_ADMIN_*` unset and it exits without touching the database, so it is safe to keep in every deployment. The server is wired to wait on it (`depends_on`), so if you drop the `init` service entirely, remove that dependency from `service-authentication` too or it won't start. Email-bearing flows (registration, password reset, email change) fall back to a debug sender that prints to stdout unless you configure SMTP — see the optional configuration below.
 
-**Required variables**
+### Configuration
 
-| Name                   | Description                                                          | Images                                              |
-| ---------------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
-| POSTGRES_DSN           | The Postgres Data Source Name (DSN) used to connect to the database. | `standalone`<br/>`rest`<br/>`init`<br/>`migrations` |
-| SERVICE_JSON_KEYS_PORT | Port where service-json-keys is running                              | `standalone`<br/>`rest`                             |
-| SERVICE_JSON_KEYS_HOST | URL to a running service-json-keys instance                          | `standalone`<br/>`rest`                             |
+Every variable is read from the process environment.
 
-This service requires a running instance of the [JSON Keys service](https://github.com/a-novel/service-json-keys). Note
-that the authentication and json keys service share sensitive data, they should communicate over a secure, unexposed
-network.
+| Name                     | Description                                                                                                                     | Images                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `POSTGRES_DSN`           | PostgreSQL connection string. **Required.**                                                                                     | `rest`<br/>`jobs/migrations`<br/>`jobs/init`<br/>`standalone-rest` |
+| `SERVICE_JSON_KEYS_HOST` | Hostname of the [JSON Keys service](https://github.com/a-novel/service-json-keys) (no scheme/port). **Required** on the server. | `rest`<br/>`standalone-rest`                                       |
+| `SERVICE_JSON_KEYS_PORT` | gRPC port of the JSON Keys service. **Required** on the server.                                                                 | `rest`<br/>`standalone-rest`                                       |
+| `SUPER_ADMIN_EMAIL`      | Email of the super-admin to provision. The bootstrap is skipped if unset.                                                       | `jobs/init`<br/>`standalone-rest`                                  |
+| `SUPER_ADMIN_PASSWORD`   | Plaintext password for the super-admin. Pass it securely. The bootstrap is skipped if unset.                                    | `jobs/init`<br/>`standalone-rest`                                  |
 
-**Platform connection**
+Authentication and JSON Keys exchange sensitive data, so the link between them must run on a secure, unexposed network.
 
-You can provide a connection to the client platform by pointing to a running instance of the
-[authentication platform](https://github.com/a-novel/platform-authentication).
+<details>
+<summary>Optional configuration (client platform, SMTP, REST tuning, OpenTelemetry)</summary>
 
-This connection is optional and only used to populate links in emails.
+**Client platform** — optional; only used to build links in outgoing emails. Point it at a running [authentication platform](https://github.com/a-novel/platform-authentication) (images `rest`, `standalone-rest`):
 
-| Name                              | Description                                                            | Default value                             | Images                  |
-| --------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------- | ----------------------- |
-| PLATFORM_AUTH_URL                 | URL to the client platform (optional if all other values are provided) |                                           | `standalone`<br/>`rest` |
-| PLATFORM_AUTH_URL_UPDATE_EMAIL    | URL to the client platform email validation page                       | PLATFORM_AUTH_URL + `/ext/email/validate` | `standalone`<br/>`rest` |
-| PLATFORM_AUTH_URL_UPDATE_PASSWORD | URL to the client platform password update page                        | PLATFORM_AUTH_URL + `/ext/password/reset` | `standalone`<br/>`rest` |
-| PLATFORM_AUTH_URL_REGISTER        | URL to the client platform register page                               | PLATFORM_AUTH_URL + `/ext/account/create` | `standalone`<br/>`rest` |
+| Name                                | Description                      | Default                                     |
+| ----------------------------------- | -------------------------------- | ------------------------------------------- |
+| `PLATFORM_AUTH_URL`                 | Base URL of the client platform. |                                             |
+| `PLATFORM_AUTH_URL_UPDATE_EMAIL`    | Email-validation page.           | `PLATFORM_AUTH_URL` + `/ext/email/validate` |
+| `PLATFORM_AUTH_URL_UPDATE_PASSWORD` | Password-reset page.             | `PLATFORM_AUTH_URL` + `/ext/password/reset` |
+| `PLATFORM_AUTH_URL_REGISTER`        | Register page.                   | `PLATFORM_AUTH_URL` + `/ext/account/create` |
 
-**SMTP**
+**SMTP** — without these, emails are printed to stdout by a debug sender (dev only; set a real server in production, since emails carry short codes) (images `rest`, `standalone-rest`):
 
-By default, this service uses a mock email sender that prints email content to the standard
-output. It is highly recommended to set an actual SMTP server in production environments,
-as emails contain sensitive information (eg short codes).
+| Name                     | Description                                                                                  | Default |
+| ------------------------ | -------------------------------------------------------------------------------------------- | ------- |
+| `SMTP_ADDR`              | SMTP server address (`domain:port`).                                                         |         |
+| `SMTP_SENDER_NAME`       | Display name on outgoing emails.                                                             |         |
+| `SMTP_SENDER_EMAIL`      | Sender address.                                                                              |         |
+| `SMTP_SENDER_PASSWORD`   | Sender account password. Sensitive — handle with care.                                       |         |
+| `SMTP_SENDER_DOMAIN`     | Sender domain; must match the host portion of `SMTP_ADDR`.                                   |         |
+| `SMTP_TIMEOUT`           | Send timeout.                                                                                | `20s`   |
+| `SMTP_FORCE_UNENCRYPTED` | **Never set in production.** Allows plain credentials over an insecure connection; dev only. | `false` |
 
-| Name                   | Description                                                                                                                                                                                                                 | Default value | Images                  |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------- |
-| SMTP_ADDR              | Address of the SMTP server (`domain:port`)                                                                                                                                                                                  |               | `standalone`<br/>`rest` |
-| SMTP_SENDER_NAME       | Name that will appear as the sender in outgoing emails                                                                                                                                                                      |               | `standalone`<br/>`rest` |
-| SMTP_SENDER_EMAIL      | Email address used to send outgoing smtp emails                                                                                                                                                                             |               | `standalone`<br/>`rest` |
-| SMTP_SENDER_PASSWORD   | Plain password used to connect to the sender email account, this data is sensitive so handle with care                                                                                                                      |               | `standalone`<br/>`rest` |
-| SMTP_SENDER_DOMAIN     | Domain used for sending Smtp emails                                                                                                                                                                                         |               | `standalone`<br/>`rest` |
-| SMTP_TIMEOUT           | Set the timeout for sending emails                                                                                                                                                                                          | `20s`         | `standalone`<br/>`rest` |
-| SMTP_FORCE_UNENCRYPTED | DO NOT SET IN PRODUCTION. This variable bypasses SMTP security by allowing plain credentials over insecure connections. This setting is intended for development only, and could compromise your credentials in production. | `false`       | `standalone`<br/>`rest` |
+**REST tuning** (images `rest`, `standalone-rest`):
 
-**Rest API**
+| Name                          | Description                          | Default          |
+| ----------------------------- | ------------------------------------ | ---------------- |
+| `REST_MAX_REQUEST_SIZE`       | Maximum request body size, in bytes. | `2097152` (2MiB) |
+| `REST_TIMEOUT_READ`           | Read timeout.                        | `15s`            |
+| `REST_TIMEOUT_READ_HEADER`    | Header read timeout.                 | `3s`             |
+| `REST_TIMEOUT_WRITE`          | Write timeout.                       | `30s`            |
+| `REST_TIMEOUT_IDLE`           | Idle keep-alive timeout.             | `60s`            |
+| `REST_TIMEOUT_REQUEST`        | Per-request timeout.                 | `60s`            |
+| `REST_CORS_ALLOWED_ORIGINS`   | CORS allowed origins.                | `*`              |
+| `REST_CORS_ALLOWED_HEADERS`   | CORS allowed headers.                | `*`              |
+| `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.         | `false`          |
+| `REST_CORS_MAX_AGE`           | CORS max-age, in seconds.            | `3600`           |
 
-While you should not need to change these values in most cases, the following variables allow you to
-customize the API behavior.
+Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter (images `rest`, `jobs/init`, `standalone-rest`):
 
-| Name                        | Description                                 | Default value    | Images                  |
-| --------------------------- | ------------------------------------------- | ---------------- | ----------------------- |
-| REST_MAX_REQUEST_SIZE       | Maximum size of incoming requests in bytes  | `2097152` (2MiB) | `standalone`<br/>`rest` |
-| REST_TIMEOUT_READ           | Timeout for read operations                 | `15s`            | `standalone`<br/>`rest` |
-| REST_TIMEOUT_READ_HEADER    | Timeout for header reading operations       | `3s`             | `standalone`<br/>`rest` |
-| REST_TIMEOUT_WRITE          | Timeout for write operations                | `30s`            | `standalone`<br/>`rest` |
-| REST_TIMEOUT_IDLE           | Idle timeout                                | `60s`            | `standalone`<br/>`rest` |
-| REST_TIMEOUT_REQUEST        | Timeout for api requests                    | `60s`            | `standalone`<br/>`rest` |
-| REST_CORS_ALLOWED_ORIGINS   | CORS allowed origins (allow all by default) | `*`              | `standalone`<br/>`rest` |
-| REST_CORS_ALLOWED_HEADERS   | CORS allowed headers (allow all by default) | `*`              | `standalone`<br/>`rest` |
-| REST_CORS_ALLOW_CREDENTIALS | CORS allow credentials                      | `false`          | `standalone`<br/>`rest` |
-| REST_CORS_MAX_AGE           | CORS max age                                | `3600`           | `standalone`<br/>`rest` |
+| Name                | Description                                                           | Default                  |
+| ------------------- | --------------------------------------------------------------------- | ------------------------ |
+| `OTEL`              | Enable OTel tracing; the variables below pick the exporter.           | `false`                  |
+| `GCLOUD_PROJECT_ID` | Google Cloud project ID. When set, switches the OTel exporter to GCP. |                          |
+| `APP_NAME`          | Application name attached to traces and logs.                         | `service-authentication` |
 
-**Logs & Tracing**
+</details>
 
-For now, OTEL is only provided using 2 exporters: stdout and Google Cloud. Other integrations may come
-in the future.
+## Using the client packages
 
-| Name              | Description                                                                             | Default value            | Images                             |
-| ----------------- | --------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------- |
-| OTEL              | Activate OTEL tracing (use options below to switch between exporters)                   | `false`                  | `standalone`<br/>`rest`<br/>`init` |
-| GCLOUD_PROJECT_ID | Google Cloud project id for the OTEL exporter. Switch to Google Cloud exporter when set |                          | `standalone`<br/>`rest`<br/>`init` |
-| APP_NAME          | Application name to be used in traces                                                   | `service-authentication` | `standalone`<br/>`rest`<br/>`init` |
+Two clients ship with the service. Each snippet is the **minimum viable call**; the full surface is what your editor's intellisense, [pkg.go.dev](https://pkg.go.dev/github.com/a-novel/service-authentication/v2), and the [API reference](https://a-novel.github.io/service-authentication) are for.
 
-**Setup**
+- **Go** mounts an auth middleware — use it from a backend service that gates routes on roles and permissions. It needs a JSON Keys client to verify tokens, but no running authentication instance.
+- **JavaScript / TypeScript** talks REST — use it from a frontend or Node service that drives the login / refresh / credential flows.
 
-The below variables allow you to setup an empty instance through a job, injecting the minimum data to
-use the application.
-
-| Name                 | Description                                           | Images                  |
-| -------------------- | ----------------------------------------------------- | ----------------------- |
-| SUPER_ADMIN_EMAIL    | Email for the initial super admin user                | `standalone`<br/>`init` |
-| SUPER_ADMIN_PASSWORD | Unencrypted password for the initial super admin user | `standalone`<br/>`init` |
-
-### Javascript (npm)
-
-To interact with a running instance of the authentication service, you can use the integrated package.
-
-> ⚠️ **Warning**: Even though the package is public, GitHub registry requires you to have a Personal Access Token
-> with `repo` and `read:packages` scopes to pull it in your project. See
-> [this issue](https://github.com/orgs/community/discussions/23386#discussioncomment-3240193) for more information.
-
-Make sure you have a `.npmrc` with the following content (in your project or in your home directory):
-
-```ini
-@a-novel:registry=https://npm.pkg.github.com
-@a-novel-kit:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${YOUR_PERSONAL_ACCESS_TOKEN}
-```
-
-Then, install the package using pnpm:
+### Go
 
 ```bash
-# pnpm config set auto-install-peers true
-#  Or
-# pnpm config set auto-install-peers true --location project
-pnpm add @a-novel/service-authentication-rest
-```
-
-To use it, you must create an `AuthenticationApi` instance. A single instance can be shared across
-your client.
-
-```typescript
-import { AuthenticationApi, tokenCreateAnon } from "@a-novel/service-authentication-rest";
-
-export const authenticationApi = new AuthenticationApi("<base_api_url>");
-
-// (optional) check the status of the api connection.
-await authenticationApi.ping();
-await authenticationApi.health();
-```
-
-You can then call methods from the package using this api instance. Each method comes with
-[zod](https://github.com/colinhacks/zod) types so you can validate requests easily.
-
-Responses are validated by default.
-
-```typescript
-import {
-  ClaimsSchema,
-  CredentialsCreateRequestSchema,
-  CredentialsExistsRequestSchema,
-  CredentialsGetRequestSchema,
-  CredentialsListRequestSchema,
-  CredentialsResetPasswordRequestSchema,
-  CredentialsSchema,
-  CredentialsUpdateEmailRequestSchema,
-  CredentialsUpdatePasswordRequestSchema,
-  CredentialsUpdateRoleRequestSchema,
-  ShortCodeCreateEmailUpdateRequestSchema,
-  ShortCodeCreatePasswordResetRequestSchema,
-  ShortCodeCreateRegisterRequestSchema,
-  TokenCreateRequestSchema,
-  TokenRefreshRequestSchema,
-  TokenSchema,
-  claimsGet,
-  credentialsCreate,
-  credentialsExists,
-  credentialsGet,
-  credentialsList,
-  credentialsResetPassword,
-  credentialsUpdateEmail,
-  credentialsUpdatePassword,
-  credentialsUpdateRole,
-  shortCodeCreateEmailUpdate,
-  shortCodeCreatePasswordReset,
-  shortCodeCreateRegister,
-  tokenCreate,
-  tokenCreateAnon,
-  tokenRefresh,
-} from "@a-novel/service-authentication-rest";
-```
-
-### Go module
-
-You can integrate the authentication capabilities directly into your Go services by using the provided
-Go module. Note this does not require a running instance of the authentication service, but only of its
-[JSON Keys service](https://github.com/a-novel/service-json-keys) dependency.
-
-```bash
-go get -u github.com/a-novel/service-authentication/v2
+go get github.com/a-novel/service-authentication/v2
 ```
 
 ```go
@@ -313,61 +181,99 @@ import (
 
 	loggingpresets "github.com/a-novel-kit/golib/logging/presets"
 	"github.com/go-chi/chi/v5"
-	"github.com/muesli/termenv"
 
-	"github.com/a-novel/service-authentication/v2/pkg/go"
-	"github.com/a-novel/service-json-keys/v2/pkg/go"
+	serviceauthentication "github.com/a-novel/service-authentication/v2/pkg/go"
+	servicejsonkeys "github.com/a-novel/service-json-keys/v2/pkg/go"
 )
 
-// Define roles for your application (required).
-//
-// The key is the name of the role, as it is passed to the JWT payload.
-// Permissions are evaluated at path level, which means a given role can
-// only access resources for which it has explicit permissions. For more
-// fine-grained access, you must implement custom validation yourself.
-//
-// The priority argument serves as a hierarchy indicator between roles, and is
-// used by some custom access checks to grant permission for an operation between
-// 2 users, based on their relative roles priorities.
+// Declare your roles. Each role grants a set of permissions; `inherits` pulls in
+// another role's permissions transitively, and `priority` ranks roles for checks
+// that compare two users (e.g. an admin acting on a lower-priority account).
 var myPermissions = serviceauthentication.Permissions{
+	// Keys must be roles your tokens actually carry. service-authentication issues the
+	// built-in auth:* roles; a deployment can define more in its permissions config.
 	Roles: map[string]serviceauthentication.Role{
-		"role1": {
-			Priority:    0,
-			Permissions: []string{"permission1", "permission2"},
-		},
-		"role2": {
-			Priority:    1,
-			Inherits:    []string{"role1"},
-			Permissions: []string{"permission3"},
-		},
-		"role3": {
-			Priority:    0,
-			Permissions: []string{"permission4"},
-		},
+		"auth:user":  {Priority: 0, Permissions: []string{"post:read"}},
+		"auth:admin": {Priority: 1, Inherits: []string{"auth:user"}, Permissions: []string{"post:read", "post:write"}},
 	},
 }
 
 func main() {
 	ctx := context.Background()
 
-	jsonKeysClient, _ := servicejsonkeys.NewClient("<service-json-keys-url>")
-	serviceVerifyAccessToken := servicejsonkeys.NewClaimsVerifier[serviceauthentication.Claims](jsonKeysClient)
+	jsonKeysClient, _ := servicejsonkeys.NewClient("service-json-keys:8080")
+	verifier := servicejsonkeys.NewClaimsVerifier[serviceauthentication.Claims](jsonKeysClient)
+	logger := &loggingpresets.LogLocal{Out: os.Stdout}
 
-	logger := &loggingpresets.LogLocal{
-		Out:      os.Stdout,
-	}
-
-	// You can now add permission-based authentication to your routes.
-	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, myPermissions, logger)
+	// withAuth gates routes on permissions.
+	withAuth := serviceauthentication.NewAuthHandler(verifier, myPermissions, logger)
 	router := chi.NewRouter()
 
-	// Route only accessible to users with role2.
-	withAuth(router, "permission3").Get(...)
-	// Route accessible to users with role1 or role2.
-	withAuth(router, "permission2").Get(...)
-	// Route accessible to all authenticated users.
-	withAuth(router).Get(...)
-	// Route accessible to users with role2 or role3.
-	withAuth(router, "permission3", "permission4").Get(...)
+	withAuth(router, "post:write").Get(...) // requires the post:write permission
+	withAuth(router).Get(...)               // any authenticated (or anonymous) caller
+
+	_ = ctx
 }
 ```
+
+### JavaScript / TypeScript
+
+The package is published to GitHub Packages, which requires a Personal Access Token with the `read:packages` scope even for public packages ([why](https://github.com/orgs/community/discussions/23386#discussioncomment-3240193)). Add to `.npmrc` (project root or `$HOME`):
+
+```ini
+@a-novel:registry=https://npm.pkg.github.com
+@a-novel-kit:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${YOUR_PERSONAL_ACCESS_TOKEN}
+```
+
+```bash
+pnpm add @a-novel/service-authentication-rest
+```
+
+```typescript
+import { AuthenticationApi, tokenCreateAnon } from "@a-novel/service-authentication-rest";
+
+const api = new AuthenticationApi("http://service-authentication:8080");
+
+// Open an anonymous session — the entry point for register / login flows.
+const token = await tokenCreateAnon(api);
+```
+
+Every method ships [zod](https://github.com/colinhacks/zod) request and response schemas, and responses are validated by default. API reference: [a-novel.github.io/service-authentication](https://a-novel.github.io/service-authentication).
+
+## Running locally
+
+For a throwaway instance without the dev toolchain, the **`standalone-rest`** image bundles the server, migrations, and the init bootstrap in one container. It runs migrations and init on every boot — handy for a quick spin-up, unsafe under multi-replica production restarts.
+
+```yaml
+services:
+  postgres-authentication:
+    image: ghcr.io/a-novel/service-authentication/database:v2.4.2
+    networks: [api]
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+  service-authentication:
+    image: ghcr.io/a-novel/service-authentication/standalone-rest:v2.4.2
+    ports: ["${SERVICE_AUTHENTICATION_REST_PORT}:8080"]
+    depends_on:
+      postgres-authentication: { condition: service_healthy }
+    environment:
+      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+      SERVICE_JSON_KEYS_HOST: "<json-keys-host>"
+      SERVICE_JSON_KEYS_PORT: "<json-keys-grpc-port>"
+    networks: [api]
+
+networks:
+  api:
+```
+
+Working on the service itself? Use the `a-novel` CLI (`a-novel run start service-authentication/rest`) instead — see [CONTRIBUTING](./CONTRIBUTING.md).
+
+## Contributing
+
+Platform setup and the day-to-day commands live in the [developer onboarding guide](https://github.com/a-novel-kit/.github/blob/master/README.md). Service-specific concepts and local interactions are in [CONTRIBUTING.md](./CONTRIBUTING.md).
