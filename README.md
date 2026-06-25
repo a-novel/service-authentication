@@ -23,7 +23,7 @@ Authentication owns **user identities** — email/password credentials, hashed w
 
 Identity-changing flows — registration, email change, password reset — are gated by single-use **short codes** delivered by email, so a session token alone can never silently take over an account.
 
-The service exposes a single **public REST API** for clients (login, refresh, credential management, short codes, health). It does not sign tokens itself: it delegates signing and verification to the [JSON Keys service](https://github.com/a-novel/service-json-keys) over that service's private gRPC surface, so the two must share a secure, unexposed network. The Go client package additionally ships an auth middleware that any service can mount to verify tokens and enforce permissions locally.
+The service exposes a single **public REST API** for clients. It does not sign tokens itself: it delegates signing and verification to the [JSON Keys service](https://github.com/a-novel/service-json-keys) over that service's private gRPC surface, so the two must share a secure, unexposed network. The Go client package additionally ships an auth middleware that any service can mount to verify tokens and enforce permissions locally.
 
 ## Deploying
 
@@ -276,4 +276,4 @@ Working on the service itself? Use the `a-novel` CLI (`a-novel run start service
 
 ## Contributing
 
-Platform setup — Go, Node, Podman, the `a-novel` CLI — lives in the [developer onboarding guide](https://github.com/a-novel-kit/.github/blob/master/README.md). Service-specific concepts (the two-token system, short codes, roles & permissions, password security) and local interactions are in [CONTRIBUTING.md](./CONTRIBUTING.md).
+Platform setup and the day-to-day commands live in the [developer onboarding guide](https://github.com/a-novel-kit/.github/blob/master/README.md). Service-specific concepts and local interactions are in [CONTRIBUTING.md](./CONTRIBUTING.md).
