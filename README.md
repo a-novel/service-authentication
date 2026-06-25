@@ -19,11 +19,11 @@ Identity and session manager for the A-Novel platform: it owns user credentials,
 
 ## What it does
 
-Authentication owns **user identities** — email/password credentials, hashed with Argon2id — and the full **token lifecycle**. Clients exchange credentials (or nothing, for an anonymous session) for a short-lived access token and a long-lived refresh token, then refresh the pair without re-authenticating. Every account carries a role (`auth:anon`, `auth:user`, `auth:admin`, `auth:superadmin`), and roles map to a set of permissions that downstream services enforce per route.
+Authentication owns **user identities** — email/password credentials, hashed with Argon2id — and the **token lifecycle**. Clients trade credentials (or nothing, for an anonymous session) for a short-lived access token and a long-lived refresh token, then refresh the pair without re-authenticating. Every account carries a role (`auth:anon`, `auth:user`, `auth:admin`, `auth:superadmin`); roles map to permissions that downstream services enforce per route.
 
-Identity-changing flows — registration, email change, password reset — are gated by single-use **short codes** delivered by email, so a session token alone can never silently take over an account.
+Identity changes — registration, email change, password reset — are gated by single-use **short codes** emailed to the user, so a stolen session token alone can't take over an account.
 
-The service exposes a single **public REST API** for clients. It does not sign tokens itself: it delegates signing and verification to the [JSON Keys service](https://github.com/a-novel/service-json-keys) over that service's private gRPC surface, so the two must share a secure, unexposed network. The Go client package additionally ships an auth middleware that any service can mount to verify tokens and enforce permissions locally.
+It exposes one **public REST API** and signs nothing itself: signing and verification go to [JSON Keys](https://github.com/a-novel/service-json-keys) over that service's private gRPC surface, so the two share a secure, unexposed network. The Go client also ships an auth middleware any service can mount to verify tokens and enforce permissions locally.
 
 ## Deploying
 

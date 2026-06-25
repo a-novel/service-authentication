@@ -1,8 +1,8 @@
 # Contributing to service-authentication
 
-For platform-wide setup (Go, Node, Podman, the `a-novel` CLI) and the day-to-day `a-novel` / `pnpm` commands, see the [developer onboarding guide](https://github.com/a-novel-kit/.github/blob/master/README.md). This file documents what is specific to the authentication service.
+Platform setup and day-to-day commands are in the [developer onboarding guide](https://github.com/a-novel-kit/.github/blob/master/README.md). This file covers what's specific to the authentication service.
 
-For deployment, configuration, and client-package integration, read the [README](./README.md) first. Contributors are expected to know what the service does and how operators run it before touching the code.
+Read the [README](./README.md) first — it covers what the service does and how operators run it.
 
 ---
 
@@ -168,6 +168,4 @@ Plaintext passwords enter only through request bodies (registration, login, pass
 
 ## Questions?
 
-- Open an issue at https://github.com/a-novel/service-authentication/issues
-- Check existing issues for similar problems
-- Include relevant logs and environment details
+[Open an issue](https://github.com/a-novel/service-authentication/issues) — include logs and environment details.
