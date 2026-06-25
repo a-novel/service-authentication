@@ -218,7 +218,7 @@ func main() {
 
 ### JavaScript / TypeScript
 
-The package is published to GitHub Packages, which requires a Personal Access Token with `repo` and `read:packages` scopes even for public packages ([why](https://github.com/orgs/community/discussions/23386#discussioncomment-3240193)). Add to `.npmrc` (project root or `$HOME`):
+The package is published to GitHub Packages, which requires a Personal Access Token with the `read:packages` scope even for public packages ([why](https://github.com/orgs/community/discussions/23386#discussioncomment-3240193)). Add to `.npmrc` (project root or `$HOME`):
 
 ```ini
 @a-novel:registry=https://npm.pkg.github.com
