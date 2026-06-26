@@ -5,7 +5,7 @@ go 1.26.4
 tool github.com/vektra/mockery/v3
 
 require (
-	github.com/a-novel-kit/golib v0.22.8
+	github.com/a-novel-kit/golib v0.22.9
 	github.com/a-novel-kit/jwt v1.1.70
 	github.com/a-novel/service-json-keys/v2 v2.3.1
 	github.com/go-chi/chi/v5 v5.3.0
@@ -121,7 +121,7 @@ require (
 	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.46.0 // indirect
-	google.golang.org/api v0.285.0 // indirect
+	google.golang.org/api v0.286.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260610212136-7ab31c22f7ad // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
