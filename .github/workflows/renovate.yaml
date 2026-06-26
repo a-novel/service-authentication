@@ -22,7 +22,7 @@ jobs:
         with:
           allowed_commands: |
             [
-              "^pnpm format$", 
+              "^pnpm format:js$", 
               "^go mod download$", 
               "^go mod download .*", 
               "^rm -f .*",
