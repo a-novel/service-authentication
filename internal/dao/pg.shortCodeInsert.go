@@ -31,7 +31,7 @@ var shortCodeInsertQuery string
 // layer caught the conflict.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
-// ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The repository
+// ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The dao
 // runs at REPEATABLE READ isolation; uniqueness on (target, usage) for the
 // active subset is enforced by the partial unique index added in the
 // 20260510140000 migration, so concurrent inserts cannot produce duplicates
@@ -65,7 +65,7 @@ func NewShortCodeInsert() *ShortCodeInsert {
 	return &ShortCodeInsert{}
 }
 
-func (repository *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRequest) (*ShortCode, error) {
+func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRequest) (*ShortCode, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert")
 	defer span.End()
 
@@ -87,15 +87,15 @@ func (repository *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeI
 			// single UPDATE — active and naturally expired alike — so the
 			// partial unique index (target, usage) WHERE deleted_at IS NULL is
 			// clear before the insert.
-			err = repository.discardConflicts(ctx, tx, request)
+			err = dao.discardConflicts(ctx, tx, request)
 		} else {
 			// checkConflicts gates on `expires_at > now()`, so a naturally
 			// expired but not-yet-deleted row is invisible to it — yet that row
 			// still lives in the partial unique index and would make the insert
 			// fail with a unique violation. Soft-delete it first.
-			err = repository.discardExpired(ctx, tx, request)
+			err = dao.discardExpired(ctx, tx, request)
 			if err == nil {
-				err = repository.checkConflicts(ctx, tx, request)
+				err = dao.checkConflicts(ctx, tx, request)
 			}
 		}
 
@@ -138,7 +138,7 @@ func (repository *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeI
 //go:embed pg.shortCodeInsert.discardConflict.sql
 var shortCodeInsertDiscardConflictQuery string
 
-func (repository *ShortCodeInsert) discardConflicts(
+func (dao *ShortCodeInsert) discardConflicts(
 	ctx context.Context, tx bun.IDB, request *ShortCodeInsertRequest,
 ) error {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(discardConflicts)")
@@ -168,7 +168,7 @@ func (repository *ShortCodeInsert) discardConflicts(
 //go:embed pg.shortCodeInsert.discardExpired.sql
 var shortCodeInsertDiscardExpiredQuery string
 
-func (repository *ShortCodeInsert) discardExpired(
+func (dao *ShortCodeInsert) discardExpired(
 	ctx context.Context, tx bun.IDB, request *ShortCodeInsertRequest,
 ) error {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(discardExpired)")
@@ -193,7 +193,7 @@ func (repository *ShortCodeInsert) discardExpired(
 //go:embed pg.shortCodeInsert.checkConflict.sql
 var shortCodeInsertCheckConflictQuery string
 
-func (repository *ShortCodeInsert) checkConflicts(
+func (dao *ShortCodeInsert) checkConflicts(
 	ctx context.Context, tx bun.IDB, request *ShortCodeInsertRequest,
 ) error {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(checkConflicts)")

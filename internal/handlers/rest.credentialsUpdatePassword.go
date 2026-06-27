@@ -11,14 +11,14 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type CredentialsUpdatePasswordService interface {
-	Exec(ctx context.Context, request *services.CredentialsUpdatePasswordRequest) (*services.Credentials, error)
+	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
 type CredentialsUpdatePasswordRequest struct {
@@ -59,7 +59,7 @@ func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.CredentialsUpdatePasswordRequest{
+	res, err := handler.service.Exec(ctx, &core.CredentialsUpdatePasswordRequest{
 		Password:        request.Password,
 		CurrentPassword: request.CurrentPassword,
 		UserID:          lo.FromPtr(claims.UserID),
@@ -68,7 +68,7 @@ func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *ht
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
 			lib.ErrInvalidPassword:                   http.StatusForbidden,
-			services.ErrInvalidRequest:               http.StatusUnprocessableEntity,
+			core.ErrInvalidRequest:                   http.StatusUnprocessableEntity,
 		}, err)
 
 		return

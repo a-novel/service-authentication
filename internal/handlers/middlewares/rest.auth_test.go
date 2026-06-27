@@ -17,9 +17,9 @@ import (
 	"github.com/a-novel-kit/jwt/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	middlewaresmocks "github.com/a-novel/service-authentication/v2/internal/handlers/middlewares/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestAuth(t *testing.T) {
@@ -29,7 +29,7 @@ func TestAuth(t *testing.T) {
 
 	type verifyClaimsMock struct {
 		reqToken string
-		resp     *services.AccessTokenClaims
+		resp     *core.AccessTokenClaims
 		err      error
 	}
 
@@ -43,7 +43,7 @@ func TestAuth(t *testing.T) {
 		verifyClaimsMock  *verifyClaimsMock
 
 		expectStatus int
-		expectClaims *services.AccessTokenClaims
+		expectClaims *core.AccessTokenClaims
 	}{
 		{
 			name: "Success",
@@ -57,14 +57,14 @@ func TestAuth(t *testing.T) {
 			},
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
-				resp: &services.AccessTokenClaims{
+				resp: &core.AccessTokenClaims{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"role1"},
 				},
 			},
 
 			expectStatus: http.StatusOK,
-			expectClaims: &services.AccessTokenClaims{
+			expectClaims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Roles:  []string{"role1"},
 			},
@@ -81,14 +81,14 @@ func TestAuth(t *testing.T) {
 			},
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
-				resp: &services.AccessTokenClaims{
+				resp: &core.AccessTokenClaims{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"role2"},
 				},
 			},
 
 			expectStatus: http.StatusOK,
-			expectClaims: &services.AccessTokenClaims{
+			expectClaims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Roles:  []string{"role2"},
 			},
@@ -104,14 +104,14 @@ func TestAuth(t *testing.T) {
 			},
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
-				resp: &services.AccessTokenClaims{
+				resp: &core.AccessTokenClaims{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"role1"},
 				},
 			},
 
 			expectStatus: http.StatusOK,
-			expectClaims: &services.AccessTokenClaims{
+			expectClaims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Roles:  []string{"role1"},
 			},
@@ -189,7 +189,7 @@ func TestAuth(t *testing.T) {
 			},
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
-				resp: &services.AccessTokenClaims{
+				resp: &core.AccessTokenClaims{
 					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"role2"},
 				},
@@ -253,7 +253,7 @@ func TestAuth(t *testing.T) {
 			middleware := middlewares.NewAuth(service, testCase.permissionsByRole, config.LoggerDev)
 			w := httptest.NewRecorder()
 
-			ctxClaims := new(*services.AccessTokenClaims)
+			ctxClaims := new(*core.AccessTokenClaims)
 
 			callback := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				claims, err := middlewares.GetClaimsContext(r.Context())
@@ -300,7 +300,7 @@ func TestGetClaimsContext(t *testing.T) {
 	t.Run("Success/ValidClaims", func(t *testing.T) {
 		t.Parallel()
 
-		want := &services.AccessTokenClaims{
+		want := &core.AccessTokenClaims{
 			UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			Roles:  []string{"user"},
 		}

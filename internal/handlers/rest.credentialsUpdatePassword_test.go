@@ -16,12 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestCredentialsUpdatePassword(t *testing.T) {
@@ -30,8 +30,8 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.CredentialsUpdatePasswordRequest
-		resp *services.Credentials
+		req  *core.CredentialsUpdatePasswordRequest
+		resp *core.Credentials
 		err  error
 	}
 
@@ -39,7 +39,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		name string
 
 		request *http.Request
-		claims  *services.AccessTokenClaims
+		claims  *core.AccessTokenClaims
 
 		serviceMock *serviceMock
 
@@ -53,17 +53,17 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:        "Louvre",
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				resp: &services.Credentials{
+				resp: &core.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user@provider.com",
 					Role:      config.RoleUser,
@@ -88,12 +88,12 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:        "Louvre",
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -110,12 +110,12 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:        "Louvre",
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -132,12 +132,12 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:        "Louvre",
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),

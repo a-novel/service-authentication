@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestCredentialsCreate(t *testing.T) {
@@ -25,8 +25,8 @@ func TestCredentialsCreate(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.CredentialsCreateRequest
-		resp *services.Token
+		req  *core.CredentialsCreateRequest
+		resp *core.Token
 		err  error
 	}
 
@@ -50,12 +50,12 @@ func TestCredentialsCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsCreateRequest{
+				req: &core.CredentialsCreateRequest{
 					Email:     "user@provider.com",
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 				},
-				resp: &services.Token{
+				resp: &core.Token{
 					AccessToken:  "token",
 					RefreshToken: "refresh",
 				},
@@ -77,7 +77,7 @@ func TestCredentialsCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsCreateRequest{
+				req: &core.CredentialsCreateRequest{
 					Email:     "user@provider.com",
 					Password:  "Louvre",
 					ShortCode: "abcdef",
@@ -97,7 +97,7 @@ func TestCredentialsCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsCreateRequest{
+				req: &core.CredentialsCreateRequest{
 					Email:     "user@provider.com",
 					Password:  "Louvre",
 					ShortCode: "abcdef",
@@ -117,12 +117,12 @@ func TestCredentialsCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsCreateRequest{
+				req: &core.CredentialsCreateRequest{
 					Email:     "user@provider.com",
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 				},
-				err: services.ErrShortCodeConsumeInvalid,
+				err: core.ErrShortCodeConsumeInvalid,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -137,7 +137,7 @@ func TestCredentialsCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsCreateRequest{
+				req: &core.CredentialsCreateRequest{
 					Email:     "user@provider.com",
 					Password:  "Louvre",
 					ShortCode: "abcdef",

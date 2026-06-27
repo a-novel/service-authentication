@@ -43,7 +43,7 @@ func NewShortCodeSelect() *ShortCodeSelect {
 	return &ShortCodeSelect{}
 }
 
-func (repository *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRequest) (*ShortCode, error) {
+func (dao *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRequest) (*ShortCode, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeSelect")
 	defer span.End()
 

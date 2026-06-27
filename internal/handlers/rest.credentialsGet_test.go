@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestCredentialsGet(t *testing.T) {
@@ -26,8 +26,8 @@ func TestCredentialsGet(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.CredentialsGetRequest
-		resp *services.Credentials
+		req  *core.CredentialsGetRequest
+		resp *core.Credentials
 		err  error
 	}
 
@@ -52,10 +52,10 @@ func TestCredentialsGet(t *testing.T) {
 			),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsGetRequest{
+				req: &core.CredentialsGetRequest{
 					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				resp: &services.Credentials{
+				resp: &core.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user@provider.com",
 					Role:      config.RoleUser,
@@ -84,7 +84,7 @@ func TestCredentialsGet(t *testing.T) {
 			),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsGetRequest{
+				req: &core.CredentialsGetRequest{
 					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 				err: dao.ErrCredentialsSelectNotFound,
@@ -103,7 +103,7 @@ func TestCredentialsGet(t *testing.T) {
 			),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsGetRequest{
+				req: &core.CredentialsGetRequest{
 					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 				err: errFoo,

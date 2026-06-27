@@ -10,12 +10,12 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type CredentialsGetService interface {
-	Exec(ctx context.Context, request *services.CredentialsGetRequest) (*services.Credentials, error)
+	Exec(ctx context.Context, request *core.CredentialsGetRequest) (*core.Credentials, error)
 }
 
 type CredentialsGetRequest struct {
@@ -44,13 +44,13 @@ func (handler *CredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.CredentialsGetRequest{
+	res, err := handler.service.Exec(ctx, &core.CredentialsGetRequest{
 		ID: request.ID,
 	})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsSelectNotFound: http.StatusNotFound,
-			services.ErrInvalidRequest:       http.StatusUnprocessableEntity,
+			core.ErrInvalidRequest:           http.StatusUnprocessableEntity,
 		}, err)
 
 		return

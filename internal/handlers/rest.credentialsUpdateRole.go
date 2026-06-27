@@ -12,13 +12,13 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type CredentialsUpdateRoleService interface {
-	Exec(ctx context.Context, request *services.CredentialsUpdateRoleRequest) (*services.Credentials, error)
+	Exec(ctx context.Context, request *core.CredentialsUpdateRoleRequest) (*core.Credentials, error)
 }
 
 type CredentialsUpdateRoleRequest struct {
@@ -57,7 +57,7 @@ func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.CredentialsUpdateRoleRequest{
+	res, err := handler.service.Exec(ctx, &core.CredentialsUpdateRoleRequest{
 		TargetUserID:  request.UserID,
 		CurrentUserID: lo.FromPtr(claims.UserID),
 		Role:          request.Role,
@@ -66,11 +66,11 @@ func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.R
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
 			// The target (or actor) credentials don't exist — surfaced by the select, not the update.
-			dao.ErrCredentialsSelectNotFound:                   http.StatusNotFound,
-			services.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
-			services.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,
-			services.ErrCredentialsUpdateRoleSelfUpdate:        http.StatusForbidden,
-			services.ErrInvalidRequest:                         http.StatusUnprocessableEntity,
+			dao.ErrCredentialsSelectNotFound:               http.StatusNotFound,
+			core.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
+			core.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,
+			core.ErrCredentialsUpdateRoleSelfUpdate:        http.StatusForbidden,
+			core.ErrInvalidRequest:                         http.StatusUnprocessableEntity,
 		}, err)
 
 		return

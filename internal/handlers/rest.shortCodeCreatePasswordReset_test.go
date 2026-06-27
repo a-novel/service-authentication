@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestShortCodeCreatePasswordReset(t *testing.T) {
@@ -26,8 +26,8 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.ShortCodeCreatePasswordResetRequest
-		resp *services.ShortCode
+		req  *core.ShortCodeCreatePasswordResetRequest
+		resp *core.ShortCode
 		err  error
 	}
 
@@ -50,13 +50,13 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreatePasswordResetRequest{
+				req: &core.ShortCodeCreatePasswordResetRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
 				},
-				resp: &services.ShortCode{
+				resp: &core.ShortCode{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-111111111111"),
-					Usage:     services.ShortCodeUsageResetPassword,
+					Usage:     core.ShortCodeUsageResetPassword,
 					Target:    "00000000-0000-0000-0000-000000000001",
 					PlainCode: "abcdef",
 				},
@@ -73,7 +73,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreatePasswordResetRequest{
+				req: &core.ShortCodeCreatePasswordResetRequest{
 					Email: "nonexistent@provider.com",
 					Lang:  "fr",
 				},
@@ -92,7 +92,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreatePasswordResetRequest{
+				req: &core.ShortCodeCreatePasswordResetRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
 				},

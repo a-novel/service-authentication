@@ -66,7 +66,7 @@ func TestCredentialsSelectByEmail(t *testing.T) {
 		},
 	}
 
-	repository := dao.NewCredentialsSelectByEmail()
+	dao := dao.NewCredentialsSelectByEmail()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestCredentialsSelectByEmail(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				key, err := repository.Exec(ctx, testCase.request)
+				key, err := dao.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, key)
 			})

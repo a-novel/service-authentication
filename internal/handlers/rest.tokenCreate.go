@@ -9,13 +9,13 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type TokenCreateService interface {
-	Exec(ctx context.Context, request *services.TokenCreateRequest) (*services.Token, error)
+	Exec(ctx context.Context, request *core.TokenCreateRequest) (*core.Token, error)
 }
 
 type TokenCreateRequest struct {
@@ -47,7 +47,7 @@ func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.TokenCreateRequest{
+	res, err := handler.service.Exec(ctx, &core.TokenCreateRequest{
 		Email:    request.Email,
 		Password: request.Password,
 	})
@@ -56,7 +56,7 @@ func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsSelectByEmailNotFound: http.StatusUnauthorized,
 			lib.ErrInvalidPassword:                  http.StatusUnauthorized,
-			services.ErrInvalidRequest:              http.StatusUnprocessableEntity,
+			core.ErrInvalidRequest:                  http.StatusUnprocessableEntity,
 		}, err)
 
 		return

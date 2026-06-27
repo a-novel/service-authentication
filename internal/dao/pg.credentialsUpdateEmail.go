@@ -38,7 +38,7 @@ type CredentialsUpdateEmailRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
 	// Email is the new address to assign. Caller must verify ownership (typically
-	// via a short code emailed to this address) before invoking the repository.
+	// via a short code emailed to this address) before invoking the dao.
 	Email string
 	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
@@ -52,7 +52,7 @@ func NewCredentialsUpdateEmail() *CredentialsUpdateEmail {
 	return &CredentialsUpdateEmail{}
 }
 
-func (repository *CredentialsUpdateEmail) Exec(
+func (dao *CredentialsUpdateEmail) Exec(
 	ctx context.Context, request *CredentialsUpdateEmailRequest,
 ) (*Credentials, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsUpdateEmail")

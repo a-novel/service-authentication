@@ -36,7 +36,7 @@ func NewCredentialsSelectByEmail() *CredentialsSelectByEmail {
 	return &CredentialsSelectByEmail{}
 }
 
-func (repository *CredentialsSelectByEmail) Exec(
+func (dao *CredentialsSelectByEmail) Exec(
 	ctx context.Context, request *CredentialsSelectByEmailRequest,
 ) (*Credentials, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsSelectByEmail")

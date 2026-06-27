@@ -9,12 +9,12 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type CredentialsCreateService interface {
-	Exec(ctx context.Context, request *services.CredentialsCreateRequest) (*services.Token, error)
+	Exec(ctx context.Context, request *core.CredentialsCreateRequest) (*core.Token, error)
 }
 
 type CredentialsCreateRequest struct {
@@ -47,7 +47,7 @@ func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.CredentialsCreateRequest{
+	res, err := handler.service.Exec(ctx, &core.CredentialsCreateRequest{
 		Email:     request.Email,
 		Password:  request.Password,
 		ShortCode: request.ShortCode,
@@ -56,8 +56,8 @@ func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsInsertAlreadyExists: http.StatusConflict,
 			dao.ErrShortCodeSelectNotFound:        http.StatusForbidden,
-			services.ErrShortCodeConsumeInvalid:   http.StatusForbidden,
-			services.ErrInvalidRequest:            http.StatusUnprocessableEntity,
+			core.ErrShortCodeConsumeInvalid:       http.StatusForbidden,
+			core.ErrInvalidRequest:                http.StatusUnprocessableEntity,
 		}, err)
 
 		return

@@ -120,7 +120,7 @@ func TestShortCodeSelect(t *testing.T) {
 		},
 	}
 
-	repository := dao.NewShortCodeSelect()
+	dao := dao.NewShortCodeSelect()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -137,7 +137,7 @@ func TestShortCodeSelect(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := repository.Exec(ctx, testCase.request)
+				credentials, err := dao.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})

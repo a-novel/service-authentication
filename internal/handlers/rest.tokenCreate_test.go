@@ -13,11 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestTokenCreate(t *testing.T) {
@@ -26,8 +26,8 @@ func TestTokenCreate(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.TokenCreateRequest
-		resp *services.Token
+		req  *core.TokenCreateRequest
+		resp *core.Token
 		err  error
 	}
 
@@ -50,11 +50,11 @@ func TestTokenCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenCreateRequest{
+				req: &core.TokenCreateRequest{
 					Email:    "user@provider.com",
 					Password: "Louvre",
 				},
-				resp: &services.Token{
+				resp: &core.Token{
 					AccessToken:  "token",
 					RefreshToken: "refresh",
 				},
@@ -75,7 +75,7 @@ func TestTokenCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenCreateRequest{
+				req: &core.TokenCreateRequest{
 					Email:    "user@provider.com",
 					Password: "Louvre",
 				},
@@ -94,7 +94,7 @@ func TestTokenCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenCreateRequest{
+				req: &core.TokenCreateRequest{
 					Email:    "user@provider.com",
 					Password: "Louvre",
 				},
@@ -113,7 +113,7 @@ func TestTokenCreate(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenCreateRequest{
+				req: &core.TokenCreateRequest{
 					Email:    "user@provider.com",
 					Password: "Louvre",
 				},

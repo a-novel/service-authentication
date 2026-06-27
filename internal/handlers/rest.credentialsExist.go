@@ -8,11 +8,11 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
-	"github.com/a-novel/service-authentication/v2/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
 type CredentialsExistService interface {
-	Exec(ctx context.Context, request *services.CredentialsExistRequest) (bool, error)
+	Exec(ctx context.Context, request *core.CredentialsExistRequest) (bool, error)
 }
 
 type CredentialsExistRequest struct {
@@ -41,10 +41,10 @@ func (handler *CredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	ok, err := handler.service.Exec(ctx, &services.CredentialsExistRequest{Email: request.Email})
+	ok, err := handler.service.Exec(ctx, &core.CredentialsExistRequest{Email: request.Email})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			services.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 		}, err)
 
 		return

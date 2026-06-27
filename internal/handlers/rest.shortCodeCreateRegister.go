@@ -10,12 +10,12 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type ShortCodeCreateRegisterService interface {
-	Exec(ctx context.Context, request *services.ShortCodeCreateRegisterRequest) (*services.ShortCode, error)
+	Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)
 }
 
 type ShortCodeCreateRegisterRequest struct {
@@ -47,7 +47,7 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	_, err = handler.service.Exec(ctx, &services.ShortCodeCreateRegisterRequest{
+	_, err = handler.service.Exec(ctx, &core.ShortCodeCreateRegisterRequest{
 		Email: request.Email,
 		Lang:  request.Lang,
 	})
@@ -56,7 +56,7 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 		// The user won't receive an email, but they won't know if the email was registered.
 		if !errors.Is(err, dao.ErrCredentialsInsertAlreadyExists) {
 			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-				services.ErrInvalidRequest: http.StatusUnprocessableEntity,
+				core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			}, err)
 
 			return

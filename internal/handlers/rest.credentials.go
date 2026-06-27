@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/a-novel/service-authentication/v2/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
 type Credentials struct {
@@ -16,7 +16,7 @@ type Credentials struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func loadCredentials(s *services.Credentials) Credentials {
+func loadCredentials(s *core.Credentials) Credentials {
 	return Credentials{
 		ID:        s.ID,
 		Email:     s.Email,
@@ -26,6 +26,6 @@ func loadCredentials(s *services.Credentials) Credentials {
 	}
 }
 
-func loadCredentialsMap(item *services.Credentials, _ int) Credentials {
+func loadCredentialsMap(item *core.Credentials, _ int) Credentials {
 	return loadCredentials(item)
 }

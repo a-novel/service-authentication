@@ -45,7 +45,7 @@ func NewCredentialsInsert() *CredentialsInsert {
 	return &CredentialsInsert{}
 }
 
-func (repository *CredentialsInsert) Exec(
+func (dao *CredentialsInsert) Exec(
 	ctx context.Context, request *CredentialsInsertRequest,
 ) (*Credentials, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsInsert")

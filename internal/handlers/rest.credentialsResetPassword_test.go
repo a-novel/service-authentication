@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestCredentialsResetPassword(t *testing.T) {
@@ -27,8 +27,8 @@ func TestCredentialsResetPassword(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.CredentialsUpdatePasswordRequest
-		resp *services.Credentials
+		req  *core.CredentialsUpdatePasswordRequest
+		resp *core.Credentials
 		err  error
 	}
 
@@ -52,12 +52,12 @@ func TestCredentialsResetPassword(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				resp: &services.Credentials{
+				resp: &core.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user@provider.com",
 					Role:      config.RoleUser,
@@ -85,7 +85,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -105,7 +105,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -125,12 +125,12 @@ func TestCredentialsResetPassword(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: services.ErrShortCodeConsumeInvalid,
+				err: core.ErrShortCodeConsumeInvalid,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -145,7 +145,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdatePasswordRequest{
+				req: &core.CredentialsUpdatePasswordRequest{
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),

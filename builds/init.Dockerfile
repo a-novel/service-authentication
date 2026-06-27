@@ -13,7 +13,7 @@ COPY ./go.sum ./go.sum
 COPY "./cmd/init" "./cmd/init"
 COPY ./internal/config ./internal/config
 COPY ./internal/dao ./internal/dao
-COPY ./internal/services ./internal/services
+COPY ./internal/core ./internal/core
 COPY ./internal/models/mails ./internal/models/mails
 COPY ./internal/lib ./internal/lib
 

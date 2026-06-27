@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestCredentialsExist(t *testing.T) {
@@ -23,7 +23,7 @@ func TestCredentialsExist(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.CredentialsExistRequest
+		req  *core.CredentialsExistRequest
 		resp bool
 		err  error
 	}
@@ -44,7 +44,7 @@ func TestCredentialsExist(t *testing.T) {
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
 
 			serviceMock: &serviceMock{
-				req:  &services.CredentialsExistRequest{Email: "user@provider.com"},
+				req:  &core.CredentialsExistRequest{Email: "user@provider.com"},
 				resp: true,
 			},
 
@@ -56,7 +56,7 @@ func TestCredentialsExist(t *testing.T) {
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
 
 			serviceMock: &serviceMock{
-				req:  &services.CredentialsExistRequest{Email: "user@provider.com"},
+				req:  &core.CredentialsExistRequest{Email: "user@provider.com"},
 				resp: false,
 			},
 
@@ -68,7 +68,7 @@ func TestCredentialsExist(t *testing.T) {
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsExistRequest{Email: "user@provider.com"},
+				req: &core.CredentialsExistRequest{Email: "user@provider.com"},
 				err: errFoo,
 			},
 
