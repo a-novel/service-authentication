@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestCredentialsList(t *testing.T) {
@@ -25,8 +25,8 @@ func TestCredentialsList(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.CredentialsListRequest
-		resp []*services.Credentials
+		req  *core.CredentialsListRequest
+		resp []*core.Credentials
 		err  error
 	}
 
@@ -46,11 +46,11 @@ func TestCredentialsList(t *testing.T) {
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&offset=2", nil),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsListRequest{
+				req: &core.CredentialsListRequest{
 					Limit:  10,
 					Offset: 2,
 				},
-				resp: []*services.Credentials{
+				resp: []*core.Credentials{
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
 						Email:     "user3@email.com",
@@ -106,11 +106,11 @@ func TestCredentialsList(t *testing.T) {
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&roles=role1&roles=role2", nil),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsListRequest{
+				req: &core.CredentialsListRequest{
 					Limit: 10,
 					Roles: []string{"role1", "role2"},
 				},
-				resp: []*services.Credentials{
+				resp: []*core.Credentials{
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
 						Email:     "user3@email.com",
@@ -138,7 +138,7 @@ func TestCredentialsList(t *testing.T) {
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&offset=2", nil),
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsListRequest{
+				req: &core.CredentialsListRequest{
 					Limit:  10,
 					Offset: 2,
 				},

@@ -23,8 +23,8 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func main() {
@@ -65,20 +65,20 @@ func main() {
 
 	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
-	repositoryCredentialsInsert := dao.NewCredentialsInsert()
-	repositoryCredentialsSelectByEmail := dao.NewCredentialsSelectByEmail()
-	repositoryCredentialsUpdatePassword := dao.NewCredentialsUpdatePassword()
-	repositoryCredentialsUpdateRole := dao.NewCredentialsUpdateRole()
+	daoCredentialsInsert := dao.NewCredentialsInsert()
+	daoCredentialsSelectByEmail := dao.NewCredentialsSelectByEmail()
+	daoCredentialsUpdatePassword := dao.NewCredentialsUpdatePassword()
+	daoCredentialsUpdateRole := dao.NewCredentialsUpdateRole()
 
-	service := services.NewCredentialsCreateSuperAdmin(
-		repositoryCredentialsInsert,
-		repositoryCredentialsSelectByEmail,
-		repositoryCredentialsUpdatePassword,
-		repositoryCredentialsUpdateRole,
+	service := core.NewCredentialsCreateSuperAdmin(
+		daoCredentialsInsert,
+		daoCredentialsSelectByEmail,
+		daoCredentialsUpdatePassword,
+		daoCredentialsUpdateRole,
 	)
 
 	log.Printf("ensuring super-admin credentials for %s", env.SuperAdminEmail)
-	_ = lo.Must(service.Exec(ctx, &services.CredentialsCreateSuperAdminRequest{
+	_ = lo.Must(service.Exec(ctx, &core.CredentialsCreateSuperAdminRequest{
 		Email:    env.SuperAdminEmail,
 		Password: env.SuperAdminPassword,
 	}))

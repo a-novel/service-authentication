@@ -39,14 +39,14 @@ type CredentialsUpdatePasswordRequest struct {
 
 // CredentialsUpdatePassword updates the password used by a set of credentials.
 // Make sure the user identity has been properly validated BEFORE calling this
-// repository.
+// dao.
 type CredentialsUpdatePassword struct{}
 
 func NewCredentialsUpdatePassword() *CredentialsUpdatePassword {
 	return &CredentialsUpdatePassword{}
 }
 
-func (repository *CredentialsUpdatePassword) Exec(
+func (dao *CredentialsUpdatePassword) Exec(
 	ctx context.Context, request *CredentialsUpdatePasswordRequest,
 ) (*Credentials, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsUpdatePassword")

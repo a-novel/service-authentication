@@ -10,11 +10,11 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
-	"github.com/a-novel/service-authentication/v2/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
 type CredentialsListService interface {
-	Exec(ctx context.Context, request *services.CredentialsListRequest) ([]*services.Credentials, error)
+	Exec(ctx context.Context, request *core.CredentialsListRequest) ([]*core.Credentials, error)
 }
 
 type CredentialsListRequest struct {
@@ -45,14 +45,14 @@ func (handler *CredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.CredentialsListRequest{
+	res, err := handler.service.Exec(ctx, &core.CredentialsListRequest{
 		Limit:  request.Limit,
 		Offset: request.Offset,
 		Roles:  request.Roles,
 	})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			services.ErrInvalidRequest: http.StatusUnprocessableEntity,
+			core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 		}, err)
 
 		return

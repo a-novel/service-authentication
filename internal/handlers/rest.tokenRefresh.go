@@ -9,12 +9,12 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type TokenRefreshService interface {
-	Exec(ctx context.Context, request *services.TokenRefreshRequest) (*services.Token, error)
+	Exec(ctx context.Context, request *core.TokenRefreshRequest) (*core.Token, error)
 }
 
 type TokenRefreshRequest struct {
@@ -46,19 +46,19 @@ func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.TokenRefreshRequest{
+	res, err := handler.service.Exec(ctx, &core.TokenRefreshRequest{
 		AccessToken:  request.AccessToken,
 		RefreshToken: request.RefreshToken,
 	})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			services.ErrTokenRefreshInvalidAccessToken:  http.StatusForbidden,
-			services.ErrTokenRefreshInvalidRefreshToken: http.StatusForbidden,
-			services.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,
-			services.ErrTokenRefreshMismatchSource:      http.StatusForbidden,
+			core.ErrTokenRefreshInvalidAccessToken:  http.StatusForbidden,
+			core.ErrTokenRefreshInvalidRefreshToken: http.StatusForbidden,
+			core.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,
+			core.ErrTokenRefreshMismatchSource:      http.StatusForbidden,
 			// The credentials behind a still-valid refresh token were deleted — re-authenticate.
 			dao.ErrCredentialsSelectNotFound: http.StatusUnauthorized,
-			services.ErrInvalidRequest:       http.StatusUnprocessableEntity,
+			core.ErrInvalidRequest:           http.StatusUnprocessableEntity,
 		}, err)
 
 		return

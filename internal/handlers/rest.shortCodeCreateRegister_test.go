@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestShortCodeCreateRegister(t *testing.T) {
@@ -26,8 +26,8 @@ func TestShortCodeCreateRegister(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.ShortCodeCreateRegisterRequest
-		resp *services.ShortCode
+		req  *core.ShortCodeCreateRegisterRequest
+		resp *core.ShortCode
 		err  error
 	}
 
@@ -50,13 +50,13 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreateRegisterRequest{
+				req: &core.ShortCodeCreateRegisterRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
 				},
-				resp: &services.ShortCode{
+				resp: &core.ShortCode{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-111111111111"),
-					Usage:     services.ShortCodeUsageResetPassword,
+					Usage:     core.ShortCodeUsageResetPassword,
 					Target:    "00000000-0000-0000-0000-000000000001",
 					PlainCode: "abcdef",
 				},
@@ -73,7 +73,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreateRegisterRequest{
+				req: &core.ShortCodeCreateRegisterRequest{
 					Email: "existing_user@provider.com",
 					Lang:  "fr",
 				},
@@ -92,7 +92,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreateRegisterRequest{
+				req: &core.ShortCodeCreateRegisterRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
 				},

@@ -16,11 +16,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestCredentialsUpdateRole(t *testing.T) {
@@ -29,8 +29,8 @@ func TestCredentialsUpdateRole(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.CredentialsUpdateRoleRequest
-		resp *services.Credentials
+		req  *core.CredentialsUpdateRoleRequest
+		resp *core.Credentials
 		err  error
 	}
 
@@ -38,7 +38,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		name string
 
 		request *http.Request
-		claims  *services.AccessTokenClaims
+		claims  *core.AccessTokenClaims
 
 		serviceMock *serviceMock
 
@@ -52,17 +52,17 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdateRoleRequest{
+				req: &core.CredentialsUpdateRoleRequest{
 					Role:          config.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				resp: &services.Credentials{
+				resp: &core.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user@provider.com",
 					Role:      config.RoleAdmin,
@@ -87,12 +87,12 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdateRoleRequest{
+				req: &core.CredentialsUpdateRoleRequest{
 					Role:          config.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -109,12 +109,12 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdateRoleRequest{
+				req: &core.CredentialsUpdateRoleRequest{
 					Role:          config.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -132,17 +132,17 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdateRoleRequest{
+				req: &core.CredentialsUpdateRoleRequest{
 					Role:          config.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: services.ErrCredentialsUpdateRoleToHigher,
+				err: core.ErrCredentialsUpdateRoleToHigher,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -154,17 +154,17 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdateRoleRequest{
+				req: &core.CredentialsUpdateRoleRequest{
 					Role:          config.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: services.ErrCredentialsUpdateRoleDowngradeSuperior,
+				err: core.ErrCredentialsUpdateRoleDowngradeSuperior,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -176,17 +176,17 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdateRoleRequest{
+				req: &core.CredentialsUpdateRoleRequest{
 					Role:          config.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: services.ErrCredentialsUpdateRoleSelfUpdate,
+				err: core.ErrCredentialsUpdateRoleSelfUpdate,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -198,12 +198,12 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				"userID": "00000000-0000-0000-0000-000000000002",
 				"role": "auth:admin"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.CredentialsUpdateRoleRequest{
+				req: &core.CredentialsUpdateRoleRequest{
 					Role:          config.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),

@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestTokenRefresh(t *testing.T) {
@@ -24,8 +24,8 @@ func TestTokenRefresh(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.TokenRefreshRequest
-		resp *services.Token
+		req  *core.TokenRefreshRequest
+		resp *core.Token
 		err  error
 	}
 
@@ -48,11 +48,11 @@ func TestTokenRefresh(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenRefreshRequest{
+				req: &core.TokenRefreshRequest{
 					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
-				resp: &services.Token{
+				resp: &core.Token{
 					AccessToken:  "new-access-token",
 					RefreshToken: "refresh_token",
 				},
@@ -73,11 +73,11 @@ func TestTokenRefresh(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenRefreshRequest{
+				req: &core.TokenRefreshRequest{
 					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
-				err: services.ErrTokenRefreshInvalidAccessToken,
+				err: core.ErrTokenRefreshInvalidAccessToken,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -91,11 +91,11 @@ func TestTokenRefresh(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenRefreshRequest{
+				req: &core.TokenRefreshRequest{
 					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
-				err: services.ErrTokenRefreshInvalidRefreshToken,
+				err: core.ErrTokenRefreshInvalidRefreshToken,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -109,11 +109,11 @@ func TestTokenRefresh(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenRefreshRequest{
+				req: &core.TokenRefreshRequest{
 					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
-				err: services.ErrTokenRefreshMismatchClaims,
+				err: core.ErrTokenRefreshMismatchClaims,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -127,11 +127,11 @@ func TestTokenRefresh(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenRefreshRequest{
+				req: &core.TokenRefreshRequest{
 					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},
-				err: services.ErrTokenRefreshMismatchSource,
+				err: core.ErrTokenRefreshMismatchSource,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -145,7 +145,7 @@ func TestTokenRefresh(t *testing.T) {
 			}`)),
 
 			serviceMock: &serviceMock{
-				req: &services.TokenRefreshRequest{
+				req: &core.TokenRefreshRequest{
 					AccessToken:  "access-token",
 					RefreshToken: "refresh_token",
 				},

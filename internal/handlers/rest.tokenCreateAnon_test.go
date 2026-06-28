@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestTokenCreateAnon(t *testing.T) {
@@ -23,7 +23,7 @@ func TestTokenCreateAnon(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		resp *services.Token
+		resp *core.Token
 		err  error
 	}
 
@@ -43,7 +43,7 @@ func TestTokenCreateAnon(t *testing.T) {
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
 
 			serviceMock: &serviceMock{
-				resp: &services.Token{
+				resp: &core.Token{
 					AccessToken:  "token",
 					RefreshToken: "refresh",
 				},

@@ -8,11 +8,11 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
-	"github.com/a-novel/service-authentication/v2/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
 type TokenCreateAnonService interface {
-	Exec(ctx context.Context) (*services.Token, error)
+	Exec(ctx context.Context) (*core.Token, error)
 }
 
 type TokenCreateAnon struct {

@@ -16,7 +16,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/jwt/jws"
 
-	"github.com/a-novel/service-authentication/v2/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 
 // AuthClaimsVerifier validates JWT access tokens and extracts claims.
 type AuthClaimsVerifier interface {
-	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*services.AccessTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error)
 }
 
 // Auth provides JWT-based authentication and role-based authorization middleware.
@@ -162,26 +162,26 @@ type ClaimsContextKey struct{}
 
 // SetClaimsContext stores the authenticated user's claims in the context.
 // This is called by the Auth middleware after successful token verification.
-func SetClaimsContext(ctx context.Context, claims *services.AccessTokenClaims) context.Context {
+func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) context.Context {
 	return context.WithValue(ctx, ClaimsContextKey{}, claims)
 }
 
 // GetClaimsContext retrieves the authenticated user's claims from the context.
 // Returns nil claims with no error if no authentication was provided (for optional auth endpoints).
 // Returns an error if the value stored under [ClaimsContextKey] has an unexpected type.
-func GetClaimsContext(ctx context.Context) (*services.AccessTokenClaims, error) {
+func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 	raw := ctx.Value(ClaimsContextKey{})
 	if raw == nil {
 		return nil, nil
 	}
 
-	claims, ok := raw.(*services.AccessTokenClaims)
+	claims, ok := raw.(*core.AccessTokenClaims)
 	if !ok {
 		return nil, fmt.Errorf(
 			"%w: got type %T, expected %T",
 			ErrUnexpectedClaims,
 			raw,
-			&services.AccessTokenClaims{},
+			&core.AccessTokenClaims{},
 		)
 	}
 
@@ -191,7 +191,7 @@ func GetClaimsContext(ctx context.Context) (*services.AccessTokenClaims, error) 
 // MustGetClaimsContext retrieves the authenticated user's claims from the context.
 // Unlike GetClaimsContext, this returns an error if no claims are present,
 // making it suitable for endpoints that require authentication.
-func MustGetClaimsContext(ctx context.Context) (*services.AccessTokenClaims, error) {
+func MustGetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 	claims, err := GetClaimsContext(ctx)
 	if err != nil {
 		return nil, err

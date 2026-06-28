@@ -1,12 +1,12 @@
 package handlers
 
-import "github.com/a-novel/service-authentication/v2/internal/services"
+import "github.com/a-novel/service-authentication/v2/internal/core"
 
 type Token struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 }
 
-func loadToken(s *services.Token) Token {
+func loadToken(s *core.Token) Token {
 	return Token{AccessToken: s.AccessToken, RefreshToken: s.RefreshToken}
 }

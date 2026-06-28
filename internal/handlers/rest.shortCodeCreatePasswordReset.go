@@ -10,12 +10,12 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type ShortCodeCreatePasswordResetService interface {
-	Exec(ctx context.Context, request *services.ShortCodeCreatePasswordResetRequest) (*services.ShortCode, error)
+	Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error)
 }
 
 type ShortCodeCreatePasswordResetRequest struct {
@@ -49,7 +49,7 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 		return
 	}
 
-	_, err = handler.service.Exec(ctx, &services.ShortCodeCreatePasswordResetRequest{
+	_, err = handler.service.Exec(ctx, &core.ShortCodeCreatePasswordResetRequest{
 		Email: request.Email,
 		Lang:  request.Lang,
 	})
@@ -58,7 +58,7 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 		// The user won't receive an email, but they won't know if the email was registered.
 		if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
 			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-				services.ErrInvalidRequest: http.StatusUnprocessableEntity,
+				core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			}, err)
 
 			return

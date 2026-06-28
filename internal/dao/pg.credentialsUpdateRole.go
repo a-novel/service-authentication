@@ -27,7 +27,7 @@ var ErrCredentialsUpdateRoleNotFound = errors.New("credentials not found")
 type CredentialsUpdateRoleRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
-	// Role is the new role name to assign. The repository does not validate the
+	// Role is the new role name to assign. The dao does not validate the
 	// value against the configured permission map; that check belongs to the
 	// service layer.
 	Role string
@@ -42,7 +42,7 @@ func NewCredentialsUpdateRole() *CredentialsUpdateRole {
 	return &CredentialsUpdateRole{}
 }
 
-func (repository *CredentialsUpdateRole) Exec(
+func (dao *CredentialsUpdateRole) Exec(
 	ctx context.Context, request *CredentialsUpdateRoleRequest,
 ) (*Credentials, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsUpdateRole")

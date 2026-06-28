@@ -50,7 +50,7 @@ func NewShortCodeDelete() *ShortCodeDelete {
 	return &ShortCodeDelete{}
 }
 
-func (repository *ShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDeleteRequest) (*ShortCode, error) {
+func (dao *ShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDeleteRequest) (*ShortCode, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeDelete")
 	defer span.End()
 

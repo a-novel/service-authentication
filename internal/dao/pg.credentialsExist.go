@@ -29,7 +29,7 @@ func NewCredentialsExist() *CredentialsExist {
 	return &CredentialsExist{}
 }
 
-func (repository *CredentialsExist) Exec(ctx context.Context, request *CredentialsExistRequest) (bool, error) {
+func (dao *CredentialsExist) Exec(ctx context.Context, request *CredentialsExistRequest) (bool, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsExist")
 	defer span.End()
 

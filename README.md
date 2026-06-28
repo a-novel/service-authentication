@@ -23,11 +23,11 @@ Authentication owns **user identities** — email/password credentials, hashed w
 
 Identity changes — registration, email change, password reset — are gated by single-use **short codes** emailed to the user, so a stolen session token alone can't take over an account.
 
-It exposes one **public REST API** and signs nothing itself: signing and verification go to [JSON Keys](https://github.com/a-novel/service-json-keys) over that service's private gRPC surface, so the two share a secure, unexposed network. The Go client also ships an auth middleware any service can mount to verify tokens and enforce permissions locally.
+It exposes one **public REST API** and signs nothing itself: signing and verification go to [JSON Keys](https://github.com/a-novel/service-json-keys) over that service's private gRPC API, so the two share a secure, unexposed network. The Go client also ships an auth middleware any service can mount to verify tokens and enforce permissions locally.
 
 ## Deploying
 
-The service runs as published OCI images plus a PostgreSQL database. The REST surface is stateless, so it scales to as many replicas as you need behind a load balancer; all state lives in Postgres. A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a hard dependency — authentication reaches it over its private gRPC port, and the two share sensitive key material, so keep that link on an unexposed network.
+The service runs as published OCI images plus a PostgreSQL database. The REST server is stateless, so it scales to as many replicas as you need behind a load balancer; all state lives in Postgres. A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a hard dependency — authentication reaches it over its private gRPC port, and the two share sensitive key material, so keep that link on an unexposed network.
 
 > **OpenTofu modules are the planned canonical deployment path.** Until they land, deploy the images with any container orchestrator — the composition below is the reference for which images to run, how they wire together, and the environment they expect.
 

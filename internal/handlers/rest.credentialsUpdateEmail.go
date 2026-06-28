@@ -11,12 +11,12 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type CredentialsUpdateEmailService interface {
-	Exec(ctx context.Context, request *services.CredentialsUpdateEmailRequest) (*services.Credentials, error)
+	Exec(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.Credentials, error)
 }
 
 type CredentialsUpdateEmailRequest struct {
@@ -48,7 +48,7 @@ func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.CredentialsUpdateEmailRequest{
+	res, err := handler.service.Exec(ctx, &core.CredentialsUpdateEmailRequest{
 		UserID:    request.UserID,
 		ShortCode: request.ShortCode,
 	})
@@ -57,8 +57,8 @@ func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.
 			dao.ErrCredentialsUpdateEmailNotFound:      http.StatusNotFound,
 			dao.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
 			dao.ErrShortCodeSelectNotFound:             http.StatusForbidden,
-			services.ErrShortCodeConsumeInvalid:        http.StatusForbidden,
-			services.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
+			core.ErrShortCodeConsumeInvalid:            http.StatusForbidden,
+			core.ErrInvalidRequest:                     http.StatusUnprocessableEntity,
 		}, err)
 
 		return

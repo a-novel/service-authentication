@@ -1,9 +1,9 @@
 packages:
-  github.com/a-novel/service-authentication/v2/internal/services:
+  github.com/a-novel/service-authentication/v2/internal/core:
     config:
       all: true
-      pkgname: servicesmocks
-      dir: internal/services/mocks
+      pkgname: coremocks
+      dir: internal/core/mocks
       filename: mocks.go
   github.com/a-novel/service-authentication/v2/internal/handlers:
     config:

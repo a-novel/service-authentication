@@ -15,11 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 func TestShortCodeCreateEmailUpdate(t *testing.T) {
@@ -28,8 +28,8 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *services.ShortCodeCreateEmailUpdateRequest
-		resp *services.ShortCode
+		req  *core.ShortCodeCreateEmailUpdateRequest
+		resp *core.ShortCode
 		err  error
 	}
 
@@ -37,7 +37,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		name string
 
 		request *http.Request
-		claims  *services.AccessTokenClaims
+		claims  *core.AccessTokenClaims
 
 		serviceMock *serviceMock
 
@@ -51,19 +51,19 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 				"email": "new_user@provider.com",
 				"lang": "fr"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreateEmailUpdateRequest{
+				req: &core.ShortCodeCreateEmailUpdateRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
 					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				resp: &services.ShortCode{
+				resp: &core.ShortCode{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-111111111111"),
-					Usage:     services.ShortCodeUsageValidateEmail,
+					Usage:     core.ShortCodeUsageValidateEmail,
 					Target:    "00000000-0000-0000-0000-000000000001",
 					PlainCode: "abcdef",
 				},
@@ -78,12 +78,12 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 				"email": "new_user@provider.com",
 				"lang": "fr"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreateEmailUpdateRequest{
+				req: &core.ShortCodeCreateEmailUpdateRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
 					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -100,12 +100,12 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 				"email": "new_user@provider.com",
 				"lang": "fr"
 			}`)),
-			claims: &services.AccessTokenClaims{
+			claims: &core.AccessTokenClaims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
-				req: &services.ShortCodeCreateEmailUpdateRequest{
+				req: &core.ShortCodeCreateEmailUpdateRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
 					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),

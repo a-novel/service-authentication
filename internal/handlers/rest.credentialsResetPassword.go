@@ -11,12 +11,12 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 )
 
 type CredentialsResetPasswordService interface {
-	Exec(ctx context.Context, request *services.CredentialsUpdatePasswordRequest) (*services.Credentials, error)
+	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
 type CredentialsResetPasswordRequest struct {
@@ -51,7 +51,7 @@ func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &services.CredentialsUpdatePasswordRequest{
+	res, err := handler.service.Exec(ctx, &core.CredentialsUpdatePasswordRequest{
 		Password:  request.Password,
 		ShortCode: request.ShortCode,
 		UserID:    request.UserID,
@@ -60,9 +60,9 @@ func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *htt
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
 			dao.ErrShortCodeSelectNotFound:           http.StatusForbidden,
-			services.ErrShortCodeConsumeInvalid:      http.StatusForbidden,
-			services.ErrShortCodeConsumeExpired:      http.StatusForbidden,
-			services.ErrInvalidRequest:               http.StatusUnprocessableEntity,
+			core.ErrShortCodeConsumeInvalid:          http.StatusForbidden,
+			core.ErrShortCodeConsumeExpired:          http.StatusForbidden,
+			core.ErrInvalidRequest:                   http.StatusUnprocessableEntity,
 		}, err)
 
 		return

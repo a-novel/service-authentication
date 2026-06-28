@@ -7,7 +7,7 @@ package middlewaresmocks
 import (
 	"context"
 
-	"github.com/a-novel/service-authentication/v2/internal/services"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +40,23 @@ func (_m *MockAuthClaimsVerifier) EXPECT() *MockAuthClaimsVerifier_Expecter {
 }
 
 // VerifyClaims provides a mock function for the type MockAuthClaimsVerifier
-func (_mock *MockAuthClaimsVerifier) VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*services.AccessTokenClaims, error) {
+func (_mock *MockAuthClaimsVerifier) VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for VerifyClaims")
 	}
 
-	var r0 *services.AccessTokenClaims
+	var r0 *core.AccessTokenClaims
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) (*services.AccessTokenClaims, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) *services.AccessTokenClaims); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) *core.AccessTokenClaims); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*services.AccessTokenClaims)
+			r0 = ret.Get(0).(*core.AccessTokenClaims)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) error); ok {
@@ -97,12 +97,12 @@ func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) Return(accessTokenClaims *services.AccessTokenClaims, err error) *MockAuthClaimsVerifier_VerifyClaims_Call {
+func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) Return(accessTokenClaims *core.AccessTokenClaims, err error) *MockAuthClaimsVerifier_VerifyClaims_Call {
 	_c.Call.Return(accessTokenClaims, err)
 	return _c
 }
 
-func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*services.AccessTokenClaims, error)) *MockAuthClaimsVerifier_VerifyClaims_Call {
+func (_c *MockAuthClaimsVerifier_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error)) *MockAuthClaimsVerifier_VerifyClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }

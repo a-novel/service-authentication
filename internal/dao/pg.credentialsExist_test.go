@@ -59,7 +59,7 @@ func TestCredentialsExist(t *testing.T) {
 		},
 	}
 
-	repository := dao.NewCredentialsExist()
+	dao := dao.NewCredentialsExist()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -76,7 +76,7 @@ func TestCredentialsExist(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				key, err := repository.Exec(ctx, testCase.request)
+				key, err := dao.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, key)
 			})

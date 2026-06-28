@@ -34,7 +34,7 @@ func NewCredentialsList() *CredentialsList {
 	return &CredentialsList{}
 }
 
-func (repository *CredentialsList) Exec(
+func (dao *CredentialsList) Exec(
 	ctx context.Context, request *CredentialsListRequest,
 ) ([]*Credentials, error) {
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsList")

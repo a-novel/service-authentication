@@ -24,9 +24,9 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
-	"github.com/a-novel/service-authentication/v2/internal/services"
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
@@ -56,80 +56,80 @@ func main() {
 		jsonKeysCredentials...,
 	))
 
-	serviceVerifyAccessToken := servicejsonkeys.NewClaimsVerifier[services.AccessTokenClaims](jsonKeysClient)
-	serviceVerifyRefreshToken := servicejsonkeys.NewClaimsVerifier[services.RefreshTokenClaims](jsonKeysClient)
+	serviceVerifyAccessToken := servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient)
+	serviceVerifyRefreshToken := servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient)
 
 	// =================================================================================================================
 	// DAO
 	// =================================================================================================================
 
-	repositoryShortCodeDelete := dao.NewShortCodeDelete()
-	repositoryShortCodeInsert := dao.NewShortCodeInsert()
-	repositoryShortCodeSelect := dao.NewShortCodeSelect()
+	daoShortCodeDelete := dao.NewShortCodeDelete()
+	daoShortCodeInsert := dao.NewShortCodeInsert()
+	daoShortCodeSelect := dao.NewShortCodeSelect()
 
-	repositoryCredentialsExist := dao.NewCredentialsExist()
-	repositoryCredentialsInsert := dao.NewCredentialsInsert()
-	repositoryCredentialsList := dao.NewCredentialsList()
-	repositoryCredentialsSelect := dao.NewCredentialsSelect()
-	repositoryCredentialsSelectByEmail := dao.NewCredentialsSelectByEmail()
-	repositoryCredentialsUpdateEmail := dao.NewCredentialsUpdateEmail()
-	repositoryCredentialsUpdatePassword := dao.NewCredentialsUpdatePassword()
-	repositoryCredentialsUpdateRole := dao.NewCredentialsUpdateRole()
+	daoCredentialsExist := dao.NewCredentialsExist()
+	daoCredentialsInsert := dao.NewCredentialsInsert()
+	daoCredentialsList := dao.NewCredentialsList()
+	daoCredentialsSelect := dao.NewCredentialsSelect()
+	daoCredentialsSelectByEmail := dao.NewCredentialsSelectByEmail()
+	daoCredentialsUpdateEmail := dao.NewCredentialsUpdateEmail()
+	daoCredentialsUpdatePassword := dao.NewCredentialsUpdatePassword()
+	daoCredentialsUpdateRole := dao.NewCredentialsUpdateRole()
 
 	// =================================================================================================================
 	// SERVICES
 	// =================================================================================================================
 
-	serviceShortCodeConsume := services.NewShortCodeConsume(repositoryShortCodeSelect, repositoryShortCodeDelete)
-	serviceShortCodeCreate := services.NewShortCodeCreate(repositoryShortCodeInsert, cfg.ShortCodesConfig)
-	serviceShortCodeCreateEmailUpdate := services.NewShortCodeCreateEmailUpdate(
+	serviceShortCodeConsume := core.NewShortCodeConsume(daoShortCodeSelect, daoShortCodeDelete)
+	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, cfg.ShortCodesConfig)
+	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
 		serviceShortCodeCreate,
-		repositoryCredentialsSelectByEmail,
+		daoCredentialsSelectByEmail,
 		cfg.Smtp,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
-	serviceShortCodeCreatePasswordReset := services.NewShortCodeCreatePasswordReset(
+	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
 		serviceShortCodeCreate,
-		repositoryCredentialsSelectByEmail,
+		daoCredentialsSelectByEmail,
 		cfg.Smtp,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
-	serviceShortCodeCreateRegister := services.NewShortCodeCreateRegister(
+	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
 		serviceShortCodeCreate,
-		repositoryCredentialsSelectByEmail,
+		daoCredentialsSelectByEmail,
 		cfg.Smtp,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
 
-	serviceCredentialsCreate := services.NewCredentialsCreate(
-		repositoryCredentialsInsert,
+	serviceCredentialsCreate := core.NewCredentialsCreate(
+		daoCredentialsInsert,
 		serviceShortCodeConsume,
 		jsonKeysClient,
 	)
-	serviceCredentialsExist := services.NewCredentialsExist(repositoryCredentialsExist)
-	serviceCredentialsGet := services.NewCredentialsGet(repositoryCredentialsSelect)
-	serviceCredentialsList := services.NewCredentialsList(repositoryCredentialsList)
-	serviceCredentialsUpdateEmail := services.NewCredentialsUpdateEmail(
-		repositoryCredentialsUpdateEmail,
+	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
+	serviceCredentialsGet := core.NewCredentialsGet(daoCredentialsSelect)
+	serviceCredentialsList := core.NewCredentialsList(daoCredentialsList)
+	serviceCredentialsUpdateEmail := core.NewCredentialsUpdateEmail(
+		daoCredentialsUpdateEmail,
 		serviceShortCodeConsume,
 	)
-	serviceCredentialsUpdatePassword := services.NewCredentialsUpdatePassword(
-		repositoryCredentialsUpdatePassword,
-		repositoryCredentialsSelect,
+	serviceCredentialsUpdatePassword := core.NewCredentialsUpdatePassword(
+		daoCredentialsUpdatePassword,
+		daoCredentialsSelect,
 		serviceShortCodeConsume,
 	)
-	serviceCredentialsUpdateRole := services.NewCredentialsUpdateRole(
-		repositoryCredentialsUpdateRole,
-		repositoryCredentialsSelect,
+	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(
+		daoCredentialsUpdateRole,
+		daoCredentialsSelect,
 	)
 
-	serviceTokenCreate := services.NewTokenCreate(repositoryCredentialsSelectByEmail, jsonKeysClient)
-	serviceTokenCreateAnon := services.NewTokenCreateAnon(jsonKeysClient)
-	serviceTokenRefresh := services.NewTokenRefresh(
-		repositoryCredentialsSelect,
+	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, jsonKeysClient)
+	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
+	serviceTokenRefresh := core.NewTokenRefresh(
+		daoCredentialsSelect,
 		jsonKeysClient,
 		serviceVerifyAccessToken,
 		serviceVerifyRefreshToken,
