@@ -11,7 +11,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/auto-release@v1.0.3
+      - uses: a-novel-kit/workflows/publish-actions/auto-release@v1.2.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -29,7 +29,7 @@ jobs:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.0.3
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.2.1
         with:
           file: builds/database.Dockerfile
           image_name: ${{ github.repository }}/database
@@ -68,7 +68,7 @@ jobs:
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.0.3
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.2.1
         with:
           file: builds/migrations.Dockerfile
           image_name: ${{ github.repository }}/jobs/migrations
@@ -106,7 +106,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.0.3
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.2.1
         with:
           file: builds/init.Dockerfile
           image_name: ${{ github.repository }}/jobs/init
@@ -168,7 +168,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.0.3
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.2.1
         with:
           file: builds/rest.Dockerfile
           image_name: ${{ github.repository }}/rest
@@ -231,7 +231,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.0.3
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.2.1
         with:
           file: builds/standalone.rest.Dockerfile
           image_name: ${{ github.repository }}/standalone-rest
@@ -250,7 +250,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/npm@v1.0.3
+      - uses: a-novel-kit/workflows/publish-actions/npm@v1.2.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.PUBLISH_BOT_PRIVATE_KEY }}
