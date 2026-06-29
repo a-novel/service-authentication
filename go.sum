@@ -29,6 +29,8 @@ github.com/a-novel-kit/jwt v1.1.72 h1:jp6dVXbhlIzqIiKt/uyRtPj01L4kBB3IxninKik6CO
 github.com/a-novel-kit/jwt v1.1.72/go.mod h1:hWpErr7XayiUNcUkwhd5LM4u767VCGCcRvvUpC7niqc=
 github.com/a-novel/service-json-keys/v2 v2.3.1 h1:SqsKBLsoFP6fAdckS4l66WcBYy21xW4i2RL7NNfjWZA=
 github.com/a-novel/service-json-keys/v2 v2.3.1/go.mod h1:JRHn42C/RMaw3soHRLyvoB/hbMx3MicoE3oDmg/tpXA=
+github.com/a-novel/service-json-keys/v2 v2.3.2 h1:54/S7o9hRNhz/pNjAl4Z9n/cz2fphwpKzry6CmQjkXk=
+github.com/a-novel/service-json-keys/v2 v2.3.2/go.mod h1:XQ/b6H3RwgLjYtCaZeClbhD/ngDUsRfaW5tHki1BTCY=
 github.com/brunoga/deep v1.3.1 h1:bSrL6FhAZa6JlVv4vsi7Hg8SLwroDb1kgDERRVipBCo=
 github.com/brunoga/deep v1.3.1/go.mod h1:GDV6dnXqn80ezsLSZ5Wlv1PdKAWAO4L5PnKYtv2dgaI=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=
