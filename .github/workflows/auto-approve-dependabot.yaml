@@ -14,11 +14,11 @@ jobs:
     if: ${{ github.event.pull_request.user.login == vars.DEPENDENCY_BOT_LOGIN || github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN }}
     steps:
       - uses: actions/checkout@v7
-      - uses: a-novel-kit/workflows/generic-actions/approve-bot@v1.3.0
+      - uses: a-novel-kit/workflows/generic-actions/approve-bot@v1.3.1
         with:
           pull_request: ${{ github.event.pull_request.html_url }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: a-novel-kit/workflows/generic-actions/auto-merge-bot@v1.3.0
+      - uses: a-novel-kit/workflows/generic-actions/auto-merge-bot@v1.3.1
         # Renovate already activates auto-merge by itself.
         if: ${{ github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN }}
         with:
