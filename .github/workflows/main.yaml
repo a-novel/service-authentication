@@ -78,7 +78,7 @@ jobs:
           app_id: ${{ vars.DEPENDENCY_BOT_ID }}
           lint_action: "lint:ci"
 
-  test:
+  test-go:
     needs: [lint-go, build-database]
     runs-on: ubuntu-latest
     permissions:
@@ -273,9 +273,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
 
-  build-job-init:
+  build-init:
     runs-on: ubuntu-latest
-    needs: [test, build-database]
+    needs: [test-go, build-database]
     permissions:
       contents: read
       packages: write
@@ -315,7 +315,7 @@ jobs:
             -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD}"
 
   build-rest:
-    needs: [test, build-database]
+    needs: [test-go, build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -378,7 +378,7 @@ jobs:
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
   build-standalone-rest:
-    needs: [test, build-database]
+    needs: [test-go, build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -460,7 +460,7 @@ jobs:
   report-grc:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && success()
-    needs: [test, test-pkg-js]
+    needs: [test-go, test-pkg-js]
     permissions:
       contents: read
     steps:
@@ -469,7 +469,7 @@ jobs:
 
   report-codecov:
     runs-on: ubuntu-latest
-    needs: [test, test-pkg-js]
+    needs: [test-go, test-pkg-js]
     permissions:
       contents: read
     steps:
