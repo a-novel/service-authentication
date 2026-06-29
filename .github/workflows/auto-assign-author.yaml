@@ -9,7 +9,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    if: ${{ github.event.pull_request.user.login != vars.DEPENDENCY_BOT_LOGIN }}
     steps:
       - uses: a-novel-kit/workflows/generic-actions/assign-bot@v1.3.0
         with:

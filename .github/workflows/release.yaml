@@ -1,21 +1,63 @@
 name: release
 
+# Releases are cut from the GitHub UI (Actions ▸ release ▸ pick a type ▸ Run),
+# not from a tag push. workflow_call exposes the same inputs so an agent can
+# drive an identical release later. The protected `release` environment is the
+# "who can publish" gate (configure its required reviewers).
+#
+# The build jobs run on the default branch (the dispatch ref), not a tag, so
+# each tags its image from the explicit release version (build-actions `version:`
+# input) and pulls the database service image at the new tag; build-js publishes
+# from the release tag (ref) so the package carries the bumped version.
 on:
-  push:
-    tags:
-      - "**"
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: Version bump to cut
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry_run:
+        description: Bump & report only — no commit, tag, push, or release
+        required: false
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      release_type:
+        required: true
+        type: string
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+
+run-name: "🚀 release ${{ inputs.release_type }}${{ inputs.dry_run && ' (dry-run)' || '' }}"
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.core.outputs.version }}
+      tag: ${{ steps.core.outputs.tag }}
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/auto-release@v1.3.0
+      - id: core
+        uses: a-novel-kit/workflows/publish-actions/release-core@v1.3.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_type: ${{ inputs.release_type }}
+          dry_run: ${{ inputs.dry_run }}
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
 
   build-database:
+    needs: [release]
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,17 +75,19 @@ jobs:
         with:
           file: builds/database.Dockerfile
           image_name: ${{ github.repository }}/database
+          version: ${{ needs.release.outputs.version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
-            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" 
-            -e POSTGRES_USER="${POSTGRES_USER}" 
+            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+            -e POSTGRES_USER="${POSTGRES_USER}"
             -e POSTGRES_DB="${POSTGRES_DB}"
             -e POSTGRES_HOST_AUTH_METHOD="${POSTGRES_HOST_AUTH_METHOD}"
             -e POSTGRES_INITDB_ARGS="${POSTGRES_INITDB_ARGS}"
 
   build-migrations:
     runs-on: ubuntu-latest
-    needs: [build-database]
+    needs: [release, build-database]
+    if: ${{ !inputs.dry_run }}
     permissions:
       contents: read
       packages: write
@@ -51,7 +95,7 @@ jobs:
       id-token: write
     services:
       postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        image: ghcr.io/a-novel/service-authentication/database:${{ needs.release.outputs.tag }}
         ports:
           - "5432:5432"
         env:
@@ -72,12 +116,14 @@ jobs:
         with:
           file: builds/migrations.Dockerfile
           image_name: ${{ github.repository }}/jobs/migrations
+          version: ${{ needs.release.outputs.version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
 
   build-job-init:
     runs-on: ubuntu-latest
-    needs: [build-database]
+    needs: [release, build-database]
+    if: ${{ !inputs.dry_run }}
     permissions:
       contents: read
       packages: write
@@ -85,7 +131,7 @@ jobs:
       id-token: write
     services:
       postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        image: ghcr.io/a-novel/service-authentication/database:${{ needs.release.outputs.tag }}
         ports:
           - "5432:5432"
         env:
@@ -110,6 +156,7 @@ jobs:
         with:
           file: builds/init.Dockerfile
           image_name: ${{ github.repository }}/jobs/init
+          version: ${{ needs.release.outputs.version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
@@ -117,7 +164,8 @@ jobs:
             -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD}"
 
   build-rest:
-    needs: [build-database]
+    needs: [release, build-database]
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -140,7 +188,7 @@ jobs:
           --health-retries 5
 
       postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        image: ghcr.io/a-novel/service-authentication/database:${{ needs.release.outputs.tag }}
         ports:
           - "5432:5432"
         env:
@@ -172,6 +220,7 @@ jobs:
         with:
           file: builds/rest.Dockerfile
           image_name: ${{ github.repository }}/rest
+          version: ${{ needs.release.outputs.version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
@@ -180,7 +229,8 @@ jobs:
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
   build-standalone-rest:
-    needs: [build-database]
+    needs: [release, build-database]
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -203,7 +253,7 @@ jobs:
           --health-retries 5
 
       postgres-authentication:
-        image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
+        image: ghcr.io/a-novel/service-authentication/database:${{ needs.release.outputs.tag }}
         ports:
           - "5432:5432"
         env:
@@ -235,6 +285,7 @@ jobs:
         with:
           file: builds/standalone.rest.Dockerfile
           image_name: ${{ github.repository }}/standalone-rest
+          version: ${{ needs.release.outputs.version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
             -e POSTGRES_DSN="${POSTGRES_DSN}"
@@ -242,9 +293,11 @@ jobs:
             -e SERVICE_JSON_KEYS_HOST="${SERVICE_JSON_KEYS_HOST}"
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
+  # Publish the JS client from the bumped tag (ref) so it carries the new
+  # version rather than the pre-bump default branch.
   build-js:
-    needs:
-      - release
+    needs: [release]
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -254,4 +307,26 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.PUBLISH_BOT_PRIVATE_KEY }}
-          app_id: ${{ vars.PUBLISH_BOT_ID }}
+          client_id: ${{ vars.PUBLISH_BOT_CLIENT_ID }}
+          ref: ${{ needs.release.outputs.tag }}
+
+  # Everything shipped — clear this repo's awaiting-release board items.
+  archive:
+    needs:
+      - release
+      - build-database
+      - build-migrations
+      - build-job-init
+      - build-rest
+      - build-standalone-rest
+      - build-js
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/archive-board-items@v1.3.0
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}

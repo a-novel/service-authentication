@@ -33,7 +33,7 @@ jobs:
       - uses: a-novel-kit/workflows/generic-actions/pull-bot@v1.3.0
         id: app_token
         with:
-          app_id: ${{ vars.DEPENDENCY_BOT_ID }}
+          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
       - uses: actions/setup-node@v6
         with:
@@ -75,7 +75,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-          app_id: ${{ vars.DEPENDENCY_BOT_ID }}
+          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           lint_action: "lint:ci"
 
   test-go:
@@ -206,7 +206,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-          app_id: ${{ vars.DEPENDENCY_BOT_ID }}
+          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           coverage_artifact: jscover
           test_action: "test:ci"
 
@@ -454,7 +454,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-          app_id: ${{ vars.DEPENDENCY_BOT_ID }}
+          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           build_action: "build:rest"
 
   report-grc:
