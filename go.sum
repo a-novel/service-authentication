@@ -27,8 +27,6 @@ github.com/a-novel-kit/golib v0.22.10 h1:4E4QZawlF0Ex8XDHz211D0BqzJPcOW0idYGSbj/
 github.com/a-novel-kit/golib v0.22.10/go.mod h1:+CkFcCcAuFDEHSeTt7yBCuYDQeI2APzGl8mIJuS3/+w=
 github.com/a-novel-kit/jwt v1.1.72 h1:jp6dVXbhlIzqIiKt/uyRtPj01L4kBB3IxninKik6COQ=
 github.com/a-novel-kit/jwt v1.1.72/go.mod h1:hWpErr7XayiUNcUkwhd5LM4u767VCGCcRvvUpC7niqc=
-github.com/a-novel/service-json-keys/v2 v2.3.1 h1:SqsKBLsoFP6fAdckS4l66WcBYy21xW4i2RL7NNfjWZA=
-github.com/a-novel/service-json-keys/v2 v2.3.1/go.mod h1:JRHn42C/RMaw3soHRLyvoB/hbMx3MicoE3oDmg/tpXA=
 github.com/a-novel/service-json-keys/v2 v2.3.2 h1:54/S7o9hRNhz/pNjAl4Z9n/cz2fphwpKzry6CmQjkXk=
 github.com/a-novel/service-json-keys/v2 v2.3.2/go.mod h1:XQ/b6H3RwgLjYtCaZeClbhD/ngDUsRfaW5tHki1BTCY=
 github.com/brunoga/deep v1.3.1 h1:bSrL6FhAZa6JlVv4vsi7Hg8SLwroDb1kgDERRVipBCo=
@@ -294,8 +292,8 @@ google.golang.org/genproto/googleapis/api v0.0.0-20260610212136-7ab31c22f7ad h1:
 google.golang.org/genproto/googleapis/api v0.0.0-20260610212136-7ab31c22f7ad/go.mod h1:KdNqO+rCIWgFumrNBSEDlDNrkrQnpkax7Tv1WxNY8V4=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad h1:45WmJvIV6C2+O/jjLkPUH+F3aOj/1miDoU2DD0+NWbg=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
-google.golang.org/grpc v1.81.1 h1:VnnIIZ88UzOOKLukQi+ImGz8O1Wdp8nAGGnvOfEIWQQ=
-google.golang.org/grpc v1.81.1/go.mod h1:xGH9GfzOyMTGIOXBJmXt+BX/V0kcdQbdcuwQ/zNw42I=
+google.golang.org/grpc v1.82.0 h1:vguDnZUPjE26w09A63VoxZPnvPjB5Riyc0mkXPFmAIU=
+google.golang.org/grpc v1.82.0/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
 google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
 google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
