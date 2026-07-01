@@ -1,26 +1,69 @@
-name: auto-approve dependabot
-on: pull_request
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Auto-approves pull requests opened by the trusted dependency bots so routine
+# version bumps don't wait on a human approval. It is safe on two counts: the PR
+# author is a fixed bot identity a contributor cannot impersonate, and the approval
+# is withheld the moment a commit by anyone other than that bot lands on the branch,
+# so a tampered dependency PR falls back to normal review. Merging is left to the
+# bots' own settings — they self-merge once their requirements (this approval
+# included) are met.
+name: auto-approve dependencies
 
-permissions:
-  contents: write
-  pull-requests: write
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
-  approve-bot:
+  auto-approve:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    if: ${{ github.event.pull_request.user.login == vars.DEPENDENCY_BOT_LOGIN || github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN }}
+    if: >-
+      github.event.pull_request.user.login == vars.DEPENDENCY_BOT_LOGIN ||
+      github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN
+    # Every step runs on the minted App token; the default token is unused.
+    permissions: {}
     steps:
-      - uses: actions/checkout@v7
-      - uses: a-novel-kit/workflows/generic-actions/approve-bot@v1.3.2
+      # Approve as the App — a distinct identity from the bot author, and one whose
+      # review reliably counts toward the required-approval rule (a workflow's own
+      # token does not).
+      - name: Mint approval token
+        id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: read
+          permission-pull-requests: write
+
+      # A human push to the branch means the change needs real review, so approve
+      # only when every commit is the bot's own. Unknown authors count as non-bot,
+      # so the guard fails closed.
+      - name: Confirm every commit is the bot's
+        id: guard
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          PR: ${{ github.event.pull_request.html_url }}
+          BOT: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          authors=$(gh pr view "$PR" --json commits \
+            -q '[.commits[].authors[].login // "unknown"] | unique | sort | join(",")')
+          if [ "$authors" != "$BOT" ]; then
+            echo "::notice::Not auto-approving — commits by '${authors:-unknown}', expected only '$BOT'."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # approve-bot runs `gh pr checkout`, so a base checkout must exist first.
+      - name: Check out
+        if: ${{ steps.guard.outputs.skip != 'true' }}
+        uses: actions/checkout@v7
+        with:
+          token: ${{ steps.token.outputs.token }}
+          persist-credentials: false
+
+      - name: Approve
+        if: ${{ steps.guard.outputs.skip != 'true' }}
+        uses: a-novel-kit/workflows/generic-actions/approve-bot@v1.4.0
         with:
           pull_request: ${{ github.event.pull_request.html_url }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: a-novel-kit/workflows/generic-actions/auto-merge-bot@v1.3.2
-        # Renovate already activates auto-merge by itself.
-        if: ${{ github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN }}
-        with:
-          pull_request: ${{ github.event.pull_request.html_url }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.token.outputs.token }}
