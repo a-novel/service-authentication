@@ -1,0 +1,33 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Single-writer board automation: derive a PR's linked Task's board Status from the
+# PR's lifecycle (draft → In progress, approved → Done, merged → Awaiting release, …)
+# and write it as the [Agent] App. The action reads the PR + its closing issue on the
+# job's default token; the board write is done inside board-write, which mints the
+# [Agent] token itself — so the board stays single-writer. Runs on every PR and review
+# event so the board follows activity; the per-org reconcile sweep repairs any drift.
+name: derive-status
+
+on:
+  pull_request:
+    types: [opened, reopened, converted_to_draft, ready_for_review, closed, synchronize]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    # derive-status only READS here (the PR and its linked issue); the privileged board
+    # write happens on the [Agent] token minted inside board-write.
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/derive-status@v1.6.0
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          # The org "Tasks" board id, inlined per-org the same way the release workflow
+          # passes it to archive-board-items.
+          project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
