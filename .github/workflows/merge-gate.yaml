@@ -1,17 +1,29 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# The single required "may this PR merge?" gate. Runs on every PR to the default
-# branch, and on the merge queue's group, so the required `merge-gate` check
-# reports in both places — the queue validates required checks on the group, so
-# the gate must post there too or a queued PR waits out the timeout and drops. The
-# check itself is posted by the [Agent] App via the Checks API (a stable
-# integration id the ruleset requires), so the job below is only the runner — its
-# id is deliberately NOT `merge-gate`, to avoid a duplicate check name.
+# The required "may this PR merge?" gate, plus the landing coordinator for epic
+# members. Two jobs:
+#
+#   evaluate   — posts the required `merge-gate` check on every PR and on the merge
+#                queue's group (the queue validates required checks on the group, so
+#                the gate must post there too or a queued PR waits out the timeout and
+#                drops). The check is posted by the [Agent] App via the Checks API (a
+#                stable integration id the ruleset requires), so the job is only the
+#                runner — its id is deliberately NOT `merge-gate`, to avoid a duplicate
+#                check name. A standalone PR passes; an epic member holds until every
+#                sibling is ready (epic-atomicity).
+#
+#   auto-merge — enables native auto-merge on an epic member so the whole set lands
+#                together once the gate + approval go green. Enabling is safe while the
+#                gate is still red — GitHub parks it and merges when green. Held at
+#                `dry_run: "true"` until the rollout's go-live step flips it.
 name: merge-gate
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    # labeled/unlabeled fire on any label change; we need them so an `epic:<N>`
+    # add/remove re-evaluates membership (non-epic churn just re-posts the same result).
+    # ready_for_review/converted_to_draft: draft state flips this PR's own readiness.
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review, converted_to_draft]
   # A review changing (approve/dismiss) can flip this PR's atomicity readiness, so
   # re-evaluate the gate on review events too.
   pull_request_review:
@@ -25,7 +37,34 @@ jobs:
     # default token, so it needs no repository permissions of its own.
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.8.2
+      - uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.9.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+
+  auto-merge:
+    # Only where there is a PR to enable (pull_request events), and never on a draft.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    # The member check reads the event payload (no API); enable-auto-merge mints its
+    # own [Agent] token — so no default-token permissions are needed.
+    permissions: {}
+    steps:
+      - name: Is this an epic member?
+        id: member
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          if printf '%s' "$LABELS" | grep -qE '"epic:[0-9]+"'; then
+            echo "member=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "member=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: ${{ steps.member.outputs.member == 'true' }}
+        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.9.0
+        with:
+          pull_request_number: ${{ github.event.pull_request.number }}
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          # Read-only-first: the go-live rollout step flips this to "false".
+          dry_run: "true"
