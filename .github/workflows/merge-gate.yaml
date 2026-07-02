@@ -12,6 +12,10 @@ name: merge-gate
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  # A review changing (approve/dismiss) can flip this PR's atomicity readiness, so
+  # re-evaluate the gate on review events too.
+  pull_request_review:
+    types: [submitted, dismissed]
   merge_group:
 
 jobs:
@@ -21,7 +25,7 @@ jobs:
     # default token, so it needs no repository permissions of its own.
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.5.0
+      - uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.6.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
