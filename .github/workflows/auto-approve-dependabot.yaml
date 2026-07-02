@@ -4,9 +4,8 @@
 # version bumps don't wait on a human approval. It is safe on two counts: the PR
 # author is a fixed bot identity a contributor cannot impersonate, and the approval
 # is withheld the moment a commit by anyone other than that bot lands on the branch,
-# so a tampered dependency PR falls back to normal review. Merging is left to the
-# bots' own settings — they self-merge once their requirements (this approval
-# included) are met.
+# so a tampered dependency PR falls back to normal review. Once approved, the PR is
+# added to the merge queue so it merges hands-off (the queue owns the method).
 name: auto-approve dependencies
 
 on:
@@ -31,8 +30,10 @@ jobs:
         with:
           client-id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           private-key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          permission-contents: read
+          # No `owner`: approving + merging this one PR needs nothing org-wide, so
+          # the token stays scoped to the current repository (omitting `owner` +
+          # `repositories` scopes it there). Contrast the Projects-scoped actions.
+          permission-contents: write
           permission-pull-requests: write
 
       # A human push to the branch means the change needs real review, so approve
@@ -67,3 +68,15 @@ jobs:
         with:
           pull_request: ${{ github.event.pull_request.html_url }}
           github_token: ${{ steps.token.outputs.token }}
+
+      # Put the approved PR in the merge queue so it merges hands-off. The queue
+      # re-validates the required checks on the group and owns the merge method;
+      # pass `--squash` (the org's only allowed method) so the command is explicit
+      # for any repo without a queue too — where there is a queue it just logs that
+      # the strategy is queue-controlled.
+      - name: Enable auto-merge
+        if: ${{ steps.guard.outputs.skip != 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge "$PR" --auto --squash
