@@ -483,6 +483,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && success()
     needs: [build-js]
+    # GitHub Pages allows a single deployment in flight per site; without this
+    # group, concurrent master runs fail with "in progress deployment" errors.
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
     permissions:
       contents: read
       pages: write
