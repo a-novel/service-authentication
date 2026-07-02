@@ -25,7 +25,7 @@ jobs:
     # default token, so it needs no repository permissions of its own.
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.6.0
+      - uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.7.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
