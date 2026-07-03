@@ -88,7 +88,7 @@ importers:
         version: 5.4.0(svgo@4.0.1)(typescript@6.0.3)
       nodemailer:
         specifier: ^9.0.0
-        version: 9.0.1
+        version: 9.0.2
       prettier:
         specifier: ^3.7.4
         version: 3.9.4
@@ -2579,6 +2579,10 @@ packages:
 
   nodemailer@9.0.1:
     resolution: {integrity: sha512-Gwv8SQewT616ZM/URn0H54b8PWo/Wum7md3EW2aWy1lO27+WZCX+Xyak3J+NlmHUjDh5ME+uesJUDRbR3Ye8Bw==}
+    engines: {node: '>=6.0.0'}
+
+  nodemailer@9.0.2:
+    resolution: {integrity: sha512-Rnve6ToHDjq8GKDB+AYAXgGTSL9XLn3UBCLpJ0eV19an4LZLQdUp+i9SD8wenURjarIBNG11b/biucIgkxEeAg==}
     engines: {node: '>=6.0.0'}
 
   nopt@7.2.1:
@@ -6634,6 +6638,8 @@ snapshots:
       big-integer: 1.6.52
 
   nodemailer@9.0.1: {}
+
+  nodemailer@9.0.2: {}
 
   nopt@7.2.1:
     dependencies:
