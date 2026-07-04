@@ -1,3 +1,6 @@
+// Command rest runs the authentication service's HTTP API. It wires the data-access, core,
+// and handler layers together, mounts them on a chi router, and serves until an interrupt or
+// termination signal arrives, then shuts the server down gracefully.
 package main
 
 import (

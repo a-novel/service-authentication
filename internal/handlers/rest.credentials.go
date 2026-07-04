@@ -8,6 +8,8 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// Credentials is the JSON representation of a user's account record returned by
+// the credentials endpoints.
 type Credentials struct {
 	ID        uuid.UUID `json:"id"`
 	Email     string    `json:"email"`

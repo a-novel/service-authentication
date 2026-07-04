@@ -44,26 +44,39 @@ var (
 	ErrTokenRefreshMismatchSource = errors.New("refresh token not issued from access token")
 )
 
+// TokenRefreshDao reloads the current credentials of the user being refreshed.
 type TokenRefreshDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
+
+// TokenRefreshServiceSignClaims signs the new access token.
 type TokenRefreshServiceSignClaims interface {
 	ClaimsSign(
 		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
 	) (*servicejsonkeys.ClaimsSignResponse, error)
 }
+
+// TokenRefreshServiceVerifyClaims verifies the incoming access token and decodes its
+// claims. It is distinct from TokenRefreshServiceVerifyRefreshClaims only in the claim
+// type it returns.
 type TokenRefreshServiceVerifyClaims interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*AccessTokenClaims, error)
 }
+
+// TokenRefreshServiceVerifyRefreshClaims verifies the incoming refresh token and decodes
+// its claims.
 type TokenRefreshServiceVerifyRefreshClaims interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*RefreshTokenClaims, error)
 }
 
+// TokenRefreshRequest carries the access/refresh token pair to be renewed.
 type TokenRefreshRequest struct {
 	AccessToken  string `validate:"required,max=1024"`
 	RefreshToken string `validate:"required,max=1024"`
 }
 
+// TokenRefresh renews an access token from a valid refresh token, minting a new access
+// token that reflects the user's current roles while reusing the same refresh token.
 type TokenRefresh struct {
 	dao                        TokenRefreshDao
 	serviceSignClaims          TokenRefreshServiceSignClaims
@@ -96,9 +109,8 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	// Step 1: Verify the access token signature.
-	// We allow expired tokens here because the whole point of refresh is to get a new access token
-	// after the old one expires. However, the signature must still be valid to prevent forgery.
+	// Verify the access token's signature. Expiry is ignored on purpose: renewing an
+	// expired access token is exactly what refresh is for, but the signature must hold.
 	accessTokenClaims, err := service.serviceVerifyClaims.VerifyClaims(
 		ctx,
 		&servicejsonkeys.VerifyClaimsRequest{
@@ -115,8 +127,7 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	// Step 2: Verify the refresh token signature and expiration.
-	// Unlike access tokens, refresh tokens must not be expired.
+	// Verify the refresh token. Unlike the access token, it must not be expired.
 	refreshTokenClaims, err := service.serviceVerifyRefreshClaims.VerifyClaims(
 		ctx,
 		&servicejsonkeys.VerifyClaimsRequest{
@@ -137,8 +148,7 @@ func (service *TokenRefresh) Exec(
 		attribute.String("refreshTokenClaims.userID", refreshTokenClaims.UserID.String()),
 	)
 
-	// Step 3: Verify that both tokens belong to the same user.
-	// This prevents an attacker from using a stolen refresh token with a different user's access token.
+	// Both tokens must name the same user; see ErrTokenRefreshMismatchClaims.
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchClaims)
 	}
@@ -148,16 +158,14 @@ func (service *TokenRefresh) Exec(
 		attribute.String("refreshTokenClaims.jti", refreshTokenClaims.Jti),
 	)
 
-	// Step 4: Verify that the access token was issued from this specific refresh token.
-	// Each access token stores the JTI of the refresh token that created it.
-	// This binding ensures that:
-	//   - An access token can only be refreshed using its original refresh token
-	//   - Revoking a refresh token effectively revokes all access tokens derived from it
+	// The access token must have been minted by this very refresh token — so revoking a
+	// refresh token also invalidates every access token minted from it. See
+	// ErrTokenRefreshMismatchSource for the binding this enforces.
 	if accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchSource)
 	}
 
-	// Retrieve updated credentials.
+	// Reload credentials so any role change since the original sign lands in the new token.
 	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectRequest{
 		ID: lo.FromPtr(accessTokenClaims.UserID),
 	})

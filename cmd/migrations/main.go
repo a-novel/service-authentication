@@ -23,11 +23,9 @@ func main() {
 
 	start := time.Now()
 
-	// Inventory the .up.sql files up-front so the recap can say how
-	// many migrations were discovered (the underlying helper uses
-	// uptrace/bun's Migrate, which doesn't expose a count without
-	// invasive wrapping — counting the embed.FS is the simplest
-	// stable approximation).
+	// Inventory the .up.sql files up-front so the recap can report how many were found.
+	// bun's migrator (used by RunMigrationsContext) exposes no count, so walking the
+	// embed.FS is the simplest stable approximation.
 	discovered := listUpMigrations(migrations.Migrations)
 	log.Printf("discovered %d migration(s) in models/migrations", len(discovered))
 
@@ -46,18 +44,16 @@ func main() {
 		len(discovered), time.Since(start).Round(time.Millisecond))
 }
 
-// listUpMigrations returns the bare names of every *.up.sql in the
-// migrations FS, sorted by their natural lexical order (timestamp
-// prefix guarantees chronological). Used for the start-of-run
-// inventory log; doesn't decide which are actually applied — bun's
-// migrator does that against the schema_migrations table.
+// listUpMigrations returns the bare name of every *.up.sql in f, in the lexical order
+// WalkDir yields (the timestamp prefix makes that chronological). It feeds the start-of-run
+// inventory log only; bun's migrator decides which migrations actually apply.
 func listUpMigrations(f fs.FS) []string {
 	var out []string
 
 	_ = fs.WalkDir(f, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			// Propagating aborts the walk; the caller discards the error —
-			// the inventory is best-effort logging, not a gate.
+			// Aborting the walk only skips inventory logging, not the migration run, so
+			// the caller discards this error.
 			return err
 		}
 

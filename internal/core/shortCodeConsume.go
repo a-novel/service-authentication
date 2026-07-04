@@ -26,24 +26,36 @@ var (
 	ErrShortCodeConsumeExpired = errors.New("short code expired")
 )
 
+// ShortCodeConsumeDaoSelect loads the stored short code for a (Usage, Target)
+// pair so the submitted code can be verified against it.
 type ShortCodeConsumeDaoSelect interface {
 	Exec(ctx context.Context, request *dao.ShortCodeSelectRequest) (*dao.ShortCode, error)
 }
+
+// ShortCodeConsumeDaoDelete retires a short code once it has been redeemed, so it
+// cannot be used a second time.
 type ShortCodeConsumeDaoDelete interface {
 	Exec(ctx context.Context, request *dao.ShortCodeDeleteRequest) (*dao.ShortCode, error)
 }
 
+// ShortCodeConsumeRequest identifies the code to redeem: the flow it was issued
+// for, the subject it was bound to, and the plaintext code the user supplied.
 type ShortCodeConsumeRequest struct {
 	Usage  string `validate:"required,usage"`
 	Target string `validate:"required,max=1024"`
 	Code   string `validate:"required,max=1024"`
 }
 
+// ShortCodeConsume verifies a user-submitted short code against the stored hash
+// and, on success, retires it so it cannot be redeemed twice. It is the
+// counterpart to [ShortCodeCreate].
 type ShortCodeConsume struct {
 	daoSelect ShortCodeConsumeDaoSelect
 	daoDelete ShortCodeConsumeDaoDelete
 }
 
+// NewShortCodeConsume wires the consume service to the DAOs that read and delete
+// stored codes.
 func NewShortCodeConsume(
 	daoSelect ShortCodeConsumeDaoSelect,
 	daoDelete ShortCodeConsumeDaoDelete,
@@ -54,6 +66,9 @@ func NewShortCodeConsume(
 	}
 }
 
+// Exec verifies the submitted code and, on success, deletes it and returns the
+// consumed [ShortCode]. It returns [ErrShortCodeConsumeInvalid] when the code does
+// not match the stored hash and [ErrShortCodeConsumeExpired] when it has lapsed.
 func (service *ShortCodeConsume) Exec(
 	ctx context.Context, request *ShortCodeConsumeRequest,
 ) (*ShortCode, error) {
@@ -87,7 +102,7 @@ func (service *ShortCodeConsume) Exec(
 		return nil, otel.ReportError(span, ErrShortCodeConsumeExpired)
 	}
 
-	// Compare the encrypted code with the plain code of the request.
+	// Compare the submitted code against the stored Argon2id hash.
 	err = lib.CompareArgon2(request.Code, entity.Code)
 	if err != nil {
 		// lib.ErrInvalidPassword is the expected outcome (mistyped / stale code, handler → 4xx);

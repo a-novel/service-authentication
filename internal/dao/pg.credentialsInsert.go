@@ -24,6 +24,7 @@ var credentialsInsertQuery string
 // branch on it with errors.Is.
 var ErrCredentialsInsertAlreadyExists = errors.New("credentials already exists")
 
+// CredentialsInsertRequest is the input to [CredentialsInsert.Exec].
 type CredentialsInsertRequest struct {
 	// See Credentials.ID.
 	ID uuid.UUID

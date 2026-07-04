@@ -45,6 +45,9 @@ type CredentialsUpdateRoleRequest struct {
 	Role          string `validate:"required,role"`
 }
 
+// CredentialsUpdateRole changes a target user's role on behalf of an acting user,
+// enforcing the role hierarchy: an actor cannot change its own role, promote anyone
+// above its own rank, or demote a user whose rank is at or above its own.
 type CredentialsUpdateRole struct {
 	dao                  CredentialsUpdateRoleDao
 	daoCredentialsSelect CredentialsUpdateRoleDaoCredentialsSelect

@@ -4,6 +4,6 @@
 // observability) and the defaults applied when an environment variable is unset.
 //
 // The env subpackage parses the process environment into the [App] struct;
-// configtest exposes a fixture builder for tests. Runtime code should depend on
+// configtest exposes shared fixtures for tests. Runtime code should depend on
 // the typed structs declared here rather than reading os.Getenv directly.
 package config

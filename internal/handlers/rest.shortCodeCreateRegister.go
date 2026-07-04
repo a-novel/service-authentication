@@ -52,8 +52,7 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 		Lang:  request.Lang,
 	})
 	if err != nil {
-		// Silently succeed if email already exists to prevent email enumeration.
-		// The user won't receive an email, but they won't know if the email was registered.
+		// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
 		if !errors.Is(err, dao.ErrCredentialsInsertAlreadyExists) {
 			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 				core.ErrInvalidRequest: http.StatusUnprocessableEntity,

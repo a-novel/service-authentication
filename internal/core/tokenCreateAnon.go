@@ -15,6 +15,9 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
+// anonTokenClaims is the fixed sign request for anonymous access tokens. The payload
+// never varies — no user ID, only the anonymous role — so it is marshaled once at
+// package load rather than per request.
 var anonTokenClaims = &servicejsonkeys.ClaimsSignRequest{
 	Usage: servicejsonkeys.KeyUsageAuth,
 	Payload: lo.Must(grpcf.MarshalJSONAsAny(AccessTokenClaims{
@@ -22,12 +25,15 @@ var anonTokenClaims = &servicejsonkeys.ClaimsSignRequest{
 	})),
 }
 
+// TokenCreateAnonSignClaimsService is the json-keys signing surface TokenCreateAnon needs.
 type TokenCreateAnonSignClaimsService interface {
 	ClaimsSign(
 		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
 	) (*servicejsonkeys.ClaimsSignResponse, error)
 }
 
+// TokenCreateAnon issues an anonymous access token, carrying no user ID and only the
+// anonymous role. See AccessTokenClaims for what such tokens grant.
 type TokenCreateAnon struct {
 	signClaimsService TokenCreateAnonSignClaimsService
 }

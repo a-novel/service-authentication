@@ -7,7 +7,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// Credentials represent the information used to authenticate and discriminate a user.
+// Credentials hold the information used to authenticate and identify a user.
 type Credentials struct {
 	bun.BaseModel `bun:"table:credentials"`
 

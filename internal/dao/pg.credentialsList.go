@@ -15,9 +15,7 @@ import (
 //go:embed pg.credentialsList.sql
 var credentialsListQuery string
 
-// CredentialsListRequest is the input to [CredentialsList.Exec]. Pagination uses
-// limit/offset; an empty Roles slice disables the role filter and returns
-// credentials of every role.
+// CredentialsListRequest is the input to [CredentialsList.Exec].
 type CredentialsListRequest struct {
 	Limit  int
 	Offset int
@@ -47,8 +45,9 @@ func (dao *CredentialsList) Exec(
 	)
 
 	if len(request.Roles) == 0 {
-		// Make sure roles are defined in the query, to prevent type error.
-		// An empty array will still ignore roles filter like a nil value is expected to do.
+		// bun.List needs a non-nil slice to render a valid expression; a nil slice
+		// produces a type error. An empty slice renders as NULL, which the query
+		// treats as "no role filter".
 		request.Roles = []string{}
 	}
 

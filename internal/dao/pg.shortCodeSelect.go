@@ -23,9 +23,8 @@ var shortCodeSelectQuery string
 // the dao layer can't distinguish: never-issued, expired, and already-consumed.
 var ErrShortCodeSelectNotFound = errors.New("short code not found")
 
-// ShortCodeSelectRequest is the input to [ShortCodeSelect.Exec]. At most one
-// non-deleted row exists per (Usage, Target) pair: the partial unique index
-// added in the 20260510140000 migration enforces this, so the query returns
+// ShortCodeSelectRequest is the input to [ShortCodeSelect.Exec]. A partial unique
+// index keeps at most one active row per (Usage, Target) pair, so the query returns
 // either zero or one row.
 type ShortCodeSelectRequest struct {
 	// Usage selects which flow this code is valid for; matches [ShortCode.Usage].

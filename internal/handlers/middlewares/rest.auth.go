@@ -45,6 +45,8 @@ type Auth struct {
 	logger logging.Log
 }
 
+// NewAuth returns an [Auth] that verifies access tokens with the given claims
+// verifier and resolves caller roles to permissions through permissionsByRole.
 func NewAuth(
 	claimsVerifier AuthClaimsVerifier,
 	permissionsByRole map[string][]string,
@@ -73,7 +75,7 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 			defer span.End()
 
 			token := r.Header.Get("Authorization")
-			// No token but no permissions required.
+			// Optional-auth endpoint: no token supplied and none required, so pass through unauthenticated.
 			if token == "" && len(requiredPermissions) == 0 {
 				otel.ReportSuccessNoContent(span)
 				next.ServeHTTP(w, r.WithContext(ctx))
@@ -189,7 +191,7 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 }
 
 // MustGetClaimsContext retrieves the authenticated user's claims from the context.
-// Unlike GetClaimsContext, this returns an error if no claims are present,
+// Unlike [GetClaimsContext], this returns an error if no claims are present,
 // making it suitable for endpoints that require authentication.
 func MustGetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 	claims, err := GetClaimsContext(ctx)

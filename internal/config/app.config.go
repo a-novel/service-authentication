@@ -10,16 +10,19 @@ import (
 	"github.com/a-novel-kit/golib/smtp"
 )
 
+// Main holds the core identity of the service, used to tag its logs and traces.
 type Main struct {
 	Name string `json:"name" yaml:"name"`
 }
 
+// Dependencies configures how the service reaches the backing services it calls.
 type Dependencies struct {
 	ServiceJsonKeysHost        string                    `json:"jsonKeysServiceHost" yaml:"jsonKeysServiceHost"`
 	ServiceJsonKeysPort        int                       `json:"jsonKeysServicePort" yaml:"jsonKeysServicePort"`
 	ServiceJsonKeysCredentials grpcf.CredentialsProvider `json:"-"                   yaml:"-"`
 }
 
+// RestTimeouts bounds the phases of the REST server's request lifecycle.
 type RestTimeouts struct {
 	Read       time.Duration `json:"read"       yaml:"read"`
 	ReadHeader time.Duration `json:"readHeader" yaml:"readHeader"`
@@ -28,6 +31,7 @@ type RestTimeouts struct {
 	Request    time.Duration `json:"request"    yaml:"request"`
 }
 
+// Cors configures the cross-origin resource sharing policy of the REST server.
 type Cors struct {
 	AllowedOrigins   []string `json:"allowedOrigins"   yaml:"allowedOrigins"`
 	AllowedHeaders   []string `json:"allowedHeaders"   yaml:"allowedHeaders"`
@@ -35,6 +39,7 @@ type Cors struct {
 	MaxAge           int      `json:"maxAge"           yaml:"maxAge"`
 }
 
+// Rest configures the public REST HTTP server.
 type Rest struct {
 	Port           int          `json:"port"           yaml:"port"`
 	Timeouts       RestTimeouts `json:"timeouts"       yaml:"timeouts"`
@@ -42,6 +47,7 @@ type Rest struct {
 	Cors           Cors         `json:"cors"           yaml:"cors"`
 }
 
+// App is the fully resolved configuration for the service, assembled at startup from the environment.
 type App struct {
 	App  Main `json:"app"  yaml:"app"`
 	Rest Rest `json:"rest" yaml:"rest"`

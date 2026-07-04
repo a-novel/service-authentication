@@ -39,12 +39,7 @@ func printDepsGraph[Mod comparable](deps map[Mod]map[Mod]bool) string {
 // Algorithm: topological sort over the inheritance graph; nodes are processed
 // in order of depth (mods with no parents first), and each resolved mod's
 // inherited deps are appended in resolution order.
-//
-// Inlined from github.com/a-novel-kit/golib/deps after that package was
-// deprecated for single-consumer-in-org. See manage-versions ("Step 0 —
-// grep consumers first") for the bar; this consumer was below it.
 func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[Mod][]Mod) (map[Mod][]Deps, error) {
-	// Reference: https://dnaeon.github.io/dependency-graph-resolution-algorithm-in-go/
 	// Seed every mod from `mods` into depsGraph as a leaf (no parents). This is what
 	// lets callers omit empty entries from `deps` — e.g. `deps = {mod2: [mod1]}` without
 	// an explicit `mod1: []` — and have the algorithm still find a depth-0 root to start

@@ -18,21 +18,31 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
+// ShortCodeCreateRegisterService issues the underlying short code; satisfied by
+// [ShortCodeCreate].
 type ShortCodeCreateRegisterService interface {
 	Exec(ctx context.Context, request *ShortCodeCreateRequest) (*ShortCode, error)
 }
 
+// ShortCodeCreateRegisterDao reports whether an email address is already
+// registered, so a duplicate sign-up can be rejected.
 type ShortCodeCreateRegisterDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
+// ShortCodeCreateRegisterSmtp is the mailer used to deliver the registration code.
 type ShortCodeCreateRegisterSmtp = smtp.Sender
 
+// ShortCodeCreateRegisterRequest carries the address to register and the language
+// of the registration mail.
 type ShortCodeCreateRegisterRequest struct {
 	Email string `validate:"required,email,max=1024"`
 	Lang  string `validate:"required,langs"`
 }
 
+// ShortCodeCreateRegister issues a [ShortCodeUsageRegister] code for a new-account
+// sign-up and emails it to the prospective address, after rejecting the sign-up if
+// that address is already registered.
 type ShortCodeCreateRegister struct {
 	service          ShortCodeCreateRegisterService
 	selectDao        ShortCodeCreateRegisterDao
@@ -43,6 +53,8 @@ type ShortCodeCreateRegister struct {
 	wg sync.WaitGroup
 }
 
+// NewShortCodeCreateRegister wires the registration flow to the short-code
+// service, the email-existence DAO, and the mailer.
 func NewShortCodeCreateRegister(
 	service ShortCodeCreateRegisterService,
 	selectDao ShortCodeCreateRegisterDao,
@@ -59,10 +71,14 @@ func NewShortCodeCreateRegister(
 	}
 }
 
+// Wait blocks until every in-flight registration email has finished sending, so
+// callers can drain pending deliveries before shutdown.
 func (service *ShortCodeCreateRegister) Wait() {
 	service.wg.Wait()
 }
 
+// Exec issues the registration code and schedules its delivery email, returning
+// the code immediately. It fails if the address is already registered.
 func (service *ShortCodeCreateRegister) Exec(
 	ctx context.Context, request *ShortCodeCreateRegisterRequest,
 ) (*ShortCode, error) {
@@ -101,7 +117,8 @@ func (service *ShortCodeCreateRegister) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
-	// Sends the short code by mail, once the request is done (context terminated).
+	// Deliver the code by email in a detached goroutine: WithoutCancel keeps the
+	// send alive after the request context is cancelled, and Wait drains it on shutdown.
 	service.wg.Add(1)
 
 	go service.sendMail(context.WithoutCancel(ctx), request, shortCode)

@@ -38,6 +38,9 @@ type CredentialsUpdatePasswordRequest struct {
 	UserID          uuid.UUID
 }
 
+// CredentialsUpdatePassword changes an account's password through one of two
+// authenticated paths: a reset short code proving the caller owns the account's
+// email, or the current password proving an active session belongs to the owner.
 type CredentialsUpdatePassword struct {
 	dao                     CredentialsUpdatePasswordDao
 	daoCredentialsSelect    CredentialsUpdatePasswordDaoCredentialsSelect
@@ -69,7 +72,6 @@ func (service *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	// Encrypt the new password.
 	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
@@ -77,14 +79,12 @@ func (service *CredentialsUpdatePassword) Exec(
 
 	var credentials *dao.Credentials
 
-	// Password update supports two authentication paths, running within a transaction
-	// to ensure atomicity of verification and update.
+	// Verification and update share one transaction so a failed check never leaves a
+	// changed password behind.
 	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
 		switch {
-		// Path 1: Password Reset Flow
-		// Used when the user forgot their password and requested a reset via email.
-		// The short code proves the user owns the email address associated with this account.
-		// This path does NOT require knowing the current password.
+		// Reset path: the short code proves the caller owns the account's email, so no
+		// current password is required.
 		case request.ShortCode != "":
 			_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
 				Usage:  ShortCodeUsageResetPassword,
@@ -95,10 +95,8 @@ func (service *CredentialsUpdatePassword) Exec(
 				return fmt.Errorf("consume short code: %w", err)
 			}
 
-		// Path 2: Authenticated Password Change
-		// Used when a logged-in user wants to change their password.
-		// Requires the current password as proof of identity, preventing
-		// attackers with session access from locking out the legitimate user.
+		// Change path: verifying the current password stops someone holding only a live
+		// session from locking the owner out of their own account.
 		case request.CurrentPassword != "":
 			credentials, err = service.daoCredentialsSelect.Exec(
 				ctx,
@@ -114,7 +112,6 @@ func (service *CredentialsUpdatePassword) Exec(
 			}
 		}
 
-		// Update the password with the new Argon2 hash.
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsUpdatePasswordRequest{
 			ID:       request.UserID,
 			Password: encryptedPassword,

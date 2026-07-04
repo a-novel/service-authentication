@@ -7,9 +7,8 @@ import (
 	"github.com/a-novel-kit/golib/config"
 )
 
-// prefix allows to set a custom prefix to all configuration environment variables.
-// This is useful when importing the package in another project, when env variable names
-// might conflict with the source project.
+// prefix is prepended to every configuration environment variable name. It lets a project that
+// embeds this package namespace the variables so they do not clash with its own.
 var prefix = os.Getenv("SERVICE_AUTHENTICATION_ENV_PREFIX")
 
 func getEnv(name string) string {
@@ -88,7 +87,7 @@ var (
 )
 
 var (
-	// PostgresDsn is the url used to connect to the postgres database instance.
+	// PostgresDsn is the URL used to connect to the Postgres database instance.
 	// Typically formatted as:
 	//	postgres://<user>:<password>@<host>:<port>/<database>
 	PostgresDsn = postgresDsn
@@ -126,33 +125,33 @@ var (
 	// See https://github.com/a-novel/service-json-keys
 	ServiceJsonKeysPort = config.LoadEnv(serviceJsonKeysPort, ServiceJsonKeysPortDefault, config.IntParser)
 
-	// SmtpAddr is the address of the SMTP service used to send mails.
+	// SmtpAddr is the address of the SMTP server used to send emails.
 	//
 	// It should be in the form domain:port.
 	SmtpAddr = smtpAddr
-	// SmtpSenderName defines the name that will appear as the sender in outgoing emails.
+	// SmtpSenderName is the display name that appears as the sender on outgoing emails.
 	SmtpSenderName = smtpSenderName
-	// SmtpSenderEmail is the email address used to send outgoing smtp emails.
+	// SmtpSenderEmail is the address outgoing emails are sent from.
 	SmtpSenderEmail = smtpSenderEmail
-	// SmtpSenderPassword is the plain password used to connect to the SmtpSenderEmail account. This is a sensitive
-	// value that should be handled appropriately.
+	// SmtpSenderPassword is the plain password used to authenticate the SmtpSenderEmail account. It is a sensitive
+	// value and should be handled accordingly.
 	SmtpSenderPassword = smtpSenderPassword
-	// SmtpSenderDomain is the domain used for sending Smtp emails. It should match the hostname of the SmtpAddr.
+	// SmtpSenderDomain is the domain used when sending emails. It should match the host of SmtpAddr.
 	SmtpSenderDomain = smtpSenderDomain
-	// SmtpTimeout is the timeout value when attempting to send an email.
+	// SmtpTimeout bounds how long a single email send may take.
 	SmtpTimeout = config.LoadEnv(smtpTimeout, SmtpTimeoutDefault, config.DurationParser)
-	// SmtpForceUnencrypted hacks the smtp client into sending plain credentials over any connection. This setting is
-	// used because the Go Smtp implementation refuses to send plain credentials over non-TLS connections, except for
-	// localhost. But because we use Docker, localhost is not always the name of our actual local host.
+	// SmtpForceUnencrypted forces the SMTP client to send plain credentials over any connection. Go's SMTP client
+	// refuses to send plain credentials over a non-TLS connection except to localhost, and under Docker the mail host
+	// is rarely reachable as localhost, so this override is needed for local runs.
 	//
-	// This setting MUST NEVER be set in production.
+	// It must never be set in production.
 	SmtpForceUnencrypted = config.LoadEnv(smtpForceUnencrypted, false, config.BoolParser)
 
 	// AppName is the name of the application, as it will appear in logs and tracing.
 	AppName = config.LoadEnv(appName, AppNameDefault, config.StringParser)
-	// Otel flag configures whether to use Open Telemetry or not.
+	// Otel enables OpenTelemetry instrumentation.
 	//
-	// See: https://opentelemetry.io/
+	// See https://opentelemetry.io/
 	Otel = config.LoadEnv(otel, false, config.BoolParser)
 
 	// RestPort is the port on which the rest server will listen for incoming requests.
@@ -177,7 +176,7 @@ var (
 	// See: https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
 	GcloudProjectId = gcloudProjectId
 	// SuperAdminEmail sets the email address for the default super-admin on the platform. Unlike other accounts,
-	// its email does not require to be validated.
+	// its email does not need to be validated.
 	SuperAdminEmail = superAdminEmail
 	// SuperAdminPassword sets the password for the default super-admin on the platform.
 	SuperAdminPassword = superAdminPassword

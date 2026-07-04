@@ -4,25 +4,33 @@ import (
 	_ "embed"
 )
 
-// Role manages a set of permissions for a given Role.
+// A Role bundles the permissions granted to its holders. A role may inherit other
+// roles to accumulate their permissions, and its priority ranks it against the rest
+// of the hierarchy.
 type Role struct {
-	// Inherits the permissions from every listed role. Circular dependencies between roles are not allowed.
-	Inherits []string `json:"inherits" yaml:"inherits"`
-	// The set of permissions for the current role.
+	// Inherits pulls in the permissions of every listed role. Circular inheritance
+	// between roles is not allowed.
+	Inherits    []string `json:"inherits"    yaml:"inherits"`
 	Permissions []string `json:"permissions" yaml:"permissions"`
-	// The hierarchy level of this role. Roles with higher priorities are leaders, and the ones with lower
-	// priorities are subordinates.
+	// Priority ranks this role in the hierarchy; a higher value outranks a lower one.
 	Priority int `json:"priority" yaml:"priority"`
 }
 
+// Built-in role identifiers. Each matches a key in the permissions map, and they
+// grant progressively more access.
 const (
-	RoleAnon       = "auth:anon"
-	RoleUser       = "auth:user"
-	RoleAdmin      = "auth:admin"
+	// RoleAnon is the unauthenticated caller.
+	RoleAnon = "auth:anon"
+	// RoleUser is an authenticated standard user.
+	RoleUser = "auth:user"
+	// RoleAdmin is an operator with elevated access.
+	RoleAdmin = "auth:admin"
+	// RoleSuperAdmin holds the highest level of access.
 	RoleSuperAdmin = "auth:superadmin"
 )
 
-// Permissions maps every Role to a set of permissions.
+// Permissions is the role/permission configuration: it maps each role identifier
+// to its Role definition.
 type Permissions struct {
 	Roles map[string]Role `json:"roles" yaml:"roles"`
 }

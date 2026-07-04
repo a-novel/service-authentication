@@ -72,16 +72,15 @@ func SetClaimsContext(ctx context.Context, claims *Claims) context.Context {
 }
 
 // GetClaimsContext retrieves the authenticated user's claims from the context, if any.
-// Returns (nil, nil) for unauthenticated requests on optional-auth endpoints. Returns an
-// error wrapping [middlewares.ErrUnexpectedClaims] if the value stored under the claims
-// key has the wrong type.
+// Returns (nil, nil) for unauthenticated requests on optional-auth endpoints, and an error
+// if the value stored under the claims key has an unexpected type.
 func GetClaimsContext(ctx context.Context) (*Claims, error) {
 	return middlewares.GetClaimsContext(ctx)
 }
 
 // MustGetClaimsContext retrieves the authenticated user's claims from the context, returning
-// [middlewares.ErrMissingAuth] if no claims are present. Use this on endpoints that require
-// authentication; use [GetClaimsContext] on endpoints where authentication is optional.
+// an error if no claims are present. Use this on endpoints that require authentication; use
+// [GetClaimsContext] on endpoints where authentication is optional.
 func MustGetClaimsContext(ctx context.Context) (*Claims, error) {
 	return middlewares.MustGetClaimsContext(ctx)
 }

@@ -40,8 +40,11 @@ func NewRestHealthStatus(err error) *RestHealthStatus {
 	}
 }
 
+// RestHealthClientSmtp is the SMTP sender whose reachability the health check probes.
 type RestHealthClientSmtp = smtp.Sender
 
+// RestHealthApiJsonKeys is the slice of the JSON-keys client the health check needs:
+// a Status probe used to confirm the upstream service answers.
 type RestHealthApiJsonKeys interface {
 	Status(
 		ctx context.Context,
@@ -50,11 +53,15 @@ type RestHealthApiJsonKeys interface {
 	) (*servicejsonkeys.StatusResponse, error)
 }
 
+// RestHealth is the handler backing /healthcheck. It probes each downstream
+// dependency and reports their combined status; see RestHealthStatus for why the
+// response withholds error detail.
 type RestHealth struct {
 	apiJsonKeys RestHealthApiJsonKeys
 	clientSmtp  RestHealthClientSmtp
 }
 
+// NewRestHealth returns a RestHealth handler wired to the dependencies it probes.
 func NewRestHealth(
 	apiJsonKeys RestHealthApiJsonKeys,
 	clientSmtp RestHealthClientSmtp,
@@ -87,7 +94,8 @@ func (handler *RestHealth) reportPostgres(ctx context.Context) error {
 
 	pgdb, ok := pg.(*bun.DB)
 	if !ok {
-		// Cannot assess db connection if we are running on transaction mode
+		// Inside a transaction the handle is not a *bun.DB and exposes no pool to
+		// ping, so there is nothing to probe; report healthy.
 		return nil
 	}
 
