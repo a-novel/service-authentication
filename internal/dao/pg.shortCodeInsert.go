@@ -31,11 +31,10 @@ var shortCodeInsertQuery string
 // layer caught the conflict.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
-// ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The dao
-// runs at REPEATABLE READ isolation; uniqueness on (target, usage) for the
-// active subset is enforced by the partial unique index added in the
-// 20260510140000 migration, so concurrent inserts cannot produce duplicates
-// (the loser sees [ErrShortCodeInsertAlreadyExists]).
+// ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The insert runs at
+// repeatable-read isolation, and uniqueness on the active (target, usage) subset is
+// backed by a partial unique index, so concurrent inserts cannot produce duplicates:
+// the loser sees [ErrShortCodeInsertAlreadyExists].
 type ShortCodeInsertRequest struct {
 	// See ShortCode.ID.
 	ID uuid.UUID
@@ -47,7 +46,7 @@ type ShortCodeInsertRequest struct {
 	Target string
 	// See ShortCode.Data.
 	Data []byte
-	// Time used for insertion date.
+	// Now is the timestamp recorded as the row's creation time.
 	Now time.Time
 	// See ShortCode.ExpiresAt.
 	ExpiresAt time.Time

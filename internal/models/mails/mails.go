@@ -1,3 +1,6 @@
+// Package mails holds the transactional email templates. Each email type is embedded
+// once per supported language and parsed at initialization into a ready-to-render
+// template set that the sending code selects by language.
 package mails
 
 import (
@@ -25,9 +28,8 @@ var (
 	registerEn string
 )
 
-// Template variable names. The mail templates expect these exact keys in the data map
-// passed to SendMail. Defined here so the three send-mail call sites (register, password
-// reset, email update) and the templates themselves stay in sync from a single source.
+// The templates read their values from a data map keyed by these names. Defining the
+// keys here keeps the sending code and the templates in sync against one source.
 const (
 	TemplateVarShortCode = "ShortCode"
 	TemplateVarTarget    = "Target"
@@ -37,18 +39,26 @@ const (
 	TemplateVarPurpose   = "_Purpose"
 )
 
+// MailTemplates groups the parsed email templates by type. Each field carries every
+// language variant as named sub-templates, chosen by language when the mail is rendered.
 type MailTemplates struct {
 	EmailUpdate   *template.Template
 	PasswordReset *template.Template
 	Register      *template.Template
 }
 
+// Mails holds the ready-to-render email templates. They are parsed once at package
+// initialization, where a malformed template panics rather than deferring the failure
+// to the moment a mail is sent.
 var Mails = MailTemplates{
 	EmailUpdate:   template.Must(template.New(config.LangEN).Parse(emailUpdateEn)),
 	PasswordReset: template.Must(template.New(config.LangEN).Parse(passwordResetEn)),
 	Register:      template.Must(template.New(config.LangEN).Parse(registerEn)),
 }
 
+// Attach the French variant to each template as an associated sub-template, so one
+// MailTemplates field can render either language. The results are discarded because only
+// the side effect of registering the parsed variant matters.
 var (
 	_ = template.Must(Mails.EmailUpdate.New(config.LangFR).Parse(emailUpdateFr))
 	_ = template.Must(Mails.PasswordReset.New(config.LangFR).Parse(passwordResetFr))

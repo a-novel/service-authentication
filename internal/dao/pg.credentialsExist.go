@@ -20,9 +20,9 @@ type CredentialsExistRequest struct {
 	Email string
 }
 
-// CredentialsExist checks whether a user with a given email address exists or not.
+// CredentialsExist reports whether a user with the given email address exists.
 //
-// It does not return an error if the user does not exist, instead it returns a false boolean.
+// An absent user is not an error; the call returns false instead.
 type CredentialsExist struct{}
 
 func NewCredentialsExist() *CredentialsExist {

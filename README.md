@@ -19,7 +19,7 @@ Identity and session manager for the A-Novel platform: it owns user credentials,
 
 ## What it does
 
-Authentication owns **user identities** — email/password credentials, hashed with Argon2id — and the **token lifecycle**. Clients trade credentials (or nothing, for an anonymous session) for a short-lived access token and a long-lived refresh token, then refresh the pair without re-authenticating. Every account carries a role (`auth:anon`, `auth:user`, `auth:admin`, `auth:superadmin`); roles map to permissions that downstream services enforce per route.
+Authentication owns **user identities** — email/password credentials, hashed with Argon2id — and the **token lifecycle**. Clients trade credentials for a short-lived access token and a long-lived refresh token, then refresh the pair without re-authenticating; callers with no account get an anonymous, access-only token that cannot be refreshed. Every account carries a role, and each role maps to a set of permissions that downstream services enforce per route.
 
 Identity changes — registration, email change, password reset — are gated by single-use **short codes** emailed to the user, so a stolen session token alone can't take over an account.
 
@@ -55,7 +55,7 @@ services:
       - authentication-postgres-data:/var/lib/postgresql/
 
   migrations-authentication:
-    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.4.2
+    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.4.3
     depends_on:
       postgres-authentication: { condition: service_healthy }
     environment:
@@ -64,7 +64,7 @@ services:
 
   # Optional: seeds the initial super-admin user. Pass the credentials securely.
   init-authentication:
-    image: ghcr.io/a-novel/service-authentication/jobs/init:v2.4.2
+    image: ghcr.io/a-novel/service-authentication/jobs/init:v2.4.3
     depends_on:
       postgres-authentication: { condition: service_healthy }
       migrations-authentication: { condition: service_completed_successfully }
@@ -107,8 +107,6 @@ Every variable is read from the process environment.
 | `SERVICE_JSON_KEYS_PORT` | gRPC port of the JSON Keys service. **Required** on the server.                                                                 | `rest`<br/>`standalone-rest`                                       |
 | `SUPER_ADMIN_EMAIL`      | Email of the super-admin to provision. The bootstrap is skipped if unset.                                                       | `jobs/init`<br/>`standalone-rest`                                  |
 | `SUPER_ADMIN_PASSWORD`   | Plaintext password for the super-admin. Pass it securely. The bootstrap is skipped if unset.                                    | `jobs/init`<br/>`standalone-rest`                                  |
-
-Authentication and JSON Keys exchange sensitive data, so the link between them must run on a secure, unexposed network.
 
 <details>
 <summary>Optional configuration (client platform, SMTP, REST tuning, OpenTelemetry)</summary>

@@ -17,17 +17,22 @@ import (
 )
 
 const (
+	// OtelFlushTimeout bounds how long the process waits to flush buffered telemetry on shutdown.
 	OtelFlushTimeout = 2 * time.Second
 )
 
+// LoggerDev writes human-readable logs to stdout for local development.
 var LoggerDev = &loggingpresets.LogLocal{
 	Out: os.Stdout,
 }
 
+// LoggerProd emits structured logs for the Google Cloud Logging backend.
 var LoggerProd = &loggingpresets.LogGcloud{
 	ProjectId: env.GcloudProjectId,
 }
 
+// AppPresetDefault is the application configuration read from the environment, with each field falling
+// back to its documented default when the variable is unset.
 var AppPresetDefault = App{
 	App: Main{
 		Name: env.AppName,

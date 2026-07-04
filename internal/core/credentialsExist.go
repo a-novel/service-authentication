@@ -20,6 +20,8 @@ type CredentialsExistRequest struct {
 	Email string `validate:"required,email,max=1024"`
 }
 
+// CredentialsExist reports whether an account is already registered for a given
+// email, letting callers reject duplicate registrations before doing further work.
 type CredentialsExist struct {
 	dao CredentialsExistDao
 }

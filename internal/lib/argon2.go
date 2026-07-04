@@ -31,13 +31,14 @@ var (
 )
 
 const (
+	// Number of $-separated segments in an encoded Argon2id hash string, used to
+	// validate its shape before decoding.
 	argon2HashLen = 6
 )
 
-// Default parameters for Argon2id, following https://www.rfc-editor.org/rfc/rfc9106.html#section-7.4
-// recommendations.
-//
-// We use the second recommendation for resources optimization.
+// Default parameters for Argon2id, following the recommendations in RFC 9106
+// (https://www.rfc-editor.org/rfc/rfc9106.html#section-7.4). The second,
+// lower-memory configuration is used.
 const (
 	Argon2IterationsDefault = 3
 	Argon2MemoryDefault     = 64 * 1024
@@ -53,7 +54,7 @@ type Argon2Params struct {
 	Memory uint32
 	// Iterations is the number of passes over the memory.
 	Iterations uint32
-	// Parallelism is the number of threads (or lanes) used by the algorithm. Uses the runtime cpus count by default.
+	// Parallelism is the number of threads (or lanes) used by the algorithm. Defaults to the host CPU count when zero.
 	Parallelism uint8
 	// SaltLength is the length of the random salt. 16 bytes is recommended for password hashing.
 	SaltLength uint
@@ -84,7 +85,7 @@ func GenerateArgon2(password string, params Argon2Params) (string, error) {
 	// Set to number of available CPUs by default.
 	if params.Parallelism == 0 {
 		nCpus := runtime.NumCPU()
-		// Prevent overflow, even though it should hardly happen lol.
+		// Guard against overflow when narrowing to uint8.
 		if nCpus > math.MaxUint8 {
 			nCpus = math.MaxUint8
 		}
@@ -92,9 +93,6 @@ func GenerateArgon2(password string, params Argon2Params) (string, error) {
 		params.Parallelism = uint8(nCpus)
 	}
 
-	// Pass the plaintext password, salt and parameters to the argon2.IDKey
-	// function. This will generate a hash of the password using the Argon2id
-	// variant.
 	hash := argon2.IDKey(
 		[]byte(password),
 		salt,
@@ -126,7 +124,6 @@ func GenerateArgon2(password string, params Argon2Params) (string, error) {
 //
 // This is similar to bcrypt.CompareHashAndPassword but uses the more modern Argon2 algorithm.
 func CompareArgon2(password, encodedHash string) error {
-	// Extract the parameters, salt and derived key from the encoded password hash.
 	params, salt, hash, err := decodeHash(encodedHash)
 	if err != nil {
 		return fmt.Errorf("decode hash: %w", err)
@@ -142,9 +139,8 @@ func CompareArgon2(password, encodedHash string) error {
 		params.KeyLength,
 	)
 
-	// Check that the contents of the hashed passwords are identical. Note
-	// that we are using the subtle.ConstantTimeCompare() function for this
-	// to help prevent timing attacks.
+	// Compare in constant time so the response latency does not leak how much of
+	// the hash matched.
 	if subtle.ConstantTimeCompare(hash, otherHash) == 1 {
 		return nil
 	}

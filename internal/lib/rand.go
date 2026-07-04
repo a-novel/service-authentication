@@ -6,15 +6,16 @@ import (
 	"math/big"
 )
 
-// URLCharList is a list of URL-valid characters, for generating random strings.
+// URLCharList is the alphabet of URL-safe characters that NewRandomURLString draws
+// from when generating random strings.
 var URLCharList = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-// Precompute values to optimize the algorithm.
+// Alphabet length hoisted out of the generation loop.
 var (
 	urlCharListLen = int64(len(URLCharList))
 )
 
-// NewRandomURLString generates a random, url-safe text of a given length.
+// NewRandomURLString generates a random, URL-safe string of the given length.
 func NewRandomURLString(length int) (string, error) {
 	out := make([]rune, length)
 

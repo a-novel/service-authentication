@@ -1,14 +1,10 @@
-// Command init bootstraps the super-admin credentials from environment variables. It is
-// idempotent and safe to run on every deploy:
+// Command init reconciles the super-admin account with the credentials given in
+// SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD. It is idempotent and safe to run on every
+// deploy: a missing account is created with the super-admin role, and an existing account
+// whose password or role has drifted is brought back in line.
 //
-//   - If no account exists for SUPER_ADMIN_EMAIL, a new one is created with the super-admin
-//     role and the configured password.
-//   - If an account exists with a different password, the password is updated.
-//   - If an account exists with a non-super-admin role, the role is upgraded.
-//
-// If either SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD is empty, the command logs a warning
-// and exits cleanly without attempting any database changes — useful for environments where
-// the bootstrap step is intentionally disabled.
+// When either variable is empty the command logs a warning and exits without touching the
+// database, so the bootstrap step can be disabled by leaving the variables unset.
 package main
 
 import (

@@ -29,6 +29,9 @@ type CredentialsUpdateEmailRequest struct {
 	ShortCode string `validate:"required,max=1024"`
 }
 
+// CredentialsUpdateEmail applies an email change confirmed by a short code. The
+// caller does not supply the new address directly: it is carried in the short-code
+// payload, so only the address the code was issued for can take effect.
 type CredentialsUpdateEmail struct {
 	dao                     CredentialsUpdateEmailDao
 	serviceShortCodeConsume CredentialsUpdateEmailServiceShortCodeConsume

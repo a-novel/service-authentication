@@ -17,26 +17,33 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
+// ShortCodeCreateDao persists a new short code and returns the stored row.
 type ShortCodeCreateDao interface {
 	Exec(ctx context.Context, request *dao.ShortCodeInsertRequest) (*dao.ShortCode, error)
 }
 
+// ShortCodeCreateRequest describes a code to issue: the flow it is for, the
+// subject it binds to, any flow-specific data to carry, and how long it lives.
 type ShortCodeCreateRequest struct {
 	Usage  string `validate:"required,usage"`
 	Target string `validate:"required,max=1024"`
 	Data   any
 	TTL    time.Duration `validate:"required"`
 
-	// Whe true, automatically expires any existing short code with the same target and usage.
-	// Otherwise, the presence of a duplicate will trigger an error.
+	// When true, any existing code for the same target and usage is expired and
+	// replaced; when false, a duplicate makes the request fail.
 	Override bool
 }
 
+// ShortCodeCreate issues a short code: it generates a random plaintext code,
+// stores only its Argon2id hash, and returns the plaintext once so the caller can
+// deliver it to the target. [ShortCodeConsume] redeems it.
 type ShortCodeCreate struct {
 	dao    ShortCodeCreateDao
 	config config.ShortCodes
 }
 
+// NewShortCodeCreate wires the create service to its DAO and short-code configuration.
 func NewShortCodeCreate(
 	dao ShortCodeCreateDao,
 	config config.ShortCodes,
@@ -47,6 +54,8 @@ func NewShortCodeCreate(
 	}
 }
 
+// Exec issues a new short code and returns it with the plaintext populated in
+// [ShortCode.PlainCode]; only the hash is stored.
 func (service *ShortCodeCreate) Exec(
 	ctx context.Context, request *ShortCodeCreateRequest,
 ) (*ShortCode, error) {
@@ -64,7 +73,7 @@ func (service *ShortCodeCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("generate short code: %w", err))
 	}
 
-	// Encrypt the short code in the database.
+	// Store only the Argon2id hash; the plaintext code never reaches the database.
 	encrypted, err := lib.GenerateArgon2(plainCode, lib.Argon2ParamsDefault)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt short code: %w", err))

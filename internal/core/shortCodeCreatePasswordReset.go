@@ -18,19 +18,30 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
+// ShortCodeCreatePasswordResetService issues the underlying short code; satisfied
+// by [ShortCodeCreate].
 type ShortCodeCreatePasswordResetService interface {
 	Exec(ctx context.Context, request *ShortCodeCreateRequest) (*ShortCode, error)
 }
+
+// ShortCodeCreatePasswordResetDao looks up the credentials for an email address,
+// which both confirms the account exists and yields the user ID to bind the code to.
 type ShortCodeCreatePasswordResetDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
+
+// ShortCodeCreatePasswordResetSmtp is the mailer used to deliver the reset code.
 type ShortCodeCreatePasswordResetSmtp = smtp.Sender
 
+// ShortCodeCreatePasswordResetRequest carries the account email to reset and the
+// language of the reset mail.
 type ShortCodeCreatePasswordResetRequest struct {
 	Email string `validate:"required,email,max=1024"`
 	Lang  string `validate:"required,langs"`
 }
 
+// ShortCodeCreatePasswordReset issues a [ShortCodeUsageResetPassword] code for an
+// existing account and emails it to the account's current address.
 type ShortCodeCreatePasswordReset struct {
 	service          ShortCodeCreatePasswordResetService
 	selectDao        ShortCodeCreatePasswordResetDao
@@ -41,6 +52,8 @@ type ShortCodeCreatePasswordReset struct {
 	wg sync.WaitGroup
 }
 
+// NewShortCodeCreatePasswordReset wires the password-reset flow to the short-code
+// service, the credentials lookup DAO, and the mailer.
 func NewShortCodeCreatePasswordReset(
 	service ShortCodeCreatePasswordResetService,
 	selectDao ShortCodeCreatePasswordResetDao,
@@ -57,10 +70,14 @@ func NewShortCodeCreatePasswordReset(
 	}
 }
 
+// Wait blocks until every in-flight reset email has finished sending, so callers
+// can drain pending deliveries before shutdown.
 func (service *ShortCodeCreatePasswordReset) Wait() {
 	service.wg.Wait()
 }
 
+// Exec issues the reset code and schedules its delivery email, returning the code
+// immediately. It fails if no account matches the requested email.
 func (service *ShortCodeCreatePasswordReset) Exec(
 	ctx context.Context, request *ShortCodeCreatePasswordResetRequest,
 ) (*ShortCode, error) {
@@ -95,7 +112,8 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
-	// Sends the short code by mail, once the request is done (context terminated).
+	// Deliver the code by email in a detached goroutine: WithoutCancel keeps the
+	// send alive after the request context is cancelled, and Wait drains it on shutdown.
 	service.wg.Add(1)
 
 	go service.sendMail(context.WithoutCancel(ctx), request, credentials.ID, shortCode)

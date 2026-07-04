@@ -30,11 +30,16 @@ type CredentialsCreateSuperAdminDaoUpdateRole interface {
 	Exec(ctx context.Context, request *dao.CredentialsUpdateRoleRequest) (*dao.Credentials, error)
 }
 
+// CredentialsCreateSuperAdminRequest carries the email and password of the
+// super-admin account to provision.
 type CredentialsCreateSuperAdminRequest struct {
 	Email    string `validate:"required,email,max=1024"`
 	Password string `validate:"required,min=4,max=1024"`
 }
 
+// CredentialsCreateSuperAdmin idempotently provisions a super-admin account for
+// bootstrap. Given an email and password it creates the account when absent, and
+// otherwise resets that account's password and raises its role to super-admin.
 type CredentialsCreateSuperAdmin struct {
 	dao               CredentialsCreateSuperAdminDao
 	daoSelect         CredentialsCreateSuperAdminDaoSelect
@@ -56,6 +61,10 @@ func NewCredentialsCreateSuperAdmin(
 	}
 }
 
+// Exec provisions the super-admin account described by the request, running the
+// lookup and the create-or-update in one transaction. The password is hashed with
+// Argon2id before storage. An existing account keeps its identity and creation
+// time; only its password and, when needed, its role are updated.
 func (service *CredentialsCreateSuperAdmin) Exec(
 	ctx context.Context, request *CredentialsCreateSuperAdminRequest,
 ) (*Credentials, error) {
@@ -96,7 +105,7 @@ func (service *CredentialsCreateSuperAdmin) Exec(
 
 			return nil
 		}
-		// If the error was not found, we already returned, so an error here is unexpected.
+		// The not-found case returned above; any error remaining here is a real lookup failure.
 		if err != nil {
 			return err
 		}

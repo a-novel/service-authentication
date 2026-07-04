@@ -23,6 +23,8 @@ type CredentialsListRequest struct {
 	Roles  []string `validate:"min=0,max=10,dive,role"`
 }
 
+// CredentialsList returns a paginated page of accounts, optionally narrowed to a
+// set of roles.
 type CredentialsList struct {
 	dao CredentialsListDao
 }

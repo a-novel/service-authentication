@@ -36,9 +36,8 @@ type TokenCreateRequest struct {
 	Password string `validate:"required,max=1024"`
 }
 
-// TokenCreate implements the authentication service using a two-token system.
-// It issues both an access token (short-lived, for API authorization) and
-// a refresh token (long-lived, for obtaining new access tokens).
+// TokenCreate authenticates a user by email and password and issues a fresh
+// access/refresh token pair.
 type TokenCreate struct {
 	dao               TokenCreateDao
 	serviceSignClaims TokenCreateServiceSignClaims
@@ -54,16 +53,12 @@ func NewTokenCreate(
 	}
 }
 
-// Exec authenticates a user and returns a token pair.
+// Exec verifies the request's email and password and returns a freshly signed
+// access/refresh token pair. See signTokenPair for how the two tokens are bound.
 //
-// The two-token system works as follows:
-//   - Access Token: Short-lived JWT containing user ID, roles, and a reference to the refresh token.
-//     Used for API authorization via the Authorization header.
-//   - Refresh Token: Long-lived JWT used to obtain new access tokens without re-authentication.
-//     Contains only the user ID and is bound to the access token via its JTI.
-//
-// Returns ErrInvalidPassword if the password doesn't match, or dao.ErrCredentialsSelectByEmailNotFound
-// if the email is not registered.
+// It returns lib.ErrInvalidPassword when the password does not match and
+// dao.ErrCredentialsSelectByEmailNotFound when the email is not registered; both
+// surface as 401 at the handler.
 func (service *TokenCreate) Exec(
 	ctx context.Context, request *TokenCreateRequest,
 ) (*Token, error) {

@@ -89,7 +89,6 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	// Encrypt the password.
 	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))

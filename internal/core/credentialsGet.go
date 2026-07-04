@@ -20,6 +20,7 @@ type CredentialsGetRequest struct {
 	ID uuid.UUID
 }
 
+// CredentialsGet retrieves a single account by its ID.
 type CredentialsGet struct {
 	dao CredentialsGetDao
 }
