@@ -19,7 +19,7 @@ Identity and session manager for the A-Novel platform: it owns user credentials,
 
 ## What it does
 
-Authentication owns **user identities** — email/password credentials, hashed with Argon2id — and the **token lifecycle**. Clients trade credentials (or nothing, for an anonymous session) for a short-lived access token and a long-lived refresh token, then refresh the pair without re-authenticating. Every account carries a role, and each role maps to a set of permissions that downstream services enforce per route.
+Authentication owns **user identities** — email/password credentials, hashed with Argon2id — and the **token lifecycle**. Clients trade credentials for a short-lived access token and a long-lived refresh token, then refresh the pair without re-authenticating; callers with no account get an anonymous, access-only token that cannot be refreshed. Every account carries a role, and each role maps to a set of permissions that downstream services enforce per route.
 
 Identity changes — registration, email change, password reset — are gated by single-use **short codes** emailed to the user, so a stolen session token alone can't take over an account.
 

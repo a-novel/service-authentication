@@ -6,8 +6,8 @@ import (
 	"math/big"
 )
 
-// URLCharList is the alphabet of URL-safe characters drawn from when generating
-// random strings.
+// URLCharList is the alphabet of URL-safe characters that NewRandomURLString draws
+// from when generating random strings.
 var URLCharList = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 // Alphabet length hoisted out of the generation loop.
