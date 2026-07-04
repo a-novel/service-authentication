@@ -1,6 +1,6 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# The required `epic-freeze` check: the per-PR half of the Stage-4 partial-landing detector.
+# The required `epic-freeze` check: the per-PR half of the partial-landing detector.
 # It answers one question — "is this PR's epic frozen because it landed partially?" A standalone
 # PR, or a healthy epic member, passes; a member of a partially-landed epic fails, which blocks the
 # PR and (on a merge_group event) drops it from the queue. The sweep half runs on the
@@ -35,6 +35,6 @@ jobs:
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          # Read-only-first: logs intended posts without calling GitHub. Flip to "false" once a live
+          # Logs intended posts without calling GitHub. Flip to "false" once a live
           # sweep has primed every open PR green — only then add epic-freeze to checks.yaml `always`.
           dry_run: "true"
