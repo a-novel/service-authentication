@@ -37,6 +37,11 @@ on:
         options:
           - "true"
           - "false"
+      max_rollback_repos:
+        description: BLAST-CAP — abort if the rollback would touch more than this many distinct repos (default 5). Raise it deliberately for a genuinely wide rollback.
+        required: false
+        default: "5"
+        type: string
 
 run-name: "⏮ ROLLBACK epic:#${{ inputs.epic_number }} requested by @${{ github.actor }} (dry_run=${{ inputs.dry_run }})"
 
@@ -81,12 +86,19 @@ jobs:
           fi
           echo "@${ACTOR} is a repo admin; confirmation matches — proceeding with rollback of epic:#${EPIC} (dry_run=${DRY_RUN:-true})." | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - uses: a-novel-kit/workflows/generic-actions/epic-rollback@v1.11.0
+      - uses: a-novel-kit/workflows/generic-actions/epic-rollback@v1.12.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
           epic_number: ${{ inputs.epic_number }}
           reason: ${{ inputs.reason }}
           dry_run: ${{ inputs.dry_run }}
+          # BLAST-CAP: abort before any revert if the ledger spans more than this many repos.
+          max_rollback_repos: ${{ inputs.max_rollback_repos }}
+          # Org-level HALT (FAIL-SAFE — RUNNING only for an explicit off-token: empty/unset, 0, off,
+          # false, no, disabled; ANYTHING ELSE, incl. a fat-fingered value, engages) → the action
+          # aborts loud as its first step, before any mint. Threaded from the org variable (a
+          # composite action can't read `vars` itself).
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
           # The org "Tasks" board id, inlined per-org the same way derive-status passes it.
           project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}

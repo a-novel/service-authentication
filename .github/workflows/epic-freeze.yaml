@@ -31,10 +31,15 @@ jobs:
     # a per-PR run can never re-enqueue.
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.11.0
+      - uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.12.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
           # Logs intended posts without calling GitHub. Flip to "false" once a live
           # sweep has primed every open PR green — only then add epic-freeze to checks.yaml `always`.
           dry_run: "true"
+          # Org-level HALT (FAIL-SAFE — RUNNING only for an explicit off-token: empty/unset, 0, off,
+          # false, no, disabled; ANYTHING ELSE, incl. a fat-fingered value, engages) → per-PR posts a
+          # `failure` HOLD on this head (a required-check poster must never skip). Threaded from the
+          # org variable.
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}

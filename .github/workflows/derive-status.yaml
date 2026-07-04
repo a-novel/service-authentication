@@ -24,10 +24,15 @@ jobs:
       pull-requests: read
       issues: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/derive-status@v1.11.0
+      - uses: a-novel-kit/workflows/generic-actions/derive-status@v1.12.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
           # The org "Tasks" board id, inlined per-org the same way the release workflow
           # passes it to archive-board-items.
           project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
+          # Org-level HALT (FAIL-SAFE — RUNNING only for an explicit off-token: empty/unset, 0, off,
+          # false, no, disabled; ANYTHING ELSE, incl. a fat-fingered value, engages) → this writer
+          # no-ops (no board write; the guard emits a `halted` output that gates each board-write
+          # step, since a composite action has no early return). Threaded from the org variable.
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
