@@ -1,0 +1,40 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# The required `epic-freeze` check: the per-PR half of the Stage-4 partial-landing detector.
+# It answers one question — "is this PR's epic frozen because it landed partially?" A standalone
+# PR, or a healthy epic member, passes; a member of a partially-landed epic fails, which blocks the
+# PR and (on a merge_group event) drops it from the queue. The sweep half runs on the
+# reconcile-board schedule and shares the same predicate, so the two can never disagree on a PR.
+#
+# Why its own file, not a job on merge-gate.yaml: as a second required check it needs an independent
+# failure domain (a broken run here must not starve merge-gate, or vice versa), and it must never
+# carry an auto-merge job — re-enabling auto-merge would silently resume a landing a human froze.
+name: epic-freeze
+
+on:
+  # Triggers mirror merge-gate.yaml. labeled/unlabeled matter: an `epic:<N>` label flips a PR
+  # between the standalone fast-path and the epic check. merge_group: a failure there drops the
+  # queued group, so the check must post on the group head too or a queued PR times out.
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review, converted_to_draft]
+  pull_request_review:
+    types: [submitted, dismissed]
+  merge_group:
+
+jobs:
+  # Named `evaluate`, not `epic-freeze`: the [Agent] App posts that check-run itself, so a job of
+  # the same name would collide with it (same pattern as merge-gate.yaml).
+  evaluate:
+    runs-on: ubuntu-latest
+    # No permissions of its own — the detector mints its own [Agent] tokens. In per-PR mode that is
+    # only checks:write + read scopes; the write token that rolls a stray forward is sweep-only, so
+    # a per-PR run can never re-enqueue.
+    permissions: {}
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.10.0
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          # Read-only-first: logs intended posts without calling GitHub. Flip to "false" once a live
+          # sweep has primed every open PR green — only then add epic-freeze to checks.yaml `always`.
+          dry_run: "true"
