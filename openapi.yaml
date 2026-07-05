@@ -27,7 +27,7 @@ info:
     For some secure operations, users can receive a short code on a secure channel: this acts as a temporary, single-use
     password. The code is never returned by the API; the user retrieves it from that channel, then completes the
     operation with it. Usually, the message will contain a link for this very purpose.
-  version: v2.4.3
+  version: v2.4.4
   license:
     name: AGPL-3.0
     url: "https://raw.githubusercontent.com/a-novel/service-authentication/refs/heads/master/LICENSE"
