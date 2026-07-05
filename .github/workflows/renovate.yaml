@@ -18,7 +18,7 @@ jobs:
       id-token: write
       security-events: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/renovate@v1.15.6
+      - uses: a-novel-kit/workflows/generic-actions/renovate@v1.16.0
         with:
           allowed_commands: |
             [
