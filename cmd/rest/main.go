@@ -59,8 +59,8 @@ func main() {
 		jsonKeysCredentials...,
 	))
 
-	serviceVerifyAccessToken := servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient)
-	serviceVerifyRefreshToken := servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient)
+	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient))
+	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
 
 	// =================================================================================================================
 	// DAO
