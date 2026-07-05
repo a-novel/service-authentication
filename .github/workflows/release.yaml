@@ -174,7 +174,7 @@ jobs:
       id-token: write
     services:
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.3.2
+        image: ghcr.io/a-novel/service-json-keys/database:v2.4.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -199,7 +199,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.3.2
+        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.4.0
         ports:
           - "4000:8080"
         credentials:
@@ -239,7 +239,7 @@ jobs:
       id-token: write
     services:
       postgres-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/database:v2.3.2
+        image: ghcr.io/a-novel/service-json-keys/database:v2.4.0
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -264,7 +264,7 @@ jobs:
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
       service-json-keys:
-        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.3.2
+        image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.4.0
         ports:
           - "4000:8080"
         credentials:
