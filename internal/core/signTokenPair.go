@@ -9,8 +9,7 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
-	"github.com/a-novel-kit/jwt"
-	"github.com/a-novel-kit/jwt/jws"
+	"github.com/a-novel-kit/jwt/v2"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
@@ -54,15 +53,13 @@ func signTokenPair(
 	// Parse the refresh token's claims without verifying the signature: we just obtained
 	// it from the trusted internal signer (json-keys) on the previous line, so the issuer
 	// is trusted by construction. We only need the JTI to embed in the access token below;
-	// the access token's signature is what binds the pair end-to-end. NewInsecureVerifier
-	// is safe here precisely because the input did not come from an external party.
-	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{
-		Plugins: []jwt.RecipientPlugin{jws.NewInsecureVerifier()},
-	})
+	// the access token's signature is what binds the pair end-to-end. DecodeUnverified is
+	// safe here precisely because the input did not come from an external party.
+	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{})
 
 	var refreshTokenClaims RefreshTokenClaims
 
-	err = refreshTokenRecipient.Consume(ctx, refreshToken.GetToken(), &refreshTokenClaims)
+	err = refreshTokenRecipient.DecodeUnverified(refreshToken.GetToken(), &refreshTokenClaims)
 	if err != nil {
 		return nil, fmt.Errorf("parse refresh token: %w", err)
 	}

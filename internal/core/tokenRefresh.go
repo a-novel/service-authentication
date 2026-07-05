@@ -12,8 +12,8 @@ import (
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/jwt/jwp"
-	"github.com/a-novel-kit/jwt/jws"
+	"github.com/a-novel-kit/jwt/v2/jwp"
+	"github.com/a-novel-kit/jwt/v2/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
