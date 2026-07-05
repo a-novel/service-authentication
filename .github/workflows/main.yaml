@@ -20,7 +20,7 @@ jobs:
       - name: go generate
         shell: bash
         run: go generate ./...
-      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.15.3
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.15.4
         with:
           fail_message: go generate definitions are not up-to-date, please run 'go generate ./...' and commit the changes
 
@@ -30,7 +30,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/pull-bot@v1.15.3
+      - uses: a-novel-kit/workflows/generic-actions/pull-bot@v1.15.4
         id: app_token
         with:
           client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
@@ -53,7 +53,7 @@ jobs:
       - name: pnpm
         shell: bash
         run: pnpm generate
-      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.15.3
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.15.4
         with:
           fail_message: pnpm definitions are not up-to-date, please run 'pnpm generate' and commit the changes
 
@@ -63,7 +63,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/go-actions/lint-go@v1.15.3
+      - uses: a-novel-kit/workflows/go-actions/lint-go@v1.15.4
 
   lint-node:
     runs-on: ubuntu-latest
@@ -71,7 +71,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/lint-node@v1.15.3
+      - uses: a-novel-kit/workflows/node-actions/lint-node@v1.15.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
@@ -107,7 +107,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/go-actions/test-go@v1.15.3
+      - uses: a-novel-kit/workflows/go-actions/test-go@v1.15.4
         id: test
         with:
           filter_extra_patterns: " | grep -v /cmd"
@@ -201,7 +201,7 @@ jobs:
       SUPER_ADMIN_PASSWORD: admin
       MAIL_HOST: http://0.0.0.0:8025
     steps:
-      - uses: a-novel-kit/workflows/node-actions/test-node@v1.15.3
+      - uses: a-novel-kit/workflows/node-actions/test-node@v1.15.4
         id: test
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -226,7 +226,7 @@ jobs:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.15.3
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.15.4
         id: build
         with:
           file: builds/database.Dockerfile
@@ -266,7 +266,7 @@ jobs:
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.15.3
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.15.4
         with:
           file: builds/migrations.Dockerfile
           image_name: ${{ github.repository }}/jobs/migrations
@@ -304,7 +304,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.15.3
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.15.4
         with:
           file: builds/init.Dockerfile
           image_name: ${{ github.repository }}/jobs/init
@@ -366,7 +366,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.15.3
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.15.4
         with:
           file: builds/rest.Dockerfile
           image_name: ${{ github.repository }}/rest
@@ -431,7 +431,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.15.3
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.15.4
         id: build
         with:
           file: builds/standalone.rest.Dockerfile
@@ -450,7 +450,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/build-node@v1.15.3
+      - uses: a-novel-kit/workflows/node-actions/build-node@v1.15.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
@@ -464,7 +464,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/go-actions/go-report-card@v1.15.3
+      - uses: a-novel-kit/workflows/go-actions/go-report-card@v1.15.4
         if: github.ref == 'refs/heads/master' && success()
 
   report-codecov:
@@ -473,7 +473,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/codecov@v1.15.3
+      - uses: a-novel-kit/workflows/generic-actions/codecov@v1.15.4
         with:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
           coverage_files: coverage.txt,coverage/*
