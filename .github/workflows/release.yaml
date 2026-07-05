@@ -48,7 +48,7 @@ jobs:
       tag: ${{ steps.core.outputs.tag }}
     steps:
       - id: core
-        uses: a-novel-kit/workflows/publish-actions/release-core@v1.13.0
+        uses: a-novel-kit/workflows/publish-actions/release-core@v1.14.0
         with:
           release_type: ${{ inputs.release_type }}
           dry_run: ${{ inputs.dry_run }}
@@ -71,7 +71,7 @@ jobs:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.13.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.14.0
         with:
           file: builds/database.Dockerfile
           image_name: ${{ github.repository }}/database
@@ -112,7 +112,7 @@ jobs:
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.13.0
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.14.0
         with:
           file: builds/migrations.Dockerfile
           image_name: ${{ github.repository }}/jobs/migrations
@@ -152,7 +152,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.13.0
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.14.0
         with:
           file: builds/init.Dockerfile
           image_name: ${{ github.repository }}/jobs/init
@@ -216,7 +216,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.13.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.14.0
         with:
           file: builds/rest.Dockerfile
           image_name: ${{ github.repository }}/rest
@@ -281,7 +281,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.13.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.14.0
         with:
           file: builds/standalone.rest.Dockerfile
           image_name: ${{ github.repository }}/standalone-rest
@@ -303,7 +303,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/npm@v1.13.0
+      - uses: a-novel-kit/workflows/publish-actions/npm@v1.14.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.PUBLISH_BOT_PRIVATE_KEY }}
@@ -325,7 +325,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/archive-board-items@v1.13.0
+      - uses: a-novel-kit/workflows/generic-actions/archive-board-items@v1.14.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
