@@ -64,7 +64,7 @@ jobs:
 
       - name: Approve
         if: ${{ steps.guard.outputs.skip != 'true' }}
-        uses: a-novel-kit/workflows/generic-actions/approve-bot@v1.16.1
+        uses: a-novel-kit/workflows/generic-actions/approve-bot@v1.17.0
         with:
           pull_request: ${{ github.event.pull_request.html_url }}
           github_token: ${{ steps.token.outputs.token }}
