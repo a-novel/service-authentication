@@ -77,8 +77,8 @@ github.com/getsentry/sentry-go/otel v0.47.0 h1:0LwN6BQR5tQQgaSruxEuFNKQlt+bS1D4H
 github.com/getsentry/sentry-go/otel v0.47.0/go.mod h1:JrF+DAQp1h0+wAmAb8HN4hHBWPnKJ4btiZr0NU7pEVw=
 github.com/getsentry/sentry-go/otel/otlp v0.47.0 h1:SVrisfuYZ4yS/K977VXwRjzUokoM9mW5sXCvlS+h5pY=
 github.com/getsentry/sentry-go/otel/otlp v0.47.0/go.mod h1:T42drgCERAt3rYd2OZTuk/Qk0oJFMcPQ5mmJwjYeWto=
-github.com/go-chi/chi/v5 v5.3.0 h1:halUjDxhshgXHMrao5bB8eNBXo/rnzwr8m5m36glehM=
-github.com/go-chi/chi/v5 v5.3.0/go.mod h1:R+tYY2hNuVUUjxoPtqUdgBqevM9s9njzkTLutVsOCto=
+github.com/go-chi/chi/v5 v5.3.1 h1:3j4HZLGZQ3JpMCrPJF/Jl3mYJfWLKBfNJ6quurUGCf8=
+github.com/go-chi/chi/v5 v5.3.1/go.mod h1:R+tYY2hNuVUUjxoPtqUdgBqevM9s9njzkTLutVsOCto=
 github.com/go-chi/cors v1.2.2 h1:Jmey33TE+b+rB7fT8MUy1u0I4L+NARQlK6LhzKPSyQE=
 github.com/go-chi/cors v1.2.2/go.mod h1:sSbTewc+6wYHBBCW7ytsFSn836hqM7JxpglAy2Vzc58=
 github.com/go-errors/errors v1.4.2 h1:J6MZopCL4uSllY1OfXM374weqZFFItUbrImctkmUxIA=
