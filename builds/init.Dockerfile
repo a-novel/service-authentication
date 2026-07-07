@@ -1,7 +1,7 @@
 # This image runs a job that will create / update a default super-admin user.
 #
 # It requires a patched database instance to run properly.
-FROM docker.io/library/golang:1.26.4-alpine AS builder
+FROM docker.io/library/golang:1.26.5-alpine AS builder
 
 ENV CGO_ENABLED=0
 
