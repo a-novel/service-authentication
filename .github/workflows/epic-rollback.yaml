@@ -7,9 +7,9 @@
 # non-admins), it demands a typed confirmation, it defaults to a no-write dry run that just
 # prints the plan, and every compensating revert still passes the same merge-gate + review +
 # queue + partial-landing detector as the forward landing. The heavy lifting (ledger
-# reconstruction, per-repo reverts, atomic landing, board reset) lives in the epic-rollback
-# action, which the [Agent] App drives org-wide; this shell only anchors the admin gate and
-# the confirmation.
+# reconstruction, per-repo reverts, atomic landing, board reset) AND the admin/confirmation fences
+# all live in the reusable epic-rollback-run workflow (pinned below); this thin caller only threads
+# the org creds + the operator's dispatch inputs into it.
 name: epic-rollback
 
 on:
@@ -47,58 +47,15 @@ run-name: "⏮ ROLLBACK epic:#${{ inputs.epic_number }} requested by @${{ github
 
 jobs:
   rollback:
-    runs-on: ubuntu-latest
-    # The default token is used only for the admin check (Metadata:read, always present); the
-    # rollback action mints its own least-privilege [Agent] tokens for every read and write.
-    permissions:
-      contents: read
-    steps:
-      # Fail closed unless the dispatcher is a repo admin, AND the epic number is numeric, AND
-      # the typed confirmation matches exactly. workflow_dispatch is open to any write user, so
-      # this gate is what keeps a destructive rollback admin-only + fat-finger-proof.
-      - name: Require admin + numeric epic + typed confirmation
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO_FULL: ${{ github.repository }}
-          ACTOR: ${{ github.actor }}
-          EPIC: ${{ inputs.epic_number }}
-          CONFIRM: ${{ inputs.confirm }}
-          DRY_RUN: ${{ inputs.dry_run }}
-        run: |
-          set -euo pipefail
-          # Admin gate (copied from a-novel-kit/workflows' generic-actions/approve-pr/action.yaml):
-          # `|| echo ""` keeps a failed lookup from tripping `set -e` — an empty permission falls
-          # through and fails closed.
-          perm=$(gh api "repos/${REPO_FULL}/collaborators/${ACTOR}/permission" -q '.permission' 2>/dev/null || echo "")
-          if [ "$perm" != "admin" ]; then
-            echo "::error::epic-rollback is admin-only; @${ACTOR} has permission '${perm:-none}'."
-            exit 1
-          fi
-          # Numeric validation before the number ever reaches the `label:"epic:<N>"` search grammar.
-          if ! [[ "${EPIC:-}" =~ ^[0-9]+$ ]]; then
-            echo "::error::epic_number must be an integer, got \"${EPIC:-}\"."
-            exit 1
-          fi
-          # Typed confirmation — defeats a fat-finger on a destructive op.
-          if [ "${CONFIRM:-}" != "revert-epic-${EPIC}" ]; then
-            echo "::error::confirmation mismatch — type \"revert-epic-${EPIC}\" exactly to proceed."
-            exit 1
-          fi
-          echo "@${ACTOR} is a repo admin; confirmation matches — proceeding with rollback of epic:#${EPIC} (dry_run=${DRY_RUN:-true})." | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - uses: a-novel-kit/workflows/generic-actions/epic-rollback@v1.17.0
-        with:
-          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
-          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          epic_number: ${{ inputs.epic_number }}
-          reason: ${{ inputs.reason }}
-          dry_run: ${{ inputs.dry_run }}
-          # BLAST-CAP: abort before any revert if the ledger spans more than this many repos.
-          max_rollback_repos: ${{ inputs.max_rollback_repos }}
-          # Org-level HALT (FAIL-SAFE — RUNNING only for an explicit off-token: empty/unset, 0, off,
-          # false, no, disabled; ANYTHING ELSE, incl. a fat-fingered value, engages) → the action
-          # aborts loud as its first step, before any mint. Threaded from the org variable (a
-          # composite action can't read `vars` itself).
-          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
-          # The org "Tasks" board id, inlined per-org the same way derive-status passes it.
-          project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
+    uses: a-novel-kit/workflows/.github/workflows/epic-rollback-run.yaml@v1.19.0
+    with:
+      epic_number: ${{ inputs.epic_number }}
+      confirm: ${{ inputs.confirm }}
+      reason: ${{ inputs.reason }}
+      dry_run: ${{ inputs.dry_run }}
+      max_rollback_repos: ${{ inputs.max_rollback_repos }}
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
+      kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+    secrets:
+      app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}

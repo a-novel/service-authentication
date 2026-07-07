@@ -6,8 +6,8 @@
 # the released tag per repo as a receipt on the Epic. It is idempotent: a re-dispatch resumes, releasing
 # only the repos that haven't shipped yet. Unlike epic-rollback this is a FORWARD op (it publishes, it
 # doesn't undo merged code), so it is fenced by the admin gate + a dry-run default + a choice-typed
-# dry_run (no typed confirmation). The heavy lifting lives in the release-train action, which the
-# [Agent] App drives; this shell only anchors the admin gate. dry_run defaults on: it rehearses the
+# dry_run (no typed confirmation). The heavy lifting + the admin gate live in the reusable release-train-run workflow (pinned below);
+# this thin caller only threads the org creds + dispatch inputs. dry_run defaults on: it rehearses the
 # whole train and cuts nothing until you set dry_run=false.
 name: release-train
 
@@ -33,47 +33,11 @@ run-name: "🚂 release train epic:#${{ inputs.epic_number }} requested by @${{ 
 
 jobs:
   release-train:
-    runs-on: ubuntu-latest
-    # The default token is used only for the admin check (Metadata:read, always present); the
-    # release-train action mints its own least-privilege [Agent] tokens (dispatch + reads).
-    permissions:
-      contents: read
-    steps:
-      # Fail closed unless the dispatcher is a repo admin, AND the epic number is numeric.
-      # workflow_dispatch is open to any write user, so this gate is what keeps the release train
-      # admin-only.
-      - name: Require admin + numeric epic
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO_FULL: ${{ github.repository }}
-          ACTOR: ${{ github.actor }}
-          EPIC: ${{ inputs.epic_number }}
-          DRY_RUN: ${{ inputs.dry_run }}
-        run: |
-          set -euo pipefail
-          # Admin gate (copied from a-novel-kit/workflows' generic-actions/approve-pr/action.yaml):
-          # `|| echo ""` keeps a failed lookup from tripping `set -e` — an empty permission falls
-          # through and fails closed.
-          perm=$(gh api "repos/${REPO_FULL}/collaborators/${ACTOR}/permission" -q '.permission' 2>/dev/null || echo "")
-          if [ "$perm" != "admin" ]; then
-            echo "::error::release-train is admin-only; @${ACTOR} has permission '${perm:-none}'."
-            exit 1
-          fi
-          # Numeric validation before the number ever reaches the `label:"epic:<N>"` search grammar.
-          if ! [[ "${EPIC:-}" =~ ^[0-9]+$ ]]; then
-            echo "::error::epic_number must be an integer, got \"${EPIC:-}\"."
-            exit 1
-          fi
-          echo "@${ACTOR} is a repo admin — proceeding with the release train for epic:#${EPIC} (dry_run=${DRY_RUN:-true})." | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - uses: a-novel-kit/workflows/generic-actions/release-train@v1.17.0
-        with:
-          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
-          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          epic_number: ${{ inputs.epic_number }}
-          dry_run: ${{ inputs.dry_run }}
-          # Org-level HALT (FAIL-SAFE — RUNNING only for an explicit off-token: empty/unset, 0, off,
-          # false, no, disabled; ANYTHING ELSE, incl. a fat-fingered value, engages) → the action
-          # aborts loud as its first step, before any mint. Threaded from the org variable (a composite
-          # action can't read `vars` itself).
-          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+    uses: a-novel-kit/workflows/.github/workflows/release-train-run.yaml@v1.19.0
+    with:
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      epic_number: ${{ inputs.epic_number }}
+      dry_run: ${{ inputs.dry_run }}
+      kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+    secrets:
+      app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}

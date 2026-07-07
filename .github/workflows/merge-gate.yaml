@@ -31,51 +31,10 @@ on:
   merge_group:
 
 jobs:
-  evaluate:
-    runs-on: ubuntu-latest
-    # The gate mints its own [Agent] token (checks:write) and never uses the
-    # default token, so it needs no repository permissions of its own.
-    permissions: {}
-    steps:
-      - uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.17.0
-        with:
-          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
-          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          # Org-level HALT (FAIL-SAFE — RUNNING only for an explicit off-token: empty/unset, 0, off,
-          # false, no, disabled; ANYTHING ELSE, incl. a fat-fingered value, engages) → the gate posts
-          # a `failure` HOLD on every PR, BEFORE any success path, so nothing merges org-wide.
-          # Threaded from the org variable (a composite action can't read `vars` itself). The variable
-          # need not exist to run — an unset value reads as empty, which is a running state.
-          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
-
-  auto-merge:
-    # Only where there is a PR to enable (pull_request events), and never on a draft.
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
-    runs-on: ubuntu-latest
-    # The member check reads the event payload (no API); enable-auto-merge mints its
-    # own [Agent] token — so no default-token permissions are needed.
-    permissions: {}
-    steps:
-      - name: Is this an epic member?
-        id: member
-        env:
-          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
-        run: |
-          if printf '%s' "$LABELS" | grep -qE '"epic:[0-9]+"'; then
-            echo "member=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "member=false" >> "$GITHUB_OUTPUT"
-          fi
-      - if: ${{ steps.member.outputs.member == 'true' }}
-        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.17.0
-        with:
-          pull_request_number: ${{ github.event.pull_request.number }}
-          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
-          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          # Live: auto-merge is enabled for epic members.
-          dry_run: "false"
-          # Org-level HALT (FAIL-SAFE — RUNNING only for an explicit off-token; ANYTHING ELSE engages)
-          # → do not arm auto-merge (merge-gate HOLDs anyway). NOTE: this does NOT disarm auto-merge
-          # ALREADY armed on an idle ready PR before the halt — merge-gate's red check still blocks it,
-          # with a brief latency window until the next event / reconcile sweep re-posts the hold.
-          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+  merge-gate:
+    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.19.0
+    with:
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+    secrets:
+      app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}

@@ -14,69 +14,13 @@ on:
 
 jobs:
   auto-approve:
-    runs-on: ubuntu-latest
     if: >-
       github.event.pull_request.user.login == vars.DEPENDENCY_BOT_LOGIN ||
       github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN
-    # Every step runs on the minted App token; the default token is unused.
-    permissions: {}
-    steps:
-      # Approve as the App — a distinct identity from the bot author, and one whose
-      # review reliably counts toward the required-approval rule (a workflow's own
-      # token does not).
-      - name: Mint approval token
-        id: token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ vars.AGENT_BOT_CLIENT_ID }}
-          private-key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          # No `owner`: approving + merging this one PR needs nothing org-wide, so
-          # the token stays scoped to the current repository (omitting `owner` +
-          # `repositories` scopes it there). Contrast the Projects-scoped actions.
-          permission-contents: write
-          permission-pull-requests: write
-
-      # A human push to the branch means the change needs real review, so approve
-      # only when every commit is the bot's own. Unknown authors count as non-bot,
-      # so the guard fails closed.
-      - name: Confirm every commit is the bot's
-        id: guard
-        env:
-          GH_TOKEN: ${{ steps.token.outputs.token }}
-          PR: ${{ github.event.pull_request.html_url }}
-          BOT: ${{ github.event.pull_request.user.login }}
-        run: |
-          set -euo pipefail
-          authors=$(gh pr view "$PR" --json commits \
-            -q '[.commits[].authors[].login // "unknown"] | unique | sort | join(",")')
-          if [ "$authors" != "$BOT" ]; then
-            echo "::notice::Not auto-approving — commits by '${authors:-unknown}', expected only '$BOT'."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      # approve-bot runs `gh pr checkout`, so a base checkout must exist first.
-      - name: Check out
-        if: ${{ steps.guard.outputs.skip != 'true' }}
-        uses: actions/checkout@v7
-        with:
-          token: ${{ steps.token.outputs.token }}
-          persist-credentials: false
-
-      - name: Approve
-        if: ${{ steps.guard.outputs.skip != 'true' }}
-        uses: a-novel-kit/workflows/generic-actions/approve-bot@v1.17.0
-        with:
-          pull_request: ${{ github.event.pull_request.html_url }}
-          github_token: ${{ steps.token.outputs.token }}
-
-      # Put the approved PR in the merge queue so it merges hands-off. The queue
-      # re-validates the required checks on the group and owns the merge method;
-      # pass `--squash` (the org's only allowed method) so the command is explicit
-      # for any repo without a queue too — where there is a queue it just logs that
-      # the strategy is queue-controlled.
-      - name: Enable auto-merge
-        if: ${{ steps.guard.outputs.skip != 'true' }}
-        env:
-          GH_TOKEN: ${{ steps.token.outputs.token }}
-          PR: ${{ github.event.pull_request.html_url }}
-        run: gh pr merge "$PR" --auto --squash
+    uses: a-novel-kit/workflows/.github/workflows/auto-approve-dependabot-run.yaml@v1.19.0
+    with:
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      dependency_bot_login: ${{ vars.DEPENDENCY_BOT_LOGIN }}
+      dependabot_security_login: ${{ vars.DEPENDABOT_SECURITY_LOGIN }}
+    secrets:
+      bot_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
