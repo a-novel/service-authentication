@@ -1,7 +1,7 @@
 # This image exposes our app as a rest api server.
 #
 # It requires a patched database instance to run properly.
-FROM docker.io/library/golang:1.26.4-alpine AS builder
+FROM docker.io/library/golang:1.26.5-alpine AS builder
 
 # Static binary: no libc dependency, so it runs on a bare alpine base and could
 # move to scratch/distroless later.
