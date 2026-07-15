@@ -47,7 +47,7 @@ run-name: "⏮ ROLLBACK epic:#${{ inputs.epic_number }} requested by @${{ github
 
 jobs:
   rollback:
-    uses: a-novel-kit/workflows/.github/workflows/epic-rollback-run.yaml@v1.19.3
+    uses: a-novel-kit/workflows/.github/workflows/epic-rollback-run.yaml@v1.19.4
     with:
       epic_number: ${{ inputs.epic_number }}
       confirm: ${{ inputs.confirm }}
