@@ -17,7 +17,7 @@ jobs:
     if: >-
       github.event.pull_request.user.login == vars.DEPENDENCY_BOT_LOGIN ||
       github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN
-    uses: a-novel-kit/workflows/.github/workflows/auto-approve-dependabot-run.yaml@v1.19.3
+    uses: a-novel-kit/workflows/.github/workflows/auto-approve-dependabot-run.yaml@v1.19.4
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       dependency_bot_login: ${{ vars.DEPENDENCY_BOT_LOGIN }}
