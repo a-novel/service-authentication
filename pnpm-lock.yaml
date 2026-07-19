@@ -43,7 +43,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^1.3.18
-        version: 1.3.41(b3227fe81a26a3903715ca5ff5dbc057)
+        version: 1.3.41(efa1aa397e5fce64b3c1130144eea0c1)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.7.0(jiti@2.7.0))
@@ -106,10 +106,10 @@ importers:
         version: 8.64.0(eslint@10.7.0(jiti@2.7.0))(typescript@6.0.3)
       vite:
         specifier: ^8.0.16
-        version: 8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
+        version: 8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
       vitest:
         specifier: ^4.0.16
-        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
 
   pkg/js/rest:
     devDependencies:
@@ -121,7 +121,7 @@ importers:
         version: 6.0.3
       vite:
         specifier: ^8.0.0
-        version: 8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)
+        version: 8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)
       zod:
         specifier: ^4.1.12
         version: 4.4.3
@@ -154,10 +154,10 @@ importers:
         version: 6.0.3
       vite:
         specifier: ^8.0.0
-        version: 8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)
+        version: 8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)
       vitest:
         specifier: ^4.0.8
-        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.7.0)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.7.0)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))
       zod:
         specifier: ^4.1.12
         version: 4.4.3
@@ -169,7 +169,7 @@ importers:
         version: 1.3.41(zod@4.4.3)
       '@a-novel-kit/nodelib-test':
         specifier: ^1.3.18
-        version: 1.3.41(@a-novel-kit/nodelib-browser@1.3.41(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.7))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.10)(zod@4.4.3)
+        version: 1.3.41(@a-novel-kit/nodelib-browser@1.3.41(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.7))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.10)(zod@4.4.3)
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../../rest
@@ -187,7 +187,7 @@ importers:
         version: 3.4.6
       '@types/node':
         specifier: ^24.10.0
-        version: 24.12.0
+        version: 24.13.3
       '@vitest/coverage-v8':
         specifier: ^4.0.8
         version: 4.1.10(vitest@4.1.10)
@@ -217,10 +217,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.2.2
-        version: 7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0)
+        version: 7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0)
       vitest:
         specifier: ^4.0.8
-        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(@vitest/coverage-v8@4.1.10)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0))
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0))
 
 packages:
 
@@ -1362,9 +1362,6 @@ packages:
 
   '@types/mailparser@3.4.6':
     resolution: {integrity: sha512-wVV3cnIKzxTffaPH8iRnddX1zahbYB1ZEoAxyhoBo3TBCBuK6nZ8M8JYO/RhsCuuBVOw/DEN/t/ENbruwlxn6Q==}
-
-  '@types/node@24.12.0':
-    resolution: {integrity: sha512-GYDxsZi3ChgmckRT9HPU0WEhKLP08ev/Yfcq2AstjrDASOYCSXeyjDsHg4v5t4jOj7cyDX3vmprafKlWIG9MXQ==}
 
   '@types/node@24.13.3':
     resolution: {integrity: sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q==}
@@ -3161,8 +3158,8 @@ packages:
   postcss-value-parser@4.2.0:
     resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
 
-  postcss@8.5.16:
-    resolution: {integrity: sha512-vuwillviilfKZsg0VGj5R/YwwcHx4SLsIOI/7K6mQkWx+l5cUHTjj5g0AasTBcyXsbfTgrwsUNmVUb5xVwyPwg==}
+  postcss@8.5.19:
+    resolution: {integrity: sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   posthtml-parser@0.11.0:
@@ -3562,9 +3559,6 @@ packages:
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
-  undici-types@7.16.0:
-    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
-
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
@@ -3650,8 +3644,8 @@ packages:
       yaml:
         optional: true
 
-  vite@8.1.4:
-    resolution: {integrity: sha512-bTT9PsdWO+MQMNG9ZXIP/qM9wGh37DFxTV/sPq9cFpHr3w4jkgef032PkAL9jAqhk3Nz8NQw3O8n6/xFkqO4QQ==}
+  vite@8.1.5:
+    resolution: {integrity: sha512-7ULLwsCdYx/nRyrpiEwvqb5TFHrMVZyBt+rg/OAXT7rgj/z+DtTDyKFeLAdDkubDVDKD8jOsndmy7m55XcfUsw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -3860,11 +3854,11 @@ snapshots:
     dependencies:
       zod: 4.4.3
 
-  '@a-novel-kit/nodelib-config@1.3.41(b3227fe81a26a3903715ca5ff5dbc057)':
+  '@a-novel-kit/nodelib-config@1.3.41(efa1aa397e5fce64b3c1130144eea0c1)':
     dependencies:
       '@eslint/compat': 2.1.0(eslint@10.7.0(jiti@2.7.0))
       '@eslint/js': 10.0.1(eslint@10.7.0(jiti@2.7.0))
-      '@sveltejs/kit': 2.70.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)))(svelte@5.56.6(@typescript-eslint/types@8.64.0))(typescript@6.0.3)(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
+      '@sveltejs/kit': 2.70.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)))(svelte@5.56.6(@typescript-eslint/types@8.64.0))(typescript@6.0.3)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
       '@trivago/prettier-plugin-sort-imports': 6.0.2(prettier-plugin-svelte@3.5.2(prettier@3.9.5)(svelte@5.56.6(@typescript-eslint/types@8.64.0)))(prettier@3.9.5)(svelte@5.56.6(@typescript-eslint/types@8.64.0))
       '@types/node': 24.13.3
       eslint: 10.7.0(jiti@2.7.0)
@@ -3873,7 +3867,7 @@ snapshots:
       eslint-plugin-storybook: 10.5.0(eslint@10.7.0(jiti@2.7.0))(storybook@10.5.2(prettier@3.9.5)(react@19.2.7))(typescript@6.0.3)
       eslint-plugin-svelte: 3.20.0(eslint@10.7.0(jiti@2.7.0))(svelte@5.56.6(@typescript-eslint/types@8.64.0))
       prettier: 3.9.5
-      prettier-plugin-css-order: 2.2.0(postcss@8.5.16)(prettier@3.9.5)
+      prettier-plugin-css-order: 2.2.0(postcss@8.5.19)(prettier@3.9.5)
       prettier-plugin-packagejson: 3.0.2(prettier@3.9.5)
       prettier-plugin-sql: 0.20.0(prettier@3.9.5)
       storybook: 10.5.2(prettier@3.9.5)(react@19.2.7)
@@ -3881,18 +3875,18 @@ snapshots:
       typescript: 6.0.3
       typescript-eslint: 8.64.0(eslint@10.7.0(jiti@2.7.0))(typescript@6.0.3)
 
-  '@a-novel-kit/nodelib-test@1.3.41(@a-novel-kit/nodelib-browser@1.3.41(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.7))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.10)(zod@4.4.3)':
+  '@a-novel-kit/nodelib-test@1.3.41(@a-novel-kit/nodelib-browser@1.3.41(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3)))(@tanstack/react-query@5.90.21(react@19.2.7))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.10)(zod@4.4.3)':
     dependencies:
       '@a-novel-kit/nodelib-browser': 1.3.41(zod@4.4.3)
-      '@msw/playwright': 0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))
+      '@msw/playwright': 0.4.5(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))
       '@tanstack/react-query': 5.90.21(react@19.2.7)
       '@testing-library/react': 16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       globals: 16.5.0
       lodash-es: 4.18.1
-      msw: 2.12.10(@types/node@24.12.0)(typescript@5.9.3)
+      msw: 2.12.10(@types/node@24.13.3)(typescript@5.9.3)
       playwright: 1.58.2
       v8-to-istanbul: 9.3.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(@vitest/coverage-v8@4.1.10)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0))
       zod: 4.4.3
 
   '@a-novel-kit/nodelib-test@1.3.41(@a-novel-kit/nodelib-browser@1.3.41(zod@4.4.3))(@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3)))(@tanstack/react-query@5.90.21(react@19.2.7))(@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(playwright@1.58.2)(v8-to-istanbul@9.3.0)(vitest@4.1.10)(zod@4.4.3)':
@@ -3906,7 +3900,7 @@ snapshots:
       msw: 2.12.10(@types/node@25.7.0)(typescript@6.0.3)
       playwright: 1.58.2
       v8-to-istanbul: 9.3.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.7.0)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.7.0)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))
       zod: 4.4.3
 
   '@acemir/cssom@0.9.31': {}
@@ -4213,20 +4207,12 @@ snapshots:
 
   '@inquirer/ansi@1.0.2': {}
 
-  '@inquirer/confirm@5.1.21(@types/node@24.12.0)':
-    dependencies:
-      '@inquirer/core': 10.3.2(@types/node@24.12.0)
-      '@inquirer/type': 3.0.10(@types/node@24.12.0)
-    optionalDependencies:
-      '@types/node': 24.12.0
-
   '@inquirer/confirm@5.1.21(@types/node@24.13.3)':
     dependencies:
       '@inquirer/core': 10.3.2(@types/node@24.13.3)
       '@inquirer/type': 3.0.10(@types/node@24.13.3)
     optionalDependencies:
       '@types/node': 24.13.3
-    optional: true
 
   '@inquirer/confirm@5.1.21(@types/node@25.7.0)':
     dependencies:
@@ -4234,19 +4220,6 @@ snapshots:
       '@inquirer/type': 3.0.10(@types/node@25.7.0)
     optionalDependencies:
       '@types/node': 25.7.0
-
-  '@inquirer/core@10.3.2(@types/node@24.12.0)':
-    dependencies:
-      '@inquirer/ansi': 1.0.2
-      '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@24.12.0)
-      cli-width: 4.1.0
-      mute-stream: 2.0.0
-      signal-exit: 4.1.0
-      wrap-ansi: 6.2.0
-      yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 24.12.0
 
   '@inquirer/core@10.3.2(@types/node@24.13.3)':
     dependencies:
@@ -4260,7 +4233,6 @@ snapshots:
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
       '@types/node': 24.13.3
-    optional: true
 
   '@inquirer/core@10.3.2(@types/node@25.7.0)':
     dependencies:
@@ -4277,14 +4249,9 @@ snapshots:
 
   '@inquirer/figures@1.0.15': {}
 
-  '@inquirer/type@3.0.10(@types/node@24.12.0)':
-    optionalDependencies:
-      '@types/node': 24.12.0
-
   '@inquirer/type@3.0.10(@types/node@24.13.3)':
     optionalDependencies:
       '@types/node': 24.13.3
-    optional: true
 
   '@inquirer/type@3.0.10(@types/node@25.7.0)':
     optionalDependencies:
@@ -4320,10 +4287,10 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))':
+  '@msw/playwright@0.4.5(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))':
     dependencies:
       '@mswjs/interceptors': 0.40.0
-      msw: 2.12.10(@types/node@24.12.0)(typescript@5.9.3)
+      msw: 2.12.10(@types/node@24.13.3)(typescript@5.9.3)
       outvariant: 1.4.3
 
   '@msw/playwright@0.4.5(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))':
@@ -4670,11 +4637,11 @@ snapshots:
     dependencies:
       acorn: 8.17.0
 
-  '@sveltejs/kit@2.70.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)))(svelte@5.56.6(@typescript-eslint/types@8.64.0))(typescript@6.0.3)(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))':
+  '@sveltejs/kit@2.70.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)))(svelte@5.56.6(@typescript-eslint/types@8.64.0))(typescript@6.0.3)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@sveltejs/acorn-typescript': 1.0.10(acorn@8.17.0)
-      '@sveltejs/vite-plugin-svelte': 7.1.2(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
+      '@sveltejs/vite-plugin-svelte': 7.1.2(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
       '@types/cookie': 0.6.0
       acorn: 8.17.0
       cookie: 2.0.1
@@ -4686,19 +4653,19 @@ snapshots:
       set-cookie-parser: 3.1.1
       sirv: 3.0.2
       svelte: 5.56.6(@typescript-eslint/types@8.64.0)
-      vite: 8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
+      vite: 8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       typescript: 6.0.3
 
-  '@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))':
+  '@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.6(@typescript-eslint/types@8.64.0))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))':
     dependencies:
       deepmerge: 4.3.1
       magic-string: 0.30.21
       obug: 2.1.3
       svelte: 5.56.6(@typescript-eslint/types@8.64.0)
-      vite: 8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
-      vitefu: 1.1.3(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
+      vite: 8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
+      vitefu: 1.1.3(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
 
   '@tanstack/query-core@5.90.20': {}
 
@@ -4779,13 +4746,13 @@ snapshots:
 
   '@types/jsdom@27.0.0':
     dependencies:
-      '@types/node': 24.12.0
+      '@types/node': 24.13.3
       '@types/tough-cookie': 4.0.5
       parse5: 7.3.0
 
   '@types/jsdom@28.0.3':
     dependencies:
-      '@types/node': 24.12.0
+      '@types/node': 24.13.3
       '@types/tough-cookie': 4.0.5
       parse5: 8.0.1
       undici-types: 7.25.0
@@ -4794,12 +4761,8 @@ snapshots:
 
   '@types/mailparser@3.4.6':
     dependencies:
-      '@types/node': 24.12.0
+      '@types/node': 24.13.3
       iconv-lite: 0.6.3
-
-  '@types/node@24.12.0':
-    dependencies:
-      undici-types: 7.16.0
 
   '@types/node@24.13.3':
     dependencies:
@@ -4923,7 +4886,7 @@ snapshots:
       obug: 2.1.3
       std-env: 4.2.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
 
   '@vitest/expect@3.2.4':
     dependencies:
@@ -4942,32 +4905,32 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.10(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0))':
+  '@vitest/mocker@4.1.10(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      msw: 2.12.10(@types/node@24.12.0)(typescript@5.9.3)
-      vite: 7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0)
+      msw: 2.12.10(@types/node@24.13.3)(typescript@5.9.3)
+      vite: 7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0)
 
-  '@vitest/mocker@4.1.10(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))':
+  '@vitest/mocker@4.1.10(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
       msw: 2.12.10(@types/node@24.13.3)(typescript@6.0.3)
-      vite: 8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
+      vite: 8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
 
-  '@vitest/mocker@4.1.10(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))':
+  '@vitest/mocker@4.1.10(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
       msw: 2.12.10(@types/node@25.7.0)(typescript@6.0.3)
-      vite: 8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)
+      vite: 8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -5232,9 +5195,9 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  css-declaration-sorter@7.4.0(postcss@8.5.16):
+  css-declaration-sorter@7.4.0(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
   css-select@5.2.2:
     dependencies:
@@ -5260,57 +5223,57 @@ snapshots:
 
   cssesc@3.0.0: {}
 
-  cssnano-preset-default@7.0.15(postcss@8.5.16):
+  cssnano-preset-default@7.0.15(postcss@8.5.19):
     dependencies:
       browserslist: 4.28.2
-      css-declaration-sorter: 7.4.0(postcss@8.5.16)
-      cssnano-utils: 5.0.2(postcss@8.5.16)
-      postcss: 8.5.16
-      postcss-calc: 10.1.1(postcss@8.5.16)
-      postcss-colormin: 7.0.9(postcss@8.5.16)
-      postcss-convert-values: 7.0.11(postcss@8.5.16)
-      postcss-discard-comments: 7.0.7(postcss@8.5.16)
-      postcss-discard-duplicates: 7.0.3(postcss@8.5.16)
-      postcss-discard-empty: 7.0.2(postcss@8.5.16)
-      postcss-discard-overridden: 7.0.2(postcss@8.5.16)
-      postcss-merge-longhand: 7.0.6(postcss@8.5.16)
-      postcss-merge-rules: 7.0.10(postcss@8.5.16)
-      postcss-minify-font-values: 7.0.2(postcss@8.5.16)
-      postcss-minify-gradients: 7.0.4(postcss@8.5.16)
-      postcss-minify-params: 7.0.8(postcss@8.5.16)
-      postcss-minify-selectors: 7.1.0(postcss@8.5.16)
-      postcss-normalize-charset: 7.0.2(postcss@8.5.16)
-      postcss-normalize-display-values: 7.0.2(postcss@8.5.16)
-      postcss-normalize-positions: 7.0.3(postcss@8.5.16)
-      postcss-normalize-repeat-style: 7.0.3(postcss@8.5.16)
-      postcss-normalize-string: 7.0.2(postcss@8.5.16)
-      postcss-normalize-timing-functions: 7.0.2(postcss@8.5.16)
-      postcss-normalize-unicode: 7.0.8(postcss@8.5.16)
-      postcss-normalize-url: 7.0.2(postcss@8.5.16)
-      postcss-normalize-whitespace: 7.0.2(postcss@8.5.16)
-      postcss-ordered-values: 7.0.3(postcss@8.5.16)
-      postcss-reduce-initial: 7.0.8(postcss@8.5.16)
-      postcss-reduce-transforms: 7.0.2(postcss@8.5.16)
-      postcss-svgo: 7.1.2(postcss@8.5.16)
-      postcss-unique-selectors: 7.0.6(postcss@8.5.16)
+      css-declaration-sorter: 7.4.0(postcss@8.5.19)
+      cssnano-utils: 5.0.2(postcss@8.5.19)
+      postcss: 8.5.19
+      postcss-calc: 10.1.1(postcss@8.5.19)
+      postcss-colormin: 7.0.9(postcss@8.5.19)
+      postcss-convert-values: 7.0.11(postcss@8.5.19)
+      postcss-discard-comments: 7.0.7(postcss@8.5.19)
+      postcss-discard-duplicates: 7.0.3(postcss@8.5.19)
+      postcss-discard-empty: 7.0.2(postcss@8.5.19)
+      postcss-discard-overridden: 7.0.2(postcss@8.5.19)
+      postcss-merge-longhand: 7.0.6(postcss@8.5.19)
+      postcss-merge-rules: 7.0.10(postcss@8.5.19)
+      postcss-minify-font-values: 7.0.2(postcss@8.5.19)
+      postcss-minify-gradients: 7.0.4(postcss@8.5.19)
+      postcss-minify-params: 7.0.8(postcss@8.5.19)
+      postcss-minify-selectors: 7.1.0(postcss@8.5.19)
+      postcss-normalize-charset: 7.0.2(postcss@8.5.19)
+      postcss-normalize-display-values: 7.0.2(postcss@8.5.19)
+      postcss-normalize-positions: 7.0.3(postcss@8.5.19)
+      postcss-normalize-repeat-style: 7.0.3(postcss@8.5.19)
+      postcss-normalize-string: 7.0.2(postcss@8.5.19)
+      postcss-normalize-timing-functions: 7.0.2(postcss@8.5.19)
+      postcss-normalize-unicode: 7.0.8(postcss@8.5.19)
+      postcss-normalize-url: 7.0.2(postcss@8.5.19)
+      postcss-normalize-whitespace: 7.0.2(postcss@8.5.19)
+      postcss-ordered-values: 7.0.3(postcss@8.5.19)
+      postcss-reduce-initial: 7.0.8(postcss@8.5.19)
+      postcss-reduce-transforms: 7.0.2(postcss@8.5.19)
+      postcss-svgo: 7.1.2(postcss@8.5.19)
+      postcss-unique-selectors: 7.0.6(postcss@8.5.19)
 
-  cssnano-preset-lite@4.0.5(postcss@8.5.16):
+  cssnano-preset-lite@4.0.5(postcss@8.5.19):
     dependencies:
-      cssnano-utils: 5.0.2(postcss@8.5.16)
-      postcss: 8.5.16
-      postcss-discard-comments: 7.0.7(postcss@8.5.16)
-      postcss-discard-empty: 7.0.2(postcss@8.5.16)
-      postcss-normalize-whitespace: 7.0.2(postcss@8.5.16)
+      cssnano-utils: 5.0.2(postcss@8.5.19)
+      postcss: 8.5.19
+      postcss-discard-comments: 7.0.7(postcss@8.5.19)
+      postcss-discard-empty: 7.0.2(postcss@8.5.19)
+      postcss-normalize-whitespace: 7.0.2(postcss@8.5.19)
 
-  cssnano-utils@5.0.2(postcss@8.5.16):
+  cssnano-utils@5.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  cssnano@7.1.7(postcss@8.5.16):
+  cssnano@7.1.7(postcss@8.5.19):
     dependencies:
-      cssnano-preset-default: 7.0.15(postcss@8.5.16)
+      cssnano-preset-default: 7.0.15(postcss@8.5.19)
       lilconfig: 3.1.3
-      postcss: 8.5.16
+      postcss: 8.5.19
 
   csso@5.0.5:
     dependencies:
@@ -5518,9 +5481,9 @@ snapshots:
       esutils: 2.0.3
       globals: 16.5.0
       known-css-properties: 0.37.0
-      postcss: 8.5.16
-      postcss-load-config: 3.1.4(postcss@8.5.16)
-      postcss-safe-parser: 7.0.1(postcss@8.5.16)
+      postcss: 8.5.19
+      postcss-load-config: 3.1.4(postcss@8.5.19)
+      postcss-safe-parser: 7.0.1(postcss@8.5.19)
       semver: 7.8.5
       svelte-eslint-parser: 1.8.0(svelte@5.56.6(@typescript-eslint/types@8.64.0))
     optionalDependencies:
@@ -5730,28 +5693,28 @@ snapshots:
       htmlparser2: 10.1.0
       selderee: 0.12.0
 
-  htmlnano@3.3.2(cssnano@7.1.7(postcss@8.5.16))(postcss@8.5.16)(svgo@4.0.1)(typescript@5.9.3):
+  htmlnano@3.3.2(cssnano@7.1.7(postcss@8.5.19))(postcss@8.5.19)(svgo@4.0.1)(typescript@5.9.3):
     dependencies:
       '@types/relateurl': 0.2.33
       commander: 14.0.3
       cosmiconfig: 9.0.1(typescript@5.9.3)
       posthtml: 0.16.7
     optionalDependencies:
-      cssnano: 7.1.7(postcss@8.5.16)
-      postcss: 8.5.16
+      cssnano: 7.1.7(postcss@8.5.19)
+      postcss: 8.5.19
       svgo: 4.0.1
     transitivePeerDependencies:
       - typescript
 
-  htmlnano@3.3.2(cssnano@7.1.7(postcss@8.5.16))(postcss@8.5.16)(svgo@4.0.1)(typescript@6.0.3):
+  htmlnano@3.3.2(cssnano@7.1.7(postcss@8.5.19))(postcss@8.5.19)(svgo@4.0.1)(typescript@6.0.3):
     dependencies:
       '@types/relateurl': 0.2.33
       commander: 14.0.3
       cosmiconfig: 9.0.1(typescript@6.0.3)
       posthtml: 0.16.7
     optionalDependencies:
-      cssnano: 7.1.7(postcss@8.5.16)
-      postcss: 8.5.16
+      cssnano: 7.1.7(postcss@8.5.19)
+      postcss: 8.5.19
       svgo: 4.0.1
     transitivePeerDependencies:
       - typescript
@@ -6312,15 +6275,15 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
       cheerio: 1.0.0
-      cssnano: 7.1.7(postcss@8.5.16)
-      cssnano-preset-lite: 4.0.5(postcss@8.5.16)
+      cssnano: 7.1.7(postcss@8.5.19)
+      cssnano-preset-lite: 4.0.5(postcss@8.5.19)
       detect-node: 2.1.0
-      htmlnano: 3.3.2(cssnano@7.1.7(postcss@8.5.16))(postcss@8.5.16)(svgo@4.0.1)(typescript@5.9.3)
+      htmlnano: 3.3.2(cssnano@7.1.7(postcss@8.5.19))(postcss@8.5.19)(svgo@4.0.1)(typescript@5.9.3)
       juice: 11.1.1
       lodash: 4.18.1
       mjml-parser-xml: 5.0.0
       mjml-validator: 5.0.0
-      postcss: 8.5.16
+      postcss: 8.5.19
       prettier: 3.9.5
     transitivePeerDependencies:
       - purgecss
@@ -6335,16 +6298,16 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
       cheerio: 1.0.0
-      cssnano: 7.1.7(postcss@8.5.16)
-      cssnano-preset-lite: 4.0.5(postcss@8.5.16)
+      cssnano: 7.1.7(postcss@8.5.19)
+      cssnano-preset-lite: 4.0.5(postcss@8.5.19)
       detect-node: 2.1.0
-      htmlnano: 3.3.2(cssnano@7.1.7(postcss@8.5.16))(postcss@8.5.16)(svgo@4.0.1)(typescript@6.0.3)
+      htmlnano: 3.3.2(cssnano@7.1.7(postcss@8.5.19))(postcss@8.5.19)(svgo@4.0.1)(typescript@6.0.3)
       js-beautify: 1.15.4
       juice: 11.1.1
       lodash: 4.18.1
       mjml-parser-xml: 5.4.0
       mjml-validator: 5.4.0
-      postcss: 8.5.16
+      postcss: 8.5.19
     transitivePeerDependencies:
       - purgecss
       - relateurl
@@ -7050,9 +7013,9 @@ snapshots:
 
   ms@2.1.3: {}
 
-  msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3):
+  msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3):
     dependencies:
-      '@inquirer/confirm': 5.1.21(@types/node@24.12.0)
+      '@inquirer/confirm': 5.1.21(@types/node@24.13.3)
       '@mswjs/interceptors': 0.41.9
       '@open-draft/deferred-promise': 2.2.0
       '@types/statuses': 2.0.6
@@ -7310,184 +7273,184 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
-  postcss-calc@10.1.1(postcss@8.5.16):
+  postcss-calc@10.1.1(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-selector-parser: 7.1.4
       postcss-value-parser: 4.2.0
 
-  postcss-colormin@7.0.9(postcss@8.5.16):
+  postcss-colormin@7.0.9(postcss@8.5.19):
     dependencies:
       '@colordx/core': 5.2.0
       browserslist: 4.28.2
       caniuse-api: 3.0.0
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-convert-values@7.0.11(postcss@8.5.16):
+  postcss-convert-values@7.0.11(postcss@8.5.19):
     dependencies:
       browserslist: 4.28.2
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-discard-comments@7.0.7(postcss@8.5.16):
+  postcss-discard-comments@7.0.7(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-selector-parser: 7.1.4
 
-  postcss-discard-duplicates@7.0.3(postcss@8.5.16):
+  postcss-discard-duplicates@7.0.3(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  postcss-discard-empty@7.0.2(postcss@8.5.16):
+  postcss-discard-empty@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  postcss-discard-overridden@7.0.2(postcss@8.5.16):
+  postcss-discard-overridden@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  postcss-less@6.0.0(postcss@8.5.16):
+  postcss-less@6.0.0(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  postcss-load-config@3.1.4(postcss@8.5.16):
+  postcss-load-config@3.1.4(postcss@8.5.19):
     dependencies:
       lilconfig: 2.1.0
       yaml: 1.10.3
     optionalDependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  postcss-merge-longhand@7.0.6(postcss@8.5.16):
+  postcss-merge-longhand@7.0.6(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
-      stylehacks: 7.0.10(postcss@8.5.16)
+      stylehacks: 7.0.10(postcss@8.5.19)
 
-  postcss-merge-rules@7.0.10(postcss@8.5.16):
+  postcss-merge-rules@7.0.10(postcss@8.5.19):
     dependencies:
       browserslist: 4.28.2
       caniuse-api: 3.0.0
-      cssnano-utils: 5.0.2(postcss@8.5.16)
-      postcss: 8.5.16
+      cssnano-utils: 5.0.2(postcss@8.5.19)
+      postcss: 8.5.19
       postcss-selector-parser: 7.1.4
 
-  postcss-minify-font-values@7.0.2(postcss@8.5.16):
+  postcss-minify-font-values@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-minify-gradients@7.0.4(postcss@8.5.16):
+  postcss-minify-gradients@7.0.4(postcss@8.5.19):
     dependencies:
       '@colordx/core': 5.2.0
-      cssnano-utils: 5.0.2(postcss@8.5.16)
-      postcss: 8.5.16
+      cssnano-utils: 5.0.2(postcss@8.5.19)
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-minify-params@7.0.8(postcss@8.5.16):
+  postcss-minify-params@7.0.8(postcss@8.5.19):
     dependencies:
       browserslist: 4.28.2
-      cssnano-utils: 5.0.2(postcss@8.5.16)
-      postcss: 8.5.16
+      cssnano-utils: 5.0.2(postcss@8.5.19)
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-minify-selectors@7.1.0(postcss@8.5.16):
+  postcss-minify-selectors@7.1.0(postcss@8.5.19):
     dependencies:
       browserslist: 4.28.2
       caniuse-api: 3.0.0
       cssesc: 3.0.0
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-selector-parser: 7.1.4
 
-  postcss-normalize-charset@7.0.2(postcss@8.5.16):
+  postcss-normalize-charset@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  postcss-normalize-display-values@7.0.2(postcss@8.5.16):
+  postcss-normalize-display-values@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-normalize-positions@7.0.3(postcss@8.5.16):
+  postcss-normalize-positions@7.0.3(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-normalize-repeat-style@7.0.3(postcss@8.5.16):
+  postcss-normalize-repeat-style@7.0.3(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-normalize-string@7.0.2(postcss@8.5.16):
+  postcss-normalize-string@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-normalize-timing-functions@7.0.2(postcss@8.5.16):
+  postcss-normalize-timing-functions@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-normalize-unicode@7.0.8(postcss@8.5.16):
+  postcss-normalize-unicode@7.0.8(postcss@8.5.19):
     dependencies:
       browserslist: 4.28.2
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-normalize-url@7.0.2(postcss@8.5.16):
+  postcss-normalize-url@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-normalize-whitespace@7.0.2(postcss@8.5.16):
+  postcss-normalize-whitespace@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-ordered-values@7.0.3(postcss@8.5.16):
+  postcss-ordered-values@7.0.3(postcss@8.5.19):
     dependencies:
-      cssnano-utils: 5.0.2(postcss@8.5.16)
-      postcss: 8.5.16
+      cssnano-utils: 5.0.2(postcss@8.5.19)
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-reduce-initial@7.0.8(postcss@8.5.16):
+  postcss-reduce-initial@7.0.8(postcss@8.5.19):
     dependencies:
       browserslist: 4.28.2
       caniuse-api: 3.0.0
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  postcss-reduce-transforms@7.0.2(postcss@8.5.16):
+  postcss-reduce-transforms@7.0.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
 
-  postcss-safe-parser@7.0.1(postcss@8.5.16):
+  postcss-safe-parser@7.0.1(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
-  postcss-scss@4.0.9(postcss@8.5.16):
+  postcss-scss@4.0.9(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
 
   postcss-selector-parser@7.1.4:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
 
-  postcss-svgo@7.1.2(postcss@8.5.16):
+  postcss-svgo@7.1.2(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-value-parser: 4.2.0
       svgo: 4.0.1
 
-  postcss-unique-selectors@7.0.6(postcss@8.5.16):
+  postcss-unique-selectors@7.0.6(postcss@8.5.19):
     dependencies:
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-selector-parser: 7.1.4
 
   postcss-value-parser@4.2.0: {}
 
-  postcss@8.5.16:
+  postcss@8.5.19:
     dependencies:
       nanoid: 3.3.15
       picocolors: 1.1.1
@@ -7512,11 +7475,11 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
-  prettier-plugin-css-order@2.2.0(postcss@8.5.16)(prettier@3.9.5):
+  prettier-plugin-css-order@2.2.0(postcss@8.5.19)(prettier@3.9.5):
     dependencies:
-      css-declaration-sorter: 7.4.0(postcss@8.5.16)
-      postcss-less: 6.0.0(postcss@8.5.16)
-      postcss-scss: 4.0.9(postcss@8.5.16)
+      css-declaration-sorter: 7.4.0(postcss@8.5.19)
+      postcss-less: 6.0.0(postcss@8.5.19)
+      postcss-scss: 4.0.9(postcss@8.5.19)
       prettier: 3.9.5
     transitivePeerDependencies:
       - postcss
@@ -7793,10 +7756,10 @@ snapshots:
     dependencies:
       min-indent: 1.0.1
 
-  stylehacks@7.0.10(postcss@8.5.16):
+  stylehacks@7.0.10(postcss@8.5.19):
     dependencies:
       browserslist: 4.28.2
-      postcss: 8.5.16
+      postcss: 8.5.19
       postcss-selector-parser: 7.1.4
 
   supports-color@7.2.0:
@@ -7808,8 +7771,8 @@ snapshots:
       eslint-scope: 8.4.0
       eslint-visitor-keys: 4.2.1
       espree: 10.4.0
-      postcss: 8.5.16
-      postcss-scss: 4.0.9(postcss@8.5.16)
+      postcss: 8.5.19
+      postcss-scss: 4.0.9(postcss@8.5.19)
       postcss-selector-parser: 7.1.4
       semver: 7.8.5
     optionalDependencies:
@@ -7924,8 +7887,6 @@ snapshots:
 
   uc.micro@2.1.0: {}
 
-  undici-types@7.16.0: {}
-
   undici-types@7.18.2: {}
 
   undici-types@7.21.0:
@@ -7963,25 +7924,25 @@ snapshots:
 
   valid-data-url@3.0.1: {}
 
-  vite@7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0):
+  vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0):
     dependencies:
       esbuild: 0.27.7
       fdir: 6.5.0(picomatch@4.0.5)
       picomatch: 4.0.5
-      postcss: 8.5.16
+      postcss: 8.5.19
       rollup: 4.62.2
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 24.12.0
+      '@types/node': 24.13.3
       fsevents: 2.3.3
       jiti: 2.7.0
       lightningcss: 1.32.0
 
-  vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0):
+  vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.5
-      postcss: 8.5.16
+      postcss: 8.5.19
       rolldown: 1.1.5
       tinyglobby: 0.2.17
     optionalDependencies:
@@ -7990,11 +7951,11 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.7.0
 
-  vite@8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0):
+  vite@8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.5
-      postcss: 8.5.16
+      postcss: 8.5.19
       rolldown: 1.1.5
       tinyglobby: 0.2.17
     optionalDependencies:
@@ -8003,14 +7964,14 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.7.0
 
-  vitefu@1.1.3(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)):
+  vitefu@1.1.3(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)):
     optionalDependencies:
-      vite: 8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
+      vite: 8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
 
-  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(@vitest/coverage-v8@4.1.10)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0)):
+  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@vitest/mocker': 4.1.10(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -8027,20 +7988,20 @@ snapshots:
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
-      vite: 7.3.6(@types/node@24.12.0)(jiti@2.7.0)(lightningcss@1.32.0)
+      vite: 7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
-      '@types/node': 24.12.0
+      '@types/node': 24.13.3
       '@vitest/coverage-v8': 4.1.10(vitest@4.1.10)
       jsdom: 27.4.0(@noble/hashes@1.8.0)
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)):
+  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
+      '@vitest/mocker': 4.1.10(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -8057,7 +8018,7 @@ snapshots:
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
-      vite: 8.1.4(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
+      vite: 8.1.5(@types/node@24.13.3)(esbuild@0.27.7)(jiti@2.7.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
@@ -8067,10 +8028,10 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.7.0)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)):
+  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.7.0)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))
+      '@vitest/mocker': 4.1.10(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -8087,7 +8048,7 @@ snapshots:
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
-      vite: 8.1.4(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)
+      vite: 8.1.5(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
