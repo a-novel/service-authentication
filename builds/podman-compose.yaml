@@ -4,7 +4,7 @@ services:
   # ====================================================================================================================
 
   mailserver:
-    image: ghcr.io/axllent/mailpit:v1.30.4
+    image: ghcr.io/axllent/mailpit:v1.30.5
     ports:
       # SMTP listener for the rest target, UI for the operator's browser.
       # Without the SMTP publish, a rest process running on the host cannot
