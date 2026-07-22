@@ -32,7 +32,7 @@ on:
 
 jobs:
   merge-gate:
-    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.20.0
+    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.20.1
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
