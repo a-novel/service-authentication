@@ -8,12 +8,9 @@
   },
   "packageRules": [
     {
-      "matchManagers": ["gomod"],
-      "matchFileNames": ["!go.mod"],
-      "goGetDirs": ["."]
-    },
-    {
       "matchFileNames": ["golangci-lint.mod"],
+      "additionalBranchPrefix": "golangci-lint-",
+      "goGetDirs": ["."],
       "postUpgradeTasks": {
         "commands": [
           "rm -f golangci-lint.sum",
@@ -25,6 +22,8 @@
     },
     {
       "matchFileNames": ["gotestsum.mod"],
+      "additionalBranchPrefix": "gotestsum-",
+      "goGetDirs": ["."],
       "postUpgradeTasks": {
         "commands": ["rm -f gotestsum.sum", "go get -modfile=gotestsum.mod -tool gotest.tools/gotestsum"],
         "executionMode": "branch"
