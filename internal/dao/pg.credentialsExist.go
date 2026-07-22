@@ -22,7 +22,7 @@ type CredentialsExistRequest struct {
 
 // CredentialsExist reports whether a user with the given email address exists.
 //
-// An absent user is not an error; the call returns false instead.
+// A missing user yields false with a nil error.
 type CredentialsExist struct{}
 
 func NewCredentialsExist() *CredentialsExist {

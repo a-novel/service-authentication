@@ -30,8 +30,8 @@ type ShortCodeCreateRequest struct {
 	Data   any
 	TTL    time.Duration `validate:"required"`
 
-	// When true, any existing code for the same target and usage is expired and
-	// replaced; when false, a duplicate makes the request fail.
+	// Override expires and replaces any existing code for the same target and usage.
+	// When false, a duplicate fails the request.
 	Override bool
 }
 
@@ -67,7 +67,6 @@ func (service *ShortCodeCreate) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	// Generate a new random code.
 	plainCode, err := lib.NewRandomURLString(service.config.Size)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("generate short code: %w", err))
@@ -79,7 +78,6 @@ func (service *ShortCodeCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt short code: %w", err))
 	}
 
-	// Serialize the data associated with the short code before storing it.
 	var serializedData []byte
 	if request.Data != nil {
 		serializedData, err = json.Marshal(request.Data)

@@ -65,7 +65,7 @@ func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.R
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 			dao.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
-			// The target (or actor) credentials don't exist — surfaced by the select, not the update.
+			// The select raises this when the target or actor credentials are missing.
 			dao.ErrCredentialsSelectNotFound:               http.StatusNotFound,
 			core.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
 			core.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,

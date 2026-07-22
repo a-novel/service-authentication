@@ -17,12 +17,11 @@ import (
 var (
 	// ErrShortCodeConsumeInvalid is returned by [ShortCodeConsume.Exec] when the
 	// supplied code does not match the stored hash for the (Usage, Target) pair.
-	// This is the expected "wrong code" outcome a caller maps to a 4xx response.
+	// Callers map it to a 4xx response.
 	ErrShortCodeConsumeInvalid = errors.New("invalid short code")
 	// ErrShortCodeConsumeExpired is returned by [ShortCodeConsume.Exec] when the
-	// stored code's expiry has already passed. The SQL select also filters expired
-	// rows; this check is defense-in-depth against clock skew between the database
-	// and the service.
+	// stored code's expiry has already passed. The SQL select filters expired rows
+	// too; this check covers clock skew between the database and the service.
 	ErrShortCodeConsumeExpired = errors.New("short code expired")
 )
 
@@ -87,8 +86,8 @@ func (service *ShortCodeConsume) Exec(
 	if err != nil {
 		if errors.Is(err, dao.ErrShortCodeSelectNotFound) {
 			// Burn an Argon2id verification so a missing code costs the same as a
-			// wrong code — closes the timing channel that would otherwise reveal
-			// whether a code is in flight for the target.
+			// wrong one, and the latency reveals nothing about whether a code is in
+			// flight for the target.
 			lib.DummyCompareArgon2(request.Code)
 		}
 
@@ -97,25 +96,21 @@ func (service *ShortCodeConsume) Exec(
 
 	span.SetAttributes(attribute.String("shortCode.id", entity.ID.String()))
 
-	// Explicit expiration check as defense-in-depth (SQL already filters expired codes).
 	if entity.ExpiresAt.Before(time.Now()) {
 		return nil, otel.ReportError(span, ErrShortCodeConsumeExpired)
 	}
 
-	// Compare the submitted code against the stored Argon2id hash.
 	err = lib.CompareArgon2(request.Code, entity.Code)
 	if err != nil {
-		// lib.ErrInvalidPassword is the expected outcome (mistyped / stale code, handler → 4xx);
-		// the other CompareArgon2 errors (lib.ErrInvalidHash, lib.ErrIncompatibleVersion) mean
-		// the stored short-code hash is malformed. Both are reported on the span and surfaced to
-		// the caller as ErrShortCodeConsumeInvalid.
+		// A mistyped or stale code yields lib.ErrInvalidPassword; a malformed stored hash
+		// yields lib.ErrInvalidHash or lib.ErrIncompatibleVersion. Both surface to the
+		// caller as ErrShortCodeConsumeInvalid.
 		return nil, otel.ReportError(span, errors.Join(
 			fmt.Errorf("compare short code: %w", err),
 			ErrShortCodeConsumeInvalid,
 		))
 	}
 
-	// Delete the short code from the database. It has been consumed.
 	_, err = service.daoDelete.Exec(ctx, &dao.ShortCodeDeleteRequest{
 		ID:      entity.ID,
 		Now:     time.Now(),

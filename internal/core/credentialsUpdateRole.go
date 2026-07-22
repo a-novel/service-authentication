@@ -80,7 +80,6 @@ func (service *CredentialsUpdateRole) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	// No self-update allowed.
 	if request.CurrentUserID == request.TargetUserID {
 		return nil, otel.ReportError(span, ErrCredentialsUpdateRoleSelfUpdate)
 	}
@@ -88,7 +87,6 @@ func (service *CredentialsUpdateRole) Exec(
 	newTargetRoleImportance := config.PermissionsConfigDefault.Roles[request.Role].Priority
 	span.SetAttributes(attribute.Int("newTargetRoleImportance", newTargetRoleImportance))
 
-	// Retrieve the target user credentials.
 	targetCredentials, err := service.daoCredentialsSelect.Exec(ctx, &dao.CredentialsSelectRequest{
 		ID: request.TargetUserID,
 	})
@@ -98,7 +96,6 @@ func (service *CredentialsUpdateRole) Exec(
 
 	span.SetAttributes(attribute.String("targetCredentials.email", targetCredentials.Email))
 
-	// Retrieve the current user credentials.
 	currentCredentials, err := service.daoCredentialsSelect.Exec(ctx, &dao.CredentialsSelectRequest{
 		ID: request.CurrentUserID,
 	})
@@ -132,7 +129,7 @@ func (service *CredentialsUpdateRole) Exec(
 		))
 	}
 
-	// If new role is equal to the current role, return the target credentials (noop).
+	// Same rank as the target already holds: nothing to update.
 	if newTargetRoleImportance == targetRoleIImportance {
 		span.SetAttributes(attribute.Bool("noop", true))
 
@@ -145,7 +142,6 @@ func (service *CredentialsUpdateRole) Exec(
 		}), nil
 	}
 
-	// Update the role.
 	updatedCredentials, err := service.dao.Exec(
 		ctx,
 		&dao.CredentialsUpdateRoleRequest{

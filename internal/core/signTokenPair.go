@@ -29,9 +29,9 @@ type tokenPairSigner interface {
 // token's JTI, so revoking the refresh token effectively revokes every access token
 // derived from it. See AccessTokenClaims for the binding semantics.
 //
-// signTokenPair returns plain errors; callers wrap them with otel.ReportError on their own
-// span. Sentinel errors are not produced by this helper — every failure path here is
-// genuine infrastructure failure (json-keys RPC down, marshal failure, etc.).
+// signTokenPair returns plain errors for the caller to report on its own span. Every
+// failure path here is infrastructure failure — the json-keys RPC being down, a marshal
+// error — so the helper produces no sentinels.
 func signTokenPair(
 	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials,
 ) (*Token, error) {
@@ -50,11 +50,9 @@ func signTokenPair(
 		return nil, fmt.Errorf("issue refresh token: %w", err)
 	}
 
-	// Parse the refresh token's claims without verifying the signature: we just obtained
-	// it from the trusted internal signer (json-keys) on the previous line, so the issuer
-	// is trusted by construction. We only need the JTI to embed in the access token below;
-	// the access token's signature is what binds the pair end-to-end. DecodeUnverified is
-	// safe here precisely because the input did not come from an external party.
+	// The refresh token comes straight from the trusted internal signer above, so its
+	// issuer is trusted by construction and DecodeUnverified is safe on this input. Only
+	// the JTI is needed, to embed in the access token below.
 	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{})
 
 	var refreshTokenClaims RefreshTokenClaims

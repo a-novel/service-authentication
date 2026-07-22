@@ -36,8 +36,7 @@ type AuthClaimsVerifier interface {
 // Auth provides JWT-based authentication and role-based authorization middleware.
 // It verifies access tokens and checks that the user has at least one of the required permissions.
 type Auth struct {
-	// permissionsByRole maps role names to their granted permissions.
-	// A user with a role gains all permissions listed for that role.
+	// permissionsByRole maps a role name to every permission it grants.
 	permissionsByRole map[string][]string
 
 	claimsVerifier AuthClaimsVerifier
@@ -75,7 +74,7 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 			defer span.End()
 
 			token := r.Header.Get("Authorization")
-			// Optional-auth endpoint: no token supplied and none required, so pass through unauthenticated.
+			// Optional-auth endpoint: pass through with no claims on the context.
 			if token == "" && len(requiredPermissions) == 0 {
 				otel.ReportSuccessNoContent(span)
 				next.ServeHTTP(w, r.WithContext(ctx))
@@ -123,7 +122,6 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 			ctx = SetClaimsContext(ctx, claims)
 
 			if len(requiredPermissions) > 0 {
-				// Check if the user has at least one of the required permissions.
 				grantedPermissions := map[string]bool{}
 
 				for _, permission := range requiredPermissions {
@@ -190,9 +188,9 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 	return claims, nil
 }
 
-// MustGetClaimsContext retrieves the authenticated user's claims from the context.
-// Unlike [GetClaimsContext], this returns an error if no claims are present,
-// making it suitable for endpoints that require authentication.
+// MustGetClaimsContext retrieves the authenticated user's claims from the context,
+// returning [ErrMissingAuth] when none are present. Use it on endpoints that require
+// authentication, and [GetClaimsContext] where authentication is optional.
 func MustGetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 	claims, err := GetClaimsContext(ctx)
 	if err != nil {

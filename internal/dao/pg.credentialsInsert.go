@@ -34,7 +34,7 @@ type CredentialsInsertRequest struct {
 	Password string
 	// See Credentials.Role.
 	Role string
-	// Time used for user registration.
+	// Now is the timestamp recorded as the row's creation time.
 	Now time.Time
 }
 
@@ -55,9 +55,7 @@ func (dao *CredentialsInsert) Exec(
 	span.SetAttributes(
 		attribute.String("credentials.id", request.ID.String()),
 		attribute.String("credentials.email", request.Email),
-		// Do not record the password on the span, even redacted: a "*****" of the
-		// same length leaks the input length over every trace, which is partial
-		// credential information an attacker reading traces could correlate.
+		// The password never goes on the span. A redaction still carries its length.
 		attribute.String("credentials.role", request.Role),
 		attribute.Int64("credentials.now", request.Now.Unix()),
 	)

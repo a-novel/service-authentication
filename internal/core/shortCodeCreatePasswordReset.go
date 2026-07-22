@@ -101,7 +101,6 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
 	}
 
-	// Create a new short code.
 	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageResetPassword,
 		Target:   credentials.ID.String(),

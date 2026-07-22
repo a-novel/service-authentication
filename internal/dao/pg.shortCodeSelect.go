@@ -16,11 +16,11 @@ import (
 //go:embed pg.shortCodeSelect.sql
 var shortCodeSelectQuery string
 
-// ErrShortCodeSelectNotFound is returned by [ShortCodeSelect.Exec] when no
-// active short code matches the (Usage, Target) pair. The query filters expired
-// and deleted rows directly in its WHERE clause (deleted_at IS NULL AND
-// expires_at > CURRENT_TIMESTAMP), so this sentinel covers three on-disk states
-// the dao layer can't distinguish: never-issued, expired, and already-consumed.
+// ErrShortCodeSelectNotFound is returned by [ShortCodeSelect.Exec] when no active
+// short code matches the (Usage, Target) pair. The query filters expired and deleted
+// rows in its WHERE clause (deleted_at IS NULL AND expires_at > CURRENT_TIMESTAMP),
+// so the sentinel covers every state the DAO cannot tell apart: never issued, expired,
+// and already consumed.
 var ErrShortCodeSelectNotFound = errors.New("short code not found")
 
 // ShortCodeSelectRequest is the input to [ShortCodeSelect.Exec]. A partial unique

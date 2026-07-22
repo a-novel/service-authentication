@@ -28,8 +28,7 @@ var (
 	registerEn string
 )
 
-// The templates read their values from a data map keyed by these names. Defining the
-// keys here keeps the sending code and the templates in sync against one source.
+// The templates read their values from a data map keyed by these names.
 const (
 	TemplateVarShortCode = "ShortCode"
 	TemplateVarTarget    = "Target"
@@ -47,9 +46,8 @@ type MailTemplates struct {
 	Register      *template.Template
 }
 
-// Mails holds the ready-to-render email templates. They are parsed once at package
-// initialization, where a malformed template panics rather than deferring the failure
-// to the moment a mail is sent.
+// Mails holds the ready-to-render email templates, parsed once at package
+// initialization. A malformed template panics at startup.
 var Mails = MailTemplates{
 	EmailUpdate:   template.Must(template.New(config.LangEN).Parse(emailUpdateEn)),
 	PasswordReset: template.Must(template.New(config.LangEN).Parse(passwordResetEn)),
@@ -57,8 +55,8 @@ var Mails = MailTemplates{
 }
 
 // Attach the French variant to each template as an associated sub-template, so one
-// MailTemplates field can render either language. The results are discarded because only
-// the side effect of registering the parsed variant matters.
+// MailTemplates field can render either language. Only registering the variant matters,
+// so the results are discarded.
 var (
 	_ = template.Must(Mails.EmailUpdate.New(config.LangFR).Parse(emailUpdateFr))
 	_ = template.Must(Mails.PasswordReset.New(config.LangFR).Parse(passwordResetFr))

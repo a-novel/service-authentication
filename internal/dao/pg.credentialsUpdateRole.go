@@ -27,9 +27,8 @@ var ErrCredentialsUpdateRoleNotFound = errors.New("credentials not found")
 type CredentialsUpdateRoleRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
-	// Role is the new role name to assign. The dao does not validate the
-	// value against the configured permission map; that check belongs to the
-	// service layer.
+	// Role is the new role name to assign. Validating it against the configured
+	// permission map belongs to the service layer.
 	Role string
 	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
