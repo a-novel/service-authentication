@@ -434,7 +434,7 @@ jobs:
         with:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
           coverage_files: coverage.txt,coverage/*
-          coverage_artifact_ids: ${{ needs.test.outputs.artifact-id }},${{ needs.test-pkg-js.outputs.artifact-id }}
+          coverage_artifact_ids: ${{ needs.test-go.outputs.artifact-id }},${{ needs.test-pkg-js.outputs.artifact-id }}
 
   publish-docs:
     runs-on: ubuntu-latest
