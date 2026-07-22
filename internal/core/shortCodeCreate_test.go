@@ -84,13 +84,15 @@ func TestShortCodeCreate(t *testing.T) {
 
 			mockDao := coremocks.NewMockShortCodeCreateDao(t)
 
-			var encryptedShortCode string
+			var (
+				encryptedShortCode string
+				stampedNow         time.Time
+				stampedExpiresAt   time.Time
+			)
 
 			if testCase.daoMock != nil {
 				mockDao.EXPECT().
 					Exec(mock.Anything, mock.MatchedBy(func(data *dao.ShortCodeInsertRequest) bool {
-						now := time.Now()
-
 						var dataMap map[string]string
 
 						err := json.Unmarshal(data.Data, &dataMap)
@@ -101,12 +103,12 @@ func TestShortCodeCreate(t *testing.T) {
 							assert.Equal(t, testCase.request.Usage, data.Usage) &&
 							assert.Equal(t, testCase.request.Target, data.Target) &&
 							assert.Equal(t, testCase.request.Data, dataMap) &&
-							assert.WithinDuration(t, now, data.Now, time.Second) &&
-							assert.WithinDuration(t, now.Add(testCase.request.TTL), data.ExpiresAt, time.Second) &&
 							assert.Equal(t, testCase.request.Override, data.Override)
 					})).
 					RunAndReturn(func(_ context.Context, data *dao.ShortCodeInsertRequest) (*dao.ShortCode, error) {
 						encryptedShortCode = data.Code
+						stampedNow = data.Now
+						stampedExpiresAt = data.ExpiresAt
 
 						return testCase.daoMock.resp, testCase.daoMock.err
 					})
@@ -114,12 +116,27 @@ func TestShortCodeCreate(t *testing.T) {
 
 			service := core.NewShortCodeCreate(mockDao, config.ShortCodesPresetDefault)
 
+			// Bracket the call rather than compare against a clock read somewhere else.
+			// The service stamps its timestamp before hashing the code with Argon2id,
+			// which is deliberately expensive, so any two reads taken either side of that
+			// differ by however long the hash took — over a second on a loaded machine.
+			// A timestamp taken during the call is between these two by construction, at
+			// any speed.
+			before := time.Now()
+
 			resp, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
+
+			after := time.Now()
 
 			if testCase.expectErr == nil {
 				require.NotNil(t, resp)
 				require.NotEmpty(t, encryptedShortCode)
+
+				assert.WithinRange(t, stampedNow, before, after)
+				// Exact, not approximate: the service reads the clock once and derives the
+				// expiry from that read, so anything else means it read it twice.
+				assert.Equal(t, stampedNow.Add(testCase.request.TTL), stampedExpiresAt)
 
 				require.Equal(t, testCase.request.Usage, resp.Usage)
 				require.Equal(t, testCase.request.Target, resp.Target)
