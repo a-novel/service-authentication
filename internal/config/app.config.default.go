@@ -72,7 +72,6 @@ var AppPresetDefault = App{
 		UpdateEmail:    env.PlatformAuthUpdateEmailUrl,
 		UpdatePassword: env.PlatformAuthUpdatePasswordUrl,
 		Register:       env.PlatformAuthRegisterUrl,
-		Timeout:        env.SmtpTimeout,
 	},
 
 	Smtp: lo.Ternary[smtp.Sender](env.SmtpAddr == "", smtp.NewDebugSender(nil), &smtp.ProdSender{
@@ -82,6 +81,7 @@ var AppPresetDefault = App{
 		Password:            env.SmtpSenderPassword,
 		Domain:              env.SmtpSenderDomain,
 		ForceUnencryptedTls: env.SmtpForceUnencrypted,
+		Timeout:             env.SmtpTimeout,
 	}),
 	Otel: lo.If[otel.Config](!env.Otel, &otelpresets.Disabled{}).
 		ElseIf(env.GcloudProjectId == "", &otelpresets.Local{
