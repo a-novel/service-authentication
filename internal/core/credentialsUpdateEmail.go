@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/transaction"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
@@ -35,15 +34,18 @@ type CredentialsUpdateEmailRequest struct {
 type CredentialsUpdateEmail struct {
 	dao                     CredentialsUpdateEmailDao
 	serviceShortCodeConsume CredentialsUpdateEmailServiceShortCodeConsume
+	transactor              transaction.Transactor
 }
 
 func NewCredentialsUpdateEmail(
 	dao CredentialsUpdateEmailDao,
 	serviceShortCodeConsume CredentialsUpdateEmailServiceShortCodeConsume,
+	transactor transaction.Transactor,
 ) *CredentialsUpdateEmail {
 	return &CredentialsUpdateEmail{
 		dao:                     dao,
 		serviceShortCodeConsume: serviceShortCodeConsume,
+		transactor:              transactor,
 	}
 }
 
@@ -62,7 +64,7 @@ func (service *CredentialsUpdateEmail) Exec(
 
 	var credentials *dao.Credentials
 
-	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
+	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
 		// Verify short code.
 		shortCode, txErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
 			Usage:  ShortCodeUsageValidateEmail,

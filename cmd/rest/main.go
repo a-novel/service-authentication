@@ -71,6 +71,8 @@ func main() {
 	daoShortCodeSelect := dao.NewShortCodeSelect()
 
 	daoCredentialsExist := dao.NewCredentialsExist()
+	daoTransactor := postgres.NewTransactor(nil)
+
 	daoCredentialsInsert := dao.NewCredentialsInsert()
 	daoCredentialsList := dao.NewCredentialsList()
 	daoCredentialsSelect := dao.NewCredentialsSelect()
@@ -108,21 +110,16 @@ func main() {
 	)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
-		daoCredentialsInsert,
-		serviceShortCodeConsume,
-		jsonKeysClient,
+		daoCredentialsInsert, serviceShortCodeConsume, jsonKeysClient, daoTransactor,
 	)
 	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
 	serviceCredentialsGet := core.NewCredentialsGet(daoCredentialsSelect)
 	serviceCredentialsList := core.NewCredentialsList(daoCredentialsList)
 	serviceCredentialsUpdateEmail := core.NewCredentialsUpdateEmail(
-		daoCredentialsUpdateEmail,
-		serviceShortCodeConsume,
+		daoCredentialsUpdateEmail, serviceShortCodeConsume, daoTransactor,
 	)
 	serviceCredentialsUpdatePassword := core.NewCredentialsUpdatePassword(
-		daoCredentialsUpdatePassword,
-		daoCredentialsSelect,
-		serviceShortCodeConsume,
+		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeConsume, daoTransactor,
 	)
 	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(
 		daoCredentialsUpdateRole,

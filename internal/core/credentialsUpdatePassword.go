@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/transaction"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
@@ -45,17 +44,20 @@ type CredentialsUpdatePassword struct {
 	dao                     CredentialsUpdatePasswordDao
 	daoCredentialsSelect    CredentialsUpdatePasswordDaoCredentialsSelect
 	serviceShortCodeConsume CredentialsUpdatePasswordServiceShortCodeConsume
+	transactor              transaction.Transactor
 }
 
 func NewCredentialsUpdatePassword(
 	dao CredentialsUpdatePasswordDao,
 	daoCredentialsSelect CredentialsUpdatePasswordDaoCredentialsSelect,
 	serviceShortCodeConsume CredentialsUpdatePasswordServiceShortCodeConsume,
+	transactor transaction.Transactor,
 ) *CredentialsUpdatePassword {
 	return &CredentialsUpdatePassword{
 		dao:                     dao,
 		daoCredentialsSelect:    daoCredentialsSelect,
 		serviceShortCodeConsume: serviceShortCodeConsume,
+		transactor:              transactor,
 	}
 }
 
@@ -81,7 +83,7 @@ func (service *CredentialsUpdatePassword) Exec(
 
 	// Verification and update share one transaction so a failed check never leaves a
 	// changed password behind.
-	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
+	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
 		switch {
 		// Reset path: the short code proves the caller owns the account's email, so no
 		// current password is required.

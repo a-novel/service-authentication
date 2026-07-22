@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
@@ -356,7 +357,7 @@ func TestCredentialsCreateSuperAdmin(t *testing.T) {
 				}
 
 				service := core.NewCredentialsCreateSuperAdmin(
-					mockDao, daoSelect, daoUpdatePassword, daoUpdateRole,
+					mockDao, daoSelect, daoUpdatePassword, daoUpdateRole, transactiontest.NewTransactor(),
 				)
 
 				resp, err := service.Exec(ctx, testCase.request)

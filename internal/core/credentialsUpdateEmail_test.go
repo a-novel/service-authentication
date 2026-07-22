@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
@@ -144,7 +145,9 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 						Return(testCase.daoMock.resp, testCase.daoMock.err)
 				}
 
-				service := core.NewCredentialsUpdateEmail(mockDao, serviceShortCodeConsume)
+				service := core.NewCredentialsUpdateEmail(
+					mockDao, serviceShortCodeConsume, transactiontest.NewTransactor(),
+				)
 
 				resp, err := service.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
