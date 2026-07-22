@@ -55,8 +55,7 @@ func (dao *CredentialsInsert) Exec(
 	span.SetAttributes(
 		attribute.String("credentials.id", request.ID.String()),
 		attribute.String("credentials.email", request.Email),
-		// The password never goes on the span. A redacted placeholder would still
-		// leak the input length to anyone reading traces.
+		// The password never goes on the span. A redaction still carries its length.
 		attribute.String("credentials.role", request.Role),
 		attribute.Int64("credentials.now", request.Now.Unix()),
 	)

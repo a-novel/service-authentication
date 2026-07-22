@@ -4,9 +4,8 @@
 // The isolation is a convention the language does not enforce: Go links any package
 // reachable from a production import into the binary, so keeping configtest off every
 // production import path is what confines these fixtures to the test binary. A dedicated
-// subpackage also sidesteps a naming trap — Go's build-time exclusion matches `_test.go`
-// with an underscore, so fixtures parked in a `*.test.go` file beside the production
-// config would ship.
+// subpackage also sidesteps a naming trap. Go's build-time exclusion matches `_test.go`
+// with an underscore. A `*.test.go` file ships in the binary.
 package configtest
 
 import (

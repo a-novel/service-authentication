@@ -315,8 +315,7 @@ func TestGetClaimsContext(t *testing.T) {
 		t.Parallel()
 
 		// A wrong type stored under ClaimsContextKey surfaces as ErrUnexpectedClaims.
-		// Returning nil claims would let an endpoint that only checks `claims == nil`
-		// fail open.
+		// An endpoint checking only `claims == nil` still fails closed.
 		ctx := context.WithValue(t.Context(), middlewares.ClaimsContextKey{}, "not-claims")
 
 		claims, err := middlewares.GetClaimsContext(ctx)

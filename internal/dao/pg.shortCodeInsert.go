@@ -76,9 +76,9 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 		attribute.Bool("shortCode.override", request.Override),
 	)
 
-	// Repeatable-read is required so the conflict check and the insert see one
-	// snapshot. A nested transaction would silently inherit the caller's isolation
-	// level, so callers must sequence the two operations.
+	// Repeatable-read is required. The conflict check and the insert see one snapshot.
+	// A nested transaction inherits the caller's isolation level, so callers sequence the
+	// two operations themselves.
 	if postgres.InTx(ctx) {
 		return nil, otel.ReportError(span, ErrShortCodeInsertNested)
 	}
@@ -94,9 +94,9 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 			// the partial unique index is clear before the insert.
 			err = dao.discardConflicts(ctx, request)
 		} else {
-			// checkConflicts gates on `expires_at > now()`, so an expired row it
-			// ignores still sits in the partial unique index and would fail the
-			// insert with a unique violation. Soft-delete it first.
+			// checkConflicts gates on `expires_at > now()`. An expired row it ignores
+			// still sits in the partial unique index and collides with the insert.
+			// Soft-delete it first.
 			err = dao.discardExpired(ctx, request)
 			if err == nil {
 				err = dao.checkConflicts(ctx, request)

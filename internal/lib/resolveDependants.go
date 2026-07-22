@@ -38,9 +38,9 @@ func printDepsGraph[Mod comparable](deps map[Mod]map[Mod]bool) string {
 //
 // Inherited dependencies come after the module's own, in resolution order.
 func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[Mod][]Mod) (map[Mod][]Deps, error) {
-	// Seed every mod as a leaf so callers can omit empty entries from `deps`. A mod that
-	// only ever appears as a parent would otherwise be missing from the graph, leaving
-	// no depth-0 root and yielding a false circular dependency.
+	// Seed every mod as a leaf so callers can omit empty entries from `deps`. The seed also
+	// puts a mod that only appears as a parent into the graph, which gives the walk its
+	// depth-0 root.
 	depsGraph := map[Mod]map[Mod]bool{}
 	for mod := range mods {
 		depsGraph[mod] = map[Mod]bool{}
