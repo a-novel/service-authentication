@@ -266,7 +266,7 @@ func main() {
 
 	serve(
 		httpServer,
-		cfg.Rest.Timeouts.Request,
+		cfg.Rest.Timeouts.Shutdown,
 		serviceShortCodeCreateRegister,
 		serviceShortCodeCreateEmailUpdate,
 		serviceShortCodeCreatePasswordReset,
@@ -276,9 +276,9 @@ func main() {
 // serve runs the server until an interrupt or termination signal arrives, then stops it and drains
 // whatever detached work is still in flight.
 //
-// shutdownBudget covers the whole stop. The HTTP shutdown and the drain share it, so a deploy waits
+// shutdownTimeout bounds the whole stop. The HTTP shutdown and the drain share it, so a deploy waits
 // no longer than the operator configured.
-func serve(httpServer *http.Server, shutdownBudget time.Duration, drains ...lib.Waiter) {
+func serve(httpServer *http.Server, shutdownTimeout time.Duration, drains ...lib.Waiter) {
 	log.Println("Starting REST server on " + httpServer.Addr)
 
 	go func() {
@@ -294,7 +294,7 @@ func serve(httpServer *http.Server, shutdownBudget time.Duration, drains ...lib.
 
 	log.Println("Shutting down REST server...")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownBudget)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	err := httpServer.Shutdown(shutdownCtx)

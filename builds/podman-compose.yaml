@@ -88,6 +88,10 @@ services:
     build:
       context: ..
       dockerfile: ./builds/standalone.rest.Dockerfile
+    # Clears REST_TIMEOUT_SHUTDOWN (25s), which in turn clears SMTP_TIMEOUT (20s). On SIGTERM the
+    # server drains its requests and then waits on the detached email sends; the runtime's 10s
+    # default sends SIGKILL partway through, dropping whatever is still going out.
+    stop_grace_period: 30s
     ports:
       - "${REST_PORT}:8080"
     depends_on:

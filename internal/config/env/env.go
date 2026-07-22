@@ -34,9 +34,13 @@ const (
 	RestTimeoutWriteDefault      = 30 * time.Second
 	RestTimeoutIdleDefault       = 60 * time.Second
 	RestTimeoutRequestDefault    = 60 * time.Second
-	RestMaxRequestSizeDefault    = 2 << 20 // 2 MiB
-	CorsAllowCredentialsDefault  = false
-	CorsMaxAgeDefault            = 3600
+	// RestTimeoutShutdownDefault clears SmtpTimeoutDefault, leaving room for a send that starts
+	// just before the signal to finish. The container runtime's stop grace period has to clear
+	// this in turn; builds/podman-compose.yaml sets one.
+	RestTimeoutShutdownDefault  = 25 * time.Second
+	RestMaxRequestSizeDefault   = 2 << 20 // 2 MiB
+	CorsAllowCredentialsDefault = false
+	CorsMaxAgeDefault           = 3600
 
 	// PostgresMaxOpenConnsDefault keeps the pool well under a stock PostgreSQL
 	// max_connections of 100 once multiplied by a service's replica count, leaving
@@ -87,6 +91,7 @@ var (
 	restTimeoutWrite      = getEnv("REST_TIMEOUT_WRITE")
 	restTimeoutIdle       = getEnv("REST_TIMEOUT_IDLE")
 	restTimeoutRequest    = getEnv("REST_TIMEOUT_REQUEST")
+	restTimeoutShutdown   = getEnv("REST_TIMEOUT_SHUTDOWN")
 	corsAllowedOrigins    = getEnv("REST_CORS_ALLOWED_ORIGINS")
 	corsAllowedHeaders    = getEnv("REST_CORS_ALLOWED_HEADERS")
 	corsAllowCredentials  = getEnv("REST_CORS_ALLOW_CREDENTIALS")
@@ -180,6 +185,7 @@ var (
 	RestTimeoutWrite      = config.LoadEnv(restTimeoutWrite, RestTimeoutWriteDefault, config.DurationParser)
 	RestTimeoutIdle       = config.LoadEnv(restTimeoutIdle, RestTimeoutIdleDefault, config.DurationParser)
 	RestTimeoutRequest    = config.LoadEnv(restTimeoutRequest, RestTimeoutRequestDefault, config.DurationParser)
+	RestTimeoutShutdown   = config.LoadEnv(restTimeoutShutdown, RestTimeoutShutdownDefault, config.DurationParser)
 	CorsAllowedOrigins    = config.LoadEnv(
 		corsAllowedOrigins, CorsAllowedOriginsDefault, config.SliceParser(config.StringParser),
 	)
