@@ -13,17 +13,13 @@ type Waiter interface {
 
 // Drain waits for every waiter to finish, or for ctx to expire.
 //
-// Mail delivery is detached from the request that triggered it — the handler answers 202 and the
-// send continues on its own goroutine, so a cancelled request does not cancel a half-sent email.
-// The cost is that process exit kills whatever is still in flight, and nothing reports it: the 202
-// went out long ago, the goroutine's error log sits after the call that never returned, and the
-// database holds a perfectly valid unconsumed short code. The user is told to check their inbox and
-// never receives anything.
+// Mail delivery runs on its own goroutine, detached from the request that triggered it, so a
+// cancelled request leaves a half-sent email alone. Process exit then reaches whatever is still in
+// flight, and the loss is silent: the handler answered 202 long before, and the short code sits in
+// the database intact. The user checks an inbox that stays empty.
 //
-// The bound matters as much as the wait. Each send carries its own timeout, so the drain terminates
-// on its own; the context is the second belt, so a misconfigured sender delays a deploy rather than
-// blocking it forever. Draining against an unbounded send would trade dropped mail for a hung
-// shutdown, which is the worse failure for a rolling restart.
+// The bound carries as much weight as the wait. Each send holds its own timeout, and ctx is the
+// second bound, so a sender that stops answering delays a deploy by the shutdown budget.
 func Drain(ctx context.Context, waiters ...Waiter) error {
 	done := make(chan struct{})
 
@@ -39,8 +35,8 @@ func Drain(ctx context.Context, waiters ...Waiter) error {
 	case <-done:
 		return nil
 	case <-ctx.Done():
-		// The goroutine above outlives this return. That is deliberate: it is parked on sends that
-		// are themselves bounded, and the process is exiting.
+		// The goroutine above outlives this return, parked on sends that carry their own timeouts
+		// while the process exits.
 		return fmt.Errorf("drain in-flight work: %w", ctx.Err())
 	}
 }

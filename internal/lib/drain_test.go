@@ -67,8 +67,8 @@ func TestDrain(t *testing.T) {
 		start := time.Now()
 		err := lib.Drain(ctx, stuck)
 
-		// A sender that never returns must delay the deploy, not block it. Without the bound this
-		// blocks forever — which is why the drain could not land before the send carried a timeout.
+		// A sender that never returns delays the deploy by the budget and no more, which is what
+		// lets the drain wait on sends at all.
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 		require.Less(t, time.Since(start), 5*time.Second)
 	})

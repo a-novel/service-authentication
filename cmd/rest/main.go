@@ -276,8 +276,8 @@ func main() {
 // serve runs the server until an interrupt or termination signal arrives, then stops it and drains
 // whatever detached work is still in flight.
 //
-// shutdownBudget covers the whole stop, not each step: the HTTP shutdown and the drain share it, so
-// a slow drain cannot extend a deploy past what the operator configured.
+// shutdownBudget covers the whole stop. The HTTP shutdown and the drain share it, so a deploy waits
+// no longer than the operator configured.
 func serve(httpServer *http.Server, shutdownBudget time.Duration, drains ...lib.Waiter) {
 	log.Println("Starting REST server on " + httpServer.Addr)
 
@@ -302,14 +302,14 @@ func serve(httpServer *http.Server, shutdownBudget time.Duration, drains ...lib.
 		panic(err)
 	}
 
-	// Drained after the HTTP shutdown, not before: once the server stops accepting, no new send can
-	// be spawned, so the set being waited on is closed.
+	// Drained after the HTTP shutdown, once the server has stopped accepting: the set being waited
+	// on is closed by then.
 	log.Println("Draining in-flight emails...")
 
 	err = lib.Drain(shutdownCtx, drains...)
 	if err != nil {
-		// Logged rather than fatal: the process is already stopping, and mail that did not make it
-		// is a fact to report, not a reason to fail the shutdown.
+		// Logged while the process is already stopping. Mail that missed the budget is worth
+		// reporting and the shutdown still completes.
 		log.Println("Some emails were still in flight at shutdown: " + err.Error())
 	}
 }
