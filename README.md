@@ -147,7 +147,7 @@ Every variable is read from the process environment.
 | `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.         | `false`          |
 | `REST_CORS_MAX_AGE`           | CORS max-age, in seconds.            | `3600`           |
 
-Database connection pool (server images). The limits are **per process**: what must stay under the database's `max_connections` is the sum across every replica plus the migration job, not one replica's number. The stock `postgres` default is 100.
+Database connection pool (server images). The limits are **per process**. The database's `max_connections` has to cover every replica plus the migration job; the stock `postgres` default is 100.
 
 | Name                      | Description                               | Default |
 | ------------------------- | ----------------------------------------- | ------- |

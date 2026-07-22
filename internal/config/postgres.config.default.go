@@ -14,10 +14,9 @@ var PostgresPresetDefault = newPostgresPreset()
 
 // newPostgresPreset builds the connection config with its pool bounded.
 //
-// The limits belong here rather than on the pool the config hands out: that
-// handle is cached, so setting them afterwards only takes effect if it happens
-// before anything else asks for a connection — an order nothing enforces, and
-// missing it applies them to nothing without an error.
+// The pool is bounded as it opens. Setting the limits on the handle afterwards
+// stops working once anything has taken a connection, because the handle is
+// cached, and past that point they apply to nothing and report nothing.
 func newPostgresPreset() *postgrespresets.Default {
 	preset := postgrespresets.NewDefault(pgdriver.WithDSN(env.PostgresDsn))
 	preset.MaxOpenConns = env.PostgresMaxOpenConns
