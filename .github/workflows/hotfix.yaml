@@ -1,13 +1,14 @@
 name: hotfix
 
-# repocfg-managed, org-wide. Thin dispatch caller — the whole hotfix engine lives in the reusable
-# a-novel-kit/workflows/.github/workflows/hotfix-run.yaml (@vX.Y.Z). Renovate bumps the pin. Do NOT
-# hand-edit on a target repo — `a-novel repo update` overwrites it.
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+# A thin dispatch caller: the whole hotfix engine lives in the reusable
+# a-novel-kit/workflows/.github/workflows/hotfix-run.yaml, whose pin Renovate bumps.
 #
-# Patch an ALREADY-RELEASED line without touching the default branch: cut vX.Y.(Z+1) from the line's
-# latest live tag, apply the fix, reconcile it forward to master. Admin + protected-`release`-env
-# gated (the human "who may publish" gate); deliberately kill-switch-EXEMPT (the emergency patch path
-# must stay open even when normal automation is halted).
+# It patches an already-released line without touching the default branch: cut
+# vX.Y.(Z+1) from the line's latest live tag, apply the fix, reconcile it forward to
+# master. Gated on admin plus the protected `release` environment, the human "who
+# may publish" gate. It is exempt from the kill switch, so the emergency patch path
+# stays open even when normal automation is halted.
 on:
   workflow_dispatch:
     inputs:
@@ -36,8 +37,9 @@ on:
 
 run-name: "🚑 hotfix v${{ inputs.line }}.x${{ inputs.dry_run && ' (dry-run)' || '' }}"
 
-# hotfix-vs-hotfix: serialize on this repo (a second hotfix waits, never races). cancel-in-progress:false
-# = queue, don't cancel a hotfix mid-flight. (hotfix-vs-release is handled inside the reusable's lock.)
+# Hotfixes serialize on this repo: a second one waits, and cancel-in-progress:false
+# queues it behind the hotfix in flight. A hotfix racing a release is handled by the
+# reusable workflow's own lock.
 concurrency:
   group: hotfix-${{ github.repository }}
   cancel-in-progress: false

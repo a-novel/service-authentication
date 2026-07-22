@@ -1,14 +1,15 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# Human-triggered Epic RELEASE TRAIN (a-novel-kit/workflows#236) — one dispatch releases every repo a
-# landed Epic touched. It reconstructs the `epic:<N>` merged repo set, derives each repo's semver bump
-# from its commit history, and drives each repo's own release.yaml (rehearse dry, then cut), recording
-# the released tag per repo as a receipt on the Epic. It is idempotent: a re-dispatch resumes, releasing
-# only the repos that haven't shipped yet. Unlike epic-rollback this is a FORWARD op (it publishes, it
-# doesn't undo merged code), so it is fenced by the admin gate + a dry-run default + a choice-typed
-# dry_run (no typed confirmation). The heavy lifting + the admin gate live in the reusable release-train-run workflow (pinned below);
-# this thin caller only threads the org creds + dispatch inputs. dry_run defaults on: it rehearses the
-# whole train and cuts nothing until you set dry_run=false.
+# Human-triggered Epic release train: one dispatch releases every repo a landed
+# Epic touched. It reconstructs the `epic:<N>` merged repo set, derives each repo's
+# semver bump from its commit history, and drives each repo's own release.yaml
+# (rehearse dry, then cut), recording the released tag per repo as a receipt on the
+# Epic. It is idempotent: a re-dispatch resumes, releasing only the repos that have
+# not shipped yet. Publishing forward, it is fenced by the admin gate plus a
+# choice-typed dry_run that defaults on, so a dispatch rehearses the whole train and
+# cuts nothing until the operator sets dry_run=false. The heavy lifting and the
+# admin gate live in the reusable release-train-run workflow pinned below; this thin
+# caller only threads the org credentials and dispatch inputs.
 name: release-train
 
 on:
@@ -22,8 +23,9 @@ on:
         description: "true (default) = rehearse every repo, cut nothing; false = actually cut the releases."
         required: false
         default: "true"
-        # choice (not string): the UI + the dispatch API reject anything but these two values, so a
-        # fat-fingered "false " / "FALSE" can't silently cut real releases when the operator meant dry.
+        # A choice type makes the UI and the dispatch API reject anything but these
+        # two values, so a fat-fingered "false " or "FALSE" cannot silently cut real
+        # releases when the operator meant a rehearsal.
         type: choice
         options:
           - "true"

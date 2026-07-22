@@ -4,25 +4,24 @@
 # members. Two jobs:
 #
 #   evaluate   — posts the required `merge-gate` check on every PR and on the merge
-#                queue's group (the queue validates required checks on the group, so
-#                the gate must post there too or a queued PR waits out the timeout and
-#                drops). The check is posted by the [Agent] App via the Checks API (a
-#                stable integration id the ruleset requires), so the job is only the
-#                runner — its id is deliberately NOT `merge-gate`, to avoid a duplicate
-#                check name. A standalone PR passes; an epic member holds until every
-#                sibling is ready (epic-atomicity).
+#                queue's group. The queue validates required checks on the group, so
+#                the gate must post there too or a queued PR waits out the timeout
+#                and drops. The [Agent] App posts the check itself through the Checks
+#                API, under the stable integration id the ruleset requires, leaving
+#                this job as the runner, under an id kept clear of the check name.
+#                A standalone PR passes; an epic member holds until every sibling
+#                is ready (epic atomicity).
 #
 #   auto-merge — enables native auto-merge on an epic member so the whole set lands
-#                together once the gate + approval go green. Enabling is safe while the
-#                gate is still red — GitHub parks it and merges when green. Live at
-#                `dry_run: "false"` — auto-merge is enabled for epic members.
+#                together once the gate and approval go green. Enabling it while the
+#                gate is still red is safe: GitHub parks it and merges when green.
 name: merge-gate
 
 on:
   pull_request:
-    # labeled/unlabeled fire on any label change; we need them so an `epic:<N>`
-    # add/remove re-evaluates membership (non-epic churn just re-posts the same result).
-    # ready_for_review/converted_to_draft: draft state flips this PR's own readiness.
+    # labeled/unlabeled fire on any label change, which is what makes an `epic:<N>`
+    # add or remove re-evaluate membership; other label churn just re-posts the same
+    # result. ready_for_review and converted_to_draft flip this PR's own readiness.
     types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review, converted_to_draft]
   # A review changing (approve/dismiss) can flip this PR's atomicity readiness, so
   # re-evaluate the gate on review events too.

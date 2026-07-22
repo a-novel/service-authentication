@@ -1,9 +1,9 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# Lets a repo admin record the approval a PR author cannot give themselves. Manual
-# and audited — an admin reviews the PR, then dispatches this with the PR number.
-# The action fails closed for anyone who is not a repo admin, so workflow_dispatch
-# being open to write-access users is not a hole.
+# Lets a repo admin record the approval a PR author cannot give themselves: the
+# admin reviews the PR, then dispatches this with its number. The action fails
+# closed for anyone who is not a repo admin, which is what makes an open
+# workflow_dispatch safe here.
 name: approve-pr
 
 on:
@@ -30,8 +30,9 @@ jobs:
           pull_request: ${{ inputs.pull_request }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          # Org-level HALT (FAIL-SAFE — RUNNING only for an explicit off-token: empty/unset, 0, off,
-          # false, no, disabled; ANYTHING ELSE, incl. a fat-fingered value, engages) → the action
-          # aborts loud before approving. Threaded from the org variable (a composite action can't
-          # read `vars` itself).
+          # Org-level halt, fail-safe: automation keeps running only for an
+          # explicit off-token (empty/unset, 0, off, false, no, disabled), and
+          # anything else engages it, including a fat-fingered value. Engaged,
+          # the action aborts loudly before approving. Threaded from the org
+          # variable, which a composite action cannot read itself.
           kill_switch: ${{ vars.AGENT_KILL_SWITCH }}

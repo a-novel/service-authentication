@@ -1,15 +1,15 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# Human-triggered Epic ROLLBACK (a-novel-kit/workflows#235) — the rare escape hatch that
-# reverts an Epic's merged siblings across repos and re-lands the compensations atomically.
-# It is DESTRUCTIVE (it reverts already-merged code), so it is fenced four ways: it is
-# admin-only (workflow_dispatch is open to any write user, so the job fails closed for
-# non-admins), it demands a typed confirmation, it defaults to a no-write dry run that just
-# prints the plan, and every compensating revert still passes the same merge-gate + review +
-# queue + partial-landing detector as the forward landing. The heavy lifting (ledger
-# reconstruction, per-repo reverts, atomic landing, board reset) AND the admin/confirmation fences
-# all live in the reusable epic-rollback-run workflow (pinned below); this thin caller only threads
-# the org creds + the operator's dispatch inputs into it.
+# Human-triggered Epic rollback: the rare escape hatch that reverts an Epic's merged
+# siblings across repos and re-lands the compensations atomically. Because it
+# reverts already-merged code it is fenced four ways: admin-only, so the job fails
+# closed for the non-admins that workflow_dispatch is open to; a typed confirmation;
+# a no-write dry run by default that just prints the plan; and every compensating
+# revert passing the same merge-gate, review, queue and partial-landing detector as
+# the forward landing. The heavy lifting — ledger reconstruction, per-repo reverts,
+# atomic landing, board reset — and the admin and confirmation fences live in the
+# reusable epic-rollback-run workflow pinned below. This thin caller only threads
+# the org credentials and the operator's dispatch inputs into it.
 name: epic-rollback
 
 on:
@@ -31,8 +31,9 @@ on:
         description: "true (default) = print the plan only; false = actually open + land the reverts."
         required: false
         default: "true"
-        # choice (not string): the UI + the dispatch API reject anything but these two values, so a
-        # fat-fingered "false " / "FALSE" can't silently run dry when the operator meant to go live.
+        # A choice type makes the UI and the dispatch API reject anything but these
+        # two values, so a fat-fingered "false " or "FALSE" cannot silently run dry
+        # when the operator meant to go live.
         type: choice
         options:
           - "true"
