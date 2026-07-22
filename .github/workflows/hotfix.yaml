@@ -44,7 +44,7 @@ concurrency:
 
 jobs:
   hotfix:
-    uses: a-novel-kit/workflows/.github/workflows/hotfix-run.yaml@v1.20.0
+    uses: a-novel-kit/workflows/.github/workflows/hotfix-run.yaml@v1.20.1
     with:
       line: ${{ inputs.line }}
       fix_ref: ${{ inputs.fix_ref }}
