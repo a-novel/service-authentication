@@ -29,6 +29,8 @@ type RestTimeouts struct {
 	Write      time.Duration `json:"write"      yaml:"write"`
 	Idle       time.Duration `json:"idle"       yaml:"idle"`
 	Request    time.Duration `json:"request"    yaml:"request"`
+	// Shutdown bounds the whole stop: the HTTP server's drain and the wait on detached work share it.
+	Shutdown time.Duration `json:"shutdown" yaml:"shutdown"`
 }
 
 // Cors configures the cross-origin resource sharing policy of the REST server.

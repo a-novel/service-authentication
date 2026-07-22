@@ -142,6 +142,7 @@ Every variable is read from the process environment.
 | `REST_TIMEOUT_WRITE`          | Write timeout.                       | `30s`            |
 | `REST_TIMEOUT_IDLE`           | Idle keep-alive timeout.             | `60s`            |
 | `REST_TIMEOUT_REQUEST`        | Per-request timeout.                 | `60s`            |
+| `REST_TIMEOUT_SHUTDOWN`       | Graceful-shutdown timeout.           | `25s`            |
 | `REST_CORS_ALLOWED_ORIGINS`   | CORS allowed origins.                | `*`              |
 | `REST_CORS_ALLOWED_HEADERS`   | CORS allowed headers.                | `*`              |
 | `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.         | `false`          |
@@ -163,6 +164,22 @@ Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter
 | `APP_NAME`          | Application name attached to traces and logs.                         | `service-authentication` |
 
 </details>
+
+### Shutting down cleanly
+
+On `SIGTERM` the server stops accepting, drains its open requests, then waits for the emails already
+being sent. Registration and password-reset mail goes out on its own goroutine, so a send in progress
+survives the request that triggered it and outlives the signal.
+
+Three values have to increase in that order for the wait to complete:
+
+```
+SMTP_TIMEOUT (20s)  <  REST_TIMEOUT_SHUTDOWN (25s)  <  the deployment's termination grace period
+```
+
+Docker and Podman grant 10 seconds by default, which cuts the wait short and drops whatever is still
+going out. `builds/podman-compose.yaml` raises it to 30s; a Kubernetes deployment needs
+`terminationGracePeriodSeconds` set the same way.
 
 ## Using the client packages
 
