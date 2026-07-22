@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -30,6 +31,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
@@ -262,6 +264,21 @@ func main() {
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
+	serve(
+		httpServer,
+		cfg.Rest.Timeouts.Request,
+		serviceShortCodeCreateRegister,
+		serviceShortCodeCreateEmailUpdate,
+		serviceShortCodeCreatePasswordReset,
+	)
+}
+
+// serve runs the server until an interrupt or termination signal arrives, then stops it and drains
+// whatever detached work is still in flight.
+//
+// shutdownBudget covers the whole stop. The HTTP shutdown and the drain share it, so a deploy waits
+// no longer than the operator configured.
+func serve(httpServer *http.Server, shutdownBudget time.Duration, drains ...lib.Waiter) {
 	log.Println("Starting REST server on " + httpServer.Addr)
 
 	go func() {
@@ -277,11 +294,22 @@ func main() {
 
 	log.Println("Shutting down REST server...")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.Rest.Timeouts.Request)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownBudget)
 	defer cancel()
 
 	err := httpServer.Shutdown(shutdownCtx)
 	if err != nil {
 		panic(err)
+	}
+
+	// Drained after the HTTP shutdown, once the server has stopped accepting: the set being waited
+	// on is closed by then.
+	log.Println("Draining in-flight emails...")
+
+	err = lib.Drain(shutdownCtx, drains...)
+	if err != nil {
+		// Logged while the process is already stopping. Mail that missed the budget is worth
+		// reporting and the shutdown still completes.
+		log.Println("Some emails were still in flight at shutdown: " + err.Error())
 	}
 }
