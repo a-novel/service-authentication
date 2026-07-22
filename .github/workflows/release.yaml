@@ -294,8 +294,8 @@ jobs:
             -e SERVICE_JSON_KEYS_HOST="${SERVICE_JSON_KEYS_HOST}"
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
-  # Publish the JS client from the bumped tag (ref) so it carries the new
-  # version rather than the pre-bump default branch.
+  # Publish the JS client from the bumped tag (ref): the dispatch runs on master, which is
+  # still pre-bump.
   build-js:
     needs: [release]
     if: ${{ !inputs.dry_run }}

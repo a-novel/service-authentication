@@ -81,8 +81,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	defer span.End()
 
 	span.SetAttributes(attribute.String("email", request.Email))
-	// The password and short code never go on the span. A redacted placeholder would
-	// still leak the input length to anyone reading traces.
+	// The password and short code never go on the span. A redaction still carries its length.
 
 	err := validate.Struct(request)
 	if err != nil {
