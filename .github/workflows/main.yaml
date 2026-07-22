@@ -104,9 +104,23 @@ jobs:
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       PLATFORM_AUTH_URL: http://localhost:7010
+      SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
+      SUPER_ADMIN_PASSWORD: admin
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/run-migrations
+      # CI built the init job and never ran it, so nothing exercised its wiring:
+      # the config it loads, the database context it seeds, the services it
+      # assembles. Unit tests cover the logic; only the binary covers the binary.
+      #
+      # Twice on purpose. The job ensures a super-admin exists, so it is safe to
+      # re-run, and the second run is what catches it tripping over the row the
+      # first one wrote.
+      - name: Run the init job
+        shell: bash
+        run: |
+          go run ./cmd/init
+          go run ./cmd/init
       - uses: a-novel-kit/workflows/go-actions/test-go@v1.20.2
         id: test
         with:
