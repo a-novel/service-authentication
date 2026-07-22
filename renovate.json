@@ -4,7 +4,12 @@
     "managerFilePatterns": ["/(^|/)(?:podman-)?compose[^/]*\\.ya?ml$/"]
   },
   "gomod": {
-    "managerFilePatterns": ["/(^|/)go\\.mod$/", "/(^|/)golangci-lint\\.mod$/", "/(^|/)gotestsum\\.mod$/"]
+    "managerFilePatterns": [
+      "/(^|/)go\\.mod$/",
+      "/(^|/)golangci-lint\\.mod$/",
+      "/(^|/)gotestsum\\.mod$/",
+      "/(^|/)mockery\\.mod$/"
+    ]
   },
   "packageRules": [
     {
@@ -30,10 +35,15 @@
       }
     },
     {
-      "matchFileNames": ["go.mod"],
-      "matchPackageNames": ["github.com/vektra/mockery/v3"],
+      "matchFileNames": ["mockery.mod"],
+      "additionalBranchPrefix": "mockery-",
+      "goGetDirs": ["."],
       "postUpgradeTasks": {
-        "commands": ["go tool mockery"],
+        "commands": [
+          "rm -f mockery.sum",
+          "go get -modfile=mockery.mod -tool github.com/vektra/mockery/v3",
+          "go tool -modfile=mockery.mod mockery"
+        ],
         "executionMode": "branch"
       }
     },
