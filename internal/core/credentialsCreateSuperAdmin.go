@@ -7,10 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/transaction"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -45,6 +44,7 @@ type CredentialsCreateSuperAdmin struct {
 	daoSelect         CredentialsCreateSuperAdminDaoSelect
 	daoUpdatePassword CredentialsCreateSuperAdminDaoUpdatePassword
 	daoUpdateRole     CredentialsCreateSuperAdminDaoUpdateRole
+	transactor        transaction.Transactor
 }
 
 func NewCredentialsCreateSuperAdmin(
@@ -52,12 +52,14 @@ func NewCredentialsCreateSuperAdmin(
 	daoSelect CredentialsCreateSuperAdminDaoSelect,
 	daoUpdatePassword CredentialsCreateSuperAdminDaoUpdatePassword,
 	daoUpdateRole CredentialsCreateSuperAdminDaoUpdateRole,
+	transactor transaction.Transactor,
 ) *CredentialsCreateSuperAdmin {
 	return &CredentialsCreateSuperAdmin{
 		dao:               dao,
 		daoSelect:         daoSelect,
 		daoUpdatePassword: daoUpdatePassword,
 		daoUpdateRole:     daoUpdateRole,
+		transactor:        transactor,
 	}
 }
 
@@ -83,7 +85,7 @@ func (service *CredentialsCreateSuperAdmin) Exec(
 
 	var credentials *dao.Credentials
 
-	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
+	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
 		now := time.Now()
 
 		// Check if user exists.

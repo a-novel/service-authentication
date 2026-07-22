@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
@@ -242,7 +243,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				}
 
 				service := core.NewCredentialsUpdatePassword(
-					mockDao, daoCredentialsSelect, serviceShortCodeConsume,
+					mockDao, daoCredentialsSelect, serviceShortCodeConsume, transactiontest.NewTransactor(),
 				)
 
 				_, err = service.Exec(ctx, testCase.request)

@@ -10,13 +10,20 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
 )
+
+// ErrShortCodeInsertNested is returned when [ShortCodeInsert.Exec] is called
+// inside a transaction someone else opened. The operation needs repeatable-read
+// isolation to be correct, and a transaction opened inside another one joins it
+// rather than opening its own — so it would inherit whatever isolation the
+// caller chose, without any sign that it had. Refusing keeps that impossible
+// rather than merely documented.
+var ErrShortCodeInsertNested = errors.New("short code insert cannot run inside another transaction")
 
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
@@ -75,10 +82,19 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 		attribute.Bool("shortCode.override", request.Override),
 	)
 
+	// This operation is only correct under repeatable-read: the conflict check and
+	// the insert must see the same snapshot, or a concurrent insert slips between
+	// them. A transaction opened inside another one joins it and silently inherits
+	// its isolation level, so refuse rather than degrade — a caller that needs both
+	// must sequence them instead of nesting.
+	if postgres.InTx(ctx) {
+		return nil, otel.ReportError(span, ErrShortCodeInsertNested)
+	}
+
 	entity := new(ShortCode)
 	txOptions := &sql.TxOptions{Isolation: sql.LevelRepeatableRead}
 
-	err := postgres.RunInTx(ctx, txOptions, func(ctx context.Context, tx bun.IDB) error {
+	err := postgres.WithinTx(ctx, txOptions, func(ctx context.Context) error {
 		var err error
 
 		if request.Override {
@@ -86,20 +102,25 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 			// single UPDATE — active and naturally expired alike — so the
 			// partial unique index (target, usage) WHERE deleted_at IS NULL is
 			// clear before the insert.
-			err = dao.discardConflicts(ctx, tx, request)
+			err = dao.discardConflicts(ctx, request)
 		} else {
 			// checkConflicts gates on `expires_at > now()`, so a naturally
 			// expired but not-yet-deleted row is invisible to it — yet that row
 			// still lives in the partial unique index and would make the insert
 			// fail with a unique violation. Soft-delete it first.
-			err = dao.discardExpired(ctx, tx, request)
+			err = dao.discardExpired(ctx, request)
 			if err == nil {
-				err = dao.checkConflicts(ctx, tx, request)
+				err = dao.checkConflicts(ctx, request)
 			}
 		}
 
 		if err != nil {
 			return fmt.Errorf("handle conflict: %w", err)
+		}
+
+		tx, err := postgres.GetContext(ctx)
+		if err != nil {
+			return fmt.Errorf("get database handle: %w", err)
 		}
 
 		err = tx.NewRaw(
@@ -137,13 +158,16 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 //go:embed pg.shortCodeInsert.discardConflict.sql
 var shortCodeInsertDiscardConflictQuery string
 
-func (dao *ShortCodeInsert) discardConflicts(
-	ctx context.Context, tx bun.IDB, request *ShortCodeInsertRequest,
-) error {
+func (dao *ShortCodeInsert) discardConflicts(ctx context.Context, request *ShortCodeInsertRequest) error {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(discardConflicts)")
 	defer span.End()
 
-	_, err := tx.NewRaw(
+	tx, err := postgres.GetContext(ctx)
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("get database handle: %w", err))
+	}
+
+	_, err = tx.NewRaw(
 		shortCodeInsertDiscardConflictQuery,
 		// Go and Postgres can disagree on "now" by a small margin across the
 		// driver/connection boundary; backdating the deletion timestamp by one
@@ -167,13 +191,16 @@ func (dao *ShortCodeInsert) discardConflicts(
 //go:embed pg.shortCodeInsert.discardExpired.sql
 var shortCodeInsertDiscardExpiredQuery string
 
-func (dao *ShortCodeInsert) discardExpired(
-	ctx context.Context, tx bun.IDB, request *ShortCodeInsertRequest,
-) error {
+func (dao *ShortCodeInsert) discardExpired(ctx context.Context, request *ShortCodeInsertRequest) error {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(discardExpired)")
 	defer span.End()
 
-	_, err := tx.NewRaw(
+	tx, err := postgres.GetContext(ctx)
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("get database handle: %w", err))
+	}
+
+	_, err = tx.NewRaw(
 		shortCodeInsertDiscardExpiredQuery,
 		request.Now,
 		"expired before insert",
@@ -192,11 +219,14 @@ func (dao *ShortCodeInsert) discardExpired(
 //go:embed pg.shortCodeInsert.checkConflict.sql
 var shortCodeInsertCheckConflictQuery string
 
-func (dao *ShortCodeInsert) checkConflicts(
-	ctx context.Context, tx bun.IDB, request *ShortCodeInsertRequest,
-) error {
+func (dao *ShortCodeInsert) checkConflicts(ctx context.Context, request *ShortCodeInsertRequest) error {
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(checkConflicts)")
 	defer span.End()
+
+	tx, err := postgres.GetContext(ctx)
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("get database handle: %w", err))
+	}
 
 	res, err := tx.NewRaw(shortCodeInsertCheckConflictQuery, request.Target, request.Usage).Exec(ctx)
 	if err != nil {

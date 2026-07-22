@@ -16,6 +16,7 @@ import (
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
@@ -300,7 +301,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 				}
 
 				service := core.NewCredentialsCreate(
-					mockDao, serviceShortCodeConsume, serviceSignClaims,
+					mockDao, serviceShortCodeConsume, serviceSignClaims, transactiontest.NewTransactor(),
 				)
 
 				resp, err := service.Exec(ctx, testCase.request)
@@ -313,4 +314,43 @@ func TestCredentialsCreateRequest(t *testing.T) {
 			})
 		})
 	}
+}
+
+// TestCredentialsCreateIsAtomic proves the two writes run inside one unit of
+// work rather than merely appearing to.
+//
+// It fails against the code this replaced: that opened a transaction, handed the
+// callback the surrounding context, and let both writes resolve the connection
+// pool and commit on their own — so consuming the short code survived a failed
+// credentials insert, and the user could not retry with the link they were sent.
+// A transactor that refuses to open reproduces that boundary exactly: if the
+// writes are inside the scope, neither dependency is ever reached.
+func TestCredentialsCreateIsAtomic(t *testing.T) {
+	t.Parallel()
+
+	errNoTransaction := errors.New("transaction unavailable")
+
+	mockDao := coremocks.NewMockCredentialsCreateDao(t)
+	serviceShortCodeConsume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
+	serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
+
+	transactor := transactiontest.NewFailingTransactor(errNoTransaction)
+
+	service := core.NewCredentialsCreate(mockDao, serviceShortCodeConsume, serviceSignClaims, transactor)
+
+	resp, err := service.Exec(t.Context(), &core.CredentialsCreateRequest{
+		Email:     "user@provider.com",
+		Password:  "secret",
+		ShortCode: "foobarqux",
+	})
+	require.ErrorIs(t, err, errNoTransaction)
+	require.Nil(t, resp)
+
+	require.Equal(t, 1, transactor.Calls(), "the operation must open exactly one unit of work")
+
+	// No expectations were registered on either mock, so mockery fails the test if
+	// anything reached them outside the scope that never opened.
+	mockDao.AssertExpectations(t)
+	serviceShortCodeConsume.AssertExpectations(t)
+	serviceSignClaims.AssertExpectations(t)
 }

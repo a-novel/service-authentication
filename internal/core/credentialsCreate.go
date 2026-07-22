@@ -7,14 +7,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/transaction"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -56,17 +55,20 @@ type CredentialsCreate struct {
 	dao                     CredentialsCreateDao
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume
 	serviceSignClaims       CredentialsCreateServiceSignClaims
+	transactor              transaction.Transactor
 }
 
 func NewCredentialsCreate(
 	dao CredentialsCreateDao,
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume,
 	serviceSignClaims CredentialsCreateServiceSignClaims,
+	transactor transaction.Transactor,
 ) *CredentialsCreate {
 	return &CredentialsCreate{
 		dao:                     dao,
 		serviceShortCodeConsume: serviceShortCodeConsume,
 		serviceSignClaims:       serviceSignClaims,
+		transactor:              transactor,
 	}
 }
 
@@ -96,7 +98,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 
 	var credentials *dao.Credentials
 
-	err = postgres.RunInTx(ctx, nil, func(ctx context.Context, tx bun.IDB) error {
+	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
 		// Verify short code.
 		_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
 			Usage:  ShortCodeUsageRegister,

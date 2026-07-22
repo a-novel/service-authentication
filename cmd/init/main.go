@@ -71,6 +71,7 @@ func main() {
 		daoCredentialsSelectByEmail,
 		daoCredentialsUpdatePassword,
 		daoCredentialsUpdateRole,
+		postgres.NewTransactor(nil),
 	)
 
 	log.Printf("ensuring super-admin credentials for %s", env.SuperAdminEmail)
