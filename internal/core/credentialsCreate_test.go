@@ -316,15 +316,10 @@ func TestCredentialsCreateRequest(t *testing.T) {
 	}
 }
 
-// TestCredentialsCreateIsAtomic proves the two writes run inside one unit of
-// work rather than merely appearing to.
+// TestCredentialsCreateIsAtomic proves the two writes run inside one unit of work.
 //
-// It fails against the code this replaced: that opened a transaction, handed the
-// callback the surrounding context, and let both writes resolve the connection
-// pool and commit on their own — so consuming the short code survived a failed
-// credentials insert, and the user could not retry with the link they were sent.
-// A transactor that refuses to open reproduces that boundary exactly: if the
-// writes are inside the scope, neither dependency is ever reached.
+// The transactor is wired to refuse to open, which reproduces the scope boundary exactly:
+// with the writes inside the scope, neither dependency is ever reached.
 func TestCredentialsCreateIsAtomic(t *testing.T) {
 	t.Parallel()
 
