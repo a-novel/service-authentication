@@ -72,15 +72,14 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	// Retrieve credentials.
 	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
 		Email: request.Email,
 	})
 	if err != nil {
 		if errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
 			// Burn an Argon2id verification so an unknown email costs the same as a
-			// wrong password (both map to 401 downstream) — closes the timing channel
-			// that would otherwise reveal whether the email is registered.
+			// wrong password, and the latency reveals nothing about whether the email
+			// is registered. Both outcomes map to 401 downstream.
 			lib.DummyCompareArgon2(request.Password)
 		}
 
@@ -92,12 +91,11 @@ func (service *TokenCreate) Exec(
 		attribute.String("credentials.role", credentials.Role),
 	)
 
-	// Validate password.
 	err = lib.CompareArgon2(request.Password, credentials.Password)
 	if err != nil {
-		// lib.ErrInvalidPassword is the expected outcome the handler maps to 401; the other
-		// CompareArgon2 errors (lib.ErrInvalidHash, lib.ErrIncompatibleVersion) mean the stored
-		// hash is malformed. Both are reported on the span — it shows what the request hit.
+		// A wrong password yields lib.ErrInvalidPassword, which the handler maps to 401;
+		// a malformed stored hash yields lib.ErrInvalidHash or lib.ErrIncompatibleVersion.
+		// Both land on the span so it shows what the request hit.
 		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}
 

@@ -23,9 +23,8 @@ func main() {
 
 	start := time.Now()
 
-	// Inventory the .up.sql files up-front so the recap can report how many were found.
-	// bun's migrator (used by RunMigrationsContext) exposes no count, so walking the
-	// embed.FS is the simplest stable approximation.
+	// Inventory the .up.sql files up-front: bun's migrator exposes no count, so walking
+	// the embed.FS is how the recap knows how many exist.
 	discovered := listUpMigrations(migrations.Migrations)
 	log.Printf("discovered %d migration(s) in models/migrations", len(discovered))
 
@@ -52,8 +51,8 @@ func listUpMigrations(f fs.FS) []string {
 
 	_ = fs.WalkDir(f, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			// Aborting the walk only skips inventory logging, not the migration run, so
-			// the caller discards this error.
+			// Aborting the walk only skips inventory logging, so the caller discards
+			// this error.
 			return err
 		}
 

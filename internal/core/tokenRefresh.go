@@ -20,27 +20,21 @@ import (
 
 var (
 	// ErrTokenRefreshInvalidAccessToken is returned by [TokenRefresh.Exec] when the
-	// access token fails verification with a user-input failure: a bad signature
-	// (jws.ErrInvalidSignature) or a failed claim check (jwp.ErrInvalidClaims —
-	// audience, issuer, or subject mismatch; expiry is intentionally ignored on the
-	// access token because refresh exists precisely to renew an expired one). The
-	// sentinel is joined onto the underlying verifier error.
+	// access token fails signature or claim verification, joined onto the underlying
+	// verifier error. Expiry is ignored on the access token, since refresh exists to
+	// renew an expired one.
 	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
-	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when
-	// the refresh token fails verification with a user-input failure: a bad
-	// signature (jws.ErrInvalidSignature) or a failed claim check
-	// (jwp.ErrInvalidClaims — expiry, audience, issuer, or subject mismatch).
-	// The sentinel is joined onto the underlying verifier error.
+	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when the
+	// refresh token fails signature or claim verification, expiry included, joined
+	// onto the underlying verifier error.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
-	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the
-	// access and refresh tokens are individually valid but encode different user
-	// IDs. This typically indicates an attacker pairing a stolen refresh token
-	// with someone else's access token.
+	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the access
+	// and refresh tokens are individually valid but encode different user IDs, which
+	// typically means a stolen refresh token paired with someone else's access token.
 	ErrTokenRefreshMismatchClaims = errors.New("refresh token claims don't match access token")
-	// ErrTokenRefreshMismatchSource is returned by [TokenRefresh.Exec] when the
-	// access token's RefreshTokenID claim does not match the refresh token's JTI.
-	// This breaks the access/refresh binding — an access token can only be renewed
-	// using the very refresh token that originally minted it.
+	// ErrTokenRefreshMismatchSource is returned by [TokenRefresh.Exec] when the access
+	// token's RefreshTokenID claim does not match the refresh token's JTI. An access
+	// token may only be renewed by the refresh token that minted it.
 	ErrTokenRefreshMismatchSource = errors.New("refresh token not issued from access token")
 )
 
@@ -57,8 +51,7 @@ type TokenRefreshServiceSignClaims interface {
 }
 
 // TokenRefreshServiceVerifyClaims verifies the incoming access token and decodes its
-// claims. It is distinct from TokenRefreshServiceVerifyRefreshClaims only in the claim
-// type it returns.
+// claims.
 type TokenRefreshServiceVerifyClaims interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*AccessTokenClaims, error)
 }
@@ -109,8 +102,8 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	// Verify the access token's signature. Expiry is ignored on purpose: renewing an
-	// expired access token is exactly what refresh is for, but the signature must hold.
+	// Expiry is ignored here: refresh exists to renew an expired access token, but its
+	// signature must still hold.
 	accessTokenClaims, err := service.serviceVerifyClaims.VerifyClaims(
 		ctx,
 		&servicejsonkeys.VerifyClaimsRequest{
@@ -127,7 +120,7 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	// Verify the refresh token. Unlike the access token, it must not be expired.
+	// The refresh token is verified in full, expiry included.
 	refreshTokenClaims, err := service.serviceVerifyRefreshClaims.VerifyClaims(
 		ctx,
 		&servicejsonkeys.VerifyClaimsRequest{
@@ -148,7 +141,6 @@ func (service *TokenRefresh) Exec(
 		attribute.String("refreshTokenClaims.userID", refreshTokenClaims.UserID.String()),
 	)
 
-	// Both tokens must name the same user; see ErrTokenRefreshMismatchClaims.
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchClaims)
 	}
@@ -158,9 +150,8 @@ func (service *TokenRefresh) Exec(
 		attribute.String("refreshTokenClaims.jti", refreshTokenClaims.Jti),
 	)
 
-	// The access token must have been minted by this very refresh token — so revoking a
-	// refresh token also invalidates every access token minted from it. See
-	// ErrTokenRefreshMismatchSource for the binding this enforces.
+	// Binding an access token to the refresh token that minted it means revoking the
+	// refresh token invalidates every access token derived from it.
 	if accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchSource)
 	}

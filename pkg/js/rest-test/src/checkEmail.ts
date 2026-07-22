@@ -15,7 +15,6 @@ export async function checkEmail(mailHost: string, search: string, clear: boolea
       expect(searchRes.messages).toHaveLength(1);
       expect(searchRes.messages[0].MessageID).toBeTruthy();
 
-      //return await simpleParser(rawContent, { skipImageLinks: true });
       return searchRes.messages[0].ID as string;
     },
     { timeout: 1000 }

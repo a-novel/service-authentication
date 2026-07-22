@@ -7,8 +7,8 @@ import (
 	"github.com/a-novel-kit/golib/config"
 )
 
-// prefix is prepended to every configuration environment variable name. It lets a project that
-// embeds this package namespace the variables so they do not clash with its own.
+// prefix is prepended to every configuration environment variable name, so a project
+// embedding this package can namespace them against its own.
 var prefix = os.Getenv("SERVICE_AUTHENTICATION_ENV_PREFIX")
 
 func getEnv(name string) string {
@@ -92,24 +92,25 @@ var (
 	//	postgres://<user>:<password>@<host>:<port>/<database>
 	PostgresDsn = postgresDsn
 
-	// PlatformAuthUrl points to the authentication web client. It is used to insert URLs in emails.
+	// PlatformAuthUrl is the base URL of the authentication web client, prefixed onto the
+	// links inserted in emails.
 	PlatformAuthUrl = platformAuthUrl
-	// PlatformAuthUpdateEmailUrl points to a web client page used to complete the email update process.
-	// It is used to insert URLs in emails.
+	// PlatformAuthUpdateEmailUrl is the web client page linked from update emails to
+	// complete the email update.
 	PlatformAuthUpdateEmailUrl = config.LoadEnv(
 		platformAuthUpdateEmailUrl,
 		PlatformAuthUrl+PlatformEmailUpdateUrlDefault,
 		config.StringParser,
 	)
-	// PlatformAuthUpdatePasswordUrl points to a web client page used to complete the password reset process.
-	// It is used to insert URLs in emails.
+	// PlatformAuthUpdatePasswordUrl is the web client page linked from reset emails to
+	// complete the password reset.
 	PlatformAuthUpdatePasswordUrl = config.LoadEnv(
 		platformAuthUpdatePasswordUrl,
 		PlatformAuthUrl+PlatformPasswordResetUrlDefault,
 		config.StringParser,
 	)
-	// PlatformAuthRegisterUrl points to a web client page used to complete the registration process.
-	// It is used to insert URLs in emails.
+	// PlatformAuthRegisterUrl is the web client page linked from registration emails to
+	// complete the account creation.
 	PlatformAuthRegisterUrl = config.LoadEnv(
 		platformAuthRegisterUrl,
 		PlatformAuthUrl+PlatformAccountCreateUrlDefault,
@@ -140,9 +141,9 @@ var (
 	SmtpSenderDomain = smtpSenderDomain
 	// SmtpTimeout bounds how long a single email send may take.
 	SmtpTimeout = config.LoadEnv(smtpTimeout, SmtpTimeoutDefault, config.DurationParser)
-	// SmtpForceUnencrypted forces the SMTP client to send plain credentials over any connection. Go's SMTP client
-	// refuses to send plain credentials over a non-TLS connection except to localhost, and under Docker the mail host
-	// is rarely reachable as localhost, so this override is needed for local runs.
+	// SmtpForceUnencrypted lets the SMTP client send plain credentials over a non-TLS
+	// connection, which Go otherwise permits only towards localhost. Local runs under
+	// Docker need it because the mail host answers to another name.
 	//
 	// It must never be set in production.
 	SmtpForceUnencrypted = config.LoadEnv(smtpForceUnencrypted, false, config.BoolParser)
@@ -175,8 +176,8 @@ var (
 	//
 	// See: https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
 	GcloudProjectId = gcloudProjectId
-	// SuperAdminEmail sets the email address for the default super-admin on the platform. Unlike other accounts,
-	// its email does not need to be validated.
+	// SuperAdminEmail sets the email address for the default super-admin on the platform.
+	// The address is trusted as configured and skips email validation.
 	SuperAdminEmail = superAdminEmail
 	// SuperAdminPassword sets the password for the default super-admin on the platform.
 	SuperAdminPassword = superAdminPassword

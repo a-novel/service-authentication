@@ -10,10 +10,7 @@ import (
 // from when generating random strings.
 var URLCharList = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-// Alphabet length hoisted out of the generation loop.
-var (
-	urlCharListLen = int64(len(URLCharList))
-)
+var urlCharListLen = int64(len(URLCharList))
 
 // NewRandomURLString generates a random, URL-safe string of the given length.
 func NewRandomURLString(length int) (string, error) {

@@ -36,16 +36,11 @@ func printDepsGraph[Mod comparable](deps map[Mod]map[Mod]bool) string {
 //
 //	{mod1: [dep1, dep2], mod2: [dep3, dep1, dep2]}
 //
-// Algorithm: topological sort over the inheritance graph; nodes are processed
-// in order of depth (mods with no parents first), and each resolved mod's
-// inherited deps are appended in resolution order.
+// Inherited dependencies come after the module's own, in resolution order.
 func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[Mod][]Mod) (map[Mod][]Deps, error) {
-	// Seed every mod from `mods` into depsGraph as a leaf (no parents). This is what
-	// lets callers omit empty entries from `deps` — e.g. `deps = {mod2: [mod1]}` without
-	// an explicit `mod1: []` — and have the algorithm still find a depth-0 root to start
-	// from. Without it, a mod that appears only as a *parent* in `deps` is never added
-	// to depsGraph, the loop never finds a leaf to resolve, and the function
-	// incorrectly reports a circular dependency.
+	// Seed every mod as a leaf so callers can omit empty entries from `deps`. A mod that
+	// only ever appears as a parent would otherwise be missing from the graph, leaving
+	// no depth-0 root and yielding a false circular dependency.
 	depsGraph := map[Mod]map[Mod]bool{}
 	for mod := range mods {
 		depsGraph[mod] = map[Mod]bool{}
@@ -61,17 +56,13 @@ func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[M
 		}
 	}
 
-	// To resolve every dependency, we first need to triage the mods regarding their depths: a mod without
-	// dependencies has a depth of 0, a mod with only dependencies of depth 0 has a depth of 1, and so on.
-	// Once we solved this triage, we can process mods in order, fully processing every mod of depth n before
-	// moving to depth n+1.
+	// Resolve in rounds of increasing depth: a mod with no remaining dependencies is at
+	// the current depth, and each round strips one depth off the graph. resolvedMods
+	// therefore ends up in depth order.
 	var resolvedMods []Mod
 
-	// We're going to resolve dependencies in rounds, unwrapping a single dependency depth at a time. Once the map
-	// of dependencies is empty, this means we resolved everything, and can return the result.
 	for len(depsGraph) > 0 {
-		// A given depth n+1 must resolve to at least one node of depth n (because each level of depth depends on
-		// the previous one). If we can't find any node of depth n, then we have a circular dependency.
+		// A round that resolves nothing means every remaining mod sits on a cycle.
 		hasResolved := false
 
 		for mod, dependencies := range depsGraph {
@@ -81,11 +72,9 @@ func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[M
 
 			hasResolved = true
 
-			// A resolved node can be removed from the original graph, and added to the resolved graph.
 			delete(depsGraph, mod)
 			resolvedMods = append(resolvedMods, mod)
 
-			// Remove the resolved dependencies from the dependants of other nodes in the graph.
 			for _, dependantMod := range depsGraph {
 				delete(dependantMod, mod)
 			}
@@ -96,14 +85,12 @@ func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[M
 		}
 	}
 
-	// Now every mod is resolved, we can build the final map.
 	resolved := map[Mod][]Deps{}
 
 	for _, mod := range resolvedMods {
 		resolved[mod] = mods[mod]
 
-		// Because we resolve mods with the lowest depth first, we know that every dependency has been fully resolved
-		// when we reach a certain mod.
+		// Depth order guarantees every dependency of mod is already fully resolved.
 		for _, dep := range deps[mod] {
 			resolved[mod] = append(resolved[mod], resolved[dep]...)
 		}

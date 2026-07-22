@@ -28,18 +28,16 @@ var ErrCredentialsUpdatePasswordNotFound = errors.New("credentials not found")
 type CredentialsUpdatePasswordRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
-	// Password is the Argon2id hash to persist, not the plaintext. Plaintext
-	// must be hashed by the caller (typically via lib.GenerateArgon2) before
-	// reaching this layer; storing the hash means a database leak does not
-	// reveal usable credentials.
+	// Password is the Argon2id hash to persist. The caller hashes the plaintext
+	// (typically with lib.GenerateArgon2) before it reaches this layer, so a
+	// database leak yields no usable credentials.
 	Password string
 	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 
-// CredentialsUpdatePassword updates the password used by a set of credentials.
-// Make sure the user identity has been properly validated BEFORE calling this
-// dao.
+// CredentialsUpdatePassword updates the password used by a set of credentials. The
+// caller must have validated the user's identity before calling this DAO.
 type CredentialsUpdatePassword struct{}
 
 func NewCredentialsUpdatePassword() *CredentialsUpdatePassword {
@@ -54,9 +52,8 @@ func (dao *CredentialsUpdatePassword) Exec(
 
 	span.SetAttributes(
 		attribute.String("credentials.id", request.ID.String()),
-		// Do not record the password on the span, even redacted: a "*****" of the
-		// same length leaks the input length over every trace, which is partial
-		// credential information an attacker reading traces could correlate.
+		// The password never goes on the span. A redacted placeholder would still
+		// leak the input length to anyone reading traces.
 		attribute.Int64("credentials.now", request.Now.Unix()),
 	)
 

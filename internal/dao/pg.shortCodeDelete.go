@@ -18,21 +18,22 @@ import (
 //go:embed pg.shortCodeDelete.sql
 var shortCodeDeleteQuery string
 
+// ErrShortCodeDeleteNotFound is returned by [ShortCodeDelete.Exec] when no active
+// short code matches the requested ID. It is joined onto the underlying sql.ErrNoRows.
 var ErrShortCodeDeleteNotFound = errors.New("short code not found")
 
 const (
-	// ShortCodeDeleteOverride is the deletion comment set when a newer version of an active short
-	// code is saved in the database.
+	// ShortCodeDeleteOverride is the deletion comment set when a newer code supersedes
+	// an active one.
 	ShortCodeDeleteOverride = "override with newer key"
-	// ShortCodeDeleteConsumed is the deletion comment set when the resource the short code grants access to has
-	// been consumed successfully.
+	// ShortCodeDeleteConsumed is the deletion comment set when the short code has been
+	// redeemed successfully.
 	ShortCodeDeleteConsumed = "key consumed"
 )
 
-// ShortCodeDeleteRequest is the input to [ShortCodeDelete.Exec]. Comment should
-// usually be one of the [ShortCodeDeleteOverride] / [ShortCodeDeleteConsumed]
-// constants, but any value is accepted and persisted on the deleted row for
-// later auditing.
+// ShortCodeDeleteRequest is the input to [ShortCodeDelete.Exec]. Comment is usually
+// [ShortCodeDeleteOverride] or [ShortCodeDeleteConsumed]; any value is accepted and
+// persisted on the deleted row for later auditing.
 type ShortCodeDeleteRequest struct {
 	// ID of the short code to delete.
 	ID uuid.UUID

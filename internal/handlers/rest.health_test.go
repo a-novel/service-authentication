@@ -67,11 +67,10 @@ func TestHealth(t *testing.T) {
 			expectStatus: http.StatusOK,
 		},
 		{
-			// The SMTP and json-keys dependency mocks return errors; the response must
-			// report status=down for those dependencies WITHOUT echoing the underlying
-			// error string. The exact-match assertion on expectResponse below is the
-			// regression guard: it fails if any extra field (notably a re-introduced
-			// "err") leaks into the public response shape.
+			// The SMTP and json-keys mocks fail, so the response reports status=down for
+			// them while withholding the underlying error string. The exact-match
+			// assertion on expectResponse below is the guard: any extra field leaking
+			// into the public shape fails the test.
 			name: "Error",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),

@@ -17,31 +17,26 @@ import (
 	"github.com/a-novel-kit/golib/postgres"
 )
 
-// ErrShortCodeInsertNested is returned when [ShortCodeInsert.Exec] is called
-// inside a transaction someone else opened. The operation needs repeatable-read
-// isolation to be correct, and a transaction opened inside another one joins it
-// rather than opening its own — so it would inherit whatever isolation the
-// caller chose, without any sign that it had. Refusing keeps that impossible
-// rather than merely documented.
+// ErrShortCodeInsertNested is returned when [ShortCodeInsert.Exec] is called inside
+// a transaction someone else opened. The operation needs repeatable-read isolation,
+// and a nested transaction joins the outer one and silently inherits its isolation
+// level, so the call is refused.
 var ErrShortCodeInsertNested = errors.New("short code insert cannot run inside another transaction")
 
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
 
 // ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when an
-// active short code already covers the same (target, usage) pair. Detection
-// runs in two layers: an in-transaction conflict check on the Override=false
-// path that short-circuits with this sentinel, and the database's partial
-// unique index (target, usage) WHERE deleted_at IS NULL, which catches any
-// race that slips past the check by mapping the resulting SQLSTATE 23505 onto
-// the same sentinel. Callers branch on it with errors.Is regardless of which
-// layer caught the conflict.
+// active short code already covers the same (target, usage) pair. Two layers raise
+// it: the in-transaction conflict check on the Override=false path, and the partial
+// unique index (target, usage) WHERE deleted_at IS NULL, whose SQLSTATE 23505 is
+// mapped onto this sentinel. Callers match it with errors.Is either way.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
 // ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The insert runs at
-// repeatable-read isolation, and uniqueness on the active (target, usage) subset is
-// backed by a partial unique index, so concurrent inserts cannot produce duplicates:
-// the loser sees [ErrShortCodeInsertAlreadyExists].
+// repeatable-read isolation over a partial unique index on the active (target, usage)
+// subset, so concurrent inserts cannot produce duplicates: the loser sees
+// [ErrShortCodeInsertAlreadyExists].
 type ShortCodeInsertRequest struct {
 	// See ShortCode.ID.
 	ID uuid.UUID
@@ -58,9 +53,8 @@ type ShortCodeInsertRequest struct {
 	// See ShortCode.ExpiresAt.
 	ExpiresAt time.Time
 
-	// By default, the insertion will fail if the new short code does not meet the uniqueness
-	// criteria. When this option is set to true, any conflicting record will be deleted
-	// instead, with the ShortCodeDeleteOverride deletion comment.
+	// Override soft-deletes any conflicting record, with the ShortCodeDeleteOverride
+	// deletion comment. When false, a conflict fails the insert.
 	Override bool
 }
 
@@ -82,11 +76,9 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 		attribute.Bool("shortCode.override", request.Override),
 	)
 
-	// This operation is only correct under repeatable-read: the conflict check and
-	// the insert must see the same snapshot, or a concurrent insert slips between
-	// them. A transaction opened inside another one joins it and silently inherits
-	// its isolation level, so refuse rather than degrade — a caller that needs both
-	// must sequence them instead of nesting.
+	// Repeatable-read is required so the conflict check and the insert see one
+	// snapshot. A nested transaction would silently inherit the caller's isolation
+	// level, so callers must sequence the two operations.
 	if postgres.InTx(ctx) {
 		return nil, otel.ReportError(span, ErrShortCodeInsertNested)
 	}
@@ -98,16 +90,13 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 		var err error
 
 		if request.Override {
-			// Retire every not-yet-effectively-deleted row for the pair in a
-			// single UPDATE — active and naturally expired alike — so the
-			// partial unique index (target, usage) WHERE deleted_at IS NULL is
-			// clear before the insert.
+			// Soft-delete every live row for the pair, active or expired alike, so
+			// the partial unique index is clear before the insert.
 			err = dao.discardConflicts(ctx, request)
 		} else {
-			// checkConflicts gates on `expires_at > now()`, so a naturally
-			// expired but not-yet-deleted row is invisible to it — yet that row
-			// still lives in the partial unique index and would make the insert
-			// fail with a unique violation. Soft-delete it first.
+			// checkConflicts gates on `expires_at > now()`, so an expired row it
+			// ignores still sits in the partial unique index and would fail the
+			// insert with a unique violation. Soft-delete it first.
 			err = dao.discardExpired(ctx, request)
 			if err == nil {
 				err = dao.checkConflicts(ctx, request)
@@ -134,10 +123,9 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 			request.ExpiresAt,
 		).Scan(ctx, entity)
 		if err != nil {
-			// The partial unique index (target, usage) WHERE deleted_at IS NULL
-			// catches any conflict that the in-transaction check missed under
-			// concurrent inserts. Map the SQLSTATE 23505 onto the same sentinel
-			// callers already use so they don't need to distinguish the layer.
+			// The partial unique index catches conflicts the in-transaction check
+			// missed under concurrent inserts. Map its SQLSTATE 23505 onto the
+			// sentinel callers already match on.
 			var pgErr pgdriver.Error
 			if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
 				err = errors.Join(err, ErrShortCodeInsertAlreadyExists)
@@ -169,11 +157,10 @@ func (dao *ShortCodeInsert) discardConflicts(ctx context.Context, request *Short
 
 	_, err = tx.NewRaw(
 		shortCodeInsertDiscardConflictQuery,
-		// Go and Postgres can disagree on "now" by a small margin across the
-		// driver/connection boundary; backdating the deletion timestamp by one
-		// second keeps the row firmly in the past for any later predicate that
-		// compares deleted_at against CURRENT_TIMESTAMP (e.g. the active
-		// short-codes view), so it never re-surfaces as active.
+		// Go and Postgres can disagree on "now" by a small margin, so backdate the
+		// deletion by a second: the row then stays in the past for predicates
+		// comparing deleted_at against CURRENT_TIMESTAMP, such as the active
+		// short-codes view.
 		lo.ToPtr(request.Now.Add(-time.Second)),
 		lo.ToPtr(ShortCodeDeleteOverride),
 		request.Target,

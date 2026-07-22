@@ -1,13 +1,12 @@
-// Package configtest holds shared test fixtures for the config package. Production code must
-// not import it; only test files (in this or any other package's `_test.go` files) may.
+// Package configtest holds shared test fixtures for the config package. Only `_test.go`
+// files may import it, in this or any other package.
 //
-// Isolation is enforced by convention, not by the language. Go links any package reachable
-// from a production import into the binary, regardless of where it lives — keeping configtest
-// out of every production import path is what guarantees these fixtures ship only with the
-// test binary. The split exists because the alternative — putting the fixtures next to the
-// production config files in a `*.test.go` file — does ship them: Go's build-time exclusion
-// rule only matches `_test.go` (with an underscore), not `.test.go` (with a dot). A dedicated
-// subpackage makes the boundary explicit and easy to lint or grep against.
+// The isolation is a convention the language does not enforce: Go links any package
+// reachable from a production import into the binary, so keeping configtest off every
+// production import path is what confines these fixtures to the test binary. A dedicated
+// subpackage also sidesteps a naming trap — Go's build-time exclusion matches `_test.go`
+// with an underscore, so fixtures parked in a `*.test.go` file beside the production
+// config would ship.
 package configtest
 
 import (
@@ -15,6 +14,6 @@ import (
 )
 
 // PostgresPreset is the PostgreSQL configuration used in integration tests. It aliases
-// config.PostgresPresetDefault so tests inherit any future change to the production preset
-// (timeouts, retry policy, additional dial options) without a parallel update here.
+// config.PostgresPresetDefault, so tests track the production preset with no parallel
+// definition to maintain.
 var PostgresPreset = config.PostgresPresetDefault

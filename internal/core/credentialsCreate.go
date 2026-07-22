@@ -39,10 +39,9 @@ type CredentialsCreateServiceSignClaims interface {
 
 // CredentialsCreateRequest contains the data required to register a new user.
 type CredentialsCreateRequest struct {
-	// Email is the user's email address, must be unique across all users.
+	// Email is the user's email address, unique across all users.
 	Email string `validate:"required,email,max=1024"`
-	// Password is the plaintext password, will be hashed using Argon2id before storage.
-	// Must be at least 4 characters.
+	// Password is the plaintext password, hashed with Argon2id before storage.
 	Password string `validate:"required,min=4,max=1024"`
 	// ShortCode is the verification code sent to the user's email during registration.
 	ShortCode string `validate:"required,max=1024"`
@@ -82,9 +81,8 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	defer span.End()
 
 	span.SetAttributes(attribute.String("email", request.Email))
-	// Do not record the password or short code on the span, even redacted: a "*****"
-	// of the same length still leaks the input length over every trace, which is
-	// partial credential information an attacker reading traces could correlate.
+	// The password and short code never go on the span. A redacted placeholder would
+	// still leak the input length to anyone reading traces.
 
 	err := validate.Struct(request)
 	if err != nil {
@@ -99,7 +97,6 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		// Verify short code.
 		_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
 			Usage:  ShortCodeUsageRegister,
 			Target: request.Email,
@@ -109,7 +106,6 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 			return fmt.Errorf("consume short code: %w", err)
 		}
 
-		// Create credentials.
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{
 			ID:       uuid.New(),
 			Email:    request.Email,

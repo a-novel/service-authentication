@@ -109,7 +109,6 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
-	// Create a new short code.
 	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageValidateEmail,
 		Target:   request.ID.String(),

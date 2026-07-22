@@ -7,24 +7,21 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// ShortCode is a validation mechanism. It stores randomly generated, temporary
-// passwords used to authorize tasks that must not require direct authentication.
+// ShortCode is a randomly generated, temporary password authorizing a task that must
+// run without direct authentication.
 //
-// Like passwords, short codes are stored with one-way encryption: the original value
-// cannot be recovered from the stored one. The clear value is sent to the client
-// through a secure channel.
+// Short codes are stored hashed, so the original value cannot be recovered from the
+// row; the clear value is delivered to the client over a secure channel. A code may
+// be used once and is discarded on a successful use.
 //
-// A short code may only be used once, and is discarded after a successful use.
-//
-// Unlike most other entities, the uniqueness constraint applies only to non-expired,
-// non-deleted short codes, so it naturally evolves over time.
+// The uniqueness constraint covers only active codes — unexpired and undeleted — so
+// the set it applies to evolves over time.
 type ShortCode struct {
 	bun.BaseModel `bun:"table:short_codes"`
 
 	ID uuid.UUID `bun:"id,pk,type:uuid"`
 
-	// The encrypted version of the generated short code, used to perform password-like
-	// validation.
+	// Code is the Argon2id hash of the generated short code, verified like a password.
 	Code string `bun:"code"`
 
 	// Usage identifies the flow the short code is valid for. Together with Target it
@@ -34,19 +31,18 @@ type ShortCode struct {
 	// was sent to. See Usage for the uniqueness rule on the pair.
 	Target string `bun:"target"`
 
-	// Additional data to use after validating a short code.
+	// Data carries flow-specific context used after validating the short code.
 	Data []byte `bun:"data"`
 
 	CreatedAt time.Time `bun:"created_at"`
-	// ExpiresAt bounds the short code's lifetime. Unlike a password, the clear value
-	// lives wherever it was delivered, so the code is kept as short-lived as possible —
-	// usually a matter of days — to limit exposure, since it can authorize critical
-	// operations such as a password reset.
+	// ExpiresAt bounds the short code's lifetime. The clear value sits wherever it was
+	// delivered and can authorize a critical operation such as a password reset, so
+	// lifetimes are kept short — usually a matter of days.
 	ExpiresAt time.Time `bun:"expires_at"`
 
-	// DeletedAt marks a short code invalidated before its expiration, either manually
-	// (an admin suppressing a leak) or naturally when the code is consumed or superseded
-	// by a newer code for the same Target / Usage pair. DeletedComment records the reason.
+	// DeletedAt marks a short code invalidated before its expiration: consumed,
+	// superseded by a newer code for the same Target / Usage pair, or manually
+	// suppressed by an admin after a leak. DeletedComment records the reason.
 	DeletedAt      *time.Time `bun:"deleted_at"`
 	DeletedComment *string    `bun:"deleted_comment"`
 }

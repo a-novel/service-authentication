@@ -6,8 +6,8 @@
 // validation, orchestration, and observability. Handlers consume the core; the
 // core consumes the dao and lib packages.
 //
-// Sentinel errors (e.g. [ErrInvalidRequest]) signal expected user-facing outcomes
-// and are returned directly without marking the surrounding span as failed.
-// Genuine infrastructure failures wrap the underlying error and are reported on
-// the span via otel.ReportError.
+// Sentinel errors such as [ErrInvalidRequest] signal expected user-facing outcomes and
+// travel up to the handler, which maps them to a status code; infrastructure failures
+// wrap the underlying error instead. Both are recorded on the operation's span through
+// otel.ReportError.
 package core

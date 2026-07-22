@@ -88,12 +88,10 @@ func (service *CredentialsCreateSuperAdmin) Exec(
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
 		now := time.Now()
 
-		// Check if user exists.
 		credentials, err = service.daoSelect.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
 			Email: request.Email,
 		})
 		if errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
-			// Create credentials.
 			credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{
 				ID:       uuid.New(),
 				Email:    request.Email,
@@ -107,7 +105,7 @@ func (service *CredentialsCreateSuperAdmin) Exec(
 
 			return nil
 		}
-		// The not-found case returned above; any error remaining here is a real lookup failure.
+		// The not-found branch returned above, so anything left is a real lookup failure.
 		if err != nil {
 			return err
 		}

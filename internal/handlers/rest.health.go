@@ -22,18 +22,17 @@ const (
 )
 
 // RestHealthStatus is the JSON representation of a single dependency's health.
-// The shape is deliberately minimal: /healthcheck is an unauthenticated public
-// endpoint, so it must not expose raw error messages — those routinely include
-// internal hostnames, ports, or schema names that leak infrastructure topology.
-// The underlying error is recorded on the trace span for operators instead.
+// /healthcheck is unauthenticated and public, so the response carries no error
+// message: raw errors routinely include internal hostnames, ports, or schema names.
+// Operators read the underlying error off the trace span.
 type RestHealthStatus struct {
 	// Status is either RestHealthStatusUp or RestHealthStatusDown.
 	Status string `json:"status"`
 }
 
 // NewRestHealthStatus converts an error into a RestHealthStatus, mapping nil to
-// RestHealthStatusUp and any non-nil error to RestHealthStatusDown. The error
-// itself is intentionally discarded from the public response; see RestHealthStatus.
+// RestHealthStatusUp and any non-nil error to RestHealthStatusDown. The error itself
+// stays out of the public response; see [RestHealthStatus].
 func NewRestHealthStatus(err error) *RestHealthStatus {
 	return &RestHealthStatus{
 		Status: lo.Ternary(err == nil, RestHealthStatusUp, RestHealthStatusDown),
@@ -43,8 +42,8 @@ func NewRestHealthStatus(err error) *RestHealthStatus {
 // RestHealthClientSmtp is the SMTP sender whose reachability the health check probes.
 type RestHealthClientSmtp = smtp.Sender
 
-// RestHealthApiJsonKeys is the slice of the JSON-keys client the health check needs:
-// a Status probe used to confirm the upstream service answers.
+// RestHealthApiJsonKeys is the JSON-keys client surface the health check needs: a
+// Status probe confirming the upstream service answers.
 type RestHealthApiJsonKeys interface {
 	Status(
 		ctx context.Context,
@@ -94,8 +93,8 @@ func (handler *RestHealth) reportPostgres(ctx context.Context) error {
 
 	pgdb, ok := pg.(*bun.DB)
 	if !ok {
-		// Inside a transaction the handle is not a *bun.DB and exposes no pool to
-		// ping, so there is nothing to probe; report healthy.
+		// Inside a transaction the handle exposes no pool to ping, so there is
+		// nothing to probe; report healthy.
 		return nil
 	}
 
