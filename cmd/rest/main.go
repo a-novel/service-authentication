@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -30,6 +31,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
@@ -262,6 +264,21 @@ func main() {
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
+	serve(
+		httpServer,
+		cfg.Rest.Timeouts.Request,
+		serviceShortCodeCreateRegister,
+		serviceShortCodeCreateEmailUpdate,
+		serviceShortCodeCreatePasswordReset,
+	)
+}
+
+// serve runs the server until an interrupt or termination signal arrives, then stops it and drains
+// whatever detached work is still in flight.
+//
+// shutdownBudget covers the whole stop, not each step: the HTTP shutdown and the drain share it, so
+// a slow drain cannot extend a deploy past what the operator configured.
+func serve(httpServer *http.Server, shutdownBudget time.Duration, drains ...lib.Waiter) {
 	log.Println("Starting REST server on " + httpServer.Addr)
 
 	go func() {
@@ -277,11 +294,22 @@ func main() {
 
 	log.Println("Shutting down REST server...")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.Rest.Timeouts.Request)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownBudget)
 	defer cancel()
 
 	err := httpServer.Shutdown(shutdownCtx)
 	if err != nil {
 		panic(err)
+	}
+
+	// Drained after the HTTP shutdown, not before: once the server stops accepting, no new send can
+	// be spawned, so the set being waited on is closed.
+	log.Println("Draining in-flight emails...")
+
+	err = lib.Drain(shutdownCtx, drains...)
+	if err != nil {
+		// Logged rather than fatal: the process is already stopping, and mail that did not make it
+		// is a fact to report, not a reason to fail the shutdown.
+		log.Println("Some emails were still in flight at shutdown: " + err.Error())
 	}
 }
