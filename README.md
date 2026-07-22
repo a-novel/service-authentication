@@ -147,6 +147,13 @@ Every variable is read from the process environment.
 | `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.         | `false`          |
 | `REST_CORS_MAX_AGE`           | CORS max-age, in seconds.            | `3600`           |
 
+Database connection pool (server images). The limits are **per process**: what must stay under the database's `max_connections` is the sum across every replica plus the migration job, not one replica's number. The stock `postgres` default is 100.
+
+| Name                      | Description                               | Default |
+| ------------------------- | ----------------------------------------- | ------- |
+| `POSTGRES_MAX_OPEN_CONNS` | Maximum open connections to the database. | `20`    |
+| `POSTGRES_MAX_IDLE_CONNS` | Maximum connections kept open while idle. | `20`    |
+
 Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter (images `rest`, `jobs/init`, `standalone-rest`):
 
 | Name                | Description                                                           | Default                  |

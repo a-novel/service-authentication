@@ -37,6 +37,16 @@ const (
 	RestMaxRequestSizeDefault    = 2 << 20 // 2 MiB
 	CorsAllowCredentialsDefault  = false
 	CorsMaxAgeDefault            = 3600
+
+	// PostgresMaxOpenConnsDefault keeps the pool well under a stock PostgreSQL
+	// max_connections of 100 once multiplied by a service's replica count, leaving
+	// room for the migration job and a psql session. Go's own default is unlimited,
+	// which turns a spike into connection refusals for everything on that database
+	// rather than queueing inside this process.
+	PostgresMaxOpenConnsDefault = 20
+	// PostgresMaxIdleConnsDefault matches the open limit so a burst does not close
+	// connections it is about to reopen.
+	PostgresMaxIdleConnsDefault = 20
 )
 
 // Default values for environment variables, if applicable.
@@ -47,7 +57,9 @@ var (
 
 // Raw values for environment variables.
 var (
-	postgresDsn = getEnv("POSTGRES_DSN")
+	postgresDsn          = getEnv("POSTGRES_DSN")
+	postgresMaxOpenConns = getEnv("POSTGRES_MAX_OPEN_CONNS")
+	postgresMaxIdleConns = getEnv("POSTGRES_MAX_IDLE_CONNS")
 
 	platformAuthUrl               = getEnv("PLATFORM_AUTH_URL")
 	platformAuthUpdateEmailUrl    = getEnv("PLATFORM_AUTH_URL_UPDATE_EMAIL")
@@ -91,6 +103,11 @@ var (
 	// Typically formatted as:
 	//	postgres://<user>:<password>@<host>:<port>/<database>
 	PostgresDsn = postgresDsn
+
+	// PostgresMaxOpenConns is the maximum number of open connections to the database.
+	PostgresMaxOpenConns = config.LoadEnv(postgresMaxOpenConns, PostgresMaxOpenConnsDefault, config.IntParser)
+	// PostgresMaxIdleConns is the maximum number of connections kept open while idle.
+	PostgresMaxIdleConns = config.LoadEnv(postgresMaxIdleConns, PostgresMaxIdleConnsDefault, config.IntParser)
 
 	// PlatformAuthUrl is the base URL of the authentication web client, prefixed onto the
 	// links inserted in emails.
