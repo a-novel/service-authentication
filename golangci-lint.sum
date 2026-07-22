@@ -99,6 +99,7 @@ github.com/a-novel-kit/golib v0.22.10/go.mod h1:+CkFcCcAuFDEHSeTt7yBCuYDQeI2APzG
 github.com/a-novel-kit/golib v0.23.0/go.mod h1:Zmt0kdKJ7oZbL0lZUt+T2bLcFYBMXnEHxv7z8AXFUE8=
 github.com/a-novel-kit/jwt/v2 v2.0.0 h1:N9Q351PBwjLFQm3kDxryqjx57+3Z9RpaIxaFqZ3UYQg=
 github.com/a-novel-kit/jwt/v2 v2.0.0/go.mod h1:N/cS04wkXi6GxLAiWRnxXA81tuv1mc6pqDz/f7jRjxs=
+github.com/a-novel-kit/jwt/v2 v2.0.1/go.mod h1:QLLGdh58mLRNb0SiRCrYww2EJrdyaMSVKPn3jovPEQg=
 github.com/a-novel/service-authentication/v2 v2.4.4 h1:Gowua0BRQGt71n8hwI4cOxpeXwJqQ6pe8vlo9aEEspk=
 github.com/a-novel/service-authentication/v2 v2.4.4/go.mod h1:CbVeIzGx9UHs/ckLEX9iAie3GRRL4YaT+efgCu4PrRs=
 github.com/a-novel/service-json-keys/v2 v2.4.0 h1:Y2AxCQoAD6DJqFlQdTu508Np+JZgjm4E7IaXLLcJ6IM=
