@@ -8,11 +8,6 @@
   },
   "packageRules": [
     {
-      "matchManagers": ["gomod"],
-      "matchFileNames": ["!go.mod"],
-      "goGetDirs": ["."]
-    },
-    {
       "matchFileNames": ["golangci-lint.mod"],
       "postUpgradeTasks": {
         "commands": [
