@@ -124,9 +124,11 @@ jobs:
       - uses: a-novel-kit/workflows/go-actions/test-go@v1.22.0
         id: test
         with:
-          filter_extra_patterns: " | grep -v /cmd"
+          filter_extra_patterns: "| grep /internal"
           skip_setup: true
+          test_artifact: gotest
           coverage_artifact: gocover
+          coverage_file: coverage.txt
           modfile: gotestsum.mod
 
   test-pkg-js:

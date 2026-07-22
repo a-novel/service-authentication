@@ -465,7 +465,7 @@ components:
               - {
                   "client:postgres": { "status": "up" },
                   "client:smtp": { "status": "up" },
-                  "api:jsonKeys": { "status": "down", "err": "Connection to host refused" },
+                  "api:jsonKeys": { "status": "down" },
                 }
 
     claimsGet:
@@ -543,19 +543,20 @@ components:
   schemas:
     healthStatus:
       type: object
-      description: Summary of a server's dependencies status.
+      description: |
+        Status of a single dependency entry, as observed by the server. It carries the
+        state alone, so an unauthenticated caller cannot infer infrastructure details
+        from a degraded dependency; richer diagnostics are recorded on server-side traces.
       required: [status]
+      additionalProperties: false
       examples:
         - { "status": "up" }
-        - { "status": "down", "err": "Connection to host refused" }
+        - { "status": "down" }
       properties:
         status:
           type: string
           description: Exposes whether the server managed to connect to the dependency.
           enum: [up, down]
-        err:
-          type: string
-          description: The error message returned by the dependency, if any.
 
     claims:
       type: object
