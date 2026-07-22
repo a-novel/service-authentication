@@ -31,7 +31,7 @@ jobs:
     # a per-PR run can never re-enqueue.
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.20.1
+      - uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.20.2
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
