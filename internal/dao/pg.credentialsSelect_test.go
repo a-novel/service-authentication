@@ -38,7 +38,7 @@ func TestCredentialsSelect(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      "test_role",
+					Role:      "auth:user",
 				},
 			},
 
@@ -52,7 +52,7 @@ func TestCredentialsSelect(t *testing.T) {
 				Password:  "password-2-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "test_role",
+				Role:      "auth:user",
 			},
 		},
 		{

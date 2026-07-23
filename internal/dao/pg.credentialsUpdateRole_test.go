@@ -38,13 +38,13 @@ func TestCredentialsUpdateRole(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					Role:      "test_role_user",
+					Role:      "auth:user",
 				},
 			},
 
 			request: &dao.CredentialsUpdateRoleRequest{
 				ID:   uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role: "test_role_admin",
+				Role: "auth:admin",
 				Now:  time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 			},
 
@@ -54,7 +54,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				Password:  "password-2-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "test_role_admin",
+				Role:      "auth:admin",
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			request: &dao.CredentialsUpdateRoleRequest{
 				ID:   uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role: "test_role_admin",
+				Role: "auth:admin",
 				Now:  time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 			},
 

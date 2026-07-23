@@ -2,7 +2,15 @@ package config
 
 import (
 	_ "embed"
+	"errors"
+	"fmt"
 )
+
+// ErrUnknownRole reports a role name that the permission configuration does not
+// define. A stored role that resolves to no entry is not "a role that grants
+// nothing" — it is a role the application cannot interpret, and treating the two
+// alike denied affected accounts everything with no signal.
+var ErrUnknownRole = errors.New("unknown role")
 
 // A Role bundles the permissions granted to its holders. A role may inherit other
 // roles to accumulate their permissions, and its priority ranks it against the rest
@@ -33,4 +41,18 @@ const (
 // to its Role definition.
 type Permissions struct {
 	Roles map[string]Role `json:"roles" yaml:"roles"`
+}
+
+// Priority returns the rank of a role, and ErrUnknownRole naming it when the
+// configuration defines no such role. Callers ranking a role read from the
+// database must use this rather than indexing Roles directly: a map miss yields
+// the zero Role, priority 0 — the same rank as auth:anon — so an unknown role
+// would silently outrank nobody and be outranked by everybody.
+func (p Permissions) Priority(role string) (int, error) {
+	r, ok := p.Roles[role]
+	if !ok {
+		return 0, fmt.Errorf("%w: %q", ErrUnknownRole, role)
+	}
+
+	return r.Priority, nil
 }

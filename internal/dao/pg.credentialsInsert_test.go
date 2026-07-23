@@ -36,7 +36,7 @@ func TestCredentialsInsert(t *testing.T) {
 				Email:    "user@provider.com",
 				Password: "password-hashed",
 				Now:      time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				Role:     "test_role",
+				Role:     "auth:user",
 			},
 
 			expect: &dao.Credentials{
@@ -45,7 +45,7 @@ func TestCredentialsInsert(t *testing.T) {
 				Password:  "password-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				Role:      "test_role",
+				Role:      "auth:user",
 			},
 		},
 		{
@@ -55,7 +55,7 @@ func TestCredentialsInsert(t *testing.T) {
 				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Email: "user@provider.com",
 				Now:   time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				Role:  "test_role",
+				Role:  "auth:user",
 			},
 
 			expect: &dao.Credentials{
@@ -63,7 +63,7 @@ func TestCredentialsInsert(t *testing.T) {
 				Email:     "user@provider.com",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				Role:      "test_role",
+				Role:      "auth:user",
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func TestCredentialsInsert(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					Role:      "test_role",
+					Role:      "auth:user",
 				},
 			},
 
@@ -85,7 +85,7 @@ func TestCredentialsInsert(t *testing.T) {
 				Email:    "user@provider.com",
 				Password: "password-hashed",
 				Now:      time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				Role:     "test_role",
+				Role:     "auth:user",
 			},
 
 			expectErr: dao.ErrCredentialsInsertAlreadyExists,

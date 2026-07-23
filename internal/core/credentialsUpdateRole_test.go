@@ -345,6 +345,63 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			expectErr: errFoo,
 		},
+		{
+			// The target's stored role is one the config no longer knows — the 'user'
+			// default. Ranking it must error, not silently take priority 0 and let the
+			// hierarchy guards compare against a rank the account does not hold.
+			name: "TargetHasUnknownStoredRole",
+
+			request: &core.CredentialsUpdateRoleRequest{
+				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Role:          config.RoleAdmin,
+			},
+
+			daoCredentialsSelectTargetMock: &credentialsSelectMock{
+				resp: &dao.Credentials{
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Email: "target@email.com",
+					Role:  "user",
+				},
+			},
+
+			daoCredentialsSelectCallerMock: &credentialsSelectMock{
+				resp: &dao.Credentials{
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Email: "caller@email.com",
+					Role:  config.RoleSuperAdmin,
+				},
+			},
+
+			expectErr: config.ErrUnknownRole,
+		},
+		{
+			name: "CallerHasUnknownStoredRole",
+
+			request: &core.CredentialsUpdateRoleRequest{
+				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Role:          config.RoleAdmin,
+			},
+
+			daoCredentialsSelectTargetMock: &credentialsSelectMock{
+				resp: &dao.Credentials{
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Email: "target@email.com",
+					Role:  config.RoleUser,
+				},
+			},
+
+			daoCredentialsSelectCallerMock: &credentialsSelectMock{
+				resp: &dao.Credentials{
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Email: "caller@email.com",
+					Role:  "user",
+				},
+			},
+
+			expectErr: config.ErrUnknownRole,
+		},
 	}
 
 	for _, testCase := range testCases {
