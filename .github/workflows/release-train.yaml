@@ -35,7 +35,7 @@ run-name: "🚂 release train epic:#${{ inputs.epic_number }} requested by @${{ 
 
 jobs:
   release-train:
-    uses: a-novel-kit/workflows/.github/workflows/release-train-run.yaml@v1.23.1
+    uses: a-novel-kit/workflows/.github/workflows/release-train-run.yaml@v1.24.0
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       epic_number: ${{ inputs.epic_number }}
