@@ -18,9 +18,12 @@ import (
 )
 
 // ErrShortCodeInsertNested is returned when [ShortCodeInsert.Exec] is called inside
-// a transaction someone else opened. The operation needs repeatable-read isolation,
-// and a nested transaction joins the outer one and silently inherits its isolation
-// level, so the call is refused.
+// a transaction someone else opened. The operation must own its transaction so it
+// runs at the read-committed isolation it sets: a nested call joins the outer
+// transaction and silently inherits its isolation level (WithinTx ignores opts when
+// nested). A caller's repeatable-read level would turn the override path's UPDATE into
+// a serialization failure, so the nested call is refused rather than run at the wrong
+// isolation.
 var ErrShortCodeInsertNested = errors.New("short code insert cannot run inside another transaction")
 
 //go:embed pg.shortCodeInsert.sql
@@ -33,10 +36,10 @@ var shortCodeInsertQuery string
 // mapped onto this sentinel. Callers match it with errors.Is either way.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
-// ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. The insert runs at
-// repeatable-read isolation over a partial unique index on the active (target, usage)
-// subset, so concurrent inserts cannot produce duplicates: the loser sees
-// [ErrShortCodeInsertAlreadyExists].
+// ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec]. Correctness rests on
+// the partial unique index on the active (target, usage) subset, not on the isolation
+// level, so concurrent inserts cannot produce duplicates at read-committed: the loser
+// sees [ErrShortCodeInsertAlreadyExists].
 type ShortCodeInsertRequest struct {
 	// See ShortCode.ID.
 	ID uuid.UUID
@@ -76,15 +79,23 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 		attribute.Bool("shortCode.override", request.Override),
 	)
 
-	// Repeatable-read is required. The conflict check and the insert see one snapshot.
-	// A nested transaction inherits the caller's isolation level, so callers sequence the
-	// two operations themselves.
+	// The operation must own its transaction so the isolation it sets actually
+	// applies; a nested call would inherit the caller's level instead, so it is
+	// refused.
 	if postgres.InTx(ctx) {
 		return nil, otel.ReportError(span, ErrShortCodeInsertNested)
 	}
 
 	entity := new(ShortCode)
-	txOptions := &sql.TxOptions{Isolation: sql.LevelRepeatableRead}
+	// Read-committed, deliberately. The partial unique index (target, usage) WHERE
+	// deleted_at IS NULL enforces at-most-one-active at every isolation level, so it —
+	// not the isolation — is the correctness guarantee. Repeatable-read would buy no
+	// extra safety and would turn two concurrent overrides into a 40001 serialization
+	// failure (the losing UPDATE hits a row the winner already committed), surfacing as
+	// a 500 where the caller should see the ordinary already-exists path. Under
+	// read-committed that UPDATE blocks and re-evaluates, and the loser's insert takes
+	// the mapped 23505 route below.
+	txOptions := &sql.TxOptions{Isolation: sql.LevelReadCommitted}
 
 	err := postgres.WithinTx(ctx, txOptions, func(ctx context.Context) error {
 		var err error
@@ -123,9 +134,10 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 			request.ExpiresAt,
 		).Scan(ctx, entity)
 		if err != nil {
-			// The partial unique index catches conflicts the in-transaction check
-			// missed under concurrent inserts. Map its SQLSTATE 23505 onto the
-			// sentinel callers already match on.
+			// The partial unique index is the real guard: it catches conflicts the
+			// in-transaction check missed under concurrent inserts, including two
+			// simultaneous overrides racing for the same pair. Map its SQLSTATE 23505
+			// onto the sentinel callers already match on.
 			var pgErr pgdriver.Error
 			if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
 				err = errors.Join(err, ErrShortCodeInsertAlreadyExists)
