@@ -38,7 +38,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					Role:      "test_role",
+					Role:      "auth:user",
 				},
 			},
 
@@ -54,7 +54,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				Password:  "new-password-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "test_role",
+				Role:      "auth:user",
 			},
 		},
 		{
@@ -67,7 +67,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					Role:      "test_role",
+					Role:      "auth:user",
 				},
 			},
 
@@ -81,7 +81,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				Email:     "user@provider.com",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "test_role",
+				Role:      "auth:user",
 			},
 		},
 		{
@@ -93,7 +93,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 					Email:     "user@provider.com",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					Role:      "test_role",
+					Role:      "auth:user",
 				},
 			},
 
@@ -109,7 +109,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				Password:  "new-password-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "test_role",
+				Role:      "auth:user",
 			},
 		},
 		{

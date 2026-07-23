@@ -16,6 +16,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/jwt/v2/jws"
 
+	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
@@ -131,7 +132,22 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 				var allowed bool
 
 				for _, role := range claims.Roles {
-					if lo.ContainsBy(middleware.permissionsByRole[role], func(item string) bool {
+					permissions, known := middleware.permissionsByRole[role]
+					if !known {
+						// The token carries a role the config does not define. It was
+						// signed by this system, so this is a data or config integrity
+						// fault, not a caller error — fail it loudly and named rather
+						// than as a permission denial byte-identical to a legitimate one.
+						httpf.HandleError(
+							ctx, middleware.logger, w, span,
+							httpf.ErrMap{nil: http.StatusInternalServerError},
+							fmt.Errorf("%w: %q in token", config.ErrUnknownRole, role),
+						)
+
+						return
+					}
+
+					if lo.ContainsBy(permissions, func(item string) bool {
 						return grantedPermissions[item]
 					}) {
 						allowed = true

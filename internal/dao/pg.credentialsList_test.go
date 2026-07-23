@@ -27,21 +27,21 @@ func TestCredentialsList(t *testing.T) {
 	cred1 := &dao.Credentials{
 		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 		Email:     "user1@email.com",
-		Role:      "test_role_user",
+		Role:      "auth:user",
 		CreatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 		UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 	cred2 := &dao.Credentials{
 		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 		Email:     "user2@email.com",
-		Role:      "test_role_admin",
+		Role:      "auth:admin",
 		CreatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 		UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
 	cred3 := &dao.Credentials{
 		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
 		Email:     "user3@email.com",
-		Role:      "test_role_user",
+		Role:      "auth:user",
 		CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 		UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 	}
@@ -81,7 +81,7 @@ func TestCredentialsList(t *testing.T) {
 			name: "Success/RoleFilter",
 
 			fixtures: []*dao.Credentials{cred1, cred2, cred3},
-			request:  &dao.CredentialsListRequest{Roles: []string{"test_role_user"}},
+			request:  &dao.CredentialsListRequest{Roles: []string{"auth:user"}},
 			expect:   []*dao.Credentials{cred1, cred3}, // admin cred2 excluded
 		},
 	}
@@ -148,7 +148,7 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 				fixtures = append(fixtures, &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-00000000000" + string(rune('0'+i))),
 					Email:     "user" + string(rune('0'+i)) + "@email.com",
-					Role:      "test_role_user",
+					Role:      "auth:user",
 					CreatedAt: ts,
 					UpdatedAt: ts,
 				})
@@ -189,7 +189,7 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 				fixtures = append(fixtures, &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-00000000000" + string(rune('0'+i))),
 					Email:     "user" + string(rune('0'+i)) + "@email.com",
-					Role:      "test_role_user",
+					Role:      "auth:user",
 					CreatedAt: time.Date(2021, 1, i, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, i, 0, 0, 0, 0, time.UTC),
 				})

@@ -198,6 +198,29 @@ func TestAuth(t *testing.T) {
 			expectStatus: http.StatusForbidden,
 		},
 		{
+			// A token role the config does not define is an integrity fault, not a
+			// permission denial: it returns 500, distinct from the 403 above, so it is
+			// not lost among legitimate denials. This is the shape the 'user' default
+			// produced.
+			name: "Error/UnknownRole",
+
+			authHeader: "Bearer token",
+
+			permissions: []string{"write"},
+			permissionsByRole: map[string][]string{
+				"role1": {"read", "write"},
+			},
+			verifyClaimsMock: &verifyClaimsMock{
+				reqToken: "token",
+				resp: &core.AccessTokenClaims{
+					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:  []string{"ghost"},
+				},
+			},
+
+			expectStatus: http.StatusInternalServerError,
+		},
+		{
 			name: "Error/InvalidSignature",
 
 			authHeader: "Bearer token",

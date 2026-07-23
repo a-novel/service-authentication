@@ -84,7 +84,12 @@ func (service *CredentialsUpdateRole) Exec(
 		return nil, otel.ReportError(span, ErrCredentialsUpdateRoleSelfUpdate)
 	}
 
-	newTargetRoleImportance := config.PermissionsConfigDefault.Roles[request.Role].Priority
+	// request.Role passed validate:"role", so it is known; the lookup cannot fail.
+	newTargetRoleImportance, err := config.PermissionsConfigDefault.Priority(request.Role)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
 	span.SetAttributes(attribute.Int("newTargetRoleImportance", newTargetRoleImportance))
 
 	targetCredentials, err := service.daoCredentialsSelect.Exec(ctx, &dao.CredentialsSelectRequest{
@@ -105,8 +110,19 @@ func (service *CredentialsUpdateRole) Exec(
 
 	span.SetAttributes(attribute.String("currentCredentials.email", currentCredentials.Email))
 
-	targetRoleIImportance := config.PermissionsConfigDefault.Roles[targetCredentials.Role].Priority
-	currentRoleIImportance := config.PermissionsConfigDefault.Roles[currentCredentials.Role].Priority
+	// These two roles come from the database, not the request, so they carry no
+	// validation. A stored role the config no longer knows is an error here, not a
+	// silent priority 0 that would let the rank guards below compare against a rank
+	// the account does not have.
+	targetRoleIImportance, err := config.PermissionsConfigDefault.Priority(targetCredentials.Role)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("rank target role: %w", err))
+	}
+
+	currentRoleIImportance, err := config.PermissionsConfigDefault.Priority(currentCredentials.Role)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("rank current user role: %w", err))
+	}
 
 	span.SetAttributes(
 		attribute.Int("targetRoleImportance", targetRoleIImportance),
