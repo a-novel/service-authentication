@@ -430,16 +430,6 @@ jobs:
           client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           build_action: "build:rest"
 
-  report-grc:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && success()
-    needs: [test-go, test-pkg-js]
-    permissions:
-      contents: read
-    steps:
-      - uses: a-novel-kit/workflows/go-actions/go-report-card@v1.23.1
-        if: github.ref == 'refs/heads/master' && success()
-
   report-codecov:
     runs-on: ubuntu-latest
     needs: [test-go, test-pkg-js]
