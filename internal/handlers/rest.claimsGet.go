@@ -33,7 +33,7 @@ func (handler *ClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpf.SendJSON(ctx, w, span, Claims{
+	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, Claims{
 		UserID:         claims.UserID,
 		Roles:          claims.Roles,
 		RefreshTokenID: claims.RefreshTokenID,
