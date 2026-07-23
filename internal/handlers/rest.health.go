@@ -75,7 +75,7 @@ func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.Health")
 	defer span.End()
 
-	httpf.SendJSON(ctx, w, span, map[string]any{
+	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, map[string]any{
 		"client:postgres": NewRestHealthStatus(handler.reportPostgres(ctx)),
 		"client:smtp":     NewRestHealthStatus(handler.reportSmtp(ctx)),
 		"api:jsonKeys":    NewRestHealthStatus(handler.reportJsonKeys(ctx)),

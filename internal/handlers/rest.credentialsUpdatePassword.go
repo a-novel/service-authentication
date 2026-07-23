@@ -74,5 +74,5 @@ func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	httpf.SendJSON(ctx, w, span, loadCredentials(res))
+	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, loadCredentials(res))
 }

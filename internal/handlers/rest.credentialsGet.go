@@ -56,5 +56,5 @@ func (handler *CredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	httpf.SendJSON(ctx, w, span, loadCredentials(res))
+	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, loadCredentials(res))
 }
