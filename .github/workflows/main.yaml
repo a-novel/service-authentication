@@ -465,6 +465,15 @@ jobs:
           POSTGRES_DB: postgres
           POSTGRES_HOST_AUTH_METHOD: scram-sha-256
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        # The only postgres service in the fleet that was missing this. Steps start once the
+        # container is up, which is earlier than the server accepts connections, and the first
+        # step here is run-migrations — an unguarded race whose only cover was the setup-go and
+        # module download that happen to run ahead of it.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.4.1
