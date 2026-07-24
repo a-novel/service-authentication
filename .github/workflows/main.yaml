@@ -85,6 +85,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.26.0
+        with:
+          # renovate: datasource=github-releases depName=koalaman/shellcheck
+          version: "0.11.0"
 
   lint-dockerfile:
     runs-on: ubuntu-latest
@@ -93,6 +96,54 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.26.0
+        with:
+          # renovate: datasource=github-releases depName=hadolint/hadolint
+          version: "2.12.0"
+
+  # Structural conventions golangci-lint cannot express.
+  lint-semgrep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: a-novel-kit/workflows/security-actions/lint-semgrep@v1.26.0
+        with:
+          ruleset: service
+          # renovate: datasource=docker depName=semgrep/semgrep
+          version: "1.171.0"
+
+  # Replaces GitGuardian, which gated on a hosted service: when it saturated,
+  # every PR in the fleet became unmergeable. This runs offline.
+  scan-secrets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.26.0
+        with:
+          # renovate: datasource=github-releases depName=gitleaks/gitleaks
+          version: "8.30.1"
+
+  # Replaces CodeQL's actions analysis: excessive-permissions is the class it
+  # reported as actions/missing-workflow-permissions.
+  lint-workflows:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.26.0
+        with:
+          # renovate: datasource=docker depName=ghcr.io/zizmorcore/zizmor
+          version: "1.28.0"
 
   test-go:
     needs: [lint-go, build-database]

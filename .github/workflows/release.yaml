@@ -50,6 +50,8 @@ jobs:
       - id: core
         uses: a-novel-kit/workflows/publish-actions/release-core@v1.26.0
         with:
+          # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
+          cli_version: "1.7.5"
           release_type: ${{ inputs.release_type }}
           dry_run: ${{ inputs.dry_run }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
