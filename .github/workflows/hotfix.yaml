@@ -51,7 +51,7 @@ jobs:
     permissions:
       contents: write
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/hotfix-run.yaml@v1.26.1
+    uses: a-novel-kit/workflows/.github/workflows/hotfix-run.yaml@v1.26.2
     with:
       line: ${{ inputs.line }}
       fix_ref: ${{ inputs.fix_ref }}
