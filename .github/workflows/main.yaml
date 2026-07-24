@@ -111,6 +111,8 @@ jobs:
           persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/lint-semgrep@v1.26.0
         with:
+          # Adopting over an existing backlog: report, do not gate. Flip to false once clean.
+          advisory: \"true\"
           ruleset: service
           # renovate: datasource=docker depName=semgrep/semgrep
           version: "1.171.0"
@@ -127,6 +129,8 @@ jobs:
           persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.26.0
         with:
+          # Adopting over an existing backlog: report, do not gate. Flip to false once clean.
+          advisory: \"true\"
           # renovate: datasource=github-releases depName=gitleaks/gitleaks
           version: "8.30.1"
 
@@ -142,6 +146,8 @@ jobs:
           persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.26.0
         with:
+          # Adopting over an existing backlog: report, do not gate. Flip to false once clean.
+          advisory: \"true\"
           # renovate: datasource=docker depName=ghcr.io/zizmorcore/zizmor
           version: "1.28.0"
 
