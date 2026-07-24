@@ -78,6 +78,22 @@ jobs:
           client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           lint_action: "lint:ci"
 
+  lint-shell:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.25.1
+
+  lint-dockerfile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.25.1
+
   test-go:
     needs: [lint-go, build-database]
     runs-on: ubuntu-latest
