@@ -3,6 +3,8 @@ package lib
 import (
 	"context"
 	"fmt"
+
+	"github.com/a-novel-kit/golib/otel"
 )
 
 // Waiter blocks until the work it owns has finished. The short-code services implement it over the
@@ -21,6 +23,9 @@ type Waiter interface {
 // The bound carries as much weight as the wait. Each send holds its own timeout, and ctx is the
 // second bound, so a sender that stops answering delays a deploy by the shutdown budget.
 func Drain(ctx context.Context, waiters ...Waiter) error {
+	ctx, span := otel.Tracer().Start(ctx, "lib.Drain")
+	defer span.End()
+
 	done := make(chan struct{})
 
 	go func() {

@@ -51,13 +51,18 @@ type TokenRefreshServiceSignClaims interface {
 }
 
 // TokenRefreshServiceVerifyClaims verifies the incoming access token and decodes its
-// claims.
+// claims. Satisfied by servicejsonkeys.ClaimsVerifier, whose method name is the published
+// client's, not ours to rename to Exec.
+//
+// nosemgrep: agora-dep-interface-method-must-be-exec
 type TokenRefreshServiceVerifyClaims interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*AccessTokenClaims, error)
 }
 
 // TokenRefreshServiceVerifyRefreshClaims verifies the incoming refresh token and decodes
-// its claims.
+// its claims. Same published-client method name as [TokenRefreshServiceVerifyClaims].
+//
+// nosemgrep: agora-dep-interface-method-must-be-exec
 type TokenRefreshServiceVerifyRefreshClaims interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*RefreshTokenClaims, error)
 }

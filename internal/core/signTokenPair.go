@@ -9,6 +9,7 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
+	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/jwt/v2"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -35,6 +36,9 @@ type tokenPairSigner interface {
 func signTokenPair(
 	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials,
 ) (*Token, error) {
+	ctx, span := otel.Tracer().Start(ctx, "core.signTokenPair")
+	defer span.End()
+
 	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(RefreshTokenClaimsForm{
 		UserID: credentials.ID,
 	})

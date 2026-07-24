@@ -179,6 +179,9 @@ type ClaimsContextKey struct{}
 // SetClaimsContext stores the authenticated user's claims in the context.
 // This is called by the Auth middleware after successful token verification.
 func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) context.Context {
+	ctx, span := otel.Tracer().Start(ctx, "handlers.SetClaimsContext")
+	defer span.End()
+
 	return context.WithValue(ctx, ClaimsContextKey{}, claims)
 }
 
@@ -186,6 +189,9 @@ func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) conte
 // Returns nil claims with no error if no authentication was provided (for optional auth endpoints).
 // Returns an error if the value stored under [ClaimsContextKey] has an unexpected type.
 func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
+	ctx, span := otel.Tracer().Start(ctx, "handlers.GetClaimsContext")
+	defer span.End()
+
 	raw := ctx.Value(ClaimsContextKey{})
 	if raw == nil {
 		return nil, nil
@@ -208,6 +214,9 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 // returning [ErrMissingAuth] when none are present. Use it on endpoints that require
 // authentication, and [GetClaimsContext] where authentication is optional.
 func MustGetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
+	ctx, span := otel.Tracer().Start(ctx, "handlers.MustGetClaimsContext")
+	defer span.End()
+
 	claims, err := GetClaimsContext(ctx)
 	if err != nil {
 		return nil, err

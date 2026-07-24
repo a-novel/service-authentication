@@ -35,7 +35,11 @@ run-name: "🚂 release train epic:#${{ inputs.epic_number }} requested by @${{ 
 
 jobs:
   release-train:
-    uses: a-novel-kit/workflows/.github/workflows/release-train-run.yaml@v1.26.0
+    # matches the callee; the caller sets the ceiling, so it must not hand down
+    # the repository default.
+    permissions:
+      contents: read
+    uses: a-novel-kit/workflows/.github/workflows/release-train-run.yaml@v1.26.1
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       epic_number: ${{ inputs.epic_number }}
