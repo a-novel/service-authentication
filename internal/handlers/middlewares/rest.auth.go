@@ -181,6 +181,7 @@ type ClaimsContextKey struct{}
 func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) context.Context {
 	ctx, span := otel.Tracer().Start(ctx, "handlers.SetClaimsContext")
 	defer span.End()
+
 	return context.WithValue(ctx, ClaimsContextKey{}, claims)
 }
 
@@ -190,6 +191,7 @@ func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) conte
 func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 	ctx, span := otel.Tracer().Start(ctx, "handlers.GetClaimsContext")
 	defer span.End()
+
 	raw := ctx.Value(ClaimsContextKey{})
 	if raw == nil {
 		return nil, nil
@@ -214,6 +216,7 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 func MustGetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 	ctx, span := otel.Tracer().Start(ctx, "handlers.MustGetClaimsContext")
 	defer span.End()
+
 	claims, err := GetClaimsContext(ctx)
 	if err != nil {
 		return nil, err

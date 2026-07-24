@@ -25,6 +25,7 @@ type Waiter interface {
 func Drain(ctx context.Context, waiters ...Waiter) error {
 	ctx, span := otel.Tracer().Start(ctx, "lib.Drain")
 	defer span.End()
+
 	done := make(chan struct{})
 
 	go func() {

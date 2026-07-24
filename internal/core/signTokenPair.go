@@ -38,6 +38,7 @@ func signTokenPair(
 ) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.signTokenPair")
 	defer span.End()
+
 	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(RefreshTokenClaimsForm{
 		UserID: credentials.ID,
 	})
