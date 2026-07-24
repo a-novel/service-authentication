@@ -7,6 +7,12 @@ on:
     branches:
       - "**"
 
+# A `needs:` edge here means the downstream job cannot run without something the upstream one
+# produces — an image digest, a coverage artifact ID, a file on disk. Edges that only expressed
+# "don't spend a runner if the previous check failed" are gone: the jobs sit on separate runners
+# with separate checkouts, so an upstream verdict never changes a downstream one, and each such
+# edge cost the entire graph one job's latency. merge-gate still holds the merge itself, so a red
+# check blocks the PR whether or not the rest of the graph ran.
 jobs:
   generated-go:
     runs-on: ubuntu-latest
@@ -62,7 +68,6 @@ jobs:
 
   lint-go:
     runs-on: ubuntu-latest
-    needs: [generated-go]
     permissions:
       contents: read
     steps:
@@ -154,7 +159,10 @@ jobs:
           version: "1.28.0"
 
   test-go:
-    needs: [lint-go, build-database]
+    # build-database only: it hands over the image digest below. lint-go is not a dependency —
+    # it runs on its own runner against its own checkout, so its verdict cannot change this
+    # job's, and waiting on it only pushed the whole graph back by a lint run.
+    needs: [build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -215,7 +223,6 @@ jobs:
   # test-go filters to /internal, which leaves /pkg uncovered.
   test-pkg:
     runs-on: ubuntu-latest
-    needs: [lint-go]
     permissions:
       contents: read
     outputs:
@@ -391,7 +398,7 @@ jobs:
 
   build-init:
     runs-on: ubuntu-latest
-    needs: [test-go, build-database]
+    needs: [build-database]
     permissions:
       contents: read
       packages: write
@@ -433,7 +440,7 @@ jobs:
             -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD}"
 
   build-rest:
-    needs: [test-go, build-database]
+    needs: [build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -507,7 +514,6 @@ jobs:
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
   build-standalone-rest:
-    needs: [test-go]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -529,7 +535,6 @@ jobs:
           skip_healthcheck: true
 
   build-js:
-    needs: [test-pkg-js]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -557,7 +562,11 @@ jobs:
   publish-docs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && success()
-    needs: [build-js]
+    # This job deploys two committed files, openapi.html and openapi.yaml, and builds nothing.
+    # lint-node is the gate that matches: its `lint:ci` runs redocly over openapi.yaml and
+    # prettier over both. It used to hang off build-js, which compiles the TypeScript client and
+    # never reads either file — a chain through test-pkg-js and the whole Go lane for no signal.
+    needs: [lint-node]
     # GitHub Pages allows a single deployment in flight per site; without this
     # group, concurrent master runs fail with "in progress deployment" errors.
     concurrency:
