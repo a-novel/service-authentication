@@ -33,7 +33,7 @@ jobs:
     # a stray forward is sweep-only, so a per-PR run can never re-enqueue.
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.25.1
+      - uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.26.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
