@@ -14,6 +14,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
@@ -38,9 +40,10 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: latest
-      - name: install pnpm
-        shell: bash
-        run: npm install -g pnpm
+      # `npm install -g pnpm` took whatever was newest, which need not be the
+      # pnpm this repo declares. action-setup reads packageManager from
+      # package.json, so CI runs the version the repo pins.
+      - uses: pnpm/action-setup@v6
       - name: setup github registry
         shell: bash
         run: |
@@ -84,6 +87,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.26.1
         with:
           # renovate: datasource=github-releases depName=koalaman/shellcheck
@@ -95,6 +100,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.26.1
         with:
           # renovate: datasource=github-releases depName=hadolint/hadolint
@@ -176,6 +183,8 @@ jobs:
       SUPER_ADMIN_PASSWORD: admin
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/run-migrations
       # CI built the init job and never ran it, so nothing exercised its wiring:
       # the config it loads, the database context it seeds, the services it
@@ -410,6 +419,8 @@ jobs:
       SUPER_ADMIN_PASSWORD: admin
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker-job@v1.26.1
         with:
@@ -472,6 +483,8 @@ jobs:
       PLATFORM_AUTH_URL: http://localhost:6000
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@v1.26.1
         with:
@@ -547,6 +560,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - run: |
           mkdir _site
           mv openapi.html _site/index.html

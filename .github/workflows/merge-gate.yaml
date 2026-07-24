@@ -31,6 +31,9 @@ on:
 
 jobs:
   merge-gate:
+    # the callee mints its own App token and declares permissions: {}; the caller sets the ceiling, so it must not hand down
+    # the repository default.
+    permissions: {}
     uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.26.1
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}

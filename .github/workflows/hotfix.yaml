@@ -46,6 +46,11 @@ concurrency:
 
 jobs:
   hotfix:
+    # the callee pushes the ephemeral branch and reads in-flight runs; the caller sets the ceiling, so it must not hand down
+    # the repository default.
+    permissions:
+      contents: write
+      actions: read
     uses: a-novel-kit/workflows/.github/workflows/hotfix-run.yaml@v1.26.1
     with:
       line: ${{ inputs.line }}

@@ -48,6 +48,10 @@ run-name: "⏮ ROLLBACK epic:#${{ inputs.epic_number }} requested by @${{ github
 
 jobs:
   rollback:
+    # matches the callee; the caller sets the ceiling, so it must not hand down
+    # the repository default.
+    permissions:
+      contents: read
     uses: a-novel-kit/workflows/.github/workflows/epic-rollback-run.yaml@v1.26.1
     with:
       epic_number: ${{ inputs.epic_number }}

@@ -154,6 +154,8 @@ jobs:
       SUPER_ADMIN_PASSWORD: admin
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker-job@v1.26.1
         with:
@@ -218,6 +220,8 @@ jobs:
       PLATFORM_AUTH_URL: http://localhost:6000
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@v1.26.1
         with:
@@ -283,6 +287,8 @@ jobs:
       PLATFORM_AUTH_URL: http://localhost:6000
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@v1.26.1
         with:
