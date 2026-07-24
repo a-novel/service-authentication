@@ -65,7 +65,7 @@ func main() {
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient))
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
 
-	smtpSender := lib.NewBoundedSender(cfg.Smtp, env.SmtpMaxConcurrent)
+	smtpSender := smtp.NewBoundedSender(cfg.Smtp, env.SmtpMaxConcurrent)
 
 	// A production deployment missing SMTP_ADDR looks exactly like healthy mail loss: requests
 	// answer 202 while every email renders to stdout.

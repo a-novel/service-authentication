@@ -15,7 +15,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
@@ -137,7 +136,7 @@ func (service *ShortCodeCreateEmailUpdate) sendMail(
 
 	_, span := otel.Tracer().Start(ctx, "service.ShortCodeCreateEmailUpdate(sendMail)")
 	defer span.End()
-	defer lib.RecoverPanic(ctx, span)
+	defer otel.RecoverPanic(ctx, span)
 
 	span.SetAttributes(
 		attribute.String("user.email", request.Email),
