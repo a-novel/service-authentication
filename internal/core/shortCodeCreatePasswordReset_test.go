@@ -189,8 +189,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 					Return(nil)
 
 				if testCase.sendMailPanic {
-					// The delivery runs on a detached goroutine; a panic it fails to absorb ends
-					// the test binary, so surviving to Wait is the assertion.
+					// An unabsorbed panic ends the test binary; surviving to Wait is the assertion.
 					sendMail.Run(func(smtp.MailUsers, *template.Template, string, any) {
 						panic("mail delivery exploded")
 					})

@@ -67,8 +67,7 @@ func main() {
 
 	smtpSender := smtp.NewBoundedSender(cfg.Smtp, env.SmtpMaxConcurrent)
 
-	// A production deployment missing SMTP_ADDR looks exactly like healthy mail loss: requests
-	// answer 202 while every email renders to stdout.
+	// Missing SMTP_ADDR looks like healthy mail loss: 202 answered, mail rendered to stdout.
 	if _, debug := cfg.Smtp.(*smtp.DebugSender); debug {
 		log.Println("WARNING: SMTP_ADDR is not set; emails are printed to stdout by the debug sender and none are delivered")
 	}
