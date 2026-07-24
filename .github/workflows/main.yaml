@@ -32,37 +32,21 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/pull-bot@v1.26.1
-        id: app_token
+      - uses: a-novel-kit/workflows/node-actions/setup-node@v1.26.1
         with:
-          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: latest
-      # `npm install -g pnpm` took whatever was newest, which need not be the
-      # pnpm this repo declares. action-setup reads packageManager from
-      # package.json, so CI runs the version the repo pins.
-      - uses: pnpm/action-setup@v6
-      - name: setup github registry
+          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
+      # Not the `generate` umbrella: its generate:go leg is generated-go's, which has the setup-go.
+      - name: pnpm generate:mjml
         shell: bash
-        run: |
-          pnpm config set "@a-novel:registry" "https://npm.pkg.github.com"
-          pnpm config set "@a-novel-kit:registry" "https://npm.pkg.github.com"
-          pnpm config set "//npm.pkg.github.com/:_authToken" "${{ secrets.GITHUB_TOKEN }}"
-      - name: install dependencies
-        shell: bash
-        run: pnpm i --frozen-lockfile
-      - name: pnpm
-        shell: bash
-        run: pnpm generate
+        run: pnpm generate:mjml
       - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.26.1
         with:
-          fail_message: pnpm definitions are not up-to-date, please run 'pnpm generate' and commit the changes
+          fail_message: mail templates are not up-to-date, please run 'pnpm generate' and commit the changes
 
   lint-go:
     runs-on: ubuntu-latest
-    needs: [generated-go]
     permissions:
       contents: read
     steps:
@@ -154,7 +138,7 @@ jobs:
           version: "1.28.0"
 
   test-go:
-    needs: [lint-go, build-database]
+    needs: [build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -215,7 +199,6 @@ jobs:
   # test-go filters to /internal, which leaves /pkg uncovered.
   test-pkg:
     runs-on: ubuntu-latest
-    needs: [lint-go]
     permissions:
       contents: read
     outputs:
@@ -391,7 +374,7 @@ jobs:
 
   build-init:
     runs-on: ubuntu-latest
-    needs: [test-go, build-database]
+    needs: [build-database]
     permissions:
       contents: read
       packages: write
@@ -433,7 +416,7 @@ jobs:
             -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD}"
 
   build-rest:
-    needs: [test-go, build-database]
+    needs: [build-database]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -465,6 +448,11 @@ jobs:
           POSTGRES_DB: postgres
           POSTGRES_HOST_AUTH_METHOD: scram-sha-256
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       service-json-keys:
         image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.4.1
@@ -498,7 +486,6 @@ jobs:
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
   build-standalone-rest:
-    needs: [test-go]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -520,7 +507,6 @@ jobs:
           skip_healthcheck: true
 
   build-js:
-    needs: [test-pkg-js]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -548,7 +534,8 @@ jobs:
   publish-docs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && success()
-    needs: [build-js]
+    # lint-node is what checks the openapi files this deploys.
+    needs: [lint-node]
     # GitHub Pages allows a single deployment in flight per site; without this
     # group, concurrent master runs fail with "in progress deployment" errors.
     concurrency:
