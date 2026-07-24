@@ -7,12 +7,6 @@ on:
     branches:
       - "**"
 
-# A `needs:` edge here means the downstream job cannot run without something the upstream one
-# produces — an image digest, a coverage artifact ID, a file on disk. Edges that only expressed
-# "don't spend a runner if the previous check failed" are gone: the jobs sit on separate runners
-# with separate checkouts, so an upstream verdict never changes a downstream one, and each such
-# edge cost the entire graph one job's latency. merge-gate still holds the merge itself, so a red
-# check blocks the PR whether or not the rest of the graph ran.
 jobs:
   generated-go:
     runs-on: ubuntu-latest
@@ -38,19 +32,12 @@ jobs:
       contents: read
       packages: read
     steps:
-      # This used to inline pull-bot, setup-node, the registry config and the install by hand —
-      # the same sequence node-actions/setup-node ships, minus its pnpm cache and pinned to
-      # `node-version: latest` where the shared action tracks lts/*. Two copies of one setup drift;
-      # this one already had.
       - uses: a-novel-kit/workflows/node-actions/setup-node@v1.26.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
           client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
-      # generate:mjml, not the `generate` umbrella. That umbrella also runs generate:go, which the
-      # generated-go job above already runs — and runs correctly, against the toolchain go.mod
-      # pins, where this job has no setup-go step and would reach for whatever Go the runner image
-      # happens to ship. One `go generate` per workflow, from the pinned toolchain.
+      # Not the `generate` umbrella: its generate:go leg is generated-go's, which has the setup-go.
       - name: pnpm generate:mjml
         shell: bash
         run: pnpm generate:mjml
@@ -151,9 +138,6 @@ jobs:
           version: "1.28.0"
 
   test-go:
-    # build-database only: it hands over the image digest below. lint-go is not a dependency —
-    # it runs on its own runner against its own checkout, so its verdict cannot change this
-    # job's, and waiting on it only pushed the whole graph back by a lint run.
     needs: [build-database]
     runs-on: ubuntu-latest
     permissions:
@@ -464,10 +448,6 @@ jobs:
           POSTGRES_DB: postgres
           POSTGRES_HOST_AUTH_METHOD: scram-sha-256
           POSTGRES_INITDB_ARGS: --auth=scram-sha-256
-        # The only postgres service in the fleet that was missing this. Steps start once the
-        # container is up, which is earlier than the server accepts connections, and the first
-        # step here is run-migrations — an unguarded race whose only cover was the setup-go and
-        # module download that happen to run ahead of it.
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -554,10 +534,7 @@ jobs:
   publish-docs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && success()
-    # This job deploys two committed files, openapi.html and openapi.yaml, and builds nothing.
-    # lint-node is the gate that matches: its `lint:ci` runs redocly over openapi.yaml and
-    # prettier over both. It used to hang off build-js, which compiles the TypeScript client and
-    # never reads either file — a chain through test-pkg-js and the whole Go lane for no signal.
+    # lint-node is what checks the openapi files this deploys.
     needs: [lint-node]
     # GitHub Pages allows a single deployment in flight per site; without this
     # group, concurrent master runs fail with "in progress deployment" errors.
