@@ -25,6 +25,7 @@ import (
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/smtp"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
@@ -65,6 +66,12 @@ func main() {
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
 
 	smtpSender := lib.NewBoundedSender(cfg.Smtp, env.SmtpMaxConcurrent)
+
+	// A production deployment missing SMTP_ADDR looks exactly like healthy mail loss: requests
+	// answer 202 while every email renders to stdout.
+	if _, debug := cfg.Smtp.(*smtp.DebugSender); debug {
+		log.Println("WARNING: SMTP_ADDR is not set; emails are printed to stdout by the debug sender and none are delivered")
+	}
 
 	// =================================================================================================================
 	// DAO
