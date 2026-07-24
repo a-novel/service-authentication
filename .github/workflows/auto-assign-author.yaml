@@ -10,6 +10,6 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/assign-bot@v1.26.0
+      - uses: a-novel-kit/workflows/generic-actions/assign-bot@v1.26.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
