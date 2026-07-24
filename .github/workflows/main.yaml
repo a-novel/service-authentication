@@ -127,6 +127,7 @@ jobs:
           persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.26.0
         with:
+          config: .gitleaks.toml
           # renovate: datasource=github-releases depName=gitleaks/gitleaks
           version: "8.30.1"
 
