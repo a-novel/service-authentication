@@ -64,6 +64,8 @@ func main() {
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient))
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
 
+	smtpSender := lib.NewBoundedSender(cfg.Smtp, env.SmtpMaxConcurrent)
+
 	// =================================================================================================================
 	// DAO
 	// =================================================================================================================
@@ -92,21 +94,21 @@ func main() {
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		cfg.Smtp,
+		smtpSender,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		cfg.Smtp,
+		smtpSender,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		cfg.Smtp,
+		smtpSender,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
