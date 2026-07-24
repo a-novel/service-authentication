@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/google/uuid"
@@ -44,6 +45,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		serviceCreateMock *serviceCreateMock
 		daoSelectMock     *daoSelectMock
 		sendMail          bool
+		sendMailPanic     bool
 
 		expectErr error
 	}{
@@ -72,6 +74,33 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			},
 
 			sendMail: true,
+		},
+		{
+			name: "Success/SendMailPanic",
+
+			request: &core.ShortCodeCreateRegisterRequest{
+				Lang:  config.LangFR,
+				Email: "user@provider.com",
+			},
+
+			daoSelectMock: &daoSelectMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+
+			serviceCreateMock: &serviceCreateMock{
+				resp: &core.ShortCode{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Usage:     "test-usage",
+					Target:    "test-target",
+					Data:      []byte("test-data"),
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					PlainCode: "abcdef123456",
+				},
+			},
+
+			sendMail:      true,
+			sendMailPanic: true,
 		},
 		{
 			name: "Error/CreateShortCode",
@@ -141,7 +170,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			}
 
 			if testCase.sendMail {
-				smtpService.EXPECT().
+				sendMail := smtpService.EXPECT().
 					SendMail(
 						smtp.MailUsers{{Email: testCase.request.Email}},
 						mails.Mails.Register,
@@ -158,6 +187,14 @@ func TestShortCodeCreateRegister(t *testing.T) {
 						},
 					).
 					Return(nil)
+
+				if testCase.sendMailPanic {
+					// The delivery runs on a detached goroutine; a panic it fails to absorb ends
+					// the test binary, so surviving to Wait is the assertion.
+					sendMail.Run(func(smtp.MailUsers, *template.Template, string, any) {
+						panic("mail delivery exploded")
+					})
+				}
 			}
 
 			if testCase.daoSelectMock != nil {
