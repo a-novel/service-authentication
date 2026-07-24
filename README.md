@@ -129,6 +129,7 @@ Every variable is read from the process environment.
 | `SMTP_SENDER_PASSWORD`   | Sender account password. Sensitive — handle with care.                                       |         |
 | `SMTP_SENDER_DOMAIN`     | Sender domain; must match the host portion of `SMTP_ADDR`.                                   |         |
 | `SMTP_TIMEOUT`           | Send timeout.                                                                                | `20s`   |
+| `SMTP_MAX_CONCURRENT`    | Maximum number of emails delivered at once; further sends wait for a free slot.              | `16`    |
 | `SMTP_FORCE_UNENCRYPTED` | **Never set in production.** Allows plain credentials over an insecure connection; dev only. | `false` |
 
 **REST tuning** (images `rest`, `standalone-rest`):

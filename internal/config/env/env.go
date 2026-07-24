@@ -18,6 +18,8 @@ func getEnv(name string) string {
 // Default values for environment variables, if applicable.
 const (
 	SmtpTimeoutDefault = 20 * time.Second
+	// SmtpMaxConcurrentDefault bounds the SMTP connections a burst or a stalled server can hold open.
+	SmtpMaxConcurrentDefault = 16
 
 	PlatformEmailUpdateUrlDefault   = "/ext/email/validate"
 	PlatformPasswordResetUrlDefault = "/ext/password/reset"
@@ -79,6 +81,7 @@ var (
 	smtpSenderPassword   = getEnv("SMTP_SENDER_PASSWORD")
 	smtpSenderDomain     = getEnv("SMTP_SENDER_DOMAIN")
 	smtpTimeout          = getEnv("SMTP_TIMEOUT")
+	smtpMaxConcurrent    = getEnv("SMTP_MAX_CONCURRENT")
 	smtpForceUnencrypted = getEnv("SMTP_FORCE_UNENCRYPTED")
 
 	appName = getEnv("APP_NAME")
@@ -163,6 +166,8 @@ var (
 	SmtpSenderDomain = smtpSenderDomain
 	// SmtpTimeout bounds how long a single email send may take.
 	SmtpTimeout = config.LoadEnv(smtpTimeout, SmtpTimeoutDefault, config.DurationParser)
+	// SmtpMaxConcurrent caps concurrent email deliveries; excess sends wait for a slot.
+	SmtpMaxConcurrent = config.LoadEnv(smtpMaxConcurrent, SmtpMaxConcurrentDefault, config.IntParser)
 	// SmtpForceUnencrypted lets the SMTP client send plain credentials over a non-TLS
 	// connection, which Go otherwise permits only towards localhost. Local runs under
 	// Docker need it because the mail host answers to another name.

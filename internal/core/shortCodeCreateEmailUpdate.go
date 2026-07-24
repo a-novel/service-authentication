@@ -136,6 +136,7 @@ func (service *ShortCodeCreateEmailUpdate) sendMail(
 
 	_, span := otel.Tracer().Start(ctx, "service.ShortCodeCreateEmailUpdate(sendMail)")
 	defer span.End()
+	defer otel.RecoverPanic(ctx, span)
 
 	span.SetAttributes(
 		attribute.String("user.email", request.Email),

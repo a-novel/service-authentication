@@ -25,6 +25,7 @@ import (
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/smtp"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
@@ -64,6 +65,13 @@ func main() {
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient))
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
 
+	smtpSender := smtp.NewBoundedSender(cfg.Smtp, env.SmtpMaxConcurrent)
+
+	// Missing SMTP_ADDR looks like healthy mail loss: 202 answered, mail rendered to stdout.
+	if _, debug := cfg.Smtp.(*smtp.DebugSender); debug {
+		log.Println("WARNING: SMTP_ADDR is not set; emails are printed to stdout by the debug sender and none are delivered")
+	}
+
 	// =================================================================================================================
 	// DAO
 	// =================================================================================================================
@@ -92,21 +100,21 @@ func main() {
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		cfg.Smtp,
+		smtpSender,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		cfg.Smtp,
+		smtpSender,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		cfg.Smtp,
+		smtpSender,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)

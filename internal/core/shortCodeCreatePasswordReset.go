@@ -125,8 +125,9 @@ func (service *ShortCodeCreatePasswordReset) sendMail(
 ) {
 	defer service.wg.Done()
 
-	_, span := otel.Tracer().Start(ctx, "service.RequestPasswordReset.sendMail")
+	_, span := otel.Tracer().Start(ctx, "service.ShortCodeCreatePasswordReset(sendMail)")
 	defer span.End()
+	defer otel.RecoverPanic(ctx, span)
 
 	span.SetAttributes(
 		attribute.String("user.email", request.Email),
