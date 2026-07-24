@@ -38,33 +38,25 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/pull-bot@v1.26.1
-        id: app_token
+      # This used to inline pull-bot, setup-node, the registry config and the install by hand —
+      # the same sequence node-actions/setup-node ships, minus its pnpm cache and pinned to
+      # `node-version: latest` where the shared action tracks lts/*. Two copies of one setup drift;
+      # this one already had.
+      - uses: a-novel-kit/workflows/node-actions/setup-node@v1.26.1
         with:
-          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: latest
-      # `npm install -g pnpm` took whatever was newest, which need not be the
-      # pnpm this repo declares. action-setup reads packageManager from
-      # package.json, so CI runs the version the repo pins.
-      - uses: pnpm/action-setup@v6
-      - name: setup github registry
+          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
+      # generate:mjml, not the `generate` umbrella. That umbrella also runs generate:go, which the
+      # generated-go job above already runs — and runs correctly, against the toolchain go.mod
+      # pins, where this job has no setup-go step and would reach for whatever Go the runner image
+      # happens to ship. One `go generate` per workflow, from the pinned toolchain.
+      - name: pnpm generate:mjml
         shell: bash
-        run: |
-          pnpm config set "@a-novel:registry" "https://npm.pkg.github.com"
-          pnpm config set "@a-novel-kit:registry" "https://npm.pkg.github.com"
-          pnpm config set "//npm.pkg.github.com/:_authToken" "${{ secrets.GITHUB_TOKEN }}"
-      - name: install dependencies
-        shell: bash
-        run: pnpm i --frozen-lockfile
-      - name: pnpm
-        shell: bash
-        run: pnpm generate
+        run: pnpm generate:mjml
       - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.26.1
         with:
-          fail_message: pnpm definitions are not up-to-date, please run 'pnpm generate' and commit the changes
+          fail_message: mail templates are not up-to-date, please run 'pnpm generate' and commit the changes
 
   lint-go:
     runs-on: ubuntu-latest
