@@ -21,6 +21,11 @@ var errRecoveredPanic = errors.New("recovered panic")
 //
 // The HTTP middleware chain recovers panics on handler goroutines only. Work detached from the
 // request runs with nothing above it, and a panic that escapes a goroutine ends the whole process.
+//
+// It reports on the span the caller already holds and opens none of its own; the context is here
+// for trace-correlated logging.
+//
+// nosemgrep: agora-must-open-span
 func RecoverPanic(ctx context.Context, span trace.Span) {
 	rec := recover()
 	if rec == nil {
