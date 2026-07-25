@@ -21,9 +21,15 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: a-novel-kit/workflows/generic-actions/check-append-only@v1.27.1
+      - name: Check schema snapshots
+        uses: a-novel-kit/workflows/generic-actions/check-append-only@v1.27.1
         with:
           path: internal/models/migrations/testdata/schema
+          base: ${{ github.event.pull_request.base.sha }}
+      - name: Check migration SQL
+        uses: a-novel-kit/workflows/generic-actions/check-append-only@v1.27.1
+        with:
+          path: ":(glob)internal/models/migrations/*.sql"
           base: ${{ github.event.pull_request.base.sha }}
 
   generated-go:
