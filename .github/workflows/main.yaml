@@ -5,13 +5,50 @@ on:
     tags-ignore:
       - "**"
     branches:
-      - "**"
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  merge_group:
 
 jobs:
-  generated-go:
+  check-migration-snapshots:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: a-novel-kit/workflows/generic-actions/check-append-only@v1.27.1
+        with:
+          path: internal/models/migrations/testdata/schema
+          base: ${{ github.event.pull_request.base.sha }}
+
+  generated-go:
+    needs: [build-database]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+          POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
       - uses: actions/checkout@v7
         with:
@@ -22,7 +59,7 @@ jobs:
       - name: go generate
         shell: bash
         run: go generate ./...
-      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.26.2
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.27.1
         with:
           fail_message: go generate definitions are not up-to-date, please run 'go generate ./...' and commit the changes
 
@@ -32,7 +69,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/setup-node@v1.26.2
+      - uses: a-novel-kit/workflows/node-actions/setup-node@v1.27.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
@@ -41,7 +78,7 @@ jobs:
       - name: pnpm generate:mjml
         shell: bash
         run: pnpm generate:mjml
-      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.26.2
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.27.1
         with:
           fail_message: mail templates are not up-to-date, please run 'pnpm generate' and commit the changes
 
@@ -50,7 +87,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/go-actions/lint-go@v1.26.2
+      - uses: a-novel-kit/workflows/go-actions/lint-go@v1.27.1
 
   lint-node:
     runs-on: ubuntu-latest
@@ -58,7 +95,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/lint-node@v1.26.2
+      - uses: a-novel-kit/workflows/node-actions/lint-node@v1.27.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
@@ -73,7 +110,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.26.2
+      - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.27.1
         with:
           # renovate: datasource=github-releases depName=koalaman/shellcheck
           version: "0.11.0"
@@ -86,7 +123,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.26.2
+      - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.27.1
         with:
           # renovate: datasource=github-releases depName=hadolint/hadolint
           version: "2.14.0"
@@ -100,7 +137,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: a-novel-kit/workflows/security-actions/lint-semgrep@v1.26.2
+      - uses: a-novel-kit/workflows/security-actions/lint-semgrep@v1.27.1
         with:
           ruleset: service
           # renovate: datasource=docker depName=semgrep/semgrep
@@ -116,7 +153,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.26.2
+      - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.27.1
         with:
           config: .gitleaks.toml
           # renovate: datasource=github-releases depName=gitleaks/gitleaks
@@ -132,7 +169,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.26.2
+      - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.27.1
         with:
           # renovate: datasource=docker depName=ghcr.io/zizmorcore/zizmor
           version: "1.28.0"
@@ -182,7 +219,7 @@ jobs:
         run: |
           go run ./cmd/init
           go run ./cmd/init
-      - uses: a-novel-kit/workflows/go-actions/test-go@v1.26.2
+      - uses: a-novel-kit/workflows/go-actions/test-go@v1.27.1
         id: test
         with:
           filter_extra_patterns: "| grep /internal"
@@ -204,7 +241,7 @@ jobs:
     outputs:
       artifact-id: ${{ steps.test.outputs.artifact-id }}
     steps:
-      - uses: a-novel-kit/workflows/go-actions/test-go@v1.26.2
+      - uses: a-novel-kit/workflows/go-actions/test-go@v1.27.1
         id: test
         with:
           filter_extra_patterns: "| grep /pkg"
@@ -299,7 +336,7 @@ jobs:
       SUPER_ADMIN_PASSWORD: admin
       MAIL_HOST: http://0.0.0.0:8025
     steps:
-      - uses: a-novel-kit/workflows/node-actions/test-node@v1.26.2
+      - uses: a-novel-kit/workflows/node-actions/test-node@v1.27.1
         id: test
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -324,7 +361,7 @@ jobs:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.26.2
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.27.1
         id: build
         with:
           file: builds/database.Dockerfile
@@ -365,7 +402,7 @@ jobs:
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.26.2
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.27.1
         with:
           file: builds/migrations.Dockerfile
           image_name: ${{ github.repository }}/jobs/migrations
@@ -405,7 +442,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.26.2
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.27.1
         with:
           file: builds/init.Dockerfile
           image_name: ${{ github.repository }}/jobs/init
@@ -474,7 +511,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.26.2
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.27.1
         with:
           file: builds/rest.Dockerfile
           image_name: ${{ github.repository }}/rest
@@ -498,7 +535,7 @@ jobs:
     # integration run), so this job only builds + pushes it. skip_healthcheck
     # drops the redundant smoke run and the container constellation it needed.
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.26.2
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.27.1
         id: build
         with:
           file: builds/standalone.rest.Dockerfile
@@ -512,7 +549,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/build-node@v1.26.2
+      - uses: a-novel-kit/workflows/node-actions/build-node@v1.27.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
@@ -525,7 +562,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/codecov@v1.26.2
+      - uses: a-novel-kit/workflows/generic-actions/codecov@v1.27.1
         with:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
           coverage_files: coverage.txt,coverage_pkg.txt,coverage/*
