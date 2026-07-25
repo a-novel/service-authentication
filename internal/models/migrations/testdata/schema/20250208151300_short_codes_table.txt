@@ -1,0 +1,39 @@
+column	credentials.created_at	timestamp(0) with time zone NOT NULL
+column	credentials.email	text NOT NULL
+column	credentials.id	uuid NOT NULL
+column	credentials.password	text
+column	credentials.updated_at	timestamp(0) with time zone NOT NULL
+column	short_codes.code	text NOT NULL
+column	short_codes.created_at	timestamp(0) with time zone NOT NULL
+column	short_codes.data	bytea
+column	short_codes.deleted_at	timestamp(0) with time zone
+column	short_codes.deleted_comment	text
+column	short_codes.expires_at	timestamp(0) with time zone NOT NULL
+column	short_codes.id	uuid NOT NULL
+column	short_codes.target	text NOT NULL
+column	short_codes.usage	text NOT NULL
+comment	schema public	standard public schema
+constraint	credentials.credentials_created_at_not_null	NOT NULL created_at
+constraint	credentials.credentials_email_check	CHECK ((email <> ''::text))
+constraint	credentials.credentials_email_key	UNIQUE (email)
+constraint	credentials.credentials_email_not_null	NOT NULL email
+constraint	credentials.credentials_id_not_null	NOT NULL id
+constraint	credentials.credentials_pkey	PRIMARY KEY (id)
+constraint	credentials.credentials_updated_at_not_null	NOT NULL updated_at
+constraint	short_codes.short_codes_code_not_null	NOT NULL code
+constraint	short_codes.short_codes_created_at_not_null	NOT NULL created_at
+constraint	short_codes.short_codes_expires_at_not_null	NOT NULL expires_at
+constraint	short_codes.short_codes_id_not_null	NOT NULL id
+constraint	short_codes.short_codes_pkey	PRIMARY KEY (id)
+constraint	short_codes.short_codes_target_not_null	NOT NULL target
+constraint	short_codes.short_codes_usage_not_null	NOT NULL usage
+extension	plpgsql	1.0
+index	credentials_email_key	CREATE UNIQUE INDEX credentials_email_key ON public.credentials USING btree (email)
+index	credentials_pkey	CREATE UNIQUE INDEX credentials_pkey ON public.credentials USING btree (id)
+index	short_codes_created_at_idx	CREATE INDEX short_codes_created_at_idx ON public.short_codes USING btree (created_at)
+index	short_codes_deleted_idx	CREATE INDEX short_codes_deleted_idx ON public.short_codes USING btree (deleted_at, expires_at)
+index	short_codes_pkey	CREATE UNIQUE INDEX short_codes_pkey ON public.short_codes USING btree (id)
+index	short_codes_target_usage_idx	CREATE INDEX short_codes_target_usage_idx ON public.short_codes USING btree (target, usage)
+relation	credentials	r
+relation	short_codes	r
+schema	public	pg_database_owner=UC/pg_database_owner,=U/pg_database_owner
