@@ -1,0 +1,74 @@
+x-external-postgres-environment: &external-postgres-environment
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_USER: postgres
+  POSTGRES_DB: postgres
+  POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+  POSTGRES_INITDB_ARGS: --auth=scram-sha-256
+
+x-postgres-healthcheck: &postgres-healthcheck
+  test: ["CMD", "pg_isready"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+
+services:
+  postgres:
+    image: "${DATABASE_IMAGE:?DATABASE_IMAGE is required}"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
+    healthcheck: *postgres-healthcheck
+
+  mailserver:
+    image: "${MAILSERVER_IMAGE:?MAILSERVER_IMAGE is required}"
+    ports:
+      - "8025:8025"
+    environment:
+      MP_MAX_MESSAGES: "5000"
+      MP_SEND_API_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+      MP_SENDMAIL_FROM: noreply@agorastoryverse.com
+      MP_DISABLE_WAL: "true"
+
+  postgres-json-keys:
+    image: "${JSON_KEYS_DATABASE_IMAGE:?JSON_KEYS_DATABASE_IMAGE is required}"
+    environment: *external-postgres-environment
+    healthcheck: *postgres-healthcheck
+
+  service-json-keys:
+    image: "${JSON_KEYS_GRPC_IMAGE:?JSON_KEYS_GRPC_IMAGE is required}"
+    ports:
+      - "4001:8080"
+    depends_on:
+      postgres-json-keys:
+        condition: service_healthy
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
+      APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
+
+  standalone-rest:
+    image: "${STANDALONE_REST_IMAGE:?STANDALONE_REST_IMAGE is required}"
+    ports:
+      - "4000:8080"
+    depends_on:
+      mailserver:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      service-json-keys:
+        condition: service_healthy
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      SERVICE_JSON_KEYS_PORT: 8080
+      SERVICE_JSON_KEYS_HOST: service-json-keys
+      SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
+      SUPER_ADMIN_PASSWORD: admin
+      PLATFORM_AUTH_URL: "http://auth-platform"
+      SMTP_SENDER_DOMAIN: mailserver
+      SMTP_ADDR: mailserver:1025
+      SMTP_SENDER_NAME: Agora Storyverse [noreply]
+      SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
+      SMTP_SENDER_PASSWORD: noreply
+      SMTP_FORCE_UNENCRYPTED: "true"
