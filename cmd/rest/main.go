@@ -225,37 +225,39 @@ func main() {
 	}))
 	router.Use(cfg.HttpLogger.Logger())
 
-	router.Get("/ping", handlerPing.ServeHTTP)
-	router.Get("/healthcheck", handlerHealth.ServeHTTP)
+	router.Route("/v2", func(api chi.Router) {
+		api.Get("/ping", handlerPing.ServeHTTP)
+		api.Get("/healthcheck", handlerHealth.ServeHTTP)
 
-	router.Route("/session", func(r chi.Router) {
-		r.Put("/", handlerTokenCreate.ServeHTTP)
-		r.Put("/anon", handlerTokenCreateAnon.ServeHTTP)
+		api.Route("/session", func(r chi.Router) {
+			r.Put("/", handlerTokenCreate.ServeHTTP)
+			r.Put("/anon", handlerTokenCreateAnon.ServeHTTP)
 
-		withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
-		r.Patch("/", handlerTokenRefresh.ServeHTTP)
-	})
+			withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
+			r.Patch("/", handlerTokenRefresh.ServeHTTP)
+		})
 
-	router.Route("/credentials", func(r chi.Router) {
-		withAuth(r, "credentials:get").Get("/", handlerCredentialsGet.ServeHTTP)
-		withAuth(r, "credentials:exist").Head("/", handlerCredentialsExist.ServeHTTP)
-		withAuth(r, "credentials:list").Get("/all", handlerCredentialsList.ServeHTTP)
+		api.Route("/credentials", func(r chi.Router) {
+			withAuth(r, "credentials:get").Get("/", handlerCredentialsGet.ServeHTTP)
+			withAuth(r, "credentials:exist").Head("/", handlerCredentialsExist.ServeHTTP)
+			withAuth(r, "credentials:list").Get("/all", handlerCredentialsList.ServeHTTP)
 
-		withAuth(r, "credentials:create").Put("/", handlerCredentialsCreate.ServeHTTP)
-		withAuth(r, "credentials:email:patch").
-			Patch("/email", handlerCredentialsUpdateEmail.ServeHTTP)
-		withAuth(r, "credentials:password:patch").
-			Patch("/password", handlerCredentialsUpdatePassword.ServeHTTP)
-		withAuth(r, "credentials:password:reset").
-			Put("/password", handlerCredentialsResetPassword.ServeHTTP)
-		withAuth(r, "credentials:role:patch").
-			Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
-	})
+			withAuth(r, "credentials:create").Put("/", handlerCredentialsCreate.ServeHTTP)
+			withAuth(r, "credentials:email:patch").
+				Patch("/email", handlerCredentialsUpdateEmail.ServeHTTP)
+			withAuth(r, "credentials:password:patch").
+				Patch("/password", handlerCredentialsUpdatePassword.ServeHTTP)
+			withAuth(r, "credentials:password:reset").
+				Put("/password", handlerCredentialsResetPassword.ServeHTTP)
+			withAuth(r, "credentials:role:patch").
+				Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
+		})
 
-	router.Route("/short-code", func(r chi.Router) {
-		withAuth(r, "shortCode:register").Put("/register", handlerShortCodeCreateRegister.ServeHTTP)
-		withAuth(r, "shortCode:email:update").Put("/update-email", handlerShortCodeCreateEmailUpdate.ServeHTTP)
-		withAuth(r, "shortCode:password:reset").Put("/update-password", handlerShortCodeCreatePasswordReset.ServeHTTP)
+		api.Route("/short-code", func(r chi.Router) {
+			withAuth(r, "shortCode:register").Put("/register", handlerShortCodeCreateRegister.ServeHTTP)
+			withAuth(r, "shortCode:email:update").Put("/update-email", handlerShortCodeCreateEmailUpdate.ServeHTTP)
+			withAuth(r, "shortCode:password:reset").Put("/update-password", handlerShortCodeCreatePasswordReset.ServeHTTP)
+		})
 	})
 
 	// =================================================================================================================

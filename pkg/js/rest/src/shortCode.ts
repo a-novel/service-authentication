@@ -37,7 +37,7 @@ export async function shortCodeCreateEmailUpdate(
   accessToken: string,
   form: ShortCodeCreateEmailUpdateRequest
 ): Promise<void> {
-  return await api.fetchVoid("/short-code/update-email", {
+  return await api.fetchVoid("/v2/short-code/update-email", {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PUT",
     body: JSON.stringify(form),
@@ -50,7 +50,7 @@ export async function shortCodeCreatePasswordReset(
   accessToken: string,
   form: ShortCodeCreatePasswordResetRequest
 ): Promise<void> {
-  return await api.fetchVoid("/short-code/update-password", {
+  return await api.fetchVoid("/v2/short-code/update-password", {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PUT",
     body: JSON.stringify(form),
@@ -63,7 +63,7 @@ export async function shortCodeCreateRegister(
   accessToken: string,
   form: ShortCodeCreateRegisterRequest
 ): Promise<void> {
-  return await api.fetchVoid("/short-code/register", {
+  return await api.fetchVoid("/v2/short-code/register", {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PUT",
     body: JSON.stringify(form),

@@ -20,7 +20,7 @@ export type Claims = z.infer<typeof ClaimsSchema>;
 
 /** Returns the claims carried by the given access token, as resolved by the service. */
 export async function claimsGet(api: AuthenticationApi, accessToken: string): Promise<Claims> {
-  return await api.fetch("/session", ClaimsSchema, {
+  return await api.fetch("/v2/session", ClaimsSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "GET",
   });

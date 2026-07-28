@@ -28,25 +28,32 @@ import {
   registerUser,
 } from "@a-novel/service-authentication-rest-test";
 
+// The managed local test rail supplies a dynamic URL; legacy CI still exports MAIL_HOST.
+const mailUrl = (() => {
+  const value = process.env.MAIL_UI_URL ?? process.env.MAIL_HOST;
+  if (!value) throw new Error("MAIL_UI_URL or MAIL_HOST must be set");
+  return value;
+})();
+
 describe("credentialsCreate", () => {
   it("registers the user", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     await registerUser(api, preRegister);
   });
 
   it("does not register with wrong link", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     await expectStatus(registerUser(api, { ...preRegister, shortCode: "invalid" }), 403);
   });
 
   it("only registers once", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     await registerUser(api, preRegister);
     await expectStatus(registerUser(api, preRegister), 403);
   });
@@ -56,8 +63,8 @@ describe("credentialsCreate", () => {
 
     const email = generateRandomMail();
 
-    const preRegister1 = await preRegisterUser(api, process.env.MAIL_HOST!, email);
-    const preRegister2 = await preRegisterUser(api, process.env.MAIL_HOST!, email);
+    const preRegister1 = await preRegisterUser(api, mailUrl, email);
+    const preRegister2 = await preRegisterUser(api, mailUrl, email);
     await expectStatus(registerUser(api, preRegister1), 403);
     await registerUser(api, preRegister2);
   });
@@ -69,7 +76,7 @@ async function requestEmailUpdate(api: AuthenticationApi, token: Token, newEmail
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(process.env.MAIL_HOST!, `to:"${newEmail}" subject:"Email Update Request."`);
+  const mailData = await checkEmail(mailUrl, `to:"${newEmail}" subject:"Email Update Request."`);
 
   expect(mailData.html).toBeTruthy();
   const links = getHtmlMail(mailData.html as string, "a");
@@ -97,7 +104,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -133,7 +140,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -178,7 +185,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -189,7 +196,7 @@ describe("credentialsUpdateEmail", () => {
     const { shortCode, target, newEmail } = await requestEmailUpdate(api, userToken);
 
     // Register a new email before updating it.
-    const preRegister2 = await preRegisterUser(api, process.env.MAIL_HOST!, newEmail);
+    const preRegister2 = await preRegisterUser(api, mailUrl, newEmail);
     await registerUser(api, preRegister2);
 
     await expectStatus(
@@ -206,7 +213,7 @@ describe("credentialsUpdatePassword", () => {
   it("changes the user password", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -238,7 +245,7 @@ describe("credentialsUpdatePassword", () => {
   it("refuses to update if current password is incorrect", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -277,7 +284,7 @@ async function requestPasswordReset(api: AuthenticationApi, token: Token, email:
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(process.env.MAIL_HOST!, `to:"${email}" subject:"Password Reset Request."`);
+  const mailData = await checkEmail(mailUrl, `to:"${email}" subject:"Password Reset Request."`);
 
   expect(mailData.html).toBeTruthy();
   const links = getHtmlMail(mailData.html as string, "a");
@@ -304,7 +311,7 @@ describe("credentialsResetPassword", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const { shortCode, target } = await requestPasswordReset(api, anonToken, user.email);
@@ -336,7 +343,7 @@ describe("credentialsResetPassword", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const requestPasswordReset1 = await requestPasswordReset(api, anonToken, user.email);
@@ -370,7 +377,7 @@ describe("credentialsUpdateRole", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     expect(user.claims.roles).toStrictEqual([Role.User]);
@@ -394,7 +401,7 @@ describe("credentialsUpdateRole", () => {
   it("refuses user to change roles themselves", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const userToken = await tokenCreate(api, {
@@ -421,7 +428,7 @@ describe("credentialsGet", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const credentials = await credentialsGet(api, superAdminToken.accessToken, {
@@ -459,7 +466,7 @@ describe("credentialsExists", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const exists = await credentialsExists(api, superAdminToken.accessToken, {
@@ -494,7 +501,7 @@ describe("credentialsList", () => {
       password: process.env.SUPER_ADMIN_PASSWORD!,
     });
 
-    const preRegister = await preRegisterUser(api, process.env.MAIL_HOST!);
+    const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
     const credentials = await credentialsList(api, superAdminToken.accessToken, {});

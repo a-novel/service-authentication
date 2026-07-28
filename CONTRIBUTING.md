@@ -14,10 +14,10 @@ Once the service is up (`a-novel run start service-authentication/rest`), the RE
 
 ```bash
 # Liveness
-curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/ping
+curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/ping
 
 # Dependency check (Postgres, JSON Keys, SMTP)
-curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/healthcheck
+curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/healthcheck
 ```
 
 ### Authentication flows
@@ -32,10 +32,10 @@ PASSWORD=<PASSWORD>
 
 ```bash
 # Anonymous session — the entry point for register / login.
-ACCESS_TOKEN=$(curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session/anon | jq -r '.accessToken')
+ACCESS_TOKEN=$(curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/session/anon | jq -r '.accessToken')
 
 # Inspect the current session.
-curl -X GET http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session \
+curl -X GET http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/session \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
@@ -45,7 +45,7 @@ Registration is a two-step, email-verified flow: request a short code, read it f
 
 ```bash
 # Request a short code (emailed to the user).
-curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/short-code/register \
+curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/short-code/register \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"email\": \"$USER\", \"lang\": \"en\"}"
@@ -59,7 +59,7 @@ SHORT_CODE=$(
 
 # Complete registration with the code. Returns both tokens.
 TOKEN=$(
-  curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/credentials \
+  curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/credentials \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"email\": \"$USER\", \"password\": \"$PASSWORD\", \"shortCode\": \"$SHORT_CODE\"}"
@@ -72,7 +72,7 @@ REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 
 ```bash
 TOKEN=$(
-  curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session \
+  curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/session \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"email\": \"$USER\", \"password\": \"$PASSWORD\"}"
@@ -85,7 +85,7 @@ REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
 
 ```bash
 TOKEN=$(
-  curl -X PATCH http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/session \
+  curl -X PATCH http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/session \
     -H "Content-Type: application/json" \
     -d "{\"accessToken\": \"$ACCESS_TOKEN\", \"refreshToken\": \"$REFRESH_TOKEN\"}"
 )
@@ -123,7 +123,7 @@ Sessions are a pair of JWTs, both signed and verified through the [JSON Keys ser
 | Access token  | Authorizes API calls.           | Short (minutes) |
 | Refresh token | Mints a new pair without login. | Long (days)     |
 
-A client authenticates once, then uses the access token until it expires and the refresh token to roll a fresh pair (`PATCH /session`) without re-sending credentials.
+A client authenticates once, then uses the access token until it expires and the refresh token to roll a fresh pair (`PATCH /v2/session`) without re-sending credentials.
 
 ### Short codes
 

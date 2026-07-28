@@ -7,7 +7,7 @@ async function decodeRawHttpResponse<T>(response: Response): Promise<T> {
 }
 
 /**
- * Status of a single health-check dependency reported by the `/healthcheck` endpoint. The
+ * Status of a single health-check dependency reported by the `/v2/healthcheck` endpoint. The
  * endpoint is unauthenticated, so it carries the dependency's state alone; the failure
  * itself is recorded on the server's traces.
  */
@@ -54,7 +54,7 @@ export class AuthenticationApi {
 
   /** Checks that the server is reachable. Throws on any non-2xx response. */
   async ping(): Promise<void> {
-    await this.fetchVoid("/ping", { method: "GET" });
+    await this.fetchVoid("/v2/ping", { method: "GET" });
   }
 
   /**
@@ -63,6 +63,6 @@ export class AuthenticationApi {
    * so inspect each entry's `status` field to detect one.
    */
   async health(): Promise<Record<string, HealthDependency>> {
-    return await this.fetch("/healthcheck", undefined, { method: "GET" });
+    return await this.fetch("/v2/healthcheck", undefined, { method: "GET" });
   }
 }
