@@ -94,7 +94,7 @@ export async function credentialsGet(
   const params = new URLSearchParams();
   params.set("id", form.id);
 
-  return await api.fetch(`/credentials?${params.toString()}`, CredentialsSchema, {
+  return await api.fetch(`/v2/credentials?${params.toString()}`, CredentialsSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "GET",
   });
@@ -110,7 +110,7 @@ export async function credentialsExists(
   params.set("email", form.email);
 
   return await api
-    .fetchVoid(`/credentials?${params.toString()}`, {
+    .fetchVoid(`/v2/credentials?${params.toString()}`, {
       headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
       method: "HEAD",
     })
@@ -132,7 +132,7 @@ export async function credentialsList(
   params.set("offset", `${form.offset || 0}`);
   form.roles?.forEach((role) => params.append("roles", role));
 
-  return await api.fetch(`/credentials/all?${params.toString()}`, z.array(CredentialsSchema), {
+  return await api.fetch(`/v2/credentials/all?${params.toString()}`, z.array(CredentialsSchema), {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "GET",
   });
@@ -144,7 +144,7 @@ export async function credentialsCreate(
   accessToken: string,
   form: CredentialsCreateRequest
 ): Promise<Token> {
-  return await api.fetch("/credentials", TokenSchema, {
+  return await api.fetch("/v2/credentials", TokenSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PUT",
     body: JSON.stringify(form),
@@ -157,7 +157,7 @@ export async function credentialsUpdateEmail(
   accessToken: string,
   form: CredentialsUpdateEmailRequest
 ): Promise<Credentials> {
-  return await api.fetch("/credentials/email", CredentialsSchema, {
+  return await api.fetch("/v2/credentials/email", CredentialsSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PATCH",
     body: JSON.stringify(form),
@@ -170,7 +170,7 @@ export async function credentialsUpdatePassword(
   accessToken: string,
   form: CredentialsUpdatePasswordRequest
 ): Promise<Credentials> {
-  return await api.fetch("/credentials/password", CredentialsSchema, {
+  return await api.fetch("/v2/credentials/password", CredentialsSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PATCH",
     body: JSON.stringify(form),
@@ -183,7 +183,7 @@ export async function credentialsResetPassword(
   accessToken: string,
   form: CredentialsResetPasswordRequest
 ): Promise<Credentials> {
-  return await api.fetch("/credentials/password", CredentialsSchema, {
+  return await api.fetch("/v2/credentials/password", CredentialsSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PUT",
     body: JSON.stringify(form),
@@ -196,7 +196,7 @@ export async function credentialsUpdateRole(
   accessToken: string,
   form: CredentialsUpdateRoleRequest
 ): Promise<Credentials> {
-  return await api.fetch("/credentials/role", CredentialsSchema, {
+  return await api.fetch("/v2/credentials/role", CredentialsSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PATCH",
     body: JSON.stringify(form),

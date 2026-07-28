@@ -33,7 +33,7 @@ info:
     url: "https://raw.githubusercontent.com/a-novel/service-authentication/refs/heads/master/LICENSE"
 
 paths:
-  /ping:
+  /v2/ping:
     get:
       operationId: ping
       summary: Ping the server.
@@ -41,7 +41,7 @@ paths:
         A simple endpoint to check if the server is up and running. It always returns the same response.
 
         This does not report on the server's dependencies. To assess the server's actual health, use the
-        `/healthcheck` endpoint.
+        `/v2/healthcheck` endpoint.
       tags: [health]
       security: []
       responses:
@@ -52,7 +52,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /healthcheck:
+  /v2/healthcheck:
     get:
       operationId: healthcheck
       summary: Health diagnosis of the server.
@@ -68,7 +68,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /session:
+  /v2/session:
     get:
       operationId: claimsGet
       summary: Returns the claims of an authenticated user.
@@ -129,7 +129,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /session/anon:
+  /v2/session/anon:
     put:
       operationId: tokenCreateAnon
       summary: Create a new anonymous access token.
@@ -146,7 +146,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /credentials:
+  /v2/credentials:
     head:
       operationId: credentialsExists
       summary: Check if a given email is registered in the database.
@@ -201,7 +201,7 @@ paths:
       summary: Register a new user.
       description: |
         Create a new user account. The user must have a short-code available, generated during pre-registration. If not, 
-        use `[PUT] /short-code/register` first.
+        use `[PUT] /v2/short-code/register` first.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:create"]
@@ -221,7 +221,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /credentials/all:
+  /v2/credentials/all:
     get:
       operationId: credentialsList
       summary: Browse public credentials.
@@ -246,13 +246,13 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /credentials/email:
+  /v2/credentials/email:
     patch:
       operationId: emailUpdate
       summary: Update the user email.
       description: |
         Completes the email update process. The user must have a short-code available, generated during the initial 
-        phase. If not, use `[PUT] /short-code/update-email` first.
+        phase. If not, use `[PUT] /v2/short-code/update-email` first.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:email:patch"]
@@ -274,7 +274,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /credentials/password:
+  /v2/credentials/password:
     patch:
       operationId: passwordUpdate
       summary: Update the user password.
@@ -303,7 +303,7 @@ paths:
       summary: Reset the user password.
       description: |
         Completes the password reset process. The user must have a short-code available, generated during the initial 
-        phase. If not, use `[PUT] /short-code/update-password` first.
+        phase. If not, use `[PUT] /v2/short-code/update-password` first.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:password:reset"]
@@ -321,7 +321,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /credentials/role:
+  /v2/credentials/role:
     patch:
       operationId: roleUpdate
       summary: Update the user role.
@@ -347,7 +347,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /short-code/register:
+  /v2/short-code/register:
     put:
       operationId: registerInit
       summary: Start the registration process.
@@ -376,7 +376,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /short-code/update-email:
+  /v2/short-code/update-email:
     put:
       operationId: emailUpdateInit
       summary: Start the email update process.
@@ -405,7 +405,7 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /short-code/update-password:
+  /v2/short-code/update-password:
     put:
       operationId: passwordResetInit
       summary: Start the password reset process.

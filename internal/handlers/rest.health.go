@@ -22,7 +22,7 @@ const (
 )
 
 // RestHealthStatus is the JSON representation of a single dependency's health.
-// /healthcheck is unauthenticated and public, so the response carries no error
+// /v2/healthcheck is unauthenticated and public, so the response carries no error
 // message: raw errors routinely include internal hostnames, ports, or schema names.
 // Operators read the underlying error off the trace span.
 type RestHealthStatus struct {
@@ -52,7 +52,7 @@ type RestHealthApiJsonKeys interface {
 	) (*servicejsonkeys.StatusResponse, error)
 }
 
-// RestHealth is the handler backing /healthcheck. It probes each downstream
+// RestHealth is the handler backing /v2/healthcheck. It probes each downstream
 // dependency and reports their combined status; see RestHealthStatus for why the
 // response withholds error detail.
 type RestHealth struct {

@@ -8,7 +8,7 @@ services:
     ports:
       # SMTP listener for the rest target, UI for the operator's browser. A rest
       # process on the host needs the SMTP publish to reach mailpit, or
-      # /healthcheck reports "client:smtp down".
+      # /v2/healthcheck reports "client:smtp down".
       - "${SMTP_PORT}:1025"
       - "${MAIL_UI_PORT}:8025"
     networks:
