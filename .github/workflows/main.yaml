@@ -161,7 +161,7 @@ jobs:
       - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.28.1
         with:
           # renovate: datasource=docker depName=ghcr.io/zizmorcore/zizmor
-          version: "1.28.0"
+          version: "1.29.0"
 
   test-go:
     needs: [build-database]
