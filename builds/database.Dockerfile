@@ -25,7 +25,7 @@ EXPOSE 5432
 
 # Postgres does not provide a healthcheck by default.
 HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
-  CMD pg_isready || exit 1
+  CMD ["pg_isready"]
 
 # Use our entrypoint instead of the native one.
 ENTRYPOINT ["/usr/local/bin/database.entrypoint.sh"]
