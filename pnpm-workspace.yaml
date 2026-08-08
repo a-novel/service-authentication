@@ -53,6 +53,8 @@ minimumReleaseAgeExclude:
   - brace-expansion@5.0.7 || 5.0.8 || 5.0.9
   - js-yaml@4.3.0 || 5.2.2
   - svgo@4.0.2
+  - "@sveltejs/kit@2.70.2"
+  - nanoid@3.3.17
 
 onlyBuiltDependencies:
   - core-js
@@ -62,6 +64,7 @@ onlyBuiltDependencies:
 
 overrides:
   "@sveltejs/kit@<=2.57.0": ">=2.57.1"
+  "@sveltejs/kit@<=2.70.1": ^2.70.2
   brace-expansion@<5.0.5: ">=5.0.5"
   brace-expansion@<=5.0.7: ^5.0.8
   brace-expansion@>=3.0.0 <5.0.7: ^5.0.7
@@ -87,6 +90,7 @@ overrides:
   minimatch@>=5.0.0 <5.1.8: ">=5.1.8"
   minimatch@>=9.0.0 <9.0.6: ">=9.0.6"
   minimatch@>=9.0.0 <9.0.7: ">=9.0.7"
+  nanoid@<3.3.17: ^3.3.17
   postcss@<8.5.10: ">=8.5.10"
   protobufjs@<7.5.5: ">=7.5.5"
   rollup@>=4.0.0 <4.59.0: ">=4.59.0"
