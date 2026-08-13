@@ -3,7 +3,7 @@
 #
 # Note: this image does not run the migrations from the main image, make sure to call the appropriate
 # patch for this.
-FROM docker.io/library/postgres:18.4
+FROM docker.io/library/postgres:18.6
 
 ENV POSTGRES_INITDB_ARGS=--auth=scram-sha-256
 
