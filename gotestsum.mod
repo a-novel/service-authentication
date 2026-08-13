@@ -1,6 +1,6 @@
 module github.com/a-novel/service-authentication/v2/gotestsum
 
-go 1.26.5
+go 1.26.6
 
 tool gotest.tools/gotestsum
 
