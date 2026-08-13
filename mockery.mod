@@ -1,6 +1,6 @@
 module github.com/a-novel/service-authentication/v2/mockery
 
-go 1.26.5
+go 1.26.6
 
 tool github.com/vektra/mockery/v3
 
