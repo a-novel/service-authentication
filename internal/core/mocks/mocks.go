@@ -306,8 +306,8 @@ func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
-	_c.Call.Return(v, err)
+func (_c *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call) Return(claimsSignResponse *servicejsonkeys.ClaimsSignResponse, err error) *MockCredentialsCreateServiceSignClaims_ClaimsSign_Call {
+	_c.Call.Return(claimsSignResponse, err)
 	return _c
 }
 
@@ -3019,8 +3019,8 @@ func (_c *mocktokenPairSigner_ClaimsSign_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *mocktokenPairSigner_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *mocktokenPairSigner_ClaimsSign_Call {
-	_c.Call.Return(v, err)
+func (_c *mocktokenPairSigner_ClaimsSign_Call) Return(claimsSignResponse *servicejsonkeys.ClaimsSignResponse, err error) *mocktokenPairSigner_ClaimsSign_Call {
+	_c.Call.Return(claimsSignResponse, err)
 	return _c
 }
 
@@ -3224,8 +3224,8 @@ func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
-	_c.Call.Return(v, err)
+func (_c *MockTokenCreateServiceSignClaims_ClaimsSign_Call) Return(claimsSignResponse *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenCreateServiceSignClaims_ClaimsSign_Call {
+	_c.Call.Return(claimsSignResponse, err)
 	return _c
 }
 
@@ -3334,8 +3334,8 @@ func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
-	_c.Call.Return(v, err)
+func (_c *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call) Return(claimsSignResponse *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenCreateAnonSignClaimsService_ClaimsSign_Call {
+	_c.Call.Return(claimsSignResponse, err)
 	return _c
 }
 
@@ -3539,8 +3539,8 @@ func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Return(v *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
-	_c.Call.Return(v, err)
+func (_c *MockTokenRefreshServiceSignClaims_ClaimsSign_Call) Return(claimsSignResponse *servicejsonkeys.ClaimsSignResponse, err error) *MockTokenRefreshServiceSignClaims_ClaimsSign_Call {
+	_c.Call.Return(claimsSignResponse, err)
 	return _c
 }
 

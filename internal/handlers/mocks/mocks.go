@@ -1013,8 +1013,8 @@ func (_c *MockRestHealthApiJsonKeys_Status_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockRestHealthApiJsonKeys_Status_Call) Return(v *servicejsonkeys.StatusResponse, err error) *MockRestHealthApiJsonKeys_Status_Call {
-	_c.Call.Return(v, err)
+func (_c *MockRestHealthApiJsonKeys_Status_Call) Return(statusResponse *servicejsonkeys.StatusResponse, err error) *MockRestHealthApiJsonKeys_Status_Call {
+	_c.Call.Return(statusResponse, err)
 	return _c
 }
 
