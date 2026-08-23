@@ -1,6 +1,6 @@
 module github.com/a-novel/service-authentication/v2
 
-go 1.26.6
+go 1.27.0
 
 require (
 	github.com/a-novel-kit/golib v0.30.1
