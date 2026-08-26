@@ -48,7 +48,7 @@ jobs:
       tag: ${{ steps.core.outputs.tag }}
     steps:
       - id: core
-        uses: a-novel-kit/workflows/publish-actions/release-core@v1.29.1
+        uses: a-novel-kit/workflows/publish-actions/release-core@v1.30.0
         with:
           # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
           cli_version: "1.7.5"
@@ -67,7 +67,7 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.29.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.30.0
         with:
           file: builds/database.Dockerfile
           image_name: ${{ github.repository }}/database
@@ -97,7 +97,7 @@ jobs:
           services: postgres
           database_image: ghcr.io/a-novel/service-authentication/database:${{ needs.release.outputs.tag }}
           registry_login: "true"
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.29.1
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.30.0
         with:
           file: builds/migrations.Dockerfile
           image_name: ${{ github.repository }}/jobs/migrations
@@ -124,7 +124,7 @@ jobs:
           persist-credentials: false
       - *start-release-database
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.29.1
+      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.30.0
         with:
           file: builds/init.Dockerfile
           image_name: ${{ github.repository }}/jobs/init
@@ -160,7 +160,7 @@ jobs:
           database_image: ghcr.io/a-novel/service-authentication/database:${{ needs.release.outputs.tag }}
           registry_login: "true"
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.29.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.30.0
         with:
           file: builds/rest.Dockerfile
           image_name: ${{ github.repository }}/rest
@@ -192,7 +192,7 @@ jobs:
           persist-credentials: false
       - *start-release-build-dependencies
       - uses: ./.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.29.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.30.0
         with:
           file: builds/standalone.rest.Dockerfile
           image_name: ${{ github.repository }}/standalone-rest
@@ -214,7 +214,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/npm@v1.29.1
+      - uses: a-novel-kit/workflows/publish-actions/npm@v1.30.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.PUBLISH_BOT_PRIVATE_KEY }}
@@ -236,7 +236,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/archive-board-items@v1.29.1
+      - uses: a-novel-kit/workflows/generic-actions/archive-board-items@v1.30.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
