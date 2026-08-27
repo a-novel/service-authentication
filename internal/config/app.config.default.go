@@ -79,6 +79,7 @@ var AppPresetDefault = App{
 		Addr:                env.SmtpAddr,
 		Name:                env.SmtpSenderName,
 		Email:               env.SmtpSenderEmail,
+		Username:            env.SmtpUsername,
 		Password:            env.SmtpSenderPassword,
 		Domain:              env.SmtpSenderDomain,
 		ForceUnencryptedTls: env.SmtpForceUnencrypted,

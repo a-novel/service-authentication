@@ -78,6 +78,7 @@ var (
 	smtpAddr             = getEnv("SMTP_ADDR")
 	smtpSenderName       = getEnv("SMTP_SENDER_NAME")
 	smtpSenderEmail      = getEnv("SMTP_SENDER_EMAIL")
+	smtpUsername         = getEnv("SMTP_USERNAME")
 	smtpSenderPassword   = getEnv("SMTP_SENDER_PASSWORD")
 	smtpSenderDomain     = getEnv("SMTP_SENDER_DOMAIN")
 	smtpTimeout          = getEnv("SMTP_TIMEOUT")
@@ -159,8 +160,11 @@ var (
 	SmtpSenderName = smtpSenderName
 	// SmtpSenderEmail is the address outgoing emails are sent from.
 	SmtpSenderEmail = smtpSenderEmail
-	// SmtpSenderPassword is the plain password used to authenticate the SmtpSenderEmail account. It is a sensitive
-	// value and should be handled accordingly.
+	// SmtpUsername is the identity used for SMTP authentication. An empty value lets the sender
+	// reuse SmtpSenderEmail.
+	SmtpUsername = smtpUsername
+	// SmtpSenderPassword is the credential used for SMTP authentication. It is sensitive and
+	// should be handled accordingly.
 	SmtpSenderPassword = smtpSenderPassword
 	// SmtpSenderDomain is the domain used when sending emails. It should match the host of SmtpAddr.
 	SmtpSenderDomain = smtpSenderDomain
