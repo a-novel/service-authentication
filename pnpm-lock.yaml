@@ -131,7 +131,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.6.3(zod@4.4.3)
+        version: 1.6.3(zod@4.5.1)
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -140,16 +140,16 @@ importers:
         version: 8.2.2(@types/node@25.7.0)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)
       zod:
         specifier: ^4.1.12
-        version: 4.4.3
+        version: 4.5.1
 
   pkg/js/rest-test:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.6.3(zod@4.4.3)
+        version: 1.6.3(zod@4.5.1)
       '@a-novel-kit/nodelib-test':
         specifier: ^1.3.18
-        version: 1.6.3(@a-novel-kit/nodelib-browser@1.6.3(zod@4.4.3))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))
+        version: 1.6.3(@a-novel-kit/nodelib-browser@1.6.3(zod@4.5.1))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../rest
@@ -176,16 +176,16 @@ importers:
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@25.7.0)(@vitest/browser-playwright@4.1.11)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))(vite@8.2.2(@types/node@25.7.0)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
       zod:
         specifier: ^4.1.12
-        version: 4.4.3
+        version: 4.5.1
 
   pkg/js/test/rest:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^1.3.18
-        version: 1.6.3(zod@4.4.3)
+        version: 1.6.3(zod@4.5.1)
       '@a-novel-kit/nodelib-test':
         specifier: ^1.3.18
-        version: 1.6.3(@a-novel-kit/nodelib-browser@1.6.3(zod@4.4.3))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))
+        version: 1.6.3(@a-novel-kit/nodelib-browser@1.6.3(zod@4.5.1))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../../rest
@@ -4377,14 +4377,14 @@ packages:
   zimmerframe@1.1.4:
     resolution: {integrity: sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ==}
 
-  zod@4.4.3:
-    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+  zod@4.5.1:
+    resolution: {integrity: sha512-P3GqeAEOEDqKvafVGLezbg+39YW/ze4xrD4qdS0adOY8eoI3zfjv1PQM4UwQzgT8mZKXEbqtVt8K+ZKGqkMFKg==}
 
 snapshots:
 
-  '@a-novel-kit/nodelib-browser@1.6.3(zod@4.4.3)':
+  '@a-novel-kit/nodelib-browser@1.6.3(zod@4.5.1)':
     dependencies:
-      zod: 4.4.3
+      zod: 4.5.1
 
   '@a-novel-kit/nodelib-config@1.6.3(e48b96b69d60ff422f8d9d836b18b29d)':
     dependencies:
@@ -4417,15 +4417,15 @@ snapshots:
       vitest: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/browser-playwright@4.1.11)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.12.10(@types/node@24.13.3)(typescript@6.0.3))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
       yaml: 2.9.0
 
-  '@a-novel-kit/nodelib-test@1.6.3(@a-novel-kit/nodelib-browser@1.6.3(zod@4.4.3))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))':
+  '@a-novel-kit/nodelib-test@1.6.3(@a-novel-kit/nodelib-browser@1.6.3(zod@4.5.1))(msw@2.12.10(@types/node@24.13.3)(typescript@5.9.3))':
     dependencies:
-      '@a-novel-kit/nodelib-browser': 1.6.3(zod@4.4.3)
+      '@a-novel-kit/nodelib-browser': 1.6.3(zod@4.5.1)
       lodash-es: 4.18.1
       msw: 2.12.10(@types/node@24.13.3)(typescript@5.9.3)
 
-  '@a-novel-kit/nodelib-test@1.6.3(@a-novel-kit/nodelib-browser@1.6.3(zod@4.4.3))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))':
+  '@a-novel-kit/nodelib-test@1.6.3(@a-novel-kit/nodelib-browser@1.6.3(zod@4.5.1))(msw@2.12.10(@types/node@25.7.0)(typescript@6.0.3))':
     dependencies:
-      '@a-novel-kit/nodelib-browser': 1.6.3(zod@4.4.3)
+      '@a-novel-kit/nodelib-browser': 1.6.3(zod@4.5.1)
       lodash-es: 4.18.1
       msw: 2.12.10(@types/node@25.7.0)(typescript@6.0.3)
 
@@ -9207,4 +9207,4 @@ snapshots:
 
   zimmerframe@1.1.4: {}
 
-  zod@4.4.3: {}
+  zod@4.5.1: {}
