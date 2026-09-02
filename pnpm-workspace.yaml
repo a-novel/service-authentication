@@ -71,6 +71,7 @@ overrides:
   brace-expansion@<=5.0.7: ^5.0.8
   brace-expansion@>=3.0.0 <5.0.7: ^5.0.7
   brace-expansion@>=4.0.0 <5.0.9: ^5.0.9
+  browserslist@<=4.28.6: ^4.28.7
   cookie@<0.7.0: ">=0.7.0"
   deepmerge-ts@<8.0.0: ^8.0.0
   dompurify@<=3.3.3: ">=3.4.0"
