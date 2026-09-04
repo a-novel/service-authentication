@@ -3,6 +3,7 @@ package config
 import (
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/uptrace/bun/driver/pgdriver"
 
@@ -10,6 +11,8 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )
+
+const postgresDialTimeout = 3 * time.Minute
 
 // PostgresConnection describes how to reach PostgreSQL. Host selects the discrete
 // fields; an empty Host selects the legacy DSN fallback.
@@ -44,7 +47,8 @@ func NewPostgresPreset(
 	maxOpenConns int,
 	maxIdleConns int,
 ) *postgrespresets.Default {
-	preset := postgrespresets.NewDefault(connection.options()...)
+	options := append(connection.options(), pgdriver.WithDialTimeout(postgresDialTimeout))
+	preset := postgrespresets.NewDefault(options...)
 	preset.MaxOpenConns = maxOpenConns
 	preset.MaxIdleConns = maxIdleConns
 

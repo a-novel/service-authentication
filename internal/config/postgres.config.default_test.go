@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -100,6 +101,7 @@ func TestPostgresConnection(t *testing.T) {
 			require.Equal(t, testCase.expectPassword, driverConfig.Password)
 			require.Equal(t, testCase.expectDatabase, driverConfig.Database)
 			require.Equal(t, testCase.expectTLSEnabled, driverConfig.TLSConfig != nil)
+			require.Equal(t, 3*time.Minute, driverConfig.DialTimeout)
 			require.Equal(t, 12, preset.MaxOpenConns)
 			require.Equal(t, 8, preset.MaxIdleConns)
 		})
