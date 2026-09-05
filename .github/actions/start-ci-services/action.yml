@@ -23,7 +23,7 @@ inputs:
     description: JSON keys gRPC image reference.
   mailserver_image:
     required: false
-    default: ghcr.io/axllent/mailpit:v1.31.0
+    default: ghcr.io/axllent/mailpit:v1.31.1
     description: Mailpit image reference.
   registry_login:
     required: false
