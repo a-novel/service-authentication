@@ -156,7 +156,7 @@ func main() {
 	// =================================================================================================================
 
 	handlerPing := handlers.NewPing()
-	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.Smtp)
+	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.Smtp, cfg.Logger)
 
 	handlerClaimsGet := handlers.NewClaimsGet(cfg.Logger)
 
