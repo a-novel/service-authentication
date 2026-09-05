@@ -63,7 +63,8 @@ type RestHealthApiJsonKeys interface {
 	) (*servicejsonkeys.StatusResponse, error)
 }
 
-// RestHealth backs /v2/healthcheck with public up/down states only.
+// RestHealth reports every dependency's public up/down state and returns HTTP 503
+// when any probe fails.
 type RestHealth struct {
 	apiJsonKeys RestHealthApiJsonKeys
 	clientSmtp  RestHealthClientSmtp
@@ -87,11 +88,34 @@ func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.Health")
 	defer span.End()
 
-	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, map[string]any{
-		"client:postgres": NewRestHealthStatus(handler.reportPostgres(ctx)),
-		"client:smtp":     NewRestHealthStatus(handler.reportSmtp(ctx)),
-		"api:jsonKeys":    NewRestHealthStatus(handler.reportJsonKeys(ctx)),
-	})
+	statusCode := http.StatusOK
+	statusResp := map[string]any{}
+
+	err := handler.reportPostgres(ctx)
+	if err != nil {
+		_ = otel.ReportError(span, err)
+		statusCode = http.StatusServiceUnavailable
+	}
+
+	statusResp["client:postgres"] = NewRestHealthStatus(err)
+
+	err = handler.reportSmtp(ctx)
+	if err != nil {
+		_ = otel.ReportError(span, err)
+		statusCode = http.StatusServiceUnavailable
+	}
+
+	statusResp["client:smtp"] = NewRestHealthStatus(err)
+
+	err = handler.reportJsonKeys(ctx)
+	if err != nil {
+		_ = otel.ReportError(span, err)
+		statusCode = http.StatusServiceUnavailable
+	}
+
+	statusResp["api:jsonKeys"] = NewRestHealthStatus(err)
+
+	httpf.SendJSONStatus(ctx, w, span, statusCode, statusResp)
 }
 
 func (handler *RestHealth) reportPostgres(ctx context.Context) error {
@@ -105,11 +129,10 @@ func (handler *RestHealth) reportPostgres(ctx context.Context) error {
 
 	pgdb, ok := pg.(*bun.DB)
 	if !ok {
-		// A transaction exposes no pool to ping.
-		return nil
+		return otel.ReportError(span, postgres.ErrNoDbInContext)
 	}
 
-	err = pgdb.Ping()
+	err = pgdb.PingContext(ctx)
 	if err != nil {
 		return otel.ReportError(span, err)
 	}

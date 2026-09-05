@@ -58,9 +58,8 @@ export class AuthenticationApi {
   }
 
   /**
-   * Returns the health status of every service dependency, keyed by dependency name.
-   * The endpoint always responds 200; a degraded dependency shows as a `down` entry,
-   * so inspect each entry's `status` field to detect one.
+   * Returns the dependency health report when every probe succeeds.
+   * Throws on HTTP 503 when any dependency is unhealthy.
    */
   async health(): Promise<Record<string, HealthDependency>> {
     return await this.fetch("/v2/healthcheck", undefined, { method: "GET" });

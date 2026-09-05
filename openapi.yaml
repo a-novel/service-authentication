@@ -57,11 +57,14 @@ paths:
       operationId: healthcheck
       summary: Health diagnosis of the server.
       description: |
-        Performs a complete health diagnosis of the server dependencies, by trying to reach them each.
+        Probes every dependency and returns HTTP 200 only when all are healthy, or HTTP 503 otherwise.
+        Both responses include the complete dependency report, with sanitized up/down states.
       tags: [health]
       security: []
       responses:
         "200":
+          $ref: "#/components/responses/health"
+        "503":
           $ref: "#/components/responses/health"
         "418":
           $ref: "#/components/responses/teapot"
@@ -443,12 +446,14 @@ components:
             examples: [pong]
 
     health:
-      description: Summary of the server dependencies.
+      description: Complete dependency report; HTTP 200 means all are up, HTTP 503 means at least one is down.
       content:
         application/json:
           schema:
             type: object
             required: ["client:postgres", "client:smtp", "api:jsonKeys"]
+            additionalProperties:
+              $ref: "#/components/schemas/healthStatus"
             properties:
               "client:postgres":
                 $ref: "#/components/schemas/healthStatus"
