@@ -8,8 +8,8 @@ cloud.google.com/go/compute/metadata v0.9.0 h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdB
 cloud.google.com/go/compute/metadata v0.9.0/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.36.0 h1:3SdxXLkgAfiHRWcGTq6fneq9jgoJzneiY0yPQnjoT2E=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.36.0/go.mod h1:1iIdl0k+ppn9wT0wzR9H7HkSvIui/4qgtnKW10cQtds=
-github.com/a-novel-kit/golib v0.31.0 h1:QgcaLEplphjHfKnT4vh4rho9YnvFphr16bMm4qUQLrM=
-github.com/a-novel-kit/golib v0.31.0/go.mod h1:AVsgswseGgREzUBF4VHJtchM3nj2SQ5XfaAMvUExKS8=
+github.com/a-novel-kit/golib v0.31.1-0.20260905210723-c06eba7f60a3 h1:r7gFfc/1gdnWAdgI19wXkr9hP4C0wAEUl7I9aOBoPL4=
+github.com/a-novel-kit/golib v0.31.1-0.20260905210723-c06eba7f60a3/go.mod h1:AVsgswseGgREzUBF4VHJtchM3nj2SQ5XfaAMvUExKS8=
 github.com/a-novel-kit/jwt/v2 v2.2.1 h1:Oqu29DG6k9/v3Eo3uLpYPCGP1c8xp4cFcjaVlUpR4oM=
 github.com/a-novel-kit/jwt/v2 v2.2.1/go.mod h1:QLLGdh58mLRNb0SiRCrYww2EJrdyaMSVKPn3jovPEQg=
 github.com/a-novel/service-json-keys/v2 v2.5.3 h1:nPgYgcTTpPGjXovaFAYy9oclm0ndRaqcgFZTK42gpyY=
