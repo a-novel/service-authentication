@@ -13,7 +13,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
@@ -64,9 +63,9 @@ func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.R
 	})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			dao.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
+			core.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
 			// The select raises this when the target or actor credentials are missing.
-			dao.ErrCredentialsSelectNotFound:               http.StatusNotFound,
+			core.ErrCredentialsGetNotFound:                 http.StatusNotFound,
 			core.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
 			core.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,
 			core.ErrCredentialsUpdateRoleSelfUpdate:        http.StatusForbidden,

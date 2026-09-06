@@ -15,7 +15,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
@@ -87,7 +86,7 @@ func TestCredentialsGet(t *testing.T) {
 				req: &core.CredentialsGetRequest{
 					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: dao.ErrCredentialsSelectNotFound,
+				err: core.ErrCredentialsGetNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,

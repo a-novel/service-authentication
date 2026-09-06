@@ -17,7 +17,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -97,7 +96,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: dao.ErrCredentialsUpdateRoleNotFound,
+				err: core.ErrCredentialsUpdateRoleNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,
@@ -120,7 +119,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 				// A missing target user is surfaced by the credentials select, not the update.
-				err: dao.ErrCredentialsSelectNotFound,
+				err: core.ErrCredentialsGetNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,

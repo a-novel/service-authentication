@@ -14,7 +14,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
@@ -82,7 +81,7 @@ func TestCredentialsCreate(t *testing.T) {
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 				},
-				err: dao.ErrCredentialsInsertAlreadyExists,
+				err: core.ErrCredentialsCreateAlreadyExists,
 			},
 
 			expectStatus: http.StatusConflict,
@@ -102,7 +101,7 @@ func TestCredentialsCreate(t *testing.T) {
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 				},
-				err: dao.ErrShortCodeSelectNotFound,
+				err: core.ErrShortCodeNotFound,
 			},
 
 			expectStatus: http.StatusForbidden,

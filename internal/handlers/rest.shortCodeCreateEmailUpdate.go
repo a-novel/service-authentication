@@ -13,7 +13,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
@@ -66,7 +65,7 @@ func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *h
 	})
 	if err != nil {
 		// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
-		if !errors.Is(err, dao.ErrCredentialsUpdateEmailAlreadyExists) {
+		if !errors.Is(err, core.ErrCredentialsUpdateEmailAlreadyExists) {
 			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 				core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			}, err)

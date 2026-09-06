@@ -11,7 +11,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 type CredentialsGetService interface {
@@ -49,8 +48,8 @@ func (handler *CredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			dao.ErrCredentialsSelectNotFound: http.StatusNotFound,
-			core.ErrInvalidRequest:           http.StatusUnprocessableEntity,
+			core.ErrCredentialsGetNotFound: http.StatusNotFound,
+			core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
 		}, err)
 
 		return
