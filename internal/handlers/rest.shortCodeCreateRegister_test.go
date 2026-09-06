@@ -100,6 +100,20 @@ func TestShortCodeCreateRegister(t *testing.T) {
 
 			expectStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "Error/MultipleValues",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{} {}`)),
+
+			expectStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Error/TrailingGarbage",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{} garbage`)),
+
+			expectStatus: http.StatusBadRequest,
+		},
 	}
 
 	for _, testCase := range testCases {

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -39,11 +38,9 @@ func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *htt
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsResetPassword")
 	defer span.End()
 
-	decoder := json.NewDecoder(r.Body)
-
 	var request CredentialsResetPasswordRequest
 
-	err := decoder.Decode(&request)
+	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 

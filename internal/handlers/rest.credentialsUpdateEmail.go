@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -36,11 +35,9 @@ func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsUpdateEmail")
 	defer span.End()
 
-	decoder := json.NewDecoder(r.Body)
-
 	var request CredentialsUpdateEmailRequest
 
-	err := decoder.Decode(&request)
+	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
