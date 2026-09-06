@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
@@ -31,8 +30,10 @@ type ShortCodeCreateEmailUpdateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
-// ShortCodeCreateEmailUpdateSmtp is the mailer used to deliver the confirmation code.
-type ShortCodeCreateEmailUpdateSmtp = smtp.Sender
+// ShortCodeCreateEmailUpdateMailDelivery reserves bounded capacity for the confirmation mail.
+type ShortCodeCreateEmailUpdateMailDelivery interface {
+	Reserve(ctx context.Context) (MailDeliveryReservation, error)
+}
 
 // ShortCodeCreateEmailUpdateRequest carries the user changing their address, the
 // new email to confirm, and the language of the confirmation mail.
@@ -48,35 +49,27 @@ type ShortCodeCreateEmailUpdateRequest struct {
 type ShortCodeCreateEmailUpdate struct {
 	service          ShortCodeCreateEmailUpdateService
 	selectDao        ShortCodeCreateEmailUpdateDao
-	smtp             smtp.Sender
+	mailDelivery     ShortCodeCreateEmailUpdateMailDelivery
 	shortCodesConfig config.ShortCodes
 	smtpConfig       config.SmtpUrls
-
-	wg sync.WaitGroup
 }
 
 // NewShortCodeCreateEmailUpdate wires the email-change flow to the short-code
-// service, the email-existence DAO, and the mailer.
+// service, the email-existence DAO, and the delivery owner.
 func NewShortCodeCreateEmailUpdate(
 	service ShortCodeCreateEmailUpdateService,
 	selectDao ShortCodeCreateEmailUpdateDao,
-	smtp smtp.Sender,
+	mailDelivery ShortCodeCreateEmailUpdateMailDelivery,
 	shortCodesConfig config.ShortCodes,
 	smtpConfig config.SmtpUrls,
 ) *ShortCodeCreateEmailUpdate {
 	return &ShortCodeCreateEmailUpdate{
 		service:          service,
 		selectDao:        selectDao,
-		smtp:             smtp,
+		mailDelivery:     mailDelivery,
 		shortCodesConfig: shortCodesConfig,
 		smtpConfig:       smtpConfig,
 	}
-}
-
-// Wait blocks until every in-flight confirmation email has finished sending, so
-// callers can drain pending deliveries before shutdown.
-func (service *ShortCodeCreateEmailUpdate) Wait() {
-	service.wg.Wait()
 }
 
 // Exec issues the confirmation code and schedules its delivery email, returning
@@ -109,6 +102,12 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
+	reservation, err := service.mailDelivery.Reserve(ctx)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
+	}
+	defer reservation.Release()
+
 	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageValidateEmail,
 		Target:   request.ID.String(),
@@ -120,52 +119,21 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
-	// Deliver the code by email in a detached goroutine: WithoutCancel keeps the
-	// send alive after the request context is cancelled, and Wait drains it on shutdown.
-	service.wg.Add(1)
-
-	go service.sendMail(context.WithoutCancel(ctx), request, shortCode)
-
-	return otel.ReportSuccess(span, shortCode), nil
-}
-
-func (service *ShortCodeCreateEmailUpdate) sendMail(
-	ctx context.Context, request *ShortCodeCreateEmailUpdateRequest, shortCode *ShortCode,
-) {
-	defer service.wg.Done()
-
-	_, span := otel.Tracer().Start(ctx, "service.ShortCodeCreateEmailUpdate(sendMail)")
-	defer span.End()
-	defer otel.RecoverPanic(ctx, span)
-
-	span.SetAttributes(
-		attribute.String("user.email", request.Email),
-		attribute.String("email.lang", request.Lang),
-		attribute.String("short_code.target", shortCode.Target),
-	)
-
-	logger := otel.Logger()
-
-	err := service.smtp.SendMail(
-		smtp.MailUsers{{Email: request.Email}},
-		mails.Mails.EmailUpdate,
-		request.Lang,
-		map[string]any{
+	reservation.Deliver(ctx, &MailDeliveryRequest{
+		To:           smtp.MailUsers{{Email: request.Email}},
+		Template:     mails.Mails.EmailUpdate,
+		TemplateName: request.Lang,
+		Data: map[string]any{
 			mails.TemplateVarShortCode: shortCode.PlainCode,
 			mails.TemplateVarTarget:    request.ID.String(),
 			"Source":                   base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 			mails.TemplateVarURL:       service.smtpConfig.UpdateEmail,
 			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL.Hours(),
 			mails.TemplateVarBanner:    assets.BannerBase64,
-			mails.TemplateVarPurpose:   "email-update",
+			mails.TemplateVarPurpose:   mailDeliveryKindEmailUpdate,
 		},
-	)
-	if err != nil {
-		logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+		Kind: mailDeliveryKindEmailUpdate,
+	})
 
-		return
-	}
-
-	logger.InfoContext(ctx, "email update request sent to "+request.Email)
-	otel.ReportSuccessNoContent(span)
+	return otel.ReportSuccess(span, shortCode), nil
 }

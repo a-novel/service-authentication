@@ -46,6 +46,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		daoSelectMock     *daoSelectMock
 		sendMail          bool
 		sendMailPanic     bool
+		closeMailDelivery bool
 
 		expectErr error
 	}{
@@ -105,6 +106,22 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			sendMailPanic: true,
 		},
 		{
+			name: "Error/MailDeliveryUnavailable",
+
+			request: &core.ShortCodeCreateEmailUpdateRequest{
+				Lang:  config.LangFR,
+				Email: "user@provider.com",
+				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			},
+
+			daoSelectMock: &daoSelectMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+
+			closeMailDelivery: true,
+			expectErr:         core.ErrMailDeliveryUnavailable,
+		},
+		{
 			name: "Error/CreateShortCode",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
@@ -161,7 +178,12 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			serviceCreate := coremocks.NewMockShortCodeCreateEmailUpdateService(t)
 			daoSelect := coremocks.NewMockShortCodeCreateEmailUpdateDao(t)
-			smtpService := coremocks.NewMockShortCodeCreateEmailUpdateSmtp(t)
+			smtpService := coremocks.NewMockMailDeliverySMTP(t)
+
+			mailDelivery := core.NewMailDelivery(smtpService, 1)
+			if testCase.closeMailDelivery {
+				mailDelivery.Close()
+			}
 
 			if testCase.serviceCreateMock != nil {
 				serviceCreate.EXPECT().
@@ -212,7 +234,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			}
 
 			service := core.NewShortCodeCreateEmailUpdate(
-				serviceCreate, daoSelect, smtpService, config.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, daoSelect, mailDelivery, config.ShortCodesPresetDefault, smtpConfig,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
@@ -222,9 +244,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 				require.Equal(t, testCase.serviceCreateMock.resp, resp)
 			}
 
-			if testCase.sendMail {
-				service.Wait()
-			}
+			waitForMailDelivery(t, mailDelivery)
 
 			serviceCreate.AssertExpectations(t)
 			daoSelect.AssertExpectations(t)
