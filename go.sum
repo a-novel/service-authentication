@@ -10,6 +10,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.36.0
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.36.0/go.mod h1:1iIdl0k+ppn9wT0wzR9H7HkSvIui/4qgtnKW10cQtds=
 github.com/a-novel-kit/golib v0.34.0 h1:OQSEkDWEB4OsjrhWp73vuHidPsm9d+MPRtuL1b8BsPM=
 github.com/a-novel-kit/golib v0.34.0/go.mod h1:AVsgswseGgREzUBF4VHJtchM3nj2SQ5XfaAMvUExKS8=
+github.com/a-novel-kit/golib v0.35.0 h1:YtDgdOSuJQ3Qd8pCbufosh1gyw550Ybk5Jn/jcQ/TxA=
+github.com/a-novel-kit/golib v0.35.0/go.mod h1:AVsgswseGgREzUBF4VHJtchM3nj2SQ5XfaAMvUExKS8=
 github.com/a-novel-kit/jwt/v2 v2.2.1 h1:Oqu29DG6k9/v3Eo3uLpYPCGP1c8xp4cFcjaVlUpR4oM=
 github.com/a-novel-kit/jwt/v2 v2.2.1/go.mod h1:QLLGdh58mLRNb0SiRCrYww2EJrdyaMSVKPn3jovPEQg=
 github.com/a-novel/service-json-keys/v2 v2.5.5 h1:2f9w0XEX19Noxnx0HcCc//SGhNzEHyYfl/SRhvlm71w=

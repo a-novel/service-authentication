@@ -15,7 +15,7 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
-	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/postgres/postgrestest"
 	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
@@ -239,7 +239,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			postgres.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
+			postgrestest.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
 				mockDao := coremocks.NewMockCredentialsCreateDao(t)
