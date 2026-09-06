@@ -147,6 +147,9 @@ func (delivery *MailDelivery) Wait(ctx context.Context) error {
 }
 
 func (reservation *mailDeliveryReservation) Deliver(ctx context.Context, request *MailDeliveryRequest) {
+	ctx, span := otel.Tracer().Start(ctx, "core.MailDelivery(deliver)")
+	defer span.End()
+
 	reservation.once.Do(func() {
 		go func() {
 			defer reservation.delivery.complete()
@@ -154,6 +157,8 @@ func (reservation *mailDeliveryReservation) Deliver(ctx context.Context, request
 			reservation.delivery.send(context.WithoutCancel(ctx), request)
 		}()
 	})
+
+	otel.ReportSuccessNoContent(span)
 }
 
 func (reservation *mailDeliveryReservation) Release() {
