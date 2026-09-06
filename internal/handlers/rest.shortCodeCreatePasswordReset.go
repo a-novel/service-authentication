@@ -11,7 +11,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 type ShortCodeCreatePasswordResetService interface {
@@ -55,7 +54,7 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 	})
 	if err != nil {
 		// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
-		if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+		if !errors.Is(err, core.ErrCredentialsByEmailNotFound) {
 			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
 				core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 			}, err)

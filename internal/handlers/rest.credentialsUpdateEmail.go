@@ -12,7 +12,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 type CredentialsUpdateEmailService interface {
@@ -54,11 +53,11 @@ func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.
 	})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			dao.ErrCredentialsUpdateEmailNotFound:      http.StatusNotFound,
-			dao.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
-			dao.ErrShortCodeSelectNotFound:             http.StatusForbidden,
-			core.ErrShortCodeConsumeInvalid:            http.StatusForbidden,
-			core.ErrInvalidRequest:                     http.StatusUnprocessableEntity,
+			core.ErrCredentialsUpdateEmailNotFound:      http.StatusNotFound,
+			core.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
+			core.ErrShortCodeNotFound:                   http.StatusForbidden,
+			core.ErrShortCodeConsumeInvalid:             http.StatusForbidden,
+			core.ErrInvalidRequest:                      http.StatusUnprocessableEntity,
 		}, err)
 
 		return

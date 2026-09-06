@@ -16,7 +16,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
@@ -90,7 +89,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: dao.ErrCredentialsUpdatePasswordNotFound,
+				err: core.ErrCredentialsUpdatePasswordNotFound,
 			},
 
 			expectStatus: http.StatusForbidden,
@@ -110,7 +109,7 @@ func TestCredentialsResetPassword(t *testing.T) {
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: dao.ErrShortCodeSelectNotFound,
+				err: core.ErrShortCodeNotFound,
 			},
 
 			expectStatus: http.StatusForbidden,

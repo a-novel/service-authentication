@@ -16,7 +16,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -88,7 +87,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 					Lang:  "fr",
 					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: dao.ErrCredentialsUpdateEmailAlreadyExists,
+				err: core.ErrCredentialsUpdateEmailAlreadyExists,
 			},
 
 			expectStatus: http.StatusAccepted,

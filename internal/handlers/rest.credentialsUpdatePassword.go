@@ -12,7 +12,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
@@ -66,9 +65,9 @@ func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *ht
 	})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			dao.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
-			lib.ErrInvalidPassword:                   http.StatusForbidden,
-			core.ErrInvalidRequest:                   http.StatusUnprocessableEntity,
+			core.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
+			lib.ErrInvalidPassword:                    http.StatusForbidden,
+			core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
 		}, err)
 
 		return

@@ -10,7 +10,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 type TokenRefreshService interface {
@@ -57,8 +56,8 @@ func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			core.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,
 			core.ErrTokenRefreshMismatchSource:      http.StatusForbidden,
 			// The credentials behind a still-valid refresh token were deleted — re-authenticate.
-			dao.ErrCredentialsSelectNotFound: http.StatusUnauthorized,
-			core.ErrInvalidRequest:           http.StatusUnprocessableEntity,
+			core.ErrCredentialsGetNotFound: http.StatusUnauthorized,
+			core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
 		}, err)
 
 		return

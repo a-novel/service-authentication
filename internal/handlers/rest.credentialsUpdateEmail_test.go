@@ -16,7 +16,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
@@ -111,7 +110,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				req: &core.CredentialsUpdateEmailRequest{
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: dao.ErrCredentialsUpdateEmailNotFound,
+				err: core.ErrCredentialsUpdateEmailNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,
@@ -127,7 +126,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				req: &core.CredentialsUpdateEmailRequest{
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: dao.ErrCredentialsUpdateEmailAlreadyExists,
+				err: core.ErrCredentialsUpdateEmailAlreadyExists,
 			},
 
 			expectStatus: http.StatusConflict,
@@ -143,7 +142,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				req: &core.CredentialsUpdateEmailRequest{
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: dao.ErrShortCodeSelectNotFound,
+				err: core.ErrShortCodeNotFound,
 			},
 
 			expectStatus: http.StatusForbidden,
