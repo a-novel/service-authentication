@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/postgres/postgrestest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -92,7 +93,7 @@ func TestCredentialsList(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			postgres.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
+			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
 				db, err := postgres.GetContext(ctx)
@@ -132,7 +133,7 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 	t.Run("same-second ties page without loss", func(t *testing.T) {
 		t.Parallel()
 
-		postgres.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
+		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 			t.Helper()
 
 			db, err := postgres.GetContext(ctx)
@@ -175,7 +176,7 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 	t.Run("a row touched between pages is neither skipped nor repeated", func(t *testing.T) {
 		t.Parallel()
 
-		postgres.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
+		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 			t.Helper()
 
 			db, err := postgres.GetContext(ctx)

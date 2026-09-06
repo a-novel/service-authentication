@@ -10,7 +10,6 @@ import (
 	"net/textproto"
 
 	"github.com/samber/lo"
-	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 
@@ -122,17 +121,7 @@ func (handler *RestHealth) reportPostgres(ctx context.Context) error {
 	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportPostgres)")
 	defer span.End()
 
-	pg, err := postgres.GetContext(ctx)
-	if err != nil {
-		return otel.ReportError(span, err)
-	}
-
-	pgdb, ok := pg.(*bun.DB)
-	if !ok {
-		return otel.ReportError(span, postgres.ErrNoDbInContext)
-	}
-
-	err = pgdb.PingContext(ctx)
+	err := postgres.Health(ctx)
 	if err != nil {
 		return otel.ReportError(span, err)
 	}
