@@ -5,8 +5,8 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -23,6 +23,7 @@ import (
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
+	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/smtp"
@@ -38,7 +39,11 @@ import (
 
 func main() {
 	cfg := config.AppPresetDefault
-	ctx := context.Background()
+
+	processCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	ctx := processCtx
 
 	otel.SetAppName(cfg.App.Name)
 
@@ -55,12 +60,16 @@ func main() {
 
 	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
+	database := lo.Must(cfg.Postgres.DB(ctx))
+	defer closeDatabase(database)
+
 	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
 
 	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(
 		fmt.Sprintf("%s:%d", cfg.DependenciesConfig.ServiceJsonKeysHost, cfg.DependenciesConfig.ServiceJsonKeysPort),
 		jsonKeysCredentials...,
 	))
+	defer jsonKeysClient.Close()
 
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient))
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
@@ -274,52 +283,60 @@ func main() {
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
-	serve(
+	lo.Must0(serve(
+		processCtx,
+		stop,
 		httpServer,
 		cfg.Rest.Timeouts.Shutdown,
 		serviceShortCodeCreateRegister,
 		serviceShortCodeCreateEmailUpdate,
 		serviceShortCodeCreatePasswordReset,
-	)
+	))
 }
 
-// serve runs the server until an interrupt or termination signal arrives, then stops it and drains
-// whatever detached work is still in flight.
-//
-// shutdownTimeout bounds the whole stop. The HTTP shutdown and the drain share it, so a deploy waits
-// no longer than the operator configured.
-func serve(httpServer *http.Server, shutdownTimeout time.Duration, drains ...lib.Waiter) {
+// serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.
+func serve(
+	ctx context.Context,
+	stop context.CancelFunc,
+	httpServer *http.Server,
+	shutdownTimeout time.Duration,
+	drains ...lib.Waiter,
+) error {
+	shutdownStarted := make(chan time.Time, 1)
+
+	go func() { <-ctx.Done(); shutdownStarted <- time.Now() }()
+
 	log.Println("Starting REST server on " + httpServer.Addr)
 
-	go func() {
-		err := httpServer.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			panic(err)
-		}
-	}()
+	serveErr := httpf.Serve(ctx, httpServer, shutdownTimeout)
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	// Stop also cancels the process context when serving ends because of a bind or runtime error.
+	// The recorded deadline lets the HTTP drain and accepted mail share one operator budget.
+	stop()
 
-	log.Println("Shutting down REST server...")
+	shutdownCtx, cancel := context.WithDeadline(
+		context.WithoutCancel(ctx),
+		(<-shutdownStarted).Add(shutdownTimeout),
+	)
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
-
-	err := httpServer.Shutdown(shutdownCtx)
-	if err != nil {
-		panic(err)
-	}
-
-	// Drained after the HTTP shutdown, once the server has stopped accepting: the set being waited
-	// on is closed by then.
 	log.Println("Draining in-flight emails...")
 
-	err = lib.Drain(shutdownCtx, drains...)
-	if err != nil {
+	drainErr := lib.Drain(shutdownCtx, drains...)
+
+	cancel()
+
+	if drainErr != nil {
 		// Logged while the process is already stopping. Mail that missed the budget is worth
 		// reporting and the shutdown still completes.
-		log.Println("Some emails were still in flight at shutdown: " + err.Error())
+		log.Println("Some emails were still in flight at shutdown: " + drainErr.Error())
+	}
+
+	return serveErr
+}
+
+func closeDatabase(database io.Closer) {
+	err := database.Close()
+	if err != nil {
+		log.Println("Close Postgres: " + err.Error())
 	}
 }
