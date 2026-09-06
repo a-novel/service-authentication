@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/postgres/postgrestest"
 	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
@@ -310,7 +310,7 @@ func TestCredentialsCreateSuperAdmin(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			postgres.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
+			postgrestest.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
 				mockDao := coremocks.NewMockCredentialsCreateSuperAdminDao(t)
