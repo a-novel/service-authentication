@@ -131,8 +131,12 @@ func TestHealth(t *testing.T) {
 
 				if testCase.transaction {
 					tx, err := db.BeginTx(ctx, nil)
+
 					require.NoError(t, err)
-					t.Cleanup(func() { require.NoError(t, tx.Rollback()) })
+					defer func() {
+						require.NoError(t, ctx.Err())
+						require.NoError(t, tx.Rollback())
+					}()
 
 					ctx = context.WithValue(ctx, postgres.ContextKey{}, tx)
 				}
