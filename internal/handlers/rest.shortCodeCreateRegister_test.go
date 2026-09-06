@@ -15,7 +15,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
@@ -77,7 +76,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 					Email: "existing_user@provider.com",
 					Lang:  "fr",
 				},
-				err: dao.ErrCredentialsInsertAlreadyExists,
+				err: core.ErrCredentialsCreateAlreadyExists,
 			},
 
 			// Returns 202 to prevent email enumeration.

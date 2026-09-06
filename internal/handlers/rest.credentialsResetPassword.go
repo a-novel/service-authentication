@@ -12,7 +12,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 type CredentialsResetPasswordService interface {
@@ -58,11 +57,11 @@ func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *htt
 	})
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			dao.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
-			dao.ErrShortCodeSelectNotFound:           http.StatusForbidden,
-			core.ErrShortCodeConsumeInvalid:          http.StatusForbidden,
-			core.ErrShortCodeConsumeExpired:          http.StatusForbidden,
-			core.ErrInvalidRequest:                   http.StatusUnprocessableEntity,
+			core.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
+			core.ErrShortCodeNotFound:                 http.StatusForbidden,
+			core.ErrShortCodeConsumeInvalid:           http.StatusForbidden,
+			core.ErrShortCodeConsumeExpired:           http.StatusForbidden,
+			core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
 		}, err)
 
 		return

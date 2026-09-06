@@ -14,7 +14,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
@@ -79,7 +78,7 @@ func TestTokenCreate(t *testing.T) {
 					Email:    "user@provider.com",
 					Password: "Louvre",
 				},
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: core.ErrCredentialsByEmailNotFound,
 			},
 
 			// Returns 401 to prevent email enumeration.
