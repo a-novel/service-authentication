@@ -46,6 +46,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 		serviceCreateMock *serviceCreateMock
 		sendMail          bool
 		sendMailPanic     bool
+		closeMailDelivery bool
 
 		expectErr error
 	}{
@@ -107,7 +108,24 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			sendMailPanic: true,
 		},
 		{
-			name: "CreateShortCodeError",
+			name: "Error/MailDeliveryUnavailable",
+
+			request: &core.ShortCodeCreatePasswordResetRequest{
+				Lang:  config.LangFR,
+				Email: "user@provider.com",
+			},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
+			},
+
+			closeMailDelivery: true,
+			expectErr:         core.ErrMailDeliveryUnavailable,
+		},
+		{
+			name: "Error/CreateShortCode",
 
 			request: &core.ShortCodeCreatePasswordResetRequest{
 				Lang:  config.LangFR,
@@ -127,7 +145,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			expectErr: errFoo,
 		},
 		{
-			name: "SelectEmailError",
+			name: "Error/SelectEmail",
 
 			request: &core.ShortCodeCreatePasswordResetRequest{
 				Lang:  config.LangFR,
@@ -148,7 +166,12 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 
 			serviceCreate := coremocks.NewMockShortCodeCreatePasswordResetService(t)
 			mockDao := coremocks.NewMockShortCodeCreatePasswordResetDao(t)
-			smtpService := coremocks.NewMockShortCodeCreatePasswordResetSmtp(t)
+			smtpService := coremocks.NewMockMailDeliverySMTP(t)
+
+			mailDelivery := core.NewMailDelivery(smtpService, 1)
+			if testCase.closeMailDelivery {
+				mailDelivery.Close()
+			}
 
 			if testCase.serviceCreateMock != nil {
 				serviceCreate.EXPECT().
@@ -197,7 +220,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}
 
 			service := core.NewShortCodeCreatePasswordReset(
-				serviceCreate, mockDao, smtpService, config.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, mockDao, mailDelivery, config.ShortCodesPresetDefault, smtpConfig,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
@@ -207,9 +230,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 				require.Equal(t, testCase.serviceCreateMock.resp, resp)
 			}
 
-			if testCase.sendMail {
-				service.Wait()
-			}
+			waitForMailDelivery(t, mailDelivery)
 
 			serviceCreate.AssertExpectations(t)
 			mockDao.AssertExpectations(t)

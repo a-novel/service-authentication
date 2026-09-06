@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
@@ -30,8 +28,10 @@ type ShortCodeCreatePasswordResetDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
-// ShortCodeCreatePasswordResetSmtp is the mailer used to deliver the reset code.
-type ShortCodeCreatePasswordResetSmtp = smtp.Sender
+// ShortCodeCreatePasswordResetMailDelivery reserves bounded capacity for the reset mail.
+type ShortCodeCreatePasswordResetMailDelivery interface {
+	Reserve(ctx context.Context) (MailDeliveryReservation, error)
+}
 
 // ShortCodeCreatePasswordResetRequest carries the account email to reset and the
 // language of the reset mail.
@@ -45,35 +45,27 @@ type ShortCodeCreatePasswordResetRequest struct {
 type ShortCodeCreatePasswordReset struct {
 	service          ShortCodeCreatePasswordResetService
 	selectDao        ShortCodeCreatePasswordResetDao
-	smtp             smtp.Sender
+	mailDelivery     ShortCodeCreatePasswordResetMailDelivery
 	shortCodesConfig config.ShortCodes
 	smtpConfig       config.SmtpUrls
-
-	wg sync.WaitGroup
 }
 
 // NewShortCodeCreatePasswordReset wires the password-reset flow to the short-code
-// service, the credentials lookup DAO, and the mailer.
+// service, the credentials lookup DAO, and the delivery owner.
 func NewShortCodeCreatePasswordReset(
 	service ShortCodeCreatePasswordResetService,
 	selectDao ShortCodeCreatePasswordResetDao,
-	smtp smtp.Sender,
+	mailDelivery ShortCodeCreatePasswordResetMailDelivery,
 	shortCodesConfig config.ShortCodes,
 	smtpConfig config.SmtpUrls,
 ) *ShortCodeCreatePasswordReset {
 	return &ShortCodeCreatePasswordReset{
 		service:          service,
 		selectDao:        selectDao,
-		smtp:             smtp,
+		mailDelivery:     mailDelivery,
 		shortCodesConfig: shortCodesConfig,
 		smtpConfig:       smtpConfig,
 	}
-}
-
-// Wait blocks until every in-flight reset email has finished sending, so callers
-// can drain pending deliveries before shutdown.
-func (service *ShortCodeCreatePasswordReset) Wait() {
-	service.wg.Wait()
 }
 
 // Exec issues the reset code and schedules its delivery email, returning the code
@@ -101,6 +93,12 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
 	}
 
+	reservation, err := service.mailDelivery.Reserve(ctx)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
+	}
+	defer reservation.Release()
+
 	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageResetPassword,
 		Target:   credentials.ID.String(),
@@ -111,51 +109,20 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
-	// Deliver the code by email in a detached goroutine: WithoutCancel keeps the
-	// send alive after the request context is cancelled, and Wait drains it on shutdown.
-	service.wg.Add(1)
-
-	go service.sendMail(context.WithoutCancel(ctx), request, credentials.ID, shortCode)
-
-	return otel.ReportSuccess(span, shortCode), nil
-}
-
-func (service *ShortCodeCreatePasswordReset) sendMail(
-	ctx context.Context, request *ShortCodeCreatePasswordResetRequest, userID uuid.UUID, shortCode *ShortCode,
-) {
-	defer service.wg.Done()
-
-	_, span := otel.Tracer().Start(ctx, "service.ShortCodeCreatePasswordReset(sendMail)")
-	defer span.End()
-	defer otel.RecoverPanic(ctx, span)
-
-	span.SetAttributes(
-		attribute.String("user.email", request.Email),
-		attribute.String("email.lang", request.Lang),
-		attribute.String("short_code.target", shortCode.Target),
-	)
-
-	logger := otel.Logger()
-
-	err := service.smtp.SendMail(
-		smtp.MailUsers{{Email: request.Email}},
-		mails.Mails.PasswordReset,
-		request.Lang,
-		map[string]any{
+	reservation.Deliver(ctx, &MailDeliveryRequest{
+		To:           smtp.MailUsers{{Email: request.Email}},
+		Template:     mails.Mails.PasswordReset,
+		TemplateName: request.Lang,
+		Data: map[string]any{
 			mails.TemplateVarShortCode: shortCode.PlainCode,
-			mails.TemplateVarTarget:    userID.String(),
+			mails.TemplateVarTarget:    credentials.ID.String(),
 			mails.TemplateVarURL:       service.smtpConfig.UpdatePassword,
 			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageResetPassword].TTL.Hours(),
 			mails.TemplateVarBanner:    assets.BannerBase64,
-			mails.TemplateVarPurpose:   "password-reset",
+			mails.TemplateVarPurpose:   mailDeliveryKindPasswordReset,
 		},
-	)
-	if err != nil {
-		logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+		Kind: mailDeliveryKindPasswordReset,
+	})
 
-		return
-	}
-
-	logger.InfoContext(ctx, "password reset request sent to "+request.Email)
-	otel.ReportSuccessNoContent(span)
+	return otel.ReportSuccess(span, shortCode), nil
 }
