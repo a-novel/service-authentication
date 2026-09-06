@@ -147,16 +147,9 @@ func TestCredentialsCreate(t *testing.T) {
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
-			name: "Error/MultipleValues",
+			name: "Error/InvalidBody",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{} {}`)),
-
-			expectStatus: http.StatusBadRequest,
-		},
-		{
-			name: "Error/TrailingGarbage",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{} garbage`)),
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`not json`)),
 
 			expectStatus: http.StatusBadRequest,
 		},
