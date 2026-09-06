@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -37,11 +36,9 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.ShortCodeCreatePasswordReset")
 	defer span.End()
 
-	decoder := json.NewDecoder(r.Body)
-
 	var request ShortCodeCreatePasswordResetRequest
 
-	err := decoder.Decode(&request)
+	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 

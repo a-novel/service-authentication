@@ -146,6 +146,13 @@ func TestCredentialsCreate(t *testing.T) {
 
 			expectStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "Error/InvalidBody",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`not json`)),
+
+			expectStatus: http.StatusBadRequest,
+		},
 	}
 
 	for _, testCase := range testCases {

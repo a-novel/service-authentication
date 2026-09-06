@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -35,11 +34,9 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.ShortCodeCreateRegister")
 	defer span.End()
 
-	decoder := json.NewDecoder(r.Body)
-
 	var request ShortCodeCreateRegisterRequest
 
-	err := decoder.Decode(&request)
+	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusBadRequest}, err)
 
