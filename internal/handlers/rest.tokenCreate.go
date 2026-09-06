@@ -10,7 +10,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
@@ -54,9 +53,9 @@ func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Both "email not found" and "invalid password" return 401 to prevent email enumeration.
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			dao.ErrCredentialsSelectByEmailNotFound: http.StatusUnauthorized,
-			lib.ErrInvalidPassword:                  http.StatusUnauthorized,
-			core.ErrInvalidRequest:                  http.StatusUnprocessableEntity,
+			core.ErrCredentialsByEmailNotFound: http.StatusUnauthorized,
+			lib.ErrInvalidPassword:             http.StatusUnauthorized,
+			core.ErrInvalidRequest:             http.StatusUnprocessableEntity,
 		}, err)
 
 		return
