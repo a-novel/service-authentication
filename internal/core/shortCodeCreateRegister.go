@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"sync"
 
 	"go.opentelemetry.io/otel/attribute"
 
@@ -30,8 +29,10 @@ type ShortCodeCreateRegisterDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
-// ShortCodeCreateRegisterSmtp is the mailer used to deliver the registration code.
-type ShortCodeCreateRegisterSmtp = smtp.Sender
+// ShortCodeCreateRegisterMailDelivery reserves bounded delivery capacity for the registration mail.
+type ShortCodeCreateRegisterMailDelivery interface {
+	Reserve(ctx context.Context) (MailDeliveryReservation, error)
+}
 
 // ShortCodeCreateRegisterRequest carries the address to register and the language
 // of the registration mail.
@@ -46,35 +47,27 @@ type ShortCodeCreateRegisterRequest struct {
 type ShortCodeCreateRegister struct {
 	service          ShortCodeCreateRegisterService
 	selectDao        ShortCodeCreateRegisterDao
-	smtp             smtp.Sender
+	mailDelivery     ShortCodeCreateRegisterMailDelivery
 	shortCodesConfig config.ShortCodes
 	smtpConfig       config.SmtpUrls
-
-	wg sync.WaitGroup
 }
 
 // NewShortCodeCreateRegister wires the registration flow to the short-code
-// service, the email-existence DAO, and the mailer.
+// service, the email-existence DAO, and the delivery owner.
 func NewShortCodeCreateRegister(
 	service ShortCodeCreateRegisterService,
 	selectDao ShortCodeCreateRegisterDao,
-	smtp smtp.Sender,
+	mailDelivery ShortCodeCreateRegisterMailDelivery,
 	shortCodesConfig config.ShortCodes,
 	smtpConfig config.SmtpUrls,
 ) *ShortCodeCreateRegister {
 	return &ShortCodeCreateRegister{
 		service:          service,
 		selectDao:        selectDao,
-		smtp:             smtp,
+		mailDelivery:     mailDelivery,
 		shortCodesConfig: shortCodesConfig,
 		smtpConfig:       smtpConfig,
 	}
-}
-
-// Wait blocks until every in-flight registration email has finished sending, so
-// callers can drain pending deliveries before shutdown.
-func (service *ShortCodeCreateRegister) Wait() {
-	service.wg.Wait()
 }
 
 // Exec issues the registration code and schedules its delivery email, returning
@@ -106,6 +99,12 @@ func (service *ShortCodeCreateRegister) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
+	reservation, err := service.mailDelivery.Reserve(ctx)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
+	}
+	defer reservation.Release()
+
 	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageRegister,
 		Target:   request.Email,
@@ -116,51 +115,20 @@ func (service *ShortCodeCreateRegister) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
-	// Deliver the code by email in a detached goroutine: WithoutCancel keeps the
-	// send alive after the request context is cancelled, and Wait drains it on shutdown.
-	service.wg.Add(1)
-
-	go service.sendMail(context.WithoutCancel(ctx), request, shortCode)
-
-	return otel.ReportSuccess(span, shortCode), nil
-}
-
-func (service *ShortCodeCreateRegister) sendMail(
-	ctx context.Context, request *ShortCodeCreateRegisterRequest, shortCode *ShortCode,
-) {
-	defer service.wg.Done()
-
-	_, span := otel.Tracer().Start(ctx, "service.ShortCodeCreateRegister(sendMail)")
-	defer span.End()
-	defer otel.RecoverPanic(ctx, span)
-
-	span.SetAttributes(
-		attribute.String("user.email", request.Email),
-		attribute.String("email.lang", request.Lang),
-		attribute.String("short_code.target", shortCode.Target),
-	)
-
-	logger := otel.Logger()
-
-	err := service.smtp.SendMail(
-		smtp.MailUsers{{Email: request.Email}},
-		mails.Mails.Register,
-		request.Lang,
-		map[string]any{
+	reservation.Deliver(ctx, &MailDeliveryRequest{
+		To:           smtp.MailUsers{{Email: request.Email}},
+		Template:     mails.Mails.Register,
+		TemplateName: request.Lang,
+		Data: map[string]any{
 			mails.TemplateVarShortCode: shortCode.PlainCode,
 			mails.TemplateVarTarget:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 			mails.TemplateVarURL:       service.smtpConfig.Register,
 			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL.Hours(),
 			mails.TemplateVarBanner:    assets.BannerBase64,
-			mails.TemplateVarPurpose:   "register",
+			mails.TemplateVarPurpose:   mailDeliveryKindRegister,
 		},
-	)
-	if err != nil {
-		logger.ErrorContext(ctx, otel.ReportError(span, err).Error())
+		Kind: mailDeliveryKindRegister,
+	})
 
-		return
-	}
-
-	logger.InfoContext(ctx, "register request sent to "+request.Email)
-	otel.ReportSuccessNoContent(span)
+	return otel.ReportSuccess(span, shortCode), nil
 }

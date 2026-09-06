@@ -46,6 +46,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		daoSelectMock     *daoSelectMock
 		sendMail          bool
 		sendMailPanic     bool
+		closeMailDelivery bool
 
 		expectErr error
 	}{
@@ -103,6 +104,21 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			sendMailPanic: true,
 		},
 		{
+			name: "Error/MailDeliveryUnavailable",
+
+			request: &core.ShortCodeCreateRegisterRequest{
+				Lang:  config.LangFR,
+				Email: "user@provider.com",
+			},
+
+			daoSelectMock: &daoSelectMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+
+			closeMailDelivery: true,
+			expectErr:         core.ErrMailDeliveryUnavailable,
+		},
+		{
 			name: "Error/CreateShortCode",
 
 			request: &core.ShortCodeCreateRegisterRequest{
@@ -156,7 +172,12 @@ func TestShortCodeCreateRegister(t *testing.T) {
 
 			serviceCreate := coremocks.NewMockShortCodeCreateRegisterService(t)
 			daoSelect := coremocks.NewMockShortCodeCreateRegisterDao(t)
-			smtpService := coremocks.NewMockShortCodeCreateRegisterSmtp(t)
+			smtpService := coremocks.NewMockMailDeliverySMTP(t)
+
+			mailDelivery := core.NewMailDelivery(smtpService, 1)
+			if testCase.closeMailDelivery {
+				mailDelivery.Close()
+			}
 
 			if testCase.serviceCreateMock != nil {
 				serviceCreate.EXPECT().
@@ -205,7 +226,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			}
 
 			service := core.NewShortCodeCreateRegister(
-				serviceCreate, daoSelect, smtpService, config.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, daoSelect, mailDelivery, config.ShortCodesPresetDefault, smtpConfig,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
@@ -215,9 +236,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				require.Equal(t, testCase.serviceCreateMock.resp, resp)
 			}
 
-			if testCase.sendMail {
-				service.Wait()
-			}
+			waitForMailDelivery(t, mailDelivery)
 
 			serviceCreate.AssertExpectations(t)
 			daoSelect.AssertExpectations(t)

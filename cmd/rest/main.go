@@ -33,7 +33,6 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
-	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
@@ -74,7 +73,7 @@ func main() {
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient))
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
 
-	smtpSender := smtp.NewBoundedSender(cfg.Smtp, env.SmtpMaxConcurrent)
+	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 
 	// Missing SMTP_ADDR looks like healthy mail loss: 202 answered, mail rendered to stdout.
 	if _, debug := cfg.Smtp.(*smtp.DebugSender); debug {
@@ -109,21 +108,21 @@ func main() {
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		smtpSender,
+		mailDelivery,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		smtpSender,
+		mailDelivery,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
 		serviceShortCodeCreate,
 		daoCredentialsSelectByEmail,
-		smtpSender,
+		mailDelivery,
 		cfg.ShortCodesConfig,
 		cfg.SmtpUrlsConfig,
 	)
@@ -288,9 +287,7 @@ func main() {
 		stop,
 		httpServer,
 		cfg.Rest.Timeouts.Shutdown,
-		serviceShortCodeCreateRegister,
-		serviceShortCodeCreateEmailUpdate,
-		serviceShortCodeCreatePasswordReset,
+		mailDelivery,
 	))
 }
 
@@ -300,11 +297,16 @@ func serve(
 	stop context.CancelFunc,
 	httpServer *http.Server,
 	shutdownTimeout time.Duration,
-	drains ...lib.Waiter,
+	mailDelivery *core.MailDelivery,
 ) error {
 	shutdownStarted := make(chan time.Time, 1)
 
-	go func() { <-ctx.Done(); shutdownStarted <- time.Now() }()
+	go func() {
+		<-ctx.Done()
+		mailDelivery.Close()
+
+		shutdownStarted <- time.Now()
+	}()
 
 	log.Println("Starting REST server on " + httpServer.Addr)
 
@@ -321,7 +323,7 @@ func serve(
 
 	log.Println("Draining in-flight emails...")
 
-	drainErr := lib.Drain(shutdownCtx, drains...)
+	drainErr := mailDelivery.Wait(shutdownCtx)
 
 	cancel()
 
