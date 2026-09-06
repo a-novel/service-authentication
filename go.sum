@@ -16,6 +16,8 @@ github.com/a-novel/service-json-keys/v2 v2.5.3 h1:nPgYgcTTpPGjXovaFAYy9oclm0ndRa
 github.com/a-novel/service-json-keys/v2 v2.5.3/go.mod h1:3ZekXwihWDLlJvi63zrg7BvVhf3RqLdpZFXl7KaPNbY=
 github.com/a-novel/service-json-keys/v2 v2.5.4 h1:y0RYqUrGGN9ez9oIVZs4N0lIyyraL4OdFPuOO+oY7kk=
 github.com/a-novel/service-json-keys/v2 v2.5.4/go.mod h1:M29npIssXw3RWOSD5CxBnHIvwJLEKWw4toFOZZJZ2RA=
+github.com/a-novel/service-json-keys/v2 v2.5.5 h1:2f9w0XEX19Noxnx0HcCc//SGhNzEHyYfl/SRhvlm71w=
+github.com/a-novel/service-json-keys/v2 v2.5.5/go.mod h1:rD8PVBj4h5VzUssnYR/rs3isMsM2E3ooJGHtHObbl4M=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=
 github.com/cenkalti/backoff/v5 v5.0.3/go.mod h1:rkhZdG3JZukswDf7f0cwqPNk4K0sa+F97BxZthm/crw=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
