@@ -37,7 +37,7 @@ func TestMailTemplates(t *testing.T) {
 			name:     "Register/French",
 			template: mails.Mails.Register,
 			language: "fr",
-			subject:  "Crée ton compte Agora Storyverse",
+			subject:  "Créez votre compte Agora Storyverse",
 		},
 		{
 			name:     "PasswordReset/English",
@@ -49,7 +49,7 @@ func TestMailTemplates(t *testing.T) {
 			name:     "PasswordReset/French",
 			template: mails.Mails.PasswordReset,
 			language: "fr",
-			subject:  "Réinitialise ton mot de passe Agora Storyverse",
+			subject:  "Réinitialisez votre mot de passe Agora Storyverse",
 		},
 		{
 			name:     "EmailUpdate/English",
@@ -62,7 +62,7 @@ func TestMailTemplates(t *testing.T) {
 			name:     "EmailUpdate/French",
 			template: mails.Mails.EmailUpdate,
 			language: "fr",
-			subject:  "Confirme ta nouvelle adresse e-mail Agora Storyverse",
+			subject:  "Confirmez votre nouvelle adresse e-mail Agora Storyverse",
 			source:   "bmV3QGV4YW1wbGUuY29t",
 		},
 	}

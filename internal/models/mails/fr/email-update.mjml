@@ -1,15 +1,15 @@
 <mjml lang="fr" dir="ltr">
   <!-- prettier-ignore -->
   <mj-raw position="file-start">
-Subject: Confirme ta nouvelle adresse e-mail Agora Storyverse
+Subject: Confirmez votre nouvelle adresse e-mail Agora Storyverse
 MIME-Version: 1.0
 Content-Type: text/html; charset=UTF-8
 
 <!-- Mail starts here -->
   </mj-raw>
   <mj-head>
-    <mj-title>Confirme ta nouvelle adresse e-mail Agora Storyverse</mj-title>
-    <mj-preview>Confirme cette adresse pour mettre à jour ton compte.</mj-preview>
+    <mj-title>Confirmez votre nouvelle adresse e-mail Agora Storyverse</mj-title>
+    <mj-preview>Confirmez cette adresse pour mettre à jour votre compte.</mj-preview>
     <mj-include path="../mj-theme.mjml" />
   </mj-head>
   <mj-body width="600px" background-color="#010203">
@@ -17,9 +17,9 @@ Content-Type: text/html; charset=UTF-8
     <mj-wrapper padding="0 16px">
       <mj-section css-class="message-content" background-color="#161a1d" border-radius="12px" padding="32px">
         <mj-column>
-          <mj-text padding="0 0 24px"><h1>Confirme ta nouvelle adresse e-mail</h1></mj-text>
+          <mj-text padding="0 0 24px"><h1>Confirmez votre nouvelle adresse e-mail</h1></mj-text>
           <mj-text
-            >Tu as demandé à changer l’adresse e-mail de ton compte Agora Storyverse. Confirme cette adresse pour
+            >Vous avez demandé à changer l’adresse e-mail de votre compte Agora Storyverse. Confirmez cette adresse pour
             terminer la mise à jour.</mj-text
           >
           <mj-button href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}&amp;source={{.Source}}"
@@ -27,15 +27,15 @@ Content-Type: text/html; charset=UTF-8
           >
           <mj-text mj-class="meta" padding="0 0 32px">Lien valable {{.Duration}} h.</mj-text>
           <mj-text mj-class="support" padding="0"
-            >Si tu n’es pas à l’origine de cette demande, ignore ce message. Ton adresse e-mail actuelle restera la
-            même.</mj-text
+            >Si vous n’êtes pas à l’origine de cette demande, ignorez ce message. Votre adresse e-mail actuelle restera
+            la même.</mj-text
           >
         </mj-column>
       </mj-section>
     </mj-wrapper>
     <mj-section padding="24px 24px 0">
       <mj-column>
-        <mj-text mj-class="support" padding="0 0 8px">Tu peux aussi copier ce lien dans ton navigateur :</mj-text>
+        <mj-text mj-class="support" padding="0 0 8px">Vous pouvez aussi copier ce lien dans votre navigateur :</mj-text>
         <mj-text mj-class="support" padding="0 0 32px">
           <a
             class="fallback-link"
