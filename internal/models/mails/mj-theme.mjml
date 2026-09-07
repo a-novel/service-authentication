@@ -1,6 +1,6 @@
 <mjml>
   <mj-head>
-    <!-- Email-safe sRGB values from uikit's semantic tokens. See DESIGN.md for the mapping. -->
+    <!-- Literal colors, type sizes, and spacing follow Agora uikit's presentation guidelines. -->
     <mj-attributes>
       <mj-all font-family="'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif" />
       <mj-text font-size="16px" line-height="1.5" color="#c5cbcf" padding="0 0 24px" />
