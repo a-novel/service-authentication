@@ -17,7 +17,6 @@ Content-Type: text/html; charset=UTF-8
     <mj-wrapper padding="0 16px">
       <mj-section css-class="message-content" background-color="#161a1d" border-radius="12px" padding="32px">
         <mj-column>
-          <mj-text mj-class="meta" padding="0 0 16px">Account details</mj-text>
           <mj-text padding="0 0 24px"><h1>Confirm your new email</h1></mj-text>
           <mj-text
             >You requested an email change for your Agora Storyverse account. Confirm this address to complete the
@@ -42,15 +41,6 @@ Content-Type: text/html; charset=UTF-8
             href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}&amp;source={{.Source}}"
             >{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}&amp;source={{.Source}}</a
           >
-        </mj-text>
-        <mj-text
-          font-family="Lora, Georgia, 'Noto Serif', serif"
-          font-size="16px"
-          font-style="italic"
-          color="#a2a8ab"
-          padding="0 0 48px"
-        >
-          Build worlds worth returning to.
         </mj-text>
       </mj-column>
     </mj-section>

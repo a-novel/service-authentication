@@ -105,7 +105,7 @@ func TestMailTemplates(t *testing.T) {
 			content := string(body)
 			require.Contains(t, content, `lang="`+testCase.language+`"`)
 			require.Contains(t, content, "0.5 h.")
-			require.Contains(t, content, "AGORA")
+			require.Contains(t, content, "Agora Storyverse")
 			require.Equal(t, 1, strings.Count(content, "<h1 "))
 			require.NotContains(t, content, "<no value>")
 			require.NotContains(t, content, "{{")
