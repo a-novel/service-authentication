@@ -11,7 +11,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/transaction"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
@@ -97,7 +97,7 @@ func (service *CredentialsCreateSuperAdmin) Exec(
 				Email:    request.Email,
 				Password: encryptedPassword,
 				Now:      now,
-				Role:     config.RoleSuperAdmin,
+				Role:     authconfig.RoleSuperAdmin,
 			})
 			if err != nil {
 				return fmt.Errorf("insert credentials: %w", err)
@@ -119,10 +119,10 @@ func (service *CredentialsCreateSuperAdmin) Exec(
 			return fmt.Errorf("update password: %w", err)
 		}
 
-		if credentials.Role != config.RoleSuperAdmin {
+		if credentials.Role != authconfig.RoleSuperAdmin {
 			credentials, err = service.daoUpdateRole.Exec(ctx, &dao.CredentialsUpdateRoleRequest{
 				ID:   credentials.ID,
-				Role: config.RoleSuperAdmin,
+				Role: authconfig.RoleSuperAdmin,
 				Now:  now,
 			})
 			if err != nil {

@@ -11,7 +11,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/smtp"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
@@ -48,8 +48,8 @@ type ShortCodeCreateRegister struct {
 	service          ShortCodeCreateRegisterService
 	selectDao        ShortCodeCreateRegisterDao
 	mailDelivery     ShortCodeCreateRegisterMailDelivery
-	shortCodesConfig config.ShortCodes
-	smtpConfig       config.SmtpUrls
+	shortCodesConfig authconfig.ShortCodes
+	smtpConfig       authconfig.SmtpUrls
 }
 
 // NewShortCodeCreateRegister wires the registration flow to the short-code
@@ -58,8 +58,8 @@ func NewShortCodeCreateRegister(
 	service ShortCodeCreateRegisterService,
 	selectDao ShortCodeCreateRegisterDao,
 	mailDelivery ShortCodeCreateRegisterMailDelivery,
-	shortCodesConfig config.ShortCodes,
-	smtpConfig config.SmtpUrls,
+	shortCodesConfig authconfig.ShortCodes,
+	smtpConfig authconfig.SmtpUrls,
 ) *ShortCodeCreateRegister {
 	return &ShortCodeCreateRegister{
 		service:          service,

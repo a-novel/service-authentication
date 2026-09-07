@@ -15,7 +15,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/transaction"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
@@ -110,7 +110,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 			Email:    request.Email,
 			Password: encryptedPassword,
 			Now:      time.Now(),
-			Role:     config.RoleUser,
+			Role:     authconfig.RoleUser,
 		})
 		if err != nil {
 			return fmt.Errorf("insert credentials: %w", err)

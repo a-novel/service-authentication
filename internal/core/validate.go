@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
@@ -17,11 +17,11 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 var ErrInvalidRequest = errors.New("invalid request")
 
 // ValidateLang is a go-playground/validator field-level validator that accepts
-// any language code listed in config.KnownLangs. It is registered under the
+// any language code listed in authconfig.KnownLangs. It is registered under the
 // "langs" tag at package init.
 func ValidateLang(fl validator.FieldLevel) bool {
 	val := fl.Field().String()
-	for _, lang := range config.KnownLangs {
+	for _, lang := range authconfig.KnownLangs {
 		if val == lang {
 			return true
 		}

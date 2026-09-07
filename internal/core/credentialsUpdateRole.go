@@ -11,7 +11,7 @@ import (
 
 	"github.com/a-novel-kit/golib/otel"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
@@ -85,7 +85,7 @@ func (service *CredentialsUpdateRole) Exec(
 	}
 
 	// request.Role passed validate:"role", so it is known; the lookup cannot fail.
-	newTargetRoleImportance, err := config.PermissionsConfigDefault.Priority(request.Role)
+	newTargetRoleImportance, err := authconfig.PermissionsConfigDefault.Priority(request.Role)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
@@ -114,12 +114,12 @@ func (service *CredentialsUpdateRole) Exec(
 	// validation. A stored role the config no longer knows is an error here, not a
 	// silent priority 0 that would let the rank guards below compare against a rank
 	// the account does not have.
-	targetRoleIImportance, err := config.PermissionsConfigDefault.Priority(targetCredentials.Role)
+	targetRoleIImportance, err := authconfig.PermissionsConfigDefault.Priority(targetCredentials.Role)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("rank target role: %w", err))
 	}
 
-	currentRoleIImportance, err := config.PermissionsConfigDefault.Priority(currentCredentials.Role)
+	currentRoleIImportance, err := authconfig.PermissionsConfigDefault.Priority(currentCredentials.Role)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("rank current user role: %w", err))
 	}

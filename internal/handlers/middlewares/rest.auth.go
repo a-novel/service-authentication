@@ -16,7 +16,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/jwt/v2/jws"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
@@ -141,7 +141,7 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 						httpf.HandleError(
 							ctx, middleware.logger, w, span,
 							httpf.ErrMap{nil: http.StatusInternalServerError},
-							fmt.Errorf("%w: %q in token", config.ErrUnknownRole, role),
+							fmt.Errorf("%w: %q in token", authconfig.ErrUnknownRole, role),
 						)
 
 						return

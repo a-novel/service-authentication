@@ -10,7 +10,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/smtp"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
@@ -46,8 +46,8 @@ type ShortCodeCreatePasswordReset struct {
 	service          ShortCodeCreatePasswordResetService
 	selectDao        ShortCodeCreatePasswordResetDao
 	mailDelivery     ShortCodeCreatePasswordResetMailDelivery
-	shortCodesConfig config.ShortCodes
-	smtpConfig       config.SmtpUrls
+	shortCodesConfig authconfig.ShortCodes
+	smtpConfig       authconfig.SmtpUrls
 }
 
 // NewShortCodeCreatePasswordReset wires the password-reset flow to the short-code
@@ -56,8 +56,8 @@ func NewShortCodeCreatePasswordReset(
 	service ShortCodeCreatePasswordResetService,
 	selectDao ShortCodeCreatePasswordResetDao,
 	mailDelivery ShortCodeCreatePasswordResetMailDelivery,
-	shortCodesConfig config.ShortCodes,
-	smtpConfig config.SmtpUrls,
+	shortCodesConfig authconfig.ShortCodes,
+	smtpConfig authconfig.SmtpUrls,
 ) *ShortCodeCreatePasswordReset {
 	return &ShortCodeCreatePasswordReset{
 		service:          service,

@@ -12,7 +12,7 @@ import (
 
 	"github.com/a-novel-kit/golib/otel"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
@@ -40,13 +40,13 @@ type ShortCodeCreateRequest struct {
 // deliver it to the target. [ShortCodeConsume] redeems it.
 type ShortCodeCreate struct {
 	dao    ShortCodeCreateDao
-	config config.ShortCodes
+	config authconfig.ShortCodes
 }
 
 // NewShortCodeCreate wires the create service to its DAO and short-code configuration.
 func NewShortCodeCreate(
 	dao ShortCodeCreateDao,
-	config config.ShortCodes,
+	config authconfig.ShortCodes,
 ) *ShortCodeCreate {
 	return &ShortCodeCreate{
 		dao:    dao,
