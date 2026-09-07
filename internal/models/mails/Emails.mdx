@@ -1,0 +1,79 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { useState } from "react";
+
+import enEmailUpdate from "./en/email-update.html?raw";
+import enPasswordReset from "./en/password-reset.html?raw";
+import enRegister from "./en/register.html?raw";
+import frEmailUpdate from "./fr/email-update.html?raw";
+import frPasswordReset from "./fr/password-reset.html?raw";
+import frRegister from "./fr/register.html?raw";
+
+<Meta title="Authentication/Transactional emails" />
+
+export const templates = {
+  en: { register: enRegister, "password-reset": enPasswordReset, "email-update": enEmailUpdate },
+  fr: { register: frRegister, "password-reset": frPasswordReset, "email-update": frEmailUpdate },
+};
+
+export const EmailPreview = () => {
+  const [language, setLanguage] = useState("en");
+  const [kind, setKind] = useState("register");
+  const [width, setWidth] = useState("600");
+  const source = templates[language][kind];
+  const values = {
+    URL: `https://account.example.com/${kind}`,
+    ShortCode: "preview-only-7N2Q4R",
+    Target: "cmVhZGVyQGV4YW1wbGUuY29t",
+    Source: "bmV3QGV4YW1wbGUuY29t",
+    Duration: "24",
+  };
+  const content = source.slice(source.indexOf("<!doctype")).replace(/{{\.(\w+)}}/g, (_, key) => values[key]);
+  return (
+    <div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", marginBottom: "24px" }}>
+        <label>
+          Message{" "}
+          <select value={kind} onChange={(event) => setKind(event.target.value)}>
+            <option value="register">Registration</option>
+            <option value="password-reset">Password reset</option>
+            <option value="email-update">Email change</option>
+          </select>
+        </label>
+        <label>
+          Language{" "}
+          <select value={language} onChange={(event) => setLanguage(event.target.value)}>
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+          </select>
+        </label>
+        <label>
+          Width{" "}
+          <select value={width} onChange={(event) => setWidth(event.target.value)}>
+            <option value="600">Desktop · 600px</option>
+            <option value="375">Phone · 375px</option>
+            <option value="320">Narrow · 320px</option>
+          </select>
+        </label>
+      </div>
+      <iframe
+        title={`${language === "fr" ? "French" : "English"} ${kind} email`}
+        sandbox=""
+        srcDoc={content}
+        style={{
+          display: "block",
+          width: `${width}px`,
+          maxWidth: "100%",
+          height: "1100px",
+          border: "none",
+          background: "#010203",
+        }}
+      />
+    </div>
+  );
+};
+
+# Transactional emails
+
+Registration, password reset, and email-change messages in Agora's visual language. Choose a message, language, and width to inspect the actual generated HTML. Preview links use sample data on a reserved example domain.
+
+<EmailPreview />

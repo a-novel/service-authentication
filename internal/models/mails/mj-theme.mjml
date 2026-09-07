@@ -1,0 +1,60 @@
+<mjml>
+  <mj-head>
+    <!-- Email-safe sRGB values from uikit's semantic tokens. See DESIGN.md for the mapping. -->
+    <mj-attributes>
+      <mj-all font-family="'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif" />
+      <mj-text font-size="16px" line-height="1.5" color="#c5cbcf" padding="0 0 24px" />
+      <mj-section padding="0 24px" />
+      <mj-column padding="0" />
+      <mj-button
+        align="left"
+        background-color="#0098db"
+        color="#030506"
+        font-size="16px"
+        font-weight="700"
+        line-height="24px"
+        border-radius="8px"
+        inner-padding="12px 24px"
+        padding="0 0 16px"
+      />
+      <mj-class
+        name="meta"
+        font-family="'JetBrains Mono', Consolas, 'Courier New', monospace"
+        font-size="12px"
+        line-height="1.5"
+        color="#a2a8ab"
+      />
+      <mj-class name="support" font-size="14px" line-height="1.5" color="#a2a8ab" />
+    </mj-attributes>
+    <mj-style inline="inline">
+      h1 {
+        margin: 0;
+        color: #edf3f6;
+        font-family: "TeX Gyre Heros Cn", "Arial Narrow", Arial, sans-serif;
+        font-size: 29px;
+        font-weight: 700;
+        line-height: 1.25;
+        letter-spacing: -0.58px;
+      }
+      a {
+        color: #00b1ff;
+        text-decoration: underline;
+      }
+      .fallback-link {
+        word-break: break-all;
+        overflow-wrap: anywhere;
+      }
+    </mj-style>
+    <mj-style>
+      a:focus-visible {
+        outline: 3px solid #00b1ff;
+        outline-offset: 4px;
+      }
+      @media only screen and (max-width: 480px) {
+        .message-content > table > tbody > tr > td {
+          padding: 24px !important;
+        }
+      }
+    </mj-style>
+  </mj-head>
+</mjml>

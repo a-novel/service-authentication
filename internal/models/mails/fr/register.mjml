@@ -1,43 +1,50 @@
-<mjml>
+<mjml lang="fr" dir="ltr">
   <!-- prettier-ignore -->
   <mj-raw position="file-start">
-Subject: Demande d'inscription.
-MIME-version: 1.0;
-Content-Type: text/html; charset="UTF-8";
+Subject: Crée ton compte Agora Storyverse
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
 
 <!-- Mail starts here -->
-    </mj-raw>
+  </mj-raw>
   <mj-head>
-    <mj-title>Demande d'inscription.</mj-title>
-    <mj-preview>Ton lien d'inscription Agora Storyverse.</mj-preview>
-
-    <mj-style>
-      strong {
-        color: #ffab33 !important;
-        font-weight: bold !important;
-      }
-    </mj-style>
+    <mj-title>Crée ton compte Agora Storyverse</mj-title>
+    <mj-preview>Ta prochaine histoire commence ici. Termine ton inscription.</mj-preview>
+    <mj-include path="../mj-theme.mjml" />
   </mj-head>
-  <mj-body background-color="#000">
+  <mj-body width="600px" background-color="#010203">
     <mj-include path="../mj-header.mjml" />
-
-    <mj-section>
+    <mj-wrapper padding="0 16px">
+      <mj-section css-class="message-content" background-color="#161a1d" border-radius="12px" padding="32px">
+        <mj-column>
+          <mj-text mj-class="meta" padding="0 0 16px">Ta prochaine histoire commence ici</mj-text>
+          <mj-text padding="0 0 24px"><h1>Crée ton compte</h1></mj-text>
+          <mj-text>Termine ton inscription pour rejoindre Agora Storyverse.</mj-text>
+          <mj-button href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}">Créer mon compte</mj-button>
+          <mj-text mj-class="meta" padding="0 0 32px">Lien valable {{.Duration}} h.</mj-text>
+          <mj-text mj-class="support" padding="0"
+            >Si tu n’as pas demandé de compte, tu peux ignorer ce message.</mj-text
+          >
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+    <mj-section padding="24px 24px 0">
       <mj-column>
-        <mj-text font-size="20px" color="#ffffff" font-family="helvetica">
-          Pour <strong>rejoindre la communauté Agora Storyverse</strong>, rempli le formulaire via le lien ci-dessous.
-          <br /><br />
-          Ce lien est valable pour une durée de
-          <strong>{{.Duration}}h</strong> seulement, alors fais vite!
+        <mj-text mj-class="support" padding="0 0 8px">Tu peux aussi copier ce lien dans ton navigateur :</mj-text>
+        <mj-text mj-class="support" padding="0 0 32px">
+          <a class="fallback-link" href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}"
+            >{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}</a
+          >
         </mj-text>
-
-        <mj-button
-          font-family="Helvetica"
-          background-color="#ffab33"
-          color="white"
-          href="{{.URL}}?shortCode={{.ShortCode}}&target={{.Target}}"
+        <mj-text
+          font-family="Lora, Georgia, 'Noto Serif', serif"
+          font-size="16px"
+          font-style="italic"
+          color="#a2a8ab"
+          padding="0 0 48px"
         >
-          Formulaire d'inscription
-        </mj-button>
+          Crée des mondes où l’on aime revenir.
+        </mj-text>
       </mj-column>
     </mj-section>
   </mj-body>
