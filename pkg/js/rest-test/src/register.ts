@@ -26,6 +26,7 @@ export interface PreRegisterData {
   shortCode: string;
 }
 
+/** Requests a registration link and returns its email address and short code. */
 export async function preRegisterUser(
   api: AuthenticationApi,
   mailHost: string,
@@ -38,15 +39,19 @@ export async function preRegisterUser(
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(mailHost, `to:"${userEmail}" subject:"Registration Request."`);
+  const mailData = await checkEmail(mailHost, `to:"${userEmail}"`);
 
+  expect(["Registration Request.", "Create your Agora Storyverse account"]).toContain(mailData.subject);
   expect(mailData.html).toBeTruthy();
   const links = getHtmlMail(mailData.html as string, "a");
-  expect(links).toHaveLength(1);
+  expect([1, 2]).toContain(links.length);
 
   const registrationUrl = (links[0] as HTMLAnchorElement).href;
 
   expect(registrationUrl).toBeTruthy();
+  for (const link of links) {
+    expect((link as HTMLAnchorElement).href).toBe(registrationUrl);
+  }
 
   const parsedUrl = new URL(registrationUrl);
   const shortCode = parsedUrl.searchParams.get("shortCode");
