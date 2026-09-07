@@ -76,11 +76,15 @@ async function requestEmailUpdate(api: AuthenticationApi, token: Token, newEmail
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(mailUrl, `to:"${newEmail}" subject:"Email Update Request."`);
+  const mailData = await checkEmail(
+    mailUrl,
+    `to:"${newEmail}" subject:"Confirm your new Agora Storyverse email address"`
+  );
 
   expect(mailData.html).toBeTruthy();
   const links = getHtmlMail(mailData.html as string, "a");
-  expect(links).toHaveLength(1);
+  expect(links).toHaveLength(2);
+  expect(links[1].getAttribute("href")).toBe(links[0].getAttribute("href"));
 
   const updateUrl = (links[0] as HTMLAnchorElement).href;
 
@@ -284,11 +288,12 @@ async function requestPasswordReset(api: AuthenticationApi, token: Token, email:
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(mailUrl, `to:"${email}" subject:"Password Reset Request."`);
+  const mailData = await checkEmail(mailUrl, `to:"${email}" subject:"Reset your Agora Storyverse password"`);
 
   expect(mailData.html).toBeTruthy();
   const links = getHtmlMail(mailData.html as string, "a");
-  expect(links).toHaveLength(1);
+  expect(links).toHaveLength(2);
+  expect(links[1].getAttribute("href")).toBe(links[0].getAttribute("href"));
 
   const updateUrl = (links[0] as HTMLAnchorElement).href;
 

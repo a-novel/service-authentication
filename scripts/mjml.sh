@@ -1,12 +1,27 @@
 #!/bin/bash
-# Renders every .mjml source in the tree to a sibling .html, which is what the mails
-# package embeds. Run it after editing any template.
+# Renders localized email sources to the HTML embedded by the mails package.
+# Pass --validate to check sources without writing generated files.
 
 set -e
 
-# NUL-delimited, so a template path containing a space or newline survives the split. Read through
-# process substitution rather than a pipe, so the loop stays in this shell and `set -e` still sees a
-# failed render instead of it being swallowed by a subshell.
-while IFS= read -r -d '' i; do
-  pnpm mjml "$i" --config.beautify false --config.minify false -o "${i%.*}.html"
-done < <(find . -name "*.mjml" -type f -print0)
+if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != "--validate" ]; }; then
+  printf 'Usage: %s [--validate]\n' "$0" >&2
+  exit 1
+fi
+
+mail_root="$(cd "$(dirname "$0")/../internal/models/mails" && pwd)"
+
+for source in "$mail_root"/*/*.mjml; do
+  output="${source%.*}.html"
+  if [ "${1:-}" = "--validate" ]; then
+    output=/dev/null
+  fi
+
+  pnpm mjml "$source" \
+    --config.allowIncludes true \
+    --config.includePath "$mail_root" \
+    --config.validationLevel strict \
+    --config.beautify true \
+    --config.minify false \
+    -o "$output"
+done
