@@ -1,17 +1,6 @@
 package config
 
-import (
-	_ "embed"
+import "github.com/a-novel/service-authentication/v2/internal/config/auth"
 
-	"github.com/goccy/go-yaml"
-
-	"github.com/a-novel-kit/golib/config"
-)
-
-//go:embed permissions.config.yaml
-var defaultPermissionsFile []byte
-
-// PermissionsConfigDefault is the built-in role/permission map, loaded from the
-// embedded permissions.config.yaml. It applies when no custom permission set is
-// supplied.
-var PermissionsConfigDefault = config.MustUnmarshal[Permissions](yaml.Unmarshal, defaultPermissionsFile)
+// PermissionsConfigDefault is the built-in role/permission map.
+var PermissionsConfigDefault = auth.PermissionsConfigDefault

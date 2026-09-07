@@ -1,11 +1,13 @@
 package config
 
+import "github.com/a-novel/service-authentication/v2/internal/config/auth"
+
 const (
 	// LangFR is the French language code.
-	LangFR = "fr"
+	LangFR = auth.LangFR
 	// LangEN is the English language code.
-	LangEN = "en"
+	LangEN = auth.LangEN
 )
 
-// KnownLangs lists every language code the service can render content in.
-var KnownLangs = []string{LangFR, LangEN}
+// KnownLangs lists the language codes supported by the service.
+var KnownLangs = auth.KnownLangs

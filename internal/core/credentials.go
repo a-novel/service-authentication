@@ -6,7 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
 // Credentials is a user account as the core layer exposes it: identity, email,
@@ -25,7 +25,7 @@ type Credentials struct {
 // configuration. It is registered under the "role" tag at package init.
 func ValidateCredentialsRole(fl validator.FieldLevel) bool {
 	val := fl.Field().String()
-	for role := range config.PermissionsConfigDefault.Roles {
+	for role := range authconfig.PermissionsConfigDefault.Roles {
 		if val == role {
 			return true
 		}

@@ -14,17 +14,17 @@ import (
 
 	"github.com/a-novel-kit/golib/logging"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
 // Role is a named bundle of permissions assigned to a user.
-type Role = config.Role
+type Role = authconfig.Role
 
 // Permissions is the configured role-permission map for a deployment.
-type Permissions = config.Permissions
+type Permissions = authconfig.Permissions
 
 // Claims is the authenticated user's access-token payload, extracted from the JWT and
 // stored in the request context by the auth middleware.
@@ -48,11 +48,11 @@ func NewAuthHandler(
 	permissionsByRole := lo.Must(lib.ResolveDependants[string, string](
 		lo.MapEntries(
 			permissions.Roles,
-			func(key string, value config.Role) (string, []string) {
+			func(key string, value authconfig.Role) (string, []string) {
 				return key, value.Permissions
 			},
 		),
-		lo.MapEntries(permissions.Roles, func(key string, value config.Role) (string, []string) {
+		lo.MapEntries(permissions.Roles, func(key string, value authconfig.Role) (string, []string) {
 			return key, value.Inherits
 		}),
 	))

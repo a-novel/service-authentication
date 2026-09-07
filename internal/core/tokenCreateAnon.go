@@ -12,7 +12,7 @@ import (
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
 // anonTokenClaims is the fixed sign request for anonymous access tokens. The payload
@@ -21,7 +21,7 @@ import (
 var anonTokenClaims = &servicejsonkeys.ClaimsSignRequest{
 	Usage: servicejsonkeys.KeyUsageAuth,
 	Payload: lo.Must(grpcf.MarshalJSONAsAny(AccessTokenClaims{
-		Roles: []string{config.RoleAnon},
+		Roles: []string{authconfig.RoleAnon},
 	})),
 }
 

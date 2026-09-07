@@ -7,7 +7,7 @@ import (
 	_ "embed"
 	"text/template"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
 var (
@@ -49,16 +49,16 @@ type MailTemplates struct {
 // Mails holds the ready-to-render email templates, parsed once at package
 // initialization. A malformed template panics at startup.
 var Mails = MailTemplates{
-	EmailUpdate:   template.Must(template.New(config.LangEN).Parse(emailUpdateEn)),
-	PasswordReset: template.Must(template.New(config.LangEN).Parse(passwordResetEn)),
-	Register:      template.Must(template.New(config.LangEN).Parse(registerEn)),
+	EmailUpdate:   template.Must(template.New(authconfig.LangEN).Parse(emailUpdateEn)),
+	PasswordReset: template.Must(template.New(authconfig.LangEN).Parse(passwordResetEn)),
+	Register:      template.Must(template.New(authconfig.LangEN).Parse(registerEn)),
 }
 
 // Attach the French variant to each template as an associated sub-template, so one
 // MailTemplates field can render either language. Only registering the variant matters,
 // so the results are discarded.
 var (
-	_ = template.Must(Mails.EmailUpdate.New(config.LangFR).Parse(emailUpdateFr))
-	_ = template.Must(Mails.PasswordReset.New(config.LangFR).Parse(passwordResetFr))
-	_ = template.Must(Mails.Register.New(config.LangFR).Parse(registerFr))
+	_ = template.Must(Mails.EmailUpdate.New(authconfig.LangFR).Parse(emailUpdateFr))
+	_ = template.Must(Mails.PasswordReset.New(authconfig.LangFR).Parse(passwordResetFr))
+	_ = template.Must(Mails.Register.New(authconfig.LangFR).Parse(registerFr))
 )
