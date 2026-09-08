@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
+	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 func TestMailTemplates(t *testing.T) {
@@ -82,6 +83,7 @@ func TestMailTemplates(t *testing.T) {
 				mails.TemplateVarShortCode: shortCode,
 				mails.TemplateVarTarget:    target,
 				mails.TemplateVarDuration:  0.5,
+				mails.TemplateVarBanner:    assets.BannerBase64,
 				"Source":                   testCase.source,
 			}
 
@@ -106,6 +108,8 @@ func TestMailTemplates(t *testing.T) {
 			require.Contains(t, content, `lang="`+testCase.language+`"`)
 			require.Contains(t, content, "0.5 h.")
 			require.Contains(t, content, "Agora Storyverse")
+			require.Contains(t, content, `alt="Agora Storyverse"`)
+			require.Contains(t, content, `src="data:image/png;base64,`)
 			require.Equal(t, 1, strings.Count(content, "<h1 "))
 			require.NotContains(t, content, "<no value>")
 			require.NotContains(t, content, "{{")
