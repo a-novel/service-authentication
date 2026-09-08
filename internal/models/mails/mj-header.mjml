@@ -2,7 +2,7 @@
   <mj-body>
     <mj-section padding="48px 24px 32px">
       <mj-column>
-        <mj-text font-size="20px" color="#edf3f6" padding="0">Agora Storyverse</mj-text>
+        <mj-image width="320px" alt="Agora Storyverse" padding="0" src="{{.Banner}}" />
       </mj-column>
     </mj-section>
   </mj-body>
