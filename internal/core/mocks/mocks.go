@@ -22,10 +22,19 @@ func NewMockCredentialsCreateDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsCreateDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsCreateDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -117,10 +126,19 @@ func NewMockCredentialsCreateServiceShortCodeConsume(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsCreateServiceShortCodeConsume {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsCreateServiceShortCodeConsume{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -212,10 +230,19 @@ func NewMockCredentialsCreateServiceSignClaims(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsCreateServiceSignClaims {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsCreateServiceSignClaims{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -322,10 +349,19 @@ func NewMockCredentialsCreateSuperAdminDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsCreateSuperAdminDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsCreateSuperAdminDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -417,10 +453,19 @@ func NewMockCredentialsCreateSuperAdminDaoSelect(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsCreateSuperAdminDaoSelect {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsCreateSuperAdminDaoSelect{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -512,10 +557,19 @@ func NewMockCredentialsCreateSuperAdminDaoUpdatePassword(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsCreateSuperAdminDaoUpdatePassword {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsCreateSuperAdminDaoUpdatePassword{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -607,10 +661,19 @@ func NewMockCredentialsCreateSuperAdminDaoUpdateRole(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsCreateSuperAdminDaoUpdateRole {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsCreateSuperAdminDaoUpdateRole{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -702,10 +765,19 @@ func NewMockCredentialsExistDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsExistDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsExistDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -795,10 +867,19 @@ func NewMockCredentialsGetDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsGetDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsGetDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -890,10 +971,19 @@ func NewMockCredentialsListDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsListDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsListDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -985,10 +1075,19 @@ func NewMockCredentialsUpdateEmailDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsUpdateEmailDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsUpdateEmailDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1080,10 +1179,19 @@ func NewMockCredentialsUpdateEmailServiceShortCodeConsume(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsUpdateEmailServiceShortCodeConsume {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsUpdateEmailServiceShortCodeConsume{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1175,10 +1283,19 @@ func NewMockCredentialsUpdatePasswordDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsUpdatePasswordDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsUpdatePasswordDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1270,10 +1387,19 @@ func NewMockCredentialsUpdatePasswordDaoCredentialsSelect(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsUpdatePasswordDaoCredentialsSelect {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsUpdatePasswordDaoCredentialsSelect{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1365,10 +1491,19 @@ func NewMockCredentialsUpdatePasswordServiceShortCodeConsume(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsUpdatePasswordServiceShortCodeConsume {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsUpdatePasswordServiceShortCodeConsume{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1460,10 +1595,19 @@ func NewMockCredentialsUpdateRoleDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsUpdateRoleDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsUpdateRoleDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1555,10 +1699,19 @@ func NewMockCredentialsUpdateRoleDaoCredentialsSelect(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCredentialsUpdateRoleDaoCredentialsSelect {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCredentialsUpdateRoleDaoCredentialsSelect{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1650,10 +1803,19 @@ func NewMockMailDeliverySMTP(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockMailDeliverySMTP {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockMailDeliverySMTP{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1746,10 +1908,19 @@ func NewMockMailDeliveryReservation(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockMailDeliveryReservation {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockMailDeliveryReservation{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1852,10 +2023,19 @@ func NewMockShortCodeConsumeDaoSelect(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeConsumeDaoSelect {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeConsumeDaoSelect{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -1947,10 +2127,19 @@ func NewMockShortCodeConsumeDaoDelete(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeConsumeDaoDelete {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeConsumeDaoDelete{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2042,10 +2231,19 @@ func NewMockShortCodeCreateDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreateDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreateDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2137,10 +2335,19 @@ func NewMockShortCodeCreateEmailUpdateService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreateEmailUpdateService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreateEmailUpdateService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2232,10 +2439,19 @@ func NewMockShortCodeCreateEmailUpdateDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreateEmailUpdateDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreateEmailUpdateDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2327,10 +2543,19 @@ func NewMockShortCodeCreateEmailUpdateMailDelivery(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreateEmailUpdateMailDelivery {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreateEmailUpdateMailDelivery{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2416,10 +2641,19 @@ func NewMockShortCodeCreatePasswordResetService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreatePasswordResetService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreatePasswordResetService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2511,10 +2745,19 @@ func NewMockShortCodeCreatePasswordResetDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreatePasswordResetDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreatePasswordResetDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2606,10 +2849,19 @@ func NewMockShortCodeCreatePasswordResetMailDelivery(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreatePasswordResetMailDelivery {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreatePasswordResetMailDelivery{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2695,10 +2947,19 @@ func NewMockShortCodeCreateRegisterService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreateRegisterService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreateRegisterService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2790,10 +3051,19 @@ func NewMockShortCodeCreateRegisterDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreateRegisterDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreateRegisterDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2885,10 +3155,19 @@ func NewMockShortCodeCreateRegisterMailDelivery(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockShortCodeCreateRegisterMailDelivery {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockShortCodeCreateRegisterMailDelivery{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -2974,10 +3253,19 @@ func newMocktokenPairSigner(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *mocktokenPairSigner {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &mocktokenPairSigner{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -3084,10 +3372,19 @@ func NewMockTokenCreateDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTokenCreateDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTokenCreateDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -3179,10 +3476,19 @@ func NewMockTokenCreateServiceSignClaims(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTokenCreateServiceSignClaims {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTokenCreateServiceSignClaims{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -3289,10 +3595,19 @@ func NewMockTokenCreateAnonSignClaimsService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTokenCreateAnonSignClaimsService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTokenCreateAnonSignClaimsService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -3399,10 +3714,19 @@ func NewMockTokenRefreshDao(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTokenRefreshDao {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTokenRefreshDao{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -3494,10 +3818,19 @@ func NewMockTokenRefreshServiceSignClaims(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTokenRefreshServiceSignClaims {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTokenRefreshServiceSignClaims{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -3604,10 +3937,19 @@ func NewMockTokenRefreshServiceVerifyClaims(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTokenRefreshServiceVerifyClaims {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTokenRefreshServiceVerifyClaims{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -3699,10 +4041,19 @@ func NewMockTokenRefreshServiceVerifyRefreshClaims(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTokenRefreshServiceVerifyRefreshClaims {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTokenRefreshServiceVerifyRefreshClaims{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
