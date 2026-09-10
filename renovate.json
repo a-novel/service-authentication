@@ -59,6 +59,5 @@
         "executionMode": "branch"
       }
     }
-  ],
-  "extends": ["config:recommended"]
+  ]
 }
