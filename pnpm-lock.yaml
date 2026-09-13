@@ -264,7 +264,7 @@ importers:
         version: 5.4.0(svgo@4.0.2)(typescript@6.0.3)
       nodemailer:
         specifier: ^10.0.0
-        version: 10.0.2
+        version: 10.0.3
       prettier:
         specifier: ^3.7.4
         version: 3.9.6
@@ -324,7 +324,7 @@ importers:
         version: 30.0.1(@noble/hashes@1.8.0)
       mailparser:
         specifier: ^3.9.0
-        version: 3.9.23
+        version: 3.9.24
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -375,7 +375,7 @@ importers:
         version: 27.4.0(@noble/hashes@1.8.0)(supports-color@7.2.0)
       mailparser:
         specifier: ^3.9.0
-        version: 3.9.23
+        version: 3.9.24
       mjml:
         specifier: 5.0.0
         version: 5.0.0(svgo@4.0.2)(typescript@5.9.3)
@@ -3221,8 +3221,8 @@ packages:
   magicast@0.5.4:
     resolution: {integrity: sha512-llBEhWm1SacoRwgHUoQJYtwp4PBLF4faQi5TCpIGyGs9n4y5+juI0tDgyKIfpqxckRHaHzouUEph3THklWh03w==}
 
-  mailparser@3.9.23:
-    resolution: {integrity: sha512-5jpsKltHt9oudhMu6mXxiwWMWV/CILfly+m9xhKiKW6cdmfOVvcAZ/NCuChV6QlADJqx1e5E2hwDAkP7lTP+Lg==}
+  mailparser@3.9.24:
+    resolution: {integrity: sha512-uK9B6Ynof9sh8fqHr5cclIN3q5/QL1LpEIrknLMp6UkrsOOxXW0Egt/o0COhkU0PuLZisn7l4ISpjGJTlA59sA==}
     engines: {node: '>=20.0.0'}
 
   make-dir@4.0.0:
@@ -3497,12 +3497,8 @@ packages:
     resolution: {integrity: sha512-jVe6Z61gPcPjCElPZ6j8llB3wnqGcuQzefim1ERsqIakxnEy5JlzV7XKdO1KmacRG5TKwPc4vJTgSRQ0LfkbFw==}
     engines: {node: '>=8'}
 
-  nodemailer@10.0.1:
-    resolution: {integrity: sha512-c+gU9cL9HLDax3vjxL88kW+6NOgdtEUWaZ+AUtxdJR6LLhf0kGdCLExof7yiKW7zdO9EfXCSIgmhGyFmUM0mYQ==}
-    engines: {node: '>=20.0.0'}
-
-  nodemailer@10.0.2:
-    resolution: {integrity: sha512-83mO0TnWXySiJXdMAIUYmlXYdJ2KUq/w8EJgc4ogKU2UssaHf7ZPeuHcb4YCxeNiM0DDshnm291U0/ClrSZZsg==}
+  nodemailer@10.0.3:
+    resolution: {integrity: sha512-h5c8ypcMoOIh44bIcVROvTDbjRdOJX8AXTkxMht2C92HlSjkG+/8kjoqmNPypfjQaVNaUHWyZ3tqs5I3K91F3g==}
     engines: {node: '>=20.0.0'}
 
   nopt@7.2.1:
@@ -7362,7 +7358,7 @@ snapshots:
       '@babel/types': 7.29.8
       source-map-js: 1.2.1
 
-  mailparser@3.9.23:
+  mailparser@3.9.24:
     dependencies:
       '@zone-eu/mailsplit': 5.4.16
       encoding-japanese: 2.3.0
@@ -7371,7 +7367,7 @@ snapshots:
       iconv-lite: 0.7.3
       libmime: 5.4.3
       linkify-it: 5.0.2
-      nodemailer: 10.0.1
+      nodemailer: 10.0.3
       punycode.js: 2.3.1
       tlds: 1.261.0
 
@@ -8419,9 +8415,7 @@ snapshots:
       '@types/pegjs': 0.10.6
       big-integer: 1.6.52
 
-  nodemailer@10.0.1: {}
-
-  nodemailer@10.0.2: {}
+  nodemailer@10.0.3: {}
 
   nopt@7.2.1:
     dependencies:
