@@ -225,7 +225,7 @@ importers:
         version: 10.0.1(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))
       '@redocly/cli':
         specifier: ^2.14.5
-        version: 2.52.0
+        version: 2.52.1
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
         version: 6.0.2(prettier-plugin-svelte@4.1.1(prettier@3.9.6)(svelte@5.56.10(@typescript-eslint/types@8.69.0)))(prettier@3.9.6)(supports-color@7.2.0)(svelte@5.56.10(@typescript-eslint/types@8.69.0))
@@ -264,7 +264,7 @@ importers:
         version: 5.4.1(svgo@4.0.2)(typescript@6.0.3)
       nodemailer:
         specifier: ^10.0.0
-        version: 10.0.3
+        version: 10.0.7
       prettier:
         specifier: ^3.7.4
         version: 3.9.6
@@ -1306,8 +1306,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@redocly/cli@2.52.0':
-    resolution: {integrity: sha512-VUZFUwVu2vteAgUOX04QbgGZ9+QMP6UoonaSHQ7asAfaKbYBcw6QFrqA6FrDXg1ycN73Ou07Hb8RQWTnRndxtg==}
+  '@redocly/cli@2.52.1':
+    resolution: {integrity: sha512-gwfx1WelVDHU/cw+GkpLV9+xksOI3obJGgL1nUVrAFUyXNDxM+aifXDUZk7BfbOIpF69Sea2ant0cOqbQfg/KQ==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
@@ -3517,6 +3517,10 @@ packages:
     resolution: {integrity: sha512-h5c8ypcMoOIh44bIcVROvTDbjRdOJX8AXTkxMht2C92HlSjkG+/8kjoqmNPypfjQaVNaUHWyZ3tqs5I3K91F3g==}
     engines: {node: '>=20.0.0'}
 
+  nodemailer@10.0.7:
+    resolution: {integrity: sha512-guf2Y9vYdc0x/2zry8AlOdlBSypNCqFnfetFSoD5QdHU5MrNVt9gzt5u5muJneu6vF4Zs/hrBdnhwdHITrzMhA==}
+    engines: {node: '>=20.0.0'}
+
   nopt@10.0.1:
     resolution: {integrity: sha512-df3sBr/6ax9hSGuC3CspvLlbnX8cP5L5nZwXF8cGN8l0zSWR6BvzmQ6jPUKjvo6+/xdpkNvEcucBNUdBeeV13g==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
@@ -5416,7 +5420,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@redocly/cli@2.52.0': {}
+  '@redocly/cli@2.52.1': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.8':
     optional: true
@@ -8429,6 +8433,8 @@ snapshots:
       big-integer: 1.6.52
 
   nodemailer@10.0.3: {}
+
+  nodemailer@10.0.7: {}
 
   nopt@10.0.1:
     dependencies:
