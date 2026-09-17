@@ -264,7 +264,7 @@ importers:
         version: 5.4.1(svgo@4.0.2)(typescript@6.0.3)
       nodemailer:
         specifier: ^10.0.0
-        version: 10.0.9
+        version: 10.0.10
       prettier:
         specifier: ^3.7.4
         version: 3.9.6
@@ -3512,6 +3512,10 @@ packages:
   node-sql-parser@5.4.0:
     resolution: {integrity: sha512-jVe6Z61gPcPjCElPZ6j8llB3wnqGcuQzefim1ERsqIakxnEy5JlzV7XKdO1KmacRG5TKwPc4vJTgSRQ0LfkbFw==}
     engines: {node: '>=8'}
+
+  nodemailer@10.0.10:
+    resolution: {integrity: sha512-He9XskOFms62SyAKkLu8CcGcYHAo+BSHSsORI8s4PJH8qZgZY4L4lDfvyN0twvmbpyG+eGrxpyBlskj9d9rJ8A==}
+    engines: {node: '>=20.0.0'}
 
   nodemailer@10.0.9:
     resolution: {integrity: sha512-BF0qcyplCwp+jMk6HCjFykBz/YhhZSsxrARhOldLwFWH+8kGjQsd2WIMIZhqEuyXRoGFi0ONbDeWDMDoL8MhLw==}
@@ -8427,6 +8431,8 @@ snapshots:
     dependencies:
       '@types/pegjs': 0.10.6
       big-integer: 1.6.52
+
+  nodemailer@10.0.10: {}
 
   nodemailer@10.0.9: {}
 
