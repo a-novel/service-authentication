@@ -63,6 +63,7 @@ type MailDelivery struct {
 
 	mu     sync.Mutex
 	closed bool
+	err    error
 	wg     sync.WaitGroup
 }
 
@@ -128,8 +129,8 @@ func (delivery *MailDelivery) Close() {
 	}()
 }
 
-// Wait closes admission and waits for accepted work to finish within ctx. It is safe to call
-// repeatedly and concurrently.
+// Wait closes admission and waits for accepted work to finish within ctx. It returns any SMTP
+// delivery failures collected while draining and is safe to call repeatedly and concurrently.
 func (delivery *MailDelivery) Wait(ctx context.Context) error {
 	ctx, span := otel.Tracer().Start(ctx, "core.MailDelivery(wait)")
 	defer span.End()
@@ -138,6 +139,14 @@ func (delivery *MailDelivery) Wait(ctx context.Context) error {
 
 	select {
 	case <-delivery.drained:
+		delivery.mu.Lock()
+		err := delivery.err
+		delivery.mu.Unlock()
+
+		if err != nil {
+			return otel.ReportError(span, fmt.Errorf("deliver mail: %w", err))
+		}
+
 		otel.ReportSuccessNoContent(span)
 
 		return nil
@@ -179,6 +188,12 @@ func (delivery *MailDelivery) send(ctx context.Context, request *MailDeliveryReq
 
 	err := delivery.smtp.SendMail(request.To, request.Template, request.TemplateName, request.Data)
 	if err != nil {
+		delivery.mu.Lock()
+		if delivery.err == nil {
+			delivery.err = err
+		}
+		delivery.mu.Unlock()
+
 		otel.Logger().ErrorContext(ctx, "mail delivery failed", "mail.kind", request.Kind, "error", err)
 		_ = otel.ReportError(span, err)
 

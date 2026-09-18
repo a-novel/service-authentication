@@ -2,6 +2,7 @@ package core_test
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"testing"
 	"text/template"
@@ -56,6 +57,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			request: &core.ShortCodeCreateRegisterRequest{
 				Lang:  config.LangFR,
 				Email: "user@provider.com",
+				Role:  config.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -82,6 +84,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			request: &core.ShortCodeCreateRegisterRequest{
 				Lang:  config.LangFR,
 				Email: "user@provider.com",
+				Role:  config.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -109,6 +112,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			request: &core.ShortCodeCreateRegisterRequest{
 				Lang:  config.LangFR,
 				Email: "user@provider.com",
+				Role:  config.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -124,6 +128,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			request: &core.ShortCodeCreateRegisterRequest{
 				Lang:  config.LangFR,
 				Email: "user@provider.com",
+				Role:  config.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -142,6 +147,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			request: &core.ShortCodeCreateRegisterRequest{
 				Lang:  config.LangFR,
 				Email: "user@provider.com",
+				Role:  config.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -156,6 +162,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			request: &core.ShortCodeCreateRegisterRequest{
 				Lang:  config.LangFR,
 				Email: "user@provider.com",
+				Role:  config.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -181,12 +188,16 @@ func TestShortCodeCreateRegister(t *testing.T) {
 
 			if testCase.serviceCreateMock != nil {
 				serviceCreate.EXPECT().
-					Exec(mock.Anything, &core.ShortCodeCreateRequest{
-						Usage:    core.ShortCodeUsageRegister,
-						Target:   testCase.request.Email,
-						TTL:      config.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL,
-						Override: true,
-					}).
+					Exec(mock.Anything, mock.MatchedBy(func(request *core.ShortCodeCreateRequest) bool {
+						data, err := json.Marshal(request.Data)
+
+						return err == nil &&
+							request.Usage == core.ShortCodeUsageRegister &&
+							request.Target == testCase.request.Email &&
+							request.TTL == config.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL &&
+							request.Override &&
+							string(data) == `{"role":"`+testCase.request.Role+`"}`
+					})).
 					Return(testCase.serviceCreateMock.resp, testCase.serviceCreateMock.err)
 			}
 

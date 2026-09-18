@@ -30,14 +30,14 @@ The service runs as published OCI images plus a PostgreSQL database. The REST se
 
 > **OpenTofu modules are the planned canonical deployment path.** Until they land, deploy the images with any container orchestrator — the composition below is the reference for which images to run, how they wire together, and the environment they expect.
 
-| Image                                    | Role                                                                                 |
-| ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| `service-authentication/rest`            | Public REST API. The long-running server.                                            |
-| `service-authentication/jobs/migrations` | One-shot schema migration job; runs to completion before `init` and the server.      |
-| `service-authentication/jobs/init`       | One-shot bootstrap job; provisions the super-admin from `SUPER_ADMIN_*`. Idempotent. |
-| `service-authentication/database`        | Pre-tuned PostgreSQL image — or bring your own Postgres.                             |
+| Image                                     | Role                                                                                          |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `service-authentication/rest`             | Public REST API. The long-running server.                                                     |
+| `service-authentication/jobs/migrations`  | One-shot schema migration job; runs to completion before the server or maintenance.           |
+| `service-authentication/jobs/maintenance` | Trusted, parameterized one-shot operations. Running it without an operation only prints help. |
+| `service-authentication/database`         | Pre-tuned PostgreSQL image — or bring your own Postgres.                                      |
 
-Pin every image to the same release tag — see the [latest release](https://github.com/a-novel/service-authentication/releases/latest). A production deployment runs `database`, then `migrations` to completion, then `init` to completion, then any number of `rest` replicas. Provide `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DATABASE` through the orchestrator; store the password as a secret.
+Pin every image to the same release tag — see the [latest release](https://github.com/a-novel/service-authentication/releases/latest). A production deployment runs `database`, then `migrations` to completion, then any number of `rest` replicas. Maintenance runs separately when an operator requests an operation. Provide `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DATABASE` through the orchestrator; store the password as a secret.
 
 ```yaml
 services:
@@ -66,30 +66,12 @@ services:
       POSTGRES_TLS_ENABLED: "false"
     networks: [api]
 
-  # Optional: seeds the initial super-admin user. Pass the credentials securely.
-  init-authentication:
-    image: ghcr.io/a-novel/service-authentication/jobs/init:v2.4.3
-    depends_on:
-      postgres-authentication: { condition: service_healthy }
-      migrations-authentication: { condition: service_completed_successfully }
-    environment:
-      POSTGRES_HOST: postgres-authentication
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: "${POSTGRES_USER}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
-      POSTGRES_TLS_ENABLED: "false"
-      SUPER_ADMIN_EMAIL: "<super-admin-email>"
-      SUPER_ADMIN_PASSWORD: "<super-admin-password>"
-    networks: [api]
-
   service-authentication:
     image: ghcr.io/a-novel/service-authentication/rest:v2.9.1
     ports: ["${SERVICE_AUTHENTICATION_REST_PORT}:8080"]
     depends_on:
       postgres-authentication: { condition: service_healthy }
       migrations-authentication: { condition: service_completed_successfully }
-      init-authentication: { condition: service_completed_successfully }
     environment:
       POSTGRES_HOST: postgres-authentication
       POSTGRES_PORT: "5432"
@@ -108,7 +90,15 @@ volumes:
   authentication-postgres-data:
 ```
 
-The `init` job is idempotent — leave `SUPER_ADMIN_*` unset and it exits without touching the database, so it is safe to keep in every deployment. The server is wired to wait on it (`depends_on`), so if you drop the `init` service entirely, remove that dependency from `service-authentication` too or it won't start. Email-bearing flows (registration, password reset, email change) fall back to a debug sender that prints to stdout unless you configure SMTP — see the optional configuration below.
+The maintenance image accepts operations as command arguments. Its first operation reconciles an email address to one exact recognized role:
+
+```text
+maintenance account-role --email operator@example.com --role auth:admin --lang en
+```
+
+For an existing account, the operation promotes or demotes it to the requested role and does nothing when the role already matches. For a missing account, it sends a registration link whose short code carries the requested role; completing registration creates the account with that role. Repeating the same request while that invitation is active is a no-op. A request for another role replaces the pending invitation. The recognized roles are `auth:anon`, `auth:user`, `auth:admin`, and `auth:superadmin`.
+
+Email-bearing flows fall back to a debug sender that prints to stdout unless you configure SMTP. The maintenance job waits for invitation delivery and fails the execution when the sender reports an error. See the optional configuration below.
 
 ### Configuration
 
@@ -116,24 +106,22 @@ Every variable is read from the process environment. Set `POSTGRES_HOST` to use 
 connection fields. `POSTGRES_DSN` remains a deprecated compatibility fallback while existing
 deployments migrate.
 
-| Name                     | Description                                                                                                                     | Images                                                             |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `POSTGRES_HOST`          | PostgreSQL hostname or IP address. Selects the discrete connection fields. **Required for new deployments.**                    | `rest`<br/>`jobs/migrations`<br/>`jobs/init`<br/>`standalone-rest` |
-| `POSTGRES_PORT`          | PostgreSQL port. Defaults to `5432`.                                                                                            | `rest`<br/>`jobs/migrations`<br/>`jobs/init`<br/>`standalone-rest` |
-| `POSTGRES_USER`          | PostgreSQL login role. **Required when `POSTGRES_HOST` is set.**                                                                | `rest`<br/>`jobs/migrations`<br/>`jobs/init`<br/>`standalone-rest` |
-| `POSTGRES_PASSWORD`      | PostgreSQL login password. **Required when `POSTGRES_HOST` is set; inject it as a secret.**                                     | `rest`<br/>`jobs/migrations`<br/>`jobs/init`<br/>`standalone-rest` |
-| `POSTGRES_DATABASE`      | PostgreSQL database name. **Required when `POSTGRES_HOST` is set.**                                                             | `rest`<br/>`jobs/migrations`<br/>`jobs/init`<br/>`standalone-rest` |
-| `POSTGRES_TLS_ENABLED`   | Encrypt the PostgreSQL connection. Defaults to `true`; disable only when another trusted boundary protects the database link.   | `rest`<br/>`jobs/migrations`<br/>`jobs/init`<br/>`standalone-rest` |
-| `POSTGRES_DSN`           | Deprecated connection-URL fallback, read only when `POSTGRES_HOST` is empty.                                                    | `rest`<br/>`jobs/migrations`<br/>`jobs/init`<br/>`standalone-rest` |
-| `SERVICE_JSON_KEYS_HOST` | Hostname of the [JSON Keys service](https://github.com/a-novel/service-json-keys) (no scheme/port). **Required** on the server. | `rest`<br/>`standalone-rest`                                       |
-| `SERVICE_JSON_KEYS_PORT` | gRPC port of the JSON Keys service. **Required** on the server.                                                                 | `rest`<br/>`standalone-rest`                                       |
-| `SUPER_ADMIN_EMAIL`      | Email of the super-admin to provision. The bootstrap is skipped if unset.                                                       | `jobs/init`<br/>`standalone-rest`                                  |
-| `SUPER_ADMIN_PASSWORD`   | Plaintext password for the super-admin. Pass it securely. The bootstrap is skipped if unset.                                    | `jobs/init`<br/>`standalone-rest`                                  |
+| Name                     | Description                                                                                                                     | Images                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `POSTGRES_HOST`          | PostgreSQL hostname or IP address. Selects the discrete connection fields. **Required for new deployments.**                    | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_PORT`          | PostgreSQL port. Defaults to `5432`.                                                                                            | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_USER`          | PostgreSQL login role. **Required when `POSTGRES_HOST` is set.**                                                                | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_PASSWORD`      | PostgreSQL login password. **Required when `POSTGRES_HOST` is set; inject it as a secret.**                                     | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_DATABASE`      | PostgreSQL database name. **Required when `POSTGRES_HOST` is set.**                                                             | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_TLS_ENABLED`   | Encrypt the PostgreSQL connection. Defaults to `true`; disable only when another trusted boundary protects the database link.   | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_DSN`           | Deprecated connection-URL fallback, read only when `POSTGRES_HOST` is empty.                                                    | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `SERVICE_JSON_KEYS_HOST` | Hostname of the [JSON Keys service](https://github.com/a-novel/service-json-keys) (no scheme/port). **Required** on the server. | `rest`<br/>`standalone-rest`                                              |
+| `SERVICE_JSON_KEYS_PORT` | gRPC port of the JSON Keys service. **Required** on the server.                                                                 | `rest`<br/>`standalone-rest`                                              |
 
 <details>
 <summary>Optional configuration (client platform, SMTP, REST tuning, OpenTelemetry)</summary>
 
-**Client platform** — optional; only used to build links in outgoing emails. Point it at a running [authentication platform](https://github.com/a-novel/platform-authentication) (images `rest`, `standalone-rest`):
+**Client platform** — optional; only used to build links in outgoing emails. Point it at a running [authentication platform](https://github.com/a-novel/platform-authentication) (images `rest`, `jobs/maintenance`, `standalone-rest`):
 
 | Name                                | Description                      | Default                                     |
 | ----------------------------------- | -------------------------------- | ------------------------------------------- |
@@ -142,7 +130,7 @@ deployments migrate.
 | `PLATFORM_AUTH_URL_UPDATE_PASSWORD` | Password-reset page.             | `PLATFORM_AUTH_URL` + `/ext/password/reset` |
 | `PLATFORM_AUTH_URL_REGISTER`        | Register page.                   | `PLATFORM_AUTH_URL` + `/ext/account/create` |
 
-**SMTP** — without these, emails are printed to stdout by a debug sender (dev only; set a real server in production, since emails carry short codes) (images `rest`, `standalone-rest`):
+**SMTP** — without these, emails are printed to stdout by a debug sender (dev only; set a real server in production, since emails carry short codes) (images `rest`, `jobs/maintenance`, `standalone-rest`):
 
 | Name                     | Description                                                                                  | Default             |
 | ------------------------ | -------------------------------------------------------------------------------------------- | ------------------- |
@@ -179,7 +167,7 @@ Database connection pool (server images). The limits are **per process**. The da
 | `POSTGRES_MAX_OPEN_CONNS` | Maximum open connections to the database. | `20`    |
 | `POSTGRES_MAX_IDLE_CONNS` | Maximum connections kept open while idle. | `20`    |
 
-Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter (images `rest`, `jobs/init`, `standalone-rest`):
+Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter (images `rest`, `jobs/maintenance`, `standalone-rest`):
 
 | Name                | Description                                                           | Default                  |
 | ------------------- | --------------------------------------------------------------------- | ------------------------ |
@@ -289,7 +277,7 @@ Every method ships [zod](https://github.com/colinhacks/zod) request and response
 
 ## Running locally
 
-For a throwaway instance without the dev toolchain, the **`standalone-rest`** image bundles the server, migrations, and the init bootstrap in one container. It runs migrations and init on every boot — handy for a quick spin-up, unsafe under multi-replica production restarts.
+For a throwaway instance without the dev toolchain, the **`standalone-rest`** image bundles the server, migrations, and maintenance executable in one container. It runs migrations before the server on every boot. Maintenance remains an explicit one-shot operation.
 
 ```yaml
 services:

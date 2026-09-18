@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -19,6 +20,14 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
+
+// ErrCredentialsCreateInvalidRegistrationData is returned when a consumed
+// registration code carries malformed data or a role the service does not know.
+var ErrCredentialsCreateInvalidRegistrationData = errors.New("invalid registration data")
+
+type credentialsCreateRegistrationData struct {
+	Role string `json:"role"`
+}
 
 // CredentialsCreateDao provides credential insertion capabilities.
 type CredentialsCreateDao interface {
@@ -96,13 +105,18 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
+		shortCode, consumeErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
 			Usage:  ShortCodeUsageRegister,
 			Target: request.Email,
 			Code:   request.ShortCode,
 		})
-		if err != nil {
-			return fmt.Errorf("consume short code: %w", err)
+		if consumeErr != nil {
+			return fmt.Errorf("consume short code: %w", consumeErr)
+		}
+
+		role, roleErr := computeRole(shortCode.Data)
+		if roleErr != nil {
+			return errors.Join(roleErr, ErrCredentialsCreateInvalidRegistrationData)
 		}
 
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{
@@ -110,7 +124,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 			Email:    request.Email,
 			Password: encryptedPassword,
 			Now:      time.Now(),
-			Role:     authconfig.RoleUser,
+			Role:     role,
 		})
 		if err != nil {
 			return fmt.Errorf("insert credentials: %w", err)
@@ -130,4 +144,24 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	}
 
 	return otel.ReportSuccess(span, tokens), nil
+}
+
+func computeRole(data []byte) (string, error) {
+	if len(data) == 0 {
+		return authconfig.RoleUser, nil
+	}
+
+	var registrationData credentialsCreateRegistrationData
+
+	err := json.Unmarshal(data, &registrationData)
+	if err != nil {
+		return "", fmt.Errorf("decode registration data: %w", err)
+	}
+
+	_, err = authconfig.PermissionsConfigDefault.Priority(registrationData.Role)
+	if err != nil {
+		return "", fmt.Errorf("validate registration role: %w", err)
+	}
+
+	return registrationData.Role, nil
 }

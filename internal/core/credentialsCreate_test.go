@@ -46,7 +46,8 @@ func TestCredentialsCreateRequest(t *testing.T) {
 	}
 
 	type serviceShortCodeConsumeMock struct {
-		err error
+		resp *core.ShortCode
+		err  error
 	}
 
 	testCases := []struct {
@@ -59,8 +60,9 @@ func TestCredentialsCreateRequest(t *testing.T) {
 		serviceSignClaimsMock       *serviceSignClaimsMock
 		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
 
-		expect    *core.Token
-		expectErr error
+		expect     *core.Token
+		expectErr  error
+		expectRole string
 	}{
 		{
 			name: "Success",
@@ -96,6 +98,72 @@ func TestCredentialsCreateRequest(t *testing.T) {
 				AccessToken:  "access-token",
 				RefreshToken: mockUnsignedRefreshToken,
 			},
+		},
+		{
+			name: "Success/RegistrationRole",
+
+			request: &core.CredentialsCreateRequest{
+				Email:     "admin@provider.com",
+				Password:  "password-2",
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
+				resp: &core.ShortCode{Data: []byte(`{"role":"auth:admin"}`)},
+			},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
+					Email:     "admin@provider.com",
+					Password:  "password-2-hashed",
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					Role:      config.RoleAdmin,
+				},
+			},
+
+			serviceSignClaimsMock: &serviceSignClaimsMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{Token: "access-token"},
+			},
+
+			expect: &core.Token{
+				AccessToken:  "access-token",
+				RefreshToken: mockUnsignedRefreshToken,
+			},
+			expectRole: config.RoleAdmin,
+		},
+		{
+			name: "Error/MalformedRegistrationData",
+
+			request: &core.CredentialsCreateRequest{
+				Email:     "user@provider.com",
+				Password:  "password-2",
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
+				resp: &core.ShortCode{Data: []byte(`{"role":`)},
+			},
+
+			expectErr: core.ErrCredentialsCreateInvalidRegistrationData,
+		},
+		{
+			name: "Error/UnknownRegistrationRole",
+
+			request: &core.CredentialsCreateRequest{
+				Email:     "user@provider.com",
+				Password:  "password-2",
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
+				resp: &core.ShortCode{Data: []byte(`{"role":"auth:unknown"}`)},
+			},
+
+			expectErr: core.ErrCredentialsCreateInvalidRegistrationData,
 		},
 		{
 			name: "Error/ConsumeShortCode",
@@ -247,23 +315,33 @@ func TestCredentialsCreateRequest(t *testing.T) {
 				serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
 
 				if testCase.serviceShortCodeConsumeMock != nil {
+					shortCode := testCase.serviceShortCodeConsumeMock.resp
+					if shortCode == nil && testCase.serviceShortCodeConsumeMock.err == nil {
+						shortCode = &core.ShortCode{}
+					}
+
 					serviceShortCodeConsume.EXPECT().
 						Exec(mock.Anything, &core.ShortCodeConsumeRequest{
 							Usage:  core.ShortCodeUsageRegister,
 							Target: testCase.request.Email,
 							Code:   testCase.request.ShortCode,
 						}).
-						Return(nil, testCase.serviceShortCodeConsumeMock.err)
+						Return(shortCode, testCase.serviceShortCodeConsumeMock.err)
 				}
 
 				if testCase.daoMock != nil {
+					expectRole := testCase.expectRole
+					if expectRole == "" {
+						expectRole = config.RoleUser
+					}
+
 					mockDao.EXPECT().
 						Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsInsertRequest) bool {
 							return assert.Equal(t, testCase.request.Email, data.Email) &&
 								assert.NotEqual(t, uuid.Nil, data.ID) &&
 								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
 								assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
-								assert.Equal(t, config.RoleUser, data.Role)
+								assert.Equal(t, expectRole, data.Role)
 						})).
 						Return(
 							testCase.daoMock.resp,

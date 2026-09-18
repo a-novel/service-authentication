@@ -9,6 +9,7 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
@@ -46,6 +47,7 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 	_, err = handler.service.Exec(ctx, &core.ShortCodeCreateRegisterRequest{
 		Email: request.Email,
 		Lang:  request.Lang,
+		Role:  authconfig.RoleUser,
 	})
 	if err != nil {
 		// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
