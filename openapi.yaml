@@ -203,8 +203,8 @@ paths:
       operationId: credentialsCreate
       summary: Register a new user.
       description: |
-        Create a new user account. The user must have a short-code available, generated during pre-registration. If not, 
-        use `[PUT] /v2/short-code/register` first.
+        Create a new user account with a short code received in a registration invitation. A super-admin must first
+        send the invitation through `[PUT] /v2/short-code/register`.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:create"]
@@ -353,11 +353,10 @@ paths:
   /v2/short-code/register:
     put:
       operationId: registerInit
-      summary: Start the registration process.
+      summary: Invite a user to register.
       description: |
-        Start the registration process, by sending a link with a unique short code to the user email. If the user
-        manages to open the link, it means the email is valid and no further validation is required. It can proceed to
-        complete its account safely.
+        A super-admin starts the registration process by sending a link with a unique short code to the user's email.
+        The recipient can then complete registration with an anonymous access token and the received code.
 
         The response is always 202 whether or not the email is already registered, to avoid revealing which
         emails have accounts. No email is sent when the address is already registered.
@@ -846,7 +845,7 @@ components:
                 $ref: "#/components/schemas/userRole"
 
     registerInit:
-      description: Start the registration process.
+      description: The email and language for a super-admin registration invitation.
       required: true
       content:
         application/json:

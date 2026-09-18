@@ -10,6 +10,7 @@ import {
   claimsGet,
   credentialsCreate,
   shortCodeCreateRegister,
+  tokenCreate,
   tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
 
@@ -26,15 +27,18 @@ export interface PreRegisterData {
   shortCode: string;
 }
 
-/** Requests a registration link and returns its email address and short code. */
+/** Requests a registration link as the configured super-admin and returns its email address and short code. */
 export async function preRegisterUser(
   api: AuthenticationApi,
   mailHost: string,
   userEmail: string = generateRandomMail()
 ) {
-  const anonToken = await tokenCreateAnon(api);
+  const superAdminToken = await tokenCreate(api, {
+    email: process.env.SUPER_ADMIN_EMAIL!,
+    password: process.env.SUPER_ADMIN_PASSWORD!,
+  });
 
-  await shortCodeCreateRegister(api, anonToken.accessToken, {
+  await shortCodeCreateRegister(api, superAdminToken.accessToken, {
     email: userEmail,
     lang: Lang.En,
   });

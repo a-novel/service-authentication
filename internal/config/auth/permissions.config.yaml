@@ -6,7 +6,6 @@ roles:
       - "credentials:email:patch"
       - "credentials:password:reset"
       - "shortCode:password:reset"
-      - "shortCode:register"
   "auth:user":
     priority: 1
     inherits:
@@ -28,3 +27,4 @@ roles:
       - "auth:admin"
     permissions:
       - "credentials:role:patch"
+      - "shortCode:register"
