@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,16 +14,24 @@ import (
 func TestPermissions(t *testing.T) {
 	t.Parallel()
 
+	const registrationPermission = "shortCode:register"
+
 	testCases := []struct {
-		name       string
-		role       string
-		expectRank int
-		expectErr  error
+		name                         string
+		role                         string
+		expectRank                   int
+		expectRegistrationPermission bool
+		expectErr                    error
 	}{
 		{name: "Success/Anon", role: config.RoleAnon},
 		{name: "Success/User", role: config.RoleUser, expectRank: 1},
 		{name: "Success/Admin", role: config.RoleAdmin, expectRank: 2},
-		{name: "Success/SuperAdmin", role: config.RoleSuperAdmin, expectRank: 3},
+		{
+			name:                         "Success/SuperAdmin",
+			role:                         config.RoleSuperAdmin,
+			expectRank:                   3,
+			expectRegistrationPermission: true,
+		},
 		{name: "Error/UnknownRole", role: "unknown", expectErr: config.ErrUnknownRole},
 	}
 
@@ -37,6 +46,14 @@ func TestPermissions(t *testing.T) {
 				rank, err := permissions.Priority(testCase.role)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expectRank, rank)
+
+				if testCase.expectErr == nil {
+					require.Equal(
+						t,
+						testCase.expectRegistrationPermission,
+						slices.Contains(permissions.Roles[testCase.role].Permissions, registrationPermission),
+					)
+				}
 			}
 		})
 	}

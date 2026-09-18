@@ -57,7 +57,7 @@ export async function shortCodeCreatePasswordReset(
   });
 }
 
-/** Emails a short code that authorizes registering a new account under the given address. */
+/** Emails a registration invitation; the access token must belong to a super-admin. */
 export async function shortCodeCreateRegister(
   api: AuthenticationApi,
   accessToken: string,

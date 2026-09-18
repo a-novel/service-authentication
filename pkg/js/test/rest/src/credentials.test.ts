@@ -16,6 +16,7 @@ import {
   credentialsUpdateRole,
   shortCodeCreateEmailUpdate,
   shortCodeCreatePasswordReset,
+  shortCodeCreateRegister,
   tokenCreate,
   tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
@@ -34,6 +35,21 @@ const mailUrl = (() => {
   if (!value) throw new Error("MAIL_UI_URL or MAIL_HOST must be set");
   return value;
 })();
+
+describe("shortCodeCreateRegister", () => {
+  it("refuses anonymous callers", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+    const anonymousToken = await tokenCreateAnon(api);
+
+    await expectStatus(
+      shortCodeCreateRegister(api, anonymousToken.accessToken, {
+        email: generateRandomMail(),
+        lang: Lang.En,
+      }),
+      403
+    );
+  });
+});
 
 describe("credentialsCreate", () => {
   it("registers the user", async () => {
