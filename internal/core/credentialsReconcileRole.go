@@ -145,30 +145,6 @@ func (service *CredentialsReconcileRole) Exec(
 		Role:  request.Role,
 	})
 	if err != nil {
-		if errors.Is(err, ErrCredentialsCreateAlreadyExists) {
-			// Account creation won the registration race, so reconcile the resulting credentials.
-			credentials, selectErr := service.selectCredentials.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
-				Email: request.Email,
-			})
-			if selectErr != nil {
-				return nil, otel.ReportError(span, fmt.Errorf(
-					"select credentials after registration race: %w",
-					errors.Join(err, selectErr),
-				))
-			}
-
-			result, err := service.reconcileExisting(ctx, credentials, request.Role)
-			if err != nil {
-				return nil, otel.ReportError(span, err)
-			}
-
-			if result.Outcome == CredentialsReconcileRoleUnchanged {
-				span.SetAttributes(attribute.Bool("noop", true))
-			}
-
-			return otel.ReportSuccess(span, result), nil
-		}
-
 		return nil, otel.ReportError(span, fmt.Errorf("create registration: %w", err))
 	}
 

@@ -23,289 +23,281 @@ func TestCredentialsReconcileRole(t *testing.T) {
 		Lang:  config.LangEN,
 		Role:  config.RoleAdmin,
 	}
+	invalidRequest := *request
+	invalidRequest.Role = "auth:unknown"
+
 	credentialsID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	errFoo := errors.New("foo")
 
-	t.Run("Success/Unchanged", func(t *testing.T) {
-		t.Parallel()
+	type selectCredentialsMock struct {
+		resp *dao.Credentials
+		err  error
+	}
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{Email: request.Email}).
-			Return(&dao.Credentials{ID: credentialsID, Email: request.Email, Role: request.Role}, nil)
+	type updateRoleMock struct {
+		resp *dao.Credentials
+		err  error
+	}
 
-		result, err := service.Exec(t.Context(), request)
-		require.NoError(t, err)
-		require.Equal(t, core.CredentialsReconcileRoleUnchanged, result.Outcome)
+	type selectShortCodeMock struct {
+		resp *dao.ShortCode
+		err  error
+	}
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+	type registerMock struct {
+		resp *core.ShortCode
+		err  error
+	}
 
-	t.Run("Success/Updated", func(t *testing.T) {
-		t.Parallel()
+	testCases := []struct {
+		name string
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{Email: request.Email}).
-			Return(&dao.Credentials{ID: credentialsID, Email: request.Email, Role: config.RoleSuperAdmin}, nil)
-		updateRole.EXPECT().
-			Exec(mock.Anything, mock.MatchedBy(func(update *dao.CredentialsUpdateRoleRequest) bool {
-				return update.ID == credentialsID &&
-					update.Role == request.Role &&
-					time.Since(update.Now) < time.Minute
-			})).
-			Return(&dao.Credentials{ID: credentialsID, Email: request.Email, Role: request.Role}, nil)
+		request *core.CredentialsReconcileRoleRequest
 
-		result, err := service.Exec(t.Context(), request)
-		require.NoError(t, err)
-		require.Equal(t, core.CredentialsReconcileRoleUpdated, result.Outcome)
+		selectCredentialsMock *selectCredentialsMock
+		updateRoleMock        *updateRoleMock
+		selectShortCodeMock   *selectShortCodeMock
+		registerMock          *registerMock
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+		expect    *core.CredentialsReconcileRoleResult
+		expectErr error
+	}{
+		{
+			name:    "Success/Unchanged",
+			request: request,
 
-	t.Run("Success/MatchingRegistrationPending", func(t *testing.T) {
-		t.Parallel()
+			selectCredentialsMock: &selectCredentialsMock{
+				resp: &dao.Credentials{
+					ID:    credentialsID,
+					Email: request.Email,
+					Role:  request.Role,
+				},
+			},
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{Email: request.Email}).
-			Return(nil, dao.ErrCredentialsSelectByEmailNotFound)
-		selectShortCode.EXPECT().
-			Exec(mock.Anything, &dao.ShortCodeSelectRequest{
-				Usage:  core.ShortCodeUsageRegister,
-				Target: request.Email,
-			}).
-			Return(&dao.ShortCode{Data: []byte(`{"role":"auth:admin"}`)}, nil)
+			expect: &core.CredentialsReconcileRoleResult{
+				Outcome: core.CredentialsReconcileRoleUnchanged,
+			},
+		},
+		{
+			name:    "Success/Updated",
+			request: request,
 
-		result, err := service.Exec(t.Context(), request)
-		require.NoError(t, err)
-		require.Equal(t, core.CredentialsReconcileRoleRegistrationPending, result.Outcome)
+			selectCredentialsMock: &selectCredentialsMock{
+				resp: &dao.Credentials{
+					ID:    credentialsID,
+					Email: request.Email,
+					Role:  config.RoleSuperAdmin,
+				},
+			},
+			updateRoleMock: &updateRoleMock{
+				resp: &dao.Credentials{
+					ID:    credentialsID,
+					Email: request.Email,
+					Role:  request.Role,
+				},
+			},
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+			expect: &core.CredentialsReconcileRoleResult{
+				Outcome: core.CredentialsReconcileRoleUpdated,
+			},
+		},
+		{
+			name:    "Success/MatchingRegistrationPending",
+			request: request,
 
-	t.Run("Success/RegistrationCreated", func(t *testing.T) {
-		t.Parallel()
+			selectCredentialsMock: &selectCredentialsMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+			selectShortCodeMock: &selectShortCodeMock{
+				resp: &dao.ShortCode{Data: []byte(`{"role":"auth:admin"}`)},
+			},
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{Email: request.Email}).
-			Return(nil, dao.ErrCredentialsSelectByEmailNotFound)
-		selectShortCode.EXPECT().
-			Exec(mock.Anything, &dao.ShortCodeSelectRequest{
-				Usage:  core.ShortCodeUsageRegister,
-				Target: request.Email,
-			}).
-			Return(nil, dao.ErrShortCodeSelectNotFound)
-		register.EXPECT().
-			Exec(mock.Anything, &core.ShortCodeCreateRegisterRequest{
-				Email: request.Email,
-				Lang:  request.Lang,
-				Role:  request.Role,
-			}).
-			Return(&core.ShortCode{}, nil)
+			expect: &core.CredentialsReconcileRoleResult{
+				Outcome: core.CredentialsReconcileRoleRegistrationPending,
+			},
+		},
+		{
+			name:    "Success/RegistrationCreated",
+			request: request,
 
-		result, err := service.Exec(t.Context(), request)
-		require.NoError(t, err)
-		require.Equal(t, core.CredentialsReconcileRoleRegistrationCreated, result.Outcome)
+			selectCredentialsMock: &selectCredentialsMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+			selectShortCodeMock: &selectShortCodeMock{
+				err: dao.ErrShortCodeSelectNotFound,
+			},
+			registerMock: &registerMock{
+				resp: &core.ShortCode{},
+			},
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+			expect: &core.CredentialsReconcileRoleResult{
+				Outcome: core.CredentialsReconcileRoleRegistrationCreated,
+			},
+		},
+		{
+			name:    "Success/ReplacesDifferentRegistrationRole",
+			request: request,
 
-	t.Run("Success/ReplacesDifferentRegistrationRole", func(t *testing.T) {
-		t.Parallel()
+			selectCredentialsMock: &selectCredentialsMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+			selectShortCodeMock: &selectShortCodeMock{
+				resp: &dao.ShortCode{Data: []byte(`{"role":"auth:user"}`)},
+			},
+			registerMock: &registerMock{
+				resp: &core.ShortCode{},
+			},
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{Email: request.Email}).
-			Return(nil, dao.ErrCredentialsSelectByEmailNotFound)
-		selectShortCode.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(&dao.ShortCode{Data: []byte(`{"role":"auth:user"}`)}, nil)
-		register.EXPECT().
-			Exec(mock.Anything, &core.ShortCodeCreateRegisterRequest{
-				Email: request.Email,
-				Lang:  request.Lang,
-				Role:  request.Role,
-			}).
-			Return(&core.ShortCode{}, nil)
+			expect: &core.CredentialsReconcileRoleResult{
+				Outcome: core.CredentialsReconcileRoleRegistrationCreated,
+			},
+		},
+		{
+			name:      "Error/InvalidRole",
+			request:   &invalidRequest,
+			expectErr: core.ErrInvalidRequest,
+		},
+		{
+			name:    "Error/SelectCredentials",
+			request: request,
 
-		result, err := service.Exec(t.Context(), request)
-		require.NoError(t, err)
-		require.Equal(t, core.CredentialsReconcileRoleRegistrationCreated, result.Outcome)
+			selectCredentialsMock: &selectCredentialsMock{
+				err: errFoo,
+			},
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+			expectErr: errFoo,
+		},
+		{
+			name:    "Error/UpdateRole",
+			request: request,
 
-	t.Run("Success/ReconcilesRegistrationRace", func(t *testing.T) {
-		t.Parallel()
+			selectCredentialsMock: &selectCredentialsMock{
+				resp: &dao.Credentials{
+					ID:    credentialsID,
+					Email: request.Email,
+					Role:  config.RoleUser,
+				},
+			},
+			updateRoleMock: &updateRoleMock{
+				err: errFoo,
+			},
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{Email: request.Email}).
-			Return(nil, dao.ErrCredentialsSelectByEmailNotFound).
-			Once()
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{Email: request.Email}).
-			Return(&dao.Credentials{ID: credentialsID, Email: request.Email, Role: config.RoleUser}, nil).
-			Once()
-		selectShortCode.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, dao.ErrShortCodeSelectNotFound)
-		register.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, core.ErrCredentialsCreateAlreadyExists)
-		updateRole.EXPECT().
-			Exec(mock.Anything, mock.MatchedBy(func(update *dao.CredentialsUpdateRoleRequest) bool {
-				return update.ID == credentialsID && update.Role == request.Role
-			})).
-			Return(&dao.Credentials{ID: credentialsID, Email: request.Email, Role: request.Role}, nil)
+			expectErr: errFoo,
+		},
+		{
+			name:    "Error/SelectRegistration",
+			request: request,
 
-		result, err := service.Exec(t.Context(), request)
-		require.NoError(t, err)
-		require.Equal(t, core.CredentialsReconcileRoleUpdated, result.Outcome)
+			selectCredentialsMock: &selectCredentialsMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+			selectShortCodeMock: &selectShortCodeMock{
+				err: errFoo,
+			},
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+			expectErr: errFoo,
+		},
+		{
+			name:    "Error/CreateRegistration",
+			request: request,
 
-	t.Run("Error/InvalidRole", func(t *testing.T) {
-		t.Parallel()
+			selectCredentialsMock: &selectCredentialsMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+			selectShortCodeMock: &selectShortCodeMock{
+				err: dao.ErrShortCodeSelectNotFound,
+			},
+			registerMock: &registerMock{
+				err: errFoo,
+			},
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		invalidRequest := *request
-		invalidRequest.Role = "auth:unknown"
+			expectErr: errFoo,
+		},
+		{
+			name:    "Error/RegistrationRace",
+			request: request,
 
-		result, err := service.Exec(t.Context(), &invalidRequest)
-		require.ErrorIs(t, err, core.ErrInvalidRequest)
-		require.Nil(t, result)
+			selectCredentialsMock: &selectCredentialsMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+			selectShortCodeMock: &selectShortCodeMock{
+				err: dao.ErrShortCodeSelectNotFound,
+			},
+			registerMock: &registerMock{
+				err: core.ErrCredentialsCreateAlreadyExists,
+			},
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+			expectErr: core.ErrCredentialsCreateAlreadyExists,
+		},
+	}
 
-	t.Run("Error/SelectCredentials", func(t *testing.T) {
-		t.Parallel()
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, errFoo)
+			selectCredentials := coremocks.NewMockCredentialsReconcileRoleDaoSelect(t)
+			updateRole := coremocks.NewMockCredentialsReconcileRoleDaoUpdate(t)
+			selectShortCode := coremocks.NewMockCredentialsReconcileRoleDaoShortCodeSelect(t)
+			register := coremocks.NewMockCredentialsReconcileRoleServiceRegister(t)
 
-		result, err := service.Exec(t.Context(), request)
-		require.ErrorIs(t, err, errFoo)
-		require.Nil(t, result)
+			if testCase.selectCredentialsMock != nil {
+				selectCredentials.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{
+						Email: testCase.request.Email,
+					}).
+					Return(
+						testCase.selectCredentialsMock.resp,
+						testCase.selectCredentialsMock.err,
+					)
+			}
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+			if testCase.updateRoleMock != nil {
+				updateRole.EXPECT().
+					Exec(mock.Anything, mock.MatchedBy(func(update *dao.CredentialsUpdateRoleRequest) bool {
+						return update.ID == credentialsID &&
+							update.Role == testCase.request.Role &&
+							time.Since(update.Now) < time.Minute
+					})).
+					Return(testCase.updateRoleMock.resp, testCase.updateRoleMock.err)
+			}
 
-	t.Run("Error/UpdateRole", func(t *testing.T) {
-		t.Parallel()
+			if testCase.selectShortCodeMock != nil {
+				selectShortCode.EXPECT().
+					Exec(mock.Anything, &dao.ShortCodeSelectRequest{
+						Usage:  core.ShortCodeUsageRegister,
+						Target: testCase.request.Email,
+					}).
+					Return(
+						testCase.selectShortCodeMock.resp,
+						testCase.selectShortCodeMock.err,
+					)
+			}
 
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(&dao.Credentials{ID: credentialsID, Email: request.Email, Role: config.RoleUser}, nil)
-		updateRole.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, errFoo)
+			if testCase.registerMock != nil {
+				register.EXPECT().
+					Exec(mock.Anything, &core.ShortCodeCreateRegisterRequest{
+						Email: testCase.request.Email,
+						Lang:  testCase.request.Lang,
+						Role:  testCase.request.Role,
+					}).
+					Return(testCase.registerMock.resp, testCase.registerMock.err)
+			}
 
-		result, err := service.Exec(t.Context(), request)
-		require.ErrorIs(t, err, errFoo)
-		require.Nil(t, result)
+			service := core.NewCredentialsReconcileRole(
+				selectCredentials,
+				updateRole,
+				selectShortCode,
+				register,
+			)
 
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
+			result, err := service.Exec(t.Context(), testCase.request)
+			require.ErrorIs(t, err, testCase.expectErr)
+			require.Equal(t, testCase.expect, result)
 
-	t.Run("Error/SelectRegistration", func(t *testing.T) {
-		t.Parallel()
-
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, dao.ErrCredentialsSelectByEmailNotFound)
-		selectShortCode.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, errFoo)
-
-		result, err := service.Exec(t.Context(), request)
-		require.ErrorIs(t, err, errFoo)
-		require.Nil(t, result)
-
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
-
-	t.Run("Error/CreateRegistration", func(t *testing.T) {
-		t.Parallel()
-
-		selectCredentials, updateRole, selectShortCode, register, service := newCredentialsReconcileRoleService(t)
-		selectCredentials.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, dao.ErrCredentialsSelectByEmailNotFound)
-		selectShortCode.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, dao.ErrShortCodeSelectNotFound)
-		register.EXPECT().
-			Exec(mock.Anything, mock.Anything).
-			Return(nil, errFoo)
-
-		result, err := service.Exec(t.Context(), request)
-		require.ErrorIs(t, err, errFoo)
-		require.Nil(t, result)
-
-		selectCredentials.AssertExpectations(t)
-		updateRole.AssertExpectations(t)
-		selectShortCode.AssertExpectations(t)
-		register.AssertExpectations(t)
-	})
-}
-
-func newCredentialsReconcileRoleService(t *testing.T) (
-	*coremocks.MockCredentialsReconcileRoleDaoSelect,
-	*coremocks.MockCredentialsReconcileRoleDaoUpdate,
-	*coremocks.MockCredentialsReconcileRoleDaoShortCodeSelect,
-	*coremocks.MockCredentialsReconcileRoleServiceRegister,
-	*core.CredentialsReconcileRole,
-) {
-	t.Helper()
-
-	selectCredentials := coremocks.NewMockCredentialsReconcileRoleDaoSelect(t)
-	updateRole := coremocks.NewMockCredentialsReconcileRoleDaoUpdate(t)
-	selectShortCode := coremocks.NewMockCredentialsReconcileRoleDaoShortCodeSelect(t)
-	register := coremocks.NewMockCredentialsReconcileRoleServiceRegister(t)
-
-	return selectCredentials, updateRole, selectShortCode, register, core.NewCredentialsReconcileRole(
-		selectCredentials,
-		updateRole,
-		selectShortCode,
-		register,
-	)
+			selectCredentials.AssertExpectations(t)
+			updateRole.AssertExpectations(t)
+			selectShortCode.AssertExpectations(t)
+			register.AssertExpectations(t)
+		})
+	}
 }
