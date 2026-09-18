@@ -105,35 +105,22 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
 
-  build-job-init:
+  build-job-maintenance:
     runs-on: ubuntu-latest
-    needs: [release, build-database]
+    needs: [release]
     if: ${{ !inputs.dry_run }}
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
-    env:
-      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
-      SUPER_ADMIN_PASSWORD: admin
     steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - *start-release-database
-      - uses: $/.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker-job@v1.30.1
         with:
-          file: builds/init.Dockerfile
-          image_name: ${{ github.repository }}/jobs/init
+          file: builds/maintenance.Dockerfile
+          image_name: ${{ github.repository }}/jobs/maintenance
           version: ${{ needs.release.outputs.version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_args: >-
-            -e POSTGRES_DSN="${POSTGRES_DSN}"
-            -e SUPER_ADMIN_EMAIL="${SUPER_ADMIN_EMAIL}"
-            -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD}"
 
   build-rest:
     needs: [release, build-database]
@@ -227,7 +214,7 @@ jobs:
       - release
       - build-database
       - build-migrations
-      - build-job-init
+      - build-job-maintenance
       - build-rest
       - build-standalone-rest
       - build-js

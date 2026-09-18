@@ -34,11 +34,12 @@ type ShortCodeCreateRegisterMailDelivery interface {
 	Reserve(ctx context.Context) (MailDeliveryReservation, error)
 }
 
-// ShortCodeCreateRegisterRequest carries the address to register and the language
-// of the registration mail.
+// ShortCodeCreateRegisterRequest carries the address and role to register and the
+// language of the registration mail.
 type ShortCodeCreateRegisterRequest struct {
 	Email string `validate:"required,email,max=1024"`
 	Lang  string `validate:"required,langs"`
+	Role  string `validate:"required,role"`
 }
 
 // ShortCodeCreateRegister issues a [ShortCodeUsageRegister] code for a new-account
@@ -108,6 +109,7 @@ func (service *ShortCodeCreateRegister) Exec(
 	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageRegister,
 		Target:   request.Email,
+		Data:     credentialsCreateRegistrationData{Role: request.Role},
 		TTL:      service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL,
 		Override: true,
 	})

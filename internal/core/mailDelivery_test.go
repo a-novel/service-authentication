@@ -183,7 +183,7 @@ func TestMailDelivery(t *testing.T) {
 			},
 		},
 		{
-			name: "Success/AbsorbsSenderError",
+			name: "Error/ReportsSenderError",
 			exec: func(t *testing.T) {
 				t.Helper()
 
@@ -197,7 +197,8 @@ func TestMailDelivery(t *testing.T) {
 				reservation := reserveMailDelivery(t, delivery, t.Context())
 				reservation.Deliver(t.Context(), newMailDeliveryRequest())
 
-				waitForMailDelivery(t, delivery)
+				err := delivery.Wait(t.Context())
+				require.ErrorIs(t, err, errFoo)
 				smtpService.AssertExpectations(t)
 			},
 		},

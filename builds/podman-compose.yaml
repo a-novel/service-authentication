@@ -50,20 +50,30 @@ services:
   # ONE-SHOT TARGETS
   # ====================================================================================================================
 
-  service-authentication-init:
-    profiles: ["init"]
+  service-authentication-maintenance:
+    profiles: ["maintenance"]
     build:
       context: ..
-      dockerfile: ./builds/init.Dockerfile
+      dockerfile: ./builds/maintenance.Dockerfile
     depends_on:
       postgres-authentication:
         condition: service_healthy
+      mailserver:
+        condition: service_started
+      service-authentication-migrations:
+        condition: service_completed_successfully
     environment:
       POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+      PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
+      SMTP_SENDER_DOMAIN: "${SMTP_HOST}"
+      SMTP_ADDR: "${SMTP_HOST}:${SMTP_PORT}"
+      SMTP_SENDER_NAME: Agora Storyverse [noreply]
+      SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
+      SMTP_SENDER_PASSWORD: noreply
+      SMTP_FORCE_UNENCRYPTED: true
     networks:
       - api
 
-  # Migrations depend on init: some migrations rely on init-provisioned rows.
   service-authentication-migrations:
     profiles: ["migrations"]
     build:
@@ -72,8 +82,6 @@ services:
     depends_on:
       postgres-authentication:
         condition: service_healthy
-      service-authentication-init:
-        condition: service_completed_successfully
     environment:
       POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
     networks:
@@ -99,8 +107,6 @@ services:
         condition: service_healthy
       mailserver:
         condition: service_started
-      service-authentication-init:
-        condition: service_completed_successfully
       service-authentication-migrations:
         condition: service_completed_successfully
     environment:
@@ -109,9 +115,6 @@ services:
       # allocated SERVICE_JSON_KEYS_GRPC_* values.
       SERVICE_JSON_KEYS_HOST: "${SERVICE_JSON_KEYS_GRPC_HOST}"
       SERVICE_JSON_KEYS_PORT: "${SERVICE_JSON_KEYS_GRPC_PORT}"
-      # Operator-supplied values; vary per local setup.
-      SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
-      SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
       PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
       # SMTP_SENDER_DOMAIN must match the host portion of SMTP_ADDR: Go's
       # net/smtp PlainAuth rejects auth when the AUTH host differs from the

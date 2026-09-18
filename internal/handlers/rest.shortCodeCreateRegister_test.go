@@ -52,6 +52,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				req: &core.ShortCodeCreateRegisterRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
+					Role:  config.RoleUser,
 				},
 				resp: &core.ShortCode{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-111111111111"),
@@ -75,6 +76,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				req: &core.ShortCodeCreateRegisterRequest{
 					Email: "existing_user@provider.com",
 					Lang:  "fr",
+					Role:  config.RoleUser,
 				},
 				err: core.ErrCredentialsCreateAlreadyExists,
 			},
@@ -94,6 +96,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				req: &core.ShortCodeCreateRegisterRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
+					Role:  config.RoleUser,
 				},
 				err: errFoo,
 			},

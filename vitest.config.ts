@@ -16,6 +16,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
+    env: {
+      SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL ?? "noreply@agorastoryverse.com",
+      SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD ?? "admin",
+    },
     provide: {
       globalConfigValue: true,
     },
@@ -36,6 +40,10 @@ export default defineConfig({
       {
         root: "pkg/js/test/rest",
         extends: true,
+        test: {
+          name: "rest-integration",
+          globalSetup: [resolve("./pkg/js/test/rest/src/setup.ts")],
+        },
       },
     ],
   },

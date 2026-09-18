@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 COPY ./cmd/rest ./cmd/rest
 COPY ./cmd/migrations ./cmd/migrations
-COPY ./cmd/init ./cmd/init
+COPY ./cmd/maintenance ./cmd/maintenance
 COPY ./internal/handlers ./internal/handlers
 COPY ./internal/dao ./internal/dao
 COPY ./internal/lib ./internal/lib
@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -ldflags="-s -w" -trimpath -o /rest ./cmd/rest/ && \
     go build -ldflags="-s -w" -trimpath -o /migrations ./cmd/migrations/ && \
-    go build -ldflags="-s -w" -trimpath -o /init ./cmd/init/
+    go build -ldflags="-s -w" -trimpath -o /maintenance ./cmd/maintenance/
 
 FROM docker.io/library/alpine:3.24.2
 
@@ -38,7 +38,7 @@ WORKDIR /
 
 COPY --from=builder /rest /rest
 COPY --from=builder /migrations /migrations
-COPY --from=builder /init /init
+COPY --from=builder /maintenance /maintenance
 
 # Alpine ships BusyBox wget — no extra package needed for the healthcheck.
 HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
@@ -50,5 +50,6 @@ ENV REST_PORT=8080
 # Rest api port.
 EXPOSE 8080
 
-# Run patches before starting the server.
-CMD ["sh", "-c", "/migrations && /init && /rest"]
+# Run patches before starting the server. The maintenance binary is included for
+# explicit one-shot use, but server startup does not invoke it.
+CMD ["sh", "-c", "/migrations && exec /rest"]

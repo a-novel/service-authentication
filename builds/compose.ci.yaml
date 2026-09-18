@@ -59,12 +59,18 @@ services:
         condition: service_healthy
       service-json-keys:
         condition: service_healthy
+    command:
+      - sh
+      - -c
+      - >-
+        /migrations &&
+        /maintenance account-role --email "$${SUPER_ADMIN_EMAIL}" --role auth:superadmin --lang en &&
+        exec /rest
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
       SERVICE_JSON_KEYS_PORT: 8080
       SERVICE_JSON_KEYS_HOST: service-json-keys
       SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
-      SUPER_ADMIN_PASSWORD: admin
       PLATFORM_AUTH_URL: "http://auth-platform"
       SMTP_SENDER_DOMAIN: mailserver
       SMTP_ADDR: mailserver:1025

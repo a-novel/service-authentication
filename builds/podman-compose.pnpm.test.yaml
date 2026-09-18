@@ -68,12 +68,18 @@ services:
     depends_on:
       - postgres-authentication
       - mailserver
+    command:
+      - sh
+      - -c
+      - >-
+        /migrations &&
+        /maintenance account-role --email "$${SUPER_ADMIN_EMAIL}" --role auth:superadmin --lang en &&
+        exec /rest
     environment:
       POSTGRES_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-authentication:5432/${POSTGRES_DB}?sslmode=disable"
       SERVICE_JSON_KEYS_PORT: 8080
       SERVICE_JSON_KEYS_HOST: service-json-keys
-      SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL}"
-      SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD}"
+      SUPER_ADMIN_EMAIL: "${SUPER_ADMIN_EMAIL:-noreply@agorastoryverse.com}"
       PLATFORM_AUTH_URL: http://localhost:7010
       SMTP_SENDER_DOMAIN: mailserver
       SMTP_ADDR: mailserver:1025

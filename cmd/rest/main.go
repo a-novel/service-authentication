@@ -328,9 +328,9 @@ func serve(
 	cancel()
 
 	if drainErr != nil {
-		// Logged while the process is already stopping. Mail that missed the budget is worth
-		// reporting and the shutdown still completes.
-		log.Println("Some emails were still in flight at shutdown: " + drainErr.Error())
+		// Logged while the process is already stopping. Failed deliveries or mail that missed
+		// the budget are worth reporting and the shutdown still completes.
+		log.Println("Some emails failed or were still in flight at shutdown: " + drainErr.Error())
 	}
 
 	return serveErr

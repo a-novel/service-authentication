@@ -110,9 +110,6 @@ var (
 	corsMaxAge            = getEnv("REST_CORS_MAX_AGE")
 
 	gcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
-
-	superAdminEmail    = getEnv("SUPER_ADMIN_EMAIL")
-	superAdminPassword = getEnv("SUPER_ADMIN_PASSWORD")
 )
 
 var (
@@ -228,9 +225,4 @@ var (
 	//
 	// See: https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
 	GcloudProjectId = gcloudProjectId
-	// SuperAdminEmail sets the email address for the default super-admin on the platform.
-	// The address is trusted as configured and skips email validation.
-	SuperAdminEmail = superAdminEmail
-	// SuperAdminPassword sets the password for the default super-admin on the platform.
-	SuperAdminPassword = superAdminPassword
 )
