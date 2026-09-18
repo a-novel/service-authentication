@@ -105,9 +105,10 @@ func (service *CredentialsReconcileRole) Exec(
 		Email: request.Email,
 	})
 	if err == nil {
-		result, reconcileErr := service.reconcileExisting(ctx, credentials, request.Role)
-		if reconcileErr != nil {
-			return nil, otel.ReportError(span, reconcileErr)
+		// Existing credentials are the reconciliation path; absent credentials continue to registration below.
+		result, err := service.reconcileExisting(ctx, credentials, request.Role)
+		if err != nil {
+			return nil, otel.ReportError(span, err)
 		}
 
 		if result.Outcome == CredentialsReconcileRoleUnchanged {
@@ -126,7 +127,7 @@ func (service *CredentialsReconcileRole) Exec(
 		Target: request.Email,
 	})
 	if err == nil {
-		pendingRole, roleErr := credentialsCreateRole(shortCode.Data)
+		pendingRole, roleErr := computeRole(shortCode.Data)
 		if roleErr == nil && pendingRole == request.Role {
 			span.SetAttributes(attribute.Bool("noop", true))
 
@@ -145,6 +146,7 @@ func (service *CredentialsReconcileRole) Exec(
 	})
 	if err != nil {
 		if errors.Is(err, ErrCredentialsCreateAlreadyExists) {
+			// Account creation won the registration race, so reconcile the resulting credentials.
 			credentials, selectErr := service.selectCredentials.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
 				Email: request.Email,
 			})
@@ -155,9 +157,9 @@ func (service *CredentialsReconcileRole) Exec(
 				))
 			}
 
-			result, reconcileErr := service.reconcileExisting(ctx, credentials, request.Role)
-			if reconcileErr != nil {
-				return nil, otel.ReportError(span, reconcileErr)
+			result, err := service.reconcileExisting(ctx, credentials, request.Role)
+			if err != nil {
+				return nil, otel.ReportError(span, err)
 			}
 
 			if result.Outcome == CredentialsReconcileRoleUnchanged {

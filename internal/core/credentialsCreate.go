@@ -114,9 +114,9 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 			return fmt.Errorf("consume short code: %w", consumeErr)
 		}
 
-		role, roleErr := credentialsCreateRole(shortCode.Data)
+		role, roleErr := computeRole(shortCode.Data)
 		if roleErr != nil {
-			return roleErr
+			return errors.Join(roleErr, ErrCredentialsCreateInvalidRegistrationData)
 		}
 
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{
@@ -146,7 +146,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	return otel.ReportSuccess(span, tokens), nil
 }
 
-func credentialsCreateRole(data []byte) (string, error) {
+func computeRole(data []byte) (string, error) {
 	if len(data) == 0 {
 		return authconfig.RoleUser, nil
 	}
@@ -155,18 +155,12 @@ func credentialsCreateRole(data []byte) (string, error) {
 
 	err := json.Unmarshal(data, &registrationData)
 	if err != nil {
-		return "", errors.Join(
-			fmt.Errorf("decode registration data: %w", err),
-			ErrCredentialsCreateInvalidRegistrationData,
-		)
+		return "", fmt.Errorf("decode registration data: %w", err)
 	}
 
 	_, err = authconfig.PermissionsConfigDefault.Priority(registrationData.Role)
 	if err != nil {
-		return "", errors.Join(
-			fmt.Errorf("validate registration role: %w", err),
-			ErrCredentialsCreateInvalidRegistrationData,
-		)
+		return "", fmt.Errorf("validate registration role: %w", err)
 	}
 
 	return registrationData.Role, nil
