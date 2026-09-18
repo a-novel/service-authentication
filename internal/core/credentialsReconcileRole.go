@@ -180,10 +180,13 @@ func (service *CredentialsReconcileRole) reconcileExisting(
 	credentials *dao.Credentials,
 	role string,
 ) (*CredentialsReconcileRoleResult, error) {
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsReconcileRole(reconcileExisting)")
+	defer span.End()
+
 	if credentials.Role == role {
-		return &CredentialsReconcileRoleResult{
+		return otel.ReportSuccess(span, &CredentialsReconcileRoleResult{
 			Outcome: CredentialsReconcileRoleUnchanged,
-		}, nil
+		}), nil
 	}
 
 	_, err := service.updateRole.Exec(ctx, &dao.CredentialsUpdateRoleRequest{
@@ -192,10 +195,10 @@ func (service *CredentialsReconcileRole) reconcileExisting(
 		Now:  time.Now(),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("update credentials role: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("update credentials role: %w", err))
 	}
 
-	return &CredentialsReconcileRoleResult{
+	return otel.ReportSuccess(span, &CredentialsReconcileRoleResult{
 		Outcome: CredentialsReconcileRoleUpdated,
-	}, nil
+	}), nil
 }
