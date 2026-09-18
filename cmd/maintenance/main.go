@@ -135,9 +135,12 @@ func run(ctx context.Context, args []string) error {
 
 	deliveryErr := mailDelivery.Wait(ctx)
 
-	err = errors.Join(operationErr, deliveryErr)
-	if err != nil {
-		return fmt.Errorf("reconcile account role: %w", err)
+	if operationErr != nil {
+		return fmt.Errorf("reconcile account role: %w", errors.Join(operationErr, deliveryErr))
+	}
+
+	if deliveryErr != nil {
+		return fmt.Errorf("reconcile account role: %w", deliveryErr)
 	}
 
 	log.Printf(
