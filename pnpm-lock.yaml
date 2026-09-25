@@ -226,7 +226,7 @@ importers:
         version: 10.0.1(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))
       '@redocly/cli':
         specifier: ^2.14.5
-        version: 2.53.3
+        version: 2.54.0
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
         version: 6.0.2(prettier-plugin-svelte@4.1.1(prettier@3.9.8)(svelte@5.56.10(@typescript-eslint/types@8.69.0)))(prettier@3.9.8)(supports-color@7.2.0)(svelte@5.56.10(@typescript-eslint/types@8.69.0))
@@ -1307,8 +1307,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@redocly/cli@2.53.3':
-    resolution: {integrity: sha512-hzNAWzHCOZ05vwRx0ehTxNeJaxxizjGV505eKtfs9MR/8ieD/8lYhAK4GF5FaqRRwOEpLO0PvzQwBSKYXmxhRA==}
+  '@redocly/cli@2.54.0':
+    resolution: {integrity: sha512-HEcR7txc+WtPXULmurqSlGsNOD+2qqKIoPKubvUvvU6DsYthQiQWoeVN0AfQAIOT/VZ7y+DBNPp1VEd0LX8MBA==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
@@ -5425,7 +5425,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@redocly/cli@2.53.3': {}
+  '@redocly/cli@2.54.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.8':
     optional: true
