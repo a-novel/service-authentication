@@ -3,9 +3,19 @@
 #
 # Note: this image does not run the migrations from the main image, make sure to call the appropriate
 # patch for this.
-FROM docker.io/library/postgres:18.6
+FROM docker.io/library/postgres:18.6-trixie
 
 ENV POSTGRES_INITDB_ARGS=--auth=scram-sha-256
+
+# Keep backup tooling with the database; archiving and scheduling remain opt-in.
+# Preserve the base image's PostgreSQL binaries when installing packages.
+RUN sha256sum /usr/lib/postgresql/18/bin/postgres /usr/lib/postgresql/18/lib/uuid-ossp.so > /tmp/database.sha256 \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        pgbackrest=2.59.1-1.pgdg13+1 \
+    && sha256sum --check /tmp/database.sha256 \
+    && gosu postgres pgbackrest version \
+    && rm -rf /var/lib/apt/lists/* /tmp/database.sha256
 
 # ======================================================================================================================
 # Prepare extension scripts.

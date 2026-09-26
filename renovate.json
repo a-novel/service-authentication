@@ -13,6 +13,12 @@
   },
   "packageRules": [
     {
+      "matchFileNames": ["builds/database.Dockerfile"],
+      "matchDatasources": ["deb"],
+      "matchPackageNames": ["pgbackrest"],
+      "registryUrls": ["https://apt.postgresql.org/pub/repos/apt?suite=trixie-pgdg&components=main&binaryArch=amd64"]
+    },
+    {
       "matchFileNames": ["golangci-lint.mod"],
       "additionalBranchPrefix": "golangci-lint-",
       "goGetDirs": ["."],
