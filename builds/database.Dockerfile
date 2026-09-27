@@ -12,9 +12,12 @@ ENV POSTGRES_INITDB_ARGS=--auth=scram-sha-256
 RUN sha256sum /usr/lib/postgresql/18/bin/postgres /usr/lib/postgresql/18/lib/uuid-ossp.so > /tmp/database.sha256 \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates=20250419 \
         pgbackrest=2.59.1-1.pgdg13+1 \
     && sha256sum --check /tmp/database.sha256 \
     && gosu postgres pgbackrest version \
+    && gosu postgres test -s /etc/ssl/certs/ca-certificates.crt \
+    && gosu postgres openssl crl2pkcs7 -nocrl -certfile /etc/ssl/certs/ca-certificates.crt -out /dev/null \
     && rm -rf /var/lib/apt/lists/* /tmp/database.sha256
 
 # ======================================================================================================================

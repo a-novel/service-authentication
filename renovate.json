@@ -15,6 +15,12 @@
     {
       "matchFileNames": ["builds/database.Dockerfile"],
       "matchDatasources": ["deb"],
+      "matchPackageNames": ["ca-certificates"],
+      "registryUrls": ["https://deb.debian.org/debian?suite=trixie&components=main&binaryArch=amd64"]
+    },
+    {
+      "matchFileNames": ["builds/database.Dockerfile"],
+      "matchDatasources": ["deb"],
       "matchPackageNames": ["pgbackrest"],
       "registryUrls": ["https://apt.postgresql.org/pub/repos/apt?suite=trixie-pgdg&components=main&binaryArch=amd64"]
     },
