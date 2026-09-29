@@ -12,7 +12,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
@@ -30,8 +29,8 @@ func TestRESTWaitlistJoin(t *testing.T) {
 		{name: "Accepted", status: http.StatusAccepted},
 		{name: "MalformedJSON", body: "{", status: http.StatusBadRequest},
 		{name: "InvalidRequest", err: core.ErrInvalidRequest, status: http.StatusUnprocessableEntity},
-		{name: "Busy", err: dao.ErrWaitlistBusy, status: http.StatusTooManyRequests, retry: "60"},
-		{name: "Unavailable", err: dao.ErrWaitlistUnavailable, status: http.StatusServiceUnavailable, retry: "60"},
+		{name: "Busy", err: core.ErrWaitlistBusy, status: http.StatusTooManyRequests, retry: "60"},
+		{name: "Unavailable", err: core.ErrWaitlistUnavailable, status: http.StatusServiceUnavailable, retry: "60"},
 		{name: "UnexpectedFailure", err: errors.New("database unavailable"), status: http.StatusInternalServerError},
 	}
 	for _, testCase := range testCases {
@@ -57,6 +56,8 @@ func TestRESTWaitlistJoin(t *testing.T) {
 			if testCase.status == http.StatusAccepted {
 				require.Empty(t, response.Body.String())
 			}
+
+			service.AssertExpectations(t)
 		})
 	}
 }

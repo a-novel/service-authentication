@@ -157,31 +157,20 @@ func (_m *MockCredentialsCreateWaitlist) EXPECT() *MockCredentialsCreateWaitlist
 }
 
 // Exec provides a mock function for the type MockCredentialsCreateWaitlist
-func (_mock *MockCredentialsCreateWaitlist) Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error) {
+func (_mock *MockCredentialsCreateWaitlist) Exec(ctx context.Context, request *dao.WaitlistRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *dao.WaitlistResult
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.WaitlistRequest) (*dao.WaitlistResult, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.WaitlistRequest) *dao.WaitlistResult); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.WaitlistRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dao.WaitlistResult)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dao.WaitlistRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockCredentialsCreateWaitlist_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -214,12 +203,12 @@ func (_c *MockCredentialsCreateWaitlist_Exec_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockCredentialsCreateWaitlist_Exec_Call) Return(waitlistResult *dao.WaitlistResult, err error) *MockCredentialsCreateWaitlist_Exec_Call {
-	_c.Call.Return(waitlistResult, err)
+func (_c *MockCredentialsCreateWaitlist_Exec_Call) Return(err error) *MockCredentialsCreateWaitlist_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockCredentialsCreateWaitlist_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)) *MockCredentialsCreateWaitlist_Exec_Call {
+func (_c *MockCredentialsCreateWaitlist_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.WaitlistRequest) error) *MockCredentialsCreateWaitlist_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -4382,31 +4371,20 @@ func (_m *MockWaitlistJoinWriter) EXPECT() *MockWaitlistJoinWriter_Expecter {
 }
 
 // Exec provides a mock function for the type MockWaitlistJoinWriter
-func (_mock *MockWaitlistJoinWriter) Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error) {
+func (_mock *MockWaitlistJoinWriter) Exec(ctx context.Context, request *dao.WaitlistRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *dao.WaitlistResult
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.WaitlistRequest) (*dao.WaitlistResult, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.WaitlistRequest) *dao.WaitlistResult); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.WaitlistRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dao.WaitlistResult)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dao.WaitlistRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockWaitlistJoinWriter_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -4439,12 +4417,12 @@ func (_c *MockWaitlistJoinWriter_Exec_Call) Run(run func(ctx context.Context, re
 	return _c
 }
 
-func (_c *MockWaitlistJoinWriter_Exec_Call) Return(waitlistResult *dao.WaitlistResult, err error) *MockWaitlistJoinWriter_Exec_Call {
-	_c.Call.Return(waitlistResult, err)
+func (_c *MockWaitlistJoinWriter_Exec_Call) Return(err error) *MockWaitlistJoinWriter_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockWaitlistJoinWriter_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)) *MockWaitlistJoinWriter_Exec_Call {
+func (_c *MockWaitlistJoinWriter_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.WaitlistRequest) error) *MockWaitlistJoinWriter_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }

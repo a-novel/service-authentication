@@ -142,15 +142,13 @@ func TestGoogleWaitlist(t *testing.T) {
 				action = "join"
 			}
 
-			result, err := writer.Exec(t.Context(), &dao.WaitlistRequest{
+			err = writer.Exec(t.Context(), &dao.WaitlistRequest{
 				Action: action, Email: "member@example.com", Lang: "fr",
 			})
 			require.ErrorIs(t, err, testCase.expectErr)
 
-			if testCase.expectErr == nil {
-				require.Equal(t, "accepted", result.Status)
-			} else {
-				require.Nil(t, result)
+			if testCase.expectErr != nil {
+				require.EqualError(t, err, testCase.expectErr.Error(), "Google details must stay out of errors and traces")
 			}
 
 			if testCase.disabled {
@@ -170,7 +168,7 @@ func TestGoogleWaitlist(t *testing.T) {
 			return nil, request.Context().Err()
 		}))
 		require.NoError(t, err)
-		_, err = writer.Exec(ctx, &dao.WaitlistRequest{Action: "join"})
+		err = writer.Exec(ctx, &dao.WaitlistRequest{Action: "join"})
 		require.ErrorIs(t, err, dao.ErrWaitlistUnavailable)
 	})
 }

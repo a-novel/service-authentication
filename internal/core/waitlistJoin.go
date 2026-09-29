@@ -17,7 +17,7 @@ type WaitlistJoinCredentials interface {
 
 // WaitlistJoinWriter adds or removes rows through the serialized sheet writer.
 type WaitlistJoinWriter interface {
-	Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)
+	Exec(ctx context.Context, request *dao.WaitlistRequest) error
 }
 
 // WaitlistJoinRequest records interest in an invitation, not permission to create an account.
@@ -39,7 +39,7 @@ func NewWaitlistJoin(credentials WaitlistJoinCredentials, writer WaitlistJoinWri
 
 // Exec keeps the sheet free of registered accounts, including a concurrent registration.
 func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequest) error {
-	ctx, span := otel.Tracer().Start(ctx, "service.WaitlistJoin")
+	ctx, span := otel.Tracer().Start(ctx, "core.WaitlistJoin")
 	defer span.End()
 
 	err := validate.Struct(request)
@@ -55,10 +55,12 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 	}
 
 	if exists {
+		otel.ReportSuccessNoContent(span)
+
 		return nil
 	}
 
-	_, err = service.writer.Exec(ctx, &dao.WaitlistRequest{Action: "join", Email: request.Email, Lang: request.Lang})
+	err = service.writer.Exec(ctx, &dao.WaitlistRequest{Action: "join", Email: request.Email, Lang: request.Lang})
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("join waitlist: %w", err))
 	}
@@ -70,11 +72,13 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 	}
 
 	if exists {
-		_, err = service.writer.Exec(ctx, &dao.WaitlistRequest{Action: "remove", Email: request.Email})
+		err = service.writer.Exec(ctx, &dao.WaitlistRequest{Action: "remove", Email: request.Email})
 		if err != nil {
 			return otel.ReportError(span, fmt.Errorf("remove registered account from waitlist: %w", err))
 		}
 	}
+
+	otel.ReportSuccessNoContent(span)
 
 	return nil
 }

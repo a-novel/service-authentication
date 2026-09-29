@@ -1,4 +1,11 @@
 packages:
+  github.com/a-novel-kit/golib/transaction:
+    config:
+      pkgname: coremocks
+      dir: internal/core/mocks
+      filename: transactor.go
+    interfaces:
+      Transactor:
   github.com/a-novel/service-authentication/v2/internal/core:
     config:
       all: true

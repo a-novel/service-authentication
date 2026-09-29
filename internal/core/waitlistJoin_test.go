@@ -72,14 +72,14 @@ func TestWaitlistJoin(t *testing.T) {
 				if !testCase.exists && testCase.lookupErr == nil {
 					calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 						Action: "join", Email: email, Lang: lang,
-					}).Return(&dao.WaitlistResult{Status: "accepted"}, testCase.joinErr).Once())
+					}).Return(testCase.joinErr).Once())
 					if testCase.joinErr == nil {
 						calls = append(calls, credentials.EXPECT().Exec(mock.Anything, &dao.CredentialsExistRequest{Email: email}).
 							Return(testCase.created, testCase.recheckErr).Once())
 						if testCase.created && testCase.recheckErr == nil {
 							calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 								Action: "remove", Email: email,
-							}).Return(&dao.WaitlistResult{Status: "accepted"}, testCase.removeErr).Once())
+							}).Return(testCase.removeErr).Once())
 						}
 					}
 				}
@@ -91,6 +91,8 @@ func TestWaitlistJoin(t *testing.T) {
 				Email: email, Lang: lang,
 			})
 			require.ErrorIs(t, err, testCase.expectErr)
+			credentials.AssertExpectations(t)
+			writer.AssertExpectations(t)
 		})
 	}
 }

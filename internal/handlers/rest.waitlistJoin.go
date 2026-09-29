@@ -10,7 +10,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 // RESTWaitlistJoinService accepts invitation requests without disclosing account existence.
@@ -51,14 +50,14 @@ func (handler *RESTWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	err = handler.service.Exec(ctx, &core.WaitlistJoinRequest{Email: request.Email, Lang: request.Lang})
 	if err != nil {
-		if errors.Is(err, dao.ErrWaitlistBusy) || errors.Is(err, dao.ErrWaitlistUnavailable) {
+		if errors.Is(err, core.ErrWaitlistBusy) || errors.Is(err, core.ErrWaitlistUnavailable) {
 			w.Header().Set("Retry-After", "60")
 		}
 
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			core.ErrInvalidRequest:     http.StatusUnprocessableEntity,
-			dao.ErrWaitlistBusy:        http.StatusTooManyRequests,
-			dao.ErrWaitlistUnavailable: http.StatusServiceUnavailable,
+			core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
+			core.ErrWaitlistBusy:        http.StatusTooManyRequests,
+			core.ErrWaitlistUnavailable: http.StatusServiceUnavailable,
 		}, err)
 
 		return

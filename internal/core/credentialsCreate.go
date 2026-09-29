@@ -39,7 +39,7 @@ type CredentialsCreateDao interface {
 
 // CredentialsCreateWaitlist removes registered addresses after the account transaction commits.
 type CredentialsCreateWaitlist interface {
-	Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)
+	Exec(ctx context.Context, request *dao.WaitlistRequest) error
 }
 
 // CredentialsCreateServiceShortCodeConsume validates and consumes registration short codes.
@@ -152,7 +152,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	// The account is committed. Google cannot roll it back, and a failed cleanup must not prevent login.
 	// Keep cleanup bounded but independent of a client disconnect after the database commit.
 	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), waitlistCleanupTimeout)
-	_, cleanupErr := service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{
+	cleanupErr := service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{
 		Action: "remove", Email: request.Email,
 	})
 

@@ -8,10 +8,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/golib/otel"
 
@@ -35,12 +36,6 @@ type WaitlistRequest struct {
 	Email string `json:"email,omitempty"`
 	// Lang is the preferred invitation language.
 	Lang string `json:"lang,omitempty"`
-}
-
-// WaitlistResult acknowledges a mutation.
-type WaitlistResult struct {
-	// Status is the writer's acknowledgement, independent of its HTTP transport status.
-	Status string `json:"status"`
 }
 
 // GoogleWaitlist calls the private sheet writer without exposing its secret or response data in errors.
@@ -75,41 +70,38 @@ func NewGoogleWaitlist(cfg authconfig.Waitlist, transport http.RoundTripper) (*G
 }
 
 // Exec signs one idempotent writer operation. A disabled writer permits cleanup but rejects joins.
-func (writer *GoogleWaitlist) Exec(ctx context.Context, request *WaitlistRequest) (*WaitlistResult, error) {
+func (writer *GoogleWaitlist) Exec(ctx context.Context, request *WaitlistRequest) error {
 	ctx, span := otel.Tracer().Start(ctx, "dao.GoogleWaitlist")
 	defer span.End()
 
 	if writer.config.URL == "" {
 		if request.Action == "remove" {
-			return otel.ReportSuccess(span, &WaitlistResult{Status: "accepted"}), nil
+			otel.ReportSuccessNoContent(span)
+
+			return nil
 		}
 
-		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
+		return otel.ReportError(span, ErrWaitlistUnavailable)
 	}
 
-	payload, err := json.Marshal(struct {
+	// Both wire structs contain only JSON-safe scalars, so encoding cannot fail.
+	payload := lo.Must(json.Marshal(struct {
 		*WaitlistRequest
 
 		Timestamp int64 `json:"timestamp"`
-	}{request, time.Now().Unix()})
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("encode waitlist request: %w", err))
-	}
+	}{request, time.Now().Unix()}))
 
 	mac := hmac.New(sha256.New, []byte(writer.config.Secret))
 	_, _ = mac.Write(payload) // hash.Hash.Write never returns an error.
 
-	body, err := json.Marshal(struct {
+	body := lo.Must(json.Marshal(struct {
 		Payload   string `json:"payload"`
 		Signature string `json:"signature"`
-	}{string(payload), base64.RawURLEncoding.EncodeToString(mac.Sum(nil))})
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("encode waitlist envelope: %w", err))
-	}
+	}{string(payload), base64.RawURLEncoding.EncodeToString(mac.Sum(nil))}))
 
 	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, writer.config.URL, bytes.NewReader(body))
 	if err != nil {
-		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
+		return otel.ReportError(span, ErrWaitlistUnavailable)
 	}
 
 	httpRequest.Header.Set("Content-Type", "application/json")
@@ -117,24 +109,27 @@ func (writer *GoogleWaitlist) Exec(ctx context.Context, request *WaitlistRequest
 	response, err := writer.client.Do(httpRequest)
 	if err != nil {
 		// HTTP errors can contain Google's one-time response URL. Keep it out of logs and traces.
-		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
+		return otel.ReportError(span, ErrWaitlistUnavailable)
 	}
-	defer func() { _ = response.Body.Close() }()
+	defer func() { _ = response.Body.Close() }() // Closing cannot change the writer's acknowledgement.
 
-	var result WaitlistResult
+	var result struct {
+		Status string `json:"status"`
+	}
 
 	decodeErr := json.NewDecoder(io.LimitReader(response.Body, waitlistMaxResponseSize)).Decode(&result)
 	if response.StatusCode != http.StatusOK || decodeErr != nil {
-		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
+		return otel.ReportError(span, ErrWaitlistUnavailable)
 	}
 
-	if result.Status == "busy" {
-		return nil, otel.ReportError(span, ErrWaitlistBusy)
-	}
+	switch result.Status {
+	case "accepted":
+		otel.ReportSuccessNoContent(span)
 
-	if result.Status != "accepted" {
-		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
+		return nil
+	case "busy":
+		return otel.ReportError(span, ErrWaitlistBusy)
+	default:
+		return otel.ReportError(span, ErrWaitlistUnavailable)
 	}
-
-	return otel.ReportSuccess(span, &result), nil
 }
