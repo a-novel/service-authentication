@@ -89,6 +89,7 @@ func main() {
 	daoShortCodeSelect := dao.NewShortCodeSelect()
 
 	daoCredentialsExist := dao.NewCredentialsExist()
+	daoWaitlist := lo.Must(dao.NewGoogleWaitlist(cfg.Waitlist, nil))
 	daoTransactor := postgres.NewTransactor(nil)
 
 	daoCredentialsInsert := dao.NewCredentialsInsert()
@@ -128,7 +129,7 @@ func main() {
 	)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
-		daoCredentialsInsert, serviceShortCodeConsume, jsonKeysClient, daoTransactor,
+		daoCredentialsInsert, serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist,
 	)
 	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
 	serviceCredentialsGet := core.NewCredentialsGet(daoCredentialsSelect)
@@ -236,6 +237,8 @@ func main() {
 	router.Route("/v2", func(api chi.Router) {
 		api.Get("/ping", handlerPing.ServeHTTP)
 		api.Get("/healthcheck", handlerHealth.ServeHTTP)
+
+		mountWaitlist(api, withAuth, daoWaitlist, cfg)
 
 		api.Route("/session", func(r chi.Router) {
 			r.Put("/", handlerTokenCreate.ServeHTTP)

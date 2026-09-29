@@ -13,6 +13,7 @@ import (
 	otelpresets "github.com/a-novel-kit/golib/otel/presets"
 	"github.com/a-novel-kit/golib/smtp"
 
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )
 
@@ -68,6 +69,7 @@ var AppPresetDefault = App{
 		),
 	},
 	Permissions:      PermissionsConfigDefault,
+	Waitlist:         authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
 	ShortCodesConfig: ShortCodesPresetDefault,
 	SmtpUrlsConfig: SmtpUrls{
 		UpdateEmail:    env.PlatformAuthUpdateEmailUrl,

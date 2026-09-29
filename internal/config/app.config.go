@@ -8,6 +8,8 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/smtp"
+
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
 // Main holds the core identity of the service, used to tag its logs and traces.
@@ -54,10 +56,11 @@ type App struct {
 	App  Main `json:"app"  yaml:"app"`
 	Rest Rest `json:"rest" yaml:"rest"`
 
-	DependenciesConfig Dependencies `json:"dependencies" yaml:"dependencies"`
-	Permissions        Permissions  `json:"permissions"  yaml:"permissions"`
-	ShortCodesConfig   ShortCodes   `json:"shortCodes"   yaml:"shortCodes"`
-	SmtpUrlsConfig     SmtpUrls     `json:"smtpUrls"     yaml:"smtpUrls"`
+	DependenciesConfig Dependencies        `json:"dependencies" yaml:"dependencies"`
+	Permissions        Permissions         `json:"permissions"  yaml:"permissions"`
+	ShortCodesConfig   ShortCodes          `json:"shortCodes"   yaml:"shortCodes"`
+	SmtpUrlsConfig     SmtpUrls            `json:"smtpUrls"     yaml:"smtpUrls"`
+	Waitlist           authconfig.Waitlist `json:"waitlist"     yaml:"waitlist"`
 
 	Smtp       smtp.Sender        `json:"smtp"       yaml:"smtp"`
 	Otel       otel.Config        `json:"otel"       yaml:"otel"`

@@ -20,6 +20,8 @@ const (
 	SmtpTimeoutDefault = 20 * time.Second
 	// SmtpMaxConcurrentDefault bounds the SMTP connections a burst or a stalled server can hold open.
 	SmtpMaxConcurrentDefault = 16
+	// WaitlistTimeoutDefault bounds one request to the optional Google sheet writer.
+	WaitlistTimeoutDefault = 10 * time.Second
 
 	PlatformEmailUpdateUrlDefault   = "/ext/email/validate"
 	PlatformPasswordResetUrlDefault = "/ext/password/reset"
@@ -92,6 +94,10 @@ var (
 	smtpTimeout          = getEnv("SMTP_TIMEOUT")
 	smtpMaxConcurrent    = getEnv("SMTP_MAX_CONCURRENT")
 	smtpForceUnencrypted = getEnv("SMTP_FORCE_UNENCRYPTED")
+
+	waitlistURL     = getEnv("WAITLIST_URL")
+	waitlistSecret  = getEnv("WAITLIST_SECRET")
+	waitlistTimeout = getEnv("WAITLIST_TIMEOUT")
 
 	appName = getEnv("APP_NAME")
 	otel    = getEnv("OTEL")
@@ -195,6 +201,13 @@ var (
 	//
 	// It must never be set in production.
 	SmtpForceUnencrypted = config.LoadEnv(smtpForceUnencrypted, false, config.BoolParser)
+
+	// WaitlistURL is the Google Apps Script /exec deployment URL; empty disables the integration.
+	WaitlistURL = waitlistURL
+	// WaitlistSecret is a server-only signing key shared with the Google script properties.
+	WaitlistSecret = waitlistSecret
+	// WaitlistTimeout bounds the Google request and its content redirect.
+	WaitlistTimeout = config.LoadEnv(waitlistTimeout, WaitlistTimeoutDefault, config.DurationParser)
 
 	// AppName is the name of the application, as it will appear in logs and tracing.
 	AppName = config.LoadEnv(appName, AppNameDefault, config.StringParser)

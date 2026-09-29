@@ -26,7 +26,7 @@ It exposes one **public REST API** and signs nothing itself: signing and verific
 
 ## Deploying
 
-The service runs as published OCI images plus a PostgreSQL database. The REST server is stateless, so it scales to as many replicas as you need behind a load balancer; all state lives in Postgres. A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a hard dependency — authentication reaches it over its private gRPC port, and the two share sensitive key material, so keep that link on an unexposed network.
+The service runs as published OCI images plus a PostgreSQL database. The REST server is stateless, so it scales to as many replicas as you need behind a load balancer; account state lives in Postgres. The optional invitation list uses a private Google Sheet instead. A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a hard dependency — authentication reaches it over its private gRPC port, and the two share sensitive key material, so keep that link on an unexposed network.
 
 > **OpenTofu modules are the planned canonical deployment path.** Until they land, deploy the images with any container orchestrator — the composition below is the reference for which images to run, how they wire together, and the environment they expect.
 
@@ -176,6 +176,25 @@ Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter
 | `APP_NAME`          | Application name attached to traces and logs.                         | `service-authentication` |
 
 </details>
+
+### Invitation list
+
+Public signup can collect invitation requests while account creation remains invitation-only.
+`PUT /v2/waitlist` requires an anonymous or authenticated session and stores no account or short code.
+Existing accounts are acknowledged without sending mail or adding a row; successful account creation
+removes the address from the list. Admin invitations remain unchanged.
+
+The integration is disabled until both settings are supplied to the REST server:
+
+| Name               | Purpose                                                                  | Default  |
+| ------------------ | ------------------------------------------------------------------------ | -------- |
+| `WAITLIST_URL`     | Google Apps Script deployment URL ending in `/exec`.                     | Disabled |
+| `WAITLIST_SECRET`  | Random signing key shared with the script, injected as a runtime secret. | Disabled |
+| `WAITLIST_TIMEOUT` | Timeout for one writer operation, including Google's response redirect.  | `10s`    |
+
+Follow the [private-sheet setup and operations guide](./docs/waitlist.md). CI needs no production
+Google credentials. A Google outage does not block login or invalidate a newly created account;
+cleanup is best-effort after the database commit.
 
 ### Shutting down cleanly
 
