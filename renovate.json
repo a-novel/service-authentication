@@ -1,18 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>a-novel-kit/workflows//renovate/service#v1.31.0"],
-  "packageRules": [
-    {
-      "matchFileNames": ["builds/database.Dockerfile"],
-      "matchDatasources": ["deb"],
-      "matchPackageNames": ["ca-certificates"],
-      "registryUrls": ["https://deb.debian.org/debian?suite=trixie&components=main&binaryArch=amd64"]
-    },
-    {
-      "matchFileNames": ["builds/database.Dockerfile"],
-      "matchDatasources": ["deb"],
-      "matchPackageNames": ["pgbackrest"],
-      "registryUrls": ["https://apt.postgresql.org/pub/repos/apt?suite=trixie-pgdg&components=main&binaryArch=amd64"]
-    }
-  ]
+  "extends": ["github>a-novel-kit/workflows//renovate/service#v1.31.1"]
 }
