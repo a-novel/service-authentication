@@ -1,11 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>a-novel-kit/workflows//renovate/service#v1.31.0"],
-  "packageRules": [
-    {
-      "matchFileNames": ["builds/database.apko.yaml"],
-      "matchDatasources": ["apk"],
-      "registryUrls": ["https://packages.wolfi.dev/os?arch=x86_64"]
-    }
-  ]
+  "extends": ["github>a-novel-kit/workflows//renovate/service#v1.31.1"]
 }
