@@ -53,6 +53,7 @@ func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			core.ErrCredentialsCreateAlreadyExists: http.StatusConflict,
 			core.ErrShortCodeNotFound:              http.StatusForbidden,
 			core.ErrShortCodeConsumeInvalid:        http.StatusForbidden,
+			core.ErrShortCodeConsumeExpired:        http.StatusForbidden,
 			core.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
 		}, err)
 

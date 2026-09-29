@@ -18,8 +18,9 @@ jobs:
       id-token: write
       security-events: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/renovate@v1.30.2
+      - uses: a-novel-kit/workflows/generic-actions/renovate@v1.31.0
         with:
+          repository_config: "true"
           allowed_commands: |
             [
               "^pnpm format:js$", 

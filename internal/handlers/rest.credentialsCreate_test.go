@@ -127,6 +127,26 @@ func TestCredentialsCreate(t *testing.T) {
 			expectStatus: http.StatusForbidden,
 		},
 		{
+			name: "Error/ShortCodeExpired",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/credentials", strings.NewReader(`{
+				"email": "user@provider.com",
+				"password": "Louvre",
+				"shortCode": "abcdef"
+			}`)),
+
+			serviceMock: &serviceMock{
+				req: &core.CredentialsCreateRequest{
+					Email:     "user@provider.com",
+					Password:  "Louvre",
+					ShortCode: "abcdef",
+				},
+				err: errors.Join(errFoo, core.ErrShortCodeConsumeExpired),
+			},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
 			name: "Error/Internal",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
