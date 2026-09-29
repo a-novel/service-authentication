@@ -54,6 +54,7 @@ func (handler *CredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *http.
 			core.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
 			core.ErrShortCodeNotFound:                   http.StatusForbidden,
 			core.ErrShortCodeConsumeInvalid:             http.StatusForbidden,
+			core.ErrShortCodeConsumeExpired:             http.StatusForbidden,
 			core.ErrInvalidRequest:                      http.StatusUnprocessableEntity,
 		}, err)
 
