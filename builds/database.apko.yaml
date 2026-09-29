@@ -1,0 +1,41 @@
+contents:
+  repositories:
+    - https://packages.wolfi.dev/os
+  keyring:
+    - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+  packages:
+    - wolfi-baselayout
+    - busybox
+    - ca-certificates-bundle
+    - postgresql-18=18.6-r3
+    - postgresql-18-client=18.6-r3
+    - postgresql-18-contrib=18.6-r3
+    - postgresql-18-oci-entrypoint-base=18.6-r3
+    - gosu=1.19-r17
+    - glibc-locale-en
+    - libxml2-16=2.15.4-r0
+    - libbz2-1
+    - lz4
+    - zstd
+    - libssh2
+    - openssl
+accounts:
+  groups:
+    - groupname: postgres
+      gid: 999
+  users:
+    - username: postgres
+      uid: 999
+      gid: 999
+      homedir: /var/lib/postgresql
+paths:
+  - path: /var/lib/postgresql
+    type: directory
+    uid: 999
+    gid: 999
+    permissions: 0700
+  - path: /var/run/postgresql
+    type: directory
+    uid: 999
+    gid: 999
+    permissions: 03775

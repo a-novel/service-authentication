@@ -4,10 +4,16 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/^builds\\/database\\.Dockerfile$/"],
-      "matchStrings": ["github\\.com/tianon/gosu@(?<currentValue>[0-9.]+)"],
+      "matchStrings": ["chainguard\\.dev/apko@(?<currentValue>v[0-9.]+)"],
       "datasourceTemplate": "github-tags",
-      "depNameTemplate": "tianon/gosu",
-      "versioningTemplate": "loose"
+      "depNameTemplate": "chainguard-dev/apko"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^builds\\/database\\.apko\\.yaml$/"],
+      "matchStrings": ["- (?<depName>[a-z0-9-]+)=(?<currentValue>[^\\s]+)"],
+      "datasourceTemplate": "apk",
+      "registryUrlTemplate": "https://packages.wolfi.dev/os?arch=x86_64"
     }
   ],
   "docker-compose": {
@@ -23,16 +29,9 @@
   },
   "packageRules": [
     {
-      "matchFileNames": ["builds/database.Dockerfile"],
-      "matchDatasources": ["deb"],
-      "matchPackageNames": ["ca-certificates"],
-      "registryUrls": ["https://deb.debian.org/debian?suite=trixie&components=main&binaryArch=amd64"]
-    },
-    {
-      "matchFileNames": ["builds/database.Dockerfile"],
-      "matchDatasources": ["deb"],
-      "matchPackageNames": ["pgbackrest"],
-      "registryUrls": ["https://apt.postgresql.org/pub/repos/apt?suite=trixie-pgdg&components=main&binaryArch=amd64"]
+      "matchFileNames": ["builds/database.apko.yaml"],
+      "matchPackageNames": ["/^postgresql-18/"],
+      "groupName": "PostgreSQL runtime packages"
     },
     {
       "matchFileNames": ["golangci-lint.mod"],

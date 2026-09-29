@@ -100,6 +100,23 @@ For an existing account, the operation promotes or demotes it to the requested r
 
 Email-bearing flows fall back to a debug sender that prints to stdout unless you configure SMTP. The maintenance job waits for invitation delivery and fails the execution when the sender reports an error. See the optional configuration below.
 
+### Database image
+
+The database image packages PostgreSQL and pgBackRest on Wolfi. Its
+[package manifest](./builds/database.apko.yaml) is assembled with apko during the container
+build; Docker and Podman users need no additional host tools. PostgreSQL keeps its standard
+`POSTGRES_*` initialization variables, `uuid-ossp` extension and volume at
+`/var/lib/postgresql`. Backup scheduling and repository credentials remain the operator's
+responsibility.
+
+Use a fresh volume when moving from the Debian-based image. To keep existing data, take a
+logical dump and restore it into the new database, then validate it before switching traffic.
+Do not reuse a Debian data directory or assume its physical backups are portable: the libc,
+collation and extension environment changed. Retain the previous image with its backups.
+
+Wolfi's package repository rolls forward. Retain published service images for recovery rather
+than relying on an old package manifest remaining rebuildable indefinitely.
+
 ### Configuration
 
 Every variable is read from the process environment. Set `POSTGRES_HOST` to use the discrete
