@@ -4,6 +4,15 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/^builds\\/database\\.Dockerfile$/"],
+      "matchStrings": [
+        "ARG PGBACKREST_VERSION=(?<currentValue>[0-9.]+)\\s+ARG PGBACKREST_SHA256=(?<currentDigest>[a-f0-9]{64})\\s"
+      ],
+      "datasourceTemplate": "custom.pgbackrest",
+      "depNameTemplate": "pgbackrest/pgbackrest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^builds\\/database\\.Dockerfile$/"],
       "matchStrings": ["chainguard\\.dev/apko@(?<currentValue>v[0-9.]+)"],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "chainguard-dev/apko"
@@ -16,6 +25,15 @@
       "registryUrlTemplate": "https://packages.wolfi.dev/os?arch=x86_64"
     }
   ],
+  "customDatasources": {
+    "pgbackrest": {
+      "defaultRegistryUrlTemplate": "https://api.github.com/repos/pgbackrest/pgbackrest/releases?per_page=100",
+      "transformTemplates": [
+        "$[draft = false and prerelease = false and $substring(tag_name, 0, 8) = 'release/'].($version := $substringAfter(tag_name, 'release/'); $published := published_at; assets[name = 'pgbackrest-' & $version & '.tar.gz' and $match($string(digest), /^sha256:[a-f0-9]{64}$/)].{'version': $version, 'digest': $substring(digest, 7), 'releaseTimestamp': $published})",
+        "{'releases': [$[$match(version, /^[0-9]+\\.[0-9]+(\\.[0-9]+)?$/)]], 'sourceUrl': 'https://github.com/pgbackrest/pgbackrest'}"
+      ]
+    }
+  },
   "docker-compose": {
     "managerFilePatterns": ["/(^|/)(?:podman-)?compose[^/]*\\.ya?ml$/"]
   },

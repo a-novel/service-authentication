@@ -12,15 +12,18 @@ RUN apko build-minirootfs /database.yaml /runtime.tar \
     && tar -xf /runtime.tar -C /runtime --exclude=dev \
     && tar -xf /builder.tar -C /builder --exclude=dev
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-RUN wget -q -O /pgbackrest.tar.gz https://github.com/pgbackrest/pgbackrest/releases/download/release/2.59.1/pgbackrest-2.59.1.tar.gz \
-    && echo '1cd522afc33b8ff846ef88c55dc238717c9c8817a4f6ca7c9f64887de9c7402d  /pgbackrest.tar.gz' | sha256sum -c -
+ARG PGBACKREST_VERSION=2.59.1
+ARG PGBACKREST_SHA256=1cd522afc33b8ff846ef88c55dc238717c9c8817a4f6ca7c9f64887de9c7402d
+RUN wget -q -O /pgbackrest.tar.gz "https://github.com/pgbackrest/pgbackrest/releases/download/release/${PGBACKREST_VERSION}/pgbackrest-${PGBACKREST_VERSION}.tar.gz" \
+    && echo "${PGBACKREST_SHA256}  /pgbackrest.tar.gz" | sha256sum -c -
 
 # Wolfi supplies PostgreSQL; only pgBackRest needs its upstream source build.
 FROM scratch AS backup-builder
 COPY --from=packages /builder/ /
 COPY --from=packages /pgbackrest.tar.gz /tmp/pgbackrest.tar.gz
-RUN tar -xzf /tmp/pgbackrest.tar.gz -C /tmp \
-    && meson setup /tmp/build /tmp/pgbackrest-2.59.1 --buildtype=release \
+RUN mkdir /tmp/pgbackrest \
+    && tar -xzf /tmp/pgbackrest.tar.gz -C /tmp/pgbackrest --strip-components=1 \
+    && meson setup /tmp/build /tmp/pgbackrest --buildtype=release \
     && ninja -C /tmp/build -j 2 \
     && meson test -C /tmp/build --print-errorlogs
 
