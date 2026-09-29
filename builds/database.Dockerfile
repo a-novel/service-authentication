@@ -3,7 +3,16 @@
 #
 # Note: this image does not run the migrations from the main image, make sure to call the appropriate
 # patch for this.
+FROM docker.io/library/golang:1.27.1-alpine AS gosu-builder
+
+ENV CGO_ENABLED=0
+
+# Build the upstream privilege helper with the supported compiler.
+RUN GOBIN=/out go install -trimpath -ldflags="-s -w" github.com/tianon/gosu@1.19
+
 FROM docker.io/library/postgres:18.6-trixie
+
+COPY --from=gosu-builder /out/gosu /usr/local/bin/gosu
 
 ENV POSTGRES_INITDB_ARGS=--auth=scram-sha-256
 
@@ -14,7 +23,9 @@ RUN sha256sum /usr/lib/postgresql/18/bin/postgres /usr/lib/postgresql/18/lib/uui
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         ca-certificates=20250419 \
         pgbackrest=2.59.1-1.pgdg13+1 \
+    && apt-get purge -y --auto-remove gnupg gnupg-l10n gpg gpg-agent gpgconf gpgsm dirmngr \
     && sha256sum --check /tmp/database.sha256 \
+    && test "$(gosu postgres id -u)" = "$(id -u postgres)" \
     && gosu postgres pgbackrest version \
     && gosu postgres test -s /etc/ssl/certs/ca-certificates.crt \
     && gosu postgres openssl crl2pkcs7 -nocrl -certfile /etc/ssl/certs/ca-certificates.crt -out /dev/null \
