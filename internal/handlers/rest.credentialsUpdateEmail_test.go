@@ -164,6 +164,24 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			expectStatus: http.StatusForbidden,
 		},
 		{
+			name: "Error/ShortCodeExpired",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPatch, "/v2/credentials/email", strings.NewReader(`{
+				"userID": "00000000-0000-0000-0000-000000000001",
+				"shortCode": "abcdef"
+			}`)),
+
+			serviceMock: &serviceMock{
+				req: &core.CredentialsUpdateEmailRequest{
+					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					ShortCode: "abcdef",
+				},
+				err: errors.Join(errFoo, core.ErrShortCodeConsumeExpired),
+			},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
 			name: "Error/Internal",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
