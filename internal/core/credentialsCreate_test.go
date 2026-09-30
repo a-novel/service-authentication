@@ -15,11 +15,9 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
-	"github.com/a-novel-kit/golib/postgres/postgrestest"
 	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
-	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -63,9 +61,11 @@ func TestCredentialsCreateRequest(t *testing.T) {
 		expect     *core.Token
 		expectErr  error
 		expectRole string
+		cleanupErr error
 	}{
 		{
-			name: "Success",
+			name:       "Success/WaitlistUnavailable",
+			cleanupErr: dao.ErrWaitlistUnavailable,
 
 			request: &core.CredentialsCreateRequest{
 				Email:     "user@provider.com",
@@ -307,123 +307,181 @@ func TestCredentialsCreateRequest(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			postgrestest.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
-				t.Helper()
+			ctx := t.Context()
+			mockDao := coremocks.NewMockCredentialsCreateDao(t)
+			serviceShortCodeConsume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
+			serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
 
-				mockDao := coremocks.NewMockCredentialsCreateDao(t)
-				serviceShortCodeConsume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
-				serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
+			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
+			if testCase.daoMock != nil && testCase.daoMock.err == nil {
+				waitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
+					Action: "remove", Email: testCase.request.Email,
+				}).Return(&dao.WaitlistResult{}, testCase.cleanupErr).Once()
+			}
 
-				if testCase.serviceShortCodeConsumeMock != nil {
-					shortCode := testCase.serviceShortCodeConsumeMock.resp
-					if shortCode == nil && testCase.serviceShortCodeConsumeMock.err == nil {
-						shortCode = &core.ShortCode{}
-					}
-
-					serviceShortCodeConsume.EXPECT().
-						Exec(mock.Anything, &core.ShortCodeConsumeRequest{
-							Usage:  core.ShortCodeUsageRegister,
-							Target: testCase.request.Email,
-							Code:   testCase.request.ShortCode,
-						}).
-						Return(shortCode, testCase.serviceShortCodeConsumeMock.err)
+			if testCase.serviceShortCodeConsumeMock != nil {
+				shortCode := testCase.serviceShortCodeConsumeMock.resp
+				if shortCode == nil && testCase.serviceShortCodeConsumeMock.err == nil {
+					shortCode = &core.ShortCode{}
 				}
 
-				if testCase.daoMock != nil {
-					expectRole := testCase.expectRole
-					if expectRole == "" {
-						expectRole = config.RoleUser
-					}
+				serviceShortCodeConsume.EXPECT().
+					Exec(mock.Anything, &core.ShortCodeConsumeRequest{
+						Usage:  core.ShortCodeUsageRegister,
+						Target: testCase.request.Email,
+						Code:   testCase.request.ShortCode,
+					}).
+					Return(shortCode, testCase.serviceShortCodeConsumeMock.err)
+			}
 
-					mockDao.EXPECT().
-						Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsInsertRequest) bool {
-							return assert.Equal(t, testCase.request.Email, data.Email) &&
-								assert.NotEqual(t, uuid.Nil, data.ID) &&
-								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
-								assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
-								assert.Equal(t, expectRole, data.Role)
-						})).
-						Return(
-							testCase.daoMock.resp,
-							testCase.daoMock.err,
-						)
+			if testCase.daoMock != nil {
+				expectRole := testCase.expectRole
+				if expectRole == "" {
+					expectRole = config.RoleUser
 				}
 
-				if testCase.serviceSignClaimsMock != nil {
-					serviceSignClaims.EXPECT().
-						ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
-							Usage: servicejsonkeys.KeyUsageAuthRefresh,
-							Payload: lo.Must(grpcf.MarshalJSONAsAny(core.RefreshTokenClaimsForm{
-								UserID: testCase.daoMock.resp.ID,
-							})),
-						}).
-						Return(
-							&servicejsonkeys.ClaimsSignResponse{
-								Token: mockUnsignedRefreshToken,
-							},
-							testCase.serviceSignClaimsMock.err,
-						)
-				}
+				mockDao.EXPECT().
+					Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsInsertRequest) bool {
+						return assert.Equal(t, testCase.request.Email, data.Email) &&
+							assert.NotEqual(t, uuid.Nil, data.ID) &&
+							assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
+							assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
+							assert.Equal(t, expectRole, data.Role)
+					})).
+					Return(
+						testCase.daoMock.resp,
+						testCase.daoMock.err,
+					)
+			}
 
-				if testCase.issueTokenMock != nil {
-					serviceSignClaims.EXPECT().
-						ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
-							Usage: servicejsonkeys.KeyUsageAuth,
-							Payload: lo.Must(grpcf.MarshalJSONAsAny(core.AccessTokenClaims{
-								UserID:         &testCase.daoMock.resp.ID,
-								Roles:          []string{testCase.daoMock.resp.Role},
-								RefreshTokenID: mockUnsignedJTI,
-							})),
-						}).
-						Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
-				}
+			if testCase.serviceSignClaimsMock != nil {
+				serviceSignClaims.EXPECT().
+					ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
+						Usage: servicejsonkeys.KeyUsageAuthRefresh,
+						Payload: lo.Must(grpcf.MarshalJSONAsAny(core.RefreshTokenClaimsForm{
+							UserID: testCase.daoMock.resp.ID,
+						})),
+					}).
+					Return(
+						&servicejsonkeys.ClaimsSignResponse{
+							Token: mockUnsignedRefreshToken,
+						},
+						testCase.serviceSignClaimsMock.err,
+					)
+			}
 
-				service := core.NewCredentialsCreate(
-					mockDao, serviceShortCodeConsume, serviceSignClaims, transactiontest.NewTransactor(),
-				)
+			if testCase.issueTokenMock != nil {
+				serviceSignClaims.EXPECT().
+					ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
+						Usage: servicejsonkeys.KeyUsageAuth,
+						Payload: lo.Must(grpcf.MarshalJSONAsAny(core.AccessTokenClaims{
+							UserID:         &testCase.daoMock.resp.ID,
+							Roles:          []string{testCase.daoMock.resp.Role},
+							RefreshTokenID: mockUnsignedJTI,
+						})),
+					}).
+					Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
+			}
 
-				resp, err := service.Exec(ctx, testCase.request)
-				require.ErrorIs(t, err, testCase.expectErr)
-				require.Equal(t, testCase.expect, resp)
+			service := core.NewCredentialsCreate(
+				mockDao, serviceShortCodeConsume, serviceSignClaims, transactiontest.NewTransactor(), waitlist,
+			)
 
-				mockDao.AssertExpectations(t)
-				serviceShortCodeConsume.AssertExpectations(t)
-				serviceSignClaims.AssertExpectations(t)
-			})
+			resp, err := service.Exec(ctx, testCase.request)
+			require.ErrorIs(t, err, testCase.expectErr)
+			require.Equal(t, testCase.expect, resp)
+
+			mockDao.AssertExpectations(t)
+			serviceShortCodeConsume.AssertExpectations(t)
+			serviceSignClaims.AssertExpectations(t)
+			waitlist.AssertExpectations(t)
 		})
 	}
 }
 
-// TestCredentialsCreateIsAtomic proves the two writes run inside one unit of work.
-//
-// The transactor is wired to refuse to open, which reproduces the scope boundary exactly:
-// with the writes inside the scope, neither dependency is ever reached.
+// TestCredentialsCreateIsAtomic keeps sheet cleanup outside the transaction and after its commit,
+// even when the client disconnects before cleanup starts.
 func TestCredentialsCreateIsAtomic(t *testing.T) {
 	t.Parallel()
 
-	errNoTransaction := errors.New("transaction unavailable")
+	errTransaction := errors.New("transaction failed")
 
-	mockDao := coremocks.NewMockCredentialsCreateDao(t)
-	serviceShortCodeConsume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
-	serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
+	testCases := []struct {
+		name      string
+		opened    bool
+		committed bool
+		expectErr error
+	}{
+		{name: "BeginFails", expectErr: errTransaction},
+		{name: "CommitFails", opened: true, expectErr: errTransaction},
+		{name: "DisconnectAfterCommit", opened: true, committed: true, expectErr: context.Canceled},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 
-	transactor := transactiontest.NewFailingTransactor(errNoTransaction)
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
 
-	service := core.NewCredentialsCreate(mockDao, serviceShortCodeConsume, serviceSignClaims, transactor)
+			request := &core.CredentialsCreateRequest{
+				Email: "user@provider.com", Password: "secret", ShortCode: "foobarqux",
+			}
+			mockDao := coremocks.NewMockCredentialsCreateDao(t)
+			consume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
+			sign := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
+			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
+			transactor := coremocks.NewMockTransactor(t)
+			committed := false
 
-	resp, err := service.Exec(t.Context(), &core.CredentialsCreateRequest{
-		Email:     "user@provider.com",
-		Password:  "secret",
-		ShortCode: "foobarqux",
-	})
-	require.ErrorIs(t, err, errNoTransaction)
-	require.Nil(t, resp)
+			transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).
+				RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+					if !testCase.opened {
+						return errTransaction
+					}
 
-	require.Equal(t, 1, transactor.Calls(), "the operation must open exactly one unit of work")
+					require.NoError(t, fn(ctx))
 
-	// No expectations were registered on either mock, so mockery fails the test if
-	// anything reached them outside the scope that never opened.
-	mockDao.AssertExpectations(t)
-	serviceShortCodeConsume.AssertExpectations(t)
-	serviceSignClaims.AssertExpectations(t)
+					if !testCase.committed {
+						return errTransaction
+					}
+
+					committed = true
+
+					cancel()
+
+					return nil
+				}).Once()
+
+			if testCase.opened {
+				consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{
+					Usage: core.ShortCodeUsageRegister, Target: request.Email, Code: request.ShortCode,
+				}).Return(&core.ShortCode{}, nil).Once()
+				mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
+			}
+
+			if testCase.committed {
+				waitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "remove", Email: request.Email}).
+					Run(func(cleanupCtx context.Context, _ *dao.WaitlistRequest) {
+						require.True(t, committed, "sheet I/O must happen after commit")
+						require.ErrorIs(t, ctx.Err(), context.Canceled)
+						require.NoError(t, cleanupCtx.Err(), "cleanup must survive client cancellation")
+						deadline, ok := cleanupCtx.Deadline()
+						require.True(t, ok, "cleanup must remain bounded")
+						require.Positive(t, time.Until(deadline))
+						require.LessOrEqual(t, time.Until(deadline), 3*time.Second)
+					}).Return(&dao.WaitlistResult{}, nil).Once()
+				sign.EXPECT().ClaimsSign(mock.Anything, mock.Anything).Return(nil, context.Canceled).Once()
+			}
+
+			service := core.NewCredentialsCreate(mockDao, consume, sign, transactor, waitlist)
+			resp, err := service.Exec(ctx, request)
+			require.ErrorIs(t, err, testCase.expectErr)
+			require.Nil(t, resp)
+			mockDao.AssertExpectations(t)
+			consume.AssertExpectations(t)
+			sign.AssertExpectations(t)
+			waitlist.AssertExpectations(t)
+			transactor.AssertExpectations(t)
+		})
+	}
 }

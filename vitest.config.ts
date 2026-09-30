@@ -38,6 +38,14 @@ export default defineConfig({
     },
     projects: [
       {
+        extends: true,
+        test: {
+          name: "waitlist-writer",
+          environment: "node",
+          include: ["scripts/waitlist/*.test.ts"],
+        },
+      },
+      {
         root: "pkg/js/test/rest",
         extends: true,
         test: {

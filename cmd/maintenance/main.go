@@ -22,7 +22,7 @@ func mainExitCode() int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	command := newMaintenanceCommand(accountRoleOperationDefinition())
+	command := newMaintenanceCommand(accountRoleOperationDefinition(), waitlistCleanupOperationDefinition())
 
 	err := command.run(ctx, os.Args[1:], os.Stdout)
 	if err != nil {

@@ -19,4 +19,10 @@ var (
 	ErrCredentialsUpdateRoleNotFound = dao.ErrCredentialsUpdateRoleNotFound
 	// ErrShortCodeNotFound is returned when a matching short code does not exist.
 	ErrShortCodeNotFound = dao.ErrShortCodeSelectNotFound
+	// ErrWaitlistUnavailable is returned when the invitation list cannot acknowledge a request.
+	ErrWaitlistUnavailable = dao.ErrWaitlistUnavailable
+	// ErrWaitlistBusy is returned when the invitation list cannot admit more work.
+	ErrWaitlistBusy = dao.ErrWaitlistBusy
+	// ErrWaitlistAlreadyJoined is returned when an invitation request already exists for the email.
+	ErrWaitlistAlreadyJoined = dao.ErrWaitlistAlreadyJoined
 )

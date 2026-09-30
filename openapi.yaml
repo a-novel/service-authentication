@@ -350,6 +350,47 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
+  /v2/waitlist:
+    put:
+      operationId: waitlistJoin
+      summary: Request an invitation.
+      description: |
+        Records an email and preferred language in the temporary private invitation list.
+        Anonymous sessions have this permission. This sends no email, creates no account,
+        and does not grant permission to register. Super-admin invitations remain separate.
+
+        New entries receive an empty 202. A 409 distinguishes existing accounts from duplicate requests.
+        These warnings intentionally reveal membership to the caller. Existing accounts do not create rows.
+        Email comparison matches the account store exactly;
+        case and provider-specific aliases are not normalized.
+      tags: [waitlist]
+      security:
+        - BearerAuth: ["waitlist:join"]
+      requestBody:
+        $ref: "#/components/requestBodies/waitlistJoin"
+      responses:
+        "202":
+          description: The invitation request was recorded.
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "409":
+          $ref: "#/components/responses/waitlistConflict"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          description: The writer is busy or the temporary list is full. Retry later.
+          headers:
+            Retry-After:
+              schema: { type: integer, const: 60 }
+        "503":
+          description: The integration is disabled, unreachable, or at its per-instance concurrency limit.
+        default:
+          $ref: "#/components/responses/internalError"
+
   /v2/short-code/register:
     put:
       operationId: registerInit
@@ -436,6 +477,12 @@ paths:
 
 components:
   responses:
+    waitlistConflict:
+      description: The address is registered or already has an invitation request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/waitlistConflict"
     pong:
       description: The server is up and running.
       content:
@@ -545,6 +592,17 @@ components:
       description: I'm a teapot!
 
   schemas:
+    waitlistConflict:
+      type: object
+      description: A stable warning for the invitation form; no input or internal details are returned.
+      required: [code]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Whether an account or a pending invitation request already exists.
+          enum: [account_exists, already_waitlisted]
+          examples: [account_exists, already_waitlisted]
     healthStatus:
       type: object
       description: |
@@ -746,6 +804,20 @@ components:
           $ref: "#/components/schemas/userRole"
 
   requestBodies:
+    waitlistJoin:
+      description: Email and preferred language for an invitation request.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, lang]
+            properties:
+              email:
+                $ref: "#/components/schemas/email"
+              lang:
+                $ref: "#/components/schemas/lang"
+
     tokenRefresh:
       description: The tokens set to refresh.
       required: true

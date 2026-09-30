@@ -22,6 +22,8 @@ type CredentialsListRequest struct {
 	// Roles, if non-empty, restricts the result to credentials whose role is in
 	// the slice. An empty slice returns credentials of every role.
 	Roles []string
+	// Emails, if non-empty, restricts the result to exact, case-sensitive addresses.
+	Emails []string
 }
 
 // CredentialsList returns a set of paginated credentials from the database. Only the public fields are returned,
@@ -51,6 +53,10 @@ func (dao *CredentialsList) Exec(
 		request.Roles = []string{}
 	}
 
+	if len(request.Emails) == 0 {
+		request.Emails = []string{}
+	}
+
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -63,6 +69,7 @@ func (dao *CredentialsList) Exec(
 		bun.NullZero(request.Limit),
 		request.Offset,
 		bun.List(request.Roles),
+		bun.List(request.Emails),
 	).Scan(ctx, &entities)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))

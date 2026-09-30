@@ -6,6 +6,7 @@ roles:
       - "credentials:email:patch"
       - "credentials:password:reset"
       - "shortCode:password:reset"
+      - "waitlist:join"
   "auth:user":
     priority: 1
     inherits:

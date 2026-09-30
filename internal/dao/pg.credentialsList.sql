@@ -14,6 +14,10 @@ WHERE
     (?2) IS NULL -- If no role is provided (empty array), don't filter on roles.
     OR role IN (?2)
   )
+  AND (
+    (?3) IS NULL
+    OR email IN (?3)
+  )
 ORDER BY
   created_at DESC,
   id DESC

@@ -33,12 +33,17 @@ export class AuthenticationApi {
     this._baseUrl = baseUrl;
   }
 
+  /** Sends a request without decoding it. Callers must handle non-2xx responses before consuming the body. */
+  async fetchResponse(input: string, init?: RequestInit): Promise<Response> {
+    return await fetch(`${this._baseUrl}${input}`, init);
+  }
+
   /**
    * Sends a request to the given path and discards the response body.
    * Throws if the server returns a non-2xx status.
    */
   async fetchVoid(input: string, init?: RequestInit): Promise<void> {
-    await fetch(`${this._baseUrl}${input}`, init).then(handleHttpResponse);
+    await this.fetchResponse(input, init).then(handleHttpResponse);
   }
 
   /**
@@ -47,7 +52,7 @@ export class AuthenticationApi {
    * as-is. Throws if the server returns a non-2xx status or the body fails validation.
    */
   async fetch<T>(input: string, validator?: ZodType<T>, init?: RequestInit): Promise<T> {
-    return await fetch(`${this._baseUrl}${input}`, init)
+    return await this.fetchResponse(input, init)
       .then(handleHttpResponse)
       .then(validator ? decodeHttpResponse(validator) : decodeRawHttpResponse<T>);
   }
