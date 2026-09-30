@@ -210,7 +210,7 @@ that access the list use the same configuration:
 | `WAITLIST_SECRET`  | Random signing key shared with the script, injected as a runtime secret. | Disabled |
 | `WAITLIST_TIMEOUT` | Timeout for one writer operation, including Google's response redirect.  | `10s`    |
 
-Follow the [private-sheet setup and operations guide](./docs/waitlist.md). CI needs no production
+Follow the [private-sheet setup and operations guide](./scripts/waitlist/README.md). CI needs no production
 Google credentials. A Google outage does not block login or invalidate a newly created account;
 cleanup is best-effort after the database commit. `maintenance waitlist-cleanup` previews stale rows;
 add `--apply` to remove rows belonging to registered accounts after an outage or before inviting.
