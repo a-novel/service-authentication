@@ -54,11 +54,12 @@ the sheet public. Every operation must have a valid, recent HMAC signature befor
 If your Workspace policy forbids this deployment setting, stop here: do not broaden sheet sharing.
 
 Future script changes require **Deploy → Manage deployments → Edit → New version → Deploy**.
-Keep the same project and deployment so every replica uses the same lock.
+Keep the same project and deployment so every replica uses the same lock. Deploy this script version
+before enabling the matching auth release: older writers do not support conflict codes or cleanup scans.
 
 ## 4. Configure authentication
 
-Set these on the REST service, never Studio:
+Set these on the REST service and on maintenance jobs that access the list, never Studio:
 
 - `WAITLIST_URL`: the `/exec` deployment URL.
 - `WAITLIST_SECRET`: the same key as the script property, injected from the runtime secret store.
@@ -80,16 +81,19 @@ spreadsheet ID; only the script does.
 
 - The public endpoint accepts `{ "email": "person@example.com", "lang": "en" }` with a bearer token.
   `waitlistJoin` and `WaitlistJoinRequestSchema` are the typed client entry points.
-- New rows, repeat requests, and already-registered accounts receive an empty HTTP 202. Existing
-  accounts cause no sheet write or email. Repeated requests keep the original language and date.
+- New requests receive an empty HTTP 202. Existing accounts return HTTP 409 with
+  `{ "code": "account_exists" }`; repeated requests return `{ "code": "already_waitlisted" }`.
+  The client exposes both through `WaitlistJoinConflictError.code`. These distinct warnings deliberately
+  disclose account/list membership. Existing accounts cause no sheet write or email; repeated requests
+  keep the original language and date.
 - Email equality matches the account database exactly. No lowercasing, dot removal, or alias merging.
   The sheet uses RAW values so an address beginning with `=` cannot become a formula.
 - One shared lock serializes deduplication and deletion. A second account lookup after adding a row
   closes the race with an account that completed registration during the request.
 - Registration attempts cleanup after the database commits, before signing the session tokens.
   Cleanup has a three-second budget and survives a client disconnect. Failure is recorded in tracing
-  but cannot roll back the account. There is no durable retry queue: after an outage, stale rows need
-  reconciliation before inviting from the list. PostgreSQL remains authoritative for account existence.
+  but cannot roll back the account. There is no durable retry queue: run the cleanup command after an
+  outage and before inviting from the list. PostgreSQL remains authoritative for account existence.
 - The temporary list is capped at 10,000 entries. The writer admits at most one new row per second,
   while duplicate checks and removal are not rate-limited. The API allows four concurrent waitlist
   requests per replica and an 8 KiB body. These bounds are not a replacement for deployment-level
@@ -104,18 +108,44 @@ spreadsheet ID; only the script does.
 The waitlist is optional and is not probed by the general readiness healthcheck: a Google outage
 must not take ordinary authentication out of service. Watch waitlist errors separately.
 
+## On-demand cleanup
+
+Run the existing maintenance image with the database configuration and waitlist settings above.
+It needs neither SMTP nor the JSON Keys service for this operation. Preview is the default:
+
+```text
+maintenance waitlist-cleanup
+maintenance waitlist-cleanup --apply
+```
+
+The preview reports counts without changing rows. `--apply` removes only addresses found in the
+account database, including duplicate rows; pending requests remain. No invitations are sent.
+The command logs `scanned` unique addresses, `matched` accounts and `removed` rows, never email values.
+
+Each scan reads at most 100 addresses per request and 10,000 overall, with a ten-minute deadline.
+An email cursor prevents deletions from skipping the next page. This is not a snapshot: an address
+added before the current cursor is checked on the next run. Preview does not reserve its results;
+`--apply` always rechecks the database.
+
+A failure returns a non-zero exit status and partial counts. Some deletions may have committed even
+if their acknowledgement was lost, so `removed` can undercount them. Rerunning is safe: already-deleted
+rows are absent, and remaining addresses are checked again. There is no automatic schedule.
+
 ## Verify before opening the form
 
 Use a separate test sheet and an email you control. Automated tests use local fixtures and cannot
 verify the Google deployment's permissions.
 
-1. Join twice through the deployed auth API. Both calls should return 202, with one unchanged row.
-2. Request an invitation for an existing account. Expect 202 and no added row or email.
+1. Join twice through the deployed auth API. Expect 202, then 409 `already_waitlisted`, with one unchanged row.
+2. Request an invitation for an existing account. Expect 409 `account_exists` and no added row or email.
 3. Invite the test address through the existing admin flow, then complete registration. Its row should
    disappear; other rows and the headers must remain.
 4. With a test deployment only, use a mismatched signing key. A join must fail without modifying the
    sheet. Restore the matching key and verify a retry succeeds.
 5. Confirm the sheet remains inaccessible to an unrelated Google account.
+6. In the test sheet only, add a row for an existing account. Preview cleanup: it should count the match
+   without changing any rows. Run with `--apply`: only that account's rows should disappear. A second
+   run should remove nothing.
 
 Before sending invitations, recheck account existence and treat the rows as unverified submissions.
 Restrict the list to this purpose, agree a retention period with the operators, and delete it when

@@ -316,7 +316,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 			if testCase.daoMock != nil && testCase.daoMock.err == nil {
 				waitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 					Action: "remove", Email: testCase.request.Email,
-				}).Return(testCase.cleanupErr).Once()
+				}).Return(&dao.WaitlistResult{}, testCase.cleanupErr).Once()
 			}
 
 			if testCase.serviceShortCodeConsumeMock != nil {
@@ -469,7 +469,7 @@ func TestCredentialsCreateIsAtomic(t *testing.T) {
 						require.True(t, ok, "cleanup must remain bounded")
 						require.Positive(t, time.Until(deadline))
 						require.LessOrEqual(t, time.Until(deadline), 3*time.Second)
-					}).Return(nil).Once()
+					}).Return(&dao.WaitlistResult{}, nil).Once()
 				sign.EXPECT().ClaimsSign(mock.Anything, mock.Anything).Return(nil, context.Canceled).Once()
 			}
 

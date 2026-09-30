@@ -32,8 +32,13 @@ func TestWaitlistJoin(t *testing.T) {
 		expectErr  error
 	}{
 		{name: "NewRequest"},
-		{name: "ExistingAccountDoesNothing", exists: true},
-		{name: "ConcurrentRegistrationRemovesRow", created: true},
+		{name: "ExistingAccountDoesNothing", exists: true, expectErr: core.ErrWaitlistAccountExists},
+		{name: "DuplicateRequest", joinErr: dao.ErrWaitlistAlreadyJoined, expectErr: core.ErrWaitlistAlreadyJoined},
+		{name: "ConcurrentRegistrationRemovesRow", created: true, expectErr: core.ErrWaitlistAccountExists},
+		{
+			name: "ConcurrentRegistrationWithDuplicate", created: true, joinErr: dao.ErrWaitlistAlreadyJoined,
+			expectErr: core.ErrWaitlistAccountExists,
+		},
 		{name: "InvalidEmail", email: "invalid", invalid: true, expectErr: core.ErrInvalidRequest},
 		{
 			name: "OversizedEmail", email: strings.Repeat("a", 1025) + "@example.com",
@@ -72,14 +77,14 @@ func TestWaitlistJoin(t *testing.T) {
 				if !testCase.exists && testCase.lookupErr == nil {
 					calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 						Action: "join", Email: email, Lang: lang,
-					}).Return(testCase.joinErr).Once())
-					if testCase.joinErr == nil {
+					}).Return(&dao.WaitlistResult{}, testCase.joinErr).Once())
+					if testCase.joinErr == nil || errors.Is(testCase.joinErr, dao.ErrWaitlistAlreadyJoined) {
 						calls = append(calls, credentials.EXPECT().Exec(mock.Anything, &dao.CredentialsExistRequest{Email: email}).
 							Return(testCase.created, testCase.recheckErr).Once())
 						if testCase.created && testCase.recheckErr == nil {
 							calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 								Action: "remove", Email: email,
-							}).Return(testCase.removeErr).Once())
+							}).Return(&dao.WaitlistResult{}, testCase.removeErr).Once())
 						}
 					}
 				}

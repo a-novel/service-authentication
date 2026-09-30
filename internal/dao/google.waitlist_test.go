@@ -38,6 +38,7 @@ func TestGoogleWaitlist(t *testing.T) {
 		disabled     bool
 		action       string
 		expectErr    error
+		expect       *dao.WaitlistResult
 	}{
 		{name: "SignedJoin", status: http.StatusOK, body: `{"status":"accepted"}`},
 		{name: "ContentRedirect", status: http.StatusFound, redirect: "https://script.googleusercontent.com/response"},
@@ -51,6 +52,18 @@ func TestGoogleWaitlist(t *testing.T) {
 		},
 		{name: "Busy", status: http.StatusOK, body: `{"status":"busy"}`, expectErr: dao.ErrWaitlistBusy},
 		{
+			name: "Duplicate", status: http.StatusOK, body: `{"status":"already_waitlisted"}`,
+			expectErr: dao.ErrWaitlistAlreadyJoined,
+		},
+		{
+			name: "List", action: "list", status: http.StatusOK, body: `{"status":"accepted","emails":["a@example.com"]}`,
+			expect: &dao.WaitlistResult{Emails: []string{"a@example.com"}},
+		},
+		{
+			name: "Remove", action: "remove", status: http.StatusOK, body: `{"status":"accepted","removed":2}`,
+			expect: &dao.WaitlistResult{Removed: 2},
+		},
+		{
 			name: "BadSignature", status: http.StatusOK, body: `{"status":"unauthorized"}`,
 			expectErr: dao.ErrWaitlistUnavailable,
 		},
@@ -60,12 +73,13 @@ func TestGoogleWaitlist(t *testing.T) {
 		},
 		{name: "Malformed", status: http.StatusOK, body: `{`, expectErr: dao.ErrWaitlistUnavailable},
 		{
-			name: "Oversized", status: http.StatusOK, body: strings.Repeat(" ", 128<<10) + `{"status":"accepted"}`,
+			name: "Oversized", status: http.StatusOK, body: strings.Repeat(" ", 1<<20) + `{"status":"accepted"}`,
 			expectErr: dao.ErrWaitlistUnavailable,
 		},
 		{name: "NetworkErrorSanitized", transportErr: true, expectErr: dao.ErrWaitlistUnavailable},
 		{name: "DisabledJoin", disabled: true, expectErr: dao.ErrWaitlistUnavailable},
 		{name: "DisabledCleanup", disabled: true, action: "remove"},
+		{name: "DisabledList", disabled: true, action: "list", expectErr: dao.ErrWaitlistUnavailable},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -81,6 +95,12 @@ func TestGoogleWaitlist(t *testing.T) {
 			}
 
 			calls := 0
+
+			action := testCase.action
+			if action == "" {
+				action = "join"
+			}
+
 			transport := waitlistTransport(func(request *http.Request) (*http.Response, error) {
 				calls++
 
@@ -114,7 +134,7 @@ func TestGoogleWaitlist(t *testing.T) {
 						Timestamp int64  `json:"timestamp"`
 					}
 					require.NoError(t, json.Unmarshal([]byte(envelope.Payload), &payload))
-					require.Equal(t, "join", payload.Action)
+					require.Equal(t, action, payload.Action)
 					require.Equal(t, "member@example.com", payload.Email)
 					require.Equal(t, "fr", payload.Lang)
 					require.WithinDuration(t, time.Now(), time.Unix(payload.Timestamp, 0), time.Second)
@@ -137,15 +157,21 @@ func TestGoogleWaitlist(t *testing.T) {
 			writer, err := dao.NewGoogleWaitlist(cfg, transport)
 			require.NoError(t, err)
 
-			action := testCase.action
-			if action == "" {
-				action = "join"
-			}
-
-			err = writer.Exec(t.Context(), &dao.WaitlistRequest{
+			result, err := writer.Exec(t.Context(), &dao.WaitlistRequest{
 				Action: action, Email: "member@example.com", Lang: "fr",
 			})
 			require.ErrorIs(t, err, testCase.expectErr)
+
+			if testCase.expectErr == nil {
+				expect := testCase.expect
+				if expect == nil {
+					expect = &dao.WaitlistResult{}
+				}
+
+				require.Equal(t, expect, result)
+			} else {
+				require.Nil(t, result)
+			}
 
 			if testCase.expectErr != nil {
 				require.EqualError(t, err, testCase.expectErr.Error(), "Google details must stay out of errors and traces")
@@ -168,7 +194,7 @@ func TestGoogleWaitlist(t *testing.T) {
 			return nil, request.Context().Err()
 		}))
 		require.NoError(t, err)
-		err = writer.Exec(ctx, &dao.WaitlistRequest{Action: "join"})
+		_, err = writer.Exec(ctx, &dao.WaitlistRequest{Action: "join"})
 		require.ErrorIs(t, err, dao.ErrWaitlistUnavailable)
 	})
 }

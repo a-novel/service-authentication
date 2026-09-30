@@ -39,7 +39,7 @@ type CredentialsCreateDao interface {
 
 // CredentialsCreateWaitlist removes registered addresses after the account transaction commits.
 type CredentialsCreateWaitlist interface {
-	Exec(ctx context.Context, request *dao.WaitlistRequest) error
+	Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)
 }
 
 // CredentialsCreateServiceShortCodeConsume validates and consumes registration short codes.
@@ -96,6 +96,8 @@ func NewCredentialsCreate(
 // token pair. The password is hashed with Argon2id before storage. If the short
 // code is invalid or the credentials cannot be inserted (for example because the
 // email is already taken), the transaction is rolled back and no user is created.
+// After commit, bounded waitlist cleanup runs independently of client cancellation.
+// Cleanup failures are traced and leave the account usable; maintenance can reconcile stale rows.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsCreate")
 	defer span.End()
@@ -149,11 +151,10 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	// The account is committed. Google cannot roll it back, and a failed cleanup must not prevent login.
-	// Keep cleanup bounded but independent of a client disconnect after the database commit.
+	// Preserve the committed account even when Google is unavailable or the client has disconnected.
 	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), waitlistCleanupTimeout)
-	cleanupErr := service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{
-		Action: "remove", Email: request.Email,
+	_, cleanupErr := service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{
+		Action: dao.WaitlistActionRemove, Email: request.Email,
 	})
 
 	cancel()

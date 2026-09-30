@@ -85,6 +85,24 @@ func TestCredentialsList(t *testing.T) {
 			request:  &dao.CredentialsListRequest{Roles: []string{"auth:user"}},
 			expect:   []*dao.Credentials{cred1, cred3}, // admin cred2 excluded
 		},
+		{
+			name:     "Success/ExactEmails",
+			fixtures: []*dao.Credentials{cred1, cred2, cred3},
+			request:  &dao.CredentialsListRequest{Emails: []string{cred1.Email, "User2@email.com", "missing@email.com"}},
+			expect:   []*dao.Credentials{cred1},
+		},
+		{
+			name:     "Success/EmailsAndRoles",
+			fixtures: []*dao.Credentials{cred1, cred2, cred3},
+			request:  &dao.CredentialsListRequest{Emails: []string{cred1.Email, cred2.Email}, Roles: []string{"auth:admin"}},
+			expect:   []*dao.Credentials{cred2},
+		},
+		{
+			name:     "Success/NoMatchingEmails",
+			fixtures: []*dao.Credentials{cred1},
+			request:  &dao.CredentialsListRequest{Emails: []string{"missing@email.com"}},
+			expect:   []*dao.Credentials{},
+		},
 	}
 
 	listDAO := dao.NewCredentialsList()

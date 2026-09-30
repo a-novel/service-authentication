@@ -30,6 +30,10 @@ func TestWaitlist(t *testing.T) {
 		{name: "WeakSecret", url: validURL, secret: "short", timeout: time.Second},
 		{name: "Unbounded", url: validURL, secret: strings.Repeat("a", 32)},
 		{name: "ExcessiveTimeout", url: validURL, secret: strings.Repeat("a", 32), timeout: time.Minute},
+		{name: "MaximumTimeout", url: validURL, secret: strings.Repeat("a", 32), timeout: 20 * time.Second, valid: true},
+		{name: "ShortSecretBoundary", url: validURL, secret: strings.Repeat("a", 31), timeout: time.Second},
+		{name: "MalformedURL", url: ":%", secret: strings.Repeat("a", 32), timeout: time.Second},
+		{name: "Fragment", url: validURL + "#fragment", secret: strings.Repeat("a", 32), timeout: time.Second},
 		{
 			name: "HTTP", url: "http://script.google.com/macros/s/test/exec",
 			secret: strings.Repeat("a", 32), timeout: time.Second,

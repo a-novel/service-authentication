@@ -36,6 +36,13 @@ import (
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
+const (
+	// waitlistMaxConcurrent keeps optional Google calls from exhausting REST capacity.
+	waitlistMaxConcurrent = 4
+	// waitlistMaxRequestSize allows the bounded email/language payload with JSON escaping overhead.
+	waitlistMaxRequestSize = 8 << 10
+)
+
 func main() {
 	cfg := config.AppPresetDefault
 
@@ -132,6 +139,7 @@ func main() {
 		daoCredentialsInsert, serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist,
 	)
 	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
+	serviceWaitlistJoin := core.NewWaitlistJoin(daoCredentialsExist, daoWaitlist)
 	serviceCredentialsGet := core.NewCredentialsGet(daoCredentialsSelect)
 	serviceCredentialsList := core.NewCredentialsList(daoCredentialsList)
 	serviceCredentialsUpdateEmail := core.NewCredentialsUpdateEmail(
@@ -171,6 +179,7 @@ func main() {
 
 	handlerCredentialsCreate := handlers.NewCredentialsCreate(serviceCredentialsCreate, cfg.Logger)
 	handlerCredentialsExist := handlers.NewCredentialsExist(serviceCredentialsExist, cfg.Logger)
+	handlerWaitlistJoin := handlers.NewRESTWaitlistJoin(serviceWaitlistJoin, cfg.Logger)
 	handlerCredentialsGet := handlers.NewCredentialsGet(serviceCredentialsGet, cfg.Logger)
 	handlerCredentialsList := handlers.NewCredentialsList(serviceCredentialsList, cfg.Logger)
 	handlerCredentialsResetPassword := handlers.NewCredentialsResetPassword(
@@ -211,34 +220,14 @@ func main() {
 	// ROUTER
 	// =================================================================================================================
 
-	router := chi.NewRouter()
-
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.ClientIPFromRemoteAddr)
-	router.Use(middleware.Timeout(cfg.Rest.Timeouts.Request))
-	router.Use(middleware.RequestSize(cfg.Rest.MaxRequestSize))
-	router.Use(cfg.Otel.HttpHandler())
-	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   cfg.Rest.Cors.AllowedOrigins,
-		AllowedHeaders:   cfg.Rest.Cors.AllowedHeaders,
-		AllowCredentials: cfg.Rest.Cors.AllowCredentials,
-		AllowedMethods: []string{
-			http.MethodHead,
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodPut,
-			http.MethodPatch,
-			http.MethodDelete,
-		},
-		MaxAge: cfg.Rest.Cors.MaxAge,
-	}))
-	router.Use(cfg.HttpLogger.Logger())
+	router := newRouter(cfg)
 
 	router.Route("/v2", func(api chi.Router) {
 		api.Get("/ping", handlerPing.ServeHTTP)
 		api.Get("/healthcheck", handlerHealth.ServeHTTP)
 
-		mountWaitlist(api, withAuth, daoWaitlist, cfg)
+		withAuth(api.With(middleware.Throttle(waitlistMaxConcurrent), middleware.RequestSize(waitlistMaxRequestSize)),
+			"waitlist:join").Put("/waitlist", handlerWaitlistJoin.ServeHTTP)
 
 		api.Route("/session", func(r chi.Router) {
 			r.Put("/", handlerTokenCreate.ServeHTTP)
@@ -292,6 +281,29 @@ func main() {
 		cfg.Rest.Timeouts.Shutdown,
 		mailDelivery,
 	))
+}
+
+// newRouter applies the common middleware; main mounts every route on the returned router.
+func newRouter(cfg config.App) *chi.Mux {
+	router := chi.NewRouter()
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.ClientIPFromRemoteAddr)
+	router.Use(middleware.Timeout(cfg.Rest.Timeouts.Request))
+	router.Use(middleware.RequestSize(cfg.Rest.MaxRequestSize))
+	router.Use(cfg.Otel.HttpHandler())
+	router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   cfg.Rest.Cors.AllowedOrigins,
+		AllowedHeaders:   cfg.Rest.Cors.AllowedHeaders,
+		AllowCredentials: cfg.Rest.Cors.AllowCredentials,
+		AllowedMethods: []string{
+			http.MethodHead, http.MethodGet, http.MethodPost,
+			http.MethodPut, http.MethodPatch, http.MethodDelete,
+		},
+		MaxAge: cfg.Rest.Cors.MaxAge,
+	}))
+	router.Use(cfg.HttpLogger.Logger())
+
+	return router
 }
 
 // serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.

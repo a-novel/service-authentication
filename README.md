@@ -181,10 +181,11 @@ Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter
 
 Public signup can collect invitation requests while account creation remains invitation-only.
 `PUT /v2/waitlist` requires an anonymous or authenticated session and stores no account or short code.
-Existing accounts are acknowledged without sending mail or adding a row; successful account creation
-removes the address from the list. Admin invitations remain unchanged.
+Existing accounts and repeated requests receive distinct conflict warnings without sending mail or
+adding a row; successful account creation removes the address from the list. Admin invitations remain unchanged.
 
-The integration is disabled until both settings are supplied to the REST server:
+The integration is disabled until both settings are supplied to the REST server. Maintenance jobs
+that access the list use the same configuration:
 
 | Name               | Purpose                                                                  | Default  |
 | ------------------ | ------------------------------------------------------------------------ | -------- |
@@ -194,7 +195,8 @@ The integration is disabled until both settings are supplied to the REST server:
 
 Follow the [private-sheet setup and operations guide](./docs/waitlist.md). CI needs no production
 Google credentials. A Google outage does not block login or invalidate a newly created account;
-cleanup is best-effort after the database commit.
+cleanup is best-effort after the database commit. `maintenance waitlist-cleanup` previews stale rows;
+add `--apply` to remove rows belonging to registered accounts after an outage or before inviting.
 
 ### Shutting down cleanly
 

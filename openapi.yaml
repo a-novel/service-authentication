@@ -359,8 +359,9 @@ paths:
         Anonymous sessions have this permission. This sends no email, creates no account,
         and does not grant permission to register. Super-admin invitations remain separate.
 
-        New entries, duplicate requests, and already-registered addresses receive an empty 202.
-        Existing accounts do not create rows. Email comparison matches the account store exactly;
+        New entries receive an empty 202. A 409 distinguishes existing accounts from duplicate requests.
+        These warnings intentionally reveal membership to the caller. Existing accounts do not create rows.
+        Email comparison matches the account store exactly;
         case and provider-specific aliases are not normalized.
       tags: [waitlist]
       security:
@@ -369,13 +370,15 @@ paths:
         $ref: "#/components/requestBodies/waitlistJoin"
       responses:
         "202":
-          description: Acknowledged without disclosing account or invitation-list membership.
+          description: The invitation request was recorded.
         "400":
           $ref: "#/components/responses/badRequest"
         "401":
           $ref: "#/components/responses/unauthorized"
         "403":
           $ref: "#/components/responses/forbidden"
+        "409":
+          $ref: "#/components/responses/waitlistConflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
         "429":
@@ -474,6 +477,12 @@ paths:
 
 components:
   responses:
+    waitlistConflict:
+      description: The address is registered or already has an invitation request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/waitlistConflict"
     pong:
       description: The server is up and running.
       content:
@@ -583,6 +592,17 @@ components:
       description: I'm a teapot!
 
   schemas:
+    waitlistConflict:
+      type: object
+      description: A stable warning for the invitation form; no input or internal details are returned.
+      required: [code]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          description: Whether an account or a pending invitation request already exists.
+          enum: [account_exists, already_waitlisted]
+          examples: [account_exists, already_waitlisted]
     healthStatus:
       type: object
       description: |

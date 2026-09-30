@@ -25,8 +25,14 @@ func TestRESTWaitlistJoin(t *testing.T) {
 		err    error
 		status int
 		retry  string
+		code   string
 	}{
 		{name: "Accepted", status: http.StatusAccepted},
+		{name: "ExistingAccount", err: core.ErrWaitlistAccountExists, status: http.StatusConflict, code: "account_exists"},
+		{
+			name: "AlreadyWaitlisted", err: core.ErrWaitlistAlreadyJoined,
+			status: http.StatusConflict, code: "already_waitlisted",
+		},
 		{name: "MalformedJSON", body: "{", status: http.StatusBadRequest},
 		{name: "InvalidRequest", err: core.ErrInvalidRequest, status: http.StatusUnprocessableEntity},
 		{name: "Busy", err: core.ErrWaitlistBusy, status: http.StatusTooManyRequests, retry: "60"},
@@ -55,6 +61,11 @@ func TestRESTWaitlistJoin(t *testing.T) {
 
 			if testCase.status == http.StatusAccepted {
 				require.Empty(t, response.Body.String())
+			}
+
+			if testCase.code != "" {
+				require.Equal(t, "application/json", response.Header().Get("Content-Type"))
+				require.JSONEq(t, `{"code":"`+testCase.code+`"}`, response.Body.String())
 			}
 
 			service.AssertExpectations(t)

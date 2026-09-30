@@ -23,4 +23,6 @@ var (
 	ErrWaitlistUnavailable = dao.ErrWaitlistUnavailable
 	// ErrWaitlistBusy is returned when the invitation list cannot admit more work.
 	ErrWaitlistBusy = dao.ErrWaitlistBusy
+	// ErrWaitlistAlreadyJoined is returned when an invitation request already exists for the email.
+	ErrWaitlistAlreadyJoined = dao.ErrWaitlistAlreadyJoined
 )
