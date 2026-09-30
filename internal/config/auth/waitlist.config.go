@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -33,27 +34,34 @@ type Waitlist struct {
 }
 
 // Validate rejects partial configuration, non-Google endpoints, and unbounded requests.
+// Failures wrap [ErrWaitlistConfig] with the required setting, without exposing configuration values.
 func (cfg Waitlist) Validate() error {
 	if cfg.URL == "" && cfg.Secret == "" {
 		return nil
 	}
 
+	if cfg.URL == "" || cfg.Secret == "" {
+		return fmt.Errorf("waitlist URL and secret must both be set or both be empty: %w", ErrWaitlistConfig)
+	}
+
 	endpoint, err := url.Parse(cfg.URL)
 	if err != nil {
-		return ErrWaitlistConfig
+		// Parse errors include the raw URL, which may contain accidentally embedded credentials.
+		return fmt.Errorf("waitlist URL cannot be parsed: %w", ErrWaitlistConfig)
 	}
 
 	switch {
 	case endpoint.Scheme != "https", endpoint.Host != "script.google.com":
-		return ErrWaitlistConfig
+		return fmt.Errorf("waitlist URL must use https://script.google.com: %w", ErrWaitlistConfig)
 	case endpoint.User != nil, endpoint.RawQuery != "", endpoint.Fragment != "":
-		return ErrWaitlistConfig
+		return fmt.Errorf("waitlist URL must not contain credentials, a query, or a fragment: %w", ErrWaitlistConfig)
 	case !strings.HasPrefix(endpoint.Path, "/macros/s/"), !strings.HasSuffix(endpoint.Path, "/exec"):
-		return ErrWaitlistConfig
+		return fmt.Errorf("waitlist URL must use /macros/s/<deployment>/exec: %w", ErrWaitlistConfig)
 	case len(cfg.Secret) < waitlistMinSecretLength:
-		return ErrWaitlistConfig
+		return fmt.Errorf("waitlist secret must contain at least %d bytes: %w", waitlistMinSecretLength, ErrWaitlistConfig)
 	case cfg.Timeout <= 0, cfg.Timeout > waitlistMaxTimeout:
-		return ErrWaitlistConfig
+		return fmt.Errorf("waitlist timeout must be greater than zero and at most %s: %w",
+			waitlistMaxTimeout, ErrWaitlistConfig)
 	}
 
 	return nil
