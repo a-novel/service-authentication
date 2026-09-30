@@ -3,7 +3,7 @@ FROM docker.io/library/golang:1.27.1-alpine AS packages
 ENV CGO_ENABLED=0
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GOBIN=/usr/local/bin go install -trimpath -ldflags="-s -w" chainguard.dev/apko@v1.4.5
+    GOBIN=/usr/local/bin go install -trimpath -ldflags="-s -w" chainguard.dev/apko@v1.4.6
 COPY ./builds/database.apko.yaml /database.yaml
 RUN apko build-minirootfs /database.yaml /runtime.tar \
     && apko build-minirootfs /database.yaml /builder.tar \
