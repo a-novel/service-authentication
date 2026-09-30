@@ -3,6 +3,8 @@ package core_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -28,12 +30,21 @@ func TestWaitlistCleanup(t *testing.T) {
 		removed   int
 	}
 
+	fullPages := make([]page, authconfig.WaitlistMaxEntries/authconfig.WaitlistBatchSize)
+	for i := range fullPages {
+		fullPages[i].emails = make([]string, authconfig.WaitlistBatchSize)
+		for j := range fullPages[i].emails {
+			fullPages[i].emails[j] = fmt.Sprintf("%05d@example.com", i*authconfig.WaitlistBatchSize+j)
+		}
+	}
+
 	testCases := []struct {
-		name      string
-		apply     bool
-		pages     []page
-		expect    core.WaitlistCleanupResult
-		expectErr error
+		name          string
+		apply         bool
+		pages         []page
+		expect        core.WaitlistCleanupResult
+		expectErr     error
+		expectMessage string
 	}{
 		{name: "Empty", pages: []page{{}}},
 		{
@@ -67,10 +78,20 @@ func TestWaitlistCleanup(t *testing.T) {
 		{
 			name: "RepeatedCursor", pages: []page{{emails: []string{"a@example.com"}}, {emails: []string{"a@example.com"}}},
 			expect: core.WaitlistCleanupResult{Scanned: 1}, expectErr: core.ErrWaitlistUnavailable,
+			expectMessage: "cursor did not advance; check the Apps Script list operation",
 		},
 		{
 			name: "OversizedPage", pages: []page{{emails: make([]string, authconfig.WaitlistBatchSize+1)}},
-			expectErr: core.ErrWaitlistUnavailable,
+			expectErr: core.ErrWaitlistUnavailable, expectMessage: "page contains 101 entries; limit is 100",
+		},
+		{
+			name: "ScanLimitReached", pages: append(slices.Clone(fullPages), page{}),
+			expect: core.WaitlistCleanupResult{Scanned: authconfig.WaitlistMaxEntries},
+		},
+		{
+			name: "ScanLimitExceeded", pages: append(slices.Clone(fullPages), page{emails: []string{"overflow@example.com"}}),
+			expect: core.WaitlistCleanupResult{Scanned: authconfig.WaitlistMaxEntries}, expectErr: core.ErrWaitlistUnavailable,
+			expectMessage: "cleanup would scan 10001 entries; limit is 10000",
 		},
 	}
 	for _, testCase := range testCases {
@@ -82,10 +103,13 @@ func TestWaitlistCleanup(t *testing.T) {
 			var calls []*mock.Call
 
 			after := ""
+			scanned := 0
+
 			for _, page := range testCase.pages {
 				calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "list", After: after}).
 					Return(&dao.WaitlistResult{Emails: page.emails}, page.listErr).Once())
-				if page.listErr != nil || len(page.emails) == 0 || len(page.emails) > authconfig.WaitlistBatchSize {
+				if page.listErr != nil || len(page.emails) == 0 || len(page.emails) > authconfig.WaitlistBatchSize ||
+					scanned+len(page.emails) > authconfig.WaitlistMaxEntries {
 					break
 				}
 
@@ -108,6 +132,7 @@ func TestWaitlistCleanup(t *testing.T) {
 				}
 
 				after = next
+				scanned += len(page.emails)
 			}
 
 			mock.InOrder(calls...)
@@ -116,6 +141,12 @@ func TestWaitlistCleanup(t *testing.T) {
 				Apply: testCase.apply,
 			})
 			require.ErrorIs(t, err, testCase.expectErr)
+
+			if testCase.expectMessage != "" {
+				require.ErrorContains(t, err, testCase.expectMessage)
+				require.NotContains(t, err.Error(), "@example.com")
+			}
+
 			require.Equal(t, &testCase.expect, result)
 			credentials.AssertExpectations(t)
 			writer.AssertExpectations(t)

@@ -68,14 +68,22 @@ func (service *WaitlistCleanup) Exec(
 			return otel.ReportSuccess(span, result), nil
 		}
 
-		if len(page.Emails) > authconfig.WaitlistBatchSize ||
-			result.Scanned+len(page.Emails) > authconfig.WaitlistMaxEntries {
-			return result, otel.ReportError(span, ErrWaitlistUnavailable)
+		// Enforce the shared limits here as well as in the independently deployed Apps Script.
+		if len(page.Emails) > authconfig.WaitlistBatchSize {
+			return result, otel.ReportError(span, fmt.Errorf("waitlist page contains %d entries; limit is %d: %w",
+				len(page.Emails), authconfig.WaitlistBatchSize, ErrWaitlistUnavailable))
+		}
+
+		if result.Scanned+len(page.Emails) > authconfig.WaitlistMaxEntries {
+			return result, otel.ReportError(span, fmt.Errorf("waitlist cleanup would scan %d entries; limit is %d: %w",
+				result.Scanned+len(page.Emails), authconfig.WaitlistMaxEntries, ErrWaitlistUnavailable))
 		}
 
 		next := page.Emails[len(page.Emails)-1]
 		if next == after {
-			return result, otel.ReportError(span, ErrWaitlistUnavailable)
+			// Stop a stalled writer before processing the same page twice. Cursors contain private emails.
+			return result, otel.ReportError(span, fmt.Errorf(
+				"waitlist cleanup cursor did not advance; check the Apps Script list operation: %w", ErrWaitlistUnavailable))
 		}
 
 		accounts, err := service.credentials.Exec(ctx, &dao.CredentialsListRequest{
@@ -88,6 +96,7 @@ func (service *WaitlistCleanup) Exec(
 		result.Scanned += len(page.Emails)
 		result.Matched += len(accounts)
 
+		// PostgreSQL decides which rows are stale; pending invitations remain in the sheet.
 		if request.Apply && len(accounts) > 0 {
 			emails := make([]string, len(accounts))
 			for i, account := range accounts {
@@ -104,6 +113,7 @@ func (service *WaitlistCleanup) Exec(
 			result.Removed += removed.Removed
 		}
 
+		// Email cursors remain stable when deletion shifts the sheet's row numbers.
 		after = next
 	}
 }
