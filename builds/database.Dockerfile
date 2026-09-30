@@ -12,8 +12,8 @@ RUN apko build-minirootfs /database.yaml /runtime.tar \
     && tar -xf /runtime.tar -C /runtime --exclude=dev \
     && tar -xf /builder.tar -C /builder --exclude=dev
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-ARG PGBACKREST_VERSION=2.59.1
-ARG PGBACKREST_SHA256=1cd522afc33b8ff846ef88c55dc238717c9c8817a4f6ca7c9f64887de9c7402d
+ARG PGBACKREST_VERSION=2.59.2
+ARG PGBACKREST_SHA256=dbdc5edb5161c57bd3ae61e416b1cd763205ad6ce41d9356114432a0cc0ce577
 RUN wget -q -O /pgbackrest.tar.gz "https://github.com/pgbackrest/pgbackrest/releases/download/release/${PGBACKREST_VERSION}/pgbackrest-${PGBACKREST_VERSION}.tar.gz" \
     && echo "${PGBACKREST_SHA256}  /pgbackrest.tar.gz" | sha256sum -c -
 
