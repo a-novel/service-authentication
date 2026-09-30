@@ -7,10 +7,10 @@ contents:
     - wolfi-baselayout
     - busybox
     - ca-certificates-bundle
-    - postgresql-18=18.6-r3
-    - postgresql-18-client=18.6-r3
-    - postgresql-18-contrib=18.6-r3
-    - postgresql-18-oci-entrypoint-base=18.6-r3
+    - postgresql-18=18.6-r4
+    - postgresql-18-client=18.6-r4
+    - postgresql-18-contrib=18.6-r4
+    - postgresql-18-oci-entrypoint-base=18.6-r4
     - gosu=1.19-r17
     - glibc-locale-en
     - libxml2-16=2.15.4-r0
