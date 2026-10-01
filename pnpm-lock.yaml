@@ -326,7 +326,7 @@ importers:
         version: 30.1.1(@noble/hashes@1.8.0)
       mailparser:
         specifier: ^3.9.0
-        version: 3.9.28
+        version: 3.9.29
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -377,7 +377,7 @@ importers:
         version: 27.4.0(@noble/hashes@1.8.0)(supports-color@7.2.0)
       mailparser:
         specifier: ^3.9.0
-        version: 3.9.28
+        version: 3.9.29
       mjml:
         specifier: 5.0.0
         version: 5.0.0(svgo@4.0.2)(typescript@5.9.3)
@@ -3243,8 +3243,8 @@ packages:
   magicast@0.5.4:
     resolution: {integrity: sha512-llBEhWm1SacoRwgHUoQJYtwp4PBLF4faQi5TCpIGyGs9n4y5+juI0tDgyKIfpqxckRHaHzouUEph3THklWh03w==}
 
-  mailparser@3.9.28:
-    resolution: {integrity: sha512-O7oCYzWW9YH5lHk/y3Z8R8dFnUq8wqaH146BuU2NDt/3MGjdfMLzGF2Ft7WksTCeq00covNKpwxQabcG3zJFqQ==}
+  mailparser@3.9.29:
+    resolution: {integrity: sha512-lOiYwyF7SyjZn+OloNgbWSU7QwRRvhOPZxhPOnJEfhRUt4QcbmSZymzPhqYkktRpXS1l9kCz8bLSOfyeiDsZlQ==}
     engines: {node: '>=20.0.0'}
 
   make-dir@4.0.0:
@@ -3518,10 +3518,6 @@ packages:
   node-sql-parser@5.4.0:
     resolution: {integrity: sha512-jVe6Z61gPcPjCElPZ6j8llB3wnqGcuQzefim1ERsqIakxnEy5JlzV7XKdO1KmacRG5TKwPc4vJTgSRQ0LfkbFw==}
     engines: {node: '>=8'}
-
-  nodemailer@10.0.10:
-    resolution: {integrity: sha512-He9XskOFms62SyAKkLu8CcGcYHAo+BSHSsORI8s4PJH8qZgZY4L4lDfvyN0twvmbpyG+eGrxpyBlskj9d9rJ8A==}
-    engines: {node: '>=20.0.0'}
 
   nodemailer@10.0.11:
     resolution: {integrity: sha512-/c4P7U7aGpiNu2Rl08q525q2zECkUpSaf2zQPgIStCcAjHAkkQQKwD4sTyi3l91mGcLQrKzL1syXPHymo+Ogtw==}
@@ -7395,7 +7391,7 @@ snapshots:
       '@babel/types': 7.29.8
       source-map-js: 1.2.1
 
-  mailparser@3.9.28:
+  mailparser@3.9.29:
     dependencies:
       '@zone-eu/mailsplit': 5.4.17
       encoding-japanese: 2.4.0
@@ -7404,7 +7400,7 @@ snapshots:
       iconv-lite: 0.7.3
       libmime: 5.4.4
       linkify-it: 5.0.2
-      nodemailer: 10.0.10
+      nodemailer: 10.0.11
       punycode.js: 2.3.1
       tlds: 1.261.0
 
@@ -8451,8 +8447,6 @@ snapshots:
     dependencies:
       '@types/pegjs': 0.10.6
       big-integer: 1.6.52
-
-  nodemailer@10.0.10: {}
 
   nodemailer@10.0.11: {}
 
