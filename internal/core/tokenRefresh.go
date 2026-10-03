@@ -189,8 +189,8 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	return otel.ReportSuccess(span, &Token{
+	return &Token{
 		AccessToken:  newAccessToken.GetToken(),
 		RefreshToken: request.RefreshToken, // Refresh token does not change.
-	}), nil
+	}, nil
 }

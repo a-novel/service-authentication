@@ -126,8 +126,6 @@ func (handler *RestHealth) reportPostgres(ctx context.Context) error {
 		return otel.ReportError(span, err)
 	}
 
-	otel.ReportSuccessNoContent(span)
-
 	return nil
 }
 
@@ -146,8 +144,6 @@ func (handler *RestHealth) reportJsonKeys(ctx context.Context) error {
 		return otel.ReportError(span, errJsonKeysUnhealthy)
 	}
 
-	otel.ReportSuccessNoContent(span)
-
 	return nil
 }
 
@@ -164,8 +160,6 @@ func (handler *RestHealth) reportSmtp(ctx context.Context) error {
 		// Do not wrap the original error: tracing must not export SMTP reply text.
 		return otel.ReportError(span, errSmtpUnhealthy)
 	}
-
-	otel.ReportSuccessNoContent(span)
 
 	return nil
 }

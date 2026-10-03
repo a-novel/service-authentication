@@ -75,5 +75,5 @@ func (dao *CredentialsList) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
-	return otel.ReportSuccess(span, entities), nil
+	return entities, nil
 }

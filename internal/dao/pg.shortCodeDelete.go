@@ -55,11 +55,7 @@ func (dao *ShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDeleteRe
 	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeDelete")
 	defer span.End()
 
-	span.SetAttributes(
-		attribute.String("shortCode.id", request.ID.String()),
-		attribute.Int64("shortCode.now", request.Now.Unix()),
-		attribute.String("shortCode.comment", request.Comment),
-	)
+	span.SetAttributes(attribute.String("shortCode.comment", request.Comment))
 
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
@@ -77,5 +73,5 @@ func (dao *ShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDeleteRe
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
-	return otel.ReportSuccess(span, entity), nil
+	return entity, nil
 }

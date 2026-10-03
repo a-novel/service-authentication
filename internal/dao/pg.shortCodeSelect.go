@@ -47,8 +47,8 @@ func (dao *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRe
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("data", request.Target),
-		attribute.String("usage", request.Usage),
+		attribute.String("shortCode.target", request.Target),
+		attribute.String("shortCode.usage", request.Usage),
 	)
 
 	tx, err := postgres.GetContext(ctx)
@@ -67,5 +67,5 @@ func (dao *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRe
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
-	return otel.ReportSuccess(span, entity), nil
+	return entity, nil
 }

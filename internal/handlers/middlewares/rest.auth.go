@@ -79,7 +79,6 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 			token := r.Header.Get("Authorization")
 			// Optional-auth endpoint: pass through with no claims on the context.
 			if token == "" && len(requiredPermissions) == 0 {
-				otel.ReportSuccessNoContent(span)
 				next.ServeHTTP(w, r.WithContext(ctx))
 
 				return
@@ -181,7 +180,6 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 			}
 
 			next.ServeHTTP(w, r.WithContext(ctx))
-			otel.ReportSuccessNoContent(span)
 		})
 	}
 }
@@ -212,12 +210,12 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 
 	claims, ok := raw.(*core.AccessTokenClaims)
 	if !ok {
-		return nil, fmt.Errorf(
+		return nil, otel.ReportError(span, fmt.Errorf(
 			"%w: got type %T, expected %T",
 			ErrUnexpectedClaims,
 			raw,
 			&core.AccessTokenClaims{},
-		)
+		))
 	}
 
 	return claims, nil
@@ -232,11 +230,11 @@ func MustGetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) 
 
 	claims, err := GetClaimsContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, otel.ReportError(span, err)
 	}
 
 	if claims == nil {
-		return nil, ErrMissingAuth
+		return nil, otel.ReportError(span, ErrMissingAuth)
 	}
 
 	return claims, nil

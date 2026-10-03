@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
 )
@@ -42,8 +40,6 @@ func (dao *CredentialsSelectByEmail) Exec(
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsSelectByEmail")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("email", request.Email))
-
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -60,5 +56,5 @@ func (dao *CredentialsSelectByEmail) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
-	return otel.ReportSuccess(span, entity), nil
+	return entity, nil
 }

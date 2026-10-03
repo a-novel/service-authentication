@@ -121,7 +121,7 @@ func (writer *GoogleWaitlist) Exec(ctx context.Context, request *WaitlistRequest
 
 	if writer.config.URL == "" {
 		if request.Action == WaitlistActionRemove {
-			return otel.ReportSuccess(span, &WaitlistResult{}), nil
+			return &WaitlistResult{}, nil
 		}
 
 		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
@@ -165,7 +165,7 @@ func (writer *GoogleWaitlist) Exec(ctx context.Context, request *WaitlistRequest
 
 	switch result.Status {
 	case "accepted":
-		return otel.ReportSuccess(span, &result.WaitlistResult), nil
+		return &result.WaitlistResult, nil
 	case "already_waitlisted":
 		return nil, otel.ReportError(span, ErrWaitlistAlreadyJoined)
 	case "busy":
