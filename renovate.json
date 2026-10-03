@@ -1,4 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>a-novel-kit/workflows//renovate/service#v1.38.2"]
+  "extends": ["github>a-novel-kit/workflows//renovate/service#v1.38.3"]
 }
