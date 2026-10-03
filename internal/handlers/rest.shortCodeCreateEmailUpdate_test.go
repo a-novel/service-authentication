@@ -93,6 +93,28 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			expectStatus: http.StatusAccepted,
 		},
 		{
+			name: "Error/MailDeliveryUnavailable",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
+				"email": "new_user@provider.com",
+				"lang": "fr"
+			}`)),
+			claims: &core.AccessTokenClaims{
+				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			},
+
+			serviceMock: &serviceMock{
+				req: &core.ShortCodeCreateEmailUpdateRequest{
+					Email: "new_user@provider.com",
+					Lang:  "fr",
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
+				err: errors.Join(errFoo, core.ErrMailDeliveryUnavailable),
+			},
+
+			expectStatus: http.StatusServiceUnavailable,
+		},
+		{
 			name: "Error/Internal",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{

@@ -436,6 +436,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/mailDeliveryUnavailable"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -467,6 +469,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/mailDeliveryUnavailable"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -496,6 +500,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/mailDeliveryUnavailable"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -613,6 +619,9 @@ components:
     conflict:
       description: |
         The record already exists.
+
+    mailDeliveryUnavailable:
+      description: The server is not accepting email deliveries, for instance while it shuts down. Retry later.
 
     internalError:
       description: Something unexpected happened.
