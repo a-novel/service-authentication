@@ -83,6 +83,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/claimsGet"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         default:
@@ -168,6 +170,8 @@ paths:
           description: The email is used by a registered user.
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "404":
@@ -191,6 +195,8 @@ paths:
           $ref: "#/components/responses/credentialsGet"
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "404":
@@ -215,6 +221,8 @@ paths:
           $ref: "#/components/responses/tokenCreate"
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "409":
@@ -242,6 +250,8 @@ paths:
           $ref: "#/components/responses/credentialsList"
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "422":
@@ -266,6 +276,8 @@ paths:
           $ref: "#/components/responses/credentialsGet"
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "404":
@@ -293,6 +305,8 @@ paths:
           $ref: "#/components/responses/credentialsGet"
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "404":
@@ -317,6 +331,8 @@ paths:
           $ref: "#/components/responses/credentialsGet"
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "422":
@@ -341,6 +357,8 @@ paths:
           $ref: "#/components/responses/credentialsGet"
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "404":
@@ -374,7 +392,7 @@ paths:
         "400":
           $ref: "#/components/responses/badRequest"
         "401":
-          $ref: "#/components/responses/unauthorized"
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "409":
@@ -412,6 +430,8 @@ paths:
             The request was accepted. If the email is not already registered, a registration link will be sent.
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "422":
@@ -441,6 +461,8 @@ paths:
             have accounts. No email is sent when the address is already registered.
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "422":
@@ -468,6 +490,8 @@ paths:
             The request was accepted. If the email is registered, a password reset link will be sent.
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "422":
@@ -562,6 +586,11 @@ components:
       description: |
         The provided credentials are invalid. For security reasons, this response does not indicate
         whether the email exists or the password is incorrect.
+
+    invalidToken:
+      description: |
+        The bearer token is invalid, for instance expired, or missing where the route requires a permission.
+        Refresh the session or authenticate again.
 
     forbidden:
       description: |
