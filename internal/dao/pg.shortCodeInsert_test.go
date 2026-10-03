@@ -401,12 +401,16 @@ func TestShortCodeInsertConcurrentOverride(t *testing.T) {
 			require.GreaterOrEqualf(t, successes, 1, "round %d: at least one override must succeed", round)
 
 			// The invariant the unique index protects: exactly one active row remains.
-			activeCount, err := db.NewSelect().
+			// Scanned into an int rather than read from Count, whose return type changed in bun v1.3.0.
+			var activeCount int
+
+			err := db.NewSelect().
 				Model((*dao.ShortCode)(nil)).
+				ColumnExpr("count(*)").
 				Where("target = ?", "test-target").
 				Where("usage = ?", "test-usage").
 				Where("deleted_at IS NULL").
-				Count(ctx)
+				Scan(ctx, &activeCount)
 			require.NoError(t, err)
 			require.Equalf(t, 1, activeCount, "round %d: exactly one active short code must remain", round)
 		}
