@@ -14,8 +14,8 @@ require (
 	github.com/gorilla/schema v1.4.1
 	github.com/samber/lo v1.53.0
 	github.com/stretchr/testify v1.12.1
-	github.com/uptrace/bun v1.2.18
-	github.com/uptrace/bun/driver/pgdriver v1.2.18
+	github.com/uptrace/bun v1.3.0
+	github.com/uptrace/bun/driver/pgdriver v1.3.0
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/sdk v1.47.0
 	golang.org/x/crypto v0.57.0
