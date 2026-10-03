@@ -267,7 +267,6 @@ jobs:
         with:
           file: builds/database.Dockerfile
           image_name: ${{ github.repository }}/database
-          cache: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_PASSWORD=postgres
 
