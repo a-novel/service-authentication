@@ -14,6 +14,8 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/jwt/v2"
+	"github.com/a-novel-kit/jwt/v2/jwp"
 	"github.com/a-novel-kit/jwt/v2/jws"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
@@ -111,9 +113,20 @@ func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handl
 				AccessToken: accessToken,
 			})
 			if err != nil {
+				// A token rejection is the caller's to resolve, so it answers 401 and clients
+				// refresh or re-authenticate. Any other failure, such as an unreachable key
+				// source, stays 500 so a client keeps a session it may still hold.
 				httpf.HandleError(
 					ctx, middleware.logger, w, span,
-					httpf.ErrMap{jws.ErrInvalidSignature: http.StatusUnauthorized},
+					httpf.ErrMap{
+						jws.ErrInvalidSignature:        http.StatusUnauthorized,
+						jwp.ErrInvalidClaims:           http.StatusUnauthorized,
+						jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
+						jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
+						jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
+						jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
+						jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
+					},
 					err,
 				)
 

@@ -3,6 +3,7 @@ package middlewares_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
+	"github.com/a-novel-kit/jwt/v2"
+	"github.com/a-novel-kit/jwt/v2/jwp"
 	"github.com/a-novel-kit/jwt/v2/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
@@ -233,6 +236,58 @@ func TestAuth(t *testing.T) {
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
 				err:      jws.ErrInvalidSignature,
+			},
+
+			expectStatus: http.StatusUnauthorized,
+		},
+		{
+			// Clients refresh their session on a 401; a 500 here strands an expired one.
+			name: "Error/ExpiredToken",
+
+			authHeader: "Bearer token",
+
+			permissions: []string{"read", "write"},
+			permissionsByRole: map[string][]string{
+				"role1": {"read", "write"},
+				"role2": {"read"},
+			},
+			verifyClaimsMock: &verifyClaimsMock{
+				reqToken: "token",
+				err:      fmt.Errorf("(ClaimsChecker.Unmarshal) %w: token expired", jwp.ErrInvalidClaims),
+			},
+
+			expectStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Error/MalformedToken/Format",
+
+			authHeader: "Bearer token",
+
+			permissions: []string{"read", "write"},
+			permissionsByRole: map[string][]string{
+				"role1": {"read", "write"},
+				"role2": {"read"},
+			},
+			verifyClaimsMock: &verifyClaimsMock{
+				reqToken: "token",
+				err:      fmt.Errorf("(HeaderDecoder.Decode) %w: expected at least 2 segments", jwt.ErrUnsupportedTokenFormat),
+			},
+
+			expectStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Error/UnsupportedAlgorithm",
+
+			authHeader: "Bearer token",
+
+			permissions: []string{"read", "write"},
+			permissionsByRole: map[string][]string{
+				"role1": {"read", "write"},
+				"role2": {"read"},
+			},
+			verifyClaimsMock: &verifyClaimsMock{
+				reqToken: "token",
+				err:      fmt.Errorf("(Recipient.Consume) %w: no compatible plugin found", jwt.ErrMismatchRecipientPlugin),
 			},
 
 			expectStatus: http.StatusUnauthorized,
