@@ -83,6 +83,24 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			expectStatus: http.StatusAccepted,
 		},
 		{
+			name: "Error/MailDeliveryUnavailable",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
+				"email": "new_user@provider.com",
+				"lang": "fr"
+			}`)),
+
+			serviceMock: &serviceMock{
+				req: &core.ShortCodeCreatePasswordResetRequest{
+					Email: "new_user@provider.com",
+					Lang:  "fr",
+				},
+				err: errors.Join(errFoo, core.ErrMailDeliveryUnavailable),
+			},
+
+			expectStatus: http.StatusServiceUnavailable,
+		},
+		{
 			name: "Error/Internal",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{

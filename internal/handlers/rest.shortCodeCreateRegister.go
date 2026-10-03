@@ -53,7 +53,8 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 		// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
 		if !errors.Is(err, core.ErrCredentialsCreateAlreadyExists) {
 			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-				core.ErrInvalidRequest: http.StatusUnprocessableEntity,
+				core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
+				core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
 			}, err)
 
 			return
