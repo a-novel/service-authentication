@@ -243,7 +243,7 @@ func TestHealthTelemetry(t *testing.T) {
 			require.Len(t, ended, 4)
 
 			for _, span := range ended {
-				expected := codes.Ok
+				expected := codes.Unset
 				if failed && (span.Name() == "rest.Health" || span.Name() == "rest.Health(reportSmtp)") {
 					expected = codes.Error
 				}
