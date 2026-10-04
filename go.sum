@@ -6,8 +6,8 @@ cloud.google.com/go/auth/oauth2adapt v0.3.0 h1:FY8oSZpCYoUNv6QxVODuMjQz4IlSOVeiQ
 cloud.google.com/go/auth/oauth2adapt v0.3.0/go.mod h1:7+2uCm7++XFO+/lN06c2HXpDXb/NMNn2/UwyBPbTnkk=
 cloud.google.com/go/compute/metadata v0.10.0 h1:pyKMUQSwchgkIBBJGdILqQbs/BNJXqwSA7Ej6LAvvtY=
 cloud.google.com/go/compute/metadata v0.10.0/go.mod h1:rGFHRrIif570kSibjFTMbt6/4/tzgJWFGI/HVol4GIk=
-github.com/a-novel-kit/golib v0.38.0 h1:TnBeDT7qrKYelZk8Jg5kXndEJzItxcIwE3BhtlFWhQ8=
-github.com/a-novel-kit/golib v0.38.0/go.mod h1:cM98FXd0R/baPAGlgaUUsvzHtLpHmZBMEA6VvNLGsT0=
+github.com/a-novel-kit/golib v0.39.0 h1:AS/lhbg3t+TSi0dNyttFYE6pqe1IEgvCJHhHV0dIbaQ=
+github.com/a-novel-kit/golib v0.39.0/go.mod h1:vAcO19BnUxv4RJzBMix4jbqIv+oNJaCW0h/XrHg5heM=
 github.com/a-novel-kit/jwt/v2 v2.3.0 h1:E3e5cv/uYTEAZaRb+aB6aQx+D11UdnT4JmjfyBil47Q=
 github.com/a-novel-kit/jwt/v2 v2.3.0/go.mod h1:DaD0CXjkz2pFaWq7TMNWaRtEwxe+IvRH4IUAfH5Z2mo=
 github.com/a-novel/service-json-keys/v2 v2.7.0 h1:zxMuPAGqWRcY5v5sUgWNKT4B8Vx4kpWcQ52yfW4ejZ4=
@@ -131,6 +131,8 @@ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0 h1:LxwW/9c
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0/go.mod h1:tOsftB4SslBwwErVEPaenU2RpThXWPIU8DoJHEC4dyw=
 go.opentelemetry.io/otel v1.47.0 h1:j7ALJ/zgkS7Z6aeJW09p8VC9804bC+PpeTfCD4XPnOM=
 go.opentelemetry.io/otel v1.47.0/go.mod h1:8wS9O2qfXrYrzp6hIF/HOYJJf/wIhFPhR2xLuP+iXQU=
+go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.23.0 h1:5Ek4qQ5XX0PSQfY7lMW3CvcR36yy8YFDfGnYnaku8zE=
+go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.23.0/go.mod h1:NUKIMOKSexQdTmS1pSxOQBDiVes3DHRier2ePsGW/gQ=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.47.0 h1:julhjPeUH/q/7hinbSdDdqt5h7Zw9YWmRlWRhI0jd54=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.47.0/go.mod h1:Ao2mz688LH/tFf0yMAenidq6k2YNSx6SIY2q6jDACck=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.47.0 h1:UFpxOpYPmMNUtOWhdb+nC1WELIgVf8z9higURrbzYU4=

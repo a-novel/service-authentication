@@ -3,7 +3,7 @@ module github.com/a-novel/service-authentication/v2
 go 1.27.1
 
 require (
-	github.com/a-novel-kit/golib v0.38.0
+	github.com/a-novel-kit/golib v0.39.0
 	github.com/a-novel-kit/jwt/v2 v2.3.0
 	github.com/a-novel/service-json-keys/v2 v2.7.0
 	github.com/go-chi/chi/v5 v5.3.2
@@ -70,6 +70,7 @@ require (
 	go.opentelemetry.io/contrib/detectors/gcp v1.47.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.72.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.23.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.47.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.47.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.45.0 // indirect
