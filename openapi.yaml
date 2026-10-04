@@ -606,7 +606,11 @@ components:
     unprocessableEntity:
       description: |
         The request was understood by the server, but cannot be processed because the data did not pass
-        required validation.
+        required validation. The body names each invalid field and the rule it broke.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/invalidRequest"
 
     notFound:
       description: |
@@ -630,6 +634,43 @@ components:
       description: I'm a teapot!
 
   schemas:
+    invalidRequest:
+      type: object
+      description: |
+        An RFC 9457 problem details body whose tags name the request fields that failed validation. Field
+        paths and rule codes come from the API definition, never from the submitted values.
+      required: [type, title, status, tags]
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The problem type; about:blank makes the title the HTTP status text.
+          const: about:blank
+        title:
+          type: string
+          description: The HTTP status text.
+          examples: [Unprocessable Entity]
+        status:
+          type: integer
+          description: The HTTP status code.
+          const: 422
+        tags:
+          type: object
+          description: Public details about the failure. Clients ignore tags they do not know.
+          required: [invalidFields]
+          additionalProperties: true
+          properties:
+            invalidFields:
+              type: object
+              description: |
+                Maps the path of each invalid field, in lower camel case with `.` for nesting and `[i]` for a
+                list item, to the validation rule it broke. Standard rules carry their usual name (required,
+                email, min, max); service rules name a domain check (langs, role).
+              additionalProperties:
+                type: string
+              examples:
+                - { "email": "email", "lang": "langs" }
+                - { "roles[0]": "role" }
     waitlistConflict:
       type: object
       description: A stable warning for the invitation form; no input or internal details are returned.
