@@ -2,6 +2,7 @@ package middlewares_test
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
@@ -360,6 +363,39 @@ func TestAuth(t *testing.T) {
 			require.Equal(t, testCase.expectClaims, *ctxClaims)
 		})
 	}
+
+	// A garbled token fails while the real verifier parses it, before any key is fetched, so an
+	// unreachable JSON-keys server cannot turn the rejection into a server error.
+	t.Run("Error/GarbledToken", func(t *testing.T) {
+		t.Parallel()
+
+		client, err := servicejsonkeys.NewClient(
+			"127.0.0.1:1", grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		require.NoError(t, err)
+		t.Cleanup(client.Close)
+
+		verifier, err := servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](client)
+		require.NoError(t, err)
+
+		handler := middlewares.NewAuth(verifier, map[string][]string{"role1": {"read"}}, config.LoggerDev).
+			Middleware([]string{"read"})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+
+		for _, token := range []string{
+			"!!!.e30",
+			base64.RawURLEncoding.EncodeToString([]byte("not json")) + ".e30",
+		} {
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
+
+			require.Equal(t, http.StatusUnauthorized, w.Code, token)
+		}
+	})
 }
 
 func TestGetClaimsContext(t *testing.T) {
