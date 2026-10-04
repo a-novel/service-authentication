@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
 import { expectStatus } from "@a-novel-kit/nodelib-test/http";
 import {
   AuthenticationApi,
@@ -67,5 +68,24 @@ describe("waitlistJoin", () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
     const token = await tokenCreateAnon(api);
     await expectStatus(waitlistJoin(api, token.accessToken, form), 422);
+  });
+
+  it("names the invalid fields of a rejected form", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+    const token = await tokenCreateAnon(api);
+    const response = await api.fetchResponse("/v2/waitlist", {
+      headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${token.accessToken}` },
+      method: "PUT",
+      body: JSON.stringify({ email: "invalid", lang: "xx" }),
+    });
+
+    expect(response.status).toBe(422);
+    expect(response.headers.get("Content-Type")).toBe("application/problem+json");
+    expect(await response.json()).toEqual({
+      type: "about:blank",
+      title: "Unprocessable Entity",
+      status: 422,
+      tags: { invalidFields: { email: "email", lang: "langs" } },
+    });
   });
 });
