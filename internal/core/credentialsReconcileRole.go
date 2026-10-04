@@ -115,7 +115,7 @@ func (service *CredentialsReconcileRole) Exec(
 			span.SetAttributes(attribute.Bool("noop", true))
 		}
 
-		return otel.ReportSuccess(span, result), nil
+		return result, nil
 	}
 
 	if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
@@ -131,9 +131,9 @@ func (service *CredentialsReconcileRole) Exec(
 		if roleErr == nil && pendingRole == request.Role {
 			span.SetAttributes(attribute.Bool("noop", true))
 
-			return otel.ReportSuccess(span, &CredentialsReconcileRoleResult{
+			return &CredentialsReconcileRoleResult{
 				Outcome: CredentialsReconcileRoleRegistrationPending,
-			}), nil
+			}, nil
 		}
 	} else if !errors.Is(err, dao.ErrShortCodeSelectNotFound) {
 		return nil, otel.ReportError(span, fmt.Errorf("select registration code: %w", err))
@@ -148,9 +148,9 @@ func (service *CredentialsReconcileRole) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("create registration: %w", err))
 	}
 
-	return otel.ReportSuccess(span, &CredentialsReconcileRoleResult{
+	return &CredentialsReconcileRoleResult{
 		Outcome: CredentialsReconcileRoleRegistrationCreated,
-	}), nil
+	}, nil
 }
 
 func (service *CredentialsReconcileRole) reconcileExisting(
@@ -162,9 +162,9 @@ func (service *CredentialsReconcileRole) reconcileExisting(
 	defer span.End()
 
 	if credentials.Role == role {
-		return otel.ReportSuccess(span, &CredentialsReconcileRoleResult{
+		return &CredentialsReconcileRoleResult{
 			Outcome: CredentialsReconcileRoleUnchanged,
-		}), nil
+		}, nil
 	}
 
 	_, err := service.updateRole.Exec(ctx, &dao.CredentialsUpdateRoleRequest{
@@ -176,7 +176,7 @@ func (service *CredentialsReconcileRole) reconcileExisting(
 		return nil, otel.ReportError(span, fmt.Errorf("update credentials role: %w", err))
 	}
 
-	return otel.ReportSuccess(span, &CredentialsReconcileRoleResult{
+	return &CredentialsReconcileRoleResult{
 		Outcome: CredentialsReconcileRoleUpdated,
-	}), nil
+	}, nil
 }

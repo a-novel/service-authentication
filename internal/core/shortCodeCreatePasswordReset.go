@@ -124,5 +124,5 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		Kind: mailDeliveryKindPasswordReset,
 	})
 
-	return otel.ReportSuccess(span, shortCode), nil
+	return shortCode, nil
 }

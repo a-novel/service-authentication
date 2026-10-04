@@ -120,7 +120,7 @@ func (service *ShortCodeConsume) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	return otel.ReportSuccess(span, &ShortCode{
+	return &ShortCode{
 		ID:        entity.ID,
 		Usage:     entity.Usage,
 		Target:    entity.Target,
@@ -128,5 +128,5 @@ func (service *ShortCodeConsume) Exec(
 		CreatedAt: entity.CreatedAt,
 		ExpiresAt: entity.ExpiresAt,
 		PlainCode: request.Code,
-	}), nil
+	}, nil
 }

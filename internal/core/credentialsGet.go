@@ -45,16 +45,15 @@ func (service *CredentialsGet) Exec(
 	}
 
 	span.SetAttributes(
-		attribute.String("dao.entity.id", entity.ID.String()),
-		attribute.String("dao.entity.email", entity.Email),
-		attribute.String("dao.entity.role", entity.Role),
+		attribute.String("user.email", entity.Email),
+		attribute.String("user.role", entity.Role),
 	)
 
-	return otel.ReportSuccess(span, &Credentials{
+	return &Credentials{
 		ID:        entity.ID,
 		Email:     entity.Email,
 		Role:      entity.Role,
 		CreatedAt: entity.CreatedAt,
 		UpdatedAt: entity.UpdatedAt,
-	}), nil
+	}, nil
 }

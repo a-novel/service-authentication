@@ -54,10 +54,8 @@ func (dao *CredentialsInsert) Exec(
 
 	span.SetAttributes(
 		attribute.String("credentials.id", request.ID.String()),
-		attribute.String("credentials.email", request.Email),
 		// The password never goes on the span. A redaction still carries its length.
 		attribute.String("credentials.role", request.Role),
-		attribute.Int64("credentials.now", request.Now.Unix()),
 	)
 
 	tx, err := postgres.GetContext(ctx)
@@ -85,5 +83,5 @@ func (dao *CredentialsInsert) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
-	return otel.ReportSuccess(span, entity), nil
+	return entity, nil
 }

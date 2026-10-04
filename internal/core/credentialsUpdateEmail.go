@@ -94,19 +94,17 @@ func (service *CredentialsUpdateEmail) Exec(
 			return fmt.Errorf("update email: %w", txErr)
 		}
 
-		span.SetAttributes(attribute.String("dao.credentials.email", credentials.Email))
-
 		return nil
 	})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	return otel.ReportSuccess(span, &Credentials{
+	return &Credentials{
 		ID:        credentials.ID,
 		Email:     credentials.Email,
 		Role:      credentials.Role,
 		CreatedAt: credentials.CreatedAt,
 		UpdatedAt: credentials.UpdatedAt,
-	}), nil
+	}, nil
 }

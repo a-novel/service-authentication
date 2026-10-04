@@ -65,7 +65,7 @@ func (service *WaitlistCleanup) Exec(
 		}
 
 		if len(page.Emails) == 0 {
-			return otel.ReportSuccess(span, result), nil
+			return result, nil
 		}
 
 		// Enforce the shared limits here as well as in the independently deployed Apps Script.

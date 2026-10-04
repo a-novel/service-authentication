@@ -149,13 +149,13 @@ func (service *CredentialsUpdateRole) Exec(
 	if newTargetRoleImportance == targetRoleIImportance {
 		span.SetAttributes(attribute.Bool("noop", true))
 
-		return otel.ReportSuccess(span, &Credentials{
+		return &Credentials{
 			ID:        targetCredentials.ID,
 			Email:     targetCredentials.Email,
 			Role:      targetCredentials.Role,
 			CreatedAt: targetCredentials.CreatedAt,
 			UpdatedAt: targetCredentials.UpdatedAt,
-		}), nil
+		}, nil
 	}
 
 	updatedCredentials, err := service.dao.Exec(
@@ -170,11 +170,11 @@ func (service *CredentialsUpdateRole) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	return otel.ReportSuccess(span, &Credentials{
+	return &Credentials{
 		ID:        updatedCredentials.ID,
 		Email:     updatedCredentials.Email,
 		Role:      updatedCredentials.Role,
 		CreatedAt: updatedCredentials.CreatedAt,
 		UpdatedAt: updatedCredentials.UpdatedAt,
-	}), nil
+	}, nil
 }

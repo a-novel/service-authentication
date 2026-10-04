@@ -95,7 +95,7 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		Email: request.Email,
 	})
 	if err == nil {
-		return nil, dao.ErrCredentialsUpdateEmailAlreadyExists
+		return nil, otel.ReportError(span, dao.ErrCredentialsUpdateEmailAlreadyExists)
 	}
 
 	if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
@@ -135,5 +135,5 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		Kind: mailDeliveryKindEmailUpdate,
 	})
 
-	return otel.ReportSuccess(span, shortCode), nil
+	return shortCode, nil
 }

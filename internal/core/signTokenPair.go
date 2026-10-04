@@ -30,9 +30,8 @@ type tokenPairSigner interface {
 // token's JTI, so revoking the refresh token effectively revokes every access token
 // derived from it. See AccessTokenClaims for the binding semantics.
 //
-// signTokenPair returns plain errors for the caller to report on its own span. Every
-// failure path here is infrastructure failure — the json-keys RPC being down, a marshal
-// error — so the helper produces no sentinels.
+// Every failure path here is infrastructure failure — the json-keys RPC being down, a
+// marshal error — so the helper produces no sentinels.
 func signTokenPair(
 	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials,
 ) (*Token, error) {
@@ -43,7 +42,7 @@ func signTokenPair(
 		UserID: credentials.ID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("marshal refresh claims: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("marshal refresh claims: %w", err))
 	}
 
 	refreshToken, err := signer.ClaimsSign(ctx, &servicejsonkeys.ClaimsSignRequest{
@@ -51,7 +50,7 @@ func signTokenPair(
 		Payload: refreshTokenPayload,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("issue refresh token: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("issue refresh token: %w", err))
 	}
 
 	// The refresh token comes straight from the trusted internal signer above, so its
@@ -63,7 +62,7 @@ func signTokenPair(
 
 	err = refreshTokenRecipient.DecodeUnverified(refreshToken.GetToken(), &refreshTokenClaims)
 	if err != nil {
-		return nil, fmt.Errorf("parse refresh token: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("parse refresh token: %w", err))
 	}
 
 	accessTokenPayload, err := grpcf.MarshalJSONAsAny(AccessTokenClaims{
@@ -72,7 +71,7 @@ func signTokenPair(
 		RefreshTokenID: refreshTokenClaims.Jti,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("marshal access claims: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("marshal access claims: %w", err))
 	}
 
 	accessToken, err := signer.ClaimsSign(ctx, &servicejsonkeys.ClaimsSignRequest{
@@ -80,7 +79,7 @@ func signTokenPair(
 		Payload: accessTokenPayload,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("issue access token: %w", err)
+		return nil, otel.ReportError(span, fmt.Errorf("issue access token: %w", err))
 	}
 
 	return &Token{

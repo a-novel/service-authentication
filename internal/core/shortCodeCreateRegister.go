@@ -93,7 +93,7 @@ func (service *ShortCodeCreateRegister) Exec(
 		Email: request.Email,
 	})
 	if err == nil {
-		return nil, dao.ErrCredentialsInsertAlreadyExists
+		return nil, otel.ReportError(span, dao.ErrCredentialsInsertAlreadyExists)
 	}
 
 	if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
@@ -132,5 +132,5 @@ func (service *ShortCodeCreateRegister) Exec(
 		Kind: mailDeliveryKindRegister,
 	})
 
-	return otel.ReportSuccess(span, shortCode), nil
+	return shortCode, nil
 }

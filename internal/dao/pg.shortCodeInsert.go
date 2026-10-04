@@ -152,7 +152,7 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	return otel.ReportSuccess(span, entity), nil
+	return entity, nil
 }
 
 //go:embed pg.shortCodeInsert.discardConflict.sql
@@ -182,8 +182,6 @@ func (dao *ShortCodeInsert) discardConflicts(ctx context.Context, request *Short
 		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
-	otel.ReportSuccessNoContent(span)
-
 	return nil
 }
 
@@ -209,8 +207,6 @@ func (dao *ShortCodeInsert) discardExpired(ctx context.Context, request *ShortCo
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
-
-	otel.ReportSuccessNoContent(span)
 
 	return nil
 }
@@ -238,10 +234,8 @@ func (dao *ShortCodeInsert) checkConflicts(ctx context.Context, request *ShortCo
 	}
 
 	if n == 1 {
-		return ErrShortCodeInsertAlreadyExists
+		return otel.ReportError(span, ErrShortCodeInsertAlreadyExists)
 	}
-
-	otel.ReportSuccessNoContent(span)
 
 	return nil
 }

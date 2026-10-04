@@ -129,8 +129,6 @@ func (service *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	otel.ReportSuccessNoContent(span)
-
 	return &Credentials{
 		ID:        credentials.ID,
 		Email:     credentials.Email,

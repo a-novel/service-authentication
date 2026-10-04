@@ -50,5 +50,5 @@ func (dao *CredentialsExist) Exec(ctx context.Context, request *CredentialsExist
 		return false, otel.ReportError(span, fmt.Errorf("get rows affected: %w", err))
 	}
 
-	return otel.ReportSuccess(span, n >= 1), nil
+	return n >= 1, nil
 }

@@ -70,7 +70,6 @@ func (handler *RESTWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		if conflict.Code != "" {
 			httpf.SendJSONStatus(ctx, w, span, http.StatusConflict, conflict)
-			_ = otel.ReportError(span, err)
 
 			return
 		}

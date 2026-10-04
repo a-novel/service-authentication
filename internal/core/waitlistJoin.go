@@ -88,7 +88,5 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 		return otel.ReportError(span, joinErr)
 	}
 
-	otel.ReportSuccessNoContent(span)
-
 	return nil
 }

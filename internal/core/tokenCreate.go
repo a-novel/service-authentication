@@ -104,5 +104,5 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}
 
-	return otel.ReportSuccess(span, tokens), nil
+	return tokens, nil
 }

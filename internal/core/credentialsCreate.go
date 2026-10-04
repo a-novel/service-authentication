@@ -143,8 +143,6 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 			return fmt.Errorf("insert credentials: %w", err)
 		}
 
-		span.SetAttributes(attribute.String("credentials.id", credentials.ID.String()))
-
 		return nil
 	})
 	if err != nil {
@@ -152,23 +150,20 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	}
 
 	// Preserve the committed account even when Google is unavailable or the client has disconnected.
+	// A failed cleanup leaves the account standing; the waitlist span records the error.
 	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), waitlistCleanupTimeout)
-	_, cleanupErr := service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{
+	_, _ = service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{
 		Action: dao.WaitlistActionRemove, Email: request.Email,
 	})
 
 	cancel()
-
-	if cleanupErr != nil {
-		span.RecordError(fmt.Errorf("remove registered account from waitlist: %w", cleanupErr))
-	}
 
 	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}
 
-	return otel.ReportSuccess(span, tokens), nil
+	return tokens, nil
 }
 
 func computeRole(data []byte) (string, error) {

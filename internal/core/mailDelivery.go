@@ -108,7 +108,7 @@ func (delivery *MailDelivery) Reserve(ctx context.Context) (MailDeliveryReservat
 
 	delivery.wg.Add(1)
 
-	return otel.ReportSuccess(span, MailDeliveryReservation(&mailDeliveryReservation{delivery: delivery})), nil
+	return MailDeliveryReservation(&mailDeliveryReservation{delivery: delivery}), nil
 }
 
 // Close stops new reservations and wakes callers waiting for capacity. Accepted work continues.
@@ -147,8 +147,6 @@ func (delivery *MailDelivery) Wait(ctx context.Context) error {
 			return otel.ReportError(span, fmt.Errorf("deliver mail: %w", err))
 		}
 
-		otel.ReportSuccessNoContent(span)
-
 		return nil
 	case <-ctx.Done():
 		return otel.ReportError(span, fmt.Errorf("drain mail delivery: %w", ctx.Err()))
@@ -166,8 +164,6 @@ func (reservation *mailDeliveryReservation) Deliver(ctx context.Context, request
 			reservation.delivery.send(context.WithoutCancel(ctx), request)
 		}()
 	})
-
-	otel.ReportSuccessNoContent(span)
 }
 
 func (reservation *mailDeliveryReservation) Release() {
@@ -194,12 +190,6 @@ func (delivery *MailDelivery) send(ctx context.Context, request *MailDeliveryReq
 		}
 		delivery.mu.Unlock()
 
-		otel.Logger().ErrorContext(ctx, "mail delivery failed", "mail.kind", request.Kind, "error", err)
 		_ = otel.ReportError(span, err)
-
-		return
 	}
-
-	otel.Logger().InfoContext(ctx, "mail delivered", "mail.kind", request.Kind)
-	otel.ReportSuccessNoContent(span)
 }

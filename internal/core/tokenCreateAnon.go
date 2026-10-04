@@ -53,7 +53,7 @@ func (service *TokenCreateAnon) Exec(ctx context.Context) (*Token, error) {
 		return nil, otel.ReportError(span, fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return otel.ReportSuccess(span, &Token{
+	return &Token{
 		AccessToken: accessToken.GetToken(),
-	}), nil
+	}, nil
 }

@@ -50,9 +50,6 @@ func (handler *CredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// The lookup ran, so the span succeeds even where a missing email returns 404 below.
-	defer otel.ReportSuccess(span, ok)
-
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 

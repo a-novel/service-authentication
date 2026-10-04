@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
 
@@ -104,9 +103,7 @@ func (service *ShortCodeCreate) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	span.SetAttributes(attribute.String("shortCode.id", entity.ID.String()))
-
-	return otel.ReportSuccess(span, &ShortCode{
+	return &ShortCode{
 		ID:        entity.ID,
 		Usage:     entity.Usage,
 		Target:    entity.Target,
@@ -114,5 +111,5 @@ func (service *ShortCodeCreate) Exec(
 		CreatedAt: entity.CreatedAt,
 		ExpiresAt: entity.ExpiresAt,
 		PlainCode: plainCode,
-	}), nil
+	}, nil
 }

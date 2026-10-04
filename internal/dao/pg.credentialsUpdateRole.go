@@ -47,11 +47,7 @@ func (dao *CredentialsUpdateRole) Exec(
 	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsUpdateRole")
 	defer span.End()
 
-	span.SetAttributes(
-		attribute.String("credentials.id", request.ID.String()),
-		attribute.String("credentials.role", request.Role),
-		attribute.Int64("credentials.now", request.Now.Unix()),
-	)
+	span.SetAttributes(attribute.String("credentials.id", request.ID.String()))
 
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
@@ -69,5 +65,5 @@ func (dao *CredentialsUpdateRole) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
-	return otel.ReportSuccess(span, entity), nil
+	return entity, nil
 }

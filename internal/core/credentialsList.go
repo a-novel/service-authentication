@@ -57,7 +57,7 @@ func (service *CredentialsList) Exec(
 
 	span.SetAttributes(attribute.Int("response.count", len(entities)))
 
-	return otel.ReportSuccess(span, lo.Map(entities, func(item *dao.Credentials, _ int) *Credentials {
+	return lo.Map(entities, func(item *dao.Credentials, _ int) *Credentials {
 		return &Credentials{
 			ID:        item.ID,
 			Email:     item.Email,
@@ -65,5 +65,5 @@ func (service *CredentialsList) Exec(
 			CreatedAt: item.CreatedAt,
 			UpdatedAt: item.UpdatedAt,
 		}
-	})), nil
+	}), nil
 }

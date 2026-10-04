@@ -38,7 +38,7 @@ func (service *CredentialsExist) Exec(ctx context.Context, request *CredentialsE
 
 	err := validate.Struct(request)
 	if err != nil {
-		return false, errors.Join(err, ErrInvalidRequest)
+		return false, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
 	exists, err := service.dao.Exec(ctx, &dao.CredentialsExistRequest{
@@ -50,5 +50,5 @@ func (service *CredentialsExist) Exec(ctx context.Context, request *CredentialsE
 
 	span.SetAttributes(attribute.Bool("exists", exists))
 
-	return otel.ReportSuccess(span, exists), nil
+	return exists, nil
 }
