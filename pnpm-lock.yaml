@@ -267,7 +267,7 @@ importers:
         version: 5.4.1(svgo@4.1.0)(typescript@6.0.3)
       nodemailer:
         specifier: ^10.0.0
-        version: 10.0.13
+        version: 10.0.14
       prettier:
         specifier: ^3.7.4
         version: 3.9.9
@@ -327,7 +327,7 @@ importers:
         version: 30.1.1
       mailparser:
         specifier: ^3.9.0
-        version: 3.9.33
+        version: 3.9.34
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -378,7 +378,7 @@ importers:
         version: 27.4.0(supports-color@7.2.0)
       mailparser:
         specifier: ^3.9.0
-        version: 3.9.33
+        version: 3.9.34
       mjml:
         specifier: 5.0.0
         version: 5.0.0(svgo@4.1.0)
@@ -3203,8 +3203,8 @@ packages:
   magicast@0.5.5:
     resolution: {integrity: sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA==}
 
-  mailparser@3.9.33:
-    resolution: {integrity: sha512-+ZYhApN4f7B8+jokb7VZeml8lxYHixVJ3tJTB5iPG9/MJpy8YmBHGdy+AWJ9dmtUX6t0xlu4rxwj1b7eWCvbDA==}
+  mailparser@3.9.34:
+    resolution: {integrity: sha512-A43Mtua8Oe4LBQ5obGSehIg46vuY8lX68nwOYU41+Px5quVk7Pk+YL37xtkw+G7JlT7VIMhbJl2EGsycj3lrwQ==}
     engines: {node: '>=20.0.0'}
 
   make-dir@4.0.0:
@@ -3475,8 +3475,8 @@ packages:
     resolution: {integrity: sha512-jVe6Z61gPcPjCElPZ6j8llB3wnqGcuQzefim1ERsqIakxnEy5JlzV7XKdO1KmacRG5TKwPc4vJTgSRQ0LfkbFw==}
     engines: {node: '>=8'}
 
-  nodemailer@10.0.13:
-    resolution: {integrity: sha512-SzG86OlvcW/NNhUFC6uROMwRTL4n7MswfQqC/T8mhkmnY1YVa23zUEMYi4ijSeXSl9GLz9ZeTJDUatEDuY5FeQ==}
+  nodemailer@10.0.14:
+    resolution: {integrity: sha512-eJoLFKg55fesSlzUekmfOv/SBXh4KUYT8oiQc2RLP0tfG0rbNMJBK7wgHJwXTJwqyKlSJMz9UzDZ4v+aHEvo8g==}
     engines: {node: '>=20.0.0'}
 
   nopt@10.0.1:
@@ -7244,7 +7244,7 @@ snapshots:
       '@babel/types': 7.29.8
       source-map-js: 1.2.2
 
-  mailparser@3.9.33:
+  mailparser@3.9.34:
     dependencies:
       '@zone-eu/mailsplit': 5.4.19
       encoding-japanese: 2.4.0
@@ -7253,7 +7253,7 @@ snapshots:
       iconv-lite: 0.7.3
       libmime: 5.4.6
       linkify-it: 5.0.2
-      nodemailer: 10.0.13
+      nodemailer: 10.0.14
       punycode.js: 2.3.1
       tlds: 1.261.0
 
@@ -8244,7 +8244,7 @@ snapshots:
       '@types/pegjs': 0.10.6
       big-integer: 1.6.52
 
-  nodemailer@10.0.13: {}
+  nodemailer@10.0.14: {}
 
   nopt@10.0.1:
     dependencies:
