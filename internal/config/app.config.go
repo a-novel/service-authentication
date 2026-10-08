@@ -15,6 +15,9 @@ import (
 // Main holds the core identity of the service, used to tag its logs and traces.
 type Main struct {
 	Name string `json:"name" yaml:"name"`
+	// DowntimeStart is when a planned downtime starts; nil when none is planned. From then until
+	// it is removed, the service refuses work and leaves its database alone.
+	DowntimeStart *time.Time `json:"downtimeStart" yaml:"downtimeStart"`
 }
 
 // Dependencies configures how the service reaches the backing services it calls.

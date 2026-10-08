@@ -23,6 +23,7 @@ import (
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
+	"github.com/a-novel-kit/golib/downtime"
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
@@ -64,10 +65,13 @@ func main() {
 	// DEPENDENCIES
 	// =================================================================================================================
 
-	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
+	// A server started during a planned downtime refuses work, so it leaves the database alone.
+	if !downtime.Started(cfg.App.DowntimeStart, time.Now()) {
+		ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
-	database := lo.Must(cfg.Postgres.DB(ctx))
-	defer closeDatabase(database)
+		database := lo.Must(cfg.Postgres.DB(ctx))
+		defer closeDatabase(database)
+	}
 
 	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
 
@@ -299,9 +303,14 @@ func newRouter(cfg config.App) *chi.Mux {
 			http.MethodHead, http.MethodGet, http.MethodPost,
 			http.MethodPut, http.MethodPatch, http.MethodDelete,
 		},
-		MaxAge: cfg.Rest.Cors.MaxAge,
+		// Browsers hide Retry-After from scripts unless it is exposed; the waitlist sends it.
+		ExposedHeaders: []string{"Retry-After"},
+		MaxAge:         cfg.Rest.Cors.MaxAge,
 	}))
 	router.Use(cfg.HttpLogger.Logger())
+	// During a planned downtime, only liveness answers; the logger records the refusals, and CORS
+	// lets the browser read them.
+	router.Use(downtime.Middleware(cfg.App.DowntimeStart, "/v2/ping"))
 
 	return router
 }

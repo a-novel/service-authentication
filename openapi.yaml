@@ -87,6 +87,8 @@ paths:
           $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     patch:
@@ -108,6 +110,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     put:
@@ -131,6 +135,8 @@ paths:
           $ref: "#/components/responses/unauthorized"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -148,6 +154,8 @@ paths:
           $ref: "#/components/responses/tokenCreate"
         "418":
           $ref: "#/components/responses/teapot"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -178,6 +186,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     get:
@@ -203,6 +213,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     put:
@@ -229,6 +241,8 @@ paths:
           $ref: "#/components/responses/conflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -256,6 +270,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -286,6 +302,8 @@ paths:
           $ref: "#/components/responses/conflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -313,6 +331,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     put:
@@ -337,6 +357,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -365,6 +387,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -405,7 +429,13 @@ paths:
             Retry-After:
               schema: { type: integer, const: 60 }
         "503":
-          description: The integration is disabled, unreachable, or at its per-instance concurrency limit.
+          description: |
+            The integration is disabled, unreachable, or at its per-instance concurrency limit. During a
+            planned downtime, a problem body tagged `downtime`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/plannedDowntimeProblem"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -521,9 +551,24 @@ components:
             type: string
             examples: [pong]
 
-    health:
-      description: Complete dependency report; HTTP 200 means all are up, HTTP 503 means at least one is down.
+    plannedDowntime:
+      description: |
+        The service, or a service it depends on, is in a planned downtime and refuses work until
+        operators end it. The platform reads the announced window from the downtime document infra
+        publishes.
       content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/plannedDowntimeProblem"
+
+    health:
+      description: |
+        Complete dependency report; HTTP 200 means all are up, HTTP 503 means at least one is down.
+        During a planned downtime, HTTP 503 carries a problem body tagged `downtime` instead.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/plannedDowntimeProblem"
         application/json:
           schema:
             type: object
@@ -625,7 +670,13 @@ components:
         The record already exists.
 
     mailDeliveryUnavailable:
-      description: The server is not accepting email deliveries, for instance while it shuts down. Retry later.
+      description: |
+        The server is not accepting email deliveries, for instance while it shuts down. Retry later.
+        During a planned downtime, a problem body tagged `downtime`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/plannedDowntimeProblem"
 
     internalError:
       description: Something unexpected happened.
@@ -682,6 +733,27 @@ components:
           description: Whether an account or a pending invitation request already exists.
           enum: [account_exists, already_waitlisted]
           examples: [account_exists, already_waitlisted]
+    plannedDowntimeProblem:
+      type: object
+      description: The answer to a request refused during a planned downtime.
+      required: [type, title, status, tags]
+      properties:
+        type:
+          type: string
+          const: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+          const: 503
+        tags:
+          type: object
+          required: [downtime]
+          properties:
+            downtime:
+              type: boolean
+              const: true
+
     healthStatus:
       type: object
       description: |

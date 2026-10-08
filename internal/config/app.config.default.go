@@ -36,7 +36,8 @@ var LoggerProd = &loggingpresets.LogGcloud{
 // back to its documented default when the variable is unset.
 var AppPresetDefault = App{
 	App: Main{
-		Name: env.AppName,
+		Name:          env.AppName,
+		DowntimeStart: env.DowntimeStart,
 	},
 	Rest: Rest{
 		Port:           env.RestPort,

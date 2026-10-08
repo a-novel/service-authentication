@@ -9,6 +9,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+
+	"github.com/a-novel-kit/golib/downtime"
+
+	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
 func main() {
@@ -18,6 +23,13 @@ func main() {
 func mainExitCode() int {
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
 	log.SetPrefix("maintenance: ")
+
+	// Every operation works on the database, which is unavailable during a planned downtime.
+	if downtime.Started(config.AppPresetDefault.App.DowntimeStart, time.Now()) {
+		log.Print("planned downtime in progress: nothing done")
+
+		return 0
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

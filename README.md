@@ -184,6 +184,12 @@ Database connection pool (server images). The limits are **per process**. The da
 | `POSTGRES_MAX_OPEN_CONNS` | Maximum open connections to the database. | `20`    |
 | `POSTGRES_MAX_IDLE_CONNS` | Maximum connections kept open while idle. | `20`    |
 
+Planned downtime (images `rest`, `jobs/maintenance`, `standalone-rest`):
+
+| Name             | Description                                                                                                                                                                                                                                                                                                 | Default |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `DOWNTIME_START` | When a planned downtime starts, in RFC 3339. From then until it is removed, even past the announced end, the server answers `503` except for ping, starts without the database, and maintenance does nothing. Whatever this variable says, a JSON Keys downtime refusal becomes a `503` instead of a `500`. |         |
+
 Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter (images `rest`, `jobs/maintenance`, `standalone-rest`):
 
 | Name                | Description                                                           | Default                  |
