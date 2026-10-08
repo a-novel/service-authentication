@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/a-novel-kit/golib/downtime"
+
 	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
@@ -23,7 +25,7 @@ func mainExitCode() int {
 	log.SetPrefix("maintenance: ")
 
 	// Every operation works on the database, which is unavailable during a planned downtime.
-	if config.AppPresetDefault.App.Downtime.InProgress(config.DowntimeService, time.Now()) {
+	if downtime.Started(config.AppPresetDefault.App.DowntimeStart, time.Now()) {
 		log.Print("planned downtime in progress: nothing done")
 
 		return 0

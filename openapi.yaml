@@ -71,24 +71,6 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
-  /v2/downtime:
-    get:
-      operationId: downtime
-      summary: The planned downtime window.
-      description: |
-        Returns the planned downtime window operators scheduled, whichever services it lists, or `null`
-        without one. It answers during the window too, so clients can warn users before it starts and
-        explain locked features while it runs.
-      tags: [health]
-      security: []
-      responses:
-        "200":
-          $ref: "#/components/responses/downtime"
-        "418":
-          $ref: "#/components/responses/teapot"
-        default:
-          $ref: "#/components/responses/internalError"
-
   /v2/session:
     get:
       operationId: claimsGet
@@ -449,7 +431,7 @@ paths:
         "503":
           description: |
             The integration is disabled, unreachable, or at its per-instance concurrency limit. During a
-            planned downtime, the body carries the window.
+            planned downtime, a problem body tagged `downtime`.
           content:
             application/problem+json:
               schema:
@@ -572,29 +554,21 @@ components:
     plannedDowntime:
       description: |
         The service, or a service it depends on, is in a planned downtime and refuses work until
-        operators clear it. The body carries the window; its end is the expected return, not a promise.
-      headers:
-        Retry-After:
-          description: The window's end, while it is still ahead.
-          schema:
-            type: string
+        operators end it. The platform reads the announced window from the downtime document infra
+        publishes.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/plannedDowntimeProblem"
 
-    downtime:
-      description: The planned downtime window, or null without one.
-      content:
-        application/json:
-          schema:
-            oneOf:
-              - $ref: "#/components/schemas/downtimeWindow"
-              - type: "null"
-
     health:
-      description: Complete dependency report; HTTP 200 means all are up, HTTP 503 means at least one is down.
+      description: |
+        Complete dependency report; HTTP 200 means all are up, HTTP 503 means at least one is down.
+        During a planned downtime, HTTP 503 carries a problem body tagged `downtime` instead.
       content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/plannedDowntimeProblem"
         application/json:
           schema:
             type: object
@@ -698,7 +672,7 @@ components:
     mailDeliveryUnavailable:
       description: |
         The server is not accepting email deliveries, for instance while it shuts down. Retry later.
-        During a planned downtime, the body carries the window.
+        During a planned downtime, a problem body tagged `downtime`.
       content:
         application/problem+json:
           schema:
@@ -761,6 +735,7 @@ components:
           examples: [account_exists, already_waitlisted]
     plannedDowntimeProblem:
       type: object
+      description: The answer to a request refused during a planned downtime.
       required: [type, title, status, tags]
       properties:
         type:
@@ -776,27 +751,8 @@ components:
           required: [downtime]
           properties:
             downtime:
-              $ref: "#/components/schemas/downtimeWindow"
-
-    downtimeWindow:
-      type: object
-      description: A planned downtime window, shared by every service it lists.
-      required: [services, start, end]
-      properties:
-        services:
-          type: array
-          description: The services the window stops.
-          items:
-            type: string
-          examples: [["json-keys", "authentication"]]
-        start:
-          type: string
-          format: date-time
-          description: When the listed services start refusing work.
-        end:
-          type: string
-          format: date-time
-          description: When service is expected back.
+              type: boolean
+              const: true
 
     healthStatus:
       type: object

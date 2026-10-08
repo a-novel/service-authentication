@@ -118,7 +118,7 @@ var (
 
 	gcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
 
-	downtimeWindow = getEnv("DOWNTIME")
+	downtimeStart = getEnv("DOWNTIME_START")
 )
 
 var (
@@ -242,8 +242,7 @@ var (
 	// See: https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
 	GcloudProjectId = gcloudProjectId
 
-	// Downtime is the planned downtime window, as JSON. The service refuses work while a window
-	// that lists it is in progress, and /v2/downtime shares any window with the platform. Nil
-	// without a window.
-	Downtime = config.LoadEnv(downtimeWindow, nil, downtime.ParseWindow)
+	// DowntimeStart is when a planned downtime of this service starts, in RFC 3339. From then
+	// until it is removed, the service refuses work. Nil when none is planned.
+	DowntimeStart = config.LoadEnv(downtimeStart, nil, downtime.ParseStart)
 )

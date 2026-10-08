@@ -3,7 +3,6 @@ package config
 import (
 	"time"
 
-	"github.com/a-novel-kit/golib/downtime"
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
@@ -13,15 +12,12 @@ import (
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
-// DowntimeService is this service's name in a planned downtime window.
-const DowntimeService = "authentication"
-
 // Main holds the core identity of the service, used to tag its logs and traces.
 type Main struct {
 	Name string `json:"name" yaml:"name"`
-	// Downtime is the planned downtime window; nil without one. While a window listing
-	// [DowntimeService] is in progress, the service refuses work and leaves its database alone.
-	Downtime *downtime.Window `json:"downtime" yaml:"downtime"`
+	// DowntimeStart is when a planned downtime starts; nil when none is planned. From then until
+	// it is removed, the service refuses work and leaves its database alone.
+	DowntimeStart *time.Time `json:"downtimeStart" yaml:"downtimeStart"`
 }
 
 // Dependencies configures how the service reaches the backing services it calls.
