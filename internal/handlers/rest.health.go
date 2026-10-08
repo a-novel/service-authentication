@@ -28,10 +28,7 @@ const (
 	smtpAuthenticationFailed = 535
 )
 
-var (
-	errJsonKeysUnhealthy = errors.New("JSON Keys PostgreSQL health is not UP")
-	errSmtpUnhealthy     = errors.New("SMTP health check failed")
-)
+var errSmtpUnhealthy = errors.New("SMTP health check failed")
 
 // RestHealthStatus is the JSON representation of a single dependency's health.
 // /v2/healthcheck is unauthenticated and public, so the response carries no error
@@ -133,15 +130,11 @@ func (handler *RestHealth) reportJsonKeys(ctx context.Context) error {
 	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportJsonKeys)")
 	defer span.End()
 
-	response, err := handler.apiJsonKeys.Status(ctx, &servicejsonkeys.StatusRequest{})
+	// JSON Keys fails Status with Unavailable when one of its own dependencies is down,
+	// so its success is the whole verdict.
+	_, err := handler.apiJsonKeys.Status(ctx, &servicejsonkeys.StatusRequest{})
 	if err != nil {
 		return otel.ReportError(span, err)
-	}
-
-	// The client exposes the response but not its enum constants. Match the
-	// protocol's named UP value; missing and future unknown states fail closed.
-	if response.GetPostgres().GetStatus().String() != "DEPENDENCY_STATUS_UP" {
-		return otel.ReportError(span, errJsonKeysUnhealthy)
 	}
 
 	return nil

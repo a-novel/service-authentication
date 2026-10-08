@@ -22,7 +22,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
@@ -34,15 +33,6 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
-
-func jsonKeysHealth(t *testing.T, status int) *servicejsonkeys.StatusResponse {
-	t.Helper()
-
-	response := &servicejsonkeys.StatusResponse{}
-	require.NoError(t, protojson.Unmarshal(fmt.Appendf(nil, `{"postgres":{"status":%d}}`, status), response))
-
-	return response
-}
 
 func TestHealth(t *testing.T) {
 	t.Parallel()
@@ -161,7 +151,7 @@ func TestHealth(t *testing.T) {
 						require.NoError(t, ctx.Err())
 					}
 				}).
-				Return(jsonKeysHealth(t, 1), testCase.jsonKeysError).Once()
+				Return(&servicejsonkeys.StatusResponse{}, testCase.jsonKeysError).Once()
 
 			handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: io.Discard})
 			w := httptest.NewRecorder()
@@ -227,7 +217,7 @@ func TestHealthTelemetry(t *testing.T) {
 					require.NotNil(t, parent)
 					require.True(t, parent.IsRecording())
 				}).
-				Return(jsonKeysHealth(t, 1), nil).Once()
+				Return(&servicejsonkeys.StatusResponse{}, nil).Once()
 
 			handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: io.Discard})
 			w := httptest.NewRecorder()
@@ -267,19 +257,14 @@ func TestHealthTelemetry(t *testing.T) {
 func TestHealthJsonKeysDependencies(t *testing.T) {
 	t.Parallel()
 
+	// The payload is never inspected: an empty response reads as up.
 	testCases := []struct {
-		name     string
-		response *servicejsonkeys.StatusResponse
-		err      error
-		state    string
+		name  string
+		err   error
+		state string
 	}{
-		{name: "Up", response: jsonKeysHealth(t, 1), state: "up"},
-		{name: "Down", response: jsonKeysHealth(t, 2), state: "down"},
-		{name: "Unspecified", response: jsonKeysHealth(t, 0), state: "down"},
-		{name: "Unknown", response: jsonKeysHealth(t, 99), state: "down"},
-		{name: "MissingPostgres", response: &servicejsonkeys.StatusResponse{}, state: "down"},
-		{name: "MissingResponse", state: "down"},
-		{name: "RPCError", response: jsonKeysHealth(t, 1), err: errors.New("private RPC detail"), state: "down"},
+		{name: "Up", state: "up"},
+		{name: "RPCError", err: errors.New("private RPC detail"), state: "down"},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -290,7 +275,7 @@ func TestHealthJsonKeysDependencies(t *testing.T) {
 
 			smtpClient.EXPECT().Ping().Return(nil).Once()
 			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
-				Return(testCase.response, testCase.err).Once()
+				Return(&servicejsonkeys.StatusResponse{}, testCase.err).Once()
 			handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: io.Discard})
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v2/healthcheck", nil))
@@ -340,7 +325,7 @@ func TestHealthSmtpDiagnostics(t *testing.T) {
 
 			smtpClient.EXPECT().Ping().Return(wrapped).Once()
 			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
-				Return(jsonKeysHealth(t, 1), nil).Once()
+				Return(&servicejsonkeys.StatusResponse{}, nil).Once()
 
 			var logs bytes.Buffer
 
