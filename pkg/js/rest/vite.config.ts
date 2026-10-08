@@ -15,7 +15,9 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: Object.keys(peerDependencies),
+      // Peers and their subpaths, such as nodelib-browser/http, resolve from the consumer, so errors
+      // keep the consumer's HttpError instead of a stale bundled copy.
+      external: (id) => Object.keys(peerDependencies).some((peer) => id === peer || id.startsWith(`${peer}/`)),
     },
   },
 });

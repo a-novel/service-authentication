@@ -23,7 +23,10 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: [...Object.keys(peerDependencies), ...NODE_BUILT_IN_MODULES],
+      // Peers and their subpaths, such as nodelib-browser/http, resolve from the consumer.
+      external: (id) =>
+        NODE_BUILT_IN_MODULES.includes(id) ||
+        Object.keys(peerDependencies).some((peer) => id === peer || id.startsWith(`${peer}/`)),
     },
   },
 });
