@@ -1,5 +1,6 @@
-# The lock beside this file pins every package this config resolves to. Refresh it with
-# apko lock builds/database.apko.yaml --arch x86_64 --output builds/database.apko.lock.json
+# The pgBackRest build toolchain: the runtime config plus what compiling needs. GCC writes its
+# version into the binary, so this is locked too. Refresh the lock with
+# apko lock builds/database.builder.apko.yaml --arch x86_64 --output builds/database.builder.apko.lock.json
 contents:
   repositories:
     - https://packages.wolfi.dev/os
@@ -21,6 +22,19 @@ contents:
     - zstd
     - libssh2
     - openssl
+    - build-base
+    - meson
+    - ninja
+    - pkgconf
+    - bzip2-dev
+    - lz4-dev
+    # Let the SDK dependencies select their compatible OpenSSL development package.
+    - pc:openssl
+    - postgresql-18-dev
+    - libxml2-dev
+    - zlib-dev
+    - zstd-dev
+    - libssh2-dev
 accounts:
   groups:
     - groupname: postgres

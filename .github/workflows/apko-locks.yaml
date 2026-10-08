@@ -1,0 +1,23 @@
+name: apko locks
+
+# The database image installs exactly the packages its locks pin. This moves the pins forward
+# once a week through one pull request; merging it changes the image.
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/refresh-apko-locks@v1.42.0
+        with:
+          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
+          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
+          configs: builds/database.apko.yaml builds/database.builder.apko.yaml
+          # renovate: datasource=github-tags depName=chainguard-dev/apko
+          version: "1.4.8"
