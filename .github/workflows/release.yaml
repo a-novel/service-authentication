@@ -72,6 +72,8 @@ jobs:
           file: builds/database.Dockerfile
           image_name: ${{ github.repository }}/database
           cache: false
+          # Infra tells a real database change from a release by digest: an unchanged image keeps it.
+          reproducible: "true"
           version: ${{ needs.release.outputs.version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: -e POSTGRES_PASSWORD=postgres
