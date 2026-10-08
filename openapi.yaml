@@ -71,6 +71,24 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
+  /v2/downtime:
+    get:
+      operationId: downtime
+      summary: The planned downtime window.
+      description: |
+        Returns the planned downtime window operators scheduled, whichever services it lists, or `null`
+        without one. It answers during the window too, so clients can warn users before it starts and
+        explain locked features while it runs.
+      tags: [health]
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/downtime"
+        "418":
+          $ref: "#/components/responses/teapot"
+        default:
+          $ref: "#/components/responses/internalError"
+
   /v2/session:
     get:
       operationId: claimsGet
@@ -87,6 +105,8 @@ paths:
           $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     patch:
@@ -108,6 +128,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     put:
@@ -131,6 +153,8 @@ paths:
           $ref: "#/components/responses/unauthorized"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -148,6 +172,8 @@ paths:
           $ref: "#/components/responses/tokenCreate"
         "418":
           $ref: "#/components/responses/teapot"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -178,6 +204,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     get:
@@ -203,6 +231,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     put:
@@ -229,6 +259,8 @@ paths:
           $ref: "#/components/responses/conflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -256,6 +288,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -286,6 +320,8 @@ paths:
           $ref: "#/components/responses/conflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -313,6 +349,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
     put:
@@ -337,6 +375,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -365,6 +405,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -405,7 +447,13 @@ paths:
             Retry-After:
               schema: { type: integer, const: 60 }
         "503":
-          description: The integration is disabled, unreachable, or at its per-instance concurrency limit.
+          description: |
+            The integration is disabled, unreachable, or at its per-instance concurrency limit. During a
+            planned downtime, the body carries the window.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/plannedDowntimeProblem"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -521,6 +569,29 @@ components:
             type: string
             examples: [pong]
 
+    plannedDowntime:
+      description: |
+        The service, or a service it depends on, is in a planned downtime and refuses work until
+        operators clear it. The body carries the window; its end is the expected return, not a promise.
+      headers:
+        Retry-After:
+          description: The window's end, while it is still ahead.
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/plannedDowntimeProblem"
+
+    downtime:
+      description: The planned downtime window, or null without one.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/downtimeWindow"
+              - type: "null"
+
     health:
       description: Complete dependency report; HTTP 200 means all are up, HTTP 503 means at least one is down.
       content:
@@ -625,7 +696,13 @@ components:
         The record already exists.
 
     mailDeliveryUnavailable:
-      description: The server is not accepting email deliveries, for instance while it shuts down. Retry later.
+      description: |
+        The server is not accepting email deliveries, for instance while it shuts down. Retry later.
+        During a planned downtime, the body carries the window.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/plannedDowntimeProblem"
 
     internalError:
       description: Something unexpected happened.
@@ -682,6 +759,45 @@ components:
           description: Whether an account or a pending invitation request already exists.
           enum: [account_exists, already_waitlisted]
           examples: [account_exists, already_waitlisted]
+    plannedDowntimeProblem:
+      type: object
+      required: [type, title, status, tags]
+      properties:
+        type:
+          type: string
+          const: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+          const: 503
+        tags:
+          type: object
+          required: [downtime]
+          properties:
+            downtime:
+              $ref: "#/components/schemas/downtimeWindow"
+
+    downtimeWindow:
+      type: object
+      description: A planned downtime window, shared by every service it lists.
+      required: [services, start, end]
+      properties:
+        services:
+          type: array
+          description: The services the window stops.
+          items:
+            type: string
+          examples: [["json-keys", "authentication"]]
+        start:
+          type: string
+          format: date-time
+          description: When the listed services start refusing work.
+        end:
+          type: string
+          format: date-time
+          description: When service is expected back.
+
     healthStatus:
       type: object
       description: |

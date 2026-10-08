@@ -23,6 +23,7 @@ import (
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
+	"github.com/a-novel-kit/golib/downtime"
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
@@ -64,10 +65,13 @@ func main() {
 	// DEPENDENCIES
 	// =================================================================================================================
 
-	ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
+	// A server started during a planned downtime refuses work, so it leaves the database alone.
+	if !cfg.App.Downtime.InProgress(config.DowntimeService, time.Now()) {
+		ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
-	database := lo.Must(cfg.Postgres.DB(ctx))
-	defer closeDatabase(database)
+		database := lo.Must(cfg.Postgres.DB(ctx))
+		defer closeDatabase(database)
+	}
 
 	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
 
@@ -173,6 +177,7 @@ func main() {
 	// =================================================================================================================
 
 	handlerPing := handlers.NewPing()
+	handlerDowntime := handlers.NewDowntime(cfg.App.Downtime)
 	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.Smtp, cfg.Logger)
 
 	handlerClaimsGet := handlers.NewClaimsGet(cfg.Logger)
@@ -225,6 +230,7 @@ func main() {
 	router.Route("/v2", func(api chi.Router) {
 		api.Get("/ping", handlerPing.ServeHTTP)
 		api.Get("/healthcheck", handlerHealth.ServeHTTP)
+		api.Get("/downtime", handlerDowntime.ServeHTTP)
 
 		withAuth(api.With(middleware.Throttle(waitlistMaxConcurrent), middleware.RequestSize(waitlistMaxRequestSize)),
 			"waitlist:join").Put("/waitlist", handlerWaitlistJoin.ServeHTTP)
@@ -299,9 +305,16 @@ func newRouter(cfg config.App) *chi.Mux {
 			http.MethodHead, http.MethodGet, http.MethodPost,
 			http.MethodPut, http.MethodPatch, http.MethodDelete,
 		},
-		MaxAge: cfg.Rest.Cors.MaxAge,
+		// Browsers hide Retry-After from scripts unless it is exposed; downtime and the waitlist send it.
+		ExposedHeaders: []string{"Retry-After"},
+		MaxAge:         cfg.Rest.Cors.MaxAge,
 	}))
 	router.Use(cfg.HttpLogger.Logger())
+	// During a planned downtime, only liveness, health and the window itself answer; the logger
+	// records the refusals, and CORS lets the browser read them.
+	router.Use(downtime.Middleware(
+		cfg.App.Downtime, config.DowntimeService, "/v2/ping", "/v2/healthcheck", "/v2/downtime",
+	))
 
 	return router
 }

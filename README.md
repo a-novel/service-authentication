@@ -184,6 +184,12 @@ Database connection pool (server images). The limits are **per process**. The da
 | `POSTGRES_MAX_OPEN_CONNS` | Maximum open connections to the database. | `20`    |
 | `POSTGRES_MAX_IDLE_CONNS` | Maximum connections kept open while idle. | `20`    |
 
+Planned downtime (images `rest`, `jobs/maintenance`, `standalone-rest`):
+
+| Name       | Description                                                                                                                                                                                                                                                                                                                                                                                                     | Default |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `DOWNTIME` | A planned downtime window, as JSON: `{"services":["authentication"],"start":"…","end":"…"}`. From `start` until it is removed, if it lists `authentication`, the server answers `503` except for ping, health and `/v2/downtime`, starts without the database, and maintenance does nothing. Whatever it lists, `/v2/downtime` returns it, and a JSON Keys downtime refusal becomes a `503` instead of a `500`. |         |
+
 Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter (images `rest`, `jobs/maintenance`, `standalone-rest`):
 
 | Name                | Description                                                           | Default                  |

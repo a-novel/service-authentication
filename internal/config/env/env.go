@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/a-novel-kit/golib/config"
+	"github.com/a-novel-kit/golib/downtime"
 )
 
 // prefix is prepended to every configuration environment variable name, so a project
@@ -116,6 +117,8 @@ var (
 	corsMaxAge            = getEnv("REST_CORS_MAX_AGE")
 
 	gcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
+
+	downtimeWindow = getEnv("DOWNTIME")
 )
 
 var (
@@ -238,4 +241,9 @@ var (
 	//
 	// See: https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
 	GcloudProjectId = gcloudProjectId
+
+	// Downtime is the planned downtime window, as JSON. The service refuses work while a window
+	// that lists it is in progress, and /v2/downtime shares any window with the platform. Nil
+	// without a window.
+	Downtime = config.LoadEnv(downtimeWindow, nil, downtime.ParseWindow)
 )
