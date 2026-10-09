@@ -20,4 +20,4 @@ jobs:
           client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           configs: builds/database.apko.yaml builds/database.builder.apko.yaml
           # renovate: datasource=github-tags depName=chainguard-dev/apko
-          version: "1.4.8"
+          version: "1.4.10"
