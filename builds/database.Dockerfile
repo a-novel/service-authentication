@@ -1,5 +1,5 @@
 # Assemble signed Wolfi packages with a versioned upstream builder.
-FROM docker.io/library/golang:1.27.1-alpine AS packages
+FROM docker.io/library/golang:1.27.2-alpine AS packages
 ENV CGO_ENABLED=0
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
