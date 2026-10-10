@@ -1,0 +1,93 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Restarts pull requests that GitHub leaves idle without a failure anyone sees. Two jobs:
+#
+#   requeue — the merge queue drops an entry whose required checks do not report before its
+#             timeout, and disarms its auto-merge, so a green PR waits for someone to notice.
+#             That drop measures runner capacity, not the PR, so the [Agent] App re-arms
+#             auto-merge, at most three times per PR. Other drop reasons stand.
+#
+#   rebase  — a merge can leave an open dependency PR conflicting with master, and Renovate
+#             only rebases it on its next scheduled run. When one conflicts, this dispatches
+#             that run now. A merge that conflicts nothing dispatches nothing, since every
+#             Renovate run rebases every behind PR and would rerun its CI.
+name: recover stuck pull requests
+
+on:
+  pull_request:
+    types: [dequeued, closed]
+
+jobs:
+  requeue:
+    # A run triggered by Dependabot cannot read the App secret.
+    if: github.event.action == 'dequeued' && github.actor != vars.DEPENDABOT_SECURITY_LOGIN
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Check the drop reason
+        id: drop
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          sleep 10 # the dequeued event can precede its timeline entry
+          reasons=$(gh api graphql -F owner="${GITHUB_REPOSITORY%/*}" -F name="${GITHUB_REPOSITORY#*/}" -F number="$NUMBER" -f query='
+            query($owner: String!, $name: String!, $number: Int!) {
+              repository(owner: $owner, name: $name) { pullRequest(number: $number) {
+                timelineItems(last: 50, itemTypes: [REMOVED_FROM_MERGE_QUEUE_EVENT]) {
+                  nodes { ... on RemovedFromMergeQueueEvent { reason } } } } } }' \
+            --jq '[.data.repository.pullRequest.timelineItems.nodes[].reason | ascii_downcase]')
+          last=$(jq -r 'last // ""' <<<"$reasons")
+          timeouts=$(jq '[.[] | select(. == "checks_timed_out")] | length' <<<"$reasons")
+          echo "Dropped for '$last'; $timeouts timeout(s) so far."
+          if [ "$last" = checks_timed_out ] && [ "$timeouts" -le 3 ]; then
+            echo "rearm=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.drop.outputs.rearm == 'true'
+        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.42.2
+        with:
+          pull_request_number: ${{ github.event.pull_request.number }}
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          dry_run: "false"
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+
+  rebase:
+    if: >-
+      github.event.action == 'closed' && github.event.pull_request.merged &&
+      github.actor != vars.DEPENDABOT_SECURITY_LOGIN
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Dispatch Renovate when a dependency PR conflicts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BOT: ${{ vars.DEPENDENCY_BOT_LOGIN }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/renovate.yaml" --silent 2>/dev/null || exit 0
+          # GitHub recomputes mergeability lazily after a push, so UNKNOWN means "ask again".
+          for attempt in 1 2 3 4 5 6; do
+            states=$(gh api graphql -F owner="${GITHUB_REPOSITORY%/*}" -F name="${GITHUB_REPOSITORY#*/}" -f query='
+              query($owner: String!, $name: String!) {
+                repository(owner: $owner, name: $name) {
+                  pullRequests(states: OPEN, first: 100) { nodes { mergeable author { login } } } } }' |
+              jq -c --arg bot "$BOT" '[.data.repository.pullRequests.nodes[] | select(.author.login + "[bot]" == $bot) | .mergeable]')
+            if jq -e 'index("CONFLICTING")' <<<"$states" >/dev/null; then
+              if [ -n "$(gh run list --workflow renovate.yaml --status queued --limit 1 --json databaseId --jq '.[].databaseId')" ]; then
+                echo "A Renovate run is already queued; it will rebase the conflicting PRs."
+              else
+                gh workflow run renovate.yaml --ref "$BRANCH"
+              fi
+              exit 0
+            fi
+            jq -e 'index("UNKNOWN")' <<<"$states" >/dev/null || exit 0
+            sleep 15
+          done
+          echo "Mergeability still unknown; leaving the conflict check to Renovate's schedule."
