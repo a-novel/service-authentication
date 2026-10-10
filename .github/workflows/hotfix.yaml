@@ -1,28 +1,35 @@
 name: hotfix
 
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
-# A thin dispatch caller: the whole hotfix engine lives in the reusable
-# a-novel-kit/workflows/.github/workflows/hotfix-run.yaml, whose pin Renovate bumps.
+# A thin caller: the hotfix engine lives in the reusable a-novel-kit/workflows
+# backport-run.yaml and release-line-run.yaml, whose pins Renovate bumps.
 #
-# It patches an already-released line without touching the default branch: cut
-# vX.Y.(Z+1) from the line's latest live tag, apply the fix, reconcile it forward to
-# master. Gated on admin plus the protected `release` environment, the human "who
-# may publish" gate. It is exempt from the kill switch, so the emergency patch path
-# stays open even when normal automation is halted.
+# A hotfix ships reviewed, tested changes only, never the default branch's
+# unreleased work. The fix lands on the default branch first; the dispatch then
+# opens a backport pull request per fix into the line's release/vX.Y branch, cut
+# from its latest tag on first use. Merging a backport cuts the next patch behind
+# the protected `release` environment, the human "who may publish" gate. Both
+# paths are exempt from the kill switch, so the emergency patch path stays open
+# even when normal automation is halted.
+#
+# The cut triggers on pull_request_target because GitHub runs it from the default
+# branch's copy of this file and checks the `release` environment against the
+# default branch. A push trigger would run the release line's own copy, as old
+# as the tag the line was cut from. The cut never checks out pull request code.
 on:
   workflow_dispatch:
     inputs:
       line:
-        description: 'X.Y line to patch (e.g. "1.4") — baseline auto-resolves to its latest live tag'
+        description: 'X.Y line to patch (e.g. "1.4") — its release line branches from the latest vX.Y.* tag'
         required: true
         type: string
-      fix_ref:
-        description: "Git revision carrying the fix (a commit SHA, or an A..B range) to cherry-pick onto the baseline; empty = re-cut the baseline (drill)"
+      fix_refs:
+        description: "Space-separated commit SHAs already on the default branch, oldest first, each backported as its own pull request; empty = prepare the release line only"
         required: false
         type: string
         default: ""
       severity:
-        description: Escalation severity if the hotfix fails
+        description: Escalation severity if the backport or the cut fails
         required: false
         type: choice
         options:
@@ -30,33 +37,56 @@ on:
           - sev1
         default: sev2
       dry_run:
-        description: No tag, release, reconcile PR, or cleanup Task — but a transient ephemeral branch is still pushed then deleted (the cut checks it out from the remote)
+        description: Report what would be created without pushing a branch or opening a pull request
         required: false
         type: boolean
         default: true
+  pull_request_target: # zizmor: ignore[dangerous-triggers] Cuts the merged release line by name; never checks out PR code.
+    types: [closed]
+    branches: ["release/**"]
 
-run-name: "🚑 hotfix v${{ inputs.line }}.x${{ inputs.dry_run && ' (dry-run)' || '' }}"
-
-# Hotfixes serialize on this repo: a second one waits, and cancel-in-progress:false
-# queues it behind the hotfix in flight. A hotfix racing a release is handled by the
-# reusable workflow's own lock.
-concurrency:
-  group: hotfix-${{ github.repository }}
-  cancel-in-progress: false
+run-name: "🚑 ${{ github.event_name == 'workflow_dispatch' && format('backport v{0}.x{1}', inputs.line, inputs.dry_run && ' (dry-run)' || '') || format('release {0}', github.event.pull_request.base.ref) }}"
 
 jobs:
-  hotfix:
-    # the callee pushes the ephemeral branch and reads in-flight runs; the caller sets the ceiling, so it must not hand down
-    # the repository default.
+  # Backports serialise on this repo: a second dispatch queues behind the one in
+  # flight.
+  backport:
+    if: github.event_name == 'workflow_dispatch'
+    concurrency:
+      group: hotfix-${{ github.repository }}
+      cancel-in-progress: false
+    # The callee mints its own App token for its writes; the default token only
+    # reads the dispatcher's permission.
     permissions:
-      contents: write
-      actions: read
-    uses: a-novel-kit/workflows/.github/workflows/hotfix-run.yaml@v1.42.2
+      contents: read
+    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.43.0
     with:
       line: ${{ inputs.line }}
-      fix_ref: ${{ inputs.fix_ref }}
+      fix_refs: ${{ inputs.fix_refs }}
       severity: ${{ inputs.severity }}
       dry_run: ${{ inputs.dry_run }}
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
+      mention: ${{ vars.SEV1_MENTION }}
+    secrets:
+      app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+      push_webhook: ${{ secrets.ESCALATE_PUSH_WEBHOOK }}
+
+  # Cuts serialise per line. The concurrency sits on the job, so a pull request
+  # closed without merging, whose job is skipped, never takes a queued cut's
+  # place.
+  cut:
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.merged
+    concurrency:
+      group: release-line-${{ github.repository }}-${{ github.event.pull_request.base.ref }}
+      cancel-in-progress: false
+    # The callee reads in-flight release runs; its writes use its own App token.
+    permissions:
+      contents: read
+      actions: read
+    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.43.0
+    with:
+      branch: ${{ github.event.pull_request.base.ref }}
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
       mention: ${{ vars.SEV1_MENTION }}
