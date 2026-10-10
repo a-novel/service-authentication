@@ -17,6 +17,8 @@ gitChecks: false
 linkWorkspacePackages: true
 
 minimumReleaseAgeExclude:
+  - "@a-novel-kit/*"
+  - "@a-novel/*"
   - mjml-accordion@5.2.2
   - mjml-body@5.2.2
   - mjml-button@5.2.2
