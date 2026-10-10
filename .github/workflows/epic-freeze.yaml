@@ -27,6 +27,8 @@ jobs:
   # Named `evaluate`: the [Agent] App posts the `epic-freeze` check-run itself, so
   # the job name stays clear of it (as in merge-gate.yaml).
   evaluate:
+    # Dependabot is evaluated by the trusted CI-completion job.
+    if: github.event_name == 'merge_group' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
     runs-on: ubuntu-latest
     # No permissions of its own: the detector mints its own [Agent] tokens. In
     # per-PR mode that is checks:write plus read scopes; the write token that rolls

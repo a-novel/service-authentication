@@ -1,0 +1,22 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Pull requests are for collaborators. The repository lets only collaborators open
+# one, and this workflow locks each new conversation so only collaborators can
+# comment. Issues and discussions stay open to everyone.
+name: lock-pr
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Limit the conversation to collaborators
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api --method PUT "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/lock"

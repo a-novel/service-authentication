@@ -11,12 +11,17 @@ name: auto-approve dependencies
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  # Only fixed API calls and pinned actions consume validated metadata; no PR checkout, artifacts, caches or environment files.
+  workflow_run: # zizmor: ignore[dangerous-triggers] Privileged bot approval requires base-branch Actions secrets.
+    workflows: [main]
+    types: [completed]
 
 jobs:
   auto-approve:
     if: >-
-      github.event.pull_request.user.login == vars.DEPENDENCY_BOT_LOGIN ||
-      github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN
+      github.actor != vars.DEPENDABOT_SECURITY_LOGIN &&
+      (github.event.pull_request.user.login == vars.DEPENDENCY_BOT_LOGIN ||
+       github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN)
     # the callee mints a scoped App token and declares permissions: {}; the caller sets the ceiling, so it must not hand down
     # the repository default.
     permissions: {}
@@ -27,3 +32,106 @@ jobs:
       dependabot_security_login: ${{ vars.DEPENDABOT_SECURITY_LOGIN }}
     secrets:
       bot_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+
+  # Dependabot PR events cannot read Actions secrets. The completed CI event runs
+  # this metadata-only job from the default branch without consuming PR artifacts.
+  dependabot:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.actor.login == vars.DEPENDABOT_SECURITY_LOGIN &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'pull_request')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: dependabot-${{ github.event.workflow_run.head_sha }}
+      cancel-in-progress: false
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Resolve the current Dependabot pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          BOT: ${{ vars.DEPENDABOT_SECURITY_LOGIN }}
+        run: |
+          set -euo pipefail
+          [[ "$HEAD_SHA" =~ ^[a-f0-9]{40}$ ]]
+          candidates=$(gh api --paginate --slurp "repos/$REPOSITORY/commits/$HEAD_SHA/pulls")
+          pr=$(jq -ce --arg repo "$REPOSITORY" --arg sha "$HEAD_SHA" --arg bot "$BOT" '
+            [ .[][] | select(.state == "open" and .draft == false and
+              .head.repo.full_name == $repo and .base.repo.full_name == $repo and
+              .base.ref == .base.repo.default_branch and
+              .head.sha == $sha and .user.login == $bot) ] |
+            if length == 0 then {} elif length == 1 then .[0]
+            else error("Ambiguous Dependabot pull request") end' <<< "$candidates")
+          if [ "$pr" = '{}' ]; then
+            printf 'The CI commit no longer identifies an open Dependabot pull request.\n'
+            exit 0
+          fi
+          number=$(jq -r '.number' <<< "$pr")
+          commits=$(gh api --paginate --slurp "repos/$REPOSITORY/pulls/$number/commits")
+          if ! jq -e --arg bot "$BOT" 'add | length > 0 and all(.[]; .author.login == $bot)' <<< "$commits" >/dev/null; then
+            printf 'Dependabot pull request contains non-bot commits; human review is required.\n'
+            exit 0
+          fi
+          printf 'number=%s\nnode=%s\nsha=%s\n' "$number" "$(jq -r '.node_id' <<< "$pr")" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Evaluate the merge gate
+        if: steps.pr.outputs.number != ''
+        uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.42.2
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+          pull_request_number: ${{ steps.pr.outputs.number }}
+          head_sha: ${{ steps.pr.outputs.sha }}
+
+      - name: Evaluate the epic freeze
+        if: steps.pr.outputs.number != ''
+        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.42.2
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+          dry_run: "false"
+          pull_request_number: ${{ steps.pr.outputs.number }}
+          head_sha: ${{ steps.pr.outputs.sha }}
+
+      - name: Mint approval token
+        if: steps.pr.outputs.number != ''
+        id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Approve and queue the verified commit
+        if: steps.pr.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_NODE: ${{ steps.pr.outputs.node }}
+          HEAD_SHA: ${{ steps.pr.outputs.sha }}
+        run: |
+          set -euo pipefail
+          current=$(gh api graphql -f query='query($pr: ID!) {
+            node(id: $pr) { ... on PullRequest { state headRefOid mergeQueueEntry { id } } }
+          }' -f pr="$PR_NODE")
+          if ! jq -e --arg sha "$HEAD_SHA" '.data.node |
+            .state == "OPEN" and .headRefOid == $sha and .mergeQueueEntry == null' <<< "$current" >/dev/null; then
+            printf 'The pull request changed, closed, or already entered the queue.\n'
+            exit 0
+          fi
+          gh api "repos/$REPOSITORY/pulls/$PR_NUMBER/reviews" --method POST \
+            -f event=APPROVE -f commit_id="$HEAD_SHA" >/dev/null
+          gh api graphql -f query='mutation($pr: ID!, $sha: GitObjectID!) {
+            enqueuePullRequest(input: {pullRequestId: $pr, expectedHeadOid: $sha}) {
+              mergeQueueEntry { id }
+            }
+          }' -f pr="$PR_NODE" -f sha="$HEAD_SHA"
