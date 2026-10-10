@@ -59,7 +59,7 @@ jobs:
     # reads the dispatcher's permission.
     permissions:
       contents: read
-    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.45.0
+    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.45.1
     with:
       line: ${{ inputs.line }}
       fix_refs: ${{ inputs.fix_refs }}
@@ -84,7 +84,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.45.0
+    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.45.1
     with:
       branch: ${{ github.event.pull_request.base.ref }}
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
