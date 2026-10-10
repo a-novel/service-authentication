@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/refresh-apko-locks@v1.42.1
+      - uses: a-novel-kit/workflows/generic-actions/refresh-apko-locks@v1.42.2
         with:
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
           client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
