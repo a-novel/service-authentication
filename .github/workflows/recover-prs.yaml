@@ -46,7 +46,7 @@ jobs:
             echo "rearm=true" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.drop.outputs.rearm == 'true'
-        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.45.1
+        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.45.2
         with:
           pull_request_number: ${{ github.event.pull_request.number }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
