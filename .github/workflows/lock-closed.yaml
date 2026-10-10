@@ -1,0 +1,33 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Once an issue or pull request is closed, this workflow locks its conversation so
+# only collaborators can add to the record; reopening lifts the lock. Open
+# conversations stay unlocked: GitHub refuses a GitHub App's review on a locked
+# conversation, which would block the approval bot. A bot that must comment on a
+# closed conversation reopens it first.
+name: lock closed conversations
+
+on:
+  issues:
+    types: [closed, reopened]
+  pull_request:
+    types: [closed, reopened]
+
+jobs:
+  lock:
+    # A run triggered by Dependabot gets a read-only token.
+    if: github.actor != vars.DEPENDABOT_SECURITY_LOGIN
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+    steps:
+      - name: Lock the closed conversation
+        if: github.event.action == 'closed'
+        run: gh api --method PUT "repos/$GITHUB_REPOSITORY/issues/$NUMBER/lock"
+      - name: Unlock the reopened conversation
+        if: github.event.action == 'reopened' && (github.event.issue.locked || github.event.pull_request.locked)
+        run: gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/$NUMBER/lock"
