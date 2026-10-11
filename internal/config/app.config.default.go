@@ -40,8 +40,10 @@ var AppPresetDefault = App{
 		DowntimeStart: env.DowntimeStart,
 	},
 	Rest: Rest{
-		Port:           env.RestPort,
-		MaxRequestSize: env.RestMaxRequestSize,
+		Port:              env.RestPort,
+		MaxRequestSize:    env.RestMaxRequestSize,
+		ClientIPHeader:    env.RestClientIPHeader,
+		RateLimitsEnabled: env.RestRateLimitsEnabled,
 		Timeouts: RestTimeouts{
 			Read:       env.RestTimeoutRead,
 			ReadHeader: env.RestTimeoutReadHeader,

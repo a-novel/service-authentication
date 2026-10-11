@@ -91,14 +91,7 @@ func GenerateArgon2(password string, params Argon2Params) (string, error) {
 		params.Parallelism = uint8(nCpus)
 	}
 
-	hash := argon2.IDKey(
-		[]byte(password),
-		salt,
-		params.Iterations,
-		params.Memory,
-		params.Parallelism,
-		params.KeyLength,
-	)
+	hash := idKey(password, salt, &params)
 
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
@@ -127,14 +120,7 @@ func CompareArgon2(password, encodedHash string) error {
 	}
 
 	// Re-derive the key with the parameters and salt carried by the stored hash.
-	otherHash := argon2.IDKey(
-		[]byte(password),
-		salt,
-		params.Iterations,
-		params.Memory,
-		params.Parallelism,
-		params.KeyLength,
-	)
+	otherHash := idKey(password, salt, params)
 
 	// Constant time, so latency does not leak how much of the hash matched.
 	if subtle.ConstantTimeCompare(hash, otherHash) == 1 {
@@ -142,6 +128,21 @@ func CompareArgon2(password, encodedHash string) error {
 	}
 
 	return ErrInvalidPassword
+}
+
+// argon2MaxConcurrent bounds the hashes running at once. Each allocates its memory parameter,
+// 64 MiB by default, so four fit beside the server in a 512 MiB instance.
+const argon2MaxConcurrent = 4
+
+var argon2Slots = make(chan struct{}, argon2MaxConcurrent)
+
+// idKey derives the Argon2id key once a slot frees up, so a burst of logins waits instead of
+// exhausting memory.
+func idKey(password string, salt []byte, params *Argon2Params) []byte {
+	argon2Slots <- struct{}{}
+	defer func() { <-argon2Slots }()
+
+	return argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, params.Parallelism, params.KeyLength)
 }
 
 // dummyArgon2Hash is a throwaway Argon2id hash generated once at init with

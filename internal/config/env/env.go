@@ -42,10 +42,11 @@ const (
 	// RestTimeoutShutdownDefault clears SmtpTimeoutDefault, leaving room for a send that starts
 	// just before the signal to finish. The container runtime's stop grace period has to clear
 	// this in turn; builds/podman-compose.yaml sets one.
-	RestTimeoutShutdownDefault  = 25 * time.Second
-	RestMaxRequestSizeDefault   = 2 << 20 // 2 MiB
-	CorsAllowCredentialsDefault = false
-	CorsMaxAgeDefault           = 3600
+	RestTimeoutShutdownDefault   = 25 * time.Second
+	RestMaxRequestSizeDefault    = 16 << 10 // 16 KiB
+	RestRateLimitsEnabledDefault = true
+	CorsAllowCredentialsDefault  = false
+	CorsMaxAgeDefault            = 3600
 
 	// PostgresMaxOpenConnsDefault keeps the pool well under a stock PostgreSQL
 	// max_connections of 100 once multiplied by a service's replica count, leaving
@@ -111,6 +112,8 @@ var (
 	restTimeoutIdle       = getEnv("REST_TIMEOUT_IDLE")
 	restTimeoutRequest    = getEnv("REST_TIMEOUT_REQUEST")
 	restTimeoutShutdown   = getEnv("REST_TIMEOUT_SHUTDOWN")
+	restClientIPHeader    = getEnv("REST_CLIENT_IP_HEADER")
+	restRateLimitsEnabled = getEnv("REST_RATE_LIMITS_ENABLED")
 	corsAllowedOrigins    = getEnv("REST_CORS_ALLOWED_ORIGINS")
 	corsAllowedHeaders    = getEnv("REST_CORS_ALLOWED_HEADERS")
 	corsAllowCredentials  = getEnv("REST_CORS_ALLOW_CREDENTIALS")
@@ -228,7 +231,14 @@ var (
 	RestTimeoutIdle       = config.LoadEnv(restTimeoutIdle, RestTimeoutIdleDefault, config.DurationParser)
 	RestTimeoutRequest    = config.LoadEnv(restTimeoutRequest, RestTimeoutRequestDefault, config.DurationParser)
 	RestTimeoutShutdown   = config.LoadEnv(restTimeoutShutdown, RestTimeoutShutdownDefault, config.DurationParser)
-	CorsAllowedOrigins    = config.LoadEnv(
+	// RestClientIPHeader names the header a trusted proxy sets to the visitor IP. Empty keeps the
+	// TCP peer address. Name a header only when every request reaches the server through that proxy.
+	RestClientIPHeader = restClientIPHeader
+	// RestRateLimitsEnabled turns the rate limits on. Only test stacks turn them off.
+	RestRateLimitsEnabled = config.LoadEnv(
+		restRateLimitsEnabled, RestRateLimitsEnabledDefault, config.BoolParser,
+	)
+	CorsAllowedOrigins = config.LoadEnv(
 		corsAllowedOrigins, CorsAllowedOriginsDefault, config.SliceParser(config.StringParser),
 	)
 	CorsAllowedHeaders = config.LoadEnv(

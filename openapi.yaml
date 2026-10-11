@@ -64,6 +64,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/health"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/health"
         "418":
@@ -87,6 +89,8 @@ paths:
           $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -110,6 +114,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -122,6 +128,8 @@ paths:
 
         Both an invalid email and an invalid password return the same 401 status, to avoid revealing whether an
         email is registered.
+
+        Each visitor may try 10 logins per minute and 30 per 10 minutes, and each email 30 per 10 minutes.
       tags: [session]
       security: []
       requestBody:
@@ -135,6 +143,8 @@ paths:
           $ref: "#/components/responses/unauthorized"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -147,6 +157,8 @@ paths:
       description: |
         Create an anonymous token to authenticate against the API without credentials.
         Anonymous tokens bear fewer rights than those of a plain authenticated user.
+
+        Each visitor may create 3 anonymous tokens per 5 minutes.
       tags: [session]
       security: []
       responses:
@@ -154,6 +166,8 @@ paths:
           $ref: "#/components/responses/tokenCreate"
         "418":
           $ref: "#/components/responses/teapot"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -186,6 +200,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -213,6 +229,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -241,6 +259,8 @@ paths:
           $ref: "#/components/responses/conflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -270,6 +290,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -302,6 +324,8 @@ paths:
           $ref: "#/components/responses/conflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -331,6 +355,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -357,6 +383,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -387,6 +415,8 @@ paths:
           $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/plannedDowntime"
         default:
@@ -405,6 +435,8 @@ paths:
         These warnings intentionally reveal membership to the caller. Existing accounts do not create rows.
         Email comparison matches the account store exactly;
         case and provider-specific aliases are not normalized.
+
+        Each caller may send 3 requests per 5 minutes.
       tags: [waitlist]
       security:
         - BearerAuth: ["waitlist:join"]
@@ -424,14 +456,18 @@ paths:
         "422":
           $ref: "#/components/responses/unprocessableEntity"
         "429":
-          description: The writer is busy or the temporary list is full. Retry later.
+          description: |
+            The caller sent too many requests, the writer is busy, or the temporary list is full. Retry
+            once `Retry-After` has elapsed.
           headers:
             Retry-After:
-              schema: { type: integer, const: 60 }
+              description: Seconds to wait before retrying.
+              schema:
+                type: integer
         "503":
           description: |
-            The integration is disabled, unreachable, or at its per-instance concurrency limit. During a
-            planned downtime, a problem body tagged `downtime`.
+            The integration is disabled or unreachable. During a planned downtime, a problem body tagged
+            `downtime`.
           content:
             application/problem+json:
               schema:
@@ -449,6 +485,8 @@ paths:
 
         The response is always 202 whether or not the email is already registered, to avoid revealing which
         emails have accounts. No email is sent when the address is already registered.
+
+        Each email may receive 3 invitations per hour.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:register"]
@@ -466,6 +504,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/mailDeliveryUnavailable"
         default:
@@ -479,6 +519,8 @@ paths:
         Start the email update process, by sending a link with a unique short code to the user new email. If the user
         manages to open the link, it means the email is valid and no further validation is required. The email can be
         changed safely.
+
+        Each caller may send 3 requests per 5 minutes, and each email receive 3 per hour.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:email:update"]
@@ -499,6 +541,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/mailDeliveryUnavailable"
         default:
@@ -513,6 +557,8 @@ paths:
 
         The response is always 202 whether or not the email is registered, to avoid revealing which emails
         have accounts. No email is sent when the address is not registered.
+
+        Each caller may send 3 requests per 5 minutes, and each email receive 3 per hour.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:password:reset"]
@@ -530,6 +576,8 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
         "503":
           $ref: "#/components/responses/mailDeliveryUnavailable"
         default:
@@ -677,6 +725,16 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/plannedDowntimeProblem"
+
+    tooManyRequests:
+      description: |
+        The caller sent too many requests to this route, or too many named the same email. Retry once
+        `Retry-After` has elapsed.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
 
     internalError:
       description: Something unexpected happened.

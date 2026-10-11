@@ -28,14 +28,24 @@ export type HealthDependency = {
  */
 export class AuthenticationApi {
   private readonly _baseUrl: string;
+  private readonly _headers: HeadersInit | undefined;
 
-  constructor(baseUrl: string) {
+  /**
+   * @param baseUrl - The server's base URL.
+   * @param headers - Sent with every request, below each request's own headers. A server-side
+   *   caller passes the visitor's IP here, in the header the server is configured to trust.
+   */
+  constructor(baseUrl: string, headers?: HeadersInit) {
     this._baseUrl = baseUrl;
+    this._headers = headers;
   }
 
   /** Sends a request without decoding it. Callers must handle non-2xx responses before consuming the body. */
   async fetchResponse(input: string, init?: RequestInit): Promise<Response> {
-    return await fetch(`${this._baseUrl}${input}`, init);
+    const headers = new Headers(this._headers);
+    new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
+
+    return await fetch(`${this._baseUrl}${input}`, { ...init, headers });
   }
 
   /**

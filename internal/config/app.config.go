@@ -52,6 +52,11 @@ type Rest struct {
 	Timeouts       RestTimeouts `json:"timeouts"       yaml:"timeouts"`
 	MaxRequestSize int64        `json:"maxRequestSize" yaml:"maxRequestSize"`
 	Cors           Cors         `json:"cors"           yaml:"cors"`
+	// ClientIPHeader names the header a trusted proxy sets to the visitor IP. Empty keeps the TCP
+	// peer address.
+	ClientIPHeader string `json:"clientIPHeader" yaml:"clientIPHeader"`
+	// RateLimitsEnabled turns the rate limits on.
+	RateLimitsEnabled bool `json:"rateLimitsEnabled" yaml:"rateLimitsEnabled"`
 }
 
 // App is the fully resolved configuration for the service, assembled at startup from the environment.
