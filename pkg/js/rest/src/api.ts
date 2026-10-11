@@ -28,24 +28,23 @@ export type HealthDependency = {
  */
 export class AuthenticationApi {
   private readonly _baseUrl: string;
-  private readonly _headers: HeadersInit | undefined;
+  private readonly _fetch: typeof fetch;
 
   /**
    * @param baseUrl - The server's base URL.
-   * @param headers - Sent with every request, below each request's own headers. A server-side
-   *   caller passes the visitor's IP here, in the header the server is configured to trust.
+   * @param fetcher - Sends every request. A server-side caller wraps `fetch` to add the headers its
+   *   deployment needs, such as the visitor's IP in the header the server is configured to trust.
    */
-  constructor(baseUrl: string, headers?: HeadersInit) {
+  constructor(baseUrl: string, fetcher: typeof fetch = (input, init) => fetch(input, init)) {
     this._baseUrl = baseUrl;
-    this._headers = headers;
+    this._fetch = fetcher;
   }
 
   /** Sends a request without decoding it. Callers must handle non-2xx responses before consuming the body. */
   async fetchResponse(input: string, init?: RequestInit): Promise<Response> {
-    const headers = new Headers(this._headers);
-    new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
-
-    return await fetch(`${this._baseUrl}${input}`, { ...init, headers });
+    // Called unbound: browsers reject a native fetch invoked as another object's method.
+    const fetcher = this._fetch;
+    return await fetcher(`${this._baseUrl}${input}`, init);
   }
 
   /**
