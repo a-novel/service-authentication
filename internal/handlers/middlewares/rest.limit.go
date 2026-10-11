@@ -51,7 +51,7 @@ func (limits *RestLimits) Mailbox() func(http.Handler) http.Handler {
 }
 
 // emailKey counts the email a request names in its body.
-var emailKey = httpf.JSONFieldKey("email")
+var emailKey = httpf.BodyKeyRate("email")
 
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP. Mount the limit after
 // the auth middleware, which signs the user in.
