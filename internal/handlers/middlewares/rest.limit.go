@@ -32,23 +32,21 @@ type RestLimits struct {
 // NewRestLimits builds the configured policies, which the REST config may disable for test stacks.
 func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimits {
 	limits := httpf.NewLimits(rest)
+
 	strict := limits.By(policies.Strict, CallerKey)
 	mailbox := limits.By(policies.Mailbox, emailKey)
+	loginBurst := limits.By(policies.LoginBurst, CallerKey)
+	login := limits.By(policies.Login, CallerKey)
+	loginEmail := limits.By(policies.Login, emailKey)
+	waitlistConcurrency := httpf.LimitConcurrency(policies.WaitlistMaxConcurrent)
+	waitlistSize := middleware.RequestSize(policies.WaitlistMaxRequestSize)
 
 	return RestLimits{
 		Anonymous: strict,
-		Login: chi.Chain(
-			limits.By(policies.LoginBurst, CallerKey),
-			limits.By(policies.Login, CallerKey),
-			limits.By(policies.Login, emailKey),
-		).Handler,
-		Mail:    chi.Chain(strict, mailbox).Handler,
-		Mailbox: mailbox,
-		Waitlist: chi.Chain(
-			httpf.LimitConcurrency(policies.WaitlistMaxConcurrent),
-			middleware.RequestSize(policies.WaitlistMaxRequestSize),
-			strict,
-		).Handler,
+		Login:     chi.Chain(loginBurst, login, loginEmail).Handler,
+		Mail:      chi.Chain(strict, mailbox).Handler,
+		Mailbox:   mailbox,
+		Waitlist:  chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
 	}
 }
 
