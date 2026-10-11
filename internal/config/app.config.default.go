@@ -40,7 +40,7 @@ var AppPresetDefault = App{
 		DowntimeStart: env.DowntimeStart,
 	},
 	Rest: env.Rest,
-	Limits: Limits{
+	Limits: authconfig.Limits{
 		Strict:                 env.RestRateLimitStrict,
 		LoginBurst:             env.RestRateLimitLoginBurst,
 		Login:                  env.RestRateLimitLogin,

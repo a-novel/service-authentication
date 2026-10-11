@@ -16,7 +16,7 @@ import (
 
 	"github.com/a-novel-kit/golib/httpf"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
@@ -28,7 +28,7 @@ func TestRestLimits(t *testing.T) {
 	userB := uuid.New()
 
 	// The production defaults, so each case reads as the budget a caller really gets.
-	policies := config.Limits{
+	policies := authconfig.Limits{
 		Strict:     httpf.Rate{Requests: 3, Window: 5 * time.Minute},
 		LoginBurst: httpf.Rate{Requests: 10, Window: time.Minute},
 		Login:      httpf.Rate{Requests: 30, Window: 10 * time.Minute},

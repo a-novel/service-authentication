@@ -12,7 +12,7 @@ import (
 
 	"github.com/a-novel-kit/golib/httpf"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
@@ -21,11 +21,11 @@ import (
 // caller counts as its user rather than its visitor IP.
 type RestLimits struct {
 	limits   httpf.Limits
-	policies config.Limits
+	policies authconfig.Limits
 }
 
 // NewRestLimits builds the configured policies on limits, which may disable them for test stacks.
-func NewRestLimits(limits httpf.Limits, policies config.Limits) *RestLimits {
+func NewRestLimits(limits httpf.Limits, policies authconfig.Limits) *RestLimits {
 	return &RestLimits{limits: limits, policies: policies}
 }
 
