@@ -3,7 +3,7 @@ module github.com/a-novel/service-authentication/v2
 go 1.27.2
 
 require (
-	github.com/a-novel-kit/golib v0.41.1
+	github.com/a-novel-kit/golib v0.42.0
 	github.com/a-novel-kit/jwt/v2 v2.3.0
 	github.com/a-novel/service-json-keys/v2 v2.9.1
 	github.com/go-chi/chi/v5 v5.3.2
@@ -40,8 +40,9 @@ require (
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
 	github.com/getsentry/sentry-go v0.50.0 // indirect
-	github.com/getsentry/sentry-go/otel v0.49.0 // indirect
+	github.com/getsentry/sentry-go/otel v0.50.0 // indirect
 	github.com/getsentry/sentry-go/otel/otlp v0.50.0 // indirect
+	github.com/go-chi/httprate v0.16.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -52,6 +53,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/mattn/go-runewidth v0.0.24 // indirect
@@ -64,6 +66,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/bridges/otelslog v0.21.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.47.0 // indirect
@@ -81,14 +84,14 @@ require (
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/api v0.301.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260928230214-8a89bd6388cc // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260928230214-8a89bd6388cc // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 )
