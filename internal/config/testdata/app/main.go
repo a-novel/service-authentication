@@ -1,4 +1,4 @@
-// This program exposes the server's declarative timeout preset for subprocess tests.
+// This program exposes the server's read timeout and strict rate limit presets for subprocess tests.
 package main
 
 import (
@@ -8,5 +8,5 @@ import (
 )
 
 func main() {
-	fmt.Println(config.AppPresetDefault.Rest.Timeouts.Read)
+	fmt.Println(config.AppPresetDefault.Rest.Timeouts.Read, config.AppPresetDefault.Limits.Strict)
 }

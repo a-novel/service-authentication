@@ -91,14 +91,7 @@ func GenerateArgon2(password string, params Argon2Params) (string, error) {
 		params.Parallelism = uint8(nCpus)
 	}
 
-	hash := argon2.IDKey(
-		[]byte(password),
-		salt,
-		params.Iterations,
-		params.Memory,
-		params.Parallelism,
-		params.KeyLength,
-	)
+	hash := idKey(password, salt, &params)
 
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
@@ -127,14 +120,7 @@ func CompareArgon2(password, encodedHash string) error {
 	}
 
 	// Re-derive the key with the parameters and salt carried by the stored hash.
-	otherHash := argon2.IDKey(
-		[]byte(password),
-		salt,
-		params.Iterations,
-		params.Memory,
-		params.Parallelism,
-		params.KeyLength,
-	)
+	otherHash := idKey(password, salt, params)
 
 	// Constant time, so latency does not leak how much of the hash matched.
 	if subtle.ConstantTimeCompare(hash, otherHash) == 1 {
@@ -142,6 +128,28 @@ func CompareArgon2(password, encodedHash string) error {
 	}
 
 	return ErrInvalidPassword
+}
+
+// argon2Slots bounds the hashes running at once, one per CPU unless [LimitArgon2] resizes it:
+// hashing is CPU-bound, so more concurrent hashes add memory but no throughput.
+var argon2Slots = make(chan struct{}, runtime.GOMAXPROCS(0))
+
+// LimitArgon2 caps the hashes running at once. Each allocates its memory parameter, 64 MiB by
+// default, so size the cap to the instance's memory. Call it at startup, before any request.
+func LimitArgon2(maxConcurrent int) {
+	argon2Slots = make(chan struct{}, maxConcurrent)
+}
+
+// idKey derives the Argon2id key once a slot frees up, so a burst of logins waits instead of
+// exhausting memory.
+func idKey(password string, salt []byte, params *Argon2Params) []byte {
+	// A hash returns its slot to the gate it took it from.
+	slots := argon2Slots
+	slots <- struct{}{}
+
+	defer func() { <-slots }()
+
+	return argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, params.Parallelism, params.KeyLength)
 }
 
 // dummyArgon2Hash is a throwaway Argon2id hash generated once at init with

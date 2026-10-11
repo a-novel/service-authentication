@@ -39,23 +39,15 @@ var AppPresetDefault = App{
 		Name:          env.AppName,
 		DowntimeStart: env.DowntimeStart,
 	},
-	Rest: Rest{
-		Port:           env.RestPort,
-		MaxRequestSize: env.RestMaxRequestSize,
-		Timeouts: RestTimeouts{
-			Read:       env.RestTimeoutRead,
-			ReadHeader: env.RestTimeoutReadHeader,
-			Write:      env.RestTimeoutWrite,
-			Idle:       env.RestTimeoutIdle,
-			Request:    env.RestTimeoutRequest,
-			Shutdown:   env.RestTimeoutShutdown,
-		},
-		Cors: Cors{
-			AllowedOrigins:   env.CorsAllowedOrigins,
-			AllowedHeaders:   env.CorsAllowedHeaders,
-			AllowCredentials: env.CorsAllowCredentials,
-			MaxAge:           env.CorsMaxAge,
-		},
+	Rest: env.Rest,
+	Limits: authconfig.Limits{
+		Strict:                 env.RestRateLimitStrict,
+		LoginBurst:             env.RestRateLimitLoginBurst,
+		Login:                  env.RestRateLimitLogin,
+		Mailbox:                env.RestRateLimitMailbox,
+		WaitlistMaxConcurrent:  env.WaitlistMaxConcurrent,
+		WaitlistMaxRequestSize: env.WaitlistMaxRequestSize,
+		Argon2MaxConcurrent:    env.Argon2MaxConcurrent,
 	},
 
 	DependenciesConfig: Dependencies{

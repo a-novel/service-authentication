@@ -2,10 +2,12 @@ package env
 
 import (
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/a-novel-kit/golib/config"
 	"github.com/a-novel-kit/golib/downtime"
+	"github.com/a-novel-kit/golib/httpf"
 )
 
 // prefix is prepended to every configuration environment variable name, so a project
@@ -23,6 +25,10 @@ const (
 	SmtpMaxConcurrentDefault = 16
 	// WaitlistTimeoutDefault bounds one request to the optional Google sheet writer.
 	WaitlistTimeoutDefault = 10 * time.Second
+	// WaitlistMaxConcurrentDefault keeps optional Google calls from exhausting REST capacity.
+	WaitlistMaxConcurrentDefault = 4
+	// WaitlistMaxRequestSizeDefault allows the bounded email/language payload with JSON escaping overhead.
+	WaitlistMaxRequestSizeDefault = 8 << 10
 
 	PlatformEmailUpdateUrlDefault   = "/ext/email/validate"
 	PlatformPasswordResetUrlDefault = "/ext/password/reset"
@@ -33,19 +39,10 @@ const (
 	ServiceJsonKeysHostDefault = "localhost"
 	ServiceJsonKeysPortDefault = 8080
 
-	RestPortDefault              = 8080
-	RestTimeoutReadDefault       = 15 * time.Second
-	RestTimeoutReadHeaderDefault = 3 * time.Second
-	RestTimeoutWriteDefault      = 30 * time.Second
-	RestTimeoutIdleDefault       = 60 * time.Second
-	RestTimeoutRequestDefault    = 60 * time.Second
 	// RestTimeoutShutdownDefault clears SmtpTimeoutDefault, leaving room for a send that starts
 	// just before the signal to finish. The container runtime's stop grace period has to clear
 	// this in turn; builds/podman-compose.yaml sets one.
-	RestTimeoutShutdownDefault  = 25 * time.Second
-	RestMaxRequestSizeDefault   = 2 << 20 // 2 MiB
-	CorsAllowCredentialsDefault = false
-	CorsMaxAgeDefault           = 3600
+	RestTimeoutShutdownDefault = 25 * time.Second
 
 	// PostgresMaxOpenConnsDefault keeps the pool well under a stock PostgreSQL
 	// max_connections of 100 once multiplied by a service's replica count, leaving
@@ -60,10 +57,18 @@ const (
 	PostgresTLSEnabledDefault   = true
 )
 
-// Default values for environment variables, if applicable.
+// Default rate limits, written "<requests>/<window>" as in their variables.
 var (
-	CorsAllowedOriginsDefault = []string{"*"}
-	CorsAllowedHeadersDefault = []string{"*"}
+	// Argon2MaxConcurrentDefault runs one hash per CPU the container may use, as Keycloak does.
+	// Hashing is CPU-bound, so more concurrent hashes add memory, 64 MiB each, but no throughput.
+	Argon2MaxConcurrentDefault = runtime.GOMAXPROCS(0)
+
+	RestRateLimitStrictDefault = config.Must(httpf.ParseRate("3/5m"))
+	// RestRateLimitLoginBurstDefault and RestRateLimitLoginDefault leave a forgotten password a few
+	// attempts.
+	RestRateLimitLoginBurstDefault = config.Must(httpf.ParseRate("10/1m"))
+	RestRateLimitLoginDefault      = config.Must(httpf.ParseRate("30/10m"))
+	RestRateLimitMailboxDefault    = config.Must(httpf.ParseRate("3/1h"))
 )
 
 // Raw values for environment variables.
@@ -100,21 +105,16 @@ var (
 	waitlistSecret  = getEnv("WAITLIST_SECRET")
 	waitlistTimeout = getEnv("WAITLIST_TIMEOUT")
 
+	waitlistMaxConcurrent   = getEnv("WAITLIST_MAX_CONCURRENT")
+	waitlistMaxRequestSize  = getEnv("WAITLIST_MAX_REQUEST_SIZE")
+	argon2MaxConcurrent     = getEnv("ARGON2_MAX_CONCURRENT")
+	restRateLimitStrict     = getEnv("REST_RATE_LIMIT_STRICT")
+	restRateLimitLoginBurst = getEnv("REST_RATE_LIMIT_LOGIN_BURST")
+	restRateLimitLogin      = getEnv("REST_RATE_LIMIT_LOGIN")
+	restRateLimitMailbox    = getEnv("REST_RATE_LIMIT_MAILBOX")
+
 	appName = getEnv("APP_NAME")
 	otel    = getEnv("OTEL")
-
-	restPort              = getEnv("REST_PORT")
-	restMaxRequestSize    = getEnv("REST_MAX_REQUEST_SIZE")
-	restTimeoutRead       = getEnv("REST_TIMEOUT_READ")
-	restTimeoutReadHeader = getEnv("REST_TIMEOUT_READ_HEADER")
-	restTimeoutWrite      = getEnv("REST_TIMEOUT_WRITE")
-	restTimeoutIdle       = getEnv("REST_TIMEOUT_IDLE")
-	restTimeoutRequest    = getEnv("REST_TIMEOUT_REQUEST")
-	restTimeoutShutdown   = getEnv("REST_TIMEOUT_SHUTDOWN")
-	corsAllowedOrigins    = getEnv("REST_CORS_ALLOWED_ORIGINS")
-	corsAllowedHeaders    = getEnv("REST_CORS_ALLOWED_HEADERS")
-	corsAllowCredentials  = getEnv("REST_CORS_ALLOW_CREDENTIALS")
-	corsMaxAge            = getEnv("REST_CORS_MAX_AGE")
 
 	gcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
 
@@ -211,6 +211,23 @@ var (
 	WaitlistSecret = waitlistSecret
 	// WaitlistTimeout bounds the Google request and its content redirect.
 	WaitlistTimeout = config.LoadEnv(waitlistTimeout, WaitlistTimeoutDefault, config.DurationParser)
+	// WaitlistMaxConcurrent caps the waitlist requests waiting on Google at once, per instance.
+	WaitlistMaxConcurrent = config.LoadEnv(waitlistMaxConcurrent, WaitlistMaxConcurrentDefault, config.IntParser)
+	// WaitlistMaxRequestSize caps a waitlist request body, in bytes.
+	WaitlistMaxRequestSize = config.LoadEnv(waitlistMaxRequestSize, WaitlistMaxRequestSizeDefault, config.Int64Parser)
+
+	// Argon2MaxConcurrent caps the password hashes running at once, per instance. Each allocates
+	// 64 MiB, so size it to the instance's memory.
+	Argon2MaxConcurrent = config.LoadEnv(argon2MaxConcurrent, Argon2MaxConcurrentDefault, config.IntParser)
+
+	// RestRateLimitStrict caps each caller of a route issuing anonymous tokens or invitation requests.
+	RestRateLimitStrict = config.LoadEnv(restRateLimitStrict, RestRateLimitStrictDefault, httpf.ParseRate)
+	// RestRateLimitLoginBurst caps each visitor's logins over a short window.
+	RestRateLimitLoginBurst = config.LoadEnv(restRateLimitLoginBurst, RestRateLimitLoginBurstDefault, httpf.ParseRate)
+	// RestRateLimitLogin caps each visitor's logins, and the logins naming one email, over a longer window.
+	RestRateLimitLogin = config.LoadEnv(restRateLimitLogin, RestRateLimitLoginDefault, httpf.ParseRate)
+	// RestRateLimitMailbox caps the emails each address receives from one route.
+	RestRateLimitMailbox = config.LoadEnv(restRateLimitMailbox, RestRateLimitMailboxDefault, httpf.ParseRate)
 
 	// AppName is the name of the application, as it will appear in logs and tracing.
 	AppName = config.LoadEnv(appName, AppNameDefault, config.StringParser)
@@ -219,23 +236,8 @@ var (
 	// See https://opentelemetry.io/
 	Otel = config.LoadEnv(otel, false, config.BoolParser)
 
-	// RestPort is the port on which the rest server will listen for incoming requests.
-	RestPort              = config.LoadEnv(restPort, RestPortDefault, config.IntParser)
-	RestMaxRequestSize    = config.LoadEnv(restMaxRequestSize, RestMaxRequestSizeDefault, config.Int64Parser)
-	RestTimeoutRead       = config.LoadEnv(restTimeoutRead, RestTimeoutReadDefault, config.DurationParser)
-	RestTimeoutReadHeader = config.LoadEnv(restTimeoutReadHeader, RestTimeoutReadHeaderDefault, config.DurationParser)
-	RestTimeoutWrite      = config.LoadEnv(restTimeoutWrite, RestTimeoutWriteDefault, config.DurationParser)
-	RestTimeoutIdle       = config.LoadEnv(restTimeoutIdle, RestTimeoutIdleDefault, config.DurationParser)
-	RestTimeoutRequest    = config.LoadEnv(restTimeoutRequest, RestTimeoutRequestDefault, config.DurationParser)
-	RestTimeoutShutdown   = config.LoadEnv(restTimeoutShutdown, RestTimeoutShutdownDefault, config.DurationParser)
-	CorsAllowedOrigins    = config.LoadEnv(
-		corsAllowedOrigins, CorsAllowedOriginsDefault, config.SliceParser(config.StringParser),
-	)
-	CorsAllowedHeaders = config.LoadEnv(
-		corsAllowedHeaders, CorsAllowedHeadersDefault, config.SliceParser(config.StringParser),
-	)
-	CorsAllowCredentials = config.LoadEnv(corsAllowCredentials, CorsAllowCredentialsDefault, config.BoolParser)
-	CorsMaxAge           = config.LoadEnv(corsMaxAge, CorsMaxAgeDefault, config.IntParser)
+	// Rest configures the REST server from the REST_* variables.
+	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
 	// GcloudProjectId configures the server for Google Cloud environment.
 	//
@@ -246,3 +248,13 @@ var (
 	// until it is removed, the service refuses work. Nil when none is planned.
 	DowntimeStart = config.LoadEnv(downtimeStart, nil, downtime.ParseStart)
 )
+
+// restDefaults keeps golib's REST defaults but for the versioned ping path and the shutdown, which
+// waits for detached mail.
+func restDefaults() httpf.ServerConfig {
+	defaults := httpf.ServerConfigDefault
+	defaults.Liveness = "/v2/ping"
+	defaults.Timeouts.Shutdown = RestTimeoutShutdownDefault
+
+	return defaults
+}

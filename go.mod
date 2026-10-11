@@ -3,11 +3,10 @@ module github.com/a-novel/service-authentication/v2
 go 1.27.2
 
 require (
-	github.com/a-novel-kit/golib v0.42.0
+	github.com/a-novel-kit/golib v0.44.0
 	github.com/a-novel-kit/jwt/v2 v2.3.0
 	github.com/a-novel/service-json-keys/v2 v2.9.1
 	github.com/go-chi/chi/v5 v5.3.2
-	github.com/go-chi/cors v1.2.2
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/uuid v1.6.0
@@ -42,6 +41,7 @@ require (
 	github.com/getsentry/sentry-go v0.50.0 // indirect
 	github.com/getsentry/sentry-go/otel v0.50.0 // indirect
 	github.com/getsentry/sentry-go/otel/otlp v0.50.0 // indirect
+	github.com/go-chi/cors v1.2.2 // indirect
 	github.com/go-chi/httprate v0.16.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

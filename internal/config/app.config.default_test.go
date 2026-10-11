@@ -13,17 +13,25 @@ func TestApp(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name            string
-		restTimeoutRead string
-		expectRead      string
-		expectErr       string
+		name string
+
+		restTimeoutRead     string
+		restRateLimitStrict string
+
+		expect    string
+		expectErr string
 	}{
-		{name: "Success/Default", expectRead: "15s"},
-		{name: "Success/Override", restTimeoutRead: "2s", expectRead: "2s"},
+		{name: "Success/Default", expect: "15s 3/5m0s"},
+		{name: "Success/Override", restTimeoutRead: "2s", restRateLimitStrict: "2/1m", expect: "2s 2/1m0s"},
 		{
 			name:            "Error/InvalidRestTimeoutRead",
 			restTimeoutRead: "invalid",
 			expectErr:       `time: invalid duration "invalid"`,
+		},
+		{
+			name:                "Error/InvalidRateLimit",
+			restRateLimitStrict: "3",
+			expectErr:           "invalid rate",
 		},
 	}
 
@@ -38,6 +46,7 @@ func TestApp(t *testing.T) {
 				"SERVICE_AUTHENTICATION_ENV_PREFIX=AUTH_CONFIG_TEST_",
 				"REST_TIMEOUT_READ=invalid",
 				"AUTH_CONFIG_TEST_REST_TIMEOUT_READ="+testCase.restTimeoutRead,
+				"AUTH_CONFIG_TEST_REST_RATE_LIMIT_STRICT="+testCase.restRateLimitStrict,
 			)
 
 			output, err := command.CombinedOutput()
@@ -49,7 +58,7 @@ func TestApp(t *testing.T) {
 			}
 
 			require.NoError(t, err, string(output))
-			require.Equal(t, testCase.expectRead, strings.TrimSpace(string(output)))
+			require.Equal(t, testCase.expect, strings.TrimSpace(string(output)))
 		})
 	}
 }

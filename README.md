@@ -163,19 +163,29 @@ deployments migrate.
 
 **REST tuning** (images `rest`, `standalone-rest`):
 
-| Name                          | Description                          | Default          |
-| ----------------------------- | ------------------------------------ | ---------------- |
-| `REST_MAX_REQUEST_SIZE`       | Maximum request body size, in bytes. | `2097152` (2MiB) |
-| `REST_TIMEOUT_READ`           | Read timeout.                        | `15s`            |
-| `REST_TIMEOUT_READ_HEADER`    | Header read timeout.                 | `3s`             |
-| `REST_TIMEOUT_WRITE`          | Write timeout.                       | `30s`            |
-| `REST_TIMEOUT_IDLE`           | Idle keep-alive timeout.             | `60s`            |
-| `REST_TIMEOUT_REQUEST`        | Per-request timeout.                 | `60s`            |
-| `REST_TIMEOUT_SHUTDOWN`       | Graceful-shutdown timeout.           | `25s`            |
-| `REST_CORS_ALLOWED_ORIGINS`   | CORS allowed origins.                | `*`              |
-| `REST_CORS_ALLOWED_HEADERS`   | CORS allowed headers.                | `*`              |
-| `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.         | `false`          |
-| `REST_CORS_MAX_AGE`           | CORS max-age, in seconds.            | `3600`           |
+| Name                          | Description                                                                                                                                  | Default                          |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `REST_MAX_REQUEST_SIZE`       | Maximum request body size, in bytes.                                                                                                         | `16384` (16KiB)                  |
+| `REST_CLIENT_IP_HEADER`       | Header a trusted proxy sets to the visitor IP. Set it only when every request comes through that proxy.                                      | TCP peer                         |
+| `REST_LIVENESS_PATH`          | Ping path, which still answers during a planned downtime and skips the standard rate limit.                                                  | `/v2/ping`                       |
+| `REST_RATE_LIMITS_ENABLED`    | Rate-limit each caller and email, as documented per route in the OpenAPI specification. Turn off only in test stacks.                        | `true`                           |
+| `REST_RATE_LIMIT`             | Requests each visitor sends to each route, as `<requests>/<window>`.                                                                         | `5/1s`                           |
+| `REST_RATE_LIMIT_STRICT`      | Anonymous tokens, invitation requests, and reset or email-change mails per caller.                                                           | `3/5m`                           |
+| `REST_RATE_LIMIT_LOGIN_BURST` | Logins per visitor over a short window.                                                                                                      | `10/1m`                          |
+| `REST_RATE_LIMIT_LOGIN`       | Logins per visitor, and per email, over a longer window.                                                                                     | `30/10m`                         |
+| `REST_RATE_LIMIT_MAILBOX`     | Emails each address receives from one route.                                                                                                 | `3/1h`                           |
+| `ARGON2_MAX_CONCURRENT`       | Password hashes running at once per instance; each takes 64 MiB. Hashing is CPU-bound, so more than one per CPU adds memory, not throughput. | CPU count (`GOMAXPROCS`)         |
+| `REST_TIMEOUT_READ`           | Read timeout.                                                                                                                                | `15s`                            |
+| `REST_TIMEOUT_READ_HEADER`    | Header read timeout.                                                                                                                         | `3s`                             |
+| `REST_TIMEOUT_WRITE`          | Write timeout.                                                                                                                               | `30s`                            |
+| `REST_TIMEOUT_IDLE`           | Idle keep-alive timeout.                                                                                                                     | `60s`                            |
+| `REST_TIMEOUT_REQUEST`        | Per-request timeout.                                                                                                                         | `60s`                            |
+| `REST_TIMEOUT_SHUTDOWN`       | Graceful-shutdown timeout.                                                                                                                   | `25s`                            |
+| `REST_CORS_ALLOWED_ORIGINS`   | CORS allowed origins.                                                                                                                        | `*`                              |
+| `REST_CORS_ALLOWED_HEADERS`   | CORS allowed headers.                                                                                                                        | `*`                              |
+| `REST_CORS_ALLOWED_METHODS`   | CORS allowed methods, comma-separated.                                                                                                       | `HEAD,GET,POST,PUT,PATCH,DELETE` |
+| `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.                                                                                                                 | `false`                          |
+| `REST_CORS_MAX_AGE`           | CORS max-age, in seconds.                                                                                                                    | `3600`                           |
 
 Database connection pool (server images). The limits are **per process**. The database's `max_connections` has to cover every replica plus the migration job; the stock `postgres` default is 100.
 
@@ -210,11 +220,13 @@ adding a row; successful account creation removes the address from the list. Adm
 The integration is disabled until both settings are supplied to the REST server. Maintenance jobs
 that access the list use the same configuration:
 
-| Name               | Purpose                                                                  | Default  |
-| ------------------ | ------------------------------------------------------------------------ | -------- |
-| `WAITLIST_URL`     | Google Apps Script deployment URL ending in `/exec`.                     | Disabled |
-| `WAITLIST_SECRET`  | Random signing key shared with the script, injected as a runtime secret. | Disabled |
-| `WAITLIST_TIMEOUT` | Timeout for one writer operation, including Google's response redirect.  | `10s`    |
+| Name                        | Purpose                                                                  | Default  |
+| --------------------------- | ------------------------------------------------------------------------ | -------- |
+| `WAITLIST_URL`              | Google Apps Script deployment URL ending in `/exec`.                     | Disabled |
+| `WAITLIST_SECRET`           | Random signing key shared with the script, injected as a runtime secret. | Disabled |
+| `WAITLIST_TIMEOUT`          | Timeout for one writer operation, including Google's response redirect.  | `10s`    |
+| `WAITLIST_MAX_CONCURRENT`   | Waitlist requests waiting on Google at once, per instance.               | `4`      |
+| `WAITLIST_MAX_REQUEST_SIZE` | Maximum waitlist request body size, in bytes.                            | `8192`   |
 
 Follow the [private-sheet setup and operations guide](./scripts/waitlist/README.md). CI needs no production
 Google credentials. A Google outage does not block login or invalidate a newly created account;

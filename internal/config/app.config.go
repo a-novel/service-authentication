@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/a-novel-kit/golib/grpcf"
+	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
@@ -27,37 +28,11 @@ type Dependencies struct {
 	ServiceJsonKeysCredentials grpcf.CredentialsProvider `json:"-"                   yaml:"-"`
 }
 
-// RestTimeouts bounds the phases of the REST server's request lifecycle.
-type RestTimeouts struct {
-	Read       time.Duration `json:"read"       yaml:"read"`
-	ReadHeader time.Duration `json:"readHeader" yaml:"readHeader"`
-	Write      time.Duration `json:"write"      yaml:"write"`
-	Idle       time.Duration `json:"idle"       yaml:"idle"`
-	Request    time.Duration `json:"request"    yaml:"request"`
-	// Shutdown bounds the whole stop: the HTTP server's drain and the wait on detached work share it.
-	Shutdown time.Duration `json:"shutdown" yaml:"shutdown"`
-}
-
-// Cors configures the cross-origin resource sharing policy of the REST server.
-type Cors struct {
-	AllowedOrigins   []string `json:"allowedOrigins"   yaml:"allowedOrigins"`
-	AllowedHeaders   []string `json:"allowedHeaders"   yaml:"allowedHeaders"`
-	AllowCredentials bool     `json:"allowCredentials" yaml:"allowCredentials"`
-	MaxAge           int      `json:"maxAge"           yaml:"maxAge"`
-}
-
-// Rest configures the public REST HTTP server.
-type Rest struct {
-	Port           int          `json:"port"           yaml:"port"`
-	Timeouts       RestTimeouts `json:"timeouts"       yaml:"timeouts"`
-	MaxRequestSize int64        `json:"maxRequestSize" yaml:"maxRequestSize"`
-	Cors           Cors         `json:"cors"           yaml:"cors"`
-}
-
 // App is the fully resolved configuration for the service, assembled at startup from the environment.
 type App struct {
-	App  Main `json:"app"  yaml:"app"`
-	Rest Rest `json:"rest" yaml:"rest"`
+	App    Main               `json:"app"    yaml:"app"`
+	Rest   httpf.ServerConfig `json:"rest"   yaml:"rest"`
+	Limits authconfig.Limits  `json:"limits" yaml:"limits"`
 
 	DependenciesConfig Dependencies        `json:"dependencies" yaml:"dependencies"`
 	Permissions        Permissions         `json:"permissions"  yaml:"permissions"`

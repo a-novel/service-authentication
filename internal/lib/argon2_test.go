@@ -1,7 +1,9 @@
 package lib_test
 
 import (
+	"runtime"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -56,5 +58,29 @@ func TestArgon2(t *testing.T) {
 			err = lib.CompareArgon2(testCase.password, testCase.encrypted)
 			require.ErrorIs(t, err, testCase.expectErr)
 		})
+	}
+}
+
+//nolint:paralleltest // It resizes the process-wide hash gate, which parallel tests share.
+func TestLimitArgon2(t *testing.T) {
+	lib.LimitArgon2(1)
+	t.Cleanup(func() { lib.LimitArgon2(runtime.GOMAXPROCS(0)) })
+
+	// Every hash must give its slot back, or the next one waits forever.
+	hashes := make(chan error, 3)
+	for range cap(hashes) {
+		go func() {
+			_, err := lib.GenerateArgon2("password", lib.Argon2ParamsDefault)
+			hashes <- err
+		}()
+	}
+
+	for range cap(hashes) {
+		select {
+		case err := <-hashes:
+			require.NoError(t, err)
+		case <-time.After(30 * time.Second):
+			require.FailNow(t, "a hash never got a slot")
+		}
 	}
 }
