@@ -39,26 +39,7 @@ var AppPresetDefault = App{
 		Name:          env.AppName,
 		DowntimeStart: env.DowntimeStart,
 	},
-	Rest: Rest{
-		Port:              env.RestPort,
-		MaxRequestSize:    env.RestMaxRequestSize,
-		ClientIPHeader:    env.RestClientIPHeader,
-		RateLimitsEnabled: env.RestRateLimitsEnabled,
-		Timeouts: RestTimeouts{
-			Read:       env.RestTimeoutRead,
-			ReadHeader: env.RestTimeoutReadHeader,
-			Write:      env.RestTimeoutWrite,
-			Idle:       env.RestTimeoutIdle,
-			Request:    env.RestTimeoutRequest,
-			Shutdown:   env.RestTimeoutShutdown,
-		},
-		Cors: Cors{
-			AllowedOrigins:   env.CorsAllowedOrigins,
-			AllowedHeaders:   env.CorsAllowedHeaders,
-			AllowCredentials: env.CorsAllowCredentials,
-			MaxAge:           env.CorsMaxAge,
-		},
-	},
+	Rest: env.Rest,
 
 	DependenciesConfig: Dependencies{
 		ServiceJsonKeysPort: env.ServiceJsonKeysPort,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/a-novel-kit/golib/config"
 	"github.com/a-novel-kit/golib/downtime"
+	"github.com/a-novel-kit/golib/httpf"
 )
 
 // prefix is prepended to every configuration environment variable name, so a project
@@ -33,20 +34,10 @@ const (
 	ServiceJsonKeysHostDefault = "localhost"
 	ServiceJsonKeysPortDefault = 8080
 
-	RestPortDefault              = 8080
-	RestTimeoutReadDefault       = 15 * time.Second
-	RestTimeoutReadHeaderDefault = 3 * time.Second
-	RestTimeoutWriteDefault      = 30 * time.Second
-	RestTimeoutIdleDefault       = 60 * time.Second
-	RestTimeoutRequestDefault    = 60 * time.Second
 	// RestTimeoutShutdownDefault clears SmtpTimeoutDefault, leaving room for a send that starts
 	// just before the signal to finish. The container runtime's stop grace period has to clear
 	// this in turn; builds/podman-compose.yaml sets one.
-	RestTimeoutShutdownDefault   = 25 * time.Second
-	RestMaxRequestSizeDefault    = 16 << 10 // 16 KiB
-	RestRateLimitsEnabledDefault = true
-	CorsAllowCredentialsDefault  = false
-	CorsMaxAgeDefault            = 3600
+	RestTimeoutShutdownDefault = 25 * time.Second
 
 	// PostgresMaxOpenConnsDefault keeps the pool well under a stock PostgreSQL
 	// max_connections of 100 once multiplied by a service's replica count, leaving
@@ -59,12 +50,6 @@ const (
 	PostgresMaxIdleConnsDefault = 20
 	PostgresPortDefault         = 5432
 	PostgresTLSEnabledDefault   = true
-)
-
-// Default values for environment variables, if applicable.
-var (
-	CorsAllowedOriginsDefault = []string{"*"}
-	CorsAllowedHeadersDefault = []string{"*"}
 )
 
 // Raw values for environment variables.
@@ -103,21 +88,6 @@ var (
 
 	appName = getEnv("APP_NAME")
 	otel    = getEnv("OTEL")
-
-	restPort              = getEnv("REST_PORT")
-	restMaxRequestSize    = getEnv("REST_MAX_REQUEST_SIZE")
-	restTimeoutRead       = getEnv("REST_TIMEOUT_READ")
-	restTimeoutReadHeader = getEnv("REST_TIMEOUT_READ_HEADER")
-	restTimeoutWrite      = getEnv("REST_TIMEOUT_WRITE")
-	restTimeoutIdle       = getEnv("REST_TIMEOUT_IDLE")
-	restTimeoutRequest    = getEnv("REST_TIMEOUT_REQUEST")
-	restTimeoutShutdown   = getEnv("REST_TIMEOUT_SHUTDOWN")
-	restClientIPHeader    = getEnv("REST_CLIENT_IP_HEADER")
-	restRateLimitsEnabled = getEnv("REST_RATE_LIMITS_ENABLED")
-	corsAllowedOrigins    = getEnv("REST_CORS_ALLOWED_ORIGINS")
-	corsAllowedHeaders    = getEnv("REST_CORS_ALLOWED_HEADERS")
-	corsAllowCredentials  = getEnv("REST_CORS_ALLOW_CREDENTIALS")
-	corsMaxAge            = getEnv("REST_CORS_MAX_AGE")
 
 	gcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
 
@@ -222,30 +192,8 @@ var (
 	// See https://opentelemetry.io/
 	Otel = config.LoadEnv(otel, false, config.BoolParser)
 
-	// RestPort is the port on which the rest server will listen for incoming requests.
-	RestPort              = config.LoadEnv(restPort, RestPortDefault, config.IntParser)
-	RestMaxRequestSize    = config.LoadEnv(restMaxRequestSize, RestMaxRequestSizeDefault, config.Int64Parser)
-	RestTimeoutRead       = config.LoadEnv(restTimeoutRead, RestTimeoutReadDefault, config.DurationParser)
-	RestTimeoutReadHeader = config.LoadEnv(restTimeoutReadHeader, RestTimeoutReadHeaderDefault, config.DurationParser)
-	RestTimeoutWrite      = config.LoadEnv(restTimeoutWrite, RestTimeoutWriteDefault, config.DurationParser)
-	RestTimeoutIdle       = config.LoadEnv(restTimeoutIdle, RestTimeoutIdleDefault, config.DurationParser)
-	RestTimeoutRequest    = config.LoadEnv(restTimeoutRequest, RestTimeoutRequestDefault, config.DurationParser)
-	RestTimeoutShutdown   = config.LoadEnv(restTimeoutShutdown, RestTimeoutShutdownDefault, config.DurationParser)
-	// RestClientIPHeader names the header a trusted proxy sets to the visitor IP. Empty keeps the
-	// TCP peer address. Name a header only when every request reaches the server through that proxy.
-	RestClientIPHeader = restClientIPHeader
-	// RestRateLimitsEnabled turns the rate limits on. Only test stacks turn them off.
-	RestRateLimitsEnabled = config.LoadEnv(
-		restRateLimitsEnabled, RestRateLimitsEnabledDefault, config.BoolParser,
-	)
-	CorsAllowedOrigins = config.LoadEnv(
-		corsAllowedOrigins, CorsAllowedOriginsDefault, config.SliceParser(config.StringParser),
-	)
-	CorsAllowedHeaders = config.LoadEnv(
-		corsAllowedHeaders, CorsAllowedHeadersDefault, config.SliceParser(config.StringParser),
-	)
-	CorsAllowCredentials = config.LoadEnv(corsAllowCredentials, CorsAllowCredentialsDefault, config.BoolParser)
-	CorsMaxAge           = config.LoadEnv(corsMaxAge, CorsMaxAgeDefault, config.IntParser)
+	// Rest configures the REST server from the REST_* variables.
+	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
 	// GcloudProjectId configures the server for Google Cloud environment.
 	//
@@ -256,3 +204,11 @@ var (
 	// until it is removed, the service refuses work. Nil when none is planned.
 	DowntimeStart = config.LoadEnv(downtimeStart, nil, downtime.ParseStart)
 )
+
+// restDefaults keeps golib's REST defaults but for the shutdown, which waits for detached mail.
+func restDefaults() httpf.ServerConfig {
+	defaults := httpf.ServerConfigDefault
+	defaults.Timeouts.Shutdown = RestTimeoutShutdownDefault
+
+	return defaults
+}

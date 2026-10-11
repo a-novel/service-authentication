@@ -8,17 +8,14 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	"github.com/samber/lo"
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
@@ -172,7 +169,8 @@ func main() {
 	// =================================================================================================================
 
 	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
-	limits := middlewares.NewRestLimits(cfg.Rest.RateLimitsEnabled)
+	limits := httpf.NewLimits(cfg.Rest)
+	strict := middlewares.NewRestLimits(limits)
 
 	// =================================================================================================================
 	// HANDLERS
@@ -239,12 +237,12 @@ func main() {
 			api.Get("/healthcheck", handlerHealth.ServeHTTP)
 
 			withAuth(api.With(waitlistGate(), middleware.RequestSize(waitlistMaxRequestSize)), "waitlist:join").
-				With(limits.Strict()).
+				With(strict.Strict()).
 				Put("/waitlist", handlerWaitlistJoin.ServeHTTP)
 
 			api.Route("/session", func(r chi.Router) {
-				r.With(limits.Login()).Put("/", handlerTokenCreate.ServeHTTP)
-				r.With(limits.Strict()).Put("/anon", handlerTokenCreateAnon.ServeHTTP)
+				r.With(strict.Login()).Put("/", handlerTokenCreate.ServeHTTP)
+				r.With(strict.Strict()).Put("/anon", handlerTokenCreateAnon.ServeHTTP)
 
 				withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
 				r.Patch("/", handlerTokenRefresh.ServeHTTP)
@@ -267,11 +265,11 @@ func main() {
 			})
 
 			api.Route("/short-code", func(r chi.Router) {
-				withAuth(r, "shortCode:register").With(limits.Mailbox()).
+				withAuth(r, "shortCode:register").With(strict.Mailbox()).
 					Put("/register", handlerShortCodeCreateRegister.ServeHTTP)
-				withAuth(r, "shortCode:email:update").With(limits.Mail()).
+				withAuth(r, "shortCode:email:update").With(strict.Mail()).
 					Put("/update-email", handlerShortCodeCreateEmailUpdate.ServeHTTP)
-				withAuth(r, "shortCode:password:reset").With(limits.Mail()).
+				withAuth(r, "shortCode:password:reset").With(strict.Mail()).
 					Put("/update-password", handlerShortCodeCreatePasswordReset.ServeHTTP)
 			})
 		})
@@ -281,15 +279,7 @@ func main() {
 	// RUN
 	// =================================================================================================================
 
-	httpServer := &http.Server{
-		Addr:              ":" + strconv.Itoa(cfg.Rest.Port),
-		Handler:           router,
-		ReadTimeout:       cfg.Rest.Timeouts.Read,
-		ReadHeaderTimeout: cfg.Rest.Timeouts.ReadHeader,
-		WriteTimeout:      cfg.Rest.Timeouts.Write,
-		IdleTimeout:       cfg.Rest.Timeouts.Idle,
-		BaseContext:       func(_ net.Listener) context.Context { return ctx },
-	}
+	httpServer := httpf.NewServer(ctx, cfg.Rest, router)
 
 	lo.Must0(serve(
 		processCtx,
@@ -311,36 +301,15 @@ func waitlistGate() func(http.Handler) http.Handler {
 
 // newRouter applies the common middleware; main mounts every route on the returned router.
 func newRouter(cfg config.App) *chi.Mux {
-	router := chi.NewRouter()
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.ClientIPFromRemoteAddr)
-
-	if cfg.Rest.ClientIPHeader != "" {
-		// The proxy's header names the visitor; a request without it keeps the peer address.
-		router.Use(middleware.ClientIPFromHeader(cfg.Rest.ClientIPHeader))
-	}
-
-	router.Use(middleware.Timeout(cfg.Rest.Timeouts.Request))
-	router.Use(middleware.RequestSize(cfg.Rest.MaxRequestSize))
-	router.Use(cfg.Otel.HttpHandler())
-	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   cfg.Rest.Cors.AllowedOrigins,
-		AllowedHeaders:   cfg.Rest.Cors.AllowedHeaders,
-		AllowCredentials: cfg.Rest.Cors.AllowCredentials,
-		AllowedMethods: []string{
-			http.MethodHead, http.MethodGet, http.MethodPost,
-			http.MethodPut, http.MethodPatch, http.MethodDelete,
+	return httpf.NewRouter(cfg.Rest, httpf.RouterOptions{
+		Otel:          cfg.Otel,
+		Logger:        cfg.HttpLogger,
+		DowntimeStart: cfg.App.DowntimeStart,
+		Liveness:      "/v2/ping",
+		Methods: []string{
+			http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete,
 		},
-		// Browsers hide Retry-After from scripts unless it is exposed; the waitlist sends it.
-		ExposedHeaders: []string{"Retry-After"},
-		MaxAge:         cfg.Rest.Cors.MaxAge,
-	}))
-	router.Use(cfg.HttpLogger.Logger())
-	// During a planned downtime, only liveness answers; the logger records the refusals, and CORS
-	// lets the browser read them.
-	router.Use(downtime.Middleware(cfg.App.DowntimeStart, "/v2/ping"))
-
-	return router
+	})
 }
 
 // serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.

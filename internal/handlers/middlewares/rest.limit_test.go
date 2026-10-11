@@ -13,6 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel-kit/golib/httpf"
+
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
@@ -94,16 +96,6 @@ func TestRestLimits(t *testing.T) {
 			limit: (*middlewares.RestLimits).Mailbox,
 
 			allowed: append(visitors(3, "a@example.com"), request{visitor: "192.0.2.9", email: "b@example.com"}),
-		},
-		{
-			name: "Error/Standard",
-
-			limit: (*middlewares.RestLimits).Standard,
-
-			allowed: times(5, visitor),
-			refused: &visitor,
-
-			expectRetryAfter: "1",
 		},
 		{
 			name: "Error/Strict",
@@ -201,7 +193,10 @@ func TestRestLimits(t *testing.T) {
 			router := chi.NewRouter()
 			router.Use(middleware.ClientIPFromHeader("X-Client-Ip"))
 			router.Group(func(api chi.Router) {
-				api.Use(signIn, testCase.limit(middlewares.NewRestLimits(!testCase.disabled)))
+				config := httpf.ServerConfigDefault
+				config.RateLimitsEnabled = !testCase.disabled
+
+				api.Use(signIn, testCase.limit(middlewares.NewRestLimits(httpf.NewLimits(config))))
 				// The handler echoes the body, which must reach it whole after the email limit read it.
 				api.Put("/", func(w http.ResponseWriter, r *http.Request) {
 					_, _ = io.Copy(w, r.Body)
