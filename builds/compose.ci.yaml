@@ -78,3 +78,5 @@ services:
       SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
       SMTP_SENDER_PASSWORD: noreply
       SMTP_FORCE_UNENCRYPTED: "true"
+      # The suites create many sessions from one address within seconds.
+      REST_RATE_LIMITS_ENABLED: "false"
