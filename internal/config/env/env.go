@@ -1,7 +1,6 @@
 package env
 
 import (
-	"cmp"
 	"os"
 	"time"
 
@@ -60,13 +59,13 @@ const (
 )
 
 // Default rate limits, written "<requests>/<window>" as in their variables.
-const (
-	RestRateLimitStrictDefault = "3/5m"
+var (
+	RestRateLimitStrictDefault = config.Must(httpf.ParseRate("3/5m"))
 	// RestRateLimitLoginBurstDefault and RestRateLimitLoginDefault leave a forgotten password a few
 	// attempts.
-	RestRateLimitLoginBurstDefault = "10/1m"
-	RestRateLimitLoginDefault      = "30/10m"
-	RestRateLimitMailboxDefault    = "3/1h"
+	RestRateLimitLoginBurstDefault = config.Must(httpf.ParseRate("10/1m"))
+	RestRateLimitLoginDefault      = config.Must(httpf.ParseRate("30/10m"))
+	RestRateLimitMailboxDefault    = config.Must(httpf.ParseRate("3/1h"))
 )
 
 // Raw values for environment variables.
@@ -219,13 +218,13 @@ var (
 	Argon2MaxConcurrent = config.LoadEnv(argon2MaxConcurrent, Argon2MaxConcurrentDefault, config.IntParser)
 
 	// RestRateLimitStrict caps each caller of a route issuing anonymous tokens or invitation requests.
-	RestRateLimitStrict = loadRate(restRateLimitStrict, RestRateLimitStrictDefault)
+	RestRateLimitStrict = config.LoadEnv(restRateLimitStrict, RestRateLimitStrictDefault, httpf.ParseRate)
 	// RestRateLimitLoginBurst caps each visitor's logins over a short window.
-	RestRateLimitLoginBurst = loadRate(restRateLimitLoginBurst, RestRateLimitLoginBurstDefault)
+	RestRateLimitLoginBurst = config.LoadEnv(restRateLimitLoginBurst, RestRateLimitLoginBurstDefault, httpf.ParseRate)
 	// RestRateLimitLogin caps each visitor's logins, and the logins naming one email, over a longer window.
-	RestRateLimitLogin = loadRate(restRateLimitLogin, RestRateLimitLoginDefault)
+	RestRateLimitLogin = config.LoadEnv(restRateLimitLogin, RestRateLimitLoginDefault, httpf.ParseRate)
 	// RestRateLimitMailbox caps the emails each address receives from one route.
-	RestRateLimitMailbox = loadRate(restRateLimitMailbox, RestRateLimitMailboxDefault)
+	RestRateLimitMailbox = config.LoadEnv(restRateLimitMailbox, RestRateLimitMailboxDefault, httpf.ParseRate)
 
 	// AppName is the name of the application, as it will appear in logs and tracing.
 	AppName = config.LoadEnv(appName, AppNameDefault, config.StringParser)
@@ -253,9 +252,4 @@ func restDefaults() httpf.ServerConfig {
 	defaults.Timeouts.Shutdown = RestTimeoutShutdownDefault
 
 	return defaults
-}
-
-// loadRate parses a rate variable, or its default when unset.
-func loadRate(value, fallback string) httpf.Rate {
-	return config.LoadEnv(cmp.Or(value, fallback), httpf.Rate{}, httpf.ParseRate)
 }

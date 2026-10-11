@@ -232,7 +232,7 @@ func main() {
 			api.Get("/healthcheck", handlerHealth.ServeHTTP)
 
 			withAuth(api.With(
-				waitlistGate(cfg.Limits.WaitlistMaxConcurrent),
+				httpf.LimitConcurrency(cfg.Limits.WaitlistMaxConcurrent),
 				middleware.RequestSize(cfg.Limits.WaitlistMaxRequestSize),
 			), "waitlist:join").
 				With(strict.Strict()).
@@ -286,15 +286,6 @@ func main() {
 		cfg.Rest.Timeouts.Shutdown,
 		mailDelivery,
 	))
-}
-
-// waitlistGate keeps optional Google calls from exhausting REST capacity. A full gate frees up as
-// soon as one call returns, so it asks for a retry a second later.
-func waitlistGate(maxConcurrent int) func(http.Handler) http.Handler {
-	return middleware.ThrottleWithOpts(middleware.ThrottleOpts{
-		Limit:        maxConcurrent,
-		RetryAfterFn: func(bool) time.Duration { return time.Second },
-	})
 }
 
 // newRouter applies the common middleware; main mounts every route on the returned router.

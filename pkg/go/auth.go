@@ -8,6 +8,7 @@ package serviceauthentication
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/samber/lo"
@@ -69,6 +70,12 @@ func NewAuthHandler(
 // not need to call it directly.
 func SetClaimsContext(ctx context.Context, claims *Claims) context.Context {
 	return middlewares.SetClaimsContext(ctx, claims)
+}
+
+// CallerKey keys a rate limit by the signed-in user, else by the visitor IP, for golib's
+// httpf.Limits.By. Mount the limit after the auth middleware, which signs the user in.
+func CallerKey(r *http.Request) (string, error) {
+	return middlewares.CallerKey(r)
 }
 
 // GetClaimsContext retrieves the authenticated user's claims from the context, if any.
