@@ -33,7 +33,16 @@ func TestRestLimits(t *testing.T) {
 		LoginBurst: httpf.Rate{Requests: 10, Window: time.Minute},
 		Login:      httpf.Rate{Requests: 30, Window: 10 * time.Minute},
 		Mailbox:    httpf.Rate{Requests: 3, Window: time.Hour},
+
+		WaitlistMaxConcurrent:  4,
+		WaitlistMaxRequestSize: 8 << 10,
 	}
+
+	anonymous := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Anonymous }
+	login := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Login }
+	mail := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mail }
+	mailbox := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mailbox }
+	waitlist := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Waitlist }
 
 	type request struct {
 		visitor string
@@ -67,7 +76,7 @@ func TestRestLimits(t *testing.T) {
 		name string
 
 		disabled bool
-		limit    func(limits *middlewares.RestLimits) func(http.Handler) http.Handler
+		limit    func(limits middlewares.RestLimits) func(http.Handler) http.Handler
 
 		// allowed requests all pass; refused, when set, then gets 429 with expectRetryAfter.
 		allowed []request
@@ -79,21 +88,21 @@ func TestRestLimits(t *testing.T) {
 			name: "Success/Disabled",
 
 			disabled: true,
-			limit:    (*middlewares.RestLimits).Strict,
+			limit:    anonymous,
 
 			allowed: times(10, visitor),
 		},
 		{
-			name: "Success/Strict/OtherVisitor",
+			name: "Success/Anonymous/OtherVisitor",
 
-			limit: (*middlewares.RestLimits).Strict,
+			limit: anonymous,
 
 			allowed: append(times(3, visitor), request{visitor: "192.0.2.2"}),
 		},
 		{
-			name: "Success/Strict/OtherUser",
+			name: "Success/Anonymous/OtherUser",
 
-			limit: (*middlewares.RestLimits).Strict,
+			limit: anonymous,
 
 			allowed: append(
 				times(3, request{visitor: "192.0.2.1", user: &userA}),
@@ -103,14 +112,14 @@ func TestRestLimits(t *testing.T) {
 		{
 			name: "Success/Mailbox/OtherEmail",
 
-			limit: (*middlewares.RestLimits).Mailbox,
+			limit: mailbox,
 
 			allowed: append(visitors(3, "a@example.com"), request{visitor: "192.0.2.9", email: "b@example.com"}),
 		},
 		{
-			name: "Error/Strict",
+			name: "Error/Anonymous",
 
-			limit: (*middlewares.RestLimits).Strict,
+			limit: anonymous,
 
 			allowed: times(3, visitor),
 			refused: &visitor,
@@ -119,9 +128,9 @@ func TestRestLimits(t *testing.T) {
 		},
 		{
 			// A signed-in user keeps one budget whatever address it calls from.
-			name: "Error/Strict/UserAcrossVisitors",
+			name: "Error/Anonymous/UserAcrossVisitors",
 
-			limit: (*middlewares.RestLimits).Strict,
+			limit: anonymous,
 
 			allowed: []request{
 				{visitor: "192.0.2.1", user: &userA},
@@ -133,9 +142,19 @@ func TestRestLimits(t *testing.T) {
 			expectRetryAfter: "300",
 		},
 		{
+			name: "Error/Waitlist",
+
+			limit: waitlist,
+
+			allowed: times(3, request{visitor: "192.0.2.1", user: &userA}),
+			refused: &request{visitor: "192.0.2.1", user: &userA},
+
+			expectRetryAfter: "300",
+		},
+		{
 			name: "Error/Login/Visitor",
 
-			limit: (*middlewares.RestLimits).Login,
+			limit: login,
 
 			allowed: times(10, request{visitor: "192.0.2.1", email: "a@example.com"}),
 			refused: &request{visitor: "192.0.2.1", email: "b@example.com"},
@@ -145,7 +164,7 @@ func TestRestLimits(t *testing.T) {
 		{
 			name: "Error/Login/Email",
 
-			limit: (*middlewares.RestLimits).Login,
+			limit: login,
 
 			allowed: visitors(30, "a@example.com"),
 			refused: &request{visitor: "192.0.2.99", email: "a@example.com"},
@@ -155,7 +174,7 @@ func TestRestLimits(t *testing.T) {
 		{
 			name: "Error/Mail/Caller",
 
-			limit: (*middlewares.RestLimits).Mail,
+			limit: mail,
 
 			allowed: []request{
 				{visitor: "192.0.2.1", email: "a@example.com"},
@@ -170,7 +189,7 @@ func TestRestLimits(t *testing.T) {
 			// Many visitors cannot gang up on one mailbox, nor dodge the limit with letter case.
 			name: "Error/Mail/Email",
 
-			limit: (*middlewares.RestLimits).Mail,
+			limit: mail,
 
 			allowed: []request{
 				{visitor: "192.0.2.1", email: "a@example.com"},
@@ -206,7 +225,7 @@ func TestRestLimits(t *testing.T) {
 				server := httpf.ServerConfigDefault
 				server.RateLimitsEnabled = !testCase.disabled
 
-				api.Use(signIn, testCase.limit(middlewares.NewRestLimits(httpf.NewLimits(server), policies)))
+				api.Use(signIn, testCase.limit(middlewares.NewRestLimits(server, policies)))
 				// The handler echoes the body, which must reach it whole after the email limit read it.
 				api.Put("/", func(w http.ResponseWriter, r *http.Request) {
 					_, _ = io.Copy(w, r.Body)

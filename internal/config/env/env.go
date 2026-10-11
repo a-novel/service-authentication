@@ -249,9 +249,11 @@ var (
 	DowntimeStart = config.LoadEnv(downtimeStart, nil, downtime.ParseStart)
 )
 
-// restDefaults keeps golib's REST defaults but for the shutdown, which waits for detached mail.
+// restDefaults keeps golib's REST defaults but for the versioned ping path and the shutdown, which
+// waits for detached mail.
 func restDefaults() httpf.ServerConfig {
 	defaults := httpf.ServerConfigDefault
+	defaults.Liveness = "/v2/ping"
 	defaults.Timeouts.Shutdown = RestTimeoutShutdownDefault
 
 	return defaults

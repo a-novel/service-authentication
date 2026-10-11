@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/samber/lo"
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
@@ -164,8 +163,7 @@ func main() {
 	// =================================================================================================================
 
 	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
-	limits := httpf.NewLimits(cfg.Rest)
-	strict := middlewares.NewRestLimits(limits, cfg.Limits)
+	limit := middlewares.NewRestLimits(cfg.Rest, cfg.Limits)
 
 	// =================================================================================================================
 	// HANDLERS
@@ -219,57 +217,45 @@ func main() {
 	// ROUTER
 	// =================================================================================================================
 
-	router := newRouter(cfg)
+	router := httpf.NewRouter(cfg.Rest, cfg.Otel, cfg.HttpLogger, cfg.App.DowntimeStart)
 
 	router.Route("/v2", func(api chi.Router) {
-		// Probes reach /ping without a budget.
 		api.Get("/ping", handlerPing.ServeHTTP)
+		api.Get("/healthcheck", handlerHealth.ServeHTTP)
 
-		// Routes that issue tokens or send email add a strict limit to the standard one.
-		api.Group(func(api chi.Router) {
-			api.Use(limits.Standard())
+		withAuth(api, "waitlist:join").With(limit.Waitlist).Put("/waitlist", handlerWaitlistJoin.ServeHTTP)
 
-			api.Get("/healthcheck", handlerHealth.ServeHTTP)
+		api.Route("/session", func(r chi.Router) {
+			r.With(limit.Login).Put("/", handlerTokenCreate.ServeHTTP)
+			r.With(limit.Anonymous).Put("/anon", handlerTokenCreateAnon.ServeHTTP)
 
-			withAuth(api.With(
-				httpf.LimitConcurrency(cfg.Limits.WaitlistMaxConcurrent),
-				middleware.RequestSize(cfg.Limits.WaitlistMaxRequestSize),
-			), "waitlist:join").
-				With(strict.Strict()).
-				Put("/waitlist", handlerWaitlistJoin.ServeHTTP)
+			withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
+			r.Patch("/", handlerTokenRefresh.ServeHTTP)
+		})
 
-			api.Route("/session", func(r chi.Router) {
-				r.With(strict.Login()).Put("/", handlerTokenCreate.ServeHTTP)
-				r.With(strict.Strict()).Put("/anon", handlerTokenCreateAnon.ServeHTTP)
+		api.Route("/credentials", func(r chi.Router) {
+			withAuth(r, "credentials:get").Get("/", handlerCredentialsGet.ServeHTTP)
+			withAuth(r, "credentials:exist").Head("/", handlerCredentialsExist.ServeHTTP)
+			withAuth(r, "credentials:list").Get("/all", handlerCredentialsList.ServeHTTP)
 
-				withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
-				r.Patch("/", handlerTokenRefresh.ServeHTTP)
-			})
+			withAuth(r, "credentials:create").Put("/", handlerCredentialsCreate.ServeHTTP)
+			withAuth(r, "credentials:email:patch").
+				Patch("/email", handlerCredentialsUpdateEmail.ServeHTTP)
+			withAuth(r, "credentials:password:patch").
+				Patch("/password", handlerCredentialsUpdatePassword.ServeHTTP)
+			withAuth(r, "credentials:password:reset").
+				Put("/password", handlerCredentialsResetPassword.ServeHTTP)
+			withAuth(r, "credentials:role:patch").
+				Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
+		})
 
-			api.Route("/credentials", func(r chi.Router) {
-				withAuth(r, "credentials:get").Get("/", handlerCredentialsGet.ServeHTTP)
-				withAuth(r, "credentials:exist").Head("/", handlerCredentialsExist.ServeHTTP)
-				withAuth(r, "credentials:list").Get("/all", handlerCredentialsList.ServeHTTP)
-
-				withAuth(r, "credentials:create").Put("/", handlerCredentialsCreate.ServeHTTP)
-				withAuth(r, "credentials:email:patch").
-					Patch("/email", handlerCredentialsUpdateEmail.ServeHTTP)
-				withAuth(r, "credentials:password:patch").
-					Patch("/password", handlerCredentialsUpdatePassword.ServeHTTP)
-				withAuth(r, "credentials:password:reset").
-					Put("/password", handlerCredentialsResetPassword.ServeHTTP)
-				withAuth(r, "credentials:role:patch").
-					Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
-			})
-
-			api.Route("/short-code", func(r chi.Router) {
-				withAuth(r, "shortCode:register").With(strict.Mailbox()).
-					Put("/register", handlerShortCodeCreateRegister.ServeHTTP)
-				withAuth(r, "shortCode:email:update").With(strict.Mail()).
-					Put("/update-email", handlerShortCodeCreateEmailUpdate.ServeHTTP)
-				withAuth(r, "shortCode:password:reset").With(strict.Mail()).
-					Put("/update-password", handlerShortCodeCreatePasswordReset.ServeHTTP)
-			})
+		api.Route("/short-code", func(r chi.Router) {
+			withAuth(r, "shortCode:register").With(limit.Mailbox).
+				Put("/register", handlerShortCodeCreateRegister.ServeHTTP)
+			withAuth(r, "shortCode:email:update").With(limit.Mail).
+				Put("/update-email", handlerShortCodeCreateEmailUpdate.ServeHTTP)
+			withAuth(r, "shortCode:password:reset").With(limit.Mail).
+				Put("/update-password", handlerShortCodeCreatePasswordReset.ServeHTTP)
 		})
 	})
 
@@ -286,19 +272,6 @@ func main() {
 		cfg.Rest.Timeouts.Shutdown,
 		mailDelivery,
 	))
-}
-
-// newRouter applies the common middleware; main mounts every route on the returned router.
-func newRouter(cfg config.App) *chi.Mux {
-	return httpf.NewRouter(cfg.Rest, httpf.RouterOptions{
-		Otel:          cfg.Otel,
-		Logger:        cfg.HttpLogger,
-		DowntimeStart: cfg.App.DowntimeStart,
-		Liveness:      "/v2/ping",
-		Methods: []string{
-			http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete,
-		},
-	})
 }
 
 // serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.
