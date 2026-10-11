@@ -2,6 +2,7 @@ package env
 
 import (
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/a-novel-kit/golib/config"
@@ -28,8 +29,6 @@ const (
 	WaitlistMaxConcurrentDefault = 4
 	// WaitlistMaxRequestSizeDefault allows the bounded email/language payload with JSON escaping overhead.
 	WaitlistMaxRequestSizeDefault = 8 << 10
-	// Argon2MaxConcurrentDefault fits four 64 MiB hashes beside the server in a 512 MiB instance.
-	Argon2MaxConcurrentDefault = 4
 
 	PlatformEmailUpdateUrlDefault   = "/ext/email/validate"
 	PlatformPasswordResetUrlDefault = "/ext/password/reset"
@@ -60,6 +59,10 @@ const (
 
 // Default rate limits, written "<requests>/<window>" as in their variables.
 var (
+	// Argon2MaxConcurrentDefault runs one hash per CPU the container may use, as Keycloak does.
+	// Hashing is CPU-bound, so more concurrent hashes add memory, 64 MiB each, but no throughput.
+	Argon2MaxConcurrentDefault = runtime.GOMAXPROCS(0)
+
 	RestRateLimitStrictDefault = config.Must(httpf.ParseRate("3/5m"))
 	// RestRateLimitLoginBurstDefault and RestRateLimitLoginDefault leave a forgotten password a few
 	// attempts.

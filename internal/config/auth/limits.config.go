@@ -17,6 +17,7 @@ type Limits struct {
 	WaitlistMaxConcurrent int `json:"waitlistMaxConcurrent" yaml:"waitlistMaxConcurrent"`
 	// WaitlistMaxRequestSize caps a waitlist request body, in bytes.
 	WaitlistMaxRequestSize int64 `json:"waitlistMaxRequestSize" yaml:"waitlistMaxRequestSize"`
-	// Argon2MaxConcurrent caps the password hashes running at once, per instance.
+	// Argon2MaxConcurrent caps the password hashes running at once, per instance. It defaults to the
+	// CPUs the container may use, since hashing is CPU-bound.
 	Argon2MaxConcurrent int `json:"argon2MaxConcurrent" yaml:"argon2MaxConcurrent"`
 }

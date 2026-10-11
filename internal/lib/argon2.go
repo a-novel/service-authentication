@@ -130,11 +130,9 @@ func CompareArgon2(password, encodedHash string) error {
 	return ErrInvalidPassword
 }
 
-// argon2MaxConcurrentDefault fits four 64 MiB hashes beside the server in a 512 MiB instance.
-const argon2MaxConcurrentDefault = 4
-
-// argon2Slots bounds the hashes running at once; [LimitArgon2] sizes it.
-var argon2Slots = make(chan struct{}, argon2MaxConcurrentDefault)
+// argon2Slots bounds the hashes running at once, one per CPU unless [LimitArgon2] resizes it:
+// hashing is CPU-bound, so more concurrent hashes add memory but no throughput.
+var argon2Slots = make(chan struct{}, runtime.GOMAXPROCS(0))
 
 // LimitArgon2 caps the hashes running at once. Each allocates its memory parameter, 64 MiB by
 // default, so size the cap to the instance's memory. Call it at startup, before any request.

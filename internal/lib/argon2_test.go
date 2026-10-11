@@ -1,6 +1,7 @@
 package lib_test
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -63,7 +64,7 @@ func TestArgon2(t *testing.T) {
 //nolint:paralleltest // It resizes the process-wide hash gate, which parallel tests share.
 func TestLimitArgon2(t *testing.T) {
 	lib.LimitArgon2(1)
-	t.Cleanup(func() { lib.LimitArgon2(4) })
+	t.Cleanup(func() { lib.LimitArgon2(runtime.GOMAXPROCS(0)) })
 
 	// Every hash must give its slot back, or the next one waits forever.
 	hashes := make(chan error, 3)
