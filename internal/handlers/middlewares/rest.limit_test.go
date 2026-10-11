@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/a-novel-kit/golib/httpf"
 
+	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
@@ -24,6 +26,14 @@ func TestRestLimits(t *testing.T) {
 
 	userA := uuid.New()
 	userB := uuid.New()
+
+	// The production defaults, so each case reads as the budget a caller really gets.
+	policies := config.Limits{
+		Strict:     httpf.Rate{Requests: 3, Window: 5 * time.Minute},
+		LoginBurst: httpf.Rate{Requests: 10, Window: time.Minute},
+		Login:      httpf.Rate{Requests: 30, Window: 10 * time.Minute},
+		Mailbox:    httpf.Rate{Requests: 3, Window: time.Hour},
+	}
 
 	type request struct {
 		visitor string
@@ -193,10 +203,10 @@ func TestRestLimits(t *testing.T) {
 			router := chi.NewRouter()
 			router.Use(middleware.ClientIPFromHeader("X-Client-Ip"))
 			router.Group(func(api chi.Router) {
-				config := httpf.ServerConfigDefault
-				config.RateLimitsEnabled = !testCase.disabled
+				server := httpf.ServerConfigDefault
+				server.RateLimitsEnabled = !testCase.disabled
 
-				api.Use(signIn, testCase.limit(middlewares.NewRestLimits(httpf.NewLimits(config))))
+				api.Use(signIn, testCase.limit(middlewares.NewRestLimits(httpf.NewLimits(server), policies)))
 				// The handler echoes the body, which must reach it whole after the email limit read it.
 				api.Put("/", func(w http.ResponseWriter, r *http.Request) {
 					_, _ = io.Copy(w, r.Body)

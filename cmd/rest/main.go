@@ -32,14 +32,8 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/pkg/go"
-)
-
-const (
-	// waitlistMaxConcurrent keeps optional Google calls from exhausting REST capacity.
-	waitlistMaxConcurrent = 4
-	// waitlistMaxRequestSize allows the bounded email/language payload with JSON escaping overhead.
-	waitlistMaxRequestSize = 8 << 10
 )
 
 func main() {
@@ -83,6 +77,7 @@ func main() {
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
 
 	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
+	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
 
 	// Missing SMTP_ADDR looks like healthy mail loss: 202 answered, mail rendered to stdout.
 	if _, debug := cfg.Smtp.(*smtp.DebugSender); debug {
@@ -170,7 +165,7 @@ func main() {
 
 	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
 	limits := httpf.NewLimits(cfg.Rest)
-	strict := middlewares.NewRestLimits(limits)
+	strict := middlewares.NewRestLimits(limits, cfg.Limits)
 
 	// =================================================================================================================
 	// HANDLERS
@@ -236,7 +231,10 @@ func main() {
 
 			api.Get("/healthcheck", handlerHealth.ServeHTTP)
 
-			withAuth(api.With(waitlistGate(), middleware.RequestSize(waitlistMaxRequestSize)), "waitlist:join").
+			withAuth(api.With(
+				waitlistGate(cfg.Limits.WaitlistMaxConcurrent),
+				middleware.RequestSize(cfg.Limits.WaitlistMaxRequestSize),
+			), "waitlist:join").
 				With(strict.Strict()).
 				Put("/waitlist", handlerWaitlistJoin.ServeHTTP)
 
@@ -292,9 +290,9 @@ func main() {
 
 // waitlistGate keeps optional Google calls from exhausting REST capacity. A full gate frees up as
 // soon as one call returns, so it asks for a retry a second later.
-func waitlistGate() func(http.Handler) http.Handler {
+func waitlistGate(maxConcurrent int) func(http.Handler) http.Handler {
 	return middleware.ThrottleWithOpts(middleware.ThrottleOpts{
-		Limit:        waitlistMaxConcurrent,
+		Limit:        maxConcurrent,
 		RetryAfterFn: func(bool) time.Duration { return time.Second },
 	})
 }

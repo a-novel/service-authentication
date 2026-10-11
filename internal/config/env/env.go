@@ -1,6 +1,7 @@
 package env
 
 import (
+	"cmp"
 	"os"
 	"time"
 
@@ -24,6 +25,12 @@ const (
 	SmtpMaxConcurrentDefault = 16
 	// WaitlistTimeoutDefault bounds one request to the optional Google sheet writer.
 	WaitlistTimeoutDefault = 10 * time.Second
+	// WaitlistMaxConcurrentDefault keeps optional Google calls from exhausting REST capacity.
+	WaitlistMaxConcurrentDefault = 4
+	// WaitlistMaxRequestSizeDefault allows the bounded email/language payload with JSON escaping overhead.
+	WaitlistMaxRequestSizeDefault = 8 << 10
+	// Argon2MaxConcurrentDefault fits four 64 MiB hashes beside the server in a 512 MiB instance.
+	Argon2MaxConcurrentDefault = 4
 
 	PlatformEmailUpdateUrlDefault   = "/ext/email/validate"
 	PlatformPasswordResetUrlDefault = "/ext/password/reset"
@@ -50,6 +57,16 @@ const (
 	PostgresMaxIdleConnsDefault = 20
 	PostgresPortDefault         = 5432
 	PostgresTLSEnabledDefault   = true
+)
+
+// Default rate limits, written "<requests>/<window>" as in their variables.
+const (
+	RestRateLimitStrictDefault = "3/5m"
+	// RestRateLimitLoginBurstDefault and RestRateLimitLoginDefault leave a forgotten password a few
+	// attempts.
+	RestRateLimitLoginBurstDefault = "10/1m"
+	RestRateLimitLoginDefault      = "30/10m"
+	RestRateLimitMailboxDefault    = "3/1h"
 )
 
 // Raw values for environment variables.
@@ -85,6 +102,14 @@ var (
 	waitlistURL     = getEnv("WAITLIST_URL")
 	waitlistSecret  = getEnv("WAITLIST_SECRET")
 	waitlistTimeout = getEnv("WAITLIST_TIMEOUT")
+
+	waitlistMaxConcurrent   = getEnv("WAITLIST_MAX_CONCURRENT")
+	waitlistMaxRequestSize  = getEnv("WAITLIST_MAX_REQUEST_SIZE")
+	argon2MaxConcurrent     = getEnv("ARGON2_MAX_CONCURRENT")
+	restRateLimitStrict     = getEnv("REST_RATE_LIMIT_STRICT")
+	restRateLimitLoginBurst = getEnv("REST_RATE_LIMIT_LOGIN_BURST")
+	restRateLimitLogin      = getEnv("REST_RATE_LIMIT_LOGIN")
+	restRateLimitMailbox    = getEnv("REST_RATE_LIMIT_MAILBOX")
 
 	appName = getEnv("APP_NAME")
 	otel    = getEnv("OTEL")
@@ -184,6 +209,23 @@ var (
 	WaitlistSecret = waitlistSecret
 	// WaitlistTimeout bounds the Google request and its content redirect.
 	WaitlistTimeout = config.LoadEnv(waitlistTimeout, WaitlistTimeoutDefault, config.DurationParser)
+	// WaitlistMaxConcurrent caps the waitlist requests waiting on Google at once, per instance.
+	WaitlistMaxConcurrent = config.LoadEnv(waitlistMaxConcurrent, WaitlistMaxConcurrentDefault, config.IntParser)
+	// WaitlistMaxRequestSize caps a waitlist request body, in bytes.
+	WaitlistMaxRequestSize = config.LoadEnv(waitlistMaxRequestSize, WaitlistMaxRequestSizeDefault, config.Int64Parser)
+
+	// Argon2MaxConcurrent caps the password hashes running at once, per instance. Each allocates
+	// 64 MiB, so size it to the instance's memory.
+	Argon2MaxConcurrent = config.LoadEnv(argon2MaxConcurrent, Argon2MaxConcurrentDefault, config.IntParser)
+
+	// RestRateLimitStrict caps each caller of a route issuing anonymous tokens or invitation requests.
+	RestRateLimitStrict = loadRate(restRateLimitStrict, RestRateLimitStrictDefault)
+	// RestRateLimitLoginBurst caps each visitor's logins over a short window.
+	RestRateLimitLoginBurst = loadRate(restRateLimitLoginBurst, RestRateLimitLoginBurstDefault)
+	// RestRateLimitLogin caps each visitor's logins, and the logins naming one email, over a longer window.
+	RestRateLimitLogin = loadRate(restRateLimitLogin, RestRateLimitLoginDefault)
+	// RestRateLimitMailbox caps the emails each address receives from one route.
+	RestRateLimitMailbox = loadRate(restRateLimitMailbox, RestRateLimitMailboxDefault)
 
 	// AppName is the name of the application, as it will appear in logs and tracing.
 	AppName = config.LoadEnv(appName, AppNameDefault, config.StringParser)
@@ -211,4 +253,9 @@ func restDefaults() httpf.ServerConfig {
 	defaults.Timeouts.Shutdown = RestTimeoutShutdownDefault
 
 	return defaults
+}
+
+// loadRate parses a rate variable, or its default when unset.
+func loadRate(value, fallback string) httpf.Rate {
+	return config.LoadEnv(cmp.Or(value, fallback), httpf.Rate{}, httpf.ParseRate)
 }

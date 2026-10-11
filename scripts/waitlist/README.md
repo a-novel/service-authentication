@@ -230,9 +230,9 @@ Apps Script: authentication adds the signature and timestamp on the server.
 | Try opening the sheet using an unrelated Google account.                                     | No access to the spreadsheet or its data.                                                                                               |
 | In the test environment only, temporarily mismatch the runtime key and retry a new address.  | The request fails, no row appears, and the UI does not claim success. Restore the correct key, redeploy, and verify the request works.  |
 
-Wait at least a second between distinct new addresses, and send at most 3 requests per 5 minutes from
-one address. On HTTP `429` or `503`, respect the API's `Retry-After` response and investigate repeated
-failures rather than submitting in a loop.
+Wait at least a second between distinct new addresses, and send at most 3 requests per 5 minutes
+from one address by default. On HTTP `429` or `503`, respect the API's `Retry-After` response and
+investigate repeated failures rather than submitting in a loop.
 After a timeout, a retry may return `already_waitlisted`: the first write can succeed even if its
 acknowledgement was lost. Inspect the test sheet before assuming a write failed.
 
@@ -258,7 +258,8 @@ unapproved deployment. Record the result without copying private data into a pub
 - **Capacity:** at most 10,000 entries and one new row per second. Duplicate checks and removals do
   not consume the new-row rate limit, but can still encounter lock contention. The public API allows
   four concurrent waitlist requests per replica, 3 requests per 5 minutes per caller, and an 8 KiB
-  body. An anonymous token is not proof of a person's identity.
+  body by default (`WAITLIST_MAX_CONCURRENT`, `REST_RATE_LIMIT_STRICT`,
+  `WAITLIST_MAX_REQUEST_SIZE`). An anonymous token is not proof of a person's identity.
 - **Availability:** HTTP `429` means too many requests, writer contention, or capacity. HTTP `503`
   means unavailable or disabled storage. Neither is success. A green
   readiness healthcheck does **not** prove Google is working; this optional dependency is not probed

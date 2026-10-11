@@ -129,7 +129,7 @@ paths:
         Both an invalid email and an invalid password return the same 401 status, to avoid revealing whether an
         email is registered.
 
-        Each visitor may try 10 logins per minute and 30 per 10 minutes, and each email 30 per 10 minutes.
+        By default, each visitor may try 10 logins per minute and 30 per 10 minutes, and each email 30 per 10 minutes.
       tags: [session]
       security: []
       requestBody:
@@ -158,7 +158,7 @@ paths:
         Create an anonymous token to authenticate against the API without credentials.
         Anonymous tokens bear fewer rights than those of a plain authenticated user.
 
-        Each visitor may create 3 anonymous tokens per 5 minutes.
+        By default, each visitor may create 3 anonymous tokens per 5 minutes.
       tags: [session]
       security: []
       responses:
@@ -436,7 +436,7 @@ paths:
         Email comparison matches the account store exactly;
         case and provider-specific aliases are not normalized.
 
-        Each caller may send 3 requests per 5 minutes.
+        By default, each caller may send 3 requests per 5 minutes.
       tags: [waitlist]
       security:
         - BearerAuth: ["waitlist:join"]
@@ -486,7 +486,7 @@ paths:
         The response is always 202 whether or not the email is already registered, to avoid revealing which
         emails have accounts. No email is sent when the address is already registered.
 
-        Each email may receive 3 invitations per hour.
+        By default, each email may receive 3 invitations per hour.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:register"]
@@ -520,7 +520,7 @@ paths:
         manages to open the link, it means the email is valid and no further validation is required. The email can be
         changed safely.
 
-        Each caller may send 3 requests per 5 minutes, and each email receive 3 per hour.
+        By default, each caller may send 3 requests per 5 minutes, and each email receive 3 per hour.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:email:update"]
@@ -558,7 +558,7 @@ paths:
         The response is always 202 whether or not the email is registered, to avoid revealing which emails
         have accounts. No email is sent when the address is not registered.
 
-        Each caller may send 3 requests per 5 minutes, and each email receive 3 per hour.
+        By default, each caller may send 3 requests per 5 minutes, and each email receive 3 per hour.
       tags: [shortCode]
       security:
         - BearerAuth: ["shortCode:password:reset"]

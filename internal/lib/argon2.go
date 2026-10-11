@@ -130,17 +130,26 @@ func CompareArgon2(password, encodedHash string) error {
 	return ErrInvalidPassword
 }
 
-// argon2MaxConcurrent bounds the hashes running at once. Each allocates its memory parameter,
-// 64 MiB by default, so four fit beside the server in a 512 MiB instance.
-const argon2MaxConcurrent = 4
+// argon2MaxConcurrentDefault fits four 64 MiB hashes beside the server in a 512 MiB instance.
+const argon2MaxConcurrentDefault = 4
 
-var argon2Slots = make(chan struct{}, argon2MaxConcurrent)
+// argon2Slots bounds the hashes running at once; [LimitArgon2] sizes it.
+var argon2Slots = make(chan struct{}, argon2MaxConcurrentDefault)
+
+// LimitArgon2 caps the hashes running at once. Each allocates its memory parameter, 64 MiB by
+// default, so size the cap to the instance's memory. Call it at startup, before any request.
+func LimitArgon2(maxConcurrent int) {
+	argon2Slots = make(chan struct{}, maxConcurrent)
+}
 
 // idKey derives the Argon2id key once a slot frees up, so a burst of logins waits instead of
 // exhausting memory.
 func idKey(password string, salt []byte, params *Argon2Params) []byte {
-	argon2Slots <- struct{}{}
-	defer func() { <-argon2Slots }()
+	// A hash returns its slot to the gate it took it from.
+	slots := argon2Slots
+	slots <- struct{}{}
+
+	defer func() { <-slots }()
 
 	return argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, params.Parallelism, params.KeyLength)
 }

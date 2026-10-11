@@ -40,6 +40,15 @@ var AppPresetDefault = App{
 		DowntimeStart: env.DowntimeStart,
 	},
 	Rest: env.Rest,
+	Limits: Limits{
+		Strict:                 env.RestRateLimitStrict,
+		LoginBurst:             env.RestRateLimitLoginBurst,
+		Login:                  env.RestRateLimitLogin,
+		Mailbox:                env.RestRateLimitMailbox,
+		WaitlistMaxConcurrent:  env.WaitlistMaxConcurrent,
+		WaitlistMaxRequestSize: env.WaitlistMaxRequestSize,
+		Argon2MaxConcurrent:    env.Argon2MaxConcurrent,
+	},
 
 	DependenciesConfig: Dependencies{
 		ServiceJsonKeysPort: env.ServiceJsonKeysPort,
