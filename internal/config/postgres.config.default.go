@@ -26,8 +26,8 @@ type PostgresConnection struct {
 	TLSEnabled bool
 }
 
-// PostgresPresetDefault is the default PostgreSQL connection preset.
-var PostgresPresetDefault = NewPostgresPreset(PostgresConnection{
+// postgresConnection reaches PostgreSQL through the POSTGRES_* variables.
+var postgresConnection = PostgresConnection{
 	DSN:        env.PostgresDsn,
 	Host:       env.PostgresHost,
 	Port:       env.PostgresPort,
@@ -35,9 +35,21 @@ var PostgresPresetDefault = NewPostgresPreset(PostgresConnection{
 	Password:   env.PostgresPassword,
 	Database:   env.PostgresDatabase,
 	TLSEnabled: env.PostgresTLSEnabled,
-}, env.PostgresMaxOpenConns, env.PostgresMaxIdleConns)
+}
 
-// NewPostgresPreset returns a PostgreSQL preset whose pool is bounded before it opens.
+// PostgresPresetDefault is the default PostgreSQL connection preset.
+var PostgresPresetDefault = NewPostgresPreset(postgresConnection, env.PostgresMaxOpenConns, env.PostgresMaxIdleConns)
+
+// PostgresPresetMigrations is the migrations job's connection. A migration waiting for a lock gives
+// up after three seconds, so the queries queued behind it on its table proceed, and the runner tries
+// it again later.
+var PostgresPresetMigrations = NewPostgresPreset(
+	postgresConnection, env.PostgresMaxOpenConns, env.PostgresMaxIdleConns,
+	pgdriver.WithConnParams(map[string]any{"lock_timeout": "3s"}),
+)
+
+// NewPostgresPreset returns a PostgreSQL preset whose pool is bounded before it opens. Extra options
+// apply last: connection parameters replace any a DSN carries.
 //
 // Setting the limits on the handle afterwards stops working once anything has
 // taken a connection, because the handle is cached; past that point they apply to
@@ -46,9 +58,10 @@ func NewPostgresPreset(
 	connection PostgresConnection,
 	maxOpenConns int,
 	maxIdleConns int,
+	extra ...pgdriver.Option,
 ) *postgrespresets.Default {
 	options := append(connection.options(), pgdriver.WithDialTimeout(postgresDialTimeout))
-	preset := postgrespresets.NewDefault(options...)
+	preset := postgrespresets.NewDefault(append(options, extra...)...)
 	preset.MaxOpenConns = maxOpenConns
 	preset.MaxIdleConns = maxIdleConns
 
