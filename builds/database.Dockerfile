@@ -3,7 +3,7 @@ FROM docker.io/library/golang:1.27.2-alpine AS packages
 ENV CGO_ENABLED=0
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GOBIN=/usr/local/bin go install -trimpath -ldflags="-s -w" chainguard.dev/apko@v1.4.10
+    GOBIN=/usr/local/bin go install -trimpath -ldflags="-s -w" chainguard.dev/apko@v1.4.11
 # jq only reads the locks in this stage and never reaches the image, so its version can't change it.
 # hadolint ignore=DL3018
 RUN apk add --no-cache jq
