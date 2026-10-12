@@ -3,27 +3,46 @@
 # Reports this repository to the org's Discord server. A failed `main` or `release` run on the
 # default branch posts to the CI channel and pings the repository's role, and the run that turns the
 # branch green again posts without a ping. Watching `release` catches a release that fails after
-# its tag. Each published release posts to the releases channel with its notes.
+# its tag. Each published release posts to the releases channel with its notes. A person's pull
+# request posts its lifecycle and reviews; a bot's posts only when `main` fails on its branch or in
+# the merge queue, hence the extra branches.
 name: notify
 
 on:
   # Reads the finished run's metadata only; no checkout, no artifacts.
-  workflow_run: # zizmor: ignore[dangerous-triggers] The CI channel's webhook is a default-branch Actions secret.
+  workflow_run: # zizmor: ignore[dangerous-triggers] The webhooks are default-branch Actions secrets.
     workflows: [main, release]
     types: [completed]
-    branches: [master]
+    branches: [master, "renovate/**", "dependabot/**", "gh-readonly-queue/**"]
   release:
     types: [published]
+  # Unlike pull_request, it also runs while the pull request conflicts with its base.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] Reads pull request metadata; never checks out its code.
+    types:
+      - opened
+      - ready_for_review
+      - converted_to_draft
+      - assigned
+      - unassigned
+      - review_requested
+      - review_request_removed
+      - closed
+      - reopened
+      - dequeued
+  pull_request_review:
+    types: [submitted, dismissed]
 
 permissions: {}
 
 jobs:
   ci:
-    if: github.event_name == 'workflow_run'
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.head_branch == github.event.repository.default_branch
     # The engine reads the workflow's previous run to tell a recovery from a routine success.
     permissions:
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/notify-ci-run.yaml@v1.49.1
+    uses: a-novel-kit/workflows/.github/workflows/notify-ci-run.yaml@v1.50.0
     with:
       roles: ${{ vars.DISCORD_REPO_ROLES }}
     secrets:
@@ -31,6 +50,25 @@ jobs:
 
   release:
     if: github.event_name == 'release'
-    uses: a-novel-kit/workflows/.github/workflows/notify-release-run.yaml@v1.49.1
+    uses: a-novel-kit/workflows/.github/workflows/notify-release-run.yaml@v1.50.0
     secrets:
       webhook: ${{ secrets.RELEASES_WEBHOOK }}
+
+  pull-request:
+    if: >-
+      github.event_name != 'release' &&
+      github.event.workflow_run.head_branch != github.event.repository.default_branch
+    # The engine lists a bot pull request's CI runs; the pull request itself it reads through the App.
+    permissions:
+      actions: read
+    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.50.0
+    with:
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      roles: ${{ vars.DISCORD_REPO_ROLES }}
+      bws_server_url: ${{ vars.BWS_SERVER_URL }}
+    secrets:
+      private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+      pull_requests_webhook: ${{ secrets.PULL_REQUESTS_WEBHOOK }}
+      reviews_webhook: ${{ secrets.REVIEWS_WEBHOOK }}
+      dependencies_webhook: ${{ secrets.DEPENDENCIES_WEBHOOK }}
+      bws_access_token: ${{ secrets.BWS_READ_TOKEN }}
