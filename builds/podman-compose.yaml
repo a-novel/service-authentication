@@ -1,3 +1,11 @@
+# Podman drops a Dockerfile's HEALTHCHECK from OCI images, the format it builds by default and the
+# one images are published in: a service the others wait for declares its check here.
+x-postgres-healthcheck: &postgres-healthcheck
+  test: ["CMD", "pg_isready"]
+  interval: 1s
+  timeout: 5s
+  retries: 10
+
 services:
   # ====================================================================================================================
   # EXT. DEPENDENCIES
@@ -45,6 +53,7 @@ services:
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
     volumes:
       - authentication-postgres-data:/var/lib/postgresql/
+    healthcheck: *postgres-healthcheck
 
   # ====================================================================================================================
   # ONE-SHOT TARGETS
@@ -75,7 +84,8 @@ services:
       - api
 
   service-authentication-migrations:
-    profiles: ["migrations"]
+    # Also under the profiles of the targets waiting for it, so `--profile <target>` runs it first.
+    profiles: ["migrations", "maintenance"]
     build:
       context: ..
       dockerfile: ./builds/migrations.Dockerfile
@@ -107,8 +117,6 @@ services:
         condition: service_healthy
       mailserver:
         condition: service_started
-      service-authentication-migrations:
-        condition: service_completed_successfully
     environment:
       POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
       # The Go config reads SERVICE_JSON_KEYS_HOST/PORT; bridge them to the
