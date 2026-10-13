@@ -224,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/deploy-release@a947692e4e3ca696ab2969c11d3f2e757697fdb5
+      - uses: a-novel-kit/workflows/publish-actions/deploy-release@v1.52.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
