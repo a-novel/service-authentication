@@ -34,7 +34,7 @@ func main() {
 
 	log.Println("connecting to database...")
 
-	ctx := lo.Must(postgres.NewContext(context.Background(), config.PostgresPresetDefault))
+	ctx := lo.Must(postgres.NewContext(context.Background(), config.PostgresPresetMigrations))
 
 	log.Println("applying pending migrations...")
 	lo.Must0(postgres.RunMigrationsContext(ctx, migrations.Migrations))
