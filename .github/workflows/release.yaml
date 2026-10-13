@@ -224,21 +224,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - id: token
-        uses: actions/create-github-app-token@v3
+      - uses: a-novel-kit/workflows/publish-actions/deploy-release@a947692e4e3ca696ab2969c11d3f2e757697fdb5
         with:
-          client-id: ${{ vars.AGENT_BOT_CLIENT_ID }}
-          private-key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: infra
-          permission-contents: write
-      - name: Dispatch the release to infra
-        env:
-          GH_TOKEN: ${{ steps.token.outputs.token }}
-          TAG: ${{ needs.release.outputs.tag }}
-        run: >-
-          gh api "repos/$GITHUB_REPOSITORY_OWNER/infra/dispatches" -f event_type=release
-          -f "client_payload[repository]=$GITHUB_REPOSITORY" -f "client_payload[version]=$TAG"
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          version: ${{ needs.release.outputs.tag }}
 
   # Everything shipped — clear this repo's awaiting-release board items.
   archive:
