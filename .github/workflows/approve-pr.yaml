@@ -1,8 +1,8 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# Lets a repo admin record the approval a PR author cannot give themselves: the
-# admin reviews the PR, then dispatches this with its number. The action fails
-# closed for anyone who is not a repo admin, which is what makes an open
+# Lets a repo admin or maintainer record the approval a PR author cannot give
+# themselves: they review the PR, then dispatch this with its number. The action
+# fails closed for anyone below Maintain, which is what makes an open
 # workflow_dispatch safe here.
 name: approve-pr
 
@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/approve-pr@v1.53.2
+      - uses: a-novel-kit/workflows/generic-actions/approve-pr@v1.54.0
         with:
           pull_request: ${{ inputs.pull_request }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}

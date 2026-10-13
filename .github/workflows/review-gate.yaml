@@ -1,0 +1,47 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Posts the required `review-gate` check. A person's pull request needs an
+# approval of its head from a maintainer or admin of this repository, and every
+# privileged label on any pull request must have been applied last by one of
+# them. Anyone with write access can approve and label, so this check is what
+# ties merging to the maintainer tier. The [Agent] App posts it under the
+# integration id the ruleset requires; this job only runs it, under an id kept
+# clear of the check name.
+name: review-gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted, dismissed]
+  merge_group:
+
+# Nothing posts the check again later, so a superseded run finishing last would
+# leave a stale result in either direction.
+concurrency:
+  group: review-gate-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    # Dependabot is evaluated by the trusted CI-completion job in auto-approve-dependabot.yaml.
+    if: github.event_name == 'merge_group' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
+    runs-on: ubuntu-latest
+    # The action mints its own App token for every read and the check.
+    permissions: {}
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/review-gate@v1.54.0
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          # Every label that waives a check or spends resources, across the fleet. The
+          # Dependabot job in auto-approve-dependabot.yaml carries the same list.
+          privileged_labels: |
+            allow-dependency-change
+            allow-downtime
+            allow-incomplete-translations
+            allow-resource-deletion
+            allow-screenshot-change
+            allow-translation-drift
+            append-only-override
+            with-feature-env
