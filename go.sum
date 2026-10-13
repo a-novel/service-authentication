@@ -6,8 +6,8 @@ cloud.google.com/go/auth/oauth2adapt v0.3.0 h1:FY8oSZpCYoUNv6QxVODuMjQz4IlSOVeiQ
 cloud.google.com/go/auth/oauth2adapt v0.3.0/go.mod h1:7+2uCm7++XFO+/lN06c2HXpDXb/NMNn2/UwyBPbTnkk=
 cloud.google.com/go/compute/metadata v0.10.0 h1:pyKMUQSwchgkIBBJGdILqQbs/BNJXqwSA7Ej6LAvvtY=
 cloud.google.com/go/compute/metadata v0.10.0/go.mod h1:rGFHRrIif570kSibjFTMbt6/4/tzgJWFGI/HVol4GIk=
-github.com/a-novel-kit/golib v0.45.2 h1:yqI4z/UKOpwECjnr4ij3tGmducOElihj6tJTlTXQm6A=
-github.com/a-novel-kit/golib v0.45.2/go.mod h1:EO4GcL0Gbg65q/v+uoGwJGNaikndyDmPR/uu6O84oTc=
+github.com/a-novel-kit/golib v0.46.0 h1:zdbH1ub8Y8auT4qkk0z2CVPx7o74aXSflArXEhAoLRA=
+github.com/a-novel-kit/golib v0.46.0/go.mod h1:EO4GcL0Gbg65q/v+uoGwJGNaikndyDmPR/uu6O84oTc=
 github.com/a-novel-kit/jwt/v2 v2.3.0 h1:E3e5cv/uYTEAZaRb+aB6aQx+D11UdnT4JmjfyBil47Q=
 github.com/a-novel-kit/jwt/v2 v2.3.0/go.mod h1:DaD0CXjkz2pFaWq7TMNWaRtEwxe+IvRH4IUAfH5Z2mo=
 github.com/a-novel/service-json-keys/v2 v2.10.1 h1:SgTI2cAH76RLAG2P9gbNhQH83WlcbKaaFXQbVI6J0eg=
