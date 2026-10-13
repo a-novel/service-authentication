@@ -30,7 +30,7 @@ jobs:
     # The action mints its own App token for every read and the check.
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/review-gate@v1.54.1
+      - uses: a-novel-kit/workflows/generic-actions/review-gate@v1.55.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
