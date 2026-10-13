@@ -5,7 +5,8 @@
 # branch green again posts without a ping. Watching `release` catches a release that fails after
 # its tag. Each published release posts to the releases channel with its notes. A person's pull
 # request posts its lifecycle and reviews; a bot's posts only when `main` fails on its branch or in
-# the merge queue, hence the extra branches.
+# the merge queue, hence the extra branches. The Dependencies App opens its own pull requests, such
+# as infra's release pins, on `chore/deps/`.
 name: notify
 
 on:
@@ -13,7 +14,7 @@ on:
   workflow_run: # zizmor: ignore[dangerous-triggers] The webhooks are default-branch Actions secrets.
     workflows: [main, release]
     types: [completed]
-    branches: [master, "renovate/**", "dependabot/**", "gh-readonly-queue/**"]
+    branches: [master, "renovate/**", "dependabot/**", "chore/deps/**", "gh-readonly-queue/**"]
   release:
     types: [published]
   # Unlike pull_request, it also runs while the pull request conflicts with its base.
