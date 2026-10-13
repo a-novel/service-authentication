@@ -1,1 +1,11 @@
 * @kushuh
+
+# Dependency manifests and lockfiles have no owner: the dependency bots change them in every version
+# bump, which would request a review each time. A person's manifest change is held instead by the
+# required check-dependencies check until a reviewer adds the allow-dependency-change label.
+*.mod
+*.sum
+go.work
+package.json
+pnpm-lock.yaml
+pnpm-workspace.yaml

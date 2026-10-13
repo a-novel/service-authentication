@@ -1,0 +1,26 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Holds a pull request that changes a dependency manifest until a reviewer adds the
+# allow-dependency-change label, so every dependency a person adds, removes or bumps is acknowledged.
+# The master and release-line rulesets require this job's check. A ruleset cannot exempt the merge
+# queue's merges, which have no actor, so the check itself passes bots and merge-queue groups.
+name: check dependencies
+
+on:
+  pull_request:
+    # labeled and unlabeled re-run the check when the acknowledgement changes.
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+  merge_group:
+
+permissions: {}
+
+jobs:
+  check-dependencies:
+    runs-on: ubuntu-latest
+    # Lists the pull request's files, commits and labels, and removes the label after a push.
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: a-novel-kit/workflows/generic-actions/check-dependencies@v1.51.0
+        with:
+          github_token: ${{ github.token }}
