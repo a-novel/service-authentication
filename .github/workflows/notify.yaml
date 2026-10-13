@@ -14,7 +14,12 @@ on:
   workflow_run: # zizmor: ignore[dangerous-triggers] The webhooks are default-branch Actions secrets.
     workflows: [main, release]
     types: [completed]
-    branches: [master, "renovate/**", "dependabot/**", "chore/deps/**", "gh-readonly-queue/**"]
+    branches:
+      - master
+      - "renovate/**"
+      - "dependabot/**"
+      - "chore/deps/**"
+      - "gh-readonly-queue/**"
   release:
     types: [published]
   # Unlike pull_request, it also runs while the pull request conflicts with its base.

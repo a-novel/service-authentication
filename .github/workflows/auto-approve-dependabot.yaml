@@ -3,8 +3,8 @@
 # Auto-approves pull requests opened by the trusted dependency bots so routine
 # version bumps don't wait on a human approval. It is safe on two counts: the PR
 # author is a fixed bot identity a contributor cannot impersonate, and the approval
-# is withheld the moment a commit by anyone other than that bot lands on the branch,
-# so a tampered dependency PR falls back to normal review. Once approved, the PR is
+# is withheld the moment a commit GitHub did not sign for that bot lands on the
+# branch, so a tampered dependency PR falls back to normal review. Once approved, the PR is
 # added to the merge queue so it merges hands-off (the queue owns the method).
 #
 # The approval also enforces Renovate's release age: it waits while the PR head's
@@ -82,8 +82,10 @@ jobs:
           fi
           number=$(jq -r '.number' <<< "$pr")
           commits=$(gh api --paginate --slurp "repos/$REPOSITORY/pulls/$number/commits")
-          if ! jq -e --arg bot "$BOT" 'add | length > 0 and all(.[]; .author.login == $bot)' <<< "$commits" >/dev/null; then
-            printf 'Dependabot pull request contains non-bot commits; human review is required.\n'
+          # An author is only a claimed email; GitHub signs (as web-flow) only the bot's own commits.
+          if ! jq -e --arg bot "$BOT" 'add | length > 0 and all(.[]; .author.login == $bot and
+            .committer.login == "web-flow" and .commit.verification.verified)' <<< "$commits" >/dev/null; then
+            printf 'Dependabot pull request contains commits GitHub did not sign for the bot; human review is required.\n'
             exit 0
           fi
           printf 'number=%s\nnode=%s\nsha=%s\n' "$number" "$(jq -r '.node_id' <<< "$pr")" "$HEAD_SHA" >> "$GITHUB_OUTPUT"

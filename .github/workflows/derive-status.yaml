@@ -11,7 +11,13 @@ name: derive-status
 
 on:
   pull_request:
-    types: [opened, reopened, converted_to_draft, ready_for_review, closed, synchronize]
+    types:
+      - opened
+      - reopened
+      - converted_to_draft
+      - ready_for_review
+      - closed
+      - synchronize
   pull_request_review:
     types: [submitted, dismissed]
 

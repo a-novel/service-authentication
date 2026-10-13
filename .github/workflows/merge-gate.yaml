@@ -22,7 +22,14 @@ on:
     # labeled/unlabeled fire on any label change, which is what makes an `epic:<N>`
     # add or remove re-evaluate membership; other label churn just re-posts the same
     # result. ready_for_review and converted_to_draft flip this PR's own readiness.
-    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review, converted_to_draft]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+      - ready_for_review
+      - converted_to_draft
   # A review changing (approve/dismiss) can flip this PR's atomicity readiness, so
   # re-evaluate the gate on review events too.
   pull_request_review:

@@ -18,7 +18,14 @@ on:
   # on merge_group drops the queued group, so the check must post on the group head
   # too or a queued PR times out.
   pull_request:
-    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review, converted_to_draft]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+      - ready_for_review
+      - converted_to_draft
   pull_request_review:
     types: [submitted, dismissed]
   merge_group:
