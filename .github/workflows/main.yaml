@@ -65,8 +65,6 @@ jobs:
       - uses: a-novel-kit/workflows/node-actions/setup-node@v1.55.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
       # Not the `generate` umbrella: its generate:go leg is generated-go's, which has the setup-go.
       - name: pnpm generate:mjml
         shell: bash
@@ -91,8 +89,6 @@ jobs:
       - uses: a-novel-kit/workflows/node-actions/lint-node@v1.55.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           lint_action: "lint:ci"
 
   lint-shell:
@@ -251,8 +247,6 @@ jobs:
         id: test
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           coverage_artifact: jscover
           test_action: "test:ci"
 
@@ -404,8 +398,6 @@ jobs:
       - uses: a-novel-kit/workflows/node-actions/build-node@v1.55.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
-          client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
           build_action: "build:rest"
 
   report-codecov:
