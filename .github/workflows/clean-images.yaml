@@ -1,19 +1,23 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# Deletes this repository's container images that nothing deploys once they are a week old: untagged
-# builds, closed pull request tags, and branch or merge-queue tags. Release tags, master, open pull
-# request tags and every master build stay. A deleted version can be restored for 30 days.
+# Deletes this repository's container images once the branch or pull request that built them is gone.
+# Closing a pull request deletes its `pr-<N>` image at once; a weekly sweep takes the rest: untagged
+# builds and tags of closed pull requests, merge-queue builds and old branch tags. Release tags, master,
+# every master build and open pull requests' images stay. A deleted version can be restored for 30 days.
 name: clean images
 
 on:
+  # The sweep has no deadline, so a delayed scheduled run costs nothing.
   schedule:
-    - cron: "43 4 * * *"
+    - cron: "17 3 * * 0"
   workflow_dispatch:
     inputs:
       dry_run:
         description: List what would be deleted without deleting it
         type: boolean
         default: false
+  pull_request:
+    types: [closed]
 
 permissions: {}
 
@@ -25,8 +29,10 @@ jobs:
     outputs:
       names: ${{ steps.list.outputs.names }}
     steps:
+      # A closed pull request's merge ref may be gone, so its base branch names the images.
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.base.ref || github.ref }}
           sparse-checkout: .github/workflows
           persist-credentials: false
       # A workflow token cannot list the organization's packages, so the images this repository's
@@ -39,15 +45,31 @@ jobs:
             sed -E "s#.*\}\}#${GITHUB_REPOSITORY#*/}#" | sort -u | jq -R . | jq -sc .)
           echo "names=$names" >> "$GITHUB_OUTPUT"
 
-  clean:
+  close:
     needs: [packages]
-    if: needs.packages.outputs.names != '[]'
+    if: >-
+      github.event_name == 'pull_request' && needs.packages.outputs.names != '[]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 15
+    permissions:
+      packages: write
+    steps:
+      - uses: a-novel-kit/workflows/build-actions/clean-pr-images@v1.58.0
+        with:
+          pull_request: ${{ github.event.pull_request.number }}
+          packages: ${{ needs.packages.outputs.names }}
+          github_token: ${{ github.token }}
+
+  sweep:
+    needs: [packages]
+    if: github.event_name != 'pull_request' && needs.packages.outputs.names != '[]'
+    runs-on: ubuntu-latest
+    # A weekly run can take its time; a backlog that outlasts it resumes the next week.
+    timeout-minutes: 300
     strategy:
       fail-fast: false
-      # Deletions share the repository's API quota with its CI, so packages take turns; a backlog that
-      # outlasts the timeout resumes the next day.
+      # Deletions share the repository's API quota with its CI, so packages take turns.
       max-parallel: 1
       matrix:
         package: ${{ fromJSON(needs.packages.outputs.names) }}
@@ -58,8 +80,9 @@ jobs:
     permissions:
       packages: write
       pull-requests: read
+      attestations: read
     steps:
-      - uses: a-novel-kit/workflows/build-actions/clean-images@v1.57.0
+      - uses: a-novel-kit/workflows/build-actions/clean-images@v1.58.0
         with:
           package: ${{ matrix.package }}
           github_token: ${{ github.token }}
