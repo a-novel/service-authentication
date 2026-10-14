@@ -21,6 +21,6 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/check-dependencies@v1.56.0
+      - uses: a-novel-kit/workflows/generic-actions/check-dependencies@v1.57.0
         with:
           github_token: ${{ github.token }}

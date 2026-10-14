@@ -8,9 +8,10 @@ name: hotfix
 # unreleased work. The fix lands on the default branch first; the dispatch then
 # opens a backport pull request per fix into the line's release/vX.Y branch, cut
 # from its latest tag on first use. Merging a backport cuts the next patch behind
-# the protected `release` environment, the human "who may publish" gate. Both
-# paths are exempt from the kill switch, so the emergency patch path stays open
-# even when normal automation is halted.
+# the protected `release` environment, the human "who may publish" gate, as the
+# release App, and the patch's tag runs the line's publishing jobs. Both paths
+# are exempt from the kill switch, so the emergency patch path stays open even
+# when normal automation is halted.
 #
 # The cut triggers on pull_request_target because GitHub runs it from the default
 # branch's copy of this file and checks the `release` environment against the
@@ -59,7 +60,7 @@ jobs:
     # reads the dispatcher's permission.
     permissions:
       contents: read
-    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.56.0
+    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.57.0
     with:
       line: ${{ inputs.line }}
       fix_refs: ${{ inputs.fix_refs }}
@@ -84,12 +85,15 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.56.0
+    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.57.0
     with:
       branch: ${{ github.event.pull_request.base.ref }}
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      release_client_id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
       project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
       mention: ${{ vars.SEV1_MENTION }}
     secrets:
       app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+      # Exists only in the `release` environment, which the callee's cut job names.
+      release_private_key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
       push_webhook: ${{ secrets.ESCALATE_PUSH_WEBHOOK }}

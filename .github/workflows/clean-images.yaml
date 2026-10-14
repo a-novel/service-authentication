@@ -1,0 +1,66 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Deletes this repository's container images that nothing deploys once they are a week old: untagged
+# builds, closed pull request tags, and branch or merge-queue tags. Release tags, master, open pull
+# request tags and every master build stay. A deleted version can be restored for 30 days.
+name: clean images
+
+on:
+  schedule:
+    - cron: "43 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: List what would be deleted without deleting it
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      names: ${{ steps.list.outputs.names }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/workflows
+          persist-credentials: false
+      # A workflow token cannot list the organization's packages, so the images this repository's
+      # workflows publish name them.
+      - name: List the images this repository publishes
+        id: list
+        run: |
+          set -euo pipefail
+          names=$(grep -h -o -E 'image_name: \$\{\{ github\.repository \}\}[^ "]*' .github/workflows/*.yaml |
+            sed -E "s#.*\}\}#${GITHUB_REPOSITORY#*/}#" | sort -u | jq -R . | jq -sc .)
+          echo "names=$names" >> "$GITHUB_OUTPUT"
+
+  clean:
+    needs: [packages]
+    if: needs.packages.outputs.names != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      # Deletions share the repository's API quota with its CI, so packages take turns; a backlog that
+      # outlasts the timeout resumes the next day.
+      max-parallel: 1
+      matrix:
+        package: ${{ fromJSON(needs.packages.outputs.names) }}
+    # The cleanup is not safe to run twice at once on one package.
+    concurrency:
+      group: clean-images-${{ matrix.package }}
+      cancel-in-progress: false
+    permissions:
+      packages: write
+      pull-requests: read
+    steps:
+      - uses: a-novel-kit/workflows/build-actions/clean-images@v1.57.0
+        with:
+          package: ${{ matrix.package }}
+          github_token: ${{ github.token }}
+          dry_run: ${{ inputs.dry_run || false }}

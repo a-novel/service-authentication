@@ -1,0 +1,32 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Posts reviews to Discord. A review runs a pull request's own copy of a
+# workflow, so it reaches this one through pr-relay.yaml, and notify-pr-run reads
+# the pull request and its latest review back through the API instead of trusting
+# the relay's run.
+name: notify-reviews
+
+on:
+  workflow_run: # zizmor: ignore[dangerous-triggers] notify-pr-run reads the relayed pull request through the API only.
+    workflows: [pr-relay]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  review:
+    if: github.event.workflow_run.event == 'pull_request_review'
+    # The engine lists a bot pull request's CI runs; the pull request itself it reads through the App.
+    permissions:
+      actions: read
+    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.57.0
+    with:
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      roles: ${{ vars.DISCORD_REPO_ROLES }}
+      bws_server_url: ${{ vars.BWS_SERVER_URL }}
+    secrets:
+      private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+      pull_requests_webhook: ${{ secrets.PULL_REQUESTS_WEBHOOK }}
+      reviews_webhook: ${{ secrets.REVIEWS_WEBHOOK }}
+      dependencies_webhook: ${{ secrets.DEPENDENCIES_WEBHOOK }}
+      bws_access_token: ${{ secrets.BWS_READ_TOKEN }}
