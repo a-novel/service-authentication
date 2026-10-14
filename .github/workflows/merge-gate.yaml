@@ -18,10 +18,12 @@
 name: merge-gate
 
 on:
-  pull_request:
-    # labeled/unlabeled fire on any label change, which is what makes an `epic:<N>`
-    # add or remove re-evaluate membership; other label churn just re-posts the same
-    # result. ready_for_review and converted_to_draft flip this PR's own readiness.
+  # labeled/unlabeled fire on any label change, which is what makes an `epic:<N>`
+  # add or remove re-evaluate membership; other label churn just re-posts the same
+  # result. ready_for_review and converted_to_draft flip this PR's own readiness.
+  # pull_request_target runs this default-branch copy, which a pull request cannot
+  # rewrite.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] The gate only calls the GitHub API; it never checks out the pull request.
     types:
       - opened
       - reopened
@@ -30,22 +32,51 @@ on:
       - unlabeled
       - ready_for_review
       - converted_to_draft
-  # A review changing (approve/dismiss) can flip this PR's atomicity readiness, so
-  # re-evaluate the gate on review events too.
-  pull_request_review:
-    types: [submitted, dismissed]
-  merge_group:
+  # A review changing the PR's atomicity readiness, or the merge queue's group, reaches
+  # the gate through pr-relay.yaml, since both events run a pull request's own copy of
+  # a workflow.
+  workflow_run: # zizmor: ignore[dangerous-triggers] relay-context reads the relayed pull request through the API only.
+    workflows: [pr-relay]
+    types: [completed]
 
 jobs:
   merge-gate:
     # Dependabot is evaluated by the trusted CI-completion job.
-    if: github.event_name == 'merge_group' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
+    if: github.event_name == 'pull_request_target' && github.actor != vars.DEPENDABOT_SECURITY_LOGIN
     # the callee mints its own App token and declares permissions: {}; the caller sets the ceiling, so it must not hand down
     # the repository default.
     permissions: {}
-    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.55.0
+    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.56.0
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+    secrets:
+      app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+
+  relay:
+    if: github.event_name == 'workflow_run'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      event: ${{ steps.context.outputs.event }}
+      pull_request_number: ${{ steps.context.outputs.pull_request_number }}
+      head_sha: ${{ steps.context.outputs.head_sha }}
+      merge_group_head_ref: ${{ steps.context.outputs.merge_group_head_ref }}
+    steps:
+      - id: context
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.56.0
+
+  relayed:
+    needs: relay
+    if: needs.relay.outputs.event != ''
+    permissions: {}
+    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.56.0
+    with:
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+      pull_request_number: ${{ needs.relay.outputs.pull_request_number }}
+      head_sha: ${{ needs.relay.outputs.head_sha }}
+      merge_group_head_ref: ${{ needs.relay.outputs.merge_group_head_ref }}
     secrets:
       app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}

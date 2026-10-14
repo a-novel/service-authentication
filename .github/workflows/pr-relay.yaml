@@ -1,0 +1,22 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Relays review and merge-queue events to the governance gates. Those events run a
+# pull request's own copy of a workflow, so this one holds no permission and no
+# secret. The gates listen for its runs through workflow_run, which runs their
+# default-branch copy, and relay-context treats each run as a wake-up signal only:
+# a branch that rewrites or imitates this file can at most force a re-evaluation.
+name: pr-relay
+
+on:
+  pull_request_review:
+    types: [submitted, dismissed]
+  merge_group:
+
+permissions: {}
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - run: echo "Relaying $GITHUB_EVENT_NAME to the governance gates."

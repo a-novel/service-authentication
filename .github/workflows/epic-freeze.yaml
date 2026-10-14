@@ -16,8 +16,9 @@ on:
   # Triggers mirror merge-gate.yaml. labeled/unlabeled matter because an `epic:<N>`
   # label flips a PR between the standalone fast-path and the epic check. A failure
   # on merge_group drops the queued group, so the check must post on the group head
-  # too or a queued PR times out.
-  pull_request:
+  # too or a queued PR times out. Reviews and merge groups run a pull request's own
+  # copy of a workflow, so they arrive through pr-relay.yaml.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] The gate only calls the GitHub API; it never checks out the pull request.
     types:
       - opened
       - reopened
@@ -26,26 +27,35 @@ on:
       - unlabeled
       - ready_for_review
       - converted_to_draft
-  pull_request_review:
-    types: [submitted, dismissed]
-  merge_group:
+  workflow_run: # zizmor: ignore[dangerous-triggers] relay-context reads the relayed pull request through the API only.
+    workflows: [pr-relay]
+    types: [completed]
 
 jobs:
   # Named `evaluate`: the [Agent] App posts the `epic-freeze` check-run itself, so
   # the job name stays clear of it (as in merge-gate.yaml).
   evaluate:
     # Dependabot is evaluated by the trusted CI-completion job.
-    if: github.event_name == 'merge_group' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
+    if: github.event_name == 'workflow_run' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
     runs-on: ubuntu-latest
     # No permissions of its own: the detector mints its own [Agent] tokens. In
     # per-PR mode that is checks:write plus read scopes; the write token that rolls
-    # a stray forward is sweep-only, so a per-PR run can never re-enqueue.
-    permissions: {}
+    # a stray forward is sweep-only, so a per-PR run can never re-enqueue. relay-context
+    # reads the relayed pull request with this job's token.
+    permissions:
+      pull-requests: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.55.0
+      - id: relay
+        if: github.event_name == 'workflow_run'
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.56.0
+      - if: github.event_name != 'workflow_run' || steps.relay.outputs.event != ''
+        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.56.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          pull_request_number: ${{ steps.relay.outputs.pull_request_number || github.event.pull_request.number }}
+          head_sha: ${{ steps.relay.outputs.head_sha || github.event.pull_request.head.sha }}
+          merge_group_head_ref: ${{ steps.relay.outputs.merge_group_head_ref }}
           # Live: posts the epic-freeze check-run on this head, success by
           # default and failure on a partial landing.
           dry_run: "false"

@@ -14,7 +14,8 @@
 name: recover stuck pull requests
 
 on:
-  pull_request:
+  # Runs this default-branch copy; neither job checks out the pull request.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] Both jobs only call the GitHub API.
     types: [dequeued, closed]
 
 jobs:
@@ -46,7 +47,7 @@ jobs:
             echo "rearm=true" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.drop.outputs.rearm == 'true'
-        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.55.0
+        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.56.0
         with:
           pull_request_number: ${{ github.event.pull_request.number }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}

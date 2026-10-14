@@ -10,30 +10,42 @@
 name: review-gate
 
 on:
-  pull_request:
+  # pull_request_target runs this default-branch copy, which a pull request cannot
+  # rewrite. Reviews and merge groups run a pull request's own copy of a workflow, so
+  # they arrive through pr-relay.yaml.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] The gate only calls the GitHub API; it never checks out the pull request.
     types: [opened, reopened, synchronize, labeled, unlabeled]
-  pull_request_review:
-    types: [submitted, dismissed]
-  merge_group:
+  workflow_run: # zizmor: ignore[dangerous-triggers] relay-context reads the relayed pull request through the API only.
+    workflows: [pr-relay]
+    types: [completed]
 
 # Nothing posts the check again later, so a superseded run finishing last would
 # leave a stale result in either direction.
 concurrency:
-  group: review-gate-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
+  group: review-gate-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 jobs:
   evaluate:
     # Dependabot is evaluated by the trusted CI-completion job in auto-approve-dependabot.yaml.
-    if: github.event_name == 'merge_group' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
+    if: github.event_name == 'workflow_run' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
     runs-on: ubuntu-latest
-    # The action mints its own App token for every read and the check.
-    permissions: {}
+    # The action mints its own App token for every read and the check; relay-context
+    # reads the relayed pull request with this job's token.
+    permissions:
+      pull-requests: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/review-gate@v1.55.0
+      - id: relay
+        if: github.event_name == 'workflow_run'
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.56.0
+      - if: github.event_name != 'workflow_run' || steps.relay.outputs.event != ''
+        uses: a-novel-kit/workflows/generic-actions/review-gate@v1.56.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          event: ${{ steps.relay.outputs.event || github.event_name }}
+          pull_request_number: ${{ steps.relay.outputs.pull_request_number || github.event.pull_request.number }}
+          head_sha: ${{ steps.relay.outputs.head_sha || github.event.pull_request.head.sha }}
           # Every label that waives a check or spends resources, across the fleet. The
           # Dependabot job in auto-approve-dependabot.yaml carries the same list.
           privileged_labels: |

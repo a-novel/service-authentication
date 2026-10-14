@@ -20,7 +20,8 @@
 name: auto-approve dependencies
 
 on:
-  pull_request:
+  # Runs this default-branch copy; the approval reads the pull request through the API only.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] Fixed API calls only; no pull request checkout.
     types: [opened, synchronize, reopened, auto_merge_enabled]
   status:
   # Only fixed API calls and pinned actions consume validated metadata; no PR checkout, artifacts, caches or environment files.
@@ -41,7 +42,7 @@ jobs:
     # cannot make; the caller sets the ceiling, so it must not hand down the repository default.
     permissions:
       statuses: read
-    uses: a-novel-kit/workflows/.github/workflows/auto-approve-dependabot-run.yaml@v1.55.0
+    uses: a-novel-kit/workflows/.github/workflows/auto-approve-dependabot-run.yaml@v1.56.0
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       dependency_bot_login: ${{ vars.DEPENDENCY_BOT_LOGIN }}
@@ -100,7 +101,7 @@ jobs:
 
       - name: Evaluate the merge gate
         if: steps.pr.outputs.number != ''
-        uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.55.0
+        uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.56.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
@@ -110,7 +111,7 @@ jobs:
 
       - name: Evaluate the review gate
         if: steps.pr.outputs.number != ''
-        uses: a-novel-kit/workflows/generic-actions/review-gate@v1.55.0
+        uses: a-novel-kit/workflows/generic-actions/review-gate@v1.56.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
@@ -129,7 +130,7 @@ jobs:
 
       - name: Evaluate the epic freeze
         if: steps.pr.outputs.number != ''
-        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.55.0
+        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.56.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
