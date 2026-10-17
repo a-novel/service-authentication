@@ -29,7 +29,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/approve-pr@v1.59.1
+      - uses: a-novel-kit/workflows/generic-actions/approve-pr@v1.60.0
         with:
           pull_request: ${{ inputs.pull_request }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
