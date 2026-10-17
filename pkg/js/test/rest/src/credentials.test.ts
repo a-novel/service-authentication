@@ -92,10 +92,7 @@ async function requestEmailUpdate(api: AuthenticationApi, token: Token, newEmail
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(
-    mailUrl,
-    `to:"${newEmail}" subject:"Confirm your new Agora Storyverse email address"`
-  );
+  const mailData = await checkEmail(mailUrl, `to:"${newEmail}" subject:"Confirm your new Agora email address"`);
 
   expect(mailData.html).toBeTruthy();
   const links = getHtmlMail(mailData.html as string, "a");
@@ -304,7 +301,7 @@ async function requestPasswordReset(api: AuthenticationApi, token: Token, email:
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(mailUrl, `to:"${email}" subject:"Reset your Agora Storyverse password"`);
+  const mailData = await checkEmail(mailUrl, `to:"${email}" subject:"Reset your Agora password"`);
 
   expect(mailData.html).toBeTruthy();
   const links = getHtmlMail(mailData.html as string, "a");

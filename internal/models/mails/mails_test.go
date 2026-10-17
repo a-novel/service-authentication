@@ -32,38 +32,38 @@ func TestMailTemplates(t *testing.T) {
 			name:     "Register/English",
 			template: mails.Mails.Register,
 			language: "en",
-			subject:  "Create your Agora Storyverse account",
+			subject:  "Create your Agora account",
 		},
 		{
 			name:     "Register/French",
 			template: mails.Mails.Register,
 			language: "fr",
-			subject:  "Créez votre compte Agora Storyverse",
+			subject:  "Créez votre compte Agora",
 		},
 		{
 			name:     "PasswordReset/English",
 			template: mails.Mails.PasswordReset,
 			language: "en",
-			subject:  "Reset your Agora Storyverse password",
+			subject:  "Reset your Agora password",
 		},
 		{
 			name:     "PasswordReset/French",
 			template: mails.Mails.PasswordReset,
 			language: "fr",
-			subject:  "Réinitialisez votre mot de passe Agora Storyverse",
+			subject:  "Réinitialisez votre mot de passe Agora",
 		},
 		{
 			name:     "EmailUpdate/English",
 			template: mails.Mails.EmailUpdate,
 			language: "en",
-			subject:  "Confirm your new Agora Storyverse email address",
+			subject:  "Confirm your new Agora email address",
 			source:   "bmV3QGV4YW1wbGUuY29t",
 		},
 		{
 			name:     "EmailUpdate/French",
 			template: mails.Mails.EmailUpdate,
 			language: "fr",
-			subject:  "Confirmez votre nouvelle adresse e-mail Agora Storyverse",
+			subject:  "Confirmez votre nouvelle adresse e-mail Agora",
 			source:   "bmV3QGV4YW1wbGUuY29t",
 		},
 	}
@@ -107,8 +107,8 @@ func TestMailTemplates(t *testing.T) {
 			content := string(body)
 			require.Contains(t, content, `lang="`+testCase.language+`"`)
 			require.Contains(t, content, "0.5 h.")
-			require.Contains(t, content, "Agora Storyverse")
-			require.Contains(t, content, `alt="Agora Storyverse"`)
+			require.Contains(t, content, "Agora")
+			require.Contains(t, content, `alt="Agora"`)
 			require.Contains(t, content, `src="data:image/png;base64,`)
 			require.Equal(t, 1, strings.Count(content, "<h1 "))
 			require.NotContains(t, content, "<no value>")

@@ -1,14 +1,14 @@
 <mjml lang="en" dir="ltr">
   <!-- prettier-ignore -->
   <mj-raw position="file-start">
-Subject: Confirm your new Agora Storyverse email address
+Subject: Confirm your new Agora email address
 MIME-Version: 1.0
 Content-Type: text/html; charset=UTF-8
 
 <!-- Mail starts here -->
   </mj-raw>
   <mj-head>
-    <mj-title>Confirm your new Agora Storyverse email address</mj-title>
+    <mj-title>Confirm your new Agora email address</mj-title>
     <mj-preview>Confirm this address to update your account.</mj-preview>
     <mj-include path="../mj-theme.mjml" />
   </mj-head>
@@ -19,8 +19,7 @@ Content-Type: text/html; charset=UTF-8
         <mj-column>
           <mj-text padding="0 0 24px"><h1>Confirm your new email</h1></mj-text>
           <mj-text
-            >You requested an email change for your Agora Storyverse account. Confirm this address to complete the
-            update.</mj-text
+            >You requested an email change for your Agora account. Confirm this address to complete the update.</mj-text
           >
           <mj-button href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}&amp;source={{.Source}}"
             >Confirm my email</mj-button

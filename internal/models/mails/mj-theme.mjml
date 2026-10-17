@@ -1,6 +1,6 @@
 <mjml>
   <mj-head>
-    <!-- Literal colors, type sizes, and spacing follow Agora uikit's presentation guidelines. -->
+    <!-- Literal colors, type sizes, and spacing follow A-Novel uikit's presentation guidelines. -->
     <mj-attributes>
       <mj-all font-family="'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif" />
       <mj-text font-size="16px" line-height="1.5" color="#c5cbcf" padding="0 0 24px" />

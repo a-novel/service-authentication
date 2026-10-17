@@ -74,7 +74,7 @@ services:
       PLATFORM_AUTH_URL: "http://auth-platform"
       SMTP_SENDER_DOMAIN: mailserver
       SMTP_ADDR: mailserver:1025
-      SMTP_SENDER_NAME: Agora Storyverse [noreply]
+      SMTP_SENDER_NAME: Agora [noreply]
       SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
       SMTP_SENDER_PASSWORD: noreply
       SMTP_FORCE_UNENCRYPTED: "true"

@@ -45,7 +45,9 @@ export async function preRegisterUser(
 
   const mailData = await checkEmail(mailHost, `to:"${userEmail}"`);
 
-  expect(["Registration Request.", "Create your Agora Storyverse account"]).toContain(mailData.subject);
+  expect(["Registration Request.", "Create your Agora Storyverse account", "Create your Agora account"]).toContain(
+    mailData.subject
+  );
   expect(mailData.html).toBeTruthy();
   const links = getHtmlMail(mailData.html as string, "a");
   expect([1, 2]).toContain(links.length);
