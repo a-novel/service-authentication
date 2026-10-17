@@ -12,6 +12,10 @@ permissions: {}
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    # The privileged keys are secrets of the governance environment, which no feature branch opens.
+    environment:
+      name: governance
+      deployment: false
     permissions: {}
     steps:
       - uses: a-novel-kit/workflows/generic-actions/refresh-apko-locks@v1.58.1
