@@ -19,13 +19,17 @@ run-name: "✅ approve-pr ${{ inputs.pull_request }} by @${{ github.actor }}"
 jobs:
   approve:
     runs-on: ubuntu-latest
+    # The Agent key is a secret of the governance environment, which no feature branch opens.
+    environment:
+      name: governance
+      deployment: false
     # Default token is used only for the admin check (Metadata:read, always
     # present) and the base checkout; the approval itself uses a minted
     # least-privilege [Agent] token.
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/approve-pr@v1.58.1
+      - uses: a-novel-kit/workflows/generic-actions/approve-pr@v1.58.2
         with:
           pull_request: ${{ inputs.pull_request }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}

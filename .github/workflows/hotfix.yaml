@@ -56,21 +56,24 @@ jobs:
     concurrency:
       group: hotfix-${{ github.repository }}
       cancel-in-progress: false
-    # The callee mints its own App token for its writes; the default token only
-    # reads the dispatcher's permission.
+    # The callee mints its own App tokens for its writes; the default token only
+    # reads the dispatcher's permission. The Dependencies App opens each clean
+    # backport, so the agent can approve it.
     permissions:
       contents: read
-    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.58.1
+    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.58.2
     with:
       line: ${{ inputs.line }}
       fix_refs: ${{ inputs.fix_refs }}
       severity: ${{ inputs.severity }}
       dry_run: ${{ inputs.dry_run }}
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      dependency_client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
       project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
       mention: ${{ vars.SEV1_MENTION }}
     secrets:
       app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+      dependency_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
       push_webhook: ${{ secrets.ESCALATE_PUSH_WEBHOOK }}
 
   # Cuts serialise per line. The concurrency sits on the job, so a pull request
@@ -85,7 +88,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.58.1
+    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.58.2
     with:
       branch: ${{ github.event.pull_request.base.ref }}
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}

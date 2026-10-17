@@ -23,6 +23,10 @@ jobs:
     # A run triggered by Dependabot cannot read the App secret.
     if: github.event.action == 'dequeued' && github.actor != vars.DEPENDABOT_SECURITY_LOGIN
     runs-on: ubuntu-latest
+    # The Agent key is a secret of the governance environment, which no feature branch opens.
+    environment:
+      name: governance
+      deployment: false
     permissions:
       pull-requests: read
     steps:
@@ -47,7 +51,7 @@ jobs:
             echo "rearm=true" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.drop.outputs.rearm == 'true'
-        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.58.1
+        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.58.2
         with:
           pull_request_number: ${{ github.event.pull_request.number }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}

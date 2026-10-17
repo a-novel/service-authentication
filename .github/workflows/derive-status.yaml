@@ -27,6 +27,10 @@ on:
 jobs:
   derive:
     runs-on: ubuntu-latest
+    # The Agent key is a secret of the governance environment, which no feature branch opens.
+    environment:
+      name: governance
+      deployment: false
     # derive-status only reads here (the PR and its linked issue); the privileged
     # board write happens on the [Agent] token minted inside board-write.
     permissions:
@@ -36,9 +40,9 @@ jobs:
     steps:
       - id: relay
         if: github.event_name == 'workflow_run'
-        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.58.1
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.58.2
       - if: github.event_name != 'workflow_run' || steps.relay.outputs.event == 'pull_request_review'
-        uses: a-novel-kit/workflows/generic-actions/derive-status@v1.58.1
+        uses: a-novel-kit/workflows/generic-actions/derive-status@v1.58.2
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}

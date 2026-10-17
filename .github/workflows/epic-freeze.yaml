@@ -38,6 +38,10 @@ jobs:
     # Dependabot is evaluated by the trusted CI-completion job.
     if: github.event_name == 'workflow_run' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
     runs-on: ubuntu-latest
+    # The Agent key is a secret of the governance environment, which no feature branch opens.
+    environment:
+      name: governance
+      deployment: false
     # No permissions of its own: the detector mints its own [Agent] tokens. In
     # per-PR mode that is checks:write plus read scopes; the write token that rolls
     # a stray forward is sweep-only, so a per-PR run can never re-enqueue. relay-context
@@ -47,9 +51,9 @@ jobs:
     steps:
       - id: relay
         if: github.event_name == 'workflow_run'
-        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.58.1
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.58.2
       - if: github.event_name != 'workflow_run' || steps.relay.outputs.event != ''
-        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.58.1
+        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.58.2
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
