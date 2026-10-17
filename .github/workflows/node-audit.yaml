@@ -7,6 +7,10 @@ on:
 jobs:
   security-update:
     runs-on: ubuntu-latest
+    # The privileged keys are secrets of the governance environment, which no feature branch opens.
+    environment:
+      name: governance
+      deployment: false
     permissions:
       contents: write
       packages: read
