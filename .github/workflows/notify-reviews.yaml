@@ -26,7 +26,6 @@ jobs:
       bws_server_url: ${{ vars.BWS_SERVER_URL }}
     secrets:
       private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-      pull_requests_webhook: ${{ secrets.PULL_REQUESTS_WEBHOOK }}
       reviews_webhook: ${{ secrets.REVIEWS_WEBHOOK }}
       dependencies_webhook: ${{ secrets.DEPENDENCIES_WEBHOOK }}
       bws_access_token: ${{ secrets.BWS_READ_TOKEN }}

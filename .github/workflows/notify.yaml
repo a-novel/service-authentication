@@ -4,9 +4,9 @@
 # default branch posts to the CI channel and pings the repository's role, and the run that turns the
 # branch green again posts without a ping. Watching `release` catches a release that fails after
 # its tag. Each published release posts to the releases channel with its notes. A person's pull
-# request posts its lifecycle and reviews; a bot's posts only when `main` fails on its branch or in
-# the merge queue, hence the extra branches. The Dependencies App opens its own pull requests, such
-# as infra's release pins, on `chore/deps/`.
+# request posts its reviews, its merge and a drop from the merge queue to the reviews channel; a
+# bot's posts only when `main` fails on its branch or in the merge queue, hence the extra branches.
+# The Dependencies App opens its own pull requests, such as infra's release pins, on `chore/deps/`.
 name: notify
 
 on:
@@ -27,13 +27,9 @@ on:
     types:
       - opened
       - ready_for_review
-      - converted_to_draft
-      - assigned
-      - unassigned
       - review_requested
       - review_request_removed
       - closed
-      - reopened
       - dequeued
 
 permissions: {}
@@ -72,7 +68,6 @@ jobs:
       bws_server_url: ${{ vars.BWS_SERVER_URL }}
     secrets:
       private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-      pull_requests_webhook: ${{ secrets.PULL_REQUESTS_WEBHOOK }}
       reviews_webhook: ${{ secrets.REVIEWS_WEBHOOK }}
       dependencies_webhook: ${{ secrets.DEPENDENCIES_WEBHOOK }}
       bws_access_token: ${{ secrets.BWS_READ_TOKEN }}

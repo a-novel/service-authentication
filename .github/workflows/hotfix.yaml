@@ -68,11 +68,14 @@ jobs:
       severity: ${{ inputs.severity }}
       dry_run: ${{ inputs.dry_run }}
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      release_client_id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
       dependency_client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
       project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
       mention: ${{ vars.SEV1_MENTION }}
     secrets:
       app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+      # Creates a missing release line; it exists only in the `release` environment.
+      release_private_key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
       dependency_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
       push_webhook: ${{ secrets.ESCALATE_PUSH_WEBHOOK }}
 
