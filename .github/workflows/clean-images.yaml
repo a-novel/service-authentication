@@ -36,13 +36,13 @@ jobs:
           sparse-checkout: .github/workflows
           persist-credentials: false
       # A workflow token cannot list the organization's packages, so the images this repository's
-      # workflows publish name them.
+      # workflows publish name them. A repository that publishes none lists none and cleans nothing.
       - name: List the images this repository publishes
         id: list
         run: |
           set -euo pipefail
-          names=$(grep -h -o -E 'image_name: \$\{\{ github\.repository \}\}[^ "]*' .github/workflows/*.yaml |
-            sed -E "s#.*\}\}#${GITHUB_REPOSITORY#*/}#" | sort -u | jq -R . | jq -sc .)
+          names=$(sed -n -E 's#.*image_name: \$\{\{ github\.repository \}\}([^ "]*).*#'"${GITHUB_REPOSITORY#*/}"'\1#p' \
+            .github/workflows/*.yaml | sort -u | jq -R . | jq -sc .)
           echo "names=$names" >> "$GITHUB_OUTPUT"
 
   close:
@@ -55,7 +55,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: a-novel-kit/workflows/build-actions/clean-pr-images@v1.60.0
+      - uses: a-novel-kit/workflows/build-actions/clean-pr-images@v1.60.1
         with:
           pull_request: ${{ github.event.pull_request.number }}
           packages: ${{ needs.packages.outputs.names }}
@@ -82,7 +82,7 @@ jobs:
       pull-requests: read
       attestations: read
     steps:
-      - uses: a-novel-kit/workflows/build-actions/clean-images@v1.60.0
+      - uses: a-novel-kit/workflows/build-actions/clean-images@v1.60.1
         with:
           package: ${{ matrix.package }}
           github_token: ${{ github.token }}

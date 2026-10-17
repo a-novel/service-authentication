@@ -42,7 +42,7 @@ jobs:
     # The engine reads the workflow's previous run to tell a recovery from a routine success.
     permissions:
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/notify-ci-run.yaml@v1.60.0
+    uses: a-novel-kit/workflows/.github/workflows/notify-ci-run.yaml@v1.60.1
     with:
       roles: ${{ vars.DISCORD_REPO_ROLES }}
     secrets:
@@ -50,7 +50,7 @@ jobs:
 
   release:
     if: github.event_name == 'release'
-    uses: a-novel-kit/workflows/.github/workflows/notify-release-run.yaml@v1.60.0
+    uses: a-novel-kit/workflows/.github/workflows/notify-release-run.yaml@v1.60.1
     secrets:
       webhook: ${{ secrets.RELEASES_WEBHOOK }}
 
@@ -61,7 +61,7 @@ jobs:
     # The engine lists a bot pull request's CI runs; the pull request itself it reads through the App.
     permissions:
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.60.0
+    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.60.1
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       roles: ${{ vars.DISCORD_REPO_ROLES }}
