@@ -26,6 +26,10 @@ type CredentialsUpdatePasswordDaoCredentialsSelect interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 
+type CredentialsUpdatePasswordServiceShortCodeVerify interface {
+	Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error)
+}
+
 type CredentialsUpdatePasswordServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
@@ -43,6 +47,7 @@ type CredentialsUpdatePasswordRequest struct {
 type CredentialsUpdatePassword struct {
 	dao                     CredentialsUpdatePasswordDao
 	daoCredentialsSelect    CredentialsUpdatePasswordDaoCredentialsSelect
+	serviceShortCodeVerify  CredentialsUpdatePasswordServiceShortCodeVerify
 	serviceShortCodeConsume CredentialsUpdatePasswordServiceShortCodeConsume
 	transactor              transaction.Transactor
 }
@@ -50,12 +55,14 @@ type CredentialsUpdatePassword struct {
 func NewCredentialsUpdatePassword(
 	dao CredentialsUpdatePasswordDao,
 	daoCredentialsSelect CredentialsUpdatePasswordDaoCredentialsSelect,
+	serviceShortCodeVerify CredentialsUpdatePasswordServiceShortCodeVerify,
 	serviceShortCodeConsume CredentialsUpdatePasswordServiceShortCodeConsume,
 	transactor transaction.Transactor,
 ) *CredentialsUpdatePassword {
 	return &CredentialsUpdatePassword{
 		dao:                     dao,
 		daoCredentialsSelect:    daoCredentialsSelect,
+		serviceShortCodeVerify:  serviceShortCodeVerify,
 		serviceShortCodeConsume: serviceShortCodeConsume,
 		transactor:              transactor,
 	}
@@ -74,45 +81,53 @@ func (service *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	var credentials *dao.Credentials
+	var (
+		credentials *dao.Credentials
+		shortCode   *ShortCode
+	)
 
-	// Verification and update share one transaction so a failed check never leaves a
-	// changed password behind.
+	// Argon2 runs before the transaction, which holds a pooled connection: the proof first, so a
+	// failed check costs a single run, then the new password.
+	switch {
+	// Reset path: the short code proves the caller owns the account's email, so no
+	// current password is required.
+	case request.ShortCode != "":
+		shortCode, err = service.serviceShortCodeVerify.Exec(ctx, &ShortCodeVerifyRequest{
+			Usage:  ShortCodeUsageResetPassword,
+			Target: request.UserID.String(),
+			Code:   request.ShortCode,
+		})
+		if err != nil {
+			return nil, otel.ReportError(span, fmt.Errorf("verify short code: %w", err))
+		}
+
+	// Change path: verifying the current password stops someone holding only a live
+	// session from locking the owner out of their own account.
+	case request.CurrentPassword != "":
+		credentials, err = service.daoCredentialsSelect.Exec(ctx, &dao.CredentialsSelectRequest{ID: request.UserID})
+		if err != nil {
+			return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
+		}
+
+		err = lib.CompareArgon2(request.CurrentPassword, credentials.Password)
+		if err != nil {
+			return nil, otel.ReportError(span, fmt.Errorf("compare current password: %w", err))
+		}
+	}
+
+	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
+	}
+
+	// Retiring the code and writing the password share one transaction, so a failed
+	// write leaves the code usable.
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		switch {
-		// Reset path: the short code proves the caller owns the account's email, so no
-		// current password is required.
-		case request.ShortCode != "":
-			_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
-				Usage:  ShortCodeUsageResetPassword,
-				Target: request.UserID.String(),
-				Code:   request.ShortCode,
-			})
+		if shortCode != nil {
+			_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
 			if err != nil {
 				return fmt.Errorf("consume short code: %w", err)
 			}
-
-		// Change path: verifying the current password stops someone holding only a live
-		// session from locking the owner out of their own account.
-		case request.CurrentPassword != "":
-			credentials, err = service.daoCredentialsSelect.Exec(
-				ctx,
-				&dao.CredentialsSelectRequest{ID: request.UserID},
-			)
-			if err != nil {
-				return fmt.Errorf("select credentials: %w", err)
-			}
-
-			err = lib.CompareArgon2(request.CurrentPassword, credentials.Password)
-			if err != nil {
-				return fmt.Errorf("compare current password: %w", err)
-			}
-		}
-
-		// Hashing waits for the proof, so a wrong code or password costs a single Argon2 run.
-		encryptedPassword, hashErr := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
-		if hashErr != nil {
-			return fmt.Errorf("encrypt password: %w", hashErr)
 		}
 
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsUpdatePasswordRequest{

@@ -19,6 +19,10 @@ import (
 type CredentialsUpdateEmailDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsUpdateEmailRequest) (*dao.Credentials, error)
 }
+type CredentialsUpdateEmailServiceShortCodeVerify interface {
+	Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error)
+}
+
 type CredentialsUpdateEmailServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
@@ -33,17 +37,20 @@ type CredentialsUpdateEmailRequest struct {
 // payload, so only the address the code was issued for can take effect.
 type CredentialsUpdateEmail struct {
 	dao                     CredentialsUpdateEmailDao
+	serviceShortCodeVerify  CredentialsUpdateEmailServiceShortCodeVerify
 	serviceShortCodeConsume CredentialsUpdateEmailServiceShortCodeConsume
 	transactor              transaction.Transactor
 }
 
 func NewCredentialsUpdateEmail(
 	dao CredentialsUpdateEmailDao,
+	serviceShortCodeVerify CredentialsUpdateEmailServiceShortCodeVerify,
 	serviceShortCodeConsume CredentialsUpdateEmailServiceShortCodeConsume,
 	transactor transaction.Transactor,
 ) *CredentialsUpdateEmail {
 	return &CredentialsUpdateEmail{
 		dao:                     dao,
+		serviceShortCodeVerify:  serviceShortCodeVerify,
 		serviceShortCodeConsume: serviceShortCodeConsume,
 		transactor:              transactor,
 	}
@@ -62,27 +69,32 @@ func (service *CredentialsUpdateEmail) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
+	// The check runs Argon2, so it happens before the transaction, which holds a pooled connection.
+	shortCode, err := service.serviceShortCodeVerify.Exec(ctx, &ShortCodeVerifyRequest{
+		Usage:  ShortCodeUsageValidateEmail,
+		Target: request.UserID.String(),
+		Code:   request.ShortCode,
+	})
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("verify short code: %w", err))
+	}
+
+	var newEmail string
+
+	err = json.Unmarshal(shortCode.Data, &newEmail)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("unmarshal short code data: %w", err))
+	}
+
+	span.SetAttributes(attribute.String("shortCode.newEmail", newEmail))
+
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		// Verify short code.
-		shortCode, txErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
-			Usage:  ShortCodeUsageValidateEmail,
-			Target: request.UserID.String(),
-			Code:   request.ShortCode,
-		})
+		_, txErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
 		if txErr != nil {
 			return fmt.Errorf("consume short code: %w", txErr)
 		}
-
-		var newEmail string
-
-		txErr = json.Unmarshal(shortCode.Data, &newEmail)
-		if txErr != nil {
-			return fmt.Errorf("unmarshal short code data: %w", txErr)
-		}
-
-		span.SetAttributes(attribute.String("shortCode.newEmail", newEmail))
 
 		// Update email.
 		credentials, txErr = service.dao.Exec(ctx, &dao.CredentialsUpdateEmailRequest{

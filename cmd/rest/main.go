@@ -107,7 +107,8 @@ func main() {
 	// SERVICES
 	// =================================================================================================================
 
-	serviceShortCodeConsume := core.NewShortCodeConsume(daoShortCodeSelect, daoShortCodeDelete)
+	serviceShortCodeVerify := core.NewShortCodeVerify(daoShortCodeSelect)
+	serviceShortCodeConsume := core.NewShortCodeConsume(daoShortCodeDelete)
 	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, cfg.ShortCodesConfig)
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
 		serviceShortCodeCreate,
@@ -132,17 +133,17 @@ func main() {
 	)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
-		daoCredentialsInsert, serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist,
+		daoCredentialsInsert, serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist,
 	)
 	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
 	serviceWaitlistJoin := core.NewWaitlistJoin(daoCredentialsExist, daoWaitlist)
 	serviceCredentialsGet := core.NewCredentialsGet(daoCredentialsSelect)
 	serviceCredentialsList := core.NewCredentialsList(daoCredentialsList)
 	serviceCredentialsUpdateEmail := core.NewCredentialsUpdateEmail(
-		daoCredentialsUpdateEmail, serviceShortCodeConsume, daoTransactor,
+		daoCredentialsUpdateEmail, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
 	)
 	serviceCredentialsUpdatePassword := core.NewCredentialsUpdatePassword(
-		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeConsume, daoTransactor,
+		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
 	)
 	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(
 		daoCredentialsUpdateRole,

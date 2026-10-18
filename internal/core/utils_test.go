@@ -28,19 +28,14 @@ func waitForMailDelivery(t *testing.T, delivery *core.MailDelivery) {
 	require.NoError(t, delivery.Wait(ctx))
 }
 
-// closeArgon2Gate makes every hash wait until the test ends, so [requireNoHash] can tell whether
-// an operation hashed. Tests that close it cannot run in parallel with tests that hash.
-func closeArgon2Gate(t *testing.T) {
+// requireNoHash runs exec while every Argon2 hash waits forever, and returns its error. It fails
+// the test when exec is stuck waiting to hash. The gate is process-wide, so tests calling it cannot
+// run in parallel with tests that hash.
+func requireNoHash(t *testing.T, exec func() error) error {
 	t.Helper()
 
 	lib.LimitArgon2(0)
-	t.Cleanup(func() { lib.LimitArgon2(runtime.GOMAXPROCS(0)) })
-}
-
-// requireNoHash runs exec behind the closed Argon2 gate and returns its error, failing the test
-// when exec is stuck waiting to hash.
-func requireNoHash(t *testing.T, exec func() error) error {
-	t.Helper()
+	defer lib.LimitArgon2(runtime.GOMAXPROCS(0))
 
 	done := make(chan error, 1)
 
@@ -50,8 +45,18 @@ func requireNoHash(t *testing.T, exec func() error) error {
 	case err := <-done:
 		return err
 	case <-time.After(5 * time.Second):
-		require.FailNow(t, "hashed before checking the proof")
+		require.FailNow(t, "hashed where no hash may run")
 
 		return nil
+	}
+}
+
+// noHashInTx is a transactor mock body that runs the transaction while no hash may run, since a
+// transaction holds a pooled connection for as long as it lasts.
+func noHashInTx(t *testing.T) func(ctx context.Context, fn func(ctx context.Context) error) error {
+	t.Helper()
+
+	return func(ctx context.Context, fn func(ctx context.Context) error) error {
+		return requireNoHash(t, func() error { return fn(ctx) })
 	}
 }

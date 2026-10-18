@@ -36,7 +36,7 @@ type ShortCodeCreateRequest struct {
 
 // ShortCodeCreate issues a short code: it generates a random plaintext code,
 // stores only its Argon2id hash, and returns the plaintext once so the caller can
-// deliver it to the target. [ShortCodeConsume] redeems it.
+// deliver it to the target. [ShortCodeVerify] and [ShortCodeConsume] redeem it.
 type ShortCodeCreate struct {
 	dao    ShortCodeCreateDao
 	config authconfig.ShortCodes
