@@ -5,6 +5,10 @@
 # conversations stay unlocked: GitHub refuses a GitHub App's review on a locked
 # conversation, which would block the approval bot. A bot that must comment on a
 # closed conversation reopens it first.
+#
+# Each run acts on the conversation's current state, not the event's: a close
+# quickly followed by a reopen would otherwise lock an open pull request. Runs
+# for one number queue in event order.
 name: lock closed conversations
 
 on:
@@ -12,6 +16,10 @@ on:
     types: [closed, reopened]
   pull_request:
     types: [closed, reopened]
+
+concurrency:
+  group: lock-closed-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
 
 jobs:
   lock:
@@ -25,9 +33,9 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
     steps:
-      - name: Lock the closed conversation
-        if: github.event.action == 'closed'
-        run: gh api --method PUT "repos/$GITHUB_REPOSITORY/issues/$NUMBER/lock"
-      - name: Unlock the reopened conversation
-        if: github.event.action == 'reopened' && (github.event.issue.locked || github.event.pull_request.locked)
-        run: gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/$NUMBER/lock"
+      - name: Lock a closed conversation, unlock an open one
+        run: |
+          case "$(gh api "repos/$GITHUB_REPOSITORY/issues/$NUMBER" --jq '"\(.state) \(.locked)"')" in
+            "closed false") gh api --method PUT "repos/$GITHUB_REPOSITORY/issues/$NUMBER/lock" ;;
+            "open true") gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/$NUMBER/lock" ;;
+          esac
