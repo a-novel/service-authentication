@@ -269,7 +269,8 @@ jobs:
           run_args: -e POSTGRES_PASSWORD=postgres
 
   # Infra tells a real database change from a version bump by digest alone, so the image must
-  # rebuild to the same digest. Both builds start cold, as a release does.
+  # rebuild to the same digest. The two builds run at once, each on a fresh builder: both start
+  # cold, as a release does, and a shared builder would run their common steps only once.
   test-reproducible-database:
     runs-on: ubuntu-latest
     permissions:
@@ -278,18 +279,22 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: docker/setup-buildx-action@v4
       - name: Build the database image twice
         shell: bash
         env:
           SOURCE_DATE_EPOCH: "0"
         run: |
           set -euo pipefail
-          for build in first second; do
-            docker buildx build --no-cache --provenance=false --file builds/database.Dockerfile \
-              --output "type=oci,dest=$RUNNER_TEMP/$build.tar,rewrite-timestamp=true" \
-              --metadata-file "$RUNNER_TEMP/$build.json" .
-          done
+          build() {
+            docker buildx create --name "$1" --driver docker-container --bootstrap >/dev/null
+            docker buildx build --builder "$1" --provenance=false --file builds/database.Dockerfile \
+              --output "type=oci,dest=$RUNNER_TEMP/$1.tar,rewrite-timestamp=true" \
+              --metadata-file "$RUNNER_TEMP/$1.json" . 2>&1 | sed -u "s/^/[$1] /"
+          }
+          build first &
+          pid=$!
+          build second
+          wait "$pid"
           first="$(jq -r '."containerimage.digest"' "$RUNNER_TEMP/first.json")"
           second="$(jq -r '."containerimage.digest"' "$RUNNER_TEMP/second.json")"
           if [ "$first" != "$second" ]; then
