@@ -1,15 +1,22 @@
 # Assemble signed Wolfi packages with a versioned upstream builder.
-FROM docker.io/library/golang:1.27.2-alpine AS packages
-ENV CGO_ENABLED=0
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    GOBIN=/usr/local/bin go install -trimpath -ldflags="-s -w" chainguard.dev/apko@v1.4.11
+FROM docker.io/library/alpine:3.24.2 AS packages
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # jq only reads the locks in this stage and never reaches the image, so its version can't change it.
 # hadolint ignore=DL3018
 RUN apk add --no-cache jq
+# One pinned checksum list verifies the apko release archive of every architecture.
+ARG TARGETARCH
+ARG APKO_VERSION=1.4.11
+ARG APKO_CHECKSUMS_SHA256=05942a925cecc00cd41cab2cec6996e95d2e5aa4127dfd5f2d38149909f2b7b0
+WORKDIR /tmp
+RUN archive="apko_${APKO_VERSION}_linux_${TARGETARCH}" \
+    && wget -q "https://github.com/chainguard-dev/apko/releases/download/v${APKO_VERSION}/checksums.txt" \
+        "https://github.com/chainguard-dev/apko/releases/download/v${APKO_VERSION}/$archive.tar.gz" \
+    && echo "${APKO_CHECKSUMS_SHA256}  checksums.txt" | sha256sum -c - \
+    && grep " $archive.tar.gz\$" checksums.txt | sha256sum -c - \
+    && tar -xzf "$archive.tar.gz" -C /usr/local/bin --strip-components=1 "$archive/apko"
 COPY ./builds/database.apko.yaml ./builds/database.apko.lock.json \
     ./builds/database.builder.apko.yaml ./builds/database.builder.apko.lock.json /apko/
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # Install exactly the locked packages, and fail when a config resolves to a package its lock lacks.
 RUN for config in database database.builder; do \
         lock="/apko/$config.apko.lock.json"; \
