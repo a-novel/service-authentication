@@ -19,11 +19,13 @@ on:
     workflows: [pr-relay]
     types: [completed]
 
-# Nothing posts the check again later, so a superseded run finishing last would
-# leave a stale result in either direction.
+# Nothing posts the check again later, so runs never overlap: each reads the pull
+# request when it starts, and the last to run posts the latest verdict. A newer
+# event replaces the waiting run, which never starts. Cancelling a running one would
+# leave its cancelled job in the merge box, which shows each workflow's newest run.
 concurrency:
   group: review-gate-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   evaluate:
