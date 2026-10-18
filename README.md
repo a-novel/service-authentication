@@ -177,8 +177,8 @@ deployments migrate.
 | `REST_RATE_LIMITS_ENABLED`    | Rate-limit each caller and email, as documented per route in the OpenAPI specification. Turn off only in test stacks.                        | `true`                           |
 | `REST_RATE_LIMIT`             | Requests each visitor sends to each route, as `<requests>/<window>`.                                                                         | `5/1s`                           |
 | `REST_RATE_LIMIT_STRICT`      | Anonymous tokens, invitation requests, and reset or email-change mails per caller.                                                           | `3/5m`                           |
-| `REST_RATE_LIMIT_LOGIN_BURST` | Logins per visitor over a short window.                                                                                                      | `10/1m`                          |
-| `REST_RATE_LIMIT_LOGIN`       | Logins per visitor, and per email, over a longer window.                                                                                     | `30/10m`                         |
+| `REST_RATE_LIMIT_LOGIN_BURST` | Logins, sign-ups, password resets and changes, and email updates per caller over a short window.                                             | `10/1m`                          |
+| `REST_RATE_LIMIT_LOGIN`       | The same per caller, and per email or account, over a longer window.                                                                         | `30/10m`                         |
 | `REST_RATE_LIMIT_MAILBOX`     | Emails each address receives from one route.                                                                                                 | `3/1h`                           |
 | `ARGON2_MAX_CONCURRENT`       | Password hashes running at once per instance; each takes 64 MiB. Hashing is CPU-bound, so more than one per CPU adds memory, not throughput. | CPU count (`GOMAXPROCS`)         |
 | `REST_TIMEOUT_READ`           | Read timeout.                                                                                                                                | `15s`                            |

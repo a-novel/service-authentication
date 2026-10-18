@@ -238,12 +238,12 @@ func main() {
 			withAuth(r, "credentials:exist").Head("/", handlerCredentialsExist.ServeHTTP)
 			withAuth(r, "credentials:list").Get("/all", handlerCredentialsList.ServeHTTP)
 
-			withAuth(r, "credentials:create").Put("/", handlerCredentialsCreate.ServeHTTP)
-			withAuth(r, "credentials:email:patch").
+			withAuth(r, "credentials:create").With(limit.SignUp).Put("/", handlerCredentialsCreate.ServeHTTP)
+			withAuth(r, "credentials:email:patch").With(limit.ShortCode).
 				Patch("/email", handlerCredentialsUpdateEmail.ServeHTTP)
-			withAuth(r, "credentials:password:patch").
+			withAuth(r, "credentials:password:patch").With(limit.Password).
 				Patch("/password", handlerCredentialsUpdatePassword.ServeHTTP)
-			withAuth(r, "credentials:password:reset").
+			withAuth(r, "credentials:password:reset").With(limit.ShortCode).
 				Put("/password", handlerCredentialsResetPassword.ServeHTTP)
 			withAuth(r, "credentials:role:patch").
 				Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
