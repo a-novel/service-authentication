@@ -4,8 +4,9 @@
 # default branch posts to the CI channel and pings the repository's role, and the run that turns the
 # branch green again posts without a ping. Watching `release` catches a release that fails after
 # its tag. Each published release posts to the releases channel with its notes. A person's pull
-# request posts its reviews, its merge and a drop from the merge queue to the reviews channel; a
-# bot's posts only when `main` fails on its branch or in the merge queue, hence the extra branches.
+# request posts its reviews, its merge and a drop from the merge queue to the repository's reviews
+# channel, or the org's when it has none; a bot's posts only when `main` fails on its branch or in
+# the merge queue, hence the extra branches.
 # The Dependencies App opens its own pull requests, such as infra's release pins, on `chore/deps/`.
 name: notify
 
@@ -42,7 +43,7 @@ jobs:
     # The engine reads the workflow's previous run to tell a recovery from a routine success.
     permissions:
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/notify-ci-run.yaml@v1.61.1
+    uses: a-novel-kit/workflows/.github/workflows/notify-ci-run.yaml@v1.62.0
     with:
       roles: ${{ vars.DISCORD_REPO_ROLES }}
     secrets:
@@ -50,7 +51,7 @@ jobs:
 
   release:
     if: github.event_name == 'release'
-    uses: a-novel-kit/workflows/.github/workflows/notify-release-run.yaml@v1.61.1
+    uses: a-novel-kit/workflows/.github/workflows/notify-release-run.yaml@v1.62.0
     secrets:
       webhook: ${{ secrets.RELEASES_WEBHOOK }}
 
@@ -61,7 +62,7 @@ jobs:
     # The engine lists a bot pull request's CI runs; the pull request itself it reads through the App.
     permissions:
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.61.1
+    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.62.0
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       roles: ${{ vars.DISCORD_REPO_ROLES }}
@@ -69,5 +70,6 @@ jobs:
     secrets:
       private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
       reviews_webhook: ${{ secrets.REVIEWS_WEBHOOK }}
+      reviews_webhooks: ${{ secrets.REVIEWS_WEBHOOKS }}
       dependencies_webhook: ${{ secrets.DEPENDENCIES_WEBHOOK }}
       bws_access_token: ${{ secrets.BWS_READ_TOKEN }}
