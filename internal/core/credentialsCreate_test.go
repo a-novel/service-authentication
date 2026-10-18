@@ -485,3 +485,35 @@ func TestCredentialsCreateIsAtomic(t *testing.T) {
 		})
 	}
 }
+
+// TestCredentialsCreateChecksCodeFirst hashes no password for a wrong short code, which costs the
+// single Argon2 run of the code check.
+//
+//nolint:paralleltest // It closes the process-wide hash gate, which parallel tests share.
+func TestCredentialsCreateChecksCodeFirst(t *testing.T) {
+	closeArgon2Gate(t)
+
+	request := &core.CredentialsCreateRequest{
+		Email: "user@provider.com", Password: "secret", ShortCode: "foobarqux",
+	}
+	consume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
+	consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{
+		Usage: core.ShortCodeUsageRegister, Target: request.Email, Code: request.ShortCode,
+	}).Return(nil, core.ErrShortCodeConsumeInvalid).Once()
+
+	service := core.NewCredentialsCreate(
+		coremocks.NewMockCredentialsCreateDao(t),
+		consume,
+		coremocks.NewMockCredentialsCreateServiceSignClaims(t),
+		transactiontest.NewTransactor(),
+		coremocks.NewMockCredentialsCreateWaitlist(t),
+	)
+
+	err := requireNoHash(t, func() error {
+		_, err := service.Exec(t.Context(), request)
+
+		return err
+	})
+	require.ErrorIs(t, err, core.ErrShortCodeConsumeInvalid)
+	consume.AssertExpectations(t)
+}

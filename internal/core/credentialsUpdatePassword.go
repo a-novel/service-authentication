@@ -74,11 +74,6 @@ func (service *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
-	}
-
 	var credentials *dao.Credentials
 
 	// Verification and update share one transaction so a failed check never leaves a
@@ -112,6 +107,12 @@ func (service *CredentialsUpdatePassword) Exec(
 			if err != nil {
 				return fmt.Errorf("compare current password: %w", err)
 			}
+		}
+
+		// Hashing waits for the proof, so a wrong code or password costs a single Argon2 run.
+		encryptedPassword, hashErr := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
+		if hashErr != nil {
+			return fmt.Errorf("encrypt password: %w", hashErr)
 		}
 
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsUpdatePasswordRequest{

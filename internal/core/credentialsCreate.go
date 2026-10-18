@@ -93,9 +93,10 @@ func NewCredentialsCreate(
 
 // Exec atomically registers a new user with the supplied email and password,
 // gated by a one-time registration short code, and returns a fresh access/refresh
-// token pair. The password is hashed with Argon2id before storage. If the short
-// code is invalid or the credentials cannot be inserted (for example because the
-// email is already taken), the transaction is rolled back and no user is created.
+// token pair. The password is hashed with Argon2id once the short code checks out.
+// If the short code is invalid or the credentials cannot be inserted (for example
+// because the email is already taken), the transaction is rolled back and no user
+// is created.
 // After commit, bounded waitlist cleanup runs independently of client cancellation.
 // Cleanup failures are traced and leave the account usable; maintenance can reconcile stale rows.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
@@ -108,11 +109,6 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	err := validate.Struct(request)
 	if err != nil {
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
-	}
-
-	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
 	}
 
 	var credentials *dao.Credentials
@@ -130,6 +126,12 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		role, roleErr := computeRole(shortCode.Data)
 		if roleErr != nil {
 			return errors.Join(roleErr, ErrCredentialsCreateInvalidRegistrationData)
+		}
+
+		// Hashing waits for the code, so a wrong one costs a single Argon2 run, as a missing one does.
+		encryptedPassword, hashErr := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
+		if hashErr != nil {
+			return fmt.Errorf("encrypt password: %w", hashErr)
 		}
 
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{

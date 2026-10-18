@@ -246,13 +246,89 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 					mockDao, daoCredentialsSelect, serviceShortCodeConsume, transactiontest.NewTransactor(),
 				)
 
-				_, err = service.Exec(ctx, testCase.request)
+				_, err := service.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 
 				mockDao.AssertExpectations(t)
 				daoCredentialsSelect.AssertExpectations(t)
 				serviceShortCodeConsume.AssertExpectations(t)
 			})
+		})
+	}
+}
+
+// TestCredentialsUpdatePasswordChecksProofFirst hashes no new password until the short code or the
+// current password checks out, so a failed check costs at most the single Argon2 run of the check.
+//
+//nolint:paralleltest // It closes the process-wide hash gate, which parallel tests share.
+func TestCredentialsUpdatePasswordChecksProofFirst(t *testing.T) {
+	closeArgon2Gate(t)
+
+	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+
+	testCases := []struct {
+		name string
+
+		request *core.CredentialsUpdatePasswordRequest
+
+		expectErr error
+	}{
+		{
+			name: "Error/ShortCode",
+
+			request: &core.CredentialsUpdatePasswordRequest{
+				UserID: userID, Password: "new-password", ShortCode: "short-code",
+			},
+
+			expectErr: core.ErrShortCodeConsumeInvalid,
+		},
+		{
+			name: "Error/CurrentPassword",
+
+			request: &core.CredentialsUpdatePasswordRequest{
+				UserID: userID, Password: "new-password", CurrentPassword: "password",
+			},
+
+			expectErr: dao.ErrCredentialsSelectNotFound,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Checking the current password hashes too, so the case stops at the lookup before it.
+			daoCredentialsSelect := coremocks.NewMockCredentialsUpdatePasswordDaoCredentialsSelect(t)
+			if testCase.request.CurrentPassword != "" {
+				daoCredentialsSelect.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsSelectRequest{ID: userID}).
+					Return(nil, dao.ErrCredentialsSelectNotFound).Once()
+			}
+
+			serviceShortCodeConsume := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeConsume(t)
+			if testCase.request.ShortCode != "" {
+				serviceShortCodeConsume.EXPECT().
+					Exec(mock.Anything, &core.ShortCodeConsumeRequest{
+						Usage:  core.ShortCodeUsageResetPassword,
+						Target: userID.String(),
+						Code:   testCase.request.ShortCode,
+					}).
+					Return(nil, core.ErrShortCodeConsumeInvalid).Once()
+			}
+
+			service := core.NewCredentialsUpdatePassword(
+				coremocks.NewMockCredentialsUpdatePasswordDao(t),
+				daoCredentialsSelect,
+				serviceShortCodeConsume,
+				transactiontest.NewTransactor(),
+			)
+
+			err := requireNoHash(t, func() error {
+				_, err := service.Exec(t.Context(), testCase.request)
+
+				return err
+			})
+			require.ErrorIs(t, err, testCase.expectErr)
+			daoCredentialsSelect.AssertExpectations(t)
+			serviceShortCodeConsume.AssertExpectations(t)
 		})
 	}
 }
