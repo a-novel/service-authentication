@@ -1,15 +1,13 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
 # Deletes this repository's container images once the branch or pull request that built them is gone.
-# Closing a pull request deletes its `pr-<N>` image at once; a weekly sweep takes the rest: untagged
+# Closing a pull request deletes its `pr-<N>` image at once; a daily sweep takes the rest: untagged
 # builds and tags of closed pull requests, merge-queue builds and old branch tags. Release tags, master,
 # every master build and open pull requests' images stay. A deleted version can be restored for 30 days.
 name: clean images
 
 on:
-  # The sweep has no deadline, so a delayed scheduled run costs nothing.
-  schedule:
-    - cron: "17 3 * * 0"
+  # GitHub starts scheduled runs hours late, so a-novel/infra's Cloud Scheduler dispatches the daily sweep.
   workflow_dispatch:
     inputs:
       dry_run:
@@ -65,8 +63,8 @@ jobs:
     needs: [packages]
     if: github.event_name != 'pull_request' && needs.packages.outputs.names != '[]'
     runs-on: ubuntu-latest
-    # A weekly run can take its time; a backlog that outlasts it resumes the next week.
-    timeout-minutes: 300
+    # A day of builds takes minutes; a backlog that outlasts the limit resumes the next day.
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       # Deletions share the repository's API quota with its CI, so packages take turns.
