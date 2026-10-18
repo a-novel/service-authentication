@@ -241,6 +241,8 @@ paths:
       description: |
         Create a new user account with a short code received in a registration invitation. A super-admin must first
         send the invitation through `[PUT] /v2/short-code/register`.
+
+        By default, each caller may try 10 sign-ups per minute and 30 per 10 minutes, and each email 30 per 10 minutes.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:create"]
@@ -304,6 +306,9 @@ paths:
       description: |
         Completes the email update process. The user must have a short-code available, generated during the initial 
         phase. If not, use `[PUT] /v2/short-code/update-email` first.
+
+        By default, each caller may try 10 email updates per minute and 30 per 10 minutes, and each account 30 per 10
+        minutes.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:email:patch"]
@@ -337,6 +342,8 @@ paths:
       summary: Update the user password.
       description: |
         Update the password of a user. The current password must be provided as an extra safeguard.
+
+        By default, each user may try 10 password updates per minute and 30 per 10 minutes.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:password:patch"]
@@ -367,6 +374,9 @@ paths:
       description: |
         Completes the password reset process. The user must have a short-code available, generated during the initial 
         phase. If not, use `[PUT] /v2/short-code/update-password` first.
+
+        By default, each caller may try 10 password resets per minute and 30 per 10 minutes, and each account 30 per
+        10 minutes.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:password:reset"]
@@ -728,7 +738,7 @@ components:
 
     tooManyRequests:
       description: |
-        The caller sent too many requests to this route, or too many named the same email. Retry once
+        The caller sent too many requests to this route, or too many named the same email or account. Retry once
         `Retry-After` has elapsed.
       headers:
         Retry-After:

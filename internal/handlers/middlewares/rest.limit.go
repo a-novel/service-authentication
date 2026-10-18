@@ -25,6 +25,14 @@ type RestLimits struct {
 	Mail func(http.Handler) http.Handler
 	// Mailbox caps the emails each address receives, whoever asks for them.
 	Mailbox func(http.Handler) http.Handler
+	// Password caps each signed-in user's password changes as Login caps logins.
+	Password func(http.Handler) http.Handler
+	// ShortCode caps each caller's password resets and email updates as Login caps logins, and
+	// those naming one account over the longer window.
+	ShortCode func(http.Handler) http.Handler
+	// SignUp caps each caller's sign-ups as Login caps logins, and those naming one email over the
+	// longer window.
+	SignUp func(http.Handler) http.Handler
 	// Waitlist caps the waitlist requests waiting on Google, their size, and each caller's requests.
 	Waitlist func(http.Handler) http.Handler
 }
@@ -38,6 +46,7 @@ func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimi
 	loginBurst := limits.By(policies.LoginBurst, CallerKey)
 	login := limits.By(policies.Login, CallerKey)
 	loginEmail := limits.By(policies.Login, emailKey)
+	loginAccount := limits.By(policies.Login, accountKey)
 	waitlistConcurrency := httpf.LimitConcurrency(policies.WaitlistMaxConcurrent)
 	waitlistSize := middleware.RequestSize(policies.WaitlistMaxRequestSize)
 
@@ -46,12 +55,19 @@ func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimi
 		Login:     chi.Chain(loginBurst, login, loginEmail).Handler,
 		Mail:      chi.Chain(strict, mailbox).Handler,
 		Mailbox:   mailbox,
+		Password:  chi.Chain(loginBurst, login).Handler,
+		ShortCode: chi.Chain(loginBurst, login, loginAccount).Handler,
+		SignUp:    chi.Chain(loginBurst, login, loginEmail).Handler,
 		Waitlist:  chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
 	}
 }
 
-// emailKey counts the email a request names in its body.
-var emailKey = httpf.BodyKeyRate("email")
+var (
+	// emailKey counts the email a request names in its body.
+	emailKey = httpf.BodyKeyRate("email")
+	// accountKey counts the account a request names in its body by ID.
+	accountKey = httpf.BodyKeyRate("userID")
+)
 
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP. Mount the limit after
 // the auth middleware, which signs the user in.

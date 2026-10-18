@@ -3,120 +3,58 @@ package core
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-var (
-	// ErrShortCodeConsumeInvalid is returned by [ShortCodeConsume.Exec] when the
-	// supplied code does not match the stored hash for the (Usage, Target) pair.
-	// Callers map it to a 4xx response.
-	ErrShortCodeConsumeInvalid = errors.New("invalid short code")
-	// ErrShortCodeConsumeExpired is returned by [ShortCodeConsume.Exec] when the
-	// stored code's expiry has already passed. The SQL select filters expired rows
-	// too; this check covers clock skew between the database and the service.
-	ErrShortCodeConsumeExpired = errors.New("short code expired")
-)
-
-// ShortCodeConsumeDaoSelect loads the stored short code for a (Usage, Target)
-// pair so the submitted code can be verified against it.
-type ShortCodeConsumeDaoSelect interface {
-	Exec(ctx context.Context, request *dao.ShortCodeSelectRequest) (*dao.ShortCode, error)
-}
-
-// ShortCodeConsumeDaoDelete retires a short code once it has been redeemed, so it
+// ShortCodeConsumeDao retires a short code once it has been redeemed, so it
 // cannot be used a second time.
-type ShortCodeConsumeDaoDelete interface {
+type ShortCodeConsumeDao interface {
 	Exec(ctx context.Context, request *dao.ShortCodeDeleteRequest) (*dao.ShortCode, error)
 }
 
-// ShortCodeConsumeRequest identifies the code to redeem: the flow it was issued
-// for, the subject it was bound to, and the plaintext code the user supplied.
+// ShortCodeConsumeRequest names the code to retire, as [ShortCodeVerify] returned it.
 type ShortCodeConsumeRequest struct {
-	Usage  string `validate:"required,usage"`
-	Target string `validate:"required,max=1024"`
-	Code   string `validate:"required,max=1024"`
+	ID uuid.UUID
 }
 
-// ShortCodeConsume verifies a user-submitted short code against the stored hash
-// and, on success, retires it so it cannot be redeemed twice. It is the
-// counterpart to [ShortCodeCreate].
+// ShortCodeConsume retires a short code that [ShortCodeVerify] accepted. Call it
+// in the transaction of the write the code authorizes, so a failed write leaves
+// the code usable.
 type ShortCodeConsume struct {
-	daoSelect ShortCodeConsumeDaoSelect
-	daoDelete ShortCodeConsumeDaoDelete
+	dao ShortCodeConsumeDao
 }
 
-// NewShortCodeConsume wires the consume service to the DAOs that read and delete
-// stored codes.
-func NewShortCodeConsume(
-	daoSelect ShortCodeConsumeDaoSelect,
-	daoDelete ShortCodeConsumeDaoDelete,
-) *ShortCodeConsume {
-	return &ShortCodeConsume{
-		daoSelect: daoSelect,
-		daoDelete: daoDelete,
-	}
+// NewShortCodeConsume wires the consume service to the DAO that retires stored codes.
+func NewShortCodeConsume(dao ShortCodeConsumeDao) *ShortCodeConsume {
+	return &ShortCodeConsume{dao: dao}
 }
 
-// Exec verifies the submitted code and, on success, deletes it and returns the
-// consumed [ShortCode]. It returns [ErrShortCodeConsumeInvalid] when the code does
-// not match the stored hash and [ErrShortCodeConsumeExpired] when it has lapsed.
-func (service *ShortCodeConsume) Exec(
-	ctx context.Context, request *ShortCodeConsumeRequest,
-) (*ShortCode, error) {
+// Exec retires the code and returns it. It returns [ErrShortCodeConsumeInvalid]
+// when the code was retired or expired since it was verified, so only one of
+// two concurrent redemptions succeeds.
+func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error) {
 	ctx, span := otel.Tracer().Start(ctx, "service.ShortCodeConsume")
 	defer span.End()
 
-	err := validate.Struct(request)
-	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
-	}
+	span.SetAttributes(attribute.String("shortCode.id", request.ID.String()))
 
-	entity, err := service.daoSelect.Exec(ctx, &dao.ShortCodeSelectRequest{
-		Target: request.Target,
-		Usage:  request.Usage,
-	})
-	if err != nil {
-		if errors.Is(err, dao.ErrShortCodeSelectNotFound) {
-			// Burn an Argon2id verification so a missing code costs the same as a
-			// wrong one, and the latency reveals nothing about whether a code is in
-			// flight for the target.
-			lib.DummyCompareArgon2(request.Code)
-		}
-
-		return nil, otel.ReportError(span, err)
-	}
-
-	span.SetAttributes(attribute.String("shortCode.id", entity.ID.String()))
-
-	if entity.ExpiresAt.Before(time.Now()) {
-		return nil, otel.ReportError(span, ErrShortCodeConsumeExpired)
-	}
-
-	err = lib.CompareArgon2(request.Code, entity.Code)
-	if err != nil {
-		// A mistyped or stale code yields lib.ErrInvalidPassword; a malformed stored hash
-		// yields lib.ErrInvalidHash or lib.ErrIncompatibleVersion. Both surface to the
-		// caller as ErrShortCodeConsumeInvalid.
-		return nil, otel.ReportError(span, errors.Join(
-			fmt.Errorf("compare short code: %w", err),
-			ErrShortCodeConsumeInvalid,
-		))
-	}
-
-	_, err = service.daoDelete.Exec(ctx, &dao.ShortCodeDeleteRequest{
-		ID:      entity.ID,
+	entity, err := service.dao.Exec(ctx, &dao.ShortCodeDeleteRequest{
+		ID:      request.ID,
 		Now:     time.Now(),
 		Comment: dao.ShortCodeDeleteConsumed,
 	})
 	if err != nil {
+		if errors.Is(err, dao.ErrShortCodeDeleteNotFound) {
+			err = errors.Join(err, ErrShortCodeConsumeInvalid)
+		}
+
 		return nil, otel.ReportError(span, err)
 	}
 
@@ -127,6 +65,5 @@ func (service *ShortCodeConsume) Exec(
 		Data:      entity.Data,
 		CreatedAt: entity.CreatedAt,
 		ExpiresAt: entity.ExpiresAt,
-		PlainCode: request.Code,
 	}, nil
 }

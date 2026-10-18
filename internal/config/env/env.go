@@ -222,9 +222,11 @@ var (
 
 	// RestRateLimitStrict caps each caller of a route issuing anonymous tokens or invitation requests.
 	RestRateLimitStrict = config.LoadEnv(restRateLimitStrict, RestRateLimitStrictDefault, httpf.ParseRate)
-	// RestRateLimitLoginBurst caps each visitor's logins over a short window.
+	// RestRateLimitLoginBurst caps each caller's requests checking a password or short code, logins
+	// first, over a short window.
 	RestRateLimitLoginBurst = config.LoadEnv(restRateLimitLoginBurst, RestRateLimitLoginBurstDefault, httpf.ParseRate)
-	// RestRateLimitLogin caps each visitor's logins, and the logins naming one email, over a longer window.
+	// RestRateLimitLogin caps the same requests over a longer window, per caller and per email or
+	// account named.
 	RestRateLimitLogin = config.LoadEnv(restRateLimitLogin, RestRateLimitLoginDefault, httpf.ParseRate)
 	// RestRateLimitMailbox caps the emails each address receives from one route.
 	RestRateLimitMailbox = config.LoadEnv(restRateLimitMailbox, RestRateLimitMailboxDefault, httpf.ParseRate)

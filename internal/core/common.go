@@ -1,6 +1,10 @@
 package core
 
-import "github.com/a-novel/service-authentication/v2/internal/dao"
+import (
+	"errors"
+
+	"github.com/a-novel/service-authentication/v2/internal/dao"
+)
 
 var (
 	// ErrCredentialsCreateAlreadyExists is returned when registration targets an existing email address.
@@ -19,6 +23,9 @@ var (
 	ErrCredentialsUpdateRoleNotFound = dao.ErrCredentialsUpdateRoleNotFound
 	// ErrShortCodeNotFound is returned when a matching short code does not exist.
 	ErrShortCodeNotFound = dao.ErrShortCodeSelectNotFound
+	// ErrShortCodeConsumeInvalid is returned when a submitted short code does not match the
+	// stored hash, or was retired or expired between its check and its redemption.
+	ErrShortCodeConsumeInvalid = errors.New("invalid short code")
 	// ErrWaitlistUnavailable is returned when the invitation list cannot acknowledge a request.
 	ErrWaitlistUnavailable = dao.ErrWaitlistUnavailable
 	// ErrWaitlistBusy is returned when the invitation list cannot admit more work.

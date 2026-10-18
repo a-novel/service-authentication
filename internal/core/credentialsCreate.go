@@ -42,7 +42,12 @@ type CredentialsCreateWaitlist interface {
 	Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)
 }
 
-// CredentialsCreateServiceShortCodeConsume validates and consumes registration short codes.
+// CredentialsCreateServiceShortCodeVerify checks registration short codes.
+type CredentialsCreateServiceShortCodeVerify interface {
+	Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error)
+}
+
+// CredentialsCreateServiceShortCodeConsume retires verified registration short codes.
 type CredentialsCreateServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
@@ -69,6 +74,7 @@ type CredentialsCreateRequest struct {
 // to the user's email address to verify ownership.
 type CredentialsCreate struct {
 	dao                     CredentialsCreateDao
+	serviceShortCodeVerify  CredentialsCreateServiceShortCodeVerify
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume
 	serviceSignClaims       CredentialsCreateServiceSignClaims
 	transactor              transaction.Transactor
@@ -77,6 +83,7 @@ type CredentialsCreate struct {
 
 func NewCredentialsCreate(
 	dao CredentialsCreateDao,
+	serviceShortCodeVerify CredentialsCreateServiceShortCodeVerify,
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume,
 	serviceSignClaims CredentialsCreateServiceSignClaims,
 	transactor transaction.Transactor,
@@ -84,6 +91,7 @@ func NewCredentialsCreate(
 ) *CredentialsCreate {
 	return &CredentialsCreate{
 		dao:                     dao,
+		serviceShortCodeVerify:  serviceShortCodeVerify,
 		serviceShortCodeConsume: serviceShortCodeConsume,
 		serviceSignClaims:       serviceSignClaims,
 		transactor:              transactor,
@@ -93,9 +101,11 @@ func NewCredentialsCreate(
 
 // Exec atomically registers a new user with the supplied email and password,
 // gated by a one-time registration short code, and returns a fresh access/refresh
-// token pair. The password is hashed with Argon2id before storage. If the short
-// code is invalid or the credentials cannot be inserted (for example because the
-// email is already taken), the transaction is rolled back and no user is created.
+// token pair. The short code is checked, then the password hashed with Argon2id,
+// before the transaction opens: it holds a pooled connection, so it only retires
+// the code and inserts the credentials. If the code was retired meanwhile or the
+// credentials cannot be inserted (for example because the email is already
+// taken), the transaction is rolled back and no user is created.
 // After commit, bounded waitlist cleanup runs independently of client cancellation.
 // Cleanup failures are traced and leave the account usable; maintenance can reconcile stale rows.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
@@ -110,6 +120,21 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
+	shortCode, err := service.serviceShortCodeVerify.Exec(ctx, &ShortCodeVerifyRequest{
+		Usage:  ShortCodeUsageRegister,
+		Target: request.Email,
+		Code:   request.ShortCode,
+	})
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("verify short code: %w", err))
+	}
+
+	role, err := computeRole(shortCode.Data)
+	if err != nil {
+		return nil, otel.ReportError(span, errors.Join(err, ErrCredentialsCreateInvalidRegistrationData))
+	}
+
+	// Hashing waits for the code, so a wrong one costs a single Argon2 run, as a missing one does.
 	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
@@ -118,18 +143,9 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		shortCode, consumeErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{
-			Usage:  ShortCodeUsageRegister,
-			Target: request.Email,
-			Code:   request.ShortCode,
-		})
+		_, consumeErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
 		if consumeErr != nil {
 			return fmt.Errorf("consume short code: %w", consumeErr)
-		}
-
-		role, roleErr := computeRole(shortCode.Data)
-		if roleErr != nil {
-			return errors.Join(roleErr, ErrCredentialsCreateInvalidRegistrationData)
 		}
 
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{

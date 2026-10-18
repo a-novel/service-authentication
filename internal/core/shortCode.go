@@ -9,8 +9,8 @@ import (
 
 // ShortCode is a one-time verification code issued for a sensitive identity
 // operation (registration, password reset, email change). Callers receive it
-// from [ShortCodeCreate]; a separate [ShortCodeConsume] call validates and
-// retires it.
+// from [ShortCodeCreate]; [ShortCodeVerify] checks a submitted code and
+// [ShortCodeConsume] retires it.
 type ShortCode struct {
 	ID uuid.UUID
 

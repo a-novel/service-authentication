@@ -26,6 +26,8 @@ func TestRestLimits(t *testing.T) {
 
 	userA := uuid.New()
 	userB := uuid.New()
+	accountA := uuid.NewString()
+	accountB := uuid.NewString()
 
 	// The production defaults, so each case reads as the budget a caller really gets.
 	policies := authconfig.Limits{
@@ -42,13 +44,19 @@ func TestRestLimits(t *testing.T) {
 	login := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Login }
 	mail := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mail }
 	mailbox := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mailbox }
+	password := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Password }
+	shortCode := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.ShortCode }
+	signUp := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.SignUp }
 	waitlist := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Waitlist }
 
 	type request struct {
 		visitor string
 		user    *uuid.UUID
 		email   string
+		account string
 	}
+
+	body := func(req request) string { return fmt.Sprintf(`{"email":%q,"userID":%q}`, req.email, req.account) }
 
 	// times repeats one request, so a case reads as the budget it spends.
 	times := func(count int, req request) []request {
@@ -60,11 +68,12 @@ func TestRestLimits(t *testing.T) {
 		return requests
 	}
 
-	// visitors spreads count requests naming email over as many visitor IPs.
-	visitors := func(count int, email string) []request {
+	// visitors spreads count copies of one request over as many visitor IPs.
+	visitors := func(count int, req request) []request {
 		requests := make([]request, count)
 		for i := range requests {
-			requests[i] = request{visitor: fmt.Sprintf("192.0.2.%d", i+1), email: email}
+			requests[i] = req
+			requests[i].visitor = fmt.Sprintf("192.0.2.%d", i+1)
 		}
 
 		return requests
@@ -114,7 +123,10 @@ func TestRestLimits(t *testing.T) {
 
 			limit: mailbox,
 
-			allowed: append(visitors(3, "a@example.com"), request{visitor: "192.0.2.9", email: "b@example.com"}),
+			allowed: append(
+				visitors(3, request{email: "a@example.com"}),
+				request{visitor: "192.0.2.9", email: "b@example.com"},
+			),
 		},
 		{
 			name: "Error/Anonymous",
@@ -166,10 +178,62 @@ func TestRestLimits(t *testing.T) {
 
 			limit: login,
 
-			allowed: visitors(30, "a@example.com"),
+			allowed: visitors(30, request{email: "a@example.com"}),
 			refused: &request{visitor: "192.0.2.99", email: "a@example.com"},
 
 			expectRetryAfter: "600",
+		},
+		{
+			name: "Error/SignUp/Visitor",
+
+			limit: signUp,
+
+			allowed: times(10, request{visitor: "192.0.2.1", email: "a@example.com"}),
+			refused: &request{visitor: "192.0.2.1", email: "b@example.com"},
+
+			expectRetryAfter: "60",
+		},
+		{
+			name: "Error/SignUp/Email",
+
+			limit: signUp,
+
+			allowed: visitors(30, request{email: "a@example.com"}),
+			refused: &request{visitor: "192.0.2.99", email: "a@example.com"},
+
+			expectRetryAfter: "600",
+		},
+		{
+			name: "Error/ShortCode/Visitor",
+
+			limit: shortCode,
+
+			allowed: times(10, request{visitor: "192.0.2.1", account: accountA}),
+			refused: &request{visitor: "192.0.2.1", account: accountB},
+
+			expectRetryAfter: "60",
+		},
+		{
+			// Many visitors cannot gang up on one account, nor dodge the limit with letter case.
+			name: "Error/ShortCode/Account",
+
+			limit: shortCode,
+
+			allowed: visitors(30, request{account: accountA}),
+			refused: &request{visitor: "192.0.2.99", account: strings.ToUpper(accountA)},
+
+			expectRetryAfter: "600",
+		},
+		{
+			// A password change counts against the signed-in user, wherever it comes from.
+			name: "Error/Password/User",
+
+			limit: password,
+
+			allowed: visitors(10, request{user: &userA}),
+			refused: &request{visitor: "192.0.2.99", user: &userA},
+
+			expectRetryAfter: "60",
 		},
 		{
 			name: "Error/Mail/Caller",
@@ -233,9 +297,9 @@ func TestRestLimits(t *testing.T) {
 			})
 
 			send := func(req request) *httptest.ResponseRecorder {
-				body := fmt.Sprintf(`{"email":%q}`, req.email)
-
-				httpRequest := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/", strings.NewReader(body))
+				httpRequest := httptest.NewRequestWithContext(
+					t.Context(), http.MethodPut, "/", strings.NewReader(body(req)),
+				)
 				httpRequest.Header.Set("X-Client-Ip", req.visitor)
 
 				if req.user != nil {
@@ -251,7 +315,7 @@ func TestRestLimits(t *testing.T) {
 			for _, req := range testCase.allowed {
 				response := send(req)
 				require.Equal(t, http.StatusOK, response.Code)
-				require.JSONEq(t, fmt.Sprintf(`{"email":%q}`, req.email), response.Body.String())
+				require.JSONEq(t, body(req), response.Body.String())
 			}
 
 			if testCase.refused != nil {
