@@ -13,16 +13,19 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// CredentialsResetPasswordService is the core operation PUT /v2/credentials/password delegates to.
 type CredentialsResetPasswordService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
+// CredentialsResetPasswordRequest is the JSON body of PUT /v2/credentials/password.
 type CredentialsResetPasswordRequest struct {
 	Password  string    `json:"password"`
 	ShortCode string    `json:"shortCode"`
 	UserID    uuid.UUID `json:"userID"`
 }
 
+// CredentialsResetPassword serves PUT /v2/credentials/password, which resets a password with a short code.
 type CredentialsResetPassword struct {
 	service CredentialsResetPasswordService
 	logger  logging.Log

@@ -12,10 +12,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
+// CredentialsExistDao reports whether an account uses an email.
 type CredentialsExistDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error)
 }
 
+// CredentialsExistRequest names the email to look up.
 type CredentialsExistRequest struct {
 	Email string `validate:"required,email,max=1024"`
 }

@@ -12,10 +12,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
+// CredentialsGetDao loads an account by ID.
 type CredentialsGetDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 
+// CredentialsGetRequest names the account to load.
 type CredentialsGetRequest struct {
 	ID uuid.UUID
 }

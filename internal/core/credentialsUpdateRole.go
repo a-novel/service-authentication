@@ -31,14 +31,17 @@ var (
 	)
 )
 
+// CredentialsUpdateRoleDao assigns the new role to the target account.
 type CredentialsUpdateRoleDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsUpdateRoleRequest) (*dao.Credentials, error)
 }
 
+// CredentialsUpdateRoleDaoCredentialsSelect loads the actor and target accounts to rank their roles.
 type CredentialsUpdateRoleDaoCredentialsSelect interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 
+// CredentialsUpdateRoleRequest names the target account, the acting user and the role to assign.
 type CredentialsUpdateRoleRequest struct {
 	TargetUserID  uuid.UUID
 	CurrentUserID uuid.UUID

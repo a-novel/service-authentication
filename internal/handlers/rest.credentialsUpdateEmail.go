@@ -13,15 +13,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// CredentialsUpdateEmailService is the core operation PATCH /v2/credentials/email delegates to.
 type CredentialsUpdateEmailService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.Credentials, error)
 }
 
+// CredentialsUpdateEmailRequest is the JSON body of PATCH /v2/credentials/email.
 type CredentialsUpdateEmailRequest struct {
 	UserID    uuid.UUID `json:"userID"`
 	ShortCode string    `json:"shortCode"`
 }
 
+// CredentialsUpdateEmail serves PATCH /v2/credentials/email, which applies a confirmed email change.
 type CredentialsUpdateEmail struct {
 	service CredentialsUpdateEmailService
 	logger  logging.Log

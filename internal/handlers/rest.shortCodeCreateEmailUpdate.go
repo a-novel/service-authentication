@@ -15,15 +15,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
+// ShortCodeCreateEmailUpdateService is the core operation PUT /v2/short-code/update-email delegates to.
 type ShortCodeCreateEmailUpdateService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) (*core.ShortCode, error)
 }
 
+// ShortCodeCreateEmailUpdateRequest is the JSON body of PUT /v2/short-code/update-email.
 type ShortCodeCreateEmailUpdateRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
+// ShortCodeCreateEmailUpdate serves PUT /v2/short-code/update-email, which emails a code confirming a new address.
 type ShortCodeCreateEmailUpdate struct {
 	service ShortCodeCreateEmailUpdateService
 	logger  logging.Log

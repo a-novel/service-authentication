@@ -13,14 +13,17 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// CredentialsGetService is the core operation GET /v2/credentials delegates to.
 type CredentialsGetService interface {
 	Exec(ctx context.Context, request *core.CredentialsGetRequest) (*core.Credentials, error)
 }
 
+// CredentialsGetRequest holds the query parameters of GET /v2/credentials.
 type CredentialsGetRequest struct {
 	ID uuid.UUID `schema:"id"`
 }
 
+// CredentialsGet serves GET /v2/credentials, which returns an account.
 type CredentialsGet struct {
 	service CredentialsGetService
 	logger  logging.Log

@@ -16,24 +16,30 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
+// CredentialsUpdatePasswordDao stores the new password hash.
 type CredentialsUpdatePasswordDao interface {
 	Exec(
 		ctx context.Context, request *dao.CredentialsUpdatePasswordRequest,
 	) (*dao.Credentials, error)
 }
 
+// CredentialsUpdatePasswordDaoCredentialsSelect loads the account whose current password the change path checks.
 type CredentialsUpdatePasswordDaoCredentialsSelect interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 
+// CredentialsUpdatePasswordServiceShortCodeVerify checks the password reset short code.
 type CredentialsUpdatePasswordServiceShortCodeVerify interface {
 	Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdatePasswordServiceShortCodeConsume retires the verified short code.
 type CredentialsUpdatePasswordServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdatePasswordRequest carries the new password and one proof of ownership: the
+// current password or a reset short code.
 type CredentialsUpdatePasswordRequest struct {
 	Password        string `validate:"required,min=4,max=1024"`
 	CurrentPassword string `validate:"required_without=ShortCode,max=1024"`

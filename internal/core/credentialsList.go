@@ -12,10 +12,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
+// CredentialsListDao lists a page of accounts.
 type CredentialsListDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsListRequest) ([]*dao.Credentials, error)
 }
 
+// CredentialsListRequest selects a page of accounts, and the roles to narrow it to.
 type CredentialsListRequest struct {
 	Limit  int      `validate:"required,min=1,max=100"`
 	Offset int      `validate:"min=0"`

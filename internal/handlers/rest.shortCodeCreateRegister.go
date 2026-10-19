@@ -13,15 +13,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// ShortCodeCreateRegisterService is the core operation PUT /v2/short-code/register delegates to.
 type ShortCodeCreateRegisterService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)
 }
 
+// ShortCodeCreateRegisterRequest is the JSON body of PUT /v2/short-code/register.
 type ShortCodeCreateRegisterRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
+// ShortCodeCreateRegister serves PUT /v2/short-code/register, which emails a registration invitation.
 type ShortCodeCreateRegister struct {
 	service ShortCodeCreateRegisterService
 	logger  logging.Log

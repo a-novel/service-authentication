@@ -11,15 +11,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// TokenRefreshService is the core operation PATCH /v2/session delegates to.
 type TokenRefreshService interface {
 	Exec(ctx context.Context, request *core.TokenRefreshRequest) (*core.Token, error)
 }
 
+// TokenRefreshRequest is the JSON body of PATCH /v2/session.
 type TokenRefreshRequest struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 }
 
+// TokenRefresh serves PATCH /v2/session, which renews a token pair.
 type TokenRefresh struct {
 	service TokenRefreshService
 	logger  logging.Log

@@ -12,15 +12,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// ShortCodeCreatePasswordResetService is the core operation PUT /v2/short-code/update-password delegates to.
 type ShortCodeCreatePasswordResetService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error)
 }
 
+// ShortCodeCreatePasswordResetRequest is the JSON body of PUT /v2/short-code/update-password.
 type ShortCodeCreatePasswordResetRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
+// ShortCodeCreatePasswordReset serves PUT /v2/short-code/update-password, which emails a password reset code.
 type ShortCodeCreatePasswordReset struct {
 	service ShortCodeCreatePasswordResetService
 	logger  logging.Log

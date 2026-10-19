@@ -16,17 +16,22 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
+// CredentialsUpdateEmailDao assigns the new email to the account.
 type CredentialsUpdateEmailDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsUpdateEmailRequest) (*dao.Credentials, error)
 }
+
+// CredentialsUpdateEmailServiceShortCodeVerify checks the email-change short code.
 type CredentialsUpdateEmailServiceShortCodeVerify interface {
 	Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdateEmailServiceShortCodeConsume retires the verified short code.
 type CredentialsUpdateEmailServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdateEmailRequest names the account and the short code confirming its new email.
 type CredentialsUpdateEmailRequest struct {
 	UserID    uuid.UUID
 	ShortCode string `validate:"required,max=1024"`
