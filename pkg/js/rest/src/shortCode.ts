@@ -5,11 +5,10 @@ import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
 
 import { z } from "zod";
 
-// A short code is a one-time secret the service emails to a user to authorize a sensitive action.
-// The request here asks the service to generate and send one; the user later submits the received
-// code back through the matching credentials endpoint to complete the action. Each request names
-// the target email and the language to send the email in.
-
+/**
+ * The new address to confirm and the language of the confirmation email. The user submits the
+ * emailed short code to `credentialsUpdateEmail`.
+ */
 export const ShortCodeCreateEmailUpdateRequestSchema = z.object({
   email: EmailSchema,
   lang: LangSchema,
@@ -17,6 +16,10 @@ export const ShortCodeCreateEmailUpdateRequestSchema = z.object({
 
 export type ShortCodeCreateEmailUpdateRequest = z.infer<typeof ShortCodeCreateEmailUpdateRequestSchema>;
 
+/**
+ * The account email and the language of the reset email. The user submits the emailed short code to
+ * `credentialsResetPassword`.
+ */
 export const ShortCodeCreatePasswordResetRequestSchema = z.object({
   email: EmailSchema,
   lang: LangSchema,
@@ -24,6 +27,10 @@ export const ShortCodeCreatePasswordResetRequestSchema = z.object({
 
 export type ShortCodeCreatePasswordResetRequest = z.infer<typeof ShortCodeCreatePasswordResetRequestSchema>;
 
+/**
+ * The address to invite and the language of the invitation. The user submits the emailed short code
+ * to `credentialsCreate`.
+ */
 export const ShortCodeCreateRegisterRequestSchema = z.object({
   email: EmailSchema,
   lang: LangSchema,

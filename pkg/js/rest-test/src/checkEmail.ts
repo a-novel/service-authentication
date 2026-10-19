@@ -5,6 +5,10 @@ import { handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
 import { JSDOM } from "jsdom";
 import { type AddressObject, type ParsedMail, simpleParser } from "mailparser";
 
+/**
+ * Waits up to a second for the one MailPit message matching a search query and returns it parsed.
+ * The message is deleted afterwards unless `clear` is false.
+ */
 export async function checkEmail(mailHost: string, search: string, clear: boolean = true): Promise<ParsedMail> {
   const messageID = await vi.waitFor(() => findMessageID(mailHost, search), { timeout: 1000 });
 
@@ -38,6 +42,7 @@ async function findMessageID(mailHost: string, search: string): Promise<string> 
   return searchRes.messages[0].ID as string;
 }
 
+/** Asserts that a parsed address field holds the expected address, or every expected address of a list. */
 export function expectAddress(expected: string | string[], value: AddressObject | AddressObject[] | undefined) {
   expect(value).toBeDefined();
 
@@ -57,6 +62,7 @@ export function expectAddress(expected: string | string[], value: AddressObject 
   expect((value as AddressObject).text).toBe(expected);
 }
 
+/** Returns the elements of an HTML email body that match a CSS selector. */
 export function getHtmlMail(raw: string, querySelector: string) {
   const dom = new JSDOM(raw);
   return dom.window.document.querySelectorAll(querySelector);
