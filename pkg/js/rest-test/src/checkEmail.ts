@@ -6,25 +6,12 @@ import { JSDOM } from "jsdom";
 import { type AddressObject, type ParsedMail, simpleParser } from "mailparser";
 
 export async function checkEmail(mailHost: string, search: string, clear: boolean = true): Promise<ParsedMail> {
-  const messageID = await vi.waitFor(
-    async () => {
-      const res = await fetch(`${mailHost}/api/v1/search?query=${search}&limit=1`, {
-        headers: { accept: "application/json" },
-      }).then(handleHttpResponse);
-      const searchRes = await res.json();
-      expect(searchRes.messages).toHaveLength(1);
-      expect(searchRes.messages[0].MessageID).toBeTruthy();
-
-      return searchRes.messages[0].ID as string;
-    },
-    { timeout: 1000 }
-  );
+  const messageID = await vi.waitFor(() => findMessageID(mailHost, search), { timeout: 1000 });
 
   const rawMessage = await fetch(`${mailHost}/api/v1/message/${messageID}/raw`, {
     headers: { accept: "application/json" },
   }).then(handleHttpResponse);
 
-  // Delete the message once consumed.
   if (clear) {
     await fetch(`${mailHost}/api/v1/messages`, {
       method: "DELETE",
@@ -37,6 +24,18 @@ export async function checkEmail(mailHost: string, search: string, clear: boolea
   }
 
   return await simpleParser(await rawMessage.text(), { skipImageLinks: true });
+}
+
+/** Returns the ID of the one MailPit message matching the search query, failing the assertion otherwise. */
+async function findMessageID(mailHost: string, search: string): Promise<string> {
+  const res = await fetch(`${mailHost}/api/v1/search?query=${search}&limit=1`, {
+    headers: { accept: "application/json" },
+  }).then(handleHttpResponse);
+  const searchRes = await res.json();
+  expect(searchRes.messages).toHaveLength(1);
+  expect(searchRes.messages[0].MessageID).toBeTruthy();
+
+  return searchRes.messages[0].ID as string;
 }
 
 export function expectAddress(expected: string | string[], value: AddressObject | AddressObject[] | undefined) {
