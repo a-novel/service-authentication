@@ -59,7 +59,7 @@ func NewCredentialsUpdateEmail(
 func (service *CredentialsUpdateEmail) Exec(
 	ctx context.Context, request *CredentialsUpdateEmailRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsUpdateEmail")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsUpdateEmail")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("user.id", request.UserID.String()))

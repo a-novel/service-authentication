@@ -33,7 +33,7 @@ func NewCredentialsExist(dao CredentialsExistDao) *CredentialsExist {
 }
 
 func (service *CredentialsExist) Exec(ctx context.Context, request *CredentialsExistRequest) (bool, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsExist")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsExist")
 	defer span.End()
 
 	err := validate.Struct(request)

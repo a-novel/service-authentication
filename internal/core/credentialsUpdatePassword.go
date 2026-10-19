@@ -71,7 +71,7 @@ func NewCredentialsUpdatePassword(
 func (service *CredentialsUpdatePassword) Exec(
 	ctx context.Context, request *CredentialsUpdatePasswordRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsUpdatePassword")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsUpdatePassword")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("user.id", request.UserID.String()))

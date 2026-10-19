@@ -58,7 +58,7 @@ func NewShortCodeCreate(
 func (service *ShortCodeCreate) Exec(
 	ctx context.Context, request *ShortCodeCreateRequest,
 ) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.ShortCodeCreate")
+	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeCreate")
 	defer span.End()
 
 	err := validate.Struct(request)

@@ -62,7 +62,7 @@ func NewTokenCreate(
 func (service *TokenCreate) Exec(
 	ctx context.Context, request *TokenCreateRequest,
 ) (*Token, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.TokenCreate")
+	ctx, span := otel.Tracer().Start(ctx, "core.TokenCreate")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("email", request.Email))

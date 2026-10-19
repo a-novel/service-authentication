@@ -109,7 +109,7 @@ func NewCredentialsCreate(
 // After commit, bounded waitlist cleanup runs independently of client cancellation.
 // Cleanup failures are traced and leave the account usable; maintenance can reconcile stale rows.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsCreate")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsCreate")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("email", request.Email))

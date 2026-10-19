@@ -45,7 +45,7 @@ func NewTokenCreateAnon(signClaimsService TokenCreateAnonSignClaimsService) *Tok
 }
 
 func (service *TokenCreateAnon) Exec(ctx context.Context) (*Token, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.TokenCreateAnon")
+	ctx, span := otel.Tracer().Start(ctx, "core.TokenCreateAnon")
 	defer span.End()
 
 	accessToken, err := service.signClaimsService.ClaimsSign(ctx, anonTokenClaims)

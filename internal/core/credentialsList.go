@@ -37,7 +37,7 @@ func NewCredentialsList(dao CredentialsListDao) *CredentialsList {
 func (service *CredentialsList) Exec(
 	ctx context.Context, request *CredentialsListRequest,
 ) ([]*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsList")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsList")
 	defer span.End()
 
 	err := validate.Struct(request)

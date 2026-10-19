@@ -77,7 +77,7 @@ func NewShortCodeCreateEmailUpdate(
 func (service *ShortCodeCreateEmailUpdate) Exec(
 	ctx context.Context, request *ShortCodeCreateEmailUpdateRequest,
 ) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.ShortCodeCreateEmailUpdate")
+	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeCreateEmailUpdate")
 	defer span.End()
 
 	span.SetAttributes(

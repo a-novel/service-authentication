@@ -49,7 +49,7 @@ func NewShortCodeVerify(dao ShortCodeVerifyDao) *ShortCodeVerify {
 // returns [ErrShortCodeConsumeInvalid] when the code does not match the stored
 // hash and [ErrShortCodeConsumeExpired] when it has lapsed.
 func (service *ShortCodeVerify) Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.ShortCodeVerify")
+	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeVerify")
 	defer span.End()
 
 	err := validate.Struct(request)

@@ -34,7 +34,7 @@ func NewCredentialsGet(dao CredentialsGetDao) *CredentialsGet {
 func (service *CredentialsGet) Exec(
 	ctx context.Context, request *CredentialsGetRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsGet")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsGet")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("user.id", request.ID.String()))

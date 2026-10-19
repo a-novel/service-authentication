@@ -66,7 +66,7 @@ func NewCredentialsUpdateRole(
 func (service *CredentialsUpdateRole) Exec(
 	ctx context.Context, request *CredentialsUpdateRoleRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsUpdateRole")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsUpdateRole")
 	defer span.End()
 
 	span.SetAttributes(
