@@ -49,16 +49,14 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 		Email: request.Email,
 		Lang:  request.Lang,
 	})
-	if err != nil {
-		// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
-		if !errors.Is(err, core.ErrCredentialsByEmailNotFound) {
-			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-				core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-				core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-			}, err)
+	// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
+	if err != nil && !errors.Is(err, core.ErrCredentialsByEmailNotFound) {
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
+			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+		}, err)
 
-			return
-		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

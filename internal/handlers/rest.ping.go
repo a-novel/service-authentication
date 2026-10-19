@@ -24,7 +24,5 @@ func (handler *Ping) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write([]byte("pong"))
 	if err != nil {
 		_ = otel.ReportError(span, err)
-
-		return
 	}
 }
