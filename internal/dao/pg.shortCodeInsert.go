@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"github.com/uptrace/bun/driver/pgdriver"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
@@ -138,8 +137,7 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 			// in-transaction check missed under concurrent inserts, including two
 			// simultaneous overrides racing for the same pair. Map its SQLSTATE 23505
 			// onto the sentinel callers already match on.
-			var pgErr pgdriver.Error
-			if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
+			if isUniqueViolation(err) {
 				err = errors.Join(err, ErrShortCodeInsertAlreadyExists)
 			}
 

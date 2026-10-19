@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/uptrace/bun/driver/pgdriver"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
@@ -75,8 +74,7 @@ func (dao *CredentialsInsert) Exec(
 		request.Role,
 	).Scan(ctx, entity)
 	if err != nil {
-		var pgErr pgdriver.Error
-		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
+		if isUniqueViolation(err) {
 			err = errors.Join(err, ErrCredentialsInsertAlreadyExists)
 		}
 

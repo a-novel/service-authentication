@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/uptrace/bun/driver/pgdriver"
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
@@ -65,8 +64,7 @@ func (dao *CredentialsUpdateEmail) Exec(
 
 	err = tx.NewRaw(credentialsUpdateEmailQuery, request.Email, request.Now, request.ID).Scan(ctx, entity)
 	if err != nil {
-		var pgErr pgdriver.Error
-		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
+		if isUniqueViolation(err) {
 			err = errors.Join(err, ErrCredentialsUpdateEmailAlreadyExists)
 		} else if errors.Is(err, sql.ErrNoRows) {
 			err = errors.Join(err, ErrCredentialsUpdateEmailNotFound)
