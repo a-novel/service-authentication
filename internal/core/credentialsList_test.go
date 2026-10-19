@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -41,7 +41,7 @@ func TestCredentialsList(t *testing.T) {
 			request: &core.CredentialsListRequest{
 				Limit:  10,
 				Offset: 0,
-				Roles:  []string{config.RoleUser},
+				Roles:  []string{authconfig.RoleUser},
 			},
 
 			daoMock: &daoMock{
@@ -49,21 +49,21 @@ func TestCredentialsList(t *testing.T) {
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
 						Email:     "user3@email.com",
-						Role:      config.RoleUser,
+						Role:      authconfig.RoleUser,
 						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 					},
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 						Email:     "user2@email.com",
-						Role:      config.RoleAdmin,
+						Role:      authconfig.RoleAdmin,
 						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 					},
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 						Email:     "user1@email.com",
-						Role:      config.RoleUser,
+						Role:      authconfig.RoleUser,
 						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					},
@@ -74,21 +74,21 @@ func TestCredentialsList(t *testing.T) {
 				{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
 					Email:     "user3@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 				},
 				{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					Email:     "user2@email.com",
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
 				{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user1@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				},
@@ -100,7 +100,7 @@ func TestCredentialsList(t *testing.T) {
 			request: &core.CredentialsListRequest{
 				Limit:  10,
 				Offset: 0,
-				Roles:  []string{config.RoleUser},
+				Roles:  []string{authconfig.RoleUser},
 			},
 
 			daoMock: &daoMock{

@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
@@ -65,7 +66,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				resp: &core.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user@provider.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
 				},
@@ -74,7 +75,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 			expectResponse: map[string]any{
 				"id":        "00000000-0000-0000-0000-000000000001",
 				"email":     "user@provider.com",
-				"role":      config.RoleUser,
+				"role":      authconfig.RoleUser,
 				"createdAt": "2018-02-02T12:00:00Z",
 				"updatedAt": "2020-02-02T12:00:00Z",
 			},

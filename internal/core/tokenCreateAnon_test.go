@@ -12,7 +12,7 @@ import (
 
 	"github.com/a-novel-kit/golib/grpcf"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 )
@@ -70,7 +70,7 @@ func TestTokenCreateAnon(t *testing.T) {
 					ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
 						Usage: servicejsonkeys.KeyUsageAuth,
 						Payload: lo.Must(grpcf.MarshalJSONAsAny(core.AccessTokenClaims{
-							Roles: []string{config.RoleAnon},
+							Roles: []string{authconfig.RoleAnon},
 						})),
 					}).
 					Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)

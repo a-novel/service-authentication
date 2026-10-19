@@ -61,10 +61,10 @@ var AppPresetDefault = App{
 			},
 		),
 	},
-	Permissions:      PermissionsConfigDefault,
+	Permissions:      authconfig.PermissionsConfigDefault,
 	Waitlist:         authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
-	ShortCodesConfig: ShortCodesPresetDefault,
-	SmtpUrlsConfig: SmtpUrls{
+	ShortCodesConfig: authconfig.ShortCodesPresetDefault,
+	SmtpUrlsConfig: authconfig.SmtpUrls{
 		UpdateEmail:    env.PlatformAuthUpdateEmailUrl,
 		UpdatePassword: env.PlatformAuthUpdatePasswordUrl,
 		Register:       env.PlatformAuthRegisterUrl,

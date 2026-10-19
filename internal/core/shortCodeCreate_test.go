@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -114,7 +114,7 @@ func TestShortCodeCreate(t *testing.T) {
 					})
 			}
 
-			service := core.NewShortCodeCreate(mockDao, config.ShortCodesPresetDefault)
+			service := core.NewShortCodeCreate(mockDao, authconfig.ShortCodesPresetDefault)
 
 			// Bracket the call rather than compare against a clock read somewhere else.
 			// The service stamps its timestamp before hashing the code with Argon2id,

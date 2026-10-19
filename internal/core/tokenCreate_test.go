@@ -13,7 +13,7 @@ import (
 
 	"github.com/a-novel-kit/golib/grpcf"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -64,7 +64,7 @@ func TestTokenCreate(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordArgon2ed,
-					Role:     config.RoleUser,
+					Role:     authconfig.RoleUser,
 				},
 			},
 
@@ -90,7 +90,7 @@ func TestTokenCreate(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordArgon2ed,
-					Role:     config.RoleUser,
+					Role:     authconfig.RoleUser,
 				},
 			},
 
@@ -116,7 +116,7 @@ func TestTokenCreate(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordArgon2ed,
-					Role:     config.RoleAdmin,
+					Role:     authconfig.RoleAdmin,
 				},
 			},
 
@@ -142,7 +142,7 @@ func TestTokenCreate(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordArgon2ed,
-					Role:     config.RoleSuperAdmin,
+					Role:     authconfig.RoleSuperAdmin,
 				},
 			},
 
@@ -168,7 +168,7 @@ func TestTokenCreate(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordArgon2ed,
-					Role:     config.RoleUser,
+					Role:     authconfig.RoleUser,
 				},
 			},
 
@@ -183,7 +183,7 @@ func TestTokenCreate(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordArgon2ed,
-					Role:     config.RoleUser,
+					Role:     authconfig.RoleUser,
 				},
 			},
 
@@ -204,7 +204,7 @@ func TestTokenCreate(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Password: passwordArgon2ed,
-					Role:     config.RoleUser,
+					Role:     authconfig.RoleUser,
 				},
 			},
 

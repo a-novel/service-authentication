@@ -1,9 +1,6 @@
 package auth
 
-import (
-	_ "embed"
-	"time"
-)
+import "time"
 
 // ShortCodeUsage holds the settings for a single short-code usage.
 type ShortCodeUsage struct {

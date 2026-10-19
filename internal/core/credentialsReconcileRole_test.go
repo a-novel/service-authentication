@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -20,8 +20,8 @@ func TestCredentialsReconcileRole(t *testing.T) {
 
 	request := &core.CredentialsReconcileRoleRequest{
 		Email: "operator@provider.com",
-		Lang:  config.LangEN,
-		Role:  config.RoleAdmin,
+		Lang:  authconfig.LangEN,
+		Role:  authconfig.RoleAdmin,
 	}
 	invalidRequest := *request
 	invalidRequest.Role = "auth:unknown"
@@ -86,7 +86,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:    credentialsID,
 					Email: request.Email,
-					Role:  config.RoleSuperAdmin,
+					Role:  authconfig.RoleSuperAdmin,
 				},
 			},
 			updateRoleMock: &updateRoleMock{
@@ -175,7 +175,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:    credentialsID,
 					Email: request.Email,
-					Role:  config.RoleUser,
+					Role:  authconfig.RoleUser,
 				},
 			},
 			updateRoleMock: &updateRoleMock{

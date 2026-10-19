@@ -12,6 +12,7 @@ import (
 	"github.com/a-novel-kit/golib/postgres"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -41,7 +42,7 @@ func accountRoleOperationDefinition() maintenanceOperationDefinition {
 func bindAccountRoleFlags(flags *flag.FlagSet) *accountRoleOperation {
 	operation := &accountRoleOperation{}
 	flags.StringVar(&operation.email, "email", "", "account email address")
-	flags.StringVar(&operation.lang, "lang", config.LangEN, "registration email language")
+	flags.StringVar(&operation.lang, "lang", authconfig.LangEN, "registration email language")
 	flags.StringVar(&operation.role, "role", "", "exact authentication role")
 
 	return operation

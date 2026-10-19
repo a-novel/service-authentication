@@ -14,7 +14,7 @@ import (
 
 	"github.com/a-novel-kit/golib/smtp"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -27,7 +27,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	smtpConfig := config.SmtpUrls{Register: "register-url"}
+	smtpConfig := authconfig.SmtpUrls{Register: "register-url"}
 
 	type serviceCreateMock struct {
 		resp *core.ShortCode
@@ -55,9 +55,9 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			name: "Success",
 
 			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
-				Role:  config.RoleUser,
+				Role:  authconfig.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -82,9 +82,9 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			name: "Success/SendMailPanic",
 
 			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
-				Role:  config.RoleUser,
+				Role:  authconfig.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -110,9 +110,9 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			name: "Error/MailDeliveryUnavailable",
 
 			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
-				Role:  config.RoleUser,
+				Role:  authconfig.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -126,9 +126,9 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			name: "Error/CreateShortCode",
 
 			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
-				Role:  config.RoleUser,
+				Role:  authconfig.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -145,9 +145,9 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			name: "Error/EmailAlreadyTaken",
 
 			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
-				Role:  config.RoleUser,
+				Role:  authconfig.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -160,9 +160,9 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			name: "Error/Dao",
 
 			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
-				Role:  config.RoleUser,
+				Role:  authconfig.RoleUser,
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -194,7 +194,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 						return err == nil &&
 							request.Usage == core.ShortCodeUsageRegister &&
 							request.Target == testCase.request.Email &&
-							request.TTL == config.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL &&
+							request.TTL == authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL &&
 							request.Override &&
 							string(data) == `{"role":"`+testCase.request.Role+`"}`
 					})).
@@ -211,7 +211,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 							"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
 							"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
 							"URL":       smtpConfig.Register,
-							"Duration": config.ShortCodesPresetDefault.
+							"Duration": authconfig.ShortCodesPresetDefault.
 								Usages[core.ShortCodeUsageRegister].
 								TTL.Hours(),
 							"Banner":   assets.BannerBase64,
@@ -237,7 +237,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			}
 
 			service := core.NewShortCodeCreateRegister(
-				serviceCreate, daoSelect, mailDelivery, config.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, daoSelect, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)

@@ -12,7 +12,7 @@ import (
 
 	"github.com/a-novel-kit/golib/smtp"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -25,7 +25,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	smtpConfig := config.SmtpUrls{UpdatePassword: "update-password-url"}
+	smtpConfig := authconfig.SmtpUrls{UpdatePassword: "update-password-url"}
 
 	type daoMock struct {
 		resp *dao.Credentials
@@ -54,7 +54,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			name: "Success",
 
 			request: &core.ShortCodeCreatePasswordResetRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 			},
 
@@ -82,7 +82,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			name: "Success/SendMailPanic",
 
 			request: &core.ShortCodeCreatePasswordResetRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 			},
 
@@ -111,7 +111,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			name: "Error/MailDeliveryUnavailable",
 
 			request: &core.ShortCodeCreatePasswordResetRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 			},
 
@@ -128,7 +128,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			name: "Error/CreateShortCode",
 
 			request: &core.ShortCodeCreatePasswordResetRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 			},
 
@@ -148,7 +148,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			name: "Error/SelectEmail",
 
 			request: &core.ShortCodeCreatePasswordResetRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 			},
 
@@ -178,7 +178,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 					Exec(mock.Anything, &core.ShortCodeCreateRequest{
 						Usage:    core.ShortCodeUsageResetPassword,
 						Target:   testCase.daoMock.resp.ID.String(),
-						TTL:      config.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL,
+						TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL,
 						Override: true,
 					}).
 					Return(testCase.serviceCreateMock.resp, testCase.serviceCreateMock.err)
@@ -202,7 +202,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 							"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
 							"Target":    testCase.daoMock.resp.ID.String(),
 							"URL":       smtpConfig.UpdatePassword,
-							"Duration": config.ShortCodesPresetDefault.
+							"Duration": authconfig.ShortCodesPresetDefault.
 								Usages[core.ShortCodeUsageResetPassword].
 								TTL.Hours(),
 							"Banner":   assets.BannerBase64,
@@ -220,7 +220,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}
 
 			service := core.NewShortCodeCreatePasswordReset(
-				serviceCreate, mockDao, mailDelivery, config.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, mockDao, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)

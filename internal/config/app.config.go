@@ -34,11 +34,11 @@ type App struct {
 	Rest   httpf.ServerConfig `json:"rest"   yaml:"rest"`
 	Limits authconfig.Limits  `json:"limits" yaml:"limits"`
 
-	DependenciesConfig Dependencies        `json:"dependencies" yaml:"dependencies"`
-	Permissions        Permissions         `json:"permissions"  yaml:"permissions"`
-	ShortCodesConfig   ShortCodes          `json:"shortCodes"   yaml:"shortCodes"`
-	SmtpUrlsConfig     SmtpUrls            `json:"smtpUrls"     yaml:"smtpUrls"`
-	Waitlist           authconfig.Waitlist `json:"waitlist"     yaml:"waitlist"`
+	DependenciesConfig Dependencies           `json:"dependencies" yaml:"dependencies"`
+	Permissions        authconfig.Permissions `json:"permissions"  yaml:"permissions"`
+	ShortCodesConfig   authconfig.ShortCodes  `json:"shortCodes"   yaml:"shortCodes"`
+	SmtpUrlsConfig     authconfig.SmtpUrls    `json:"smtpUrls"     yaml:"smtpUrls"`
+	Waitlist           authconfig.Waitlist    `json:"waitlist"     yaml:"waitlist"`
 
 	Smtp       smtp.Sender        `json:"smtp"       yaml:"smtp"`
 	Otel       otel.Config        `json:"otel"       yaml:"otel"`
