@@ -155,8 +155,7 @@ func (service *TokenRefresh) Exec(
 		attribute.String("refreshTokenClaims.jti", refreshTokenClaims.Jti),
 	)
 
-	// Binding an access token to the refresh token that minted it means revoking the
-	// refresh token invalidates every access token derived from it.
+	// Only the refresh token that minted an access token renews it.
 	if accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchSource)
 	}

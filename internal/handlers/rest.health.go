@@ -158,7 +158,7 @@ func (handler *RestHealth) reportSmtp(ctx context.Context) error {
 }
 
 // smtpHealthFailure extracts only allowlisted diagnostics from wrapped errors.
-// Unknown failures deliberately lose detail instead of risking a secret leak.
+// An unknown failure loses its detail, which could hold a secret.
 func smtpHealthFailure(err error) (string, int) {
 	var (
 		timeout     net.Error

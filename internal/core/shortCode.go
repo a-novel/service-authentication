@@ -21,8 +21,8 @@ type ShortCode struct {
 	// ShortCodeUsage* constants. A code issued for one usage cannot be redeemed
 	// for another.
 	Usage string
-	// Target identifies the subject of the operation — for email-bound flows,
-	// this is the email address the code was sent to.
+	// Target identifies the subject of the operation: the email address of a
+	// registration, the user ID otherwise.
 	Target string
 	// Data carries flow-specific context the consumer needs (for example, the
 	// new email for an email-change confirmation). Opaque to ShortCode itself.

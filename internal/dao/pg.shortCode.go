@@ -14,8 +14,8 @@ import (
 // row; the clear value is delivered to the client over a secure channel. A code may
 // be used once and is discarded on a successful use.
 //
-// The uniqueness constraint covers only active codes — unexpired and undeleted — so
-// the set it applies to evolves over time.
+// The uniqueness constraint covers only active codes, neither expired nor deleted, so
+// the set it applies to changes over time.
 type ShortCode struct {
 	bun.BaseModel `bun:"table:short_codes"`
 
@@ -27,8 +27,8 @@ type ShortCode struct {
 	// Usage identifies the flow the short code is valid for. Together with Target it
 	// forms the pair that is unique among active short codes.
 	Usage string `bun:"usage"`
-	// Target identifies the subject of the operation, usually the channel the clear code
-	// was sent to. See Usage for the uniqueness rule on the pair.
+	// Target identifies the subject of the operation: the email address of a registration,
+	// the user ID otherwise. See Usage for the uniqueness rule on the pair.
 	Target string `bun:"target"`
 
 	// Data carries flow-specific context used after validating the short code.
@@ -37,7 +37,7 @@ type ShortCode struct {
 	CreatedAt time.Time `bun:"created_at"`
 	// ExpiresAt bounds the short code's lifetime. The clear value sits wherever it was
 	// delivered and can authorize a critical operation such as a password reset, so
-	// lifetimes are kept short — usually a matter of days.
+	// lifetimes stay short, from hours to days.
 	ExpiresAt time.Time `bun:"expires_at"`
 
 	// DeletedAt marks a short code invalidated before its expiration: consumed,

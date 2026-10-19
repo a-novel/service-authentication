@@ -113,10 +113,9 @@ func (service *CredentialsUpdateRole) Exec(
 
 	span.SetAttributes(attribute.String("currentCredentials.email", currentCredentials.Email))
 
-	// These two roles come from the database, not the request, so they carry no
-	// validation. A stored role the config no longer knows is an error here, not a
-	// silent priority 0 that would let the rank guards below compare against a rank
-	// the account does not have.
+	// These roles come from the database and skip request validation. An unknown stored
+	// role fails here, so the rank guards below never compare against a rank the account
+	// lacks.
 	targetPriority, err := authconfig.PermissionsConfigDefault.Priority(targetCredentials.Role)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("rank target role: %w", err))

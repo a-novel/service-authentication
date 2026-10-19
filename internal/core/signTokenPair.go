@@ -15,23 +15,17 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
-// tokenPairSigner is the json-keys ClaimsSign surface that signTokenPair needs.
-// Service-level interfaces (e.g. TokenCreateServiceSignClaims) already match this shape,
-// so callers pass their existing dependency directly.
+// tokenPairSigner is the JSON Keys signing surface signTokenPair needs. The signing
+// dependency of each calling operation already matches it.
 type tokenPairSigner interface {
 	ClaimsSign(
 		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
 	) (*servicejsonkeys.ClaimsSignResponse, error)
 }
 
-// signTokenPair issues a fresh refresh+access token pair for the given credentials.
-//
-// The two tokens are bound: the access token's RefreshTokenID claim equals the refresh
-// token's JTI, so revoking the refresh token effectively revokes every access token
-// derived from it. See AccessTokenClaims for the binding semantics.
-//
-// Every failure path here is infrastructure failure — the json-keys RPC being down, a
-// marshal error — so the helper produces no sentinels.
+// signTokenPair issues a fresh refresh and access token pair for the given credentials.
+// The access token's RefreshTokenID claim holds the refresh token's JTI, which binds the
+// pair. Every failure is an infrastructure fault, so the function returns no sentinel.
 func signTokenPair(
 	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials,
 ) (*Token, error) {

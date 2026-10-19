@@ -55,7 +55,7 @@ func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			core.ErrTokenRefreshInvalidRefreshToken: http.StatusForbidden,
 			core.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,
 			core.ErrTokenRefreshMismatchSource:      http.StatusForbidden,
-			// The credentials behind a still-valid refresh token were deleted — re-authenticate.
+			// The account behind a still-valid refresh token is gone, so the caller signs in again.
 			core.ErrCredentialsGetNotFound: http.StatusUnauthorized,
 			core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
 		}, err)

@@ -16,9 +16,8 @@ import (
 )
 
 var (
-	// ErrInvalidHash is returned by [CompareArgon2] when the stored hash does not
-	// have the encoded shape produced by [GenerateArgon2] — the stored value is
-	// corrupted.
+	// ErrInvalidHash is returned by [CompareArgon2] when the stored hash lacks the
+	// encoded shape [GenerateArgon2] produces, which means the stored value is corrupted.
 	ErrInvalidHash = errors.New("the encoded hash is in an invalid format")
 	// ErrIncompatibleVersion is returned by [CompareArgon2] when the stored hash was
 	// produced with an Argon2 version this binary cannot verify. Recovering requires
