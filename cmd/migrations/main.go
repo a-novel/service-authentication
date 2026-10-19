@@ -43,29 +43,15 @@ func main() {
 		len(discovered), time.Since(start).Round(time.Millisecond))
 }
 
-// listUpMigrations returns the bare name of every *.up.sql in f, in the lexical order
-// WalkDir yields (the timestamp prefix makes that chronological). It feeds the start-of-run
-// inventory log only; bun's migrator decides which migrations actually apply.
+// listUpMigrations returns the bare name of every *.up.sql in f, in lexical order, which the
+// timestamp prefix makes chronological. It feeds the start-of-run inventory log only; bun's
+// migrator decides which migrations actually apply.
 func listUpMigrations(f fs.FS) []string {
-	var out []string
+	// Glob fails only on a malformed pattern.
+	names, _ := fs.Glob(f, "*.up.sql")
+	for i, name := range names {
+		names[i] = strings.TrimSuffix(name, ".up.sql")
+	}
 
-	_ = fs.WalkDir(f, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			// Aborting the walk only skips inventory logging, so the caller discards
-			// this error.
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		if strings.HasSuffix(path, ".up.sql") {
-			out = append(out, strings.TrimSuffix(path, ".up.sql"))
-		}
-
-		return nil
-	})
-
-	return out
+	return names
 }

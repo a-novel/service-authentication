@@ -46,37 +46,45 @@ func newMaintenanceOperationDefinition[T maintenanceOperation](
 		synopsis:    synopsis,
 		description: description,
 		parse: func(args []string) (maintenanceOperation, error) {
-			flags := flag.NewFlagSet(name, flag.ContinueOnError)
-			flags.SetOutput(os.Stderr)
-
-			operation := bindFlags(flags)
-
-			err := flags.Parse(args)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil, nil
-				}
-
-				return nil, fmt.Errorf("parse %s parameters: %w", name, err)
-			}
-
-			if flags.NArg() != 0 {
-				return nil, fmt.Errorf(
-					"%w for %s: %s",
-					errMaintenanceUnexpectedParameters,
-					name,
-					strings.Join(flags.Args(), " "),
-				)
-			}
-
-			err = validate(operation)
-			if err != nil {
-				return nil, err
-			}
-
-			return operation, nil
+			return parseOperation(name, bindFlags, validate, args)
 		},
 	}
+}
+
+// parseOperation reads the flags of the named operation from args and validates them. It returns a
+// nil operation when args ask for help.
+func parseOperation[T maintenanceOperation](
+	name string, bindFlags func(*flag.FlagSet) T, validate func(T) error, args []string,
+) (maintenanceOperation, error) {
+	flags := flag.NewFlagSet(name, flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+
+	operation := bindFlags(flags)
+
+	err := flags.Parse(args)
+	if errors.Is(err, flag.ErrHelp) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("parse %s parameters: %w", name, err)
+	}
+
+	if flags.NArg() != 0 {
+		return nil, fmt.Errorf(
+			"%w for %s: %s",
+			errMaintenanceUnexpectedParameters,
+			name,
+			strings.Join(flags.Args(), " "),
+		)
+	}
+
+	err = validate(operation)
+	if err != nil {
+		return nil, err
+	}
+
+	return operation, nil
 }
 
 func (command *maintenanceCommand) run(ctx context.Context, args []string, output io.Writer) error {
@@ -117,11 +125,7 @@ func (command *maintenanceCommand) usage() string {
 	usage.WriteString("Usage:\n")
 
 	for _, operation := range command.operations {
-		usage.WriteString("  maintenance ")
-		usage.WriteString(operation.name)
-		usage.WriteString(" ")
-		usage.WriteString(operation.synopsis)
-		usage.WriteString("\n")
+		fmt.Fprintf(&usage, "  maintenance %s %s\n", operation.name, operation.synopsis)
 	}
 
 	usage.WriteString("\nOperations:\n")
@@ -132,12 +136,7 @@ func (command *maintenanceCommand) usage() string {
 	}
 
 	for _, operation := range command.operations {
-		usage.WriteString("  ")
-		usage.WriteString(operation.name)
-		usage.WriteString(strings.Repeat(" ", maxNameLength-len(operation.name)))
-		usage.WriteString("  ")
-		usage.WriteString(operation.description)
-		usage.WriteString("\n")
+		fmt.Fprintf(&usage, "  %-*s  %s\n", maxNameLength, operation.name, operation.description)
 	}
 
 	return usage.String()
