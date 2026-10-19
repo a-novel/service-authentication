@@ -178,7 +178,8 @@ type ClaimsContextKey struct{}
 // SetClaimsContext stores the authenticated user's claims in the context.
 // This is called by the Auth middleware after successful token verification.
 func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) context.Context {
-	ctx, span := otel.Tracer().Start(ctx, "handlers.SetClaimsContext")
+	// The returned context keeps the caller's span current, so the handler's span nests under it.
+	_, span := otel.Tracer().Start(ctx, "handlers.SetClaimsContext")
 	defer span.End()
 
 	return context.WithValue(ctx, ClaimsContextKey{}, claims)
