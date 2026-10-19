@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
 func TestAccountRoleOperation(t *testing.T) {
@@ -23,30 +23,30 @@ func TestAccountRoleOperation(t *testing.T) {
 			name: "Success",
 			args: []string{
 				"--email", "operator@provider.com",
-				"--role", config.RoleAdmin,
-				"--lang", config.LangFR,
+				"--role", authconfig.RoleAdmin,
+				"--lang", authconfig.LangFR,
 			},
 			expect: &accountRoleOperation{
 				email: "operator@provider.com",
-				role:  config.RoleAdmin,
-				lang:  config.LangFR,
+				role:  authconfig.RoleAdmin,
+				lang:  authconfig.LangFR,
 			},
 		},
 		{
 			name: "Success/DefaultLanguage",
 			args: []string{
 				"--email", "operator@provider.com",
-				"--role", config.RoleAdmin,
+				"--role", authconfig.RoleAdmin,
 			},
 			expect: &accountRoleOperation{
 				email: "operator@provider.com",
-				role:  config.RoleAdmin,
-				lang:  config.LangEN,
+				role:  authconfig.RoleAdmin,
+				lang:  authconfig.LangEN,
 			},
 		},
 		{
 			name:      "Error/MissingEmail",
-			args:      []string{"--role", config.RoleAdmin},
+			args:      []string{"--role", authconfig.RoleAdmin},
 			expectErr: "requires --email",
 		},
 		{
@@ -58,7 +58,7 @@ func TestAccountRoleOperation(t *testing.T) {
 			name: "Error/UnexpectedParameters",
 			args: []string{
 				"--email", "operator@provider.com",
-				"--role", config.RoleAdmin,
+				"--role", authconfig.RoleAdmin,
 				"extra",
 			},
 			expectErr: "unexpected maintenance operation parameters",

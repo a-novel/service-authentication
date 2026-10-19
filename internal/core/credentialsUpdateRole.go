@@ -31,14 +31,17 @@ var (
 	)
 )
 
+// CredentialsUpdateRoleDao assigns the new role to the target account.
 type CredentialsUpdateRoleDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsUpdateRoleRequest) (*dao.Credentials, error)
 }
 
+// CredentialsUpdateRoleDaoCredentialsSelect loads the actor and target accounts to rank their roles.
 type CredentialsUpdateRoleDaoCredentialsSelect interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 
+// CredentialsUpdateRoleRequest names the target account, the acting user and the role to assign.
 type CredentialsUpdateRoleRequest struct {
 	TargetUserID  uuid.UUID
 	CurrentUserID uuid.UUID
@@ -66,7 +69,7 @@ func NewCredentialsUpdateRole(
 func (service *CredentialsUpdateRole) Exec(
 	ctx context.Context, request *CredentialsUpdateRoleRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsUpdateRole")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsUpdateRole")
 	defer span.End()
 
 	span.SetAttributes(
@@ -85,12 +88,12 @@ func (service *CredentialsUpdateRole) Exec(
 	}
 
 	// request.Role passed validate:"role", so it is known; the lookup cannot fail.
-	newTargetRoleImportance, err := authconfig.PermissionsConfigDefault.Priority(request.Role)
+	newPriority, err := authconfig.PermissionsConfigDefault.Priority(request.Role)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
 
-	span.SetAttributes(attribute.Int("newTargetRoleImportance", newTargetRoleImportance))
+	span.SetAttributes(attribute.Int("newTargetRoleImportance", newPriority))
 
 	targetCredentials, err := service.daoCredentialsSelect.Exec(ctx, &dao.CredentialsSelectRequest{
 		ID: request.TargetUserID,
@@ -110,27 +113,26 @@ func (service *CredentialsUpdateRole) Exec(
 
 	span.SetAttributes(attribute.String("currentCredentials.email", currentCredentials.Email))
 
-	// These two roles come from the database, not the request, so they carry no
-	// validation. A stored role the config no longer knows is an error here, not a
-	// silent priority 0 that would let the rank guards below compare against a rank
-	// the account does not have.
-	targetRoleIImportance, err := authconfig.PermissionsConfigDefault.Priority(targetCredentials.Role)
+	// These roles come from the database and skip request validation. An unknown stored
+	// role fails here, so the rank guards below never compare against a rank the account
+	// lacks.
+	targetPriority, err := authconfig.PermissionsConfigDefault.Priority(targetCredentials.Role)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("rank target role: %w", err))
 	}
 
-	currentRoleIImportance, err := authconfig.PermissionsConfigDefault.Priority(currentCredentials.Role)
+	actorPriority, err := authconfig.PermissionsConfigDefault.Priority(currentCredentials.Role)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("rank current user role: %w", err))
 	}
 
 	span.SetAttributes(
-		attribute.Int("targetRoleImportance", targetRoleIImportance),
-		attribute.Int("currentRoleImportance", currentRoleIImportance),
+		attribute.Int("targetRoleImportance", targetPriority),
+		attribute.Int("currentRoleImportance", actorPriority),
 	)
 
 	// User can only upgrade users up to its own role.
-	if newTargetRoleImportance >= targetRoleIImportance && newTargetRoleImportance > currentRoleIImportance {
+	if newPriority >= targetPriority && newPriority > actorPriority {
 		return nil, otel.ReportError(span, fmt.Errorf(
 			"%w: upgrade from %s to %s",
 			ErrCredentialsUpdateRoleToHigher, currentCredentials.Role, request.Role,
@@ -138,7 +140,7 @@ func (service *CredentialsUpdateRole) Exec(
 	}
 
 	// User can only downgrade users from a lower role.
-	if newTargetRoleImportance <= targetRoleIImportance && targetRoleIImportance >= currentRoleIImportance {
+	if newPriority <= targetPriority && targetPriority >= actorPriority {
 		return nil, otel.ReportError(span, fmt.Errorf(
 			"%w: downgrade from %s to %s",
 			ErrCredentialsUpdateRoleDowngradeSuperior, currentCredentials.Role, request.Role,
@@ -146,16 +148,10 @@ func (service *CredentialsUpdateRole) Exec(
 	}
 
 	// Same rank as the target already holds: nothing to update.
-	if newTargetRoleImportance == targetRoleIImportance {
+	if newPriority == targetPriority {
 		span.SetAttributes(attribute.Bool("noop", true))
 
-		return &Credentials{
-			ID:        targetCredentials.ID,
-			Email:     targetCredentials.Email,
-			Role:      targetCredentials.Role,
-			CreatedAt: targetCredentials.CreatedAt,
-			UpdatedAt: targetCredentials.UpdatedAt,
-		}, nil
+		return newCredentials(targetCredentials), nil
 	}
 
 	updatedCredentials, err := service.dao.Exec(
@@ -170,11 +166,5 @@ func (service *CredentialsUpdateRole) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	return &Credentials{
-		ID:        updatedCredentials.ID,
-		Email:     updatedCredentials.Email,
-		Role:      updatedCredentials.Role,
-		CreatedAt: updatedCredentials.CreatedAt,
-		UpdatedAt: updatedCredentials.UpdatedAt,
-	}, nil
+	return newCredentials(updatedCredentials), nil
 }

@@ -1,114 +1,114 @@
 # Contributing to service-authentication
 
-The shared architecture, layers, and conventions live in the [service & architecture concepts](https://github.com/a-novel/.github/blob/master/CONTRIBUTING.md); this file covers only what's specific to the authentication service. Platform setup and day-to-day commands are in the [developer guide](https://a-novel-kit.github.io/stack/).
-
-Read the [README](./README.md) first — it covers what the service does and how operators run it.
+This guide is about working on the authentication service on your machine. Read the [README](./README.md) first for what the service does. The [developer guide](https://a-novel-kit.github.io/stack/) sets up the platform, and the [service concepts](https://github.com/a-novel/.github/blob/master/CONTRIBUTING.md) explain the layers every service shares.
 
 ---
 
 ## Quick local interactions
 
-Once the service is up (`a-novel run start service-authentication/rest`), the REST server listens on `${SERVICE_AUTHENTICATION_REST_PORT}` and MailPit's UI/API on `${MAIL_UI_PORT}`. Both ports are allocated by the `a-novel` daemon; inject them into your shell with `eval "$(a-novel run env service-authentication)"`.
+Start the REST server, then load the ports the `a-novel` daemon allocated into your shell:
+
+```bash
+a-novel run start service-authentication/rest
+eval "$(a-novel run env service-authentication)"
+AUTH_URL="http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}"
+MAIL_URL="http://localhost:${MAIL_UI_PORT}"
+```
 
 ### Health
 
 ```bash
 # Liveness
-curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/ping
+curl "$AUTH_URL/v2/ping"
 
 # Dependency check (Postgres, JSON Keys, SMTP)
-curl http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/healthcheck
+curl "$AUTH_URL/v2/healthcheck"
 ```
 
 ### Authentication flows
 
-Most endpoints require a bearer token. Start with an anonymous session, then register, log in, and refresh.
+Most endpoints require a bearer token, and an anonymous session provides the first one. Set the account you will create first:
 
 ```bash
-# For convenience, define the account you will create.
-USER=<USER_EMAIL>
-PASSWORD=<PASSWORD>
+USER_EMAIL="you@example.com"
+PASSWORD="choose-a-password"
 ```
 
 ```bash
-# Anonymous session — the entry point for register / login.
-ACCESS_TOKEN=$(curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/session/anon | jq -r '.accessToken')
+ACCESS_TOKEN=$(curl -s -X PUT "$AUTH_URL/v2/session/anon" | jq -r '.accessToken')
 
 # Inspect the current session.
-curl -X GET http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/session \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
+curl "$AUTH_URL/v2/session" -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 #### Register
 
-Registration is a two-step, email-verified flow: request a short code, read it from the captured email, then create the account with it.
+Registration is invitation-only. The maintenance operation invites the address, and the invitation email carries a short code. [MailPit](#mailpit-email-testing) captures that email.
 
 ```bash
-# Request a short code (emailed to the user).
-curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/short-code/register \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\": \"$USER\", \"lang\": \"en\"}"
+a-novel run exec service-authentication/maintenance -- \
+  go run ./cmd/maintenance account-role --email "$USER_EMAIL" --role auth:user
+```
 
-# Pull the short code out of the latest captured email (see MailPit below).
-EMAIL_ID=$(curl -s http://localhost:${MAIL_UI_PORT}/api/v1/messages | jq -r '.messages[0].ID')
+Read the short code from the latest email, then create the account with it:
+
+```bash
+EMAIL_ID=$(curl -s "$MAIL_URL/api/v1/messages" | jq -r '.messages[0].ID')
 SHORT_CODE=$(
-  curl -s "http://localhost:${MAIL_UI_PORT}/api/v1/message/$EMAIL_ID" |
-    grep -oP '(?<=shortCode\=)[a-zA-Z0-9]+' | head -1
+  curl -s "$MAIL_URL/api/v1/message/$EMAIL_ID" |
+    grep -o 'shortCode=[a-zA-Z0-9]*' | head -1 | cut -d= -f2
 )
 
-# Complete registration with the code. Returns both tokens.
 TOKEN=$(
-  curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/credentials \
+  curl -s -X PUT "$AUTH_URL/v2/credentials" \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{\"email\": \"$USER\", \"password\": \"$PASSWORD\", \"shortCode\": \"$SHORT_CODE\"}"
+    -d "{\"email\": \"$USER_EMAIL\", \"password\": \"$PASSWORD\", \"shortCode\": \"$SHORT_CODE\"}"
 )
-ACCESS_TOKEN=$(echo $TOKEN | jq -r '.accessToken')
-REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
+ACCESS_TOKEN=$(jq -r '.accessToken' <<<"$TOKEN")
+REFRESH_TOKEN=$(jq -r '.refreshToken' <<<"$TOKEN")
 ```
 
 #### Login
 
 ```bash
 TOKEN=$(
-  curl -X PUT http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/session \
-    -H "Authorization: Bearer $ACCESS_TOKEN" \
+  curl -s -X PUT "$AUTH_URL/v2/session" \
     -H "Content-Type: application/json" \
-    -d "{\"email\": \"$USER\", \"password\": \"$PASSWORD\"}"
+    -d "{\"email\": \"$USER_EMAIL\", \"password\": \"$PASSWORD\"}"
 )
-ACCESS_TOKEN=$(echo $TOKEN | jq -r '.accessToken')
-REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
+ACCESS_TOKEN=$(jq -r '.accessToken' <<<"$TOKEN")
+REFRESH_TOKEN=$(jq -r '.refreshToken' <<<"$TOKEN")
 ```
 
 #### Refresh
 
 ```bash
 TOKEN=$(
-  curl -X PATCH http://localhost:${SERVICE_AUTHENTICATION_REST_PORT}/v2/session \
+  curl -s -X PATCH "$AUTH_URL/v2/session" \
     -H "Content-Type: application/json" \
     -d "{\"accessToken\": \"$ACCESS_TOKEN\", \"refreshToken\": \"$REFRESH_TOKEN\"}"
 )
-ACCESS_TOKEN=$(echo $TOKEN | jq -r '.accessToken')
-REFRESH_TOKEN=$(echo $TOKEN | jq -r '.refreshToken')
+ACCESS_TOKEN=$(jq -r '.accessToken' <<<"$TOKEN")
+REFRESH_TOKEN=$(jq -r '.refreshToken' <<<"$TOKEN")
 ```
 
 ### MailPit (email testing)
 
-[MailPit](https://mailpit.axllent.org/) captures every email the service sends during local development — nothing reaches a real inbox. UI: http://localhost:${MAIL_UI_PORT}.
+[MailPit](https://mailpit.axllent.org/) captures every email the service sends locally, so none reaches a real inbox. Its UI listens on `$MAIL_URL`.
 
 ```bash
-# Latest captured email (handy for grabbing a short code).
-curl -s http://localhost:${MAIL_UI_PORT}/api/v1/messages | jq '.messages[0]'
+# Latest captured email
+curl -s "$MAIL_URL/api/v1/messages" | jq '.messages[0]'
 
-# Clean slate.
-curl -X DELETE http://localhost:${MAIL_UI_PORT}/api/v1/messages
+# Search by recipient
+curl -s "$MAIL_URL/api/v1/search?query=to:$USER_EMAIL"
 
-# Search by recipient.
-curl "http://localhost:${MAIL_UI_PORT}/api/v1/search?query=to:user@example.com"
+# Delete every captured email
+curl -X DELETE "$MAIL_URL/api/v1/messages"
 ```
 
-See the [MailPit API v1 reference](https://mailpit.axllent.org/docs/api-v1/view.html) for more.
+The [MailPit API reference](https://mailpit.axllent.org/docs/api-v1/view.html) lists the other endpoints.
 
 ---
 
@@ -116,56 +116,46 @@ See the [MailPit API v1 reference](https://mailpit.axllent.org/docs/api-v1/view.
 
 ### Two-token system
 
-Sessions are a pair of JWTs, both signed and verified through the [JSON Keys service](https://github.com/a-novel/service-json-keys) — this service holds no signing keys of its own.
+A session is a pair of JWTs. The [JSON Keys service](https://github.com/a-novel/service-json-keys) signs and verifies both, and this service holds no signing key.
 
-| Token         | Purpose                         | Lifetime        |
-| ------------- | ------------------------------- | --------------- |
-| Access token  | Authorizes API calls.           | Short (minutes) |
-| Refresh token | Mints a new pair without login. | Long (days)     |
+| Token         | Purpose                             | Lifetime        |
+| ------------- | ----------------------------------- | --------------- |
+| Access token  | Authorizes API calls.               | Short (minutes) |
+| Refresh token | Renews the pair without signing in. | Long (days)     |
 
-A client authenticates once, then uses the access token until it expires and the refresh token to roll a fresh pair (`PATCH /v2/session`) without re-sending credentials.
+A client signs in once and sends the access token until it expires. `PATCH /v2/session` then trades both tokens for a fresh pair. The access token names the refresh token that minted it, and only that refresh token renews it.
 
 ### Short codes
 
-Single-use, time-limited codes that gate every identity-changing flow, emailed to the user so a session token alone can never complete them. Usages and TTLs live in [`internal/config/short_codes.config.yaml`](./internal/config/short_codes.config.yaml):
+A short code is a single-use, time-limited secret, emailed to the user. Registration, an email change and a password reset each need one, so a session token alone never completes them. [`internal/config/auth/short_codes.config.yaml`](./internal/config/auth/short_codes.config.yaml) sets the code length and each usage's lifetime:
 
 | Usage           | Flow                       | TTL   |
 | --------------- | -------------------------- | ----- |
 | `register`      | Account creation.          | `48h` |
-| `validateEmail` | Email-change confirmation. | `48h` |
+| `validateEmail` | Email change confirmation. | `48h` |
 | `resetPassword` | Password reset.            | `2h`  |
 
-A code is generated, emailed, consumed exactly once, then soft-deleted for the audit trail. The generated string length is the `size` field in the same file.
+The database stores only a hash of each code. A consumed code is soft-deleted, which keeps it for the audit trail.
 
 ### Roles and permissions
 
-Roles and their permissions are defined in [`internal/config/permissions.config.yaml`](./internal/config/permissions.config.yaml) and modelled by `config.Permissions` in [`internal/config/permissions.config.go`](./internal/config/permissions.config.go). Each role lists explicit permissions and may `inherit` another role's permissions transitively; `priority` ranks roles for checks that compare two users.
+[`internal/config/auth/permissions.config.yaml`](./internal/config/auth/permissions.config.yaml) defines the roles. Each role lists permissions and inherits those of the roles it names. Its priority ranks it when one user acts on another.
 
-| Role              | Priority | Adds on top of inherited                              |
-| ----------------- | -------- | ----------------------------------------------------- |
-| `auth:anon`       | 0        | Register, request short codes, reset password.        |
-| `auth:user`       | 1        | Patch own password, request email-update short codes. |
-| `auth:admin`      | 2        | Read / list / check existence of credentials.         |
-| `auth:superadmin` | 3        | Patch user roles.                                     |
+| Role              | Priority | Adds on top of inherited                                                         |
+| ----------------- | -------- | -------------------------------------------------------------------------------- |
+| `auth:anon`       | 0        | Complete a registration or an email change, reset a password, join the waitlist. |
+| `auth:user`       | 1        | Change own password, request an email change.                                    |
+| `auth:admin`      | 2        | Read, list and look up accounts.                                                 |
+| `auth:superadmin` | 3        | Change roles, invite accounts.                                                   |
 
-Permissions are checked per route. The shipped Go middleware (`pkg/go.NewAuthHandler`, see the README) resolves inheritance at startup, so route mounts reference only leaf permissions.
+Routes check permissions, never roles. The Go middleware (`NewAuthHandler` in [`pkg/go`](./pkg/go)) resolves inheritance once at startup.
 
 ### Password security
 
-Passwords are hashed with **Argon2id** (RFC 9106). The implementation lives in [`internal/lib/argon2.go`](./internal/lib/argon2.go):
-
-```go
-// Hashing — pass the tuning parameters explicitly.
-hash, err := lib.GenerateArgon2(password, lib.Argon2ParamsDefault)
-
-// Verification — returns a non-nil error on mismatch.
-err := lib.CompareArgon2(password, hash)
-```
-
-Plaintext passwords enter only through request bodies for registration, login, and password changes. Each is hashed with Argon2 before it touches the database. Never log, expose, or persist them in plaintext anywhere else.
+Passwords are hashed with **Argon2id** (RFC 9106), in [`internal/lib/argon2.go`](./internal/lib/argon2.go). A plaintext password enters only through the registration, login and password-change request bodies, and is hashed before it reaches the database. Never log, return or store one anywhere else.
 
 ---
 
 ## Questions?
 
-[Open an issue](https://github.com/a-novel/service-authentication/issues) — include logs and environment details.
+[Open an issue](https://github.com/a-novel/service-authentication/issues) with the logs and environment details.

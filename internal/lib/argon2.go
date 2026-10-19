@@ -11,13 +11,13 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/samber/lo"
 	"golang.org/x/crypto/argon2"
 )
 
 var (
-	// ErrInvalidHash is returned by [CompareArgon2] when the stored hash does not
-	// have the encoded shape produced by [GenerateArgon2] — the stored value is
-	// corrupted.
+	// ErrInvalidHash is returned by [CompareArgon2] when the stored hash lacks the
+	// encoded shape [GenerateArgon2] produces, which means the stored value is corrupted.
 	ErrInvalidHash = errors.New("the encoded hash is in an invalid format")
 	// ErrIncompatibleVersion is returned by [CompareArgon2] when the stored hash was
 	// produced with an Argon2 version this binary cannot verify. Recovering requires
@@ -82,31 +82,20 @@ func GenerateArgon2(password string, params Argon2Params) (string, error) {
 	}
 
 	if params.Parallelism == 0 {
-		nCpus := runtime.NumCPU()
-		// Guard against overflow when narrowing to uint8.
-		if nCpus > math.MaxUint8 {
-			nCpus = math.MaxUint8
-		}
-
-		params.Parallelism = uint8(nCpus)
+		params.Parallelism = uint8(min(runtime.NumCPU(), math.MaxUint8))
 	}
 
 	hash := idKey(password, salt, &params)
 
-	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
-	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
-
-	encodedHash := fmt.Sprintf(
+	return fmt.Sprintf(
 		"$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
 		argon2.Version,
 		params.Memory,
 		params.Iterations,
 		params.Parallelism,
-		b64Salt,
-		b64Hash,
-	)
-
-	return encodedHash, nil
+		base64.RawStdEncoding.EncodeToString(salt),
+		base64.RawStdEncoding.EncodeToString(hash),
+	), nil
 }
 
 // CompareArgon2 verifies a password against an encoded hash produced by
@@ -155,14 +144,7 @@ func idKey(password string, salt []byte, params *Argon2Params) []byte {
 // dummyArgon2Hash is a throwaway Argon2id hash generated once at init with
 // Argon2ParamsDefault, so verifying against it costs the same as a real
 // [CompareArgon2] call.
-var dummyArgon2Hash = func() string {
-	hash, err := GenerateArgon2("not-a-real-password", Argon2ParamsDefault)
-	if err != nil {
-		panic(fmt.Sprintf("generate dummy argon2 hash: %v", err))
-	}
-
-	return hash
-}()
+var dummyArgon2Hash = lo.Must(GenerateArgon2("not-a-real-password", Argon2ParamsDefault))
 
 // DummyCompareArgon2 runs a full Argon2id verification against a throwaway hash and
 // discards the result. Call it on the "subject not found" branch of an authentication
@@ -182,9 +164,7 @@ func decodeHash(encodedHash string) (*Argon2Params, []byte, []byte, error) {
 
 	_, err := fmt.Sscanf(values[2], "v=%d", &version)
 	if err != nil {
-		err = errors.Join(ErrInvalidHash, err)
-
-		return nil, nil, nil, fmt.Errorf("parse version: %w", err)
+		return nil, nil, nil, fmt.Errorf("parse version: %w", errors.Join(ErrInvalidHash, err))
 	}
 
 	if version != argon2.Version {
@@ -195,25 +175,19 @@ func decodeHash(encodedHash string) (*Argon2Params, []byte, []byte, error) {
 
 	_, err = fmt.Sscanf(values[3], "m=%d,t=%d,p=%d", &params.Memory, &params.Iterations, &params.Parallelism)
 	if err != nil {
-		err = errors.Join(ErrInvalidHash, err)
-
-		return nil, nil, nil, fmt.Errorf("parse parameters: %w", err)
+		return nil, nil, nil, fmt.Errorf("parse parameters: %w", errors.Join(ErrInvalidHash, err))
 	}
 
 	salt, err := base64.RawStdEncoding.Strict().DecodeString(values[4])
 	if err != nil {
-		err = errors.Join(ErrInvalidHash, err)
-
-		return nil, nil, nil, fmt.Errorf("decode salt: %w", err)
+		return nil, nil, nil, fmt.Errorf("decode salt: %w", errors.Join(ErrInvalidHash, err))
 	}
 
 	params.SaltLength = uint(len(salt))
 
 	hash, err := base64.RawStdEncoding.Strict().DecodeString(values[5])
 	if err != nil {
-		err = errors.Join(ErrInvalidHash, err)
-
-		return nil, nil, nil, fmt.Errorf("decode hash: %w", err)
+		return nil, nil, nil, fmt.Errorf("decode hash: %w", errors.Join(ErrInvalidHash, err))
 	}
 
 	rawHashLength := len(hash)

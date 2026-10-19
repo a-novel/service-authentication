@@ -13,15 +13,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// ShortCodeCreateRegisterService is the core operation PUT /v2/short-code/register delegates to.
 type ShortCodeCreateRegisterService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)
 }
 
+// ShortCodeCreateRegisterRequest is the JSON body of PUT /v2/short-code/register.
 type ShortCodeCreateRegisterRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
+// ShortCodeCreateRegister serves PUT /v2/short-code/register, which emails a registration invitation.
 type ShortCodeCreateRegister struct {
 	service ShortCodeCreateRegisterService
 	logger  logging.Log
@@ -49,16 +52,14 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 		Lang:  request.Lang,
 		Role:  authconfig.RoleUser,
 	})
-	if err != nil {
-		// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
-		if !errors.Is(err, core.ErrCredentialsCreateAlreadyExists) {
-			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-				core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-				core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-			}, err)
+	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
+	if err != nil && !errors.Is(err, core.ErrCredentialsCreateAlreadyExists) {
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
+			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+		}, err)
 
-			return
-		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

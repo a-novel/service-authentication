@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
@@ -57,14 +58,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.CredentialsUpdateRoleRequest{
-					Role:          config.RoleAdmin,
+					Role:          authconfig.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 				resp: &core.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user@provider.com",
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 					CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
 				},
@@ -73,7 +74,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectResponse: map[string]any{
 				"id":        "00000000-0000-0000-0000-000000000001",
 				"email":     "user@provider.com",
-				"role":      config.RoleAdmin,
+				"role":      authconfig.RoleAdmin,
 				"createdAt": "2018-02-02T12:00:00Z",
 				"updatedAt": "2020-02-02T12:00:00Z",
 			},
@@ -92,7 +93,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.CredentialsUpdateRoleRequest{
-					Role:          config.RoleAdmin,
+					Role:          authconfig.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -114,7 +115,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.CredentialsUpdateRoleRequest{
-					Role:          config.RoleAdmin,
+					Role:          authconfig.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -137,7 +138,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.CredentialsUpdateRoleRequest{
-					Role:          config.RoleAdmin,
+					Role:          authconfig.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -159,7 +160,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.CredentialsUpdateRoleRequest{
-					Role:          config.RoleAdmin,
+					Role:          authconfig.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -181,7 +182,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.CredentialsUpdateRoleRequest{
-					Role:          config.RoleAdmin,
+					Role:          authconfig.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -203,7 +204,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.CredentialsUpdateRoleRequest{
-					Role:          config.RoleAdmin,
+					Role:          authconfig.RoleAdmin,
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},

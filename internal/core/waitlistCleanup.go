@@ -68,22 +68,9 @@ func (service *WaitlistCleanup) Exec(
 			return result, nil
 		}
 
-		// Enforce the shared limits here as well as in the independently deployed Apps Script.
-		if len(page.Emails) > authconfig.WaitlistBatchSize {
-			return result, otel.ReportError(span, fmt.Errorf("waitlist page contains %d entries; limit is %d: %w",
-				len(page.Emails), authconfig.WaitlistBatchSize, ErrWaitlistUnavailable))
-		}
-
-		if result.Scanned+len(page.Emails) > authconfig.WaitlistMaxEntries {
-			return result, otel.ReportError(span, fmt.Errorf("waitlist cleanup would scan %d entries; limit is %d: %w",
-				result.Scanned+len(page.Emails), authconfig.WaitlistMaxEntries, ErrWaitlistUnavailable))
-		}
-
-		next := page.Emails[len(page.Emails)-1]
-		if next == after {
-			// Stop a stalled writer before processing the same page twice. Cursors contain private emails.
-			return result, otel.ReportError(span, fmt.Errorf(
-				"waitlist cleanup cursor did not advance; check the Apps Script list operation: %w", ErrWaitlistUnavailable))
+		err = checkWaitlistPage(page.Emails, result.Scanned, after)
+		if err != nil {
+			return result, otel.ReportError(span, err)
 		}
 
 		accounts, err := service.credentials.Exec(ctx, &dao.CredentialsListRequest{
@@ -114,6 +101,25 @@ func (service *WaitlistCleanup) Exec(
 		}
 
 		// Email cursors remain stable when deletion shifts the sheet's row numbers.
-		after = next
+		after = page.Emails[len(page.Emails)-1]
 	}
+}
+
+// checkWaitlistPage enforces the shared limits on a listed page, as the independently deployed Apps
+// Script does, and stops a stalled writer before the same page is processed twice. The errors leave
+// out the cursor, which is a private email.
+func checkWaitlistPage(emails []string, scanned int, after string) error {
+	switch {
+	case len(emails) > authconfig.WaitlistBatchSize:
+		return fmt.Errorf("waitlist page contains %d entries; limit is %d: %w",
+			len(emails), authconfig.WaitlistBatchSize, ErrWaitlistUnavailable)
+	case scanned+len(emails) > authconfig.WaitlistMaxEntries:
+		return fmt.Errorf("waitlist cleanup would scan %d entries; limit is %d: %w",
+			scanned+len(emails), authconfig.WaitlistMaxEntries, ErrWaitlistUnavailable)
+	case emails[len(emails)-1] == after:
+		return fmt.Errorf("waitlist cleanup cursor did not advance; check the Apps Script list operation: %w",
+			ErrWaitlistUnavailable)
+	}
+
+	return nil
 }

@@ -14,14 +14,17 @@ import {
   tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
 
+/** Returns a random email address. */
 export function generateRandomMail() {
   return crypto.randomBytes(12).toString("hex") + "@provider.com";
 }
 
+/** Returns a random password the service accepts. */
 export function generateRandomPassword() {
   return crypto.randomBytes(12).toString("hex");
 }
 
+/** A registration invitation: the invited address and the short code its email carries. */
 export interface PreRegisterData {
   email: string;
   shortCode: string;
@@ -73,6 +76,7 @@ export async function preRegisterUser(
   };
 }
 
+/** Completes a registration invitation with a random password, returning the new account and its session. */
 export async function registerUser(api: AuthenticationApi, data: PreRegisterData) {
   const userPassword = generateRandomPassword();
 

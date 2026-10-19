@@ -1,10 +1,13 @@
 package core
 
 import (
+	"slices"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 // ShortCode is a one-time verification code issued for a sensitive identity
@@ -18,8 +21,8 @@ type ShortCode struct {
 	// ShortCodeUsage* constants. A code issued for one usage cannot be redeemed
 	// for another.
 	Usage string
-	// Target identifies the subject of the operation — for email-bound flows,
-	// this is the email address the code was sent to.
+	// Target identifies the subject of the operation: the email address of a
+	// registration, the user ID otherwise.
 	Target string
 	// Data carries flow-specific context the consumer needs (for example, the
 	// new email for an email-change confirmation). Opaque to ShortCode itself.
@@ -59,12 +62,17 @@ var KnownShortCodeUsages = []string{
 // registers it under the "usage" tag, so request structs gate this with
 // `validate:"required,usage"`.
 func ValidateShortCodeUsage(fl validator.FieldLevel) bool {
-	val := fl.Field().String()
-	for _, usage := range KnownShortCodeUsages {
-		if val == usage {
-			return true
-		}
-	}
+	return slices.Contains(KnownShortCodeUsages, fl.Field().String())
+}
 
-	return false
+func newShortCode(entity *dao.ShortCode, plainCode string) *ShortCode {
+	return &ShortCode{
+		ID:        entity.ID,
+		Usage:     entity.Usage,
+		Target:    entity.Target,
+		Data:      entity.Data,
+		CreatedAt: entity.CreatedAt,
+		ExpiresAt: entity.ExpiresAt,
+		PlainCode: plainCode,
+	}
 }

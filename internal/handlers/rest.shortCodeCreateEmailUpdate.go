@@ -15,15 +15,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
+// ShortCodeCreateEmailUpdateService is the core operation PUT /v2/short-code/update-email delegates to.
 type ShortCodeCreateEmailUpdateService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) (*core.ShortCode, error)
 }
 
+// ShortCodeCreateEmailUpdateRequest is the JSON body of PUT /v2/short-code/update-email.
 type ShortCodeCreateEmailUpdateRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
+// ShortCodeCreateEmailUpdate serves PUT /v2/short-code/update-email, which emails a code confirming a new address.
 type ShortCodeCreateEmailUpdate struct {
 	service ShortCodeCreateEmailUpdateService
 	logger  logging.Log
@@ -60,16 +63,14 @@ func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *h
 		Lang:  request.Lang,
 		ID:    lo.FromPtr(claims.UserID),
 	})
-	if err != nil {
-		// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
-		if !errors.Is(err, core.ErrCredentialsUpdateEmailAlreadyExists) {
-			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-				core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-				core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-			}, err)
+	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
+	if err != nil && !errors.Is(err, core.ErrCredentialsUpdateEmailAlreadyExists) {
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
+			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+		}, err)
 
-			return
-		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

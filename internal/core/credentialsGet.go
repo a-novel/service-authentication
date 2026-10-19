@@ -12,10 +12,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
+// CredentialsGetDao loads an account by ID.
 type CredentialsGetDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 
+// CredentialsGetRequest names the account to load.
 type CredentialsGetRequest struct {
 	ID uuid.UUID
 }
@@ -34,7 +36,7 @@ func NewCredentialsGet(dao CredentialsGetDao) *CredentialsGet {
 func (service *CredentialsGet) Exec(
 	ctx context.Context, request *CredentialsGetRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsGet")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsGet")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("user.id", request.ID.String()))
@@ -49,11 +51,5 @@ func (service *CredentialsGet) Exec(
 		attribute.String("user.role", entity.Role),
 	)
 
-	return &Credentials{
-		ID:        entity.ID,
-		Email:     entity.Email,
-		Role:      entity.Role,
-		CreatedAt: entity.CreatedAt,
-		UpdatedAt: entity.UpdatedAt,
-	}, nil
+	return newCredentials(entity), nil
 }

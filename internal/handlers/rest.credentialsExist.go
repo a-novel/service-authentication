@@ -11,14 +11,17 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// CredentialsExistService is the core operation HEAD /v2/credentials delegates to.
 type CredentialsExistService interface {
 	Exec(ctx context.Context, request *core.CredentialsExistRequest) (bool, error)
 }
 
+// CredentialsExistRequest holds the query parameters of HEAD /v2/credentials.
 type CredentialsExistRequest struct {
 	Email string `schema:"email"`
 }
 
+// CredentialsExist serves HEAD /v2/credentials, which reports whether an account uses an email.
 type CredentialsExist struct {
 	service CredentialsExistService
 	logger  logging.Log

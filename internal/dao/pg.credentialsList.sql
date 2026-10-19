@@ -1,6 +1,5 @@
--- id breaks ties on created_at, and created_at does not mutate. Ordering on updated_at let a
--- credential touched between two page queries move across the boundary and be skipped or repeated,
--- and its timestamp(0) precision made same-second rows a tie the planner could order either way.
+-- Pages sort on created_at, which never changes, so a row cannot cross a page boundary between two
+-- queries. id breaks the ties of rows created in the same second.
 SELECT
   id,
   email,

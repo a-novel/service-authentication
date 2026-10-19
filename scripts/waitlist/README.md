@@ -1,16 +1,12 @@
 # Install the private invitation list
 
-This directory contains the Google Apps Script that stores Agora invitation requests in a private
-Google Sheet. Follow this guide to install it, connect the authentication service, and verify the
-complete flow. No database migration is needed.
+This guide is about the private invitation list. The Google Apps Script in this directory stores
+invitation requests in a private Google Sheet, and the authentication service writes to it over
+signed requests. The list needs no database migration.
 
-Joining the list does **not** create an account, send an email, or grant registration permission.
-Account creation still requires an invitation from the existing admin flow. Once registration
-completes, authentication attempts to remove the matching row.
-
-Jump to [installation](#installation), [verification](#verify-the-installation),
-[cleanup](#on-demand-cleanup), [updates and rollback](#update-or-roll-back-the-script),
-[key rotation](#rotate-the-signing-key), or [troubleshooting](#troubleshooting).
+Joining the list creates no account, sends no email and grants no permission to register. Accounts
+still come from an admin invitation. Once a registration completes, authentication removes the
+matching row.
 
 ## Before you start
 
@@ -45,16 +41,16 @@ Studio → authentication API → signed server request → Apps Script → priv
 
 The browser never receives the signing key or accesses Google directly. The web app accepts incoming
 requests without a Google login, but the script verifies a recent HMAC signature before accessing the
-sheet. The sheet itself stays restricted. Use one sheet, one script project, and a separate signing key
-per environment; two script projects cannot share the lock used for deduplication.
+sheet. The sheet itself stays restricted. Use one sheet, one script project and a separate signing key
+per environment. Two script projects cannot share the lock that deduplicates requests.
 
 ## Installation
 
 ### 1. Create the spreadsheet
 
 1. Sign in with the organization-controlled account that will own the deployment.
-2. Create a blank spreadsheet, for example **Agora invitation list — staging**. The spreadsheet title
-   is for operators; the script does not depend on it.
+2. Create a blank spreadsheet, for example **Invitation list — staging**. The title is for operators,
+   and the script ignores it.
 3. Open **Share** and keep general access **Restricted**. Give access only to the operators who need
    it. Do not publish the sheet to the web or enable link sharing.
 4. Rename the first sheet tab to exactly `Waitlist` (capital `W`).
@@ -82,8 +78,8 @@ Use a separate copy for analysis; never connect that copy to another live writer
 
 ### 2. Install both script files
 
-1. From the spreadsheet, open **Extensions → Apps Script**. Name the project so its purpose and
-   environment are clear, for example **Agora invitation list — staging**.
+1. From the spreadsheet, open **Extensions → Apps Script**. Name the project after its purpose and
+   environment, for example **Invitation list — staging**.
 2. Open the default `Code.gs`, remove the sample function, and paste all of [Code.js](./Code.js).
    Keep the editor filename `Code.gs`: Apps Script uses this extension for JavaScript. Do not paste
    Markdown fences or leave a second copy of the functions in another file.
@@ -96,9 +92,9 @@ Use a separate copy for analysis; never connect that copy to another live writer
    you add **Google Sheets API** using **Services → +**.
 
 With Apps Script's default Cloud project, enabling the advanced service also enables its API. If
-your organization has associated a **standard Google Cloud project**, enable **Google Sheets API**
-in that associated project's API Library as well—not merely in the project hosting authentication.
-See [advanced service setup](https://developers.google.com/apps-script/guides/services/advanced).
+your organization associated a **standard Google Cloud project**, enable **Google Sheets API** in
+that project's API Library too. The project hosting authentication does not count. See
+[advanced service setup](https://developers.google.com/apps-script/guides/services/advanced).
 
 The supplied manifest uses V8, UTC, and the spreadsheet OAuth scope only. That scope can access
 spreadsheets available to the executing owner; it is **not restricted to this one spreadsheet**.
@@ -161,8 +157,8 @@ private operations record. Opening `/exec` in a browser is not a functional test
 
 ### 5. Connect the authentication runtime
 
-Configure the **REST service** and any **maintenance job that accesses the list**. Do not add these
-values to Studio, browser configuration, Docker build arguments, or committed environment files.
+Configure the **REST service** and any **maintenance job that reads the list**. Keep these values
+out of Studio, browser configuration, Docker build arguments and committed environment files.
 
 | Runtime variable   | Value                                                                                 |
 | ------------------ | ------------------------------------------------------------------------------------- |
@@ -174,9 +170,8 @@ Both URL and key absent disable the integration. Providing only one, an unsafe U
 or an out-of-range timeout fails configuration validation. Deploy the script **before** enabling
 the matching authentication release; an older script may not understand conflict codes or cleanup.
 
-The existing `SERVICE_AUTHENTICATION_ENV_PREFIX` convention also applies to these runtime variables.
-If your deployment uses it, apply the prefix exactly as for its other authentication variables.
-Script Property names remain unprefixed. Authentication does not need the spreadsheet ID.
+A deployment that sets `SERVICE_AUTHENTICATION_ENV_PREFIX` prefixes these variables like the others.
+Script Property names take no prefix. Authentication does not need the spreadsheet ID.
 
 #### Google Cloud / Cloud Run example
 
@@ -197,9 +192,8 @@ The runtime identity needs access to **the secret**, not the spreadsheet. Google
 the Apps Script owner. There is no service-account JSON key to download and no production Google
 credential to add to CI: builds and automated tests do not call the live sheet.
 
-For another container host, use its runtime secret injection mechanism and restart/redeploy the
-service with the same variables. Preserve the existing database, JSON Keys, and SMTP configuration;
-this guide only adds the optional waitlist integration.
+On another container host, inject the secret through its runtime secret mechanism and redeploy the
+service with the same variables. Keep the existing database, JSON Keys and SMTP configuration.
 
 #### What to share when asking for setup help
 

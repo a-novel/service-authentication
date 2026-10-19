@@ -109,7 +109,7 @@ func NewCredentialsCreate(
 // After commit, bounded waitlist cleanup runs independently of client cancellation.
 // Cleanup failures are traced and leave the account usable; maintenance can reconcile stale rows.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsCreate")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsCreate")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("email", request.Email))
@@ -143,9 +143,9 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		_, consumeErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
-		if consumeErr != nil {
-			return fmt.Errorf("consume short code: %w", consumeErr)
+		_, err := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
+		if err != nil {
+			return fmt.Errorf("consume short code: %w", err)
 		}
 
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{

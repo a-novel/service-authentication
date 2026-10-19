@@ -11,16 +11,19 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// CredentialsCreateService is the core operation PUT /v2/credentials delegates to.
 type CredentialsCreateService interface {
 	Exec(ctx context.Context, request *core.CredentialsCreateRequest) (*core.Token, error)
 }
 
+// CredentialsCreateRequest is the JSON body of PUT /v2/credentials.
 type CredentialsCreateRequest struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 	ShortCode string `json:"shortCode"`
 }
 
+// CredentialsCreate serves PUT /v2/credentials, which creates an account from a registration short code.
 type CredentialsCreate struct {
 	service CredentialsCreateService
 	logger  logging.Log

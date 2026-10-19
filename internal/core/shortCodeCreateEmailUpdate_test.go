@@ -13,7 +13,7 @@ import (
 
 	"github.com/a-novel-kit/golib/smtp"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -26,7 +26,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	smtpConfig := config.SmtpUrls{UpdateEmail: "update-email-url"}
+	smtpConfig := authconfig.SmtpUrls{UpdateEmail: "update-email-url"}
 
 	type serviceCreateMock struct {
 		resp *core.ShortCode
@@ -54,7 +54,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Success",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
@@ -81,7 +81,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Success/SendMailPanic",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
@@ -109,7 +109,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/MailDeliveryUnavailable",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
@@ -125,7 +125,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/CreateShortCode",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
@@ -144,7 +144,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/EmailAlreadyTaken",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
@@ -159,7 +159,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/Dao",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  config.LangFR,
+				Lang:  authconfig.LangFR,
 				Email: "user@provider.com",
 				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
@@ -190,7 +190,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 					Exec(mock.Anything, &core.ShortCodeCreateRequest{
 						Usage:    core.ShortCodeUsageValidateEmail,
 						Target:   testCase.request.ID.String(),
-						TTL:      config.ShortCodesPresetDefault.Usages[core.ShortCodeUsageValidateEmail].TTL,
+						TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageValidateEmail].TTL,
 						Data:     testCase.request.Email,
 						Override: true,
 					}).
@@ -216,7 +216,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 							"Target":    testCase.request.ID.String(),
 							"Source":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
 							"URL":       smtpConfig.UpdateEmail,
-							"Duration": config.ShortCodesPresetDefault.
+							"Duration": authconfig.ShortCodesPresetDefault.
 								Usages[core.ShortCodeUsageValidateEmail].
 								TTL.Hours(),
 							"Banner":   assets.BannerBase64,
@@ -234,7 +234,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			}
 
 			service := core.NewShortCodeCreateEmailUpdate(
-				serviceCreate, daoSelect, mailDelivery, config.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, daoSelect, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)

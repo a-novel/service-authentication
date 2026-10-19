@@ -40,7 +40,7 @@
     "lint:typecheck:test:rest": "pnpm tsc --p ./pkg/js/test/rest/tsconfig.json --noEmit",
     "prepublish:doc": "pnpm prepublish:doc:readme && pnpm prepublish:doc:openapi",
     "prepublish:doc:openapi": "a-novel publish stamp 'version: ' openapi.yaml",
-    "prepublish:doc:readme": "a-novel publish stamp 'a-novel/service-authentication/[^/]+' README.md",
+    "prepublish:doc:readme": "a-novel publish stamp 'a-novel/service-authentication/[a-z0-9/-]+:' README.md",
     "sync": "pnpm build && pnpm i",
     "test": "vitest run -c vitest.config.ts",
     "test:ci": "pnpm build && pnpm i && pnpm test",

@@ -15,15 +15,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
+// CredentialsUpdatePasswordService is the core operation PATCH /v2/credentials/password delegates to.
 type CredentialsUpdatePasswordService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
+// CredentialsUpdatePasswordRequest is the JSON body of PATCH /v2/credentials/password.
 type CredentialsUpdatePasswordRequest struct {
 	Password        string `json:"password"`
 	CurrentPassword string `json:"currentPassword"`
 }
 
+// CredentialsUpdatePassword serves PATCH /v2/credentials/password, which changes the caller's password.
 type CredentialsUpdatePassword struct {
 	service CredentialsUpdatePasswordService
 	logger  logging.Log

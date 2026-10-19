@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -54,21 +55,21 @@ func TestCredentialsList(t *testing.T) {
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
 						Email:     "user3@email.com",
-						Role:      config.RoleUser,
+						Role:      authconfig.RoleUser,
 						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 					},
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 						Email:     "user2@email.com",
-						Role:      config.RoleAdmin,
+						Role:      authconfig.RoleAdmin,
 						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 					},
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 						Email:     "user1@email.com",
-						Role:      config.RoleUser,
+						Role:      authconfig.RoleUser,
 						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					},
@@ -79,21 +80,21 @@ func TestCredentialsList(t *testing.T) {
 				map[string]any{
 					"id":        "00000000-0000-0000-0000-000000000003",
 					"email":     "user3@email.com",
-					"role":      config.RoleUser,
+					"role":      authconfig.RoleUser,
 					"createdAt": "2021-01-01T00:00:00Z",
 					"updatedAt": "2021-01-03T00:00:00Z",
 				},
 				map[string]any{
 					"id":        "00000000-0000-0000-0000-000000000002",
 					"email":     "user2@email.com",
-					"role":      config.RoleAdmin,
+					"role":      authconfig.RoleAdmin,
 					"createdAt": "2021-01-01T00:00:00Z",
 					"updatedAt": "2021-01-02T00:00:00Z",
 				},
 				map[string]any{
 					"id":        "00000000-0000-0000-0000-000000000001",
 					"email":     "user1@email.com",
-					"role":      config.RoleUser,
+					"role":      authconfig.RoleUser,
 					"createdAt": "2021-01-01T00:00:00Z",
 					"updatedAt": "2021-01-01T00:00:00Z",
 				},
@@ -114,7 +115,7 @@ func TestCredentialsList(t *testing.T) {
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
 						Email:     "user3@email.com",
-						Role:      config.RoleUser,
+						Role:      authconfig.RoleUser,
 						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 					},
@@ -125,7 +126,7 @@ func TestCredentialsList(t *testing.T) {
 				map[string]any{
 					"id":        "00000000-0000-0000-0000-000000000003",
 					"email":     "user3@email.com",
-					"role":      config.RoleUser,
+					"role":      authconfig.RoleUser,
 					"createdAt": "2021-01-01T00:00:00Z",
 					"updatedAt": "2021-01-03T00:00:00Z",
 				},

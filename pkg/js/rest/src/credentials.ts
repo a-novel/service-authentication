@@ -115,10 +115,13 @@ export async function credentialsExists(
       method: "HEAD",
     })
     .then(() => true)
-    .catch((err) => {
-      if (isHttpStatusError(err, 404)) return false;
-      throw err;
-    });
+    .catch(falseOnNotFound);
+}
+
+/** Resolves a 404 to `false` and rethrows any other failure. */
+function falseOnNotFound(err: unknown): false {
+  if (isHttpStatusError(err, 404)) return false;
+  throw err;
 }
 
 /** Lists accounts within the request's pagination window, defaulting to the first 100. */

@@ -11,10 +11,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// TokenCreateAnonService is the core operation PUT /v2/session/anon delegates to.
 type TokenCreateAnonService interface {
 	Exec(ctx context.Context) (*core.Token, error)
 }
 
+// TokenCreateAnon serves PUT /v2/session/anon, which opens an anonymous session.
 type TokenCreateAnon struct {
 	service TokenCreateAnonService
 	logger  logging.Log

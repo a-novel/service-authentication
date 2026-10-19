@@ -12,15 +12,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// ShortCodeCreatePasswordResetService is the core operation PUT /v2/short-code/update-password delegates to.
 type ShortCodeCreatePasswordResetService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error)
 }
 
+// ShortCodeCreatePasswordResetRequest is the JSON body of PUT /v2/short-code/update-password.
 type ShortCodeCreatePasswordResetRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
+// ShortCodeCreatePasswordReset serves PUT /v2/short-code/update-password, which emails a password reset code.
 type ShortCodeCreatePasswordReset struct {
 	service ShortCodeCreatePasswordResetService
 	logger  logging.Log
@@ -49,16 +52,14 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 		Email: request.Email,
 		Lang:  request.Lang,
 	})
-	if err != nil {
-		// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
-		if !errors.Is(err, core.ErrCredentialsByEmailNotFound) {
-			httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-				core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-				core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-			}, err)
+	// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
+	if err != nil && !errors.Is(err, core.ErrCredentialsByEmailNotFound) {
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
+			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+		}, err)
 
-			return
-		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

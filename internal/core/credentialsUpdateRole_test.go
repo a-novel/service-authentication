@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -49,14 +49,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleAdmin,
+				Role:          authconfig.RoleAdmin,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -66,7 +66,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					Email:     "target@email.com",
-					Role:      config.RoleSuperAdmin,
+					Role:      authconfig.RoleSuperAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -76,7 +76,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 				},
@@ -85,7 +85,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expect: &core.Credentials{
 				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Email:     "target@email.com",
-				Role:      config.RoleAdmin,
+				Role:      authconfig.RoleAdmin,
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 			},
@@ -96,14 +96,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleAdmin,
+				Role:          authconfig.RoleAdmin,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -113,7 +113,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					Email:     "target@email.com",
-					Role:      config.RoleSuperAdmin,
+					Role:      authconfig.RoleSuperAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -123,7 +123,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 				},
@@ -132,7 +132,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expect: &core.Credentials{
 				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Email:     "target@email.com",
-				Role:      config.RoleAdmin,
+				Role:      authconfig.RoleAdmin,
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 			},
@@ -143,14 +143,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleSuperAdmin,
+				Role:          authconfig.RoleSuperAdmin,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -160,7 +160,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					Email:     "target@email.com",
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -174,14 +174,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleUser,
+				Role:          authconfig.RoleUser,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -191,7 +191,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					Email:     "target@email.com",
-					Role:      config.RoleSuperAdmin,
+					Role:      authconfig.RoleSuperAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -201,7 +201,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 				},
@@ -210,7 +210,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expect: &core.Credentials{
 				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Email:     "target@email.com",
-				Role:      config.RoleUser,
+				Role:      authconfig.RoleUser,
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
 			},
@@ -221,14 +221,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleUser,
+				Role:          authconfig.RoleUser,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -238,7 +238,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					Email:     "target@email.com",
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -264,7 +264,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Role:          config.RoleSuperAdmin,
+				Role:          authconfig.RoleSuperAdmin,
 			},
 
 			expectErr: core.ErrCredentialsUpdateRoleSelfUpdate,
@@ -276,14 +276,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleAdmin,
+				Role:          authconfig.RoleAdmin,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -293,7 +293,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					Email:     "target@email.com",
-					Role:      config.RoleSuperAdmin,
+					Role:      authconfig.RoleSuperAdmin,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -311,14 +311,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleAdmin,
+				Role:          authconfig.RoleAdmin,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "target@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				},
@@ -336,7 +336,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleAdmin,
+				Role:          authconfig.RoleAdmin,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
@@ -354,7 +354,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleAdmin,
+				Role:          authconfig.RoleAdmin,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
@@ -369,11 +369,11 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					Email: "caller@email.com",
-					Role:  config.RoleSuperAdmin,
+					Role:  authconfig.RoleSuperAdmin,
 				},
 			},
 
-			expectErr: config.ErrUnknownRole,
+			expectErr: authconfig.ErrUnknownRole,
 		},
 		{
 			name: "CallerHasUnknownStoredRole",
@@ -381,14 +381,14 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Role:          config.RoleAdmin,
+				Role:          authconfig.RoleAdmin,
 			},
 
 			daoCredentialsSelectTargetMock: &credentialsSelectMock{
 				resp: &dao.Credentials{
 					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email: "target@email.com",
-					Role:  config.RoleUser,
+					Role:  authconfig.RoleUser,
 				},
 			},
 
@@ -400,7 +400,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				},
 			},
 
-			expectErr: config.ErrUnknownRole,
+			expectErr: authconfig.ErrUnknownRole,
 		},
 	}
 

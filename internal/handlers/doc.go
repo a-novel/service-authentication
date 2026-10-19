@@ -1,9 +1,6 @@
 // Package handlers holds the REST transport layer of the authentication service.
 //
-// Each handler wraps a single service: it decodes the HTTP request, calls
-// service.Exec, and translates the result (or error) into a status code and
-// body. Service-layer sentinel errors map to user-facing 4xx responses; any
-// other error surfaces as 500. The OpenAPI specification at the repository
-// root is the source of truth for request and response shapes — handlers
-// mirror it.
+// Each handler decodes one request, calls a core operation and writes its result. A core
+// sentinel error answers its own status code, and any other error answers 500. The handlers
+// follow the OpenAPI specification at the repository root.
 package handlers

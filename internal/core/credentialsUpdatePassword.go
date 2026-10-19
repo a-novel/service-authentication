@@ -16,24 +16,30 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
+// CredentialsUpdatePasswordDao stores the new password hash.
 type CredentialsUpdatePasswordDao interface {
 	Exec(
 		ctx context.Context, request *dao.CredentialsUpdatePasswordRequest,
 	) (*dao.Credentials, error)
 }
 
+// CredentialsUpdatePasswordDaoCredentialsSelect loads the account whose current password the change path checks.
 type CredentialsUpdatePasswordDaoCredentialsSelect interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 
+// CredentialsUpdatePasswordServiceShortCodeVerify checks the password reset short code.
 type CredentialsUpdatePasswordServiceShortCodeVerify interface {
 	Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdatePasswordServiceShortCodeConsume retires the verified short code.
 type CredentialsUpdatePasswordServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdatePasswordRequest carries the new password and one proof of ownership: the
+// current password or a reset short code.
 type CredentialsUpdatePasswordRequest struct {
 	Password        string `validate:"required,min=4,max=1024"`
 	CurrentPassword string `validate:"required_without=ShortCode,max=1024"`
@@ -71,7 +77,7 @@ func NewCredentialsUpdatePassword(
 func (service *CredentialsUpdatePassword) Exec(
 	ctx context.Context, request *CredentialsUpdatePasswordRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsUpdatePassword")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsUpdatePassword")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("user.id", request.UserID.String()))
@@ -145,11 +151,5 @@ func (service *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	return &Credentials{
-		ID:        credentials.ID,
-		Email:     credentials.Email,
-		Role:      credentials.Role,
-		CreatedAt: credentials.CreatedAt,
-		UpdatedAt: credentials.UpdatedAt,
-	}, nil
+	return newCredentials(credentials), nil
 }

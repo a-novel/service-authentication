@@ -1,6 +1,6 @@
 # Authentication service
 
-Identity and session manager for the A-Novel platform: it owns user credentials, issues and refreshes the access/refresh token pair, and ships a Go middleware so any service can gate its routes on roles and permissions.
+Identity and session manager for the A-Novel platform.
 
 [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/agorastoryverse)](https://twitter.com/agorastoryverse)
 [![Discord](https://img.shields.io/discord/1315240114691248138?logo=discord)](https://discord.gg/rp4Qr8cA)
@@ -18,15 +18,17 @@ Identity and session manager for the A-Novel platform: it owns user credentials,
 
 ## What it does
 
-Authentication owns **user identities** — email/password credentials, hashed with Argon2id — and the **token lifecycle**. Clients trade credentials for a short-lived access token and a long-lived refresh token, then refresh the pair without re-authenticating; callers with no account get an anonymous, access-only token that cannot be refreshed. Every account carries a role, and each role maps to a set of permissions that downstream services enforce per route.
+Authentication owns **user identities** and their **sessions**. An account is an email and a password, hashed with Argon2id. A client trades the credentials for a short-lived access token and a long-lived refresh token, then renews the pair without signing in again. A caller without an account gets an anonymous access token, which cannot be renewed. Every account carries a role, and each role grants the permissions that services check per route.
 
-Identity changes — registration, email change, password reset — are gated by single-use **short codes** emailed to the user, so a stolen session token alone can't take over an account.
+Registration, an email change and a password reset each need a single-use **short code**, emailed to the user. A stolen session token alone cannot take over an account.
 
-It exposes one **public REST API** and signs nothing itself: signing and verification go to [JSON Keys](https://github.com/a-novel/service-json-keys) over that service's private gRPC API, so the two share a secure, unexposed network. The Go client also ships an auth middleware any service can mount to verify tokens and enforce permissions locally.
+The service exposes one **public REST API** and holds no signing key. [JSON Keys](https://github.com/a-novel/service-json-keys) signs and verifies every token over its private gRPC API, on a network the two services share. The Go client ships an auth middleware that any service mounts to verify tokens and enforce permissions locally.
 
 ## Deploying
 
-The service runs as published OCI images plus a PostgreSQL database. The REST server is stateless, so it scales to as many replicas as you need behind a load balancer; account state lives in Postgres. The optional invitation list uses a private Google Sheet instead. A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a hard dependency — authentication reaches it over its private gRPC port, and the two share sensitive key material, so keep that link on an unexposed network.
+The service runs as published OCI images plus a PostgreSQL database. Accounts live in Postgres, so the REST server scales to many replicas behind a load balancer. Each replica counts rate limits in its own memory, so every replica adds its own budget. The optional invitation list lives in a private Google Sheet.
+
+A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a hard dependency. Authentication reaches it over its private gRPC port, which carries sensitive key material: keep that link on an unexposed network.
 
 > **OpenTofu modules are the planned canonical deployment path.** Until they land, deploy the images with any container orchestrator — the composition below is the reference for which images to run, how they wire together, and the environment they expect.
 
@@ -37,7 +39,7 @@ The service runs as published OCI images plus a PostgreSQL database. The REST se
 | `service-authentication/jobs/maintenance` | Trusted, parameterized one-shot operations. Running it without an operation only prints help. |
 | `service-authentication/database`         | Pre-tuned PostgreSQL image — or bring your own Postgres.                                      |
 
-Pin every image to the same release tag — see the [latest release](https://github.com/a-novel/service-authentication/releases/latest). A production deployment runs `database`, then `migrations` to completion, then any number of `rest` replicas. Maintenance runs separately when an operator requests an operation. Provide `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DATABASE` through the orchestrator; store the password as a secret.
+Pin every image to the same release tag, such as the [latest release](https://github.com/a-novel/service-authentication/releases/latest). A production deployment runs `database`, then `migrations` to completion, then any number of `rest` replicas. Maintenance runs on its own when an operator requests an operation. Provide `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DATABASE` through the orchestrator, and store the password as a secret.
 
 ```yaml
 services:
@@ -60,7 +62,7 @@ services:
       retries: 10
 
   migrations-authentication:
-    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.4.3
+    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.14.0
     depends_on:
       postgres-authentication: { condition: service_healthy }
     environment:
@@ -96,55 +98,53 @@ volumes:
   authentication-postgres-data:
 ```
 
-The maintenance image accepts operations as command arguments. Its first operation reconciles an email address to one exact recognized role:
+The maintenance image takes an operation as command arguments. `account-role` gives an email address one exact role:
 
 ```text
 maintenance account-role --email operator@example.com --role auth:admin --lang en
 ```
 
-For an existing account, the operation promotes or demotes it to the requested role and does nothing when the role already matches. For a missing account, it sends a registration link whose short code carries the requested role; completing registration creates the account with that role. Repeating the same request while that invitation is active is a no-op. A request for another role replaces the pending invitation. The recognized roles are `auth:anon`, `auth:user`, `auth:admin`, and `auth:superadmin`.
+An existing account moves to the requested role. A missing account receives a registration link whose short code carries the role, and completing the registration creates the account with it. Repeating a request changes nothing, while a request for another role replaces the pending invitation. The roles are `auth:anon`, `auth:user`, `auth:admin` and `auth:superadmin`.
 
-Email-bearing flows fall back to a debug sender that prints to stdout unless you configure SMTP. The maintenance job waits for invitation delivery and fails the execution when the sender reports an error. See the optional configuration below.
+Without SMTP settings, emails go to a debug sender that prints them to stdout. The maintenance job waits for the invitation to go out, and fails when the sender reports an error.
 
 ### Database image
 
-The database image packages PostgreSQL and pgBackRest on Wolfi. Its
-[package manifest](./builds/database.apko.yaml) is assembled with apko during the container
-build; Docker and Podman users need no additional host tools. PostgreSQL keeps its standard
-`POSTGRES_*` initialization variables, `uuid-ossp` extension and volume at
-`/var/lib/postgresql`. Backup scheduling and repository credentials remain the operator's
-responsibility.
+The database image packages PostgreSQL and pgBackRest on Wolfi. The container build assembles its
+[package manifest](./builds/database.apko.yaml) with apko, so Docker and Podman need no other host
+tool. PostgreSQL keeps its standard `POSTGRES_*` initialization variables, the `uuid-ossp`
+extension and its volume at `/var/lib/postgresql`. Backup scheduling and repository credentials
+stay with the operator.
 
-Use a fresh volume when moving from the Debian-based image. To keep existing data, take a
-logical dump and restore it into the new database, then validate it before switching traffic.
-Do not reuse a Debian data directory or assume its physical backups are portable: the libc,
-collation and extension environment changed. Retain the previous image with its backups.
+Moving from the Debian-based image takes a fresh volume. To keep existing data, restore a logical
+dump into the new database and validate it before switching traffic. A Debian data directory and
+its physical backups do not carry over, since the libc, collation and extensions differ. Keep the
+previous image with its backups.
 
-Wolfi's package repository rolls forward. Retain published service images for recovery rather
-than relying on an old package manifest remaining rebuildable indefinitely.
+Wolfi's package repository rolls forward, so an old package manifest may stop building. Keep the
+published service images for recovery.
 
 ### Configuration
 
-Every variable is read from the process environment. Set `POSTGRES_HOST` to use the discrete
-connection fields. `POSTGRES_DSN` remains a deprecated compatibility fallback while existing
-deployments migrate.
+The service reads every variable from the process environment, prefixed with
+`SERVICE_AUTHENTICATION_ENV_PREFIX` when that variable is set.
 
-| Name                     | Description                                                                                                                     | Images                                                                    |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `POSTGRES_HOST`          | PostgreSQL hostname or IP address. Selects the discrete connection fields. **Required for new deployments.**                    | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
-| `POSTGRES_PORT`          | PostgreSQL port. Defaults to `5432`.                                                                                            | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
-| `POSTGRES_USER`          | PostgreSQL login role. **Required when `POSTGRES_HOST` is set.**                                                                | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
-| `POSTGRES_PASSWORD`      | PostgreSQL login password. **Required when `POSTGRES_HOST` is set; inject it as a secret.**                                     | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
-| `POSTGRES_DATABASE`      | PostgreSQL database name. **Required when `POSTGRES_HOST` is set.**                                                             | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
-| `POSTGRES_TLS_ENABLED`   | Encrypt the PostgreSQL connection. Defaults to `true`; disable only when another trusted boundary protects the database link.   | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
-| `POSTGRES_DSN`           | Deprecated connection-URL fallback, read only when `POSTGRES_HOST` is empty.                                                    | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
-| `SERVICE_JSON_KEYS_HOST` | Hostname of the [JSON Keys service](https://github.com/a-novel/service-json-keys) (no scheme/port). **Required** on the server. | `rest`<br/>`standalone-rest`                                              |
-| `SERVICE_JSON_KEYS_PORT` | gRPC port of the JSON Keys service. **Required** on the server.                                                                 | `rest`<br/>`standalone-rest`                                              |
+| Name                     | Description                                                                                                                         | Images                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `POSTGRES_HOST`          | PostgreSQL hostname or IP address. Selects the discrete connection fields. **Required for new deployments.**                        | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_PORT`          | PostgreSQL port. Defaults to `5432`.                                                                                                | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_USER`          | PostgreSQL login role. **Required when `POSTGRES_HOST` is set.**                                                                    | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_PASSWORD`      | PostgreSQL login password. **Required when `POSTGRES_HOST` is set; inject it as a secret.**                                         | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_DATABASE`      | PostgreSQL database name. **Required when `POSTGRES_HOST` is set.**                                                                 | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_TLS_ENABLED`   | Encrypt the PostgreSQL connection. Defaults to `true`; disable only when another trusted boundary protects the database link.       | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `POSTGRES_DSN`           | Deprecated connection-URL fallback, read only when `POSTGRES_HOST` is empty.                                                        | `rest`<br/>`jobs/migrations`<br/>`jobs/maintenance`<br/>`standalone-rest` |
+| `SERVICE_JSON_KEYS_HOST` | Hostname of the [JSON Keys service](https://github.com/a-novel/service-json-keys), without scheme or port. Defaults to `localhost`. | `rest`<br/>`standalone-rest`                                              |
+| `SERVICE_JSON_KEYS_PORT` | gRPC port of the JSON Keys service. Defaults to `8080`.                                                                             | `rest`<br/>`standalone-rest`                                              |
 
 <details>
 <summary>Optional configuration (client platform, SMTP, REST tuning, OpenTelemetry)</summary>
 
-**Client platform** — optional; only used to build links in outgoing emails. Point it at a running [authentication platform](https://github.com/a-novel/platform-authentication) (images `rest`, `jobs/maintenance`, `standalone-rest`):
+**Client platform** (images `rest`, `jobs/maintenance`, `standalone-rest`). The links in outgoing emails point at the web platform that serves the account pages, such as [platform-studio](https://github.com/a-novel/platform-studio):
 
 | Name                                | Description                      | Default                                     |
 | ----------------------------------- | -------------------------------- | ------------------------------------------- |
@@ -153,7 +153,7 @@ deployments migrate.
 | `PLATFORM_AUTH_URL_UPDATE_PASSWORD` | Password-reset page.             | `PLATFORM_AUTH_URL` + `/ext/password/reset` |
 | `PLATFORM_AUTH_URL_REGISTER`        | Register page.                   | `PLATFORM_AUTH_URL` + `/ext/account/create` |
 
-**SMTP** — without these, emails are printed to stdout by a debug sender (dev only; set a real server in production, since emails carry short codes) (images `rest`, `jobs/maintenance`, `standalone-rest`):
+**SMTP** (images `rest`, `jobs/maintenance`, `standalone-rest`). Without `SMTP_ADDR`, a debug sender prints emails to stdout. Emails carry short codes, so production needs a real server:
 
 | Name                     | Description                                                                                  | Default             |
 | ------------------------ | -------------------------------------------------------------------------------------------- | ------------------- |
@@ -171,6 +171,7 @@ deployments migrate.
 
 | Name                          | Description                                                                                                                                  | Default                          |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `REST_PORT`                   | Port the server listens on.                                                                                                                  | `8080`                           |
 | `REST_MAX_REQUEST_SIZE`       | Maximum request body size, in bytes.                                                                                                         | `16384` (16KiB)                  |
 | `REST_CLIENT_IP_HEADER`       | Header a trusted proxy sets to the visitor IP. Set it only when every request comes through that proxy.                                      | TCP peer                         |
 | `REST_LIVENESS_PATH`          | Ping path, which still answers during a planned downtime and skips the standard rate limit.                                                  | `/v2/ping`                       |
@@ -193,20 +194,20 @@ deployments migrate.
 | `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.                                                                                                                 | `false`                          |
 | `REST_CORS_MAX_AGE`           | CORS max-age, in seconds.                                                                                                                    | `3600`                           |
 
-Database connection pool (server images). The limits are **per process**. The database's `max_connections` has to cover every replica plus the migration job; the stock `postgres` default is 100.
+**Database connection pool** (server images). The limits apply **per process**. The database's `max_connections` has to cover every replica plus the migration job, and the stock `postgres` default is 100.
 
 | Name                      | Description                               | Default |
 | ------------------------- | ----------------------------------------- | ------- |
 | `POSTGRES_MAX_OPEN_CONNS` | Maximum open connections to the database. | `20`    |
 | `POSTGRES_MAX_IDLE_CONNS` | Maximum connections kept open while idle. | `20`    |
 
-Planned downtime (images `rest`, `jobs/maintenance`, `standalone-rest`):
+**Planned downtime** (images `rest`, `jobs/maintenance`, `standalone-rest`). From the start of a downtime until operators remove the variable, even past the announced end, the server answers `503` to everything but ping and starts without the database. Maintenance then does nothing. A downtime refusal from JSON Keys answers `503` whether or not this variable is set.
 
-| Name             | Description                                                                                                                                                                                                                                                                                                 | Default |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `DOWNTIME_START` | When a planned downtime starts, in RFC 3339. From then until it is removed, even past the announced end, the server answers `503` except for ping, starts without the database, and maintenance does nothing. Whatever this variable says, a JSON Keys downtime refusal becomes a `503` instead of a `500`. |         |
+| Name             | Description                                         | Default |
+| ---------------- | --------------------------------------------------- | ------- |
+| `DOWNTIME_START` | When a planned downtime starts, in RFC 3339 format. |         |
 
-Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter (images `rest`, `jobs/maintenance`, `standalone-rest`):
+**Logs and tracing** (images `rest`, `jobs/maintenance`, `standalone-rest`). OpenTelemetry exports to stdout, or to Google Cloud when a project ID is set:
 
 | Name                | Description                                                           | Default                  |
 | ------------------- | --------------------------------------------------------------------- | ------------------------ |
@@ -218,13 +219,13 @@ Logs and tracing — OpenTelemetry supports a stdout and a Google Cloud exporter
 
 ### Invitation list
 
-Public signup can collect invitation requests while account creation remains invitation-only.
-`PUT /v2/waitlist` requires an anonymous or authenticated session and stores no account or short code.
-Existing accounts and repeated requests receive distinct conflict warnings without sending mail or
-adding a row; successful account creation removes the address from the list. Admin invitations remain unchanged.
+Account creation is invitation-only, and the invitation list collects requests for an invitation.
+`PUT /v2/waitlist` takes any session, anonymous included, and creates no account or short code. An
+existing account or a repeated request gets a distinct conflict warning, and no email or row.
+Creating the account removes its address from the list.
 
-The integration is disabled until both settings are supplied to the REST server. Maintenance jobs
-that access the list use the same configuration:
+The integration stays off until the REST server has both `WAITLIST_URL` and `WAITLIST_SECRET`.
+Maintenance jobs that read the list take the same configuration:
 
 | Name                        | Purpose                                                                  | Default  |
 | --------------------------- | ------------------------------------------------------------------------ | -------- |
@@ -234,33 +235,31 @@ that access the list use the same configuration:
 | `WAITLIST_MAX_CONCURRENT`   | Waitlist requests waiting on Google at once, per instance.               | `4`      |
 | `WAITLIST_MAX_REQUEST_SIZE` | Maximum waitlist request body size, in bytes.                            | `8192`   |
 
-Follow the [private-sheet setup and operations guide](./scripts/waitlist/README.md). CI needs no production
-Google credentials. A Google outage does not block login or invalidate a newly created account;
-cleanup is best-effort after the database commit. `maintenance waitlist-cleanup` previews stale rows;
-add `--apply` to remove rows belonging to registered accounts after an outage or before inviting.
+The [invitation list guide](./scripts/waitlist/README.md) installs the private sheet and covers its
+operations. A Google outage blocks neither login nor registration.
 
 ### Shutting down cleanly
 
-On `SIGTERM` the server stops accepting, drains its open requests, then waits for the emails already
-being sent. Registration and password-reset mail goes out on its own goroutine, so a send in progress
-survives the request that triggered it and outlives the signal.
+On `SIGTERM`, the server stops accepting requests, drains the open ones, then waits for the emails
+already going out. Each email goes out on its own goroutine, so a send outlives the request that
+started it.
 
-Three values have to increase in that order for the wait to complete:
+The wait completes only when three values increase in this order:
 
 ```
 SMTP_TIMEOUT (20s)  <  REST_TIMEOUT_SHUTDOWN (25s)  <  the deployment's termination grace period
 ```
 
-Docker and Podman grant 10 seconds by default, which cuts the wait short and drops whatever is still
-going out. `builds/podman-compose.yaml` raises it to 30s; a Kubernetes deployment needs
-`terminationGracePeriodSeconds` set the same way.
+Docker and Podman grant 10 seconds by default, which cuts the wait short and drops the emails still
+going out. `builds/podman-compose.yaml` raises it to 30s. A Kubernetes deployment sets
+`terminationGracePeriodSeconds` the same way.
 
 ## Using the client packages
 
-Two clients ship with the service. Each snippet is the **minimum viable call**; the full surface is what your editor's intellisense, [pkg.go.dev](https://pkg.go.dev/github.com/a-novel/service-authentication/v2), and the [API reference](https://a-novel.github.io/service-authentication) are for.
+Two clients ship with the service. Each snippet shows a first call. [pkg.go.dev](https://pkg.go.dev/github.com/a-novel/service-authentication/v2) and the [API reference](https://a-novel.github.io/service-authentication) cover the rest.
 
-- **Go** mounts an auth middleware — use it from a backend service that gates routes on roles and permissions. It needs a JSON Keys client to verify tokens, but no running authentication instance.
-- **JavaScript / TypeScript** talks REST — use it from a frontend or Node service that drives the login / refresh / credential flows.
+- **Go** mounts an auth middleware in a backend service that gates routes on permissions. It verifies tokens through a JSON Keys client and never calls the authentication service.
+- **JavaScript / TypeScript** calls the REST API, from a frontend or a Node service that drives the login, session and account flows.
 
 ### Go
 
@@ -272,7 +271,6 @@ go get github.com/a-novel/service-authentication/v2
 package main
 
 import (
-	"context"
 	"os"
 
 	loggingpresets "github.com/a-novel-kit/golib/logging/presets"
@@ -282,39 +280,31 @@ import (
 	servicejsonkeys "github.com/a-novel/service-json-keys/v2/pkg/go"
 )
 
-// Declare your roles. Each role grants a set of permissions; `inherits` pulls in
-// another role's permissions transitively, and `priority` ranks roles for checks
-// that compare two users (e.g. an admin acting on a lower-priority account).
+// Each role grants permissions and inherits those of the roles it lists. The keys are
+// the roles your tokens carry, such as the auth:* roles the service issues.
 var myPermissions = serviceauthentication.Permissions{
-	// Keys must be roles your tokens actually carry. service-authentication issues the
-	// built-in auth:* roles; a deployment can define more in its permissions config.
 	Roles: map[string]serviceauthentication.Role{
 		"auth:user":  {Priority: 0, Permissions: []string{"post:read"}},
-		"auth:admin": {Priority: 1, Inherits: []string{"auth:user"}, Permissions: []string{"post:read", "post:write"}},
+		"auth:admin": {Priority: 1, Inherits: []string{"auth:user"}, Permissions: []string{"post:write"}},
 	},
 }
 
 func main() {
-	ctx := context.Background()
-
 	jsonKeysClient, _ := servicejsonkeys.NewClient("service-json-keys:8080")
-	verifier := servicejsonkeys.NewClaimsVerifier[serviceauthentication.Claims](jsonKeysClient)
+	verifier, _ := servicejsonkeys.NewClaimsVerifier[serviceauthentication.Claims](jsonKeysClient)
 	logger := &loggingpresets.LogLocal{Out: os.Stdout}
 
-	// withAuth gates routes on permissions.
 	withAuth := serviceauthentication.NewAuthHandler(verifier, myPermissions, logger)
 	router := chi.NewRouter()
 
 	withAuth(router, "post:write").Get(...) // requires the post:write permission
-	withAuth(router).Get(...)               // any authenticated (or anonymous) caller
-
-	_ = ctx
+	withAuth(router).Get(...)               // any caller, signed in or not
 }
 ```
 
 ### JavaScript / TypeScript
 
-The package is published to GitHub Packages, which requires a Personal Access Token with the `read:packages` scope even for public packages ([why](https://github.com/orgs/community/discussions/23386#discussioncomment-3240193)). Add to `.npmrc` (project root or `$HOME`):
+GitHub Packages hosts the package and requires a personal access token with the `read:packages` scope, even for a public package ([why](https://github.com/orgs/community/discussions/23386#discussioncomment-3240193)). Add the registries to the `.npmrc` of your project or home directory:
 
 ```ini
 @a-novel:registry=https://npm.pkg.github.com
@@ -331,15 +321,15 @@ import { AuthenticationApi, tokenCreateAnon } from "@a-novel/service-authenticat
 
 const api = new AuthenticationApi("http://service-authentication:8080");
 
-// Open an anonymous session — the entry point for register / login flows.
+// Open an anonymous session, the entry point of the registration and login flows.
 const token = await tokenCreateAnon(api);
 ```
 
-Every method ships [zod](https://github.com/colinhacks/zod) request and response schemas, and responses are validated by default. API reference: [a-novel.github.io/service-authentication](https://a-novel.github.io/service-authentication).
+Every call ships [Zod](https://github.com/colinhacks/zod) request and response schemas, and validates the response it receives.
 
 ## Running locally
 
-For a throwaway instance without the dev toolchain, the **`standalone-rest`** image bundles the server, migrations, and maintenance executable in one container. It runs migrations before the server on every boot. Maintenance remains an explicit one-shot operation.
+For a throwaway instance without the development toolchain, the **`standalone-rest`** image bundles the server, the migrations and the maintenance executable in one container. It runs the migrations before the server on every boot, and runs maintenance only on request.
 
 ```yaml
 services:
@@ -379,7 +369,7 @@ networks:
   api:
 ```
 
-Working on the service itself? Use the `a-novel` CLI (`a-novel run start service-authentication/rest`) instead — see [CONTRIBUTING](./CONTRIBUTING.md).
+To work on the service itself, run it with the `a-novel` CLI as [CONTRIBUTING](./CONTRIBUTING.md) shows.
 
 ## Contributing
 

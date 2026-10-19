@@ -15,9 +15,8 @@ import (
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
-// anonTokenClaims is the fixed sign request for anonymous access tokens. The payload
-// never varies — no user ID, only the anonymous role — so it is marshaled once at
-// package load rather than per request.
+// anonTokenClaims is the sign request of every anonymous access token. Its payload, the
+// anonymous role and no user, never varies, so it is marshaled once at package load.
 var anonTokenClaims = &servicejsonkeys.ClaimsSignRequest{
 	Usage: servicejsonkeys.KeyUsageAuth,
 	Payload: lo.Must(grpcf.MarshalJSONAsAny(AccessTokenClaims{
@@ -45,7 +44,7 @@ func NewTokenCreateAnon(signClaimsService TokenCreateAnonSignClaimsService) *Tok
 }
 
 func (service *TokenCreateAnon) Exec(ctx context.Context) (*Token, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.TokenCreateAnon")
+	ctx, span := otel.Tracer().Start(ctx, "core.TokenCreateAnon")
 	defer span.End()
 
 	accessToken, err := service.signClaimsService.ClaimsSign(ctx, anonTokenClaims)

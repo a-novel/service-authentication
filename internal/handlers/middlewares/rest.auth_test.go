@@ -13,6 +13,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -383,10 +385,12 @@ func TestAuth(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		for _, token := range []string{
+		garbledTokens := []string{
 			"!!!.e30",
 			base64.RawURLEncoding.EncodeToString([]byte("not json")) + ".e30",
-		} {
+		}
+
+		for _, token := range garbledTokens {
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 			req.Header.Set("Authorization", "Bearer "+token)
 
@@ -436,4 +440,26 @@ func TestGetClaimsContext(t *testing.T) {
 		require.ErrorIs(t, err, middlewares.ErrUnexpectedClaims)
 		require.Nil(t, claims)
 	})
+}
+
+//nolint:paralleltest // Replaces the process-wide tracer provider.
+func TestSetClaimsContext(t *testing.T) {
+	provider := sdktrace.NewTracerProvider()
+	previous := otel.GetTracerProvider()
+
+	otel.SetTracerProvider(provider)
+	t.Cleanup(func() {
+		otel.SetTracerProvider(previous)
+		require.NoError(t, provider.Shutdown(context.WithoutCancel(t.Context())))
+	})
+
+	ctx, parent := provider.Tracer("test").Start(t.Context(), "parent")
+	defer parent.End()
+
+	ctx = middlewares.SetClaimsContext(ctx, &core.AccessTokenClaims{Roles: []string{"user"}})
+
+	_, child := provider.Tracer("test").Start(ctx, "child")
+	defer child.End()
+
+	require.Equal(t, parent.SpanContext(), child.(sdktrace.ReadOnlySpan).Parent())
 }

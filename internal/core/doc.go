@@ -1,13 +1,7 @@
-// Package core holds the business-logic layer of the authentication service.
+// Package core holds the business logic of the authentication service.
 //
-// Each core operation is a small struct constructed with its declared dependencies
-// (its DAO interfaces, the json-keys signer, the SMTP sender, and other core
-// operations it composes) and exposes a single Exec method that handles request
-// validation, orchestration, and observability. Handlers consume the core; the
-// core consumes the dao and lib packages.
-//
-// Sentinel errors such as [ErrInvalidRequest] signal expected user-facing outcomes and
-// travel up to the handler, which maps them to a status code; infrastructure failures
-// wrap the underlying error instead. Both are recorded on the operation's span through
-// otel.ReportError.
+// Each operation validates its request, applies the account or session rules, and owns the
+// transaction that makes its writes atomic. Handlers call core operations, which reach the dao
+// and lib packages through interfaces they declare. A sentinel error such as [ErrInvalidRequest]
+// marks an outcome the caller caused, and handlers map it to a status code.
 package core

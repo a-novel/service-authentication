@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
@@ -13,10 +12,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
+// CredentialsListDao lists a page of accounts.
 type CredentialsListDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsListRequest) ([]*dao.Credentials, error)
 }
 
+// CredentialsListRequest selects a page of accounts, and the roles to narrow it to.
 type CredentialsListRequest struct {
 	Limit  int      `validate:"required,min=1,max=100"`
 	Offset int      `validate:"min=0"`
@@ -38,7 +39,7 @@ func NewCredentialsList(dao CredentialsListDao) *CredentialsList {
 func (service *CredentialsList) Exec(
 	ctx context.Context, request *CredentialsListRequest,
 ) ([]*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsList")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsList")
 	defer span.End()
 
 	err := validate.Struct(request)
@@ -57,13 +58,10 @@ func (service *CredentialsList) Exec(
 
 	span.SetAttributes(attribute.Int("response.count", len(entities)))
 
-	return lo.Map(entities, func(item *dao.Credentials, _ int) *Credentials {
-		return &Credentials{
-			ID:        item.ID,
-			Email:     item.Email,
-			Role:      item.Role,
-			CreatedAt: item.CreatedAt,
-			UpdatedAt: item.UpdatedAt,
-		}
-	}), nil
+	credentials := make([]*Credentials, len(entities))
+	for i, entity := range entities {
+		credentials[i] = newCredentials(entity)
+	}
+
+	return credentials, nil
 }

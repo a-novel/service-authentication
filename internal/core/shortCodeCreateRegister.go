@@ -76,7 +76,7 @@ func NewShortCodeCreateRegister(
 func (service *ShortCodeCreateRegister) Exec(
 	ctx context.Context, request *ShortCodeCreateRegisterRequest,
 ) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.ShortCodeCreateRegister")
+	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeCreateRegister")
 	defer span.End()
 
 	span.SetAttributes(

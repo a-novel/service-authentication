@@ -12,15 +12,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
+// TokenCreateService is the core operation PUT /v2/session delegates to.
 type TokenCreateService interface {
 	Exec(ctx context.Context, request *core.TokenCreateRequest) (*core.Token, error)
 }
 
+// TokenCreateRequest is the JSON body of PUT /v2/session.
 type TokenCreateRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// TokenCreate serves PUT /v2/session, which signs a user in.
 type TokenCreate struct {
 	service TokenCreateService
 	logger  logging.Log

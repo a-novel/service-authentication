@@ -16,17 +16,22 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
+// CredentialsUpdateEmailDao assigns the new email to the account.
 type CredentialsUpdateEmailDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsUpdateEmailRequest) (*dao.Credentials, error)
 }
+
+// CredentialsUpdateEmailServiceShortCodeVerify checks the email-change short code.
 type CredentialsUpdateEmailServiceShortCodeVerify interface {
 	Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdateEmailServiceShortCodeConsume retires the verified short code.
 type CredentialsUpdateEmailServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdateEmailRequest names the account and the short code confirming its new email.
 type CredentialsUpdateEmailRequest struct {
 	UserID    uuid.UUID
 	ShortCode string `validate:"required,max=1024"`
@@ -59,7 +64,7 @@ func NewCredentialsUpdateEmail(
 func (service *CredentialsUpdateEmail) Exec(
 	ctx context.Context, request *CredentialsUpdateEmailRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsUpdateEmail")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsUpdateEmail")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("user.id", request.UserID.String()))
@@ -91,19 +96,18 @@ func (service *CredentialsUpdateEmail) Exec(
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		_, txErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
-		if txErr != nil {
-			return fmt.Errorf("consume short code: %w", txErr)
+		_, err := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
+		if err != nil {
+			return fmt.Errorf("consume short code: %w", err)
 		}
 
-		// Update email.
-		credentials, txErr = service.dao.Exec(ctx, &dao.CredentialsUpdateEmailRequest{
+		credentials, err = service.dao.Exec(ctx, &dao.CredentialsUpdateEmailRequest{
 			ID:    request.UserID,
 			Email: newEmail,
 			Now:   time.Now(),
 		})
-		if txErr != nil {
-			return fmt.Errorf("update email: %w", txErr)
+		if err != nil {
+			return fmt.Errorf("update email: %w", err)
 		}
 
 		return nil
@@ -112,11 +116,5 @@ func (service *CredentialsUpdateEmail) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	return &Credentials{
-		ID:        credentials.ID,
-		Email:     credentials.Email,
-		Role:      credentials.Role,
-		CreatedAt: credentials.CreatedAt,
-		UpdatedAt: credentials.UpdatedAt,
-	}, nil
+	return newCredentials(credentials), nil
 }

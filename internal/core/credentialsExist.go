@@ -12,10 +12,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
+// CredentialsExistDao reports whether an account uses an email.
 type CredentialsExistDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error)
 }
 
+// CredentialsExistRequest names the email to look up.
 type CredentialsExistRequest struct {
 	Email string `validate:"required,email,max=1024"`
 }
@@ -33,7 +35,7 @@ func NewCredentialsExist(dao CredentialsExistDao) *CredentialsExist {
 }
 
 func (service *CredentialsExist) Exec(ctx context.Context, request *CredentialsExistRequest) (bool, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.CredentialsExist")
+	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsExist")
 	defer span.End()
 
 	err := validate.Struct(request)

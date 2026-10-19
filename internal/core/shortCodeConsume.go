@@ -40,7 +40,7 @@ func NewShortCodeConsume(dao ShortCodeConsumeDao) *ShortCodeConsume {
 // when the code was retired or expired since it was verified, so only one of
 // two concurrent redemptions succeeds.
 func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.ShortCodeConsume")
+	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeConsume")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("shortCode.id", request.ID.String()))
@@ -58,12 +58,5 @@ func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeCon
 		return nil, otel.ReportError(span, err)
 	}
 
-	return &ShortCode{
-		ID:        entity.ID,
-		Usage:     entity.Usage,
-		Target:    entity.Target,
-		Data:      entity.Data,
-		CreatedAt: entity.CreatedAt,
-		ExpiresAt: entity.ExpiresAt,
-	}, nil
+	return newShortCode(entity, ""), nil
 }

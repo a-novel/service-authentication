@@ -18,6 +18,7 @@ import (
 	servicejsonkeys "github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	serviceauthentication "github.com/a-novel/service-authentication/v2/pkg/go"
 )
@@ -134,7 +135,7 @@ func TestNewAuthHandlerResolvesInheritance(t *testing.T) {
 	// grandchild -> child -> parent. Each level adds one permission; grandchild must end up
 	// with all three.
 	permissions := serviceauthentication.Permissions{
-		Roles: map[string]config.Role{
+		Roles: map[string]authconfig.Role{
 			"parent":     {Permissions: []string{"parent:read"}},
 			"child":      {Inherits: []string{"parent"}, Permissions: []string{"child:read"}},
 			"grandchild": {Inherits: []string{"child"}, Permissions: []string{"grandchild:read"}},
@@ -190,7 +191,7 @@ func TestNewAuthHandlerPanicsOnCircularInheritance(t *testing.T) {
 	t.Parallel()
 
 	permissions := serviceauthentication.Permissions{
-		Roles: map[string]config.Role{
+		Roles: map[string]authconfig.Role{
 			"a": {Inherits: []string{"b"}},
 			"b": {Inherits: []string{"a"}},
 		},

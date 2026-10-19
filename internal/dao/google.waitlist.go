@@ -95,22 +95,7 @@ func NewGoogleWaitlist(cfg authconfig.Waitlist, transport http.RoundTripper) (*G
 
 	return &GoogleWaitlist{
 		config: cfg,
-		client: http.Client{
-			Timeout:   cfg.Timeout,
-			Transport: transport,
-			CheckRedirect: func(request *http.Request, via []*http.Request) error {
-				switch {
-				case len(via) > 1, request.Method != http.MethodGet:
-					return ErrWaitlistUnavailable
-				case request.URL.Scheme != "https", request.URL.Host != "script.googleusercontent.com":
-					return ErrWaitlistUnavailable
-				case request.URL.User != nil:
-					return ErrWaitlistUnavailable
-				}
-
-				return nil
-			},
-		},
+		client: http.Client{Timeout: cfg.Timeout, Transport: transport, CheckRedirect: checkWaitlistRedirect},
 	}, nil
 }
 
@@ -127,17 +112,7 @@ func (writer *GoogleWaitlist) Exec(ctx context.Context, request *WaitlistRequest
 		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
 	}
 
-	payload, err := json.Marshal(waitlistPayload{WaitlistRequest: request, Timestamp: time.Now().Unix()})
-	if err != nil {
-		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
-	}
-
-	mac := hmac.New(sha256.New, []byte(writer.config.Secret))
-	_, _ = mac.Write(payload) // hash.Hash.Write never returns an error.
-
-	body, err := json.Marshal(waitlistEnvelope{
-		Payload: string(payload), Signature: base64.RawURLEncoding.EncodeToString(mac.Sum(nil)),
-	})
+	body, err := writer.sign(request)
 	if err != nil {
 		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
 	}
@@ -173,4 +148,35 @@ func (writer *GoogleWaitlist) Exec(ctx context.Context, request *WaitlistRequest
 	default:
 		return nil, otel.ReportError(span, ErrWaitlistUnavailable)
 	}
+}
+
+// sign binds the request to the current time and wraps it in an envelope signed with the shared
+// secret.
+func (writer *GoogleWaitlist) sign(request *WaitlistRequest) ([]byte, error) {
+	payload, err := json.Marshal(waitlistPayload{WaitlistRequest: request, Timestamp: time.Now().Unix()})
+	if err != nil {
+		return nil, err
+	}
+
+	mac := hmac.New(sha256.New, []byte(writer.config.Secret))
+	_, _ = mac.Write(payload) // hash.Hash.Write never returns an error.
+
+	return json.Marshal(waitlistEnvelope{
+		Payload: string(payload), Signature: base64.RawURLEncoding.EncodeToString(mac.Sum(nil)),
+	})
+}
+
+// checkWaitlistRedirect follows only the single GET redirect to Google's content host that carries
+// the script's response.
+func checkWaitlistRedirect(request *http.Request, via []*http.Request) error {
+	switch {
+	case len(via) > 1, request.Method != http.MethodGet:
+		return ErrWaitlistUnavailable
+	case request.URL.Scheme != "https", request.URL.Host != "script.googleusercontent.com":
+		return ErrWaitlistUnavailable
+	case request.URL.User != nil:
+		return ErrWaitlistUnavailable
+	}
+
+	return nil
 }

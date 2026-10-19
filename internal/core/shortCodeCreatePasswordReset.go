@@ -73,7 +73,7 @@ func NewShortCodeCreatePasswordReset(
 func (service *ShortCodeCreatePasswordReset) Exec(
 	ctx context.Context, request *ShortCodeCreatePasswordResetRequest,
 ) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "service.ShortCodeCreatePasswordReset")
+	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeCreatePasswordReset")
 	defer span.End()
 
 	span.SetAttributes(

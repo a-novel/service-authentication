@@ -73,115 +73,103 @@ func NewAuth(
 func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, span := otel.Tracer().Start(r.Context(), "middlewares.Auth")
-			defer span.End()
-
-			token := r.Header.Get("Authorization")
-			// Optional-auth endpoint: pass through with no claims on the context.
-			if token == "" && len(requiredPermissions) == 0 {
-				next.ServeHTTP(w, r.WithContext(ctx))
-
-				return
-			}
-
-			if token == "" {
-				httpf.HandleError(
-					ctx, middleware.logger, w, span,
-					httpf.ErrMap{nil: http.StatusUnauthorized},
-					fmt.Errorf("%w: missing authorization header", ErrInvalidAuth),
-				)
-
-				return
-			}
-
-			authToken := strings.Split(token, " ")
-			if len(authToken) != 2 || authToken[0] != "Bearer" {
-				httpf.HandleError(
-					ctx, middleware.logger, w, span,
-					httpf.ErrMap{nil: http.StatusUnauthorized},
-					fmt.Errorf("%w: invalid authorization header", ErrInvalidAuth),
-				)
-
-				return
-			}
-
-			accessToken := authToken[1]
-
-			claims, err := middleware.claimsVerifier.VerifyClaims(ctx, &servicejsonkeys.VerifyClaimsRequest{
-				Usage:       servicejsonkeys.KeyUsageAuth,
-				AccessToken: accessToken,
-			})
-			if err != nil {
-				// A token rejection is the caller's to resolve, so it answers 401 and clients
-				// refresh or re-authenticate. Any other failure, such as an unreachable key
-				// source, stays 500 so a client keeps a session it may still hold.
-				httpf.HandleError(
-					ctx, middleware.logger, w, span,
-					httpf.ErrMap{
-						jws.ErrInvalidSignature:        http.StatusUnauthorized,
-						jwp.ErrInvalidClaims:           http.StatusUnauthorized,
-						jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
-						jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
-						jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
-						jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
-						jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
-					},
-					err,
-				)
-
-				return
-			}
-
-			ctx = SetClaimsContext(ctx, claims)
-
-			if len(requiredPermissions) > 0 {
-				grantedPermissions := map[string]bool{}
-
-				for _, permission := range requiredPermissions {
-					grantedPermissions[permission] = true
-				}
-
-				var allowed bool
-
-				for _, role := range claims.Roles {
-					permissions, known := middleware.permissionsByRole[role]
-					if !known {
-						// The token carries a role the config does not define. It was
-						// signed by this system, so this is a data or config integrity
-						// fault, not a caller error — fail it loudly and named rather
-						// than as a permission denial byte-identical to a legitimate one.
-						httpf.HandleError(
-							ctx, middleware.logger, w, span,
-							httpf.ErrMap{nil: http.StatusInternalServerError},
-							fmt.Errorf("%w: %q in token", authconfig.ErrUnknownRole, role),
-						)
-
-						return
-					}
-
-					if lo.ContainsBy(permissions, func(item string) bool {
-						return grantedPermissions[item]
-					}) {
-						allowed = true
-
-						break
-					}
-				}
-
-				if !allowed {
-					httpf.HandleError(
-						ctx, middleware.logger, w, span,
-						httpf.ErrMap{nil: http.StatusForbidden},
-						fmt.Errorf("%w: user does not have any of the required permissions", ErrInvalidAuth),
-					)
-
-					return
-				}
-			}
-
-			next.ServeHTTP(w, r.WithContext(ctx))
+			middleware.serve(w, r, next, requiredPermissions)
 		})
 	}
+}
+
+// serve authenticates one request, then hands it to next with its claims on the context.
+func (middleware *Auth) serve(
+	w http.ResponseWriter, r *http.Request, next http.Handler, requiredPermissions []string,
+) {
+	ctx, span := otel.Tracer().Start(r.Context(), "middlewares.Auth")
+	defer span.End()
+
+	token := r.Header.Get("Authorization")
+	// Optional-auth endpoint: pass through with no claims on the context.
+	if token == "" && len(requiredPermissions) == 0 {
+		next.ServeHTTP(w, r.WithContext(ctx))
+
+		return
+	}
+
+	if token == "" {
+		httpf.HandleError(
+			ctx, middleware.logger, w, span,
+			httpf.ErrMap{nil: http.StatusUnauthorized},
+			fmt.Errorf("%w: missing authorization header", ErrInvalidAuth),
+		)
+
+		return
+	}
+
+	authToken := strings.Split(token, " ")
+	if len(authToken) != 2 || authToken[0] != "Bearer" {
+		httpf.HandleError(
+			ctx, middleware.logger, w, span,
+			httpf.ErrMap{nil: http.StatusUnauthorized},
+			fmt.Errorf("%w: invalid authorization header", ErrInvalidAuth),
+		)
+
+		return
+	}
+
+	claims, err := middleware.claimsVerifier.VerifyClaims(ctx, &servicejsonkeys.VerifyClaimsRequest{
+		Usage:       servicejsonkeys.KeyUsageAuth,
+		AccessToken: authToken[1],
+	})
+	if err != nil {
+		// A token rejection is the caller's to resolve, so it answers 401 and clients
+		// refresh or re-authenticate. Any other failure, such as an unreachable key
+		// source, stays 500 so a client keeps a session it may still hold.
+		httpf.HandleError(
+			ctx, middleware.logger, w, span,
+			httpf.ErrMap{
+				jws.ErrInvalidSignature:        http.StatusUnauthorized,
+				jwp.ErrInvalidClaims:           http.StatusUnauthorized,
+				jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
+				jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
+				jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
+				jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
+				jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
+			},
+			err,
+		)
+
+		return
+	}
+
+	ctx = SetClaimsContext(ctx, claims)
+
+	if len(requiredPermissions) > 0 {
+		err = middleware.authorize(claims.Roles, requiredPermissions)
+		if err != nil {
+			httpf.HandleError(ctx, middleware.logger, w, span, httpf.ErrMap{ErrInvalidAuth: http.StatusForbidden}, err)
+
+			return
+		}
+	}
+
+	next.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// authorize returns nil once a role grants one of the required permissions, and [ErrInvalidAuth]
+// when none does. A role the configuration does not define returns [authconfig.ErrUnknownRole]
+// instead: this system signed the token, so the role reveals a data or configuration fault that
+// answers 500, never a permission denial identical to a legitimate one.
+func (middleware *Auth) authorize(roles, requiredPermissions []string) error {
+	for _, role := range roles {
+		permissions, known := middleware.permissionsByRole[role]
+		if !known {
+			return fmt.Errorf("%w: %q in token", authconfig.ErrUnknownRole, role)
+		}
+
+		if lo.Some(permissions, requiredPermissions) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("%w: user does not have any of the required permissions", ErrInvalidAuth)
 }
 
 // ClaimsContextKey is the context key for storing authenticated user claims.
@@ -190,7 +178,8 @@ type ClaimsContextKey struct{}
 // SetClaimsContext stores the authenticated user's claims in the context.
 // This is called by the Auth middleware after successful token verification.
 func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) context.Context {
-	ctx, span := otel.Tracer().Start(ctx, "handlers.SetClaimsContext")
+	// The returned context keeps the caller's span current, so the handler's span nests under it.
+	_, span := otel.Tracer().Start(ctx, "handlers.SetClaimsContext")
 	defer span.End()
 
 	return context.WithValue(ctx, ClaimsContextKey{}, claims)

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -46,7 +46,7 @@ func TestCredentialsGet(t *testing.T) {
 				resp: &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user1@email.com",
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				},
@@ -55,7 +55,7 @@ func TestCredentialsGet(t *testing.T) {
 			expect: &core.Credentials{
 				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Email:     "user1@email.com",
-				Role:      config.RoleUser,
+				Role:      authconfig.RoleUser,
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 			},

@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"slices"
 
 	"github.com/go-playground/validator/v10"
 
@@ -20,28 +21,15 @@ var ErrInvalidRequest = errors.New("invalid request")
 // any language code listed in authconfig.KnownLangs. It is registered under the
 // "langs" tag at package init.
 func ValidateLang(fl validator.FieldLevel) bool {
-	val := fl.Field().String()
-	for _, lang := range authconfig.KnownLangs {
-		if val == lang {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(authconfig.KnownLangs, fl.Field().String())
 }
 
 func init() {
-	err := validate.RegisterValidation("langs", ValidateLang)
-	if err != nil {
-		panic(err)
-	}
-
-	err = validate.RegisterValidation("role", ValidateCredentialsRole)
-	if err != nil {
-		panic(err)
-	}
-
-	err = validate.RegisterValidation("usage", ValidateShortCodeUsage)
+	err := errors.Join(
+		validate.RegisterValidation("langs", ValidateLang),
+		validate.RegisterValidation("role", ValidateCredentialsRole),
+		validate.RegisterValidation("usage", ValidateShortCodeUsage),
+	)
 	if err != nil {
 		panic(err)
 	}

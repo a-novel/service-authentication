@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"time"
 
@@ -27,14 +28,16 @@ func waitlistCleanupOperationDefinition() maintenanceOperationDefinition {
 	return newMaintenanceOperationDefinition(
 		"waitlist-cleanup", "[--apply]",
 		"Preview registered-account entries in the waitlist; --apply removes them.",
-		func(flags *flag.FlagSet) *waitlistCleanupOperation {
-			operation := &waitlistCleanupOperation{}
-			flags.BoolVar(&operation.apply, "apply", false, "remove rows belonging to registered accounts")
-
-			return operation
-		},
+		bindWaitlistCleanupFlags,
 		func(*waitlistCleanupOperation) error { return nil },
 	)
+}
+
+func bindWaitlistCleanupFlags(flags *flag.FlagSet) *waitlistCleanupOperation {
+	operation := &waitlistCleanupOperation{}
+	flags.BoolVar(&operation.apply, "apply", false, "remove rows belonging to registered accounts")
+
+	return operation
 }
 
 func (operation *waitlistCleanupOperation) run(ctx context.Context) error {
@@ -70,12 +73,7 @@ func (operation *waitlistCleanupOperation) run(ctx context.Context) error {
 		return fmt.Errorf("open database: %w", err)
 	}
 
-	defer func() {
-		closeErr := database.Close()
-		if closeErr != nil {
-			log.Print("close database: ", closeErr)
-		}
-	}()
+	defer closeDatabase(database)
 
 	result, err := core.NewWaitlistCleanup(dao.NewCredentialsList(), writer).Exec(ctx, &core.WaitlistCleanupRequest{
 		Apply: operation.apply,
@@ -84,4 +82,11 @@ func (operation *waitlistCleanupOperation) run(ctx context.Context) error {
 		operation.apply, result.Scanned, result.Matched, result.Removed)
 
 	return err
+}
+
+func closeDatabase(database io.Closer) {
+	err := database.Close()
+	if err != nil {
+		log.Print("close database: ", err)
+	}
 }

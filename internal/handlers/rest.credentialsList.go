@@ -13,16 +13,19 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
+// CredentialsListService is the core operation GET /v2/credentials/all delegates to.
 type CredentialsListService interface {
 	Exec(ctx context.Context, request *core.CredentialsListRequest) ([]*core.Credentials, error)
 }
 
+// CredentialsListRequest holds the query parameters of GET /v2/credentials/all.
 type CredentialsListRequest struct {
 	Limit  int      `schema:"limit"`
 	Offset int      `schema:"offset"`
 	Roles  []string `schema:"roles"`
 }
 
+// CredentialsList serves GET /v2/credentials/all, which lists accounts.
 type CredentialsList struct {
 	service CredentialsListService
 	logger  logging.Log

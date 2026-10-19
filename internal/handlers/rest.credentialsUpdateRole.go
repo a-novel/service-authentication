@@ -15,15 +15,18 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
+// CredentialsUpdateRoleService is the core operation PATCH /v2/credentials/role delegates to.
 type CredentialsUpdateRoleService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdateRoleRequest) (*core.Credentials, error)
 }
 
+// CredentialsUpdateRoleRequest is the JSON body of PATCH /v2/credentials/role.
 type CredentialsUpdateRoleRequest struct {
 	UserID uuid.UUID `json:"userID"`
 	Role   string    `json:"role"`
 }
 
+// CredentialsUpdateRole serves PATCH /v2/credentials/role, which changes an account's role.
 type CredentialsUpdateRole struct {
 	service CredentialsUpdateRoleService
 	logger  logging.Log

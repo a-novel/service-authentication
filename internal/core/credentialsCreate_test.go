@@ -17,7 +17,7 @@ import (
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -88,7 +88,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 				},
 			},
 
@@ -126,7 +126,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      config.RoleAdmin,
+					Role:      authconfig.RoleAdmin,
 				},
 			},
 
@@ -140,7 +140,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 				AccessToken:  "access-token",
 				RefreshToken: mockUnsignedRefreshToken,
 			},
-			expectRole: config.RoleAdmin,
+			expectRole: authconfig.RoleAdmin,
 		},
 		{
 			name: "Error/MalformedRegistrationData",
@@ -241,7 +241,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 				},
 			},
 
@@ -272,7 +272,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 					Password:  "password-2-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 				},
 			},
 
@@ -312,7 +312,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 					Password:  "abcd-hashed",
 					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      config.RoleUser,
+					Role:      authconfig.RoleUser,
 				},
 			},
 
@@ -373,7 +373,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 			if testCase.daoMock != nil {
 				expectRole := testCase.expectRole
 				if expectRole == "" {
-					expectRole = config.RoleUser
+					expectRole = authconfig.RoleUser
 				}
 
 				mockDao.EXPECT().
