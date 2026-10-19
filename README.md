@@ -62,7 +62,7 @@ services:
       retries: 10
 
   migrations-authentication:
-    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.4.3
+    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.14.0
     depends_on:
       postgres-authentication: { condition: service_healthy }
     environment:
