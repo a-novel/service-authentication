@@ -143,9 +143,9 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		_, consumeErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
-		if consumeErr != nil {
-			return fmt.Errorf("consume short code: %w", consumeErr)
+		_, err := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
+		if err != nil {
+			return fmt.Errorf("consume short code: %w", err)
 		}
 
 		credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{

@@ -58,12 +58,5 @@ func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeCon
 		return nil, otel.ReportError(span, err)
 	}
 
-	return &ShortCode{
-		ID:        entity.ID,
-		Usage:     entity.Usage,
-		Target:    entity.Target,
-		Data:      entity.Data,
-		CreatedAt: entity.CreatedAt,
-		ExpiresAt: entity.ExpiresAt,
-	}, nil
+	return newShortCode(entity, ""), nil
 }

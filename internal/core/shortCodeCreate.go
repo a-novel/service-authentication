@@ -80,14 +80,12 @@ func (service *ShortCodeCreate) Exec(
 	var serializedData []byte
 	if request.Data != nil {
 		serializedData, err = json.Marshal(request.Data)
-	}
-
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("serialize data: %w", err))
+		if err != nil {
+			return nil, otel.ReportError(span, fmt.Errorf("serialize data: %w", err))
+		}
 	}
 
 	now := time.Now()
-	expiry := now.Add(request.TTL)
 
 	entity, err := service.dao.Exec(ctx, &dao.ShortCodeInsertRequest{
 		ID:        uuid.New(),
@@ -96,20 +94,12 @@ func (service *ShortCodeCreate) Exec(
 		Target:    request.Target,
 		Data:      serializedData,
 		Now:       now,
-		ExpiresAt: expiry,
+		ExpiresAt: now.Add(request.TTL),
 		Override:  request.Override,
 	})
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
 
-	return &ShortCode{
-		ID:        entity.ID,
-		Usage:     entity.Usage,
-		Target:    entity.Target,
-		Data:      entity.Data,
-		CreatedAt: entity.CreatedAt,
-		ExpiresAt: entity.ExpiresAt,
-		PlainCode: plainCode,
-	}, nil
+	return newShortCode(entity, plainCode), nil
 }

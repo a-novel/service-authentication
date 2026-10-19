@@ -89,13 +89,5 @@ func (service *ShortCodeVerify) Exec(ctx context.Context, request *ShortCodeVeri
 		))
 	}
 
-	return &ShortCode{
-		ID:        entity.ID,
-		Usage:     entity.Usage,
-		Target:    entity.Target,
-		Data:      entity.Data,
-		CreatedAt: entity.CreatedAt,
-		ExpiresAt: entity.ExpiresAt,
-		PlainCode: request.Code,
-	}, nil
+	return newShortCode(entity, request.Code), nil
 }

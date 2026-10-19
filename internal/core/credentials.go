@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
 // Credentials is a user account as the core layer exposes it: identity, email,
@@ -24,12 +25,17 @@ type Credentials struct {
 // accepts a string only when it names a role defined in the default permissions
 // configuration. It is registered under the "role" tag at package init.
 func ValidateCredentialsRole(fl validator.FieldLevel) bool {
-	val := fl.Field().String()
-	for role := range authconfig.PermissionsConfigDefault.Roles {
-		if val == role {
-			return true
-		}
-	}
+	_, ok := authconfig.PermissionsConfigDefault.Roles[fl.Field().String()]
 
-	return false
+	return ok
+}
+
+func newCredentials(entity *dao.Credentials) *Credentials {
+	return &Credentials{
+		ID:        entity.ID,
+		Email:     entity.Email,
+		Role:      entity.Role,
+		CreatedAt: entity.CreatedAt,
+		UpdatedAt: entity.UpdatedAt,
+	}
 }

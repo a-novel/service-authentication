@@ -91,19 +91,18 @@ func (service *CredentialsUpdateEmail) Exec(
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		_, txErr := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
-		if txErr != nil {
-			return fmt.Errorf("consume short code: %w", txErr)
+		_, err := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
+		if err != nil {
+			return fmt.Errorf("consume short code: %w", err)
 		}
 
-		// Update email.
-		credentials, txErr = service.dao.Exec(ctx, &dao.CredentialsUpdateEmailRequest{
+		credentials, err = service.dao.Exec(ctx, &dao.CredentialsUpdateEmailRequest{
 			ID:    request.UserID,
 			Email: newEmail,
 			Now:   time.Now(),
 		})
-		if txErr != nil {
-			return fmt.Errorf("update email: %w", txErr)
+		if err != nil {
+			return fmt.Errorf("update email: %w", err)
 		}
 
 		return nil
@@ -112,11 +111,5 @@ func (service *CredentialsUpdateEmail) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	return &Credentials{
-		ID:        credentials.ID,
-		Email:     credentials.Email,
-		Role:      credentials.Role,
-		CreatedAt: credentials.CreatedAt,
-		UpdatedAt: credentials.UpdatedAt,
-	}, nil
+	return newCredentials(credentials), nil
 }

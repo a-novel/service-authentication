@@ -108,7 +108,7 @@ func (delivery *MailDelivery) Reserve(ctx context.Context) (MailDeliveryReservat
 
 	delivery.wg.Add(1)
 
-	return MailDeliveryReservation(&mailDeliveryReservation{delivery: delivery}), nil
+	return &mailDeliveryReservation{delivery: delivery}, nil
 }
 
 // Close stops new reservations and wakes callers waiting for capacity. Accepted work continues.

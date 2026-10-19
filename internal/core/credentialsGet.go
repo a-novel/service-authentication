@@ -49,11 +49,5 @@ func (service *CredentialsGet) Exec(
 		attribute.String("user.role", entity.Role),
 	)
 
-	return &Credentials{
-		ID:        entity.ID,
-		Email:     entity.Email,
-		Role:      entity.Role,
-		CreatedAt: entity.CreatedAt,
-		UpdatedAt: entity.UpdatedAt,
-	}, nil
+	return newCredentials(entity), nil
 }

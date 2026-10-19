@@ -145,11 +145,5 @@ func (service *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	return &Credentials{
-		ID:        credentials.ID,
-		Email:     credentials.Email,
-		Role:      credentials.Role,
-		CreatedAt: credentials.CreatedAt,
-		UpdatedAt: credentials.UpdatedAt,
-	}, nil
+	return newCredentials(credentials), nil
 }
