@@ -46,16 +46,9 @@ func NewAuthHandler(
 	permissions Permissions,
 	logger logging.Log,
 ) PermissionsHandler {
-	permissionsByRole := lo.Must(lib.ResolveDependants[string, string](
-		lo.MapEntries(
-			permissions.Roles,
-			func(key string, value authconfig.Role) (string, []string) {
-				return key, value.Permissions
-			},
-		),
-		lo.MapEntries(permissions.Roles, func(key string, value authconfig.Role) (string, []string) {
-			return key, value.Inherits
-		}),
+	permissionsByRole := lo.Must(lib.ResolveDependants(
+		lo.MapEntries(permissions.Roles, rolePermissions),
+		lo.MapEntries(permissions.Roles, roleInherits),
 	))
 
 	middlewareAuth := middlewares.NewAuth(claimsVerifier, permissionsByRole, logger)
@@ -63,6 +56,14 @@ func NewAuthHandler(
 	return func(r chi.Router, permissions ...string) chi.Router {
 		return r.With(middlewareAuth.Middleware(permissions))
 	}
+}
+
+func rolePermissions(name string, role authconfig.Role) (string, []string) {
+	return name, role.Permissions
+}
+
+func roleInherits(name string, role authconfig.Role) (string, []string) {
+	return name, role.Inherits
 }
 
 // SetClaimsContext stores the authenticated user's claims in the context. The auth
