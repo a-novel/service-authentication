@@ -171,8 +171,21 @@ func TestHealth(t *testing.T) {
 
 //nolint:paralleltest // Replaces the process-wide tracer provider while probes run.
 func TestHealthTelemetry(t *testing.T) {
-	for _, failed := range []bool{false, true} {
-		t.Run(fmt.Sprintf("Failed=%t", failed), func(t *testing.T) {
+	testCases := []struct {
+		name         string
+		smtpErr      error
+		expectStatus int
+	}{
+		{name: "Success", expectStatus: http.StatusOK},
+		{
+			name:         "Error/Smtp",
+			smtpErr:      &textproto.Error{Code: 535, Msg: "private SMTP reply"},
+			expectStatus: http.StatusServiceUnavailable,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
 			recorder := tracetest.NewSpanRecorder()
 			provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
 			previous := otel.GetTracerProvider()
@@ -196,12 +209,7 @@ func TestHealthTelemetry(t *testing.T) {
 			smtpClient := handlersmocks.NewMockRestHealthClientSmtp(t)
 			jsonKeysClient := handlersmocks.NewMockRestHealthApiJsonKeys(t)
 
-			var smtpErr error
-			if failed {
-				smtpErr = &textproto.Error{Code: 535, Msg: "private SMTP reply"}
-			}
-
-			smtpClient.EXPECT().Ping().Return(smtpErr).Once()
+			smtpClient.EXPECT().Ping().Return(testCase.smtpErr).Once()
 			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
 				Run(func(ctx context.Context, _ *servicejsonkeys.StatusRequest, _ ...grpc.CallOption) {
 					require.NoError(t, ctx.Err())
@@ -223,18 +231,14 @@ func TestHealthTelemetry(t *testing.T) {
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/healthcheck", nil))
 
-			if failed {
-				require.Equal(t, http.StatusServiceUnavailable, w.Code)
-			} else {
-				require.Equal(t, http.StatusOK, w.Code)
-			}
+			require.Equal(t, testCase.expectStatus, w.Code)
 
 			ended := recorder.Ended()
 			require.Len(t, ended, 4)
 
 			for _, span := range ended {
 				expected := codes.Unset
-				if failed && (span.Name() == "rest.Health" || span.Name() == "rest.Health(reportSmtp)") {
+				if testCase.smtpErr != nil && (span.Name() == "rest.Health" || span.Name() == "rest.Health(reportSmtp)") {
 					expected = codes.Error
 				}
 

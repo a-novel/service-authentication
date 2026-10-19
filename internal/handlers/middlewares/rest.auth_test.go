@@ -383,10 +383,12 @@ func TestAuth(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		for _, token := range []string{
+		garbledTokens := []string{
 			"!!!.e30",
 			base64.RawURLEncoding.EncodeToString([]byte("not json")) + ".e30",
-		} {
+		}
+
+		for _, token := range garbledTokens {
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 			req.Header.Set("Authorization", "Bearer "+token)
 
