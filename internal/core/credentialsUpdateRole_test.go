@@ -40,8 +40,9 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		daoCredentialsSelectCallerMock *credentialsSelectMock
 		credentialsUpdateRoleMock      *credentialsUpdateRoleMock
 
-		expect    *core.Credentials
-		expectErr error
+		expect        *core.Credentials
+		expectErr     error
+		expectMessage string
 	}{
 		{
 			name: "UpgradeToLowerRole",
@@ -166,7 +167,8 @@ func TestCredentialsUpdateRole(t *testing.T) {
 				},
 			},
 
-			expectErr: core.ErrCredentialsUpdateRoleToHigher,
+			expectErr:     core.ErrCredentialsUpdateRoleToHigher,
+			expectMessage: "upgrade from auth:user to auth:superadmin",
 		},
 		{
 			name: "DowngradeFromLowerRole",
@@ -245,6 +247,38 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			},
 
 			expectErr: core.ErrCredentialsUpdateRoleDowngradeSuperior,
+		},
+		{
+			name: "DowngradeFromHigherRole",
+
+			request: &core.CredentialsUpdateRoleRequest{
+				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Role:          authconfig.RoleUser,
+			},
+
+			daoCredentialsSelectTargetMock: &credentialsSelectMock{
+				resp: &dao.Credentials{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Email:     "target@email.com",
+					Role:      authconfig.RoleSuperAdmin,
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				},
+			},
+
+			daoCredentialsSelectCallerMock: &credentialsSelectMock{
+				resp: &dao.Credentials{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Email:     "caller@email.com",
+					Role:      authconfig.RoleAdmin,
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				},
+			},
+
+			expectErr:     core.ErrCredentialsUpdateRoleDowngradeSuperior,
+			expectMessage: "downgrade from auth:superadmin to auth:user",
 		},
 
 		{
@@ -451,6 +485,11 @@ func TestCredentialsUpdateRole(t *testing.T) {
 
 			resp, err := service.Exec(ctx, testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
+
+			if testCase.expectMessage != "" {
+				require.ErrorContains(t, err, testCase.expectMessage)
+			}
+
 			require.Equal(t, testCase.expect, resp)
 
 			mockDao.AssertExpectations(t)

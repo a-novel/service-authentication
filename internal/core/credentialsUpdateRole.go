@@ -133,7 +133,7 @@ func (service *CredentialsUpdateRole) Exec(
 	if newPriority >= targetPriority && newPriority > actorPriority {
 		return nil, otel.ReportError(span, fmt.Errorf(
 			"%w: upgrade from %s to %s",
-			ErrCredentialsUpdateRoleToHigher, currentCredentials.Role, request.Role,
+			ErrCredentialsUpdateRoleToHigher, targetCredentials.Role, request.Role,
 		))
 	}
 
@@ -141,7 +141,7 @@ func (service *CredentialsUpdateRole) Exec(
 	if newPriority <= targetPriority && targetPriority >= actorPriority {
 		return nil, otel.ReportError(span, fmt.Errorf(
 			"%w: downgrade from %s to %s",
-			ErrCredentialsUpdateRoleDowngradeSuperior, currentCredentials.Role, request.Role,
+			ErrCredentialsUpdateRoleDowngradeSuperior, targetCredentials.Role, request.Role,
 		))
 	}
 
