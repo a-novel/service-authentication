@@ -89,10 +89,10 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 		return fmt.Errorf("connect to database: %w", err)
 	}
 
-	selectCredentials := dao.NewCredentialsSelectByEmail()
-	selectShortCode := dao.NewShortCodeSelect()
-	updateRole := dao.NewCredentialsUpdateRole()
-	createShortCode := core.NewShortCodeCreate(dao.NewShortCodeInsert(), cfg.ShortCodesConfig)
+	selectCredentials := dao.NewPgCredentialsSelectByEmail()
+	selectShortCode := dao.NewPgShortCodeSelect()
+	updateRole := dao.NewPgCredentialsUpdateRole()
+	createShortCode := core.NewShortCodeCreate(dao.NewPgShortCodeInsert(), cfg.ShortCodesConfig)
 	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 	register := core.NewShortCodeCreateRegister(
 		createShortCode, selectCredentials, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,

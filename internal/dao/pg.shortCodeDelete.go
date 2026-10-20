@@ -18,7 +18,7 @@ import (
 //go:embed pg.shortCodeDelete.sql
 var shortCodeDeleteQuery string
 
-// ErrShortCodeDeleteNotFound is returned by [ShortCodeDelete.Exec] when no active short code matches
+// ErrShortCodeDeleteNotFound is returned by [PgShortCodeDelete.Exec] when no active short code matches
 // the requested ID.
 var ErrShortCodeDeleteNotFound = errors.New("short code not found")
 
@@ -31,7 +31,7 @@ const (
 	ShortCodeDeleteConsumed = "key consumed"
 )
 
-// ShortCodeDeleteRequest is the input to [ShortCodeDelete.Exec]. Comment is usually
+// ShortCodeDeleteRequest is the input to [PgShortCodeDelete.Exec]. Comment is usually
 // [ShortCodeDeleteOverride] or [ShortCodeDeleteConsumed]; any value is accepted and
 // persisted on the deleted row for later auditing.
 type ShortCodeDeleteRequest struct {
@@ -43,15 +43,15 @@ type ShortCodeDeleteRequest struct {
 	Comment string
 }
 
-// ShortCodeDelete soft-deletes an active short code, neither expired nor already deleted.
-type ShortCodeDelete struct{}
+// PgShortCodeDelete soft-deletes an active short code, neither expired nor already deleted.
+type PgShortCodeDelete struct{}
 
-func NewShortCodeDelete() *ShortCodeDelete {
-	return &ShortCodeDelete{}
+func NewPgShortCodeDelete() *PgShortCodeDelete {
+	return &PgShortCodeDelete{}
 }
 
-func (dao *ShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDeleteRequest) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeDelete")
+func (dao *PgShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDeleteRequest) (*ShortCode, error) {
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeDelete")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("shortCode.comment", request.Comment))

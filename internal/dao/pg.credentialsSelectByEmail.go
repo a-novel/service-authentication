@@ -14,28 +14,28 @@ import (
 //go:embed pg.credentialsSelectByEmail.sql
 var credentialsSelectByEmailQuery string
 
-// ErrCredentialsSelectByEmailNotFound is returned by [CredentialsSelectByEmail.Exec] when no row
+// ErrCredentialsSelectByEmailNotFound is returned by [PgCredentialsSelectByEmail.Exec] when no row
 // matches the requested email.
 var ErrCredentialsSelectByEmailNotFound = errors.New("credentials not found")
 
-// CredentialsSelectByEmailRequest is the input to [CredentialsSelectByEmail.Exec].
+// CredentialsSelectByEmailRequest is the input to [PgCredentialsSelectByEmail.Exec].
 type CredentialsSelectByEmailRequest struct {
 	// Email of the credentials to fetch. Comparison is case-sensitive.
 	Email string
 }
 
-// CredentialsSelectByEmail fetches a single credentials row by email. [CredentialsSelect] looks one
+// PgCredentialsSelectByEmail fetches a single credentials row by email. [PgCredentialsSelect] looks one
 // up by ID.
-type CredentialsSelectByEmail struct{}
+type PgCredentialsSelectByEmail struct{}
 
-func NewCredentialsSelectByEmail() *CredentialsSelectByEmail {
-	return &CredentialsSelectByEmail{}
+func NewPgCredentialsSelectByEmail() *PgCredentialsSelectByEmail {
+	return &PgCredentialsSelectByEmail{}
 }
 
-func (dao *CredentialsSelectByEmail) Exec(
+func (dao *PgCredentialsSelectByEmail) Exec(
 	ctx context.Context, request *CredentialsSelectByEmailRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsSelectByEmail")
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsSelectByEmail")
 	defer span.End()
 
 	tx, err := postgres.GetContext(ctx)

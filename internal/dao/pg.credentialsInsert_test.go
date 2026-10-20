@@ -16,7 +16,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/migrations"
 )
 
-func TestCredentialsInsert(t *testing.T) {
+func TestPgCredentialsInsert(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -93,7 +93,7 @@ func TestCredentialsInsert(t *testing.T) {
 		},
 	}
 
-	dao := dao.NewCredentialsInsert()
+	dao := dao.NewPgCredentialsInsert()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

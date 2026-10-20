@@ -29,6 +29,104 @@ var clientProgram []byte
 func TestPermissionsHandler(t *testing.T) {
 	t.Parallel()
 
+	// grandchild -> child -> parent. Each level adds one permission.
+	inheritance := map[string]authconfig.Role{
+		"parent":     {Permissions: []string{"parent:read"}},
+		"child":      {Inherits: []string{"parent"}, Permissions: []string{"child:read"}},
+		"grandchild": {Inherits: []string{"child"}, Permissions: []string{"grandchild:read"}},
+	}
+
+	// NewAuthHandler resolves role inheritance transitively at startup. A role grants every
+	// permission its ancestors do, and only those.
+	testCases := []struct {
+		name string
+
+		roles      map[string]authconfig.Role
+		role       string
+		permission string
+
+		expectStatus int
+		expectPanic  bool
+	}{
+		{
+			name: "Success/OwnPermission",
+
+			roles:      inheritance,
+			role:       "grandchild",
+			permission: "grandchild:read",
+
+			expectStatus: http.StatusOK,
+		},
+		{
+			name: "Success/ParentPermission",
+
+			roles:      inheritance,
+			role:       "grandchild",
+			permission: "child:read",
+
+			expectStatus: http.StatusOK,
+		},
+		{
+			name: "Success/GrandparentPermission",
+
+			roles:      inheritance,
+			role:       "grandchild",
+			permission: "parent:read",
+
+			expectStatus: http.StatusOK,
+		},
+		{
+			// A role never gains a permission defined on a role that inherits it.
+			name: "Error/DescendantPermission",
+
+			roles:      inheritance,
+			role:       "parent",
+			permission: "grandchild:read",
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
+			// Circular inheritance is a programming error, reported at startup.
+			name: "Error/CircularInheritance",
+
+			roles: map[string]authconfig.Role{
+				"a": {Inherits: []string{"b"}},
+				"b": {Inherits: []string{"a"}},
+			},
+
+			expectPanic: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			permissions := serviceauthentication.Permissions{Roles: testCase.roles}
+			verifier := fakeVerifier{roles: []string{testCase.role}}
+
+			if testCase.expectPanic {
+				require.Panics(t, func() { serviceauthentication.NewAuthHandler(verifier, permissions, config.LoggerDev) })
+
+				return
+			}
+
+			handler := serviceauthentication.NewAuthHandler(verifier, permissions, config.LoggerDev)
+
+			router := chi.NewRouter()
+			handler(router, testCase.permission).Get("/", func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+			req.Header.Set("Authorization", "Bearer token")
+
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+			require.Equal(t, testCase.expectStatus, rec.Code)
+		})
+	}
+
 	t.Run("Success/ImportIgnoresServerEnvironment", func(t *testing.T) {
 		t.Parallel()
 
@@ -124,75 +222,4 @@ func (f fakeVerifier) VerifyClaims(
 	_ context.Context, _ *servicejsonkeys.VerifyClaimsRequest,
 ) (*core.AccessTokenClaims, error) {
 	return &core.AccessTokenClaims{Roles: f.roles}, nil
-}
-
-// NewAuthHandler resolves role inheritance transitively at startup. A role grants every permission
-// its ancestors do, and only those.
-func TestNewAuthHandlerResolvesInheritance(t *testing.T) {
-	t.Parallel()
-
-	// grandchild -> child -> parent. Each level adds one permission; grandchild must end up
-	// with all three.
-	permissions := serviceauthentication.Permissions{
-		Roles: map[string]authconfig.Role{
-			"parent":     {Permissions: []string{"parent:read"}},
-			"child":      {Inherits: []string{"parent"}, Permissions: []string{"child:read"}},
-			"grandchild": {Inherits: []string{"child"}, Permissions: []string{"grandchild:read"}},
-		},
-	}
-
-	t.Run("Success/InheritedPermissions", func(t *testing.T) {
-		t.Parallel()
-
-		// grandchild transitively inherits parent:read, two levels up.
-		require.Equal(t, http.StatusOK, gatedStatus(t, permissions, "grandchild", "parent:read"))
-		// and the intermediate one.
-		require.Equal(t, http.StatusOK, gatedStatus(t, permissions, "grandchild", "child:read"))
-		// and its own.
-		require.Equal(t, http.StatusOK, gatedStatus(t, permissions, "grandchild", "grandchild:read"))
-	})
-
-	t.Run("Error/DescendantPermission", func(t *testing.T) {
-		t.Parallel()
-
-		// parent must not gain a permission defined on a role that inherits it.
-		require.Equal(t, http.StatusForbidden, gatedStatus(t, permissions, "parent", "grandchild:read"))
-	})
-}
-
-// gatedStatus mounts a route requiring permission, gates it with a token bearing role, and returns
-// the status a request receives.
-func gatedStatus(t *testing.T, permissions serviceauthentication.Permissions, role, permission string) int {
-	t.Helper()
-
-	handler := serviceauthentication.NewAuthHandler(fakeVerifier{roles: []string{role}}, permissions, config.LoggerDev)
-
-	router := chi.NewRouter()
-	handler(router, permission).Get("/", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
-	req.Header.Set("Authorization", "Bearer token")
-
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
-
-	return rec.Code
-}
-
-// NewAuthHandler panics on circular inheritance, a programming error it reports at startup.
-func TestNewAuthHandlerPanicsOnCircularInheritance(t *testing.T) {
-	t.Parallel()
-
-	permissions := serviceauthentication.Permissions{
-		Roles: map[string]authconfig.Role{
-			"a": {Inherits: []string{"b"}},
-			"b": {Inherits: []string{"a"}},
-		},
-	}
-
-	require.Panics(t, func() {
-		serviceauthentication.NewAuthHandler(fakeVerifier{}, permissions, config.LoggerDev)
-	})
 }

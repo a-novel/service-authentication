@@ -17,7 +17,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/migrations"
 )
 
-func TestShortCodeDelete(t *testing.T) {
+func TestPgShortCodeDelete(t *testing.T) {
 	t.Parallel()
 
 	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
@@ -150,7 +150,7 @@ func TestShortCodeDelete(t *testing.T) {
 		},
 	}
 
-	dao := dao.NewShortCodeDelete()
+	dao := dao.NewPgShortCodeDelete()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

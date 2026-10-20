@@ -16,7 +16,7 @@ import (
 //go:embed pg.credentialsList.sql
 var credentialsListQuery string
 
-// CredentialsListRequest is the input to [CredentialsList.Exec].
+// CredentialsListRequest is the input to [PgCredentialsList.Exec].
 type CredentialsListRequest struct {
 	Limit  int
 	Offset int
@@ -27,18 +27,18 @@ type CredentialsListRequest struct {
 	Emails []string
 }
 
-// CredentialsList returns a page of credentials, newest first. It leaves [Credentials.Password]
+// PgCredentialsList returns a page of credentials, newest first. It leaves [Credentials.Password]
 // empty.
-type CredentialsList struct{}
+type PgCredentialsList struct{}
 
-func NewCredentialsList() *CredentialsList {
-	return &CredentialsList{}
+func NewPgCredentialsList() *PgCredentialsList {
+	return &PgCredentialsList{}
 }
 
-func (dao *CredentialsList) Exec(
+func (dao *PgCredentialsList) Exec(
 	ctx context.Context, request *CredentialsListRequest,
 ) ([]*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsList")
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsList")
 	defer span.End()
 
 	span.SetAttributes(

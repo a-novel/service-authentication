@@ -17,11 +17,11 @@ import (
 //go:embed pg.credentialsInsert.sql
 var credentialsInsertQuery string
 
-// ErrCredentialsInsertAlreadyExists is returned by [CredentialsInsert.Exec] when the email is
+// ErrCredentialsInsertAlreadyExists is returned by [PgCredentialsInsert.Exec] when the email is
 // already registered.
 var ErrCredentialsInsertAlreadyExists = errors.New("credentials already exists")
 
-// CredentialsInsertRequest is the input to [CredentialsInsert.Exec].
+// CredentialsInsertRequest is the input to [PgCredentialsInsert.Exec].
 type CredentialsInsertRequest struct {
 	// See [Credentials.ID].
 	ID uuid.UUID
@@ -35,18 +35,18 @@ type CredentialsInsertRequest struct {
 	Now time.Time
 }
 
-// CredentialsInsert inserts a new set of credentials into the database. The email
+// PgCredentialsInsert inserts a new set of credentials into the database. The email
 // must be unique; a duplicate returns [ErrCredentialsInsertAlreadyExists].
-type CredentialsInsert struct{}
+type PgCredentialsInsert struct{}
 
-func NewCredentialsInsert() *CredentialsInsert {
-	return &CredentialsInsert{}
+func NewPgCredentialsInsert() *PgCredentialsInsert {
+	return &PgCredentialsInsert{}
 }
 
-func (dao *CredentialsInsert) Exec(
+func (dao *PgCredentialsInsert) Exec(
 	ctx context.Context, request *CredentialsInsertRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsInsert")
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsInsert")
 	defer span.End()
 
 	span.SetAttributes(

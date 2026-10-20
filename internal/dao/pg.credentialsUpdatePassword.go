@@ -17,11 +17,11 @@ import (
 //go:embed pg.credentialsUpdatePassword.sql
 var credentialsUpdatePasswordQuery string
 
-// ErrCredentialsUpdatePasswordNotFound is returned by [CredentialsUpdatePassword.Exec] when no row
+// ErrCredentialsUpdatePasswordNotFound is returned by [PgCredentialsUpdatePassword.Exec] when no row
 // matches the requested ID.
 var ErrCredentialsUpdatePasswordNotFound = errors.New("credentials not found")
 
-// CredentialsUpdatePasswordRequest is the input to [CredentialsUpdatePassword.Exec].
+// CredentialsUpdatePasswordRequest is the input to [PgCredentialsUpdatePassword.Exec].
 type CredentialsUpdatePasswordRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
@@ -32,18 +32,18 @@ type CredentialsUpdatePasswordRequest struct {
 	Now time.Time
 }
 
-// CredentialsUpdatePassword replaces the password hash of a credentials row. The caller verifies the
+// PgCredentialsUpdatePassword replaces the password hash of a credentials row. The caller verifies the
 // user's identity first.
-type CredentialsUpdatePassword struct{}
+type PgCredentialsUpdatePassword struct{}
 
-func NewCredentialsUpdatePassword() *CredentialsUpdatePassword {
-	return &CredentialsUpdatePassword{}
+func NewPgCredentialsUpdatePassword() *PgCredentialsUpdatePassword {
+	return &PgCredentialsUpdatePassword{}
 }
 
-func (dao *CredentialsUpdatePassword) Exec(
+func (dao *PgCredentialsUpdatePassword) Exec(
 	ctx context.Context, request *CredentialsUpdatePasswordRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsUpdatePassword")
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsUpdatePassword")
 	defer span.End()
 
 	tx, err := postgres.GetContext(ctx)

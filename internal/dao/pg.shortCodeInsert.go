@@ -16,7 +16,7 @@ import (
 	"github.com/a-novel-kit/golib/postgres"
 )
 
-// ErrShortCodeInsertNested is returned when [ShortCodeInsert.Exec] runs inside a caller's
+// ErrShortCodeInsertNested is returned when [PgShortCodeInsert.Exec] runs inside a caller's
 // transaction. The insert opens its own at read committed, and postgres.WithinTx ignores the options
 // of a nested call.
 var ErrShortCodeInsertNested = errors.New("short code insert cannot run inside another transaction")
@@ -24,12 +24,12 @@ var ErrShortCodeInsertNested = errors.New("short code insert cannot run inside a
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
 
-// ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when an active short code
+// ErrShortCodeInsertAlreadyExists is returned by [PgShortCodeInsert.Exec] when an active short code
 // already covers the same (target, usage) pair. The conflict check of a request without Override
 // finds it, and the partial unique index catches a concurrent insert.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
-// ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec].
+// ShortCodeInsertRequest is the input to [PgShortCodeInsert.Exec].
 type ShortCodeInsertRequest struct {
 	// See [ShortCode.ID].
 	ID uuid.UUID
@@ -51,15 +51,15 @@ type ShortCodeInsertRequest struct {
 	Override bool
 }
 
-// ShortCodeInsert inserts a new short code in the database.
-type ShortCodeInsert struct{}
+// PgShortCodeInsert inserts a new short code in the database.
+type PgShortCodeInsert struct{}
 
-func NewShortCodeInsert() *ShortCodeInsert {
-	return &ShortCodeInsert{}
+func NewPgShortCodeInsert() *PgShortCodeInsert {
+	return &PgShortCodeInsert{}
 }
 
-func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRequest) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert")
+func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRequest) (*ShortCode, error) {
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert")
 	defer span.End()
 
 	span.SetAttributes(
@@ -137,8 +137,8 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 //go:embed pg.shortCodeInsert.discardConflict.sql
 var shortCodeInsertDiscardConflictQuery string
 
-func (dao *ShortCodeInsert) discardConflicts(ctx context.Context, request *ShortCodeInsertRequest) error {
-	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(discardConflicts)")
+func (dao *PgShortCodeInsert) discardConflicts(ctx context.Context, request *ShortCodeInsertRequest) error {
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(discardConflicts)")
 	defer span.End()
 
 	tx, err := postgres.GetContext(ctx)
@@ -167,8 +167,8 @@ func (dao *ShortCodeInsert) discardConflicts(ctx context.Context, request *Short
 //go:embed pg.shortCodeInsert.discardExpired.sql
 var shortCodeInsertDiscardExpiredQuery string
 
-func (dao *ShortCodeInsert) discardExpired(ctx context.Context, request *ShortCodeInsertRequest) error {
-	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(discardExpired)")
+func (dao *PgShortCodeInsert) discardExpired(ctx context.Context, request *ShortCodeInsertRequest) error {
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(discardExpired)")
 	defer span.End()
 
 	tx, err := postgres.GetContext(ctx)
@@ -193,8 +193,8 @@ func (dao *ShortCodeInsert) discardExpired(ctx context.Context, request *ShortCo
 //go:embed pg.shortCodeInsert.checkConflict.sql
 var shortCodeInsertCheckConflictQuery string
 
-func (dao *ShortCodeInsert) checkConflicts(ctx context.Context, request *ShortCodeInsertRequest) error {
-	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeInsert(checkConflicts)")
+func (dao *PgShortCodeInsert) checkConflicts(ctx context.Context, request *ShortCodeInsertRequest) error {
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(checkConflicts)")
 	defer span.End()
 
 	tx, err := postgres.GetContext(ctx)

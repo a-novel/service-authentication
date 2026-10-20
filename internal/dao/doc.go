@@ -3,7 +3,7 @@
 //
 // A Postgres DAO resolves its database handle from the context with postgres.GetContext, so it
 // joins the transaction its caller opened and commits statement by statement otherwise. A core
-// operation opens that transaction when two writes must land together. [ShortCodeInsert] alone
+// operation opens that transaction when two writes must land together. [PgShortCodeInsert] alone
 // runs a transaction of its own.
 //
 // SQL lives in sibling .sql files embedded with go:embed. A database outcome a caller branches on,

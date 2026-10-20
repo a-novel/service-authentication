@@ -14,23 +14,23 @@ import (
 //go:embed pg.credentialsExist.sql
 var credentialsExistQuery string
 
-// CredentialsExistRequest is the input to [CredentialsExist.Exec].
+// CredentialsExistRequest is the input to [PgCredentialsExist.Exec].
 type CredentialsExistRequest struct {
 	// Email to check for an existing registration. Comparison is case-sensitive.
 	Email string
 }
 
-// CredentialsExist reports whether a user with the given email address exists.
+// PgCredentialsExist reports whether a user with the given email address exists.
 //
 // A missing user yields false with a nil error.
-type CredentialsExist struct{}
+type PgCredentialsExist struct{}
 
-func NewCredentialsExist() *CredentialsExist {
-	return &CredentialsExist{}
+func NewPgCredentialsExist() *PgCredentialsExist {
+	return &PgCredentialsExist{}
 }
 
-func (dao *CredentialsExist) Exec(ctx context.Context, request *CredentialsExistRequest) (bool, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsExist")
+func (dao *PgCredentialsExist) Exec(ctx context.Context, request *CredentialsExistRequest) (bool, error) {
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsExist")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("email", request.Email))
