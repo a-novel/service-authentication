@@ -15,7 +15,6 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
-	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
@@ -24,7 +23,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-func TestCredentialsCreateRequest(t *testing.T) {
+func TestCredentialsCreate(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -52,6 +51,17 @@ func TestCredentialsCreateRequest(t *testing.T) {
 		err error
 	}
 
+	type transactionMock struct {
+		beginErr  error
+		commitErr error
+		// disconnect cancels the request once the transaction commits.
+		disconnect bool
+	}
+
+	type waitlistMock struct {
+		err error
+	}
+
 	testCases := []struct {
 		name string
 
@@ -62,15 +72,15 @@ func TestCredentialsCreateRequest(t *testing.T) {
 		serviceSignClaimsMock       *serviceSignClaimsMock
 		serviceShortCodeVerifyMock  *serviceShortCodeVerifyMock
 		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
+		transactionMock             *transactionMock
+		waitlistMock                *waitlistMock
 
 		expect     *core.Token
 		expectErr  error
 		expectRole string
-		cleanupErr error
 	}{
 		{
-			name:       "Success/WaitlistUnavailable",
-			cleanupErr: dao.ErrWaitlistUnavailable,
+			name: "Success/WaitlistUnavailable",
 
 			request: &core.CredentialsCreateRequest{
 				Email:     "user@provider.com",
@@ -80,6 +90,8 @@ func TestCredentialsCreateRequest(t *testing.T) {
 
 			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{},
+			waitlistMock:                &waitlistMock{err: dao.ErrWaitlistUnavailable},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -118,6 +130,8 @@ func TestCredentialsCreateRequest(t *testing.T) {
 				resp: &core.ShortCode{Data: []byte(`{"role":"auth:admin"}`)},
 			},
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{},
+			waitlistMock:                &waitlistMock{},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -201,6 +215,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
 				err: core.ErrShortCodeConsumeInvalid,
 			},
+			transactionMock: &transactionMock{},
 
 			expectErr: core.ErrShortCodeConsumeInvalid,
 		},
@@ -215,6 +230,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 
 			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{},
 
 			daoMock: &daoMock{
 				err: errFoo,
@@ -233,6 +249,8 @@ func TestCredentialsCreateRequest(t *testing.T) {
 
 			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{},
+			waitlistMock:                &waitlistMock{},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -264,6 +282,8 @@ func TestCredentialsCreateRequest(t *testing.T) {
 
 			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{},
+			waitlistMock:                &waitlistMock{},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -304,6 +324,8 @@ func TestCredentialsCreateRequest(t *testing.T) {
 
 			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{},
+			waitlistMock:                &waitlistMock{},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -329,23 +351,129 @@ func TestCredentialsCreateRequest(t *testing.T) {
 				RefreshToken: mockUnsignedRefreshToken,
 			},
 		},
+		{
+			name: "Error/BeginTransaction",
+
+			request: &core.CredentialsCreateRequest{
+				Email:     "user@provider.com",
+				Password:  "password-2",
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{},
+			transactionMock:            &transactionMock{beginErr: errFoo},
+
+			expectErr: errFoo,
+		},
+		{
+			// A failed commit leaves the waitlist untouched.
+			name: "Error/CommitTransaction",
+
+			request: &core.CredentialsCreateRequest{
+				Email:     "user@provider.com",
+				Password:  "password-2",
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
+			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{commitErr: errFoo},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Email: "user@provider.com",
+					Role:  authconfig.RoleUser,
+				},
+			},
+
+			expectErr: errFoo,
+		},
+		{
+			// The client leaves once the account exists, and the waitlist cleanup still runs.
+			name: "Error/DisconnectAfterCommit",
+
+			request: &core.CredentialsCreateRequest{
+				Email:     "user@provider.com",
+				Password:  "password-2",
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
+			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{disconnect: true},
+			waitlistMock:                &waitlistMock{},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Email: "user@provider.com",
+					Role:  authconfig.RoleUser,
+				},
+			},
+
+			serviceSignClaimsMock: &serviceSignClaimsMock{err: context.Canceled},
+
+			expectErr: context.Canceled,
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := t.Context()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+
 			mockDao := coremocks.NewMockCredentialsCreateDao(t)
 			serviceShortCodeVerify := coremocks.NewMockCredentialsCreateServiceShortCodeVerify(t)
 			serviceShortCodeConsume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
 			serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
-
+			transactor := coremocks.NewMockTransactor(t)
 			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
-			if testCase.daoMock != nil && testCase.daoMock.err == nil {
+			committed := false
+
+			if testCase.transactionMock != nil {
+				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).
+					RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+						if testCase.transactionMock.beginErr != nil {
+							return testCase.transactionMock.beginErr
+						}
+
+						err := fn(ctx)
+						if err != nil {
+							return err
+						}
+
+						if testCase.transactionMock.commitErr != nil {
+							return testCase.transactionMock.commitErr
+						}
+
+						committed = true
+
+						if testCase.transactionMock.disconnect {
+							cancel()
+						}
+
+						return nil
+					}).Once()
+			}
+
+			if testCase.waitlistMock != nil {
+				// The cleanup runs after the commit, on a bounded context the client cannot cancel.
 				waitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 					Action: "remove", Email: testCase.request.Email,
-				}).Return(&dao.WaitlistResult{}, testCase.cleanupErr).Once()
+				}).
+					Run(func(cleanupCtx context.Context, _ *dao.WaitlistRequest) {
+						require.True(t, committed, "sheet I/O must happen after commit")
+						require.NoError(t, cleanupCtx.Err(), "cleanup must survive client cancellation")
+
+						deadline, ok := cleanupCtx.Deadline()
+						require.True(t, ok, "cleanup must remain bounded")
+						require.Positive(t, time.Until(deadline))
+						require.LessOrEqual(t, time.Until(deadline), 3*time.Second)
+					}).
+					Return(&dao.WaitlistResult{}, testCase.waitlistMock.err).Once()
 			}
 
 			shortCode := &core.ShortCode{ID: uuid.MustParse("00000000-0000-0000-0000-000000000010")}
@@ -431,7 +559,7 @@ func TestCredentialsCreateRequest(t *testing.T) {
 				serviceShortCodeVerify,
 				serviceShortCodeConsume,
 				serviceSignClaims,
-				transactiontest.NewTransactor(),
+				transactor,
 				waitlist,
 			)
 
@@ -443,100 +571,8 @@ func TestCredentialsCreateRequest(t *testing.T) {
 			serviceShortCodeVerify.AssertExpectations(t)
 			serviceShortCodeConsume.AssertExpectations(t)
 			serviceSignClaims.AssertExpectations(t)
-			waitlist.AssertExpectations(t)
-		})
-	}
-}
-
-// TestCredentialsCreateIsAtomic keeps sheet cleanup outside the transaction and after its commit,
-// even when the client disconnects before cleanup starts.
-func TestCredentialsCreateIsAtomic(t *testing.T) {
-	t.Parallel()
-
-	errTransaction := errors.New("transaction failed")
-
-	testCases := []struct {
-		name      string
-		opened    bool
-		committed bool
-		expectErr error
-	}{
-		{name: "BeginFails", expectErr: errTransaction},
-		{name: "CommitFails", opened: true, expectErr: errTransaction},
-		{name: "DisconnectAfterCommit", opened: true, committed: true, expectErr: context.Canceled},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
-			ctx, cancel := context.WithCancel(t.Context())
-			defer cancel()
-
-			request := &core.CredentialsCreateRequest{
-				Email: "user@provider.com", Password: "secret", ShortCode: "foobarqux",
-			}
-			shortCode := &core.ShortCode{ID: uuid.MustParse("00000000-0000-0000-0000-000000000010")}
-			mockDao := coremocks.NewMockCredentialsCreateDao(t)
-			verify := coremocks.NewMockCredentialsCreateServiceShortCodeVerify(t)
-			consume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
-			sign := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
-			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
-			transactor := coremocks.NewMockTransactor(t)
-			committed := false
-
-			verify.EXPECT().Exec(mock.Anything, &core.ShortCodeVerifyRequest{
-				Usage: core.ShortCodeUsageRegister, Target: request.Email, Code: request.ShortCode,
-			}).Return(shortCode, nil).Once()
-
-			transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).
-				RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
-					if !testCase.opened {
-						return errTransaction
-					}
-
-					require.NoError(t, fn(ctx))
-
-					if !testCase.committed {
-						return errTransaction
-					}
-
-					committed = true
-
-					cancel()
-
-					return nil
-				}).Once()
-
-			if testCase.opened {
-				consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).
-					Return(shortCode, nil).Once()
-				mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
-			}
-
-			if testCase.committed {
-				waitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "remove", Email: request.Email}).
-					Run(func(cleanupCtx context.Context, _ *dao.WaitlistRequest) {
-						require.True(t, committed, "sheet I/O must happen after commit")
-						require.ErrorIs(t, ctx.Err(), context.Canceled)
-						require.NoError(t, cleanupCtx.Err(), "cleanup must survive client cancellation")
-						deadline, ok := cleanupCtx.Deadline()
-						require.True(t, ok, "cleanup must remain bounded")
-						require.Positive(t, time.Until(deadline))
-						require.LessOrEqual(t, time.Until(deadline), 3*time.Second)
-					}).Return(&dao.WaitlistResult{}, nil).Once()
-				sign.EXPECT().ClaimsSign(mock.Anything, mock.Anything).Return(nil, context.Canceled).Once()
-			}
-
-			service := core.NewCredentialsCreate(mockDao, verify, consume, sign, transactor, waitlist)
-			resp, err := service.Exec(ctx, request)
-			require.ErrorIs(t, err, testCase.expectErr)
-			require.Nil(t, resp)
-			mockDao.AssertExpectations(t)
-			verify.AssertExpectations(t)
-			consume.AssertExpectations(t)
-			sign.AssertExpectations(t)
-			waitlist.AssertExpectations(t)
 			transactor.AssertExpectations(t)
+			waitlist.AssertExpectations(t)
 		})
 	}
 }

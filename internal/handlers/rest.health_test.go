@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -37,7 +36,9 @@ import (
 func TestRestHealth(t *testing.T) {
 	t.Parallel()
 
-	dependencyErr := errors.New("private dependency detail")
+	const privateDetail = "private dependency detail"
+
+	dependencyErr := errors.New(privateDetail)
 
 	testCases := []struct {
 		name          string
@@ -49,6 +50,8 @@ func TestRestHealth(t *testing.T) {
 		jsonKeysError error
 		statusCode    int
 		states        [3]string
+		// smtpLog is the warning a failed SMTP probe logs; empty expects no log at all.
+		smtpLog string
 	}{
 		{name: "Success", statusCode: http.StatusOK, states: [3]string{"up", "up", "up"}},
 		{
@@ -76,10 +79,67 @@ func TestRestHealth(t *testing.T) {
 			states:     [3]string{"down", "up", "up"},
 		},
 		{
-			name:       "Error/Smtp",
+			name:       "Error/Smtp/Authentication",
+			smtpError:  &textproto.Error{Code: 535, Msg: privateDetail},
+			statusCode: http.StatusServiceUnavailable,
+			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=authentication smtp_reply_code=535",
+		},
+		{
+			name:       "Error/Smtp/Rejected",
+			smtpError:  &textproto.Error{Code: 454, Msg: privateDetail},
+			statusCode: http.StatusServiceUnavailable,
+			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=smtp_rejected smtp_reply_code=454",
+		},
+		{
+			name:       "Error/Smtp/InvalidReplyCode",
+			smtpError:  &textproto.Error{Code: 123456789, Msg: privateDetail},
+			statusCode: http.StatusServiceUnavailable,
+			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=unknown smtp_reply_code=0",
+		},
+		{
+			name:       "Error/Smtp/Timeout",
+			smtpError:  &net.DNSError{Err: privateDetail, IsTimeout: true},
+			statusCode: http.StatusServiceUnavailable,
+			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=timeout smtp_reply_code=0",
+		},
+		{
+			name:       "Error/Smtp/DNS",
+			smtpError:  &net.DNSError{Err: privateDetail, Name: privateDetail},
+			statusCode: http.StatusServiceUnavailable,
+			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=dns smtp_reply_code=0",
+		},
+		{
+			name:       "Error/Smtp/Certificate",
+			smtpError:  &tls.CertificateVerificationError{Err: dependencyErr},
+			statusCode: http.StatusServiceUnavailable,
+			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=tls smtp_reply_code=0",
+		},
+		{
+			name:       "Error/Smtp/TLSRecord",
+			smtpError:  tls.RecordHeaderError{Msg: privateDetail},
+			statusCode: http.StatusServiceUnavailable,
+			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=tls smtp_reply_code=0",
+		},
+		{
+			name:       "Error/Smtp/Connection",
+			smtpError:  &net.OpError{Op: "dial", Err: dependencyErr},
+			statusCode: http.StatusServiceUnavailable,
+			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=connection smtp_reply_code=0",
+		},
+		{
+			name:       "Error/Smtp/Unknown",
 			smtpError:  dependencyErr,
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
+			smtpLog:    "SMTP health check failed: category=unknown smtp_reply_code=0",
 		},
 		{
 			name:          "Error/JsonKeys",
@@ -94,6 +154,7 @@ func TestRestHealth(t *testing.T) {
 			jsonKeysError: dependencyErr,
 			statusCode:    http.StatusServiceUnavailable,
 			states:        [3]string{"down", "down", "down"},
+			smtpLog:       "SMTP health check failed: category=unknown smtp_reply_code=0",
 		},
 	}
 	for _, testCase := range testCases {
@@ -142,7 +203,14 @@ func TestRestHealth(t *testing.T) {
 			smtpClient := handlersmocks.NewMockRestHealthClientSmtp(t)
 			jsonKeysClient := handlersmocks.NewMockRestHealthApiJsonKeys(t)
 
-			smtpClient.EXPECT().Ping().Return(testCase.smtpError).Once()
+			smtpError := testCase.smtpError
+			if smtpError != nil {
+				// Wrapped detail must stay out of the diagnostics too.
+				smtpError = fmt.Errorf("%s: %w", privateDetail, smtpError)
+			}
+
+			smtpClient.EXPECT().Ping().Return(smtpError).Once()
+			// The payload is never inspected: an empty response reads as up.
 			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
 				Run(func(ctx context.Context, _ *servicejsonkeys.StatusRequest, _ ...grpc.CallOption) {
 					if testCase.cancel {
@@ -153,7 +221,9 @@ func TestRestHealth(t *testing.T) {
 				}).
 				Return(&servicejsonkeys.StatusResponse{}, testCase.jsonKeysError).Once()
 
-			handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: io.Discard})
+			var logs bytes.Buffer
+
+			handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: &logs})
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/healthcheck", nil))
 			require.Equal(t, testCase.statusCode, w.Code)
@@ -162,7 +232,15 @@ func TestRestHealth(t *testing.T) {
 				"client:smtp":{"status":%q},
 				"api:jsonKeys":{"status":%q}
 			}`, testCase.states[0], testCase.states[1], testCase.states[2]), w.Body.String())
-			require.NotContains(t, w.Body.String(), dependencyErr.Error())
+
+			if testCase.smtpLog == "" {
+				require.Empty(t, logs.String())
+			} else {
+				require.Contains(t, logs.String(), testCase.smtpLog)
+			}
+
+			require.NotContains(t, logs.String(), privateDetail)
+			require.NotContains(t, w.Body.String(), privateDetail)
 			smtpClient.AssertExpectations(t)
 			jsonKeysClient.AssertExpectations(t)
 		})
@@ -254,105 +332,6 @@ func TestRestHealthTelemetry(t *testing.T) {
 
 			smtpClient.AssertExpectations(t)
 			jsonKeysClient.AssertExpectations(t)
-		})
-	}
-}
-
-func TestRestHealthJsonKeysDependencies(t *testing.T) {
-	t.Parallel()
-
-	// The payload is never inspected: an empty response reads as up.
-	testCases := []struct {
-		name  string
-		err   error
-		state string
-	}{
-		{name: "Up", state: "up"},
-		{name: "RPCError", err: errors.New("private RPC detail"), state: "down"},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
-			smtpClient := handlersmocks.NewMockRestHealthClientSmtp(t)
-			jsonKeysClient := handlersmocks.NewMockRestHealthApiJsonKeys(t)
-
-			smtpClient.EXPECT().Ping().Return(nil).Once()
-			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
-				Return(&servicejsonkeys.StatusResponse{}, testCase.err).Once()
-			handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: io.Discard})
-			w := httptest.NewRecorder()
-			handler.ServeHTTP(w, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v2/healthcheck", nil))
-			require.Equal(t, http.StatusServiceUnavailable, w.Code)
-			require.JSONEq(t, fmt.Sprintf(`{
-				"client:postgres":{"status":"down"},
-				"client:smtp":{"status":"up"},
-				"api:jsonKeys":{"status":%q}
-			}`, testCase.state), w.Body.String())
-		})
-	}
-}
-
-func TestRestHealthSmtpDiagnostics(t *testing.T) {
-	t.Parallel()
-
-	const privateDetail = "fixture-secret-must-never-appear"
-
-	testCases := []struct {
-		name     string
-		err      error
-		category string
-		code     int
-	}{
-		{name: "Healthy"},
-		{name: "Authentication", err: &textproto.Error{Code: 535, Msg: privateDetail}, category: "authentication", code: 535},
-		{name: "Rejected", err: &textproto.Error{Code: 454, Msg: privateDetail}, category: "smtp_rejected", code: 454},
-		{name: "InvalidReplyCode", err: &textproto.Error{Code: 123456789, Msg: privateDetail}, category: "unknown"},
-		{name: "Timeout", err: &net.DNSError{Err: privateDetail, IsTimeout: true}, category: "timeout"},
-		{name: "DNS", err: &net.DNSError{Err: privateDetail, Name: privateDetail}, category: "dns"},
-		{name: "Certificate", err: &tls.CertificateVerificationError{Err: errors.New(privateDetail)}, category: "tls"},
-		{name: "TLSRecord", err: tls.RecordHeaderError{Msg: privateDetail}, category: "tls"},
-		{name: "Connection", err: &net.OpError{Op: "dial", Err: errors.New(privateDetail)}, category: "connection"},
-		{name: "Unknown", err: errors.New(privateDetail), category: "unknown"},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
-			smtpClient := handlersmocks.NewMockRestHealthClientSmtp(t)
-			jsonKeysClient := handlersmocks.NewMockRestHealthApiJsonKeys(t)
-
-			var wrapped error
-			if testCase.err != nil {
-				wrapped = fmt.Errorf("%s: %w", privateDetail, testCase.err)
-			}
-
-			smtpClient.EXPECT().Ping().Return(wrapped).Once()
-			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
-				Return(&servicejsonkeys.StatusResponse{}, nil).Once()
-
-			var logs bytes.Buffer
-
-			handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: &logs})
-			w := httptest.NewRecorder()
-			handler.ServeHTTP(w, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v2/healthcheck", nil))
-			require.Equal(t, http.StatusServiceUnavailable, w.Code)
-
-			var body map[string]handlers.RestHealthStatus
-			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
-
-			if testCase.err == nil {
-				require.Empty(t, logs.String())
-				require.Equal(t, "up", body["client:smtp"].Status)
-			} else {
-				require.Equal(t, "down", body["client:smtp"].Status)
-				require.Contains(t, logs.String(), "SMTP health check failed")
-				require.Contains(t, logs.String(), testCase.category)
-				require.Contains(t, logs.String(), fmt.Sprintf("smtp_reply_code=%d", testCase.code))
-			}
-
-			require.NotContains(t, logs.String(), privateDetail)
-			require.NotContains(t, w.Body.String(), privateDetail)
 		})
 	}
 }

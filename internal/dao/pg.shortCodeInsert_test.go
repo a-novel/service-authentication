@@ -286,7 +286,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 		},
 	}
 
-	dao := dao.NewPgShortCodeInsert()
+	shortCodeInsert := dao.NewPgShortCodeInsert()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -303,110 +303,103 @@ func TestPgShortCodeInsert(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := dao.Exec(ctx, testCase.request)
+				credentials, err := shortCodeInsert.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})
 		})
 	}
-}
 
-// TestShortCodeInsertConcurrentOverride races two Override inserts for one (target, usage) pair
-// against a single active code they both contend on. The partial unique index keeps at most one
-// active row, so on every interleaving the loser takes the already-exists path, never a raw
-// SQLSTATE 40001 serialization failure. Several rounds run so the two transactions overlap at least
-// once.
-func TestShortCodeInsertConcurrentOverride(t *testing.T) {
-	t.Parallel()
+	// Two Override inserts race for one (target, usage) pair against the single active code they
+	// both contend on. The partial unique index keeps at most one active row, so on every
+	// interleaving the loser takes the already-exists path, never a raw SQLSTATE 40001
+	// serialization failure. Several rounds run so the two transactions overlap at least once.
+	t.Run("Success/ConcurrentOverride", func(t *testing.T) {
+		t.Parallel()
 
-	now := time.Now().UTC().Round(time.Second)
-	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
-	hourLater := time.Now().Add(time.Hour).UTC().Round(time.Second)
+		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
+			t.Helper()
 
-	shortCodeDAO := dao.NewPgShortCodeInsert()
+			db, err := postgres.GetContext(ctx)
+			require.NoError(t, err)
 
-	postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
-		t.Helper()
-
-		db, err := postgres.GetContext(ctx)
-		require.NoError(t, err)
-
-		// Seed the single active code the first round's overrides contend on. Every
-		// later round contends on the previous round's surviving row.
-		seed := []*dao.ShortCode{
-			{
-				ID:        uuid.New(),
-				Code:      "seed-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("seed-data"),
-				CreatedAt: hourAgo,
-				ExpiresAt: hourLater,
-			},
-		}
-		_, err = db.NewInsert().Model(&seed).Exec(ctx)
-		require.NoError(t, err)
-
-		const rounds = 10
-
-		for round := range rounds {
-			// Two overrides for the same pair, released together so their transactions
-			// overlap and genuinely contend on the current active row's override UPDATE.
-			requests := []*dao.ShortCodeInsertRequest{
+			// Seed the single active code the first round's overrides contend on. Every
+			// later round contends on the previous round's surviving row.
+			seed := []*dao.ShortCode{
 				{
-					ID: uuid.New(), Code: "override-a", Usage: "test-usage", Target: "test-target",
-					Data: []byte("data-a"), Now: now, ExpiresAt: hourLater, Override: true,
-				},
-				{
-					ID: uuid.New(), Code: "override-b", Usage: "test-usage", Target: "test-target",
-					Data: []byte("data-b"), Now: now, ExpiresAt: hourLater, Override: true,
+					ID:        uuid.New(),
+					Code:      "seed-code",
+					Usage:     "test-usage",
+					Target:    "test-target",
+					Data:      []byte("seed-data"),
+					CreatedAt: hourAgo,
+					ExpiresAt: hourLater,
 				},
 			}
+			_, err = db.NewInsert().Model(&seed).Exec(ctx)
+			require.NoError(t, err)
 
-			start := make(chan struct{})
-			errs := make([]error, len(requests))
+			const rounds = 10
 
-			var wg sync.WaitGroup
-			for i, request := range requests {
-				wg.Add(1)
-
-				go func() {
-					defer wg.Done()
-
-					<-start
-
-					_, errs[i] = shortCodeDAO.Exec(ctx, request)
-				}()
-			}
-
-			close(start)
-			wg.Wait()
-
-			// The loser never sees a raw serialization failure — only the mapped
-			// already-exists sentinel — and at least one override always lands.
-			successes := 0
-
-			for _, err := range errs {
-				if err == nil {
-					successes++
-
-					continue
+			for round := range rounds {
+				// Two overrides for the same pair, released together so their transactions
+				// overlap and genuinely contend on the current active row's override UPDATE.
+				requests := []*dao.ShortCodeInsertRequest{
+					{
+						ID: uuid.New(), Code: "override-a", Usage: "test-usage", Target: "test-target",
+						Data: []byte("data-a"), Now: now, ExpiresAt: hourLater, Override: true,
+					},
+					{
+						ID: uuid.New(), Code: "override-b", Usage: "test-usage", Target: "test-target",
+						Data: []byte("data-b"), Now: now, ExpiresAt: hourLater, Override: true,
+					},
 				}
 
-				require.ErrorIs(t, err, dao.ErrShortCodeInsertAlreadyExists)
+				start := make(chan struct{})
+				errs := make([]error, len(requests))
+
+				var wg sync.WaitGroup
+				for i, request := range requests {
+					wg.Add(1)
+
+					go func() {
+						defer wg.Done()
+
+						<-start
+
+						_, errs[i] = shortCodeInsert.Exec(ctx, request)
+					}()
+				}
+
+				close(start)
+				wg.Wait()
+
+				// The loser never sees a raw serialization failure — only the mapped
+				// already-exists sentinel — and at least one override always lands.
+				successes := 0
+
+				for _, err := range errs {
+					if err == nil {
+						successes++
+
+						continue
+					}
+
+					require.ErrorIs(t, err, dao.ErrShortCodeInsertAlreadyExists)
+				}
+
+				require.GreaterOrEqualf(t, successes, 1, "round %d: at least one override must succeed", round)
+
+				// The invariant the unique index protects: exactly one active row remains.
+				activeCount, err := db.NewSelect().
+					Model((*dao.ShortCode)(nil)).
+					Where("target = ?", "test-target").
+					Where("usage = ?", "test-usage").
+					Where("deleted_at IS NULL").
+					Count(ctx)
+				require.NoError(t, err)
+				require.Equalf(t, int64(1), activeCount, "round %d: exactly one active short code must remain", round)
 			}
-
-			require.GreaterOrEqualf(t, successes, 1, "round %d: at least one override must succeed", round)
-
-			// The invariant the unique index protects: exactly one active row remains.
-			activeCount, err := db.NewSelect().
-				Model((*dao.ShortCode)(nil)).
-				Where("target = ?", "test-target").
-				Where("usage = ?", "test-usage").
-				Where("deleted_at IS NULL").
-				Count(ctx)
-			require.NoError(t, err)
-			require.Equalf(t, int64(1), activeCount, "round %d: exactly one active short code must remain", round)
-		}
+		})
 	})
 }
