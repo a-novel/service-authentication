@@ -71,172 +71,122 @@ var (
 	RestRateLimitMailboxDefault    = config.Must(httpf.ParseRate("3/1h"))
 )
 
-// Raw values for environment variables.
-var (
-	postgresDsn          = getEnv("POSTGRES_DSN")
-	postgresHost         = getEnv("POSTGRES_HOST")
-	postgresPort         = getEnv("POSTGRES_PORT")
-	postgresUser         = getEnv("POSTGRES_USER")
-	postgresPassword     = getEnv("POSTGRES_PASSWORD")
-	postgresDatabase     = getEnv("POSTGRES_DATABASE")
-	postgresTLSEnabled   = getEnv("POSTGRES_TLS_ENABLED")
-	postgresMaxOpenConns = getEnv("POSTGRES_MAX_OPEN_CONNS")
-	postgresMaxIdleConns = getEnv("POSTGRES_MAX_IDLE_CONNS")
-
-	platformAuthUrl               = getEnv("PLATFORM_AUTH_URL")
-	platformAuthUpdateEmailUrl    = getEnv("PLATFORM_AUTH_URL_UPDATE_EMAIL")
-	platformAuthUpdatePasswordUrl = getEnv("PLATFORM_AUTH_URL_UPDATE_PASSWORD")
-	platformAuthRegisterUrl       = getEnv("PLATFORM_AUTH_URL_REGISTER")
-
-	serviceJsonKeysHost = getEnv("SERVICE_JSON_KEYS_HOST")
-	serviceJsonKeysPort = getEnv("SERVICE_JSON_KEYS_PORT")
-
-	smtpAddr             = getEnv("SMTP_ADDR")
-	smtpSenderName       = getEnv("SMTP_SENDER_NAME")
-	smtpSenderEmail      = getEnv("SMTP_SENDER_EMAIL")
-	smtpUsername         = getEnv("SMTP_USERNAME")
-	smtpSenderPassword   = getEnv("SMTP_SENDER_PASSWORD")
-	smtpSenderDomain     = getEnv("SMTP_SENDER_DOMAIN")
-	smtpTimeout          = getEnv("SMTP_TIMEOUT")
-	smtpMaxConcurrent    = getEnv("SMTP_MAX_CONCURRENT")
-	smtpForceUnencrypted = getEnv("SMTP_FORCE_UNENCRYPTED")
-
-	waitlistURL     = getEnv("WAITLIST_URL")
-	waitlistSecret  = getEnv("WAITLIST_SECRET")
-	waitlistTimeout = getEnv("WAITLIST_TIMEOUT")
-
-	waitlistMaxConcurrent   = getEnv("WAITLIST_MAX_CONCURRENT")
-	waitlistMaxRequestSize  = getEnv("WAITLIST_MAX_REQUEST_SIZE")
-	argon2MaxConcurrent     = getEnv("ARGON2_MAX_CONCURRENT")
-	restRateLimitStrict     = getEnv("REST_RATE_LIMIT_STRICT")
-	restRateLimitLoginBurst = getEnv("REST_RATE_LIMIT_LOGIN_BURST")
-	restRateLimitLogin      = getEnv("REST_RATE_LIMIT_LOGIN")
-	restRateLimitMailbox    = getEnv("REST_RATE_LIMIT_MAILBOX")
-
-	appName = getEnv("APP_NAME")
-	otel    = getEnv("OTEL")
-
-	gcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
-
-	downtimeStart = getEnv("DOWNTIME_START")
-)
-
 var (
 	// PostgresDsn is the legacy URL used when PostgresHost is empty.
 	//
 	// Configure the discrete PostgreSQL fields for new deployments.
-	PostgresDsn = postgresDsn
+	PostgresDsn = getEnv("POSTGRES_DSN")
 	// PostgresHost is the PostgreSQL server hostname or IP address.
-	PostgresHost = postgresHost
+	PostgresHost = getEnv("POSTGRES_HOST")
 	// PostgresPort is the PostgreSQL server port.
-	PostgresPort = config.LoadEnv(postgresPort, PostgresPortDefault, config.IntParser)
+	PostgresPort = config.LoadEnv(getEnv("POSTGRES_PORT"), PostgresPortDefault, config.IntParser)
 	// PostgresUser is the PostgreSQL login role.
-	PostgresUser = postgresUser
+	PostgresUser = getEnv("POSTGRES_USER")
 	// PostgresPassword is the PostgreSQL login credential.
-	PostgresPassword = postgresPassword
+	PostgresPassword = getEnv("POSTGRES_PASSWORD")
 	// PostgresDatabase is the PostgreSQL database name.
-	PostgresDatabase = postgresDatabase
+	PostgresDatabase = getEnv("POSTGRES_DATABASE")
 	// PostgresTLSEnabled controls transport encryption for the PostgreSQL connection.
-	PostgresTLSEnabled = config.LoadEnv(postgresTLSEnabled, PostgresTLSEnabledDefault, config.BoolParser)
+	PostgresTLSEnabled = config.LoadEnv(getEnv("POSTGRES_TLS_ENABLED"), PostgresTLSEnabledDefault, config.BoolParser)
 
 	// PostgresMaxOpenConns is the maximum number of open connections to the database.
-	PostgresMaxOpenConns = config.LoadEnv(postgresMaxOpenConns, PostgresMaxOpenConnsDefault, config.IntParser)
+	PostgresMaxOpenConns = config.LoadEnv(getEnv("POSTGRES_MAX_OPEN_CONNS"), PostgresMaxOpenConnsDefault, config.IntParser)
 	// PostgresMaxIdleConns is the maximum number of connections kept open while idle.
-	PostgresMaxIdleConns = config.LoadEnv(postgresMaxIdleConns, PostgresMaxIdleConnsDefault, config.IntParser)
+	PostgresMaxIdleConns = config.LoadEnv(getEnv("POSTGRES_MAX_IDLE_CONNS"), PostgresMaxIdleConnsDefault, config.IntParser)
 
 	// PlatformAuthUrl is the base URL of the authentication web client, prefixed onto the
 	// links inserted in emails.
-	PlatformAuthUrl = platformAuthUrl
+	PlatformAuthUrl = getEnv("PLATFORM_AUTH_URL")
 	// PlatformAuthUpdateEmailUrl is the web client page linked from update emails to
 	// complete the email update.
 	PlatformAuthUpdateEmailUrl = config.LoadEnv(
-		platformAuthUpdateEmailUrl,
-		PlatformAuthUrl+PlatformEmailUpdateUrlDefault,
-		config.StringParser,
+		getEnv("PLATFORM_AUTH_URL_UPDATE_EMAIL"), PlatformAuthUrl+PlatformEmailUpdateUrlDefault, config.StringParser,
 	)
 	// PlatformAuthUpdatePasswordUrl is the web client page linked from reset emails to
 	// complete the password reset.
 	PlatformAuthUpdatePasswordUrl = config.LoadEnv(
-		platformAuthUpdatePasswordUrl,
-		PlatformAuthUrl+PlatformPasswordResetUrlDefault,
-		config.StringParser,
+		getEnv("PLATFORM_AUTH_URL_UPDATE_PASSWORD"), PlatformAuthUrl+PlatformPasswordResetUrlDefault, config.StringParser,
 	)
 	// PlatformAuthRegisterUrl is the web client page linked from registration emails to
 	// complete the account creation.
 	PlatformAuthRegisterUrl = config.LoadEnv(
-		platformAuthRegisterUrl,
-		PlatformAuthUrl+PlatformAccountCreateUrlDefault,
-		config.StringParser,
+		getEnv("PLATFORM_AUTH_URL_REGISTER"), PlatformAuthUrl+PlatformAccountCreateUrlDefault, config.StringParser,
 	)
 
 	// ServiceJsonKeysHost points to the host name (without protocol / port) on which the JSON Keys Service is hosted.
 	//
 	// See https://github.com/a-novel/service-json-keys
-	ServiceJsonKeysHost = config.LoadEnv(serviceJsonKeysHost, ServiceJsonKeysHostDefault, config.StringParser)
+	ServiceJsonKeysHost = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_HOST"), ServiceJsonKeysHostDefault, config.StringParser)
 	// ServiceJsonKeysPort points to the port on which the JSON Keys Service is hosted.
 	//
 	// See https://github.com/a-novel/service-json-keys
-	ServiceJsonKeysPort = config.LoadEnv(serviceJsonKeysPort, ServiceJsonKeysPortDefault, config.IntParser)
+	ServiceJsonKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJsonKeysPortDefault, config.IntParser)
 
 	// SmtpAddr is the address of the SMTP server used to send emails.
 	//
 	// It should be in the form domain:port.
-	SmtpAddr = smtpAddr
+	SmtpAddr = getEnv("SMTP_ADDR")
 	// SmtpSenderName is the display name that appears as the sender on outgoing emails.
-	SmtpSenderName = smtpSenderName
+	SmtpSenderName = getEnv("SMTP_SENDER_NAME")
 	// SmtpSenderEmail is the address outgoing emails are sent from.
-	SmtpSenderEmail = smtpSenderEmail
+	SmtpSenderEmail = getEnv("SMTP_SENDER_EMAIL")
 	// SmtpUsername is the identity used for SMTP authentication. An empty value lets the sender
 	// reuse SmtpSenderEmail.
-	SmtpUsername = smtpUsername
+	SmtpUsername = getEnv("SMTP_USERNAME")
 	// SmtpSenderPassword is the credential used for SMTP authentication. It is sensitive and
 	// should be handled accordingly.
-	SmtpSenderPassword = smtpSenderPassword
+	SmtpSenderPassword = getEnv("SMTP_SENDER_PASSWORD")
 	// SmtpSenderDomain is the domain used when sending emails. It should match the host of SmtpAddr.
-	SmtpSenderDomain = smtpSenderDomain
+	SmtpSenderDomain = getEnv("SMTP_SENDER_DOMAIN")
 	// SmtpTimeout bounds how long a single email send may take.
-	SmtpTimeout = config.LoadEnv(smtpTimeout, SmtpTimeoutDefault, config.DurationParser)
+	SmtpTimeout = config.LoadEnv(getEnv("SMTP_TIMEOUT"), SmtpTimeoutDefault, config.DurationParser)
 	// SmtpMaxConcurrent caps concurrent email deliveries; excess sends wait for a slot.
-	SmtpMaxConcurrent = config.LoadEnv(smtpMaxConcurrent, SmtpMaxConcurrentDefault, config.IntParser)
+	SmtpMaxConcurrent = config.LoadEnv(getEnv("SMTP_MAX_CONCURRENT"), SmtpMaxConcurrentDefault, config.IntParser)
 	// SmtpForceUnencrypted lets the SMTP client send plain credentials over a non-TLS
 	// connection, which Go otherwise permits only towards localhost. Local runs under
 	// Docker need it because the mail host answers to another name.
 	//
 	// It must never be set in production.
-	SmtpForceUnencrypted = config.LoadEnv(smtpForceUnencrypted, false, config.BoolParser)
+	SmtpForceUnencrypted = config.LoadEnv(getEnv("SMTP_FORCE_UNENCRYPTED"), false, config.BoolParser)
 
 	// WaitlistURL is the Google Apps Script /exec deployment URL; empty disables the integration.
-	WaitlistURL = waitlistURL
+	WaitlistURL = getEnv("WAITLIST_URL")
 	// WaitlistSecret is a server-only signing key shared with the Google script properties.
-	WaitlistSecret = waitlistSecret
+	WaitlistSecret = getEnv("WAITLIST_SECRET")
 	// WaitlistTimeout bounds the Google request and its content redirect.
-	WaitlistTimeout = config.LoadEnv(waitlistTimeout, WaitlistTimeoutDefault, config.DurationParser)
+	WaitlistTimeout = config.LoadEnv(getEnv("WAITLIST_TIMEOUT"), WaitlistTimeoutDefault, config.DurationParser)
 	// WaitlistMaxConcurrent caps the waitlist requests waiting on Google at once, per instance.
-	WaitlistMaxConcurrent = config.LoadEnv(waitlistMaxConcurrent, WaitlistMaxConcurrentDefault, config.IntParser)
+	WaitlistMaxConcurrent = config.LoadEnv(
+		getEnv("WAITLIST_MAX_CONCURRENT"), WaitlistMaxConcurrentDefault, config.IntParser,
+	)
 	// WaitlistMaxRequestSize caps a waitlist request body, in bytes.
-	WaitlistMaxRequestSize = config.LoadEnv(waitlistMaxRequestSize, WaitlistMaxRequestSizeDefault, config.Int64Parser)
+	WaitlistMaxRequestSize = config.LoadEnv(
+		getEnv("WAITLIST_MAX_REQUEST_SIZE"), WaitlistMaxRequestSizeDefault, config.Int64Parser,
+	)
 
 	// Argon2MaxConcurrent caps the password hashes running at once, per instance. Each allocates
 	// 64 MiB, so size it to the instance's memory.
-	Argon2MaxConcurrent = config.LoadEnv(argon2MaxConcurrent, Argon2MaxConcurrentDefault, config.IntParser)
+	Argon2MaxConcurrent = config.LoadEnv(getEnv("ARGON2_MAX_CONCURRENT"), Argon2MaxConcurrentDefault, config.IntParser)
 
 	// RestRateLimitStrict caps each caller of a route issuing anonymous tokens or invitation requests.
-	RestRateLimitStrict = config.LoadEnv(restRateLimitStrict, RestRateLimitStrictDefault, httpf.ParseRate)
+	RestRateLimitStrict = config.LoadEnv(getEnv("REST_RATE_LIMIT_STRICT"), RestRateLimitStrictDefault, httpf.ParseRate)
 	// RestRateLimitLoginBurst caps each caller's requests checking a password or short code, logins
 	// first, over a short window.
-	RestRateLimitLoginBurst = config.LoadEnv(restRateLimitLoginBurst, RestRateLimitLoginBurstDefault, httpf.ParseRate)
+	RestRateLimitLoginBurst = config.LoadEnv(
+		getEnv("REST_RATE_LIMIT_LOGIN_BURST"), RestRateLimitLoginBurstDefault, httpf.ParseRate,
+	)
 	// RestRateLimitLogin caps the same requests over a longer window, per caller and per email or
 	// account named.
-	RestRateLimitLogin = config.LoadEnv(restRateLimitLogin, RestRateLimitLoginDefault, httpf.ParseRate)
+	RestRateLimitLogin = config.LoadEnv(getEnv("REST_RATE_LIMIT_LOGIN"), RestRateLimitLoginDefault, httpf.ParseRate)
 	// RestRateLimitMailbox caps the emails each address receives from one route.
-	RestRateLimitMailbox = config.LoadEnv(restRateLimitMailbox, RestRateLimitMailboxDefault, httpf.ParseRate)
+	RestRateLimitMailbox = config.LoadEnv(getEnv("REST_RATE_LIMIT_MAILBOX"), RestRateLimitMailboxDefault, httpf.ParseRate)
 
 	// AppName is the name of the application, as it will appear in logs and tracing.
-	AppName = config.LoadEnv(appName, AppNameDefault, config.StringParser)
+	AppName = config.LoadEnv(getEnv("APP_NAME"), AppNameDefault, config.StringParser)
 	// Otel enables OpenTelemetry instrumentation.
 	//
 	// See https://opentelemetry.io/
-	Otel = config.LoadEnv(otel, false, config.BoolParser)
+	Otel = config.LoadEnv(getEnv("OTEL"), false, config.BoolParser)
 
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
@@ -244,11 +194,11 @@ var (
 	// GcloudProjectId configures the server for Google Cloud environment.
 	//
 	// See: https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
-	GcloudProjectId = gcloudProjectId
+	GcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
 
 	// DowntimeStart is when a planned downtime of this service starts, in RFC 3339. From then
 	// until it is removed, the service refuses work. Nil when none is planned.
-	DowntimeStart = config.LoadEnv(downtimeStart, nil, downtime.ParseStart)
+	DowntimeStart = config.LoadEnv(getEnv("DOWNTIME_START"), nil, downtime.ParseStart)
 )
 
 // restDefaults keeps golib's REST defaults but for the versioned ping path and the shutdown, which
