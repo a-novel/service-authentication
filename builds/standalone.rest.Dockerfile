@@ -23,7 +23,7 @@ COPY ./internal/lib ./internal/lib
 COPY ./internal/core ./internal/core
 COPY ./internal/models ./internal/models
 COPY ./internal/config ./internal/config
-COPY ./pkg ./pkg
+COPY ./pkg/go ./pkg/go
 
 # One RUN so the three binaries share a single warm module + build cache.
 RUN --mount=type=cache,target=/go/pkg/mod \

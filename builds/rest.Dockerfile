@@ -22,9 +22,9 @@ COPY ./internal/handlers ./internal/handlers
 COPY ./internal/dao ./internal/dao
 COPY ./internal/lib ./internal/lib
 COPY ./internal/core ./internal/core
-COPY ./internal/models ./internal/models
+COPY ./internal/models/mails ./internal/models/mails
 COPY ./internal/config ./internal/config
-COPY ./pkg ./pkg
+COPY ./pkg/go ./pkg/go
 
 # Cache mounts persist the module + build cache across builds, so a rebuild after
 # a source change recompiles only the changed packages instead of the whole tree.
