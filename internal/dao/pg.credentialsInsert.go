@@ -31,7 +31,7 @@ type CredentialsInsertRequest struct {
 	Password string
 	// See [Credentials.Role].
 	Role string
-	// Now is the timestamp recorded as the row's creation time.
+	// Now is the instant stored as both created_at and updated_at.
 	Now time.Time
 }
 

@@ -34,6 +34,7 @@ type ShortCode struct {
 	// Data carries flow-specific context used after validating the short code.
 	Data []byte `bun:"data"`
 
+	// CreatedAt is when the short code was issued.
 	CreatedAt time.Time `bun:"created_at"`
 	// ExpiresAt bounds the short code's lifetime. The clear value sits wherever it was
 	// delivered and can authorize a critical operation such as a password reset, so

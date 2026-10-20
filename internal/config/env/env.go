@@ -18,8 +18,8 @@ func getEnv(name string) string {
 	return os.Getenv(prefix + name)
 }
 
-// Default values applied when an environment variable is unset.
 const (
+	// SmtpTimeoutDefault bounds one email send.
 	SmtpTimeoutDefault = 20 * time.Second
 	// SmtpMaxConcurrentDefault bounds the SMTP connections a burst or a stalled server can hold open.
 	SmtpMaxConcurrentDefault = 16
@@ -30,13 +30,19 @@ const (
 	// WaitlistMaxRequestSizeDefault allows the bounded email/language payload with JSON escaping overhead.
 	WaitlistMaxRequestSizeDefault = 8 << 10
 
-	PlatformEmailUpdateUrlDefault   = "/ext/email/validate"
+	// PlatformEmailUpdateUrlDefault is the email-validation page, under PlatformAuthUrl.
+	PlatformEmailUpdateUrlDefault = "/ext/email/validate"
+	// PlatformPasswordResetUrlDefault is the password-reset page, under PlatformAuthUrl.
 	PlatformPasswordResetUrlDefault = "/ext/password/reset"
+	// PlatformAccountCreateUrlDefault is the registration page, under PlatformAuthUrl.
 	PlatformAccountCreateUrlDefault = "/ext/account/create"
 
+	// AppNameDefault names the application in logs and traces when APP_NAME is unset.
 	AppNameDefault = "service-authentication"
 
+	// ServiceJsonKeysHostDefault reaches a JSON Keys service on the same host.
 	ServiceJsonKeysHostDefault = "localhost"
+	// ServiceJsonKeysPortDefault is the JSON Keys service's default gRPC port.
 	ServiceJsonKeysPortDefault = 8080
 
 	// RestTimeoutShutdownDefault clears SmtpTimeoutDefault, leaving room for a send that starts
@@ -44,31 +50,34 @@ const (
 	// this in turn; builds/podman-compose.yaml sets one.
 	RestTimeoutShutdownDefault = 25 * time.Second
 
-	// PostgresMaxOpenConnsDefault keeps the pool well under a stock PostgreSQL
-	// max_connections of 100 once multiplied by a service's replica count, leaving
-	// room for the migration job and a psql session. Go's own default is unlimited,
-	// which turns a spike into connection refusals for everything on that database
-	// rather than queueing inside this process.
+	// PostgresMaxOpenConnsDefault keeps the pool well under a stock PostgreSQL max_connections of 100
+	// once multiplied by a service's replica count, leaving room for the migration job and a psql
+	// session. Go's own default is unlimited, which turns a spike into connection refusals for
+	// everything on that database. The limit queues the spike inside this process instead.
 	PostgresMaxOpenConnsDefault = 20
-	// PostgresMaxIdleConnsDefault matches the open limit so a burst does not close
-	// connections it is about to reopen.
+	// PostgresMaxIdleConnsDefault matches the open limit, so a burst keeps the connections it is about
+	// to reuse.
 	PostgresMaxIdleConnsDefault = 20
-	PostgresPortDefault         = 5432
-	PostgresTLSEnabledDefault   = true
+	// PostgresPortDefault is PostgreSQL's standard port.
+	PostgresPortDefault = 5432
+	// PostgresTLSEnabledDefault encrypts the connection unless a deployment turns it off.
+	PostgresTLSEnabledDefault = true
 )
 
-// Default rate limits, written "<requests>/<window>" as in their variables.
+// Defaults computed at startup. A rate is written "<requests>/<window>", as in its variable.
 var (
 	// Argon2MaxConcurrentDefault runs one hash per CPU the container may use, as Keycloak does.
 	// Hashing is CPU-bound, so more concurrent hashes add memory, 64 MiB each, but no throughput.
 	Argon2MaxConcurrentDefault = runtime.GOMAXPROCS(0)
 
+	// RestRateLimitStrictDefault caps anonymous tokens and invitation requests per caller.
 	RestRateLimitStrictDefault = config.Must(httpf.ParseRate("3/5m"))
-	// RestRateLimitLoginBurstDefault and RestRateLimitLoginDefault leave a forgotten password a few
-	// attempts.
+	// RestRateLimitLoginBurstDefault leaves a forgotten password a few attempts within a minute.
 	RestRateLimitLoginBurstDefault = config.Must(httpf.ParseRate("10/1m"))
-	RestRateLimitLoginDefault      = config.Must(httpf.ParseRate("30/10m"))
-	RestRateLimitMailboxDefault    = config.Must(httpf.ParseRate("3/1h"))
+	// RestRateLimitLoginDefault leaves a forgotten password a few attempts over ten minutes.
+	RestRateLimitLoginDefault = config.Must(httpf.ParseRate("30/10m"))
+	// RestRateLimitMailboxDefault caps the emails one address receives from a route.
+	RestRateLimitMailboxDefault = config.Must(httpf.ParseRate("3/1h"))
 )
 
 var (

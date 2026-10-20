@@ -23,6 +23,8 @@ type Credentials struct {
 	// Role determines which actions the user is allowed to take.
 	Role string `bun:"role"`
 
+	// CreatedAt is when the account was registered.
 	CreatedAt time.Time `bun:"created_at"`
+	// UpdatedAt is when the email, password or role last changed.
 	UpdatedAt time.Time `bun:"updated_at"`
 }
