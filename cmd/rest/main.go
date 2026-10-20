@@ -38,10 +38,8 @@ import (
 func main() {
 	cfg := config.AppPresetDefault
 
-	processCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-
-	ctx := processCtx
 
 	otel.SetAppName(cfg.App.Name)
 
@@ -235,13 +233,7 @@ func main() {
 
 	httpServer := httpf.NewServer(ctx, cfg.Rest, router)
 
-	lo.Must0(serve(
-		processCtx,
-		stop,
-		httpServer,
-		cfg.Rest.Timeouts.Shutdown,
-		mailDelivery,
-	))
+	lo.Must0(serve(ctx, stop, httpServer, cfg.Rest.Timeouts.Shutdown, mailDelivery))
 }
 
 // serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.
