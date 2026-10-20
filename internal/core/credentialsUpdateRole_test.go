@@ -346,9 +346,8 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectErr: errFoo,
 		},
 		{
-			// The target's stored role is one the config no longer knows — the 'user'
-			// default. Ranking it must error, not silently take priority 0 and let the
-			// hierarchy guards compare against a rank the account does not hold.
+			// The target's stored role, 'user', names no configured role. Ranking it errors, so the
+			// hierarchy guards never compare against a rank the account does not hold.
 			name: "TargetHasUnknownStoredRole",
 
 			request: &core.CredentialsUpdateRoleRequest{

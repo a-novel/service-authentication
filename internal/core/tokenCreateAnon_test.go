@@ -66,13 +66,15 @@ func TestTokenCreateAnon(t *testing.T) {
 			serviceSignClaims := coremocks.NewMockTokenCreateAnonServiceSignClaims(t)
 
 			if testCase.issueTokenMock != nil {
+				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
+					Usage: servicejsonkeys.KeyUsageAuth,
+					Payload: lo.Must(grpcf.MarshalJSONAsAny(core.AccessTokenClaims{
+						Roles: []string{authconfig.RoleAnon},
+					})),
+				}
+
 				serviceSignClaims.EXPECT().
-					ClaimsSign(mock.Anything, &servicejsonkeys.ClaimsSignRequest{
-						Usage: servicejsonkeys.KeyUsageAuth,
-						Payload: lo.Must(grpcf.MarshalJSONAsAny(core.AccessTokenClaims{
-							Roles: []string{authconfig.RoleAnon},
-						})),
-					}).
+					ClaimsSign(mock.Anything, claimsSignRequest).
 					Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
 			}
 

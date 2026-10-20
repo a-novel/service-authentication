@@ -16,12 +16,11 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/migrations"
 )
 
-// The schema now refuses a role the application does not know, and defaults new rows to a role it
-// does — the two halves of the fix that kept a bad role out of the database in the first place.
+// The schema refuses a role the application does not know, and defaults new rows to one it does.
 func TestCredentialsRoleSchema(t *testing.T) {
 	t.Parallel()
 
-	t.Run("the check constraint rejects an unknown role", func(t *testing.T) {
+	t.Run("Error/UnknownRole", func(t *testing.T) {
 		t.Parallel()
 
 		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
@@ -30,20 +29,21 @@ func TestCredentialsRoleSchema(t *testing.T) {
 			db, err := postgres.GetContext(ctx)
 			require.NoError(t, err)
 
-			// 'user' is exactly the value the old default produced; the constraint must
-			// refuse it now.
-			_, err = db.NewInsert().Model(&dao.Credentials{
+			// 'user' looks like a role but names none the application defines.
+			credentials := &dao.Credentials{
 				ID:        uuid.New(),
 				Email:     "bad-role@email.com",
 				Role:      "user",
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
-			}).Exec(ctx)
+			}
+
+			_, err = db.NewInsert().Model(credentials).Exec(ctx)
 			require.Error(t, err, "the database must reject a role the application does not define")
 		})
 	})
 
-	t.Run("a new row without a role defaults to auth:user", func(t *testing.T) {
+	t.Run("Success/DefaultRole", func(t *testing.T) {
 		t.Parallel()
 
 		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {

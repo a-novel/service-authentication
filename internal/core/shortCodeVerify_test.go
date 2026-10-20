@@ -168,11 +168,13 @@ func TestShortCodeVerify(t *testing.T) {
 			daoSelect := coremocks.NewMockShortCodeVerifyDao(t)
 
 			if testCase.daoSelectMock != nil {
+				shortCodeSelectRequest := &dao.ShortCodeSelectRequest{
+					Target: testCase.request.Target,
+					Usage:  testCase.request.Usage,
+				}
+
 				daoSelect.EXPECT().
-					Exec(mock.Anything, &dao.ShortCodeSelectRequest{
-						Target: testCase.request.Target,
-						Usage:  testCase.request.Usage,
-					}).
+					Exec(mock.Anything, shortCodeSelectRequest).
 					Return(testCase.daoSelectMock.resp, testCase.daoSelectMock.err)
 			}
 

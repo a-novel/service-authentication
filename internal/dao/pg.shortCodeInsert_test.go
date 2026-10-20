@@ -311,13 +311,11 @@ func TestShortCodeInsert(t *testing.T) {
 	}
 }
 
-// TestShortCodeInsertConcurrentOverride races two Override inserts for one
-// (target, usage) pair against a single active code they both contend on. The partial
-// unique index guarantees at most one active row survives, so on every interleaving
-// the loser must take the ordinary already-exists path — never a raw SQLSTATE 40001
-// serialization failure, which a repeatable-read transaction would surface here as a
-// 500. Several rounds run so the two transactions reliably overlap at least once; a
-// repeatable-read implementation fails the round where they do.
+// TestShortCodeInsertConcurrentOverride races two Override inserts for one (target, usage) pair
+// against a single active code they both contend on. The partial unique index keeps at most one
+// active row, so on every interleaving the loser takes the already-exists path, never a raw
+// SQLSTATE 40001 serialization failure. Several rounds run so the two transactions overlap at least
+// once.
 func TestShortCodeInsertConcurrentOverride(t *testing.T) {
 	t.Parallel()
 
@@ -401,18 +399,14 @@ func TestShortCodeInsertConcurrentOverride(t *testing.T) {
 			require.GreaterOrEqualf(t, successes, 1, "round %d: at least one override must succeed", round)
 
 			// The invariant the unique index protects: exactly one active row remains.
-			// Scanned into an int rather than read from Count, whose return type changed in bun v1.3.0.
-			var activeCount int
-
-			err := db.NewSelect().
+			activeCount, err := db.NewSelect().
 				Model((*dao.ShortCode)(nil)).
-				ColumnExpr("count(*)").
 				Where("target = ?", "test-target").
 				Where("usage = ?", "test-usage").
 				Where("deleted_at IS NULL").
-				Scan(ctx, &activeCount)
+				Count(ctx)
 			require.NoError(t, err)
-			require.Equalf(t, 1, activeCount, "round %d: exactly one active short code must remain", round)
+			require.Equalf(t, int64(1), activeCount, "round %d: exactly one active short code must remain", round)
 		}
 	})
 }

@@ -116,12 +116,9 @@ func TestShortCodeCreate(t *testing.T) {
 
 			service := core.NewShortCodeCreate(mockDao, authconfig.ShortCodesPresetDefault)
 
-			// Bracket the call rather than compare against a clock read somewhere else.
-			// The service stamps its timestamp before hashing the code with Argon2id,
-			// which is deliberately expensive, so any two reads taken either side of that
-			// differ by however long the hash took — over a second on a loaded machine.
-			// A timestamp taken during the call is between these two by construction, at
-			// any speed.
+			// Bracket the whole call. The service stamps its timestamp after an Argon2id hash, which
+			// takes over a second on a loaded machine, and a timestamp taken during the call falls
+			// between these two reads at any speed.
 			before := time.Now()
 
 			resp, err := service.Exec(t.Context(), testCase.request)

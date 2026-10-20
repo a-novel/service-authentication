@@ -186,14 +186,16 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			}
 
 			if testCase.serviceCreateMock != nil {
+				shortCodeCreateRequest := &core.ShortCodeCreateRequest{
+					Usage:    core.ShortCodeUsageValidateEmail,
+					Target:   testCase.request.ID.String(),
+					TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageValidateEmail].TTL,
+					Data:     testCase.request.Email,
+					Override: true,
+				}
+
 				serviceCreate.EXPECT().
-					Exec(mock.Anything, &core.ShortCodeCreateRequest{
-						Usage:    core.ShortCodeUsageValidateEmail,
-						Target:   testCase.request.ID.String(),
-						TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageValidateEmail].TTL,
-						Data:     testCase.request.Email,
-						Override: true,
-					}).
+					Exec(mock.Anything, shortCodeCreateRequest).
 					Return(testCase.serviceCreateMock.resp, testCase.serviceCreateMock.err)
 			}
 
@@ -206,21 +208,21 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			}
 
 			if testCase.sendMail {
+				mailData := map[string]any{
+					"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
+					"Target":    testCase.request.ID.String(),
+					"Source":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
+					"URL":       smtpConfig.UpdateEmail,
+					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageValidateEmail].TTL.Hours(),
+					"Banner":    assets.BannerBase64,
+				}
+
 				sendMail := smtpService.EXPECT().
 					SendMail(
 						smtp.MailUsers{{Email: testCase.request.Email}},
 						mails.Mails.EmailUpdate,
 						testCase.request.Lang,
-						map[string]any{
-							"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
-							"Target":    testCase.request.ID.String(),
-							"Source":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
-							"URL":       smtpConfig.UpdateEmail,
-							"Duration": authconfig.ShortCodesPresetDefault.
-								Usages[core.ShortCodeUsageValidateEmail].
-								TTL.Hours(),
-							"Banner": assets.BannerBase64,
-						},
+						mailData,
 					).
 					Return(nil)
 

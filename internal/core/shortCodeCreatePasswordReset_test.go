@@ -174,13 +174,15 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}
 
 			if testCase.serviceCreateMock != nil {
+				shortCodeCreateRequest := &core.ShortCodeCreateRequest{
+					Usage:    core.ShortCodeUsageResetPassword,
+					Target:   testCase.daoMock.resp.ID.String(),
+					TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL,
+					Override: true,
+				}
+
 				serviceCreate.EXPECT().
-					Exec(mock.Anything, &core.ShortCodeCreateRequest{
-						Usage:    core.ShortCodeUsageResetPassword,
-						Target:   testCase.daoMock.resp.ID.String(),
-						TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL,
-						Override: true,
-					}).
+					Exec(mock.Anything, shortCodeCreateRequest).
 					Return(testCase.serviceCreateMock.resp, testCase.serviceCreateMock.err)
 			}
 
@@ -193,20 +195,20 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}
 
 			if testCase.sendMail {
+				mailData := map[string]any{
+					"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
+					"Target":    testCase.daoMock.resp.ID.String(),
+					"URL":       smtpConfig.UpdatePassword,
+					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL.Hours(),
+					"Banner":    assets.BannerBase64,
+				}
+
 				sendMail := smtpService.EXPECT().
 					SendMail(
 						smtp.MailUsers{{Email: testCase.request.Email}},
 						mails.Mails.PasswordReset,
 						testCase.request.Lang,
-						map[string]any{
-							"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
-							"Target":    testCase.daoMock.resp.ID.String(),
-							"URL":       smtpConfig.UpdatePassword,
-							"Duration": authconfig.ShortCodesPresetDefault.
-								Usages[core.ShortCodeUsageResetPassword].
-								TTL.Hours(),
-							"Banner": assets.BannerBase64,
-						},
+						mailData,
 					).
 					Return(nil)
 

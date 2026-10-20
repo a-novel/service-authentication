@@ -262,11 +262,13 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			}
 
 			if testCase.selectShortCodeMock != nil {
+				shortCodeSelectRequest := &dao.ShortCodeSelectRequest{
+					Usage:  core.ShortCodeUsageRegister,
+					Target: testCase.request.Email,
+				}
+
 				selectShortCode.EXPECT().
-					Exec(mock.Anything, &dao.ShortCodeSelectRequest{
-						Usage:  core.ShortCodeUsageRegister,
-						Target: testCase.request.Email,
-					}).
+					Exec(mock.Anything, shortCodeSelectRequest).
 					Return(
 						testCase.selectShortCodeMock.resp,
 						testCase.selectShortCodeMock.err,
@@ -274,12 +276,14 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			}
 
 			if testCase.registerMock != nil {
+				shortCodeCreateRegisterRequest := &core.ShortCodeCreateRegisterRequest{
+					Email: testCase.request.Email,
+					Lang:  testCase.request.Lang,
+					Role:  testCase.request.Role,
+				}
+
 				register.EXPECT().
-					Exec(mock.Anything, &core.ShortCodeCreateRegisterRequest{
-						Email: testCase.request.Email,
-						Lang:  testCase.request.Lang,
-						Role:  testCase.request.Role,
-					}).
+					Exec(mock.Anything, shortCodeCreateRegisterRequest).
 					Return(testCase.registerMock.resp, testCase.registerMock.err)
 			}
 

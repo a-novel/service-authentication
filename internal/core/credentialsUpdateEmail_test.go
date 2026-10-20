@@ -152,12 +152,14 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				serviceShortCodeConsume := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeConsume(t)
 
 				if testCase.serviceShortCodeVerifyMock != nil {
+					shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
+						Usage:  core.ShortCodeUsageValidateEmail,
+						Target: testCase.request.UserID.String(),
+						Code:   testCase.request.ShortCode,
+					}
+
 					serviceShortCodeVerify.EXPECT().
-						Exec(mock.Anything, &core.ShortCodeVerifyRequest{
-							Usage:  core.ShortCodeUsageValidateEmail,
-							Target: testCase.request.UserID.String(),
-							Code:   testCase.request.ShortCode,
-						}).
+						Exec(mock.Anything, shortCodeVerifyRequest).
 						Return(testCase.serviceShortCodeVerifyMock.resp, testCase.serviceShortCodeVerifyMock.err)
 				}
 

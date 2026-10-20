@@ -239,12 +239,14 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				serviceShortCodeConsume := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeConsume(t)
 
 				if testCase.serviceShortCodeVerifyMock != nil {
+					shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
+						Usage:  core.ShortCodeUsageResetPassword,
+						Target: testCase.request.UserID.String(),
+						Code:   testCase.request.ShortCode,
+					}
+
 					serviceShortCodeVerify.EXPECT().
-						Exec(mock.Anything, &core.ShortCodeVerifyRequest{
-							Usage:  core.ShortCodeUsageResetPassword,
-							Target: testCase.request.UserID.String(),
-							Code:   testCase.request.ShortCode,
-						}).
+						Exec(mock.Anything, shortCodeVerifyRequest).
 						Return(testCase.serviceShortCodeVerifyMock.resp, testCase.serviceShortCodeVerifyMock.err)
 				}
 
