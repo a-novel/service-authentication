@@ -86,9 +86,7 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	credentials, err := service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
-		Email: request.Email,
-	})
+	credentials, err := service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
 	}
@@ -99,17 +97,20 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 	}
 	defer reservation.Release()
 
-	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
+	ttl := service.shortCodesConfig.Usages[ShortCodeUsageResetPassword].TTL
+	createRequest := &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageResetPassword,
 		Target:   credentials.ID.String(),
-		TTL:      service.shortCodesConfig.Usages[ShortCodeUsageResetPassword].TTL,
+		TTL:      ttl,
 		Override: true,
-	})
+	}
+
+	shortCode, err := service.service.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
-	reservation.Deliver(ctx, &MailDeliveryRequest{
+	mail := &MailDeliveryRequest{
 		To:           smtp.MailUsers{{Email: request.Email}},
 		Template:     mails.Mails.PasswordReset,
 		TemplateName: request.Lang,
@@ -117,12 +118,13 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 			mails.TemplateVarShortCode: shortCode.PlainCode,
 			mails.TemplateVarTarget:    credentials.ID.String(),
 			mails.TemplateVarURL:       service.smtpConfig.UpdatePassword,
-			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageResetPassword].TTL.Hours(),
+			mails.TemplateVarDuration:  ttl.Hours(),
 			mails.TemplateVarBanner:    assets.BannerBase64,
-			mails.TemplateVarPurpose:   mailDeliveryKindPasswordReset,
 		},
 		Kind: mailDeliveryKindPasswordReset,
-	})
+	}
+
+	reservation.Deliver(ctx, mail)
 
 	return shortCode, nil
 }

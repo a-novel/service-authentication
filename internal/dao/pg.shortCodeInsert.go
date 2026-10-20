@@ -16,41 +16,38 @@ import (
 	"github.com/a-novel-kit/golib/postgres"
 )
 
-// ErrShortCodeInsertNested is returned when [ShortCodeInsert.Exec] runs inside a
-// transaction someone else opened. The insert owns its transaction to run at read
-// committed, while a nested call inherits the caller's isolation: WithinTx ignores its
-// options when nested.
+// ErrShortCodeInsertNested is returned when [ShortCodeInsert.Exec] runs inside a caller's
+// transaction. The insert opens its own at read committed, and postgres.WithinTx ignores the options
+// of a nested call.
 var ErrShortCodeInsertNested = errors.New("short code insert cannot run inside another transaction")
 
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
 
-// ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when an
-// active short code already covers the same (target, usage) pair. Two layers raise
-// it: the in-transaction conflict check on the Override=false path, and the partial
-// unique index (target, usage) WHERE deleted_at IS NULL, whose SQLSTATE 23505 is
-// mapped onto this sentinel. Callers match it with errors.Is either way.
+// ErrShortCodeInsertAlreadyExists is returned by [ShortCodeInsert.Exec] when an active short code
+// already covers the same (target, usage) pair. The conflict check of a request without Override
+// finds it, and the partial unique index catches a concurrent insert.
 var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
 // ShortCodeInsertRequest is the input to [ShortCodeInsert.Exec].
 type ShortCodeInsertRequest struct {
-	// See ShortCode.ID.
+	// See [ShortCode.ID].
 	ID uuid.UUID
-	// See ShortCode.Code.
+	// See [ShortCode.Code].
 	Code string
-	// See ShortCode.Usage.
+	// See [ShortCode.Usage].
 	Usage string
-	// See ShortCode.Target.
+	// See [ShortCode.Target].
 	Target string
-	// See ShortCode.Data.
+	// See [ShortCode.Data].
 	Data []byte
 	// Now is the timestamp recorded as the row's creation time.
 	Now time.Time
-	// See ShortCode.ExpiresAt.
+	// See [ShortCode.ExpiresAt].
 	ExpiresAt time.Time
 
-	// Override soft-deletes any conflicting record, with the ShortCodeDeleteOverride
-	// deletion comment. When false, a conflict fails the insert.
+	// Override soft-deletes any conflicting record, with the [ShortCodeDeleteOverride] deletion
+	// comment. When false, a conflict fails the insert.
 	Override bool
 }
 
@@ -76,24 +73,23 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 		return nil, otel.ReportError(span, ErrShortCodeInsertNested)
 	}
 
-	entity := new(ShortCode)
-	// The partial unique index on the active (target, usage) pair keeps one active code at
-	// any isolation. Under read committed, the losing UPDATE of two concurrent overrides
-	// blocks and re-evaluates, and its insert then fails on that index as an
-	// already-exists conflict. Repeatable read fails it with a serialization error instead.
+	entity := &ShortCode{}
+	// The partial unique index keeps one non-deleted code per (target, usage) pair at any
+	// isolation. Under read committed, the losing UPDATE of two concurrent overrides blocks and
+	// re-evaluates, and its insert then fails on that index as an already-exists conflict.
+	// Repeatable read fails it with a serialization error instead.
 	txOptions := &sql.TxOptions{Isolation: sql.LevelReadCommitted}
 
 	err := postgres.WithinTx(ctx, txOptions, func(ctx context.Context) error {
 		var err error
 
 		if request.Override {
-			// Soft-delete every live row for the pair, active or expired alike, so
-			// the partial unique index is clear before the insert.
+			// Soft-delete every non-deleted row of the pair, expired or not, so the partial unique
+			// index is clear before the insert.
 			err = dao.discardConflicts(ctx, request)
 		} else {
-			// checkConflicts gates on `expires_at > now()`. An expired row it ignores
-			// still sits in the partial unique index and collides with the insert.
-			// Soft-delete it first.
+			// checkConflicts ignores expired rows, which still sit in the partial unique index
+			// and collide with the insert. Soft-delete them first.
 			err = dao.discardExpired(ctx, request)
 			if err == nil {
 				err = dao.checkConflicts(ctx, request)

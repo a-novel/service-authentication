@@ -38,10 +38,8 @@ import (
 func main() {
 	cfg := config.AppPresetDefault
 
-	processCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-
-	ctx := processCtx
 
 	otel.SetAppName(cfg.App.Name)
 
@@ -111,25 +109,13 @@ func main() {
 	serviceShortCodeConsume := core.NewShortCodeConsume(daoShortCodeDelete)
 	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, cfg.ShortCodesConfig)
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
-		serviceShortCodeCreate,
-		daoCredentialsSelectByEmail,
-		mailDelivery,
-		cfg.ShortCodesConfig,
-		cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
-		serviceShortCodeCreate,
-		daoCredentialsSelectByEmail,
-		mailDelivery,
-		cfg.ShortCodesConfig,
-		cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
-		serviceShortCodeCreate,
-		daoCredentialsSelectByEmail,
-		mailDelivery,
-		cfg.ShortCodesConfig,
-		cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
 	)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
@@ -145,18 +131,12 @@ func main() {
 	serviceCredentialsUpdatePassword := core.NewCredentialsUpdatePassword(
 		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
 	)
-	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(
-		daoCredentialsUpdateRole,
-		daoCredentialsSelect,
-	)
+	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(daoCredentialsUpdateRole, daoCredentialsSelect)
 
 	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, jsonKeysClient)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
 	serviceTokenRefresh := core.NewTokenRefresh(
-		daoCredentialsSelect,
-		jsonKeysClient,
-		serviceVerifyAccessToken,
-		serviceVerifyRefreshToken,
+		daoCredentialsSelect, jsonKeysClient, serviceVerifyAccessToken, serviceVerifyRefreshToken,
 	)
 
 	// =================================================================================================================
@@ -170,49 +150,36 @@ func main() {
 	// HANDLERS
 	// =================================================================================================================
 
-	handlerPing := handlers.NewPing()
+	handlerPing := handlers.NewRestPing()
 	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.Smtp, cfg.Logger)
 
-	handlerClaimsGet := handlers.NewClaimsGet(cfg.Logger)
+	handlerClaimsGet := handlers.NewRestClaimsGet(cfg.Logger)
 
-	handlerCredentialsCreate := handlers.NewCredentialsCreate(serviceCredentialsCreate, cfg.Logger)
-	handlerCredentialsExist := handlers.NewCredentialsExist(serviceCredentialsExist, cfg.Logger)
-	handlerWaitlistJoin := handlers.NewRESTWaitlistJoin(serviceWaitlistJoin, cfg.Logger)
-	handlerCredentialsGet := handlers.NewCredentialsGet(serviceCredentialsGet, cfg.Logger)
-	handlerCredentialsList := handlers.NewCredentialsList(serviceCredentialsList, cfg.Logger)
-	handlerCredentialsResetPassword := handlers.NewCredentialsResetPassword(
-		serviceCredentialsUpdatePassword,
-		cfg.Logger,
+	handlerCredentialsCreate := handlers.NewRestCredentialsCreate(serviceCredentialsCreate, cfg.Logger)
+	handlerCredentialsExist := handlers.NewRestCredentialsExist(serviceCredentialsExist, cfg.Logger)
+	handlerWaitlistJoin := handlers.NewRestWaitlistJoin(serviceWaitlistJoin, cfg.Logger)
+	handlerCredentialsGet := handlers.NewRestCredentialsGet(serviceCredentialsGet, cfg.Logger)
+	handlerCredentialsList := handlers.NewRestCredentialsList(serviceCredentialsList, cfg.Logger)
+	handlerCredentialsResetPassword := handlers.NewRestCredentialsResetPassword(
+		serviceCredentialsUpdatePassword, cfg.Logger,
 	)
-	handlerCredentialsUpdatePassword := handlers.NewCredentialsUpdatePassword(
-		serviceCredentialsUpdatePassword,
-		cfg.Logger,
+	handlerCredentialsUpdatePassword := handlers.NewRestCredentialsUpdatePassword(
+		serviceCredentialsUpdatePassword, cfg.Logger,
 	)
-	handlerCredentialsUpdateEmail := handlers.NewCredentialsUpdateEmail(
-		serviceCredentialsUpdateEmail,
-		cfg.Logger,
-	)
-	handlerCredentialsUpdateRole := handlers.NewCredentialsUpdateRole(
-		serviceCredentialsUpdateRole,
-		cfg.Logger,
-	)
+	handlerCredentialsUpdateEmail := handlers.NewRestCredentialsUpdateEmail(serviceCredentialsUpdateEmail, cfg.Logger)
+	handlerCredentialsUpdateRole := handlers.NewRestCredentialsUpdateRole(serviceCredentialsUpdateRole, cfg.Logger)
 
-	handlerShortCodeCreateEmailUpdate := handlers.NewShortCodeCreateEmailUpdate(
-		serviceShortCodeCreateEmailUpdate,
-		cfg.Logger,
+	handlerShortCodeCreateEmailUpdate := handlers.NewRestShortCodeCreateEmailUpdate(
+		serviceShortCodeCreateEmailUpdate, cfg.Logger,
 	)
-	handlerShortCodeCreatePasswordReset := handlers.NewShortCodeCreatePasswordReset(
-		serviceShortCodeCreatePasswordReset,
-		cfg.Logger,
+	handlerShortCodeCreatePasswordReset := handlers.NewRestShortCodeCreatePasswordReset(
+		serviceShortCodeCreatePasswordReset, cfg.Logger,
 	)
-	handlerShortCodeCreateRegister := handlers.NewShortCodeCreateRegister(
-		serviceShortCodeCreateRegister,
-		cfg.Logger,
-	)
+	handlerShortCodeCreateRegister := handlers.NewRestShortCodeCreateRegister(serviceShortCodeCreateRegister, cfg.Logger)
 
-	handlerTokenCreate := handlers.NewTokenCreate(serviceTokenCreate, cfg.Logger)
-	handlerTokenCreateAnon := handlers.NewTokenCreateAnon(serviceTokenCreateAnon, cfg.Logger)
-	handlerTokenRefresh := handlers.NewTokenRefresh(serviceTokenRefresh, cfg.Logger)
+	handlerTokenCreate := handlers.NewRestTokenCreate(serviceTokenCreate, cfg.Logger)
+	handlerTokenCreateAnon := handlers.NewRestTokenCreateAnon(serviceTokenCreateAnon, cfg.Logger)
+	handlerTokenRefresh := handlers.NewRestTokenRefresh(serviceTokenRefresh, cfg.Logger)
 
 	// =================================================================================================================
 	// ROUTER
@@ -266,13 +233,7 @@ func main() {
 
 	httpServer := httpf.NewServer(ctx, cfg.Rest, router)
 
-	lo.Must0(serve(
-		processCtx,
-		stop,
-		httpServer,
-		cfg.Rest.Timeouts.Shutdown,
-		mailDelivery,
-	))
+	lo.Must0(serve(ctx, stop, httpServer, cfg.Rest.Timeouts.Shutdown, mailDelivery))
 }
 
 // serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.

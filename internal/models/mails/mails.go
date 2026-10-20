@@ -30,12 +30,18 @@ var (
 
 // The templates read their values from a data map keyed by these names.
 const (
+	// TemplateVarShortCode is the plaintext short code the link carries.
 	TemplateVarShortCode = "ShortCode"
-	TemplateVarTarget    = "Target"
-	TemplateVarURL       = "URL"
-	TemplateVarDuration  = "Duration"
-	TemplateVarBanner    = "Banner"
-	TemplateVarPurpose   = "_Purpose"
+	// TemplateVarTarget identifies the subject the short code is bound to, in the link.
+	TemplateVarTarget = "Target"
+	// TemplateVarSource is the new address of an email change, base64url-encoded in the link.
+	TemplateVarSource = "Source"
+	// TemplateVarURL is the platform page the link opens.
+	TemplateVarURL = "URL"
+	// TemplateVarDuration is the short code's lifetime, in hours.
+	TemplateVarDuration = "Duration"
+	// TemplateVarBanner is the banner image, as a data URI.
+	TemplateVarBanner = "Banner"
 )
 
 // MailTemplates groups the parsed email templates by type. Each field carries every

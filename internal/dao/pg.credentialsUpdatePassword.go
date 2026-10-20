@@ -15,28 +15,25 @@ import (
 )
 
 //go:embed pg.credentialsUpdatePassword.sql
-var credentialsUpdatePassword string
+var credentialsUpdatePasswordQuery string
 
-// ErrCredentialsUpdatePasswordNotFound is returned by
-// [CredentialsUpdatePassword.Exec] when no row matches the requested ID. It is
-// joined onto the underlying sql.ErrNoRows so callers can branch on it with
-// errors.Is.
+// ErrCredentialsUpdatePasswordNotFound is returned by [CredentialsUpdatePassword.Exec] when no row
+// matches the requested ID.
 var ErrCredentialsUpdatePasswordNotFound = errors.New("credentials not found")
 
 // CredentialsUpdatePasswordRequest is the input to [CredentialsUpdatePassword.Exec].
 type CredentialsUpdatePasswordRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
-	// Password is the Argon2id hash to persist. The caller hashes the plaintext
-	// (typically with lib.GenerateArgon2) before it reaches this layer, so a
-	// database leak yields no usable credentials.
+	// Password is the Argon2id hash to persist. The caller hashes the plaintext, so a database leak
+	// yields no usable credentials.
 	Password string
 	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 
-// CredentialsUpdatePassword updates the password used by a set of credentials. The
-// caller must have validated the user's identity before calling this DAO.
+// CredentialsUpdatePassword replaces the password hash of a credentials row. The caller verifies the
+// user's identity first.
 type CredentialsUpdatePassword struct{}
 
 func NewCredentialsUpdatePassword() *CredentialsUpdatePassword {
@@ -54,9 +51,9 @@ func (dao *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(Credentials)
+	entity := &Credentials{}
 
-	err = tx.NewRaw(credentialsUpdatePassword, request.Password, request.Now, request.ID).Scan(ctx, entity)
+	err = tx.NewRaw(credentialsUpdatePasswordQuery, request.Password, request.Now, request.ID).Scan(ctx, entity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = errors.Join(err, ErrCredentialsUpdatePasswordNotFound)

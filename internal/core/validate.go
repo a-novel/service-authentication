@@ -11,10 +11,8 @@ import (
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
-// ErrInvalidRequest is returned by every Exec entry point in this package when
-// the request fails struct-level validation. It is joined onto the underlying
-// validator error so callers can branch on it with errors.Is and surface the
-// detailed validation message at the same time.
+// ErrInvalidRequest is returned by an Exec whose request fails validation, joined onto the
+// validator error that details the failure.
 var ErrInvalidRequest = errors.New("invalid request")
 
 // ValidateLang is a go-playground/validator field-level validator that accepts

@@ -17,7 +17,7 @@ import (
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
-func TestTokenCreateAnon(t *testing.T) {
+func TestRestTokenCreateAnon(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -72,7 +72,7 @@ func TestTokenCreateAnon(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockTokenCreateAnonService(t)
+			service := handlersmocks.NewMockRestTokenCreateAnonService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
@@ -80,7 +80,7 @@ func TestTokenCreateAnon(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewTokenCreateAnon(service, config.LoggerDev)
+			handler := handlers.NewRestTokenCreateAnon(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, testCase.request)

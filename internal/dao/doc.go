@@ -1,13 +1,12 @@
-// Package dao holds the Postgres data access layer of the authentication service.
+// Package dao holds the data access layer of the authentication service: the Postgres queries,
+// and the client of the Google Sheet that stores the invitation list.
 //
-// Each request type pairs with a single DAO struct exposing one Exec method, mirroring
-// the core-layer convention. DAOs resolve their database handle from the context via
-// postgres.GetContext, so they join whatever transaction the caller installed and commit
-// statement by statement when there is none. A caller needing two writes to land together
-// opens that scope in the core layer, through the injected transaction.Transactor. Nothing
-// outside this package issues SQL directly.
+// A Postgres DAO resolves its database handle from the context with postgres.GetContext, so it
+// joins the transaction its caller opened and commits statement by statement otherwise. A core
+// operation opens that transaction when two writes must land together. [ShortCodeInsert] alone
+// runs a transaction of its own.
 //
-// SQL statements live in sibling .sql files embedded with go:embed. Constraint violations
-// map to package-level sentinel errors such as [ErrCredentialsInsertAlreadyExists], so
-// callers branch on the integrity failure without parsing pgdriver errors themselves.
+// SQL lives in sibling .sql files embedded with go:embed. A database outcome a caller branches on,
+// such as a missing row or a unique violation, is joined onto the driver error as a package
+// sentinel, so callers match it with errors.Is.
 package dao

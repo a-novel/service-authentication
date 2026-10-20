@@ -6,15 +6,14 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 )
 
-// Ping is the REST handler that responds with "pong" for liveness checks.
-type Ping struct{}
+// RestPing is the REST handler that responds with "pong" for liveness checks.
+type RestPing struct{}
 
-// NewPing returns a new Ping handler.
-func NewPing() *Ping {
-	return &Ping{}
+func NewRestPing() *RestPing {
+	return &RestPing{}
 }
 
-func (handler *Ping) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestPing) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, span := otel.Tracer().Start(r.Context(), "rest.Ping")
 	defer span.End()
 

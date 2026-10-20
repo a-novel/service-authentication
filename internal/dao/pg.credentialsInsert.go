@@ -17,23 +17,21 @@ import (
 //go:embed pg.credentialsInsert.sql
 var credentialsInsertQuery string
 
-// ErrCredentialsInsertAlreadyExists is returned by [CredentialsInsert.Exec] when
-// the email is already registered. It is detected from the Postgres unique-violation
-// SQLSTATE (23505) and joined onto the underlying driver error so callers can
-// branch on it with errors.Is.
+// ErrCredentialsInsertAlreadyExists is returned by [CredentialsInsert.Exec] when the email is
+// already registered.
 var ErrCredentialsInsertAlreadyExists = errors.New("credentials already exists")
 
 // CredentialsInsertRequest is the input to [CredentialsInsert.Exec].
 type CredentialsInsertRequest struct {
-	// See Credentials.ID.
+	// See [Credentials.ID].
 	ID uuid.UUID
-	// See Credentials.Email.
+	// See [Credentials.Email].
 	Email string
-	// See Credentials.Password.
+	// See [Credentials.Password].
 	Password string
-	// See Credentials.Role.
+	// See [Credentials.Role].
 	Role string
-	// Now is the timestamp recorded as the row's creation time.
+	// Now is the instant stored as both created_at and updated_at.
 	Now time.Time
 }
 
@@ -62,7 +60,7 @@ func (dao *CredentialsInsert) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(Credentials)
+	entity := &Credentials{}
 
 	err = tx.NewRaw(
 		credentialsInsertQuery,

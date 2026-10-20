@@ -17,7 +17,7 @@ import (
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
-func TestCredentialsExist(t *testing.T) {
+func TestRestCredentialsExist(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -80,7 +80,7 @@ func TestCredentialsExist(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockCredentialsExistService(t)
+			service := handlersmocks.NewMockRestCredentialsExistService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
@@ -88,7 +88,7 @@ func TestCredentialsExist(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewCredentialsExist(service, config.LoggerDev)
+			handler := handlers.NewRestCredentialsExist(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, testCase.request)

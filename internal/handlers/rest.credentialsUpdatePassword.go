@@ -15,34 +15,41 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-// CredentialsUpdatePasswordService is the core operation PATCH /v2/credentials/password delegates to.
-type CredentialsUpdatePasswordService interface {
+// RestCredentialsUpdatePasswordService is the core operation PATCH /v2/credentials/password delegates to.
+type RestCredentialsUpdatePasswordService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
-// CredentialsUpdatePasswordRequest is the JSON body of PATCH /v2/credentials/password.
-type CredentialsUpdatePasswordRequest struct {
+// credentialsUpdatePasswordErrors maps a refused password change to its status.
+var credentialsUpdatePasswordErrors = httpf.ErrMap{
+	core.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
+	lib.ErrInvalidPassword:                    http.StatusForbidden,
+	core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
+}
+
+// RestCredentialsUpdatePasswordRequest is the JSON body of PATCH /v2/credentials/password.
+type RestCredentialsUpdatePasswordRequest struct {
 	Password        string `json:"password"`
 	CurrentPassword string `json:"currentPassword"`
 }
 
-// CredentialsUpdatePassword serves PATCH /v2/credentials/password, which changes the caller's password.
-type CredentialsUpdatePassword struct {
-	service CredentialsUpdatePasswordService
+// RestCredentialsUpdatePassword serves PATCH /v2/credentials/password, which changes the caller's password.
+type RestCredentialsUpdatePassword struct {
+	service RestCredentialsUpdatePasswordService
 	logger  logging.Log
 }
 
-func NewCredentialsUpdatePassword(
-	service CredentialsUpdatePasswordService, logger logging.Log,
-) *CredentialsUpdatePassword {
-	return &CredentialsUpdatePassword{service: service, logger: logger}
+func NewRestCredentialsUpdatePassword(
+	service RestCredentialsUpdatePasswordService, logger logging.Log,
+) *RestCredentialsUpdatePassword {
+	return &RestCredentialsUpdatePassword{service: service, logger: logger}
 }
 
-func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestCredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsUpdatePassword")
 	defer span.End()
 
-	var request CredentialsUpdatePasswordRequest
+	var request RestCredentialsUpdatePasswordRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -58,17 +65,15 @@ func (handler *CredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &core.CredentialsUpdatePasswordRequest{
+	serviceRequest := &core.CredentialsUpdatePasswordRequest{
 		Password:        request.Password,
 		CurrentPassword: request.CurrentPassword,
 		UserID:          lo.FromPtr(claims.UserID),
-	})
+	}
+
+	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			core.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
-			lib.ErrInvalidPassword:                    http.StatusForbidden,
-			core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
-		}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsUpdatePasswordErrors, err)
 
 		return
 	}

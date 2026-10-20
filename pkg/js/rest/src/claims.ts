@@ -16,6 +16,7 @@ export const ClaimsSchema = z.object({
   refreshTokenID: z.string().optional(),
 });
 
+/** The value {@link ClaimsSchema} validates. */
 export type Claims = z.infer<typeof ClaimsSchema>;
 
 /** Returns the claims carried by the given access token, as resolved by the service. */

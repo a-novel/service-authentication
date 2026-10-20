@@ -1,6 +1,6 @@
 # Contributing to service-authentication
 
-This guide is about working on the authentication service on your machine. Read the [README](./README.md) first for what the service does. The [developer guide](https://a-novel-kit.github.io/stack/) sets up the platform, and the [service concepts](https://github.com/a-novel/.github/blob/master/CONTRIBUTING.md) explain the layers every service shares.
+This guide is about working on the authentication service on your machine. Read the [README](./README.md) first for what the service does. The [developer guide](https://a-novel-kit.github.io/stack/) sets up the platform, and the [taxonomy](https://github.com/a-novel/.github/blob/master/docs/taxonomy.md#inside-a-service-layers-and-contracts) explains the layers and contracts every service shares.
 
 ---
 
@@ -127,7 +127,7 @@ A client signs in once and sends the access token until it expires. `PATCH /v2/s
 
 ### Short codes
 
-A short code is a single-use, time-limited secret, emailed to the user. Registration, an email change and a password reset each need one, so a session token alone never completes them. [`internal/config/auth/short_codes.config.yaml`](./internal/config/auth/short_codes.config.yaml) sets the code length and each usage's lifetime:
+A short code is a single-use, time-limited secret, emailed to the user. Registration, an email change and a password reset each need one, so a session token alone never completes them. [`internal/config/auth/shortCodes.config.yaml`](./internal/config/auth/shortCodes.config.yaml) sets the code length and each usage's lifetime:
 
 | Usage           | Flow                       | TTL   |
 | --------------- | -------------------------- | ----- |

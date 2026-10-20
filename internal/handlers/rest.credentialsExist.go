@@ -11,31 +11,34 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// CredentialsExistService is the core operation HEAD /v2/credentials delegates to.
-type CredentialsExistService interface {
+// RestCredentialsExistService is the core operation HEAD /v2/credentials delegates to.
+type RestCredentialsExistService interface {
 	Exec(ctx context.Context, request *core.CredentialsExistRequest) (bool, error)
 }
 
-// CredentialsExistRequest holds the query parameters of HEAD /v2/credentials.
-type CredentialsExistRequest struct {
+// credentialsExistErrors maps a refused account lookup by email to its status.
+var credentialsExistErrors = httpf.ErrMap{core.ErrInvalidRequest: http.StatusUnprocessableEntity}
+
+// RestCredentialsExistRequest holds the query parameters of HEAD /v2/credentials.
+type RestCredentialsExistRequest struct {
 	Email string `schema:"email"`
 }
 
-// CredentialsExist serves HEAD /v2/credentials, which reports whether an account uses an email.
-type CredentialsExist struct {
-	service CredentialsExistService
+// RestCredentialsExist serves HEAD /v2/credentials, which reports whether an account uses an email.
+type RestCredentialsExist struct {
+	service RestCredentialsExistService
 	logger  logging.Log
 }
 
-func NewCredentialsExist(service CredentialsExistService, logger logging.Log) *CredentialsExist {
-	return &CredentialsExist{service: service, logger: logger}
+func NewRestCredentialsExist(service RestCredentialsExistService, logger logging.Log) *RestCredentialsExist {
+	return &RestCredentialsExist{service: service, logger: logger}
 }
 
-func (handler *CredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestCredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsExist")
 	defer span.End()
 
-	var request CredentialsExistRequest
+	var request RestCredentialsExistRequest
 
 	err := muxDecoder.Decode(&request, r.URL.Query())
 	if err != nil {
@@ -46,9 +49,7 @@ func (handler *CredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	ok, err := handler.service.Exec(ctx, &core.CredentialsExistRequest{Email: request.Email})
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			core.ErrInvalidRequest: http.StatusUnprocessableEntity,
-		}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsExistErrors, err)
 
 		return
 	}

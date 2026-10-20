@@ -16,15 +16,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/migrations"
 )
 
-// The listing orders by created_at DESC, id DESC. The fixtures below deliberately put
-// created_at and updated_at in different orders, so a revert to the old updated_at sort
-// produces a different slice and fails these assertions rather than passing by
-// coincidence.
+// The listing orders by created_at DESC, id DESC. The fixtures order created_at and updated_at
+// differently, so these assertions fail on an updated_at ordering.
 func TestCredentialsList(t *testing.T) {
 	t.Parallel()
 
-	// created_at descends 1 > 2 > 3; updated_at ascends, so ordering on it would reverse
-	// the result.
+	// created_at descends 1 > 2 > 3, and updated_at ascends.
 	cred1 := &dao.Credentials{
 		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 		Email:     "user1@email.com",
@@ -130,25 +127,14 @@ func TestCredentialsList(t *testing.T) {
 	}
 }
 
-// The two ways offset pagination over updated_at lost rows, both fixed by ordering on the
-// immutable created_at with id as the tiebreaker. Each pages through the whole set in
-// two reads and asserts the union is exactly what was inserted — no row skipped, none
-// repeated.
+// Pages order on the immutable created_at, with id breaking ties. Each case reads the whole set in
+// two pages and asserts their union holds every inserted row exactly once.
 func TestCredentialsListPaginationIsStable(t *testing.T) {
 	t.Parallel()
 
 	listDAO := dao.NewCredentialsList()
 
-	ids := func(creds []*dao.Credentials) map[uuid.UUID]int {
-		seen := map[uuid.UUID]int{}
-		for _, c := range creds {
-			seen[c.ID]++
-		}
-
-		return seen
-	}
-
-	t.Run("same-second ties page without loss", func(t *testing.T) {
+	t.Run("Success/SameSecondTies", func(t *testing.T) {
 		t.Parallel()
 
 		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
@@ -157,20 +143,20 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 			db, err := postgres.GetContext(ctx)
 			require.NoError(t, err)
 
-			// Four rows sharing one created_at — the tie timestamp(0) truncation makes
-			// common. Without the id tiebreaker the planner could order the group
-			// differently per query, so a boundary row is skipped or repeated.
+			// Four rows share one created_at, a tie timestamp(0) truncation makes common. The id
+			// tiebreaker keeps their order stable across queries.
 			ts := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
 			fixtures := make([]*dao.Credentials, 0, 4)
 
 			for i := 1; i <= 4; i++ {
-				fixtures = append(fixtures, &dao.Credentials{
+				fixture := &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-00000000000" + string(rune('0'+i))),
 					Email:     "user" + string(rune('0'+i)) + "@email.com",
 					Role:      "auth:user",
 					CreatedAt: ts,
 					UpdatedAt: ts,
-				})
+				}
+				fixtures = append(fixtures, fixture)
 			}
 
 			_, err = db.NewInsert().Model(&fixtures).Exec(ctx)
@@ -182,7 +168,7 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 			page2, err := listDAO.Exec(ctx, &dao.CredentialsListRequest{Limit: 2, Offset: 2})
 			require.NoError(t, err)
 
-			seen := ids(append(append([]*dao.Credentials{}, page1...), page2...))
+			seen := countIDs(append(append([]*dao.Credentials{}, page1...), page2...))
 			require.Len(t, seen, 4, "the two pages must union to all four rows")
 
 			for id, count := range seen {
@@ -191,7 +177,7 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 		})
 	})
 
-	t.Run("a row touched between pages is neither skipped nor repeated", func(t *testing.T) {
+	t.Run("Success/RowUpdatedBetweenPages", func(t *testing.T) {
 		t.Parallel()
 
 		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
@@ -200,18 +186,18 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 			db, err := postgres.GetContext(ctx)
 			require.NoError(t, err)
 
-			// Distinct created_at, so this is purely the mutation problem: ordering on
-			// updated_at would move the touched row across the page boundary.
+			// Distinct created_at values isolate the update: the touched row keeps its place.
 			fixtures := make([]*dao.Credentials, 0, 4)
 
 			for i := 1; i <= 4; i++ {
-				fixtures = append(fixtures, &dao.Credentials{
+				fixture := &dao.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-00000000000" + string(rune('0'+i))),
 					Email:     "user" + string(rune('0'+i)) + "@email.com",
 					Role:      "auth:user",
 					CreatedAt: time.Date(2021, 1, i, 0, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2021, 1, i, 0, 0, 0, 0, time.UTC),
-				})
+				}
+				fixtures = append(fixtures, fixture)
 			}
 
 			_, err = db.NewInsert().Model(&fixtures).Exec(ctx)
@@ -220,9 +206,7 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 			page1, err := listDAO.Exec(ctx, &dao.CredentialsListRequest{Limit: 2, Offset: 0})
 			require.NoError(t, err)
 
-			// The touch the old ordering was vulnerable to: bump the oldest-created row
-			// to the newest updated_at, which would drag it to the head of an
-			// updated_at ordering and across the page boundary.
+			// Give the oldest row the newest updated_at, which leaves its page unchanged.
 			_, err = db.NewUpdate().
 				Model((*dao.Credentials)(nil)).
 				Set("updated_at = ?", time.Date(2021, 1, 31, 0, 0, 0, 0, time.UTC)).
@@ -233,7 +217,7 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 			page2, err := listDAO.Exec(ctx, &dao.CredentialsListRequest{Limit: 2, Offset: 2})
 			require.NoError(t, err)
 
-			seen := ids(append(append([]*dao.Credentials{}, page1...), page2...))
+			seen := countIDs(append(append([]*dao.Credentials{}, page1...), page2...))
 			require.Len(t, seen, 4, "the mutation must not drop a row from the union")
 
 			for id, count := range seen {
@@ -241,4 +225,14 @@ func TestCredentialsListPaginationIsStable(t *testing.T) {
 			}
 		})
 	})
+}
+
+// countIDs counts how many times each ID appears among credentials.
+func countIDs(credentials []*dao.Credentials) map[uuid.UUID]int {
+	seen := map[uuid.UUID]int{}
+	for _, entry := range credentials {
+		seen[entry.ID]++
+	}
+
+	return seen
 }

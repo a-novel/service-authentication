@@ -13,35 +13,44 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// CredentialsResetPasswordService is the core operation PUT /v2/credentials/password delegates to.
-type CredentialsResetPasswordService interface {
+// RestCredentialsResetPasswordService is the core operation PUT /v2/credentials/password delegates to.
+type RestCredentialsResetPasswordService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
-// CredentialsResetPasswordRequest is the JSON body of PUT /v2/credentials/password.
-type CredentialsResetPasswordRequest struct {
+// credentialsResetPasswordErrors maps a refused password reset to its status.
+var credentialsResetPasswordErrors = httpf.ErrMap{
+	core.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
+	core.ErrShortCodeNotFound:                 http.StatusForbidden,
+	core.ErrShortCodeConsumeInvalid:           http.StatusForbidden,
+	core.ErrShortCodeConsumeExpired:           http.StatusForbidden,
+	core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
+}
+
+// RestCredentialsResetPasswordRequest is the JSON body of PUT /v2/credentials/password.
+type RestCredentialsResetPasswordRequest struct {
 	Password  string    `json:"password"`
 	ShortCode string    `json:"shortCode"`
 	UserID    uuid.UUID `json:"userID"`
 }
 
-// CredentialsResetPassword serves PUT /v2/credentials/password, which resets a password with a short code.
-type CredentialsResetPassword struct {
-	service CredentialsResetPasswordService
+// RestCredentialsResetPassword serves PUT /v2/credentials/password, which resets a password with a short code.
+type RestCredentialsResetPassword struct {
+	service RestCredentialsResetPasswordService
 	logger  logging.Log
 }
 
-func NewCredentialsResetPassword(
-	service CredentialsResetPasswordService, logger logging.Log,
-) *CredentialsResetPassword {
-	return &CredentialsResetPassword{service: service, logger: logger}
+func NewRestCredentialsResetPassword(
+	service RestCredentialsResetPasswordService, logger logging.Log,
+) *RestCredentialsResetPassword {
+	return &RestCredentialsResetPassword{service: service, logger: logger}
 }
 
-func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestCredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsResetPassword")
 	defer span.End()
 
-	var request CredentialsResetPasswordRequest
+	var request RestCredentialsResetPasswordRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -50,19 +59,15 @@ func (handler *CredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &core.CredentialsUpdatePasswordRequest{
+	serviceRequest := &core.CredentialsUpdatePasswordRequest{
 		Password:  request.Password,
 		ShortCode: request.ShortCode,
 		UserID:    request.UserID,
-	})
+	}
+
+	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			core.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
-			core.ErrShortCodeNotFound:                 http.StatusForbidden,
-			core.ErrShortCodeConsumeInvalid:           http.StatusForbidden,
-			core.ErrShortCodeConsumeExpired:           http.StatusForbidden,
-			core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
-		}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsResetPasswordErrors, err)
 
 		return
 	}

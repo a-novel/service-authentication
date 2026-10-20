@@ -23,7 +23,7 @@ import (
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
-func TestCredentialsUpdateRole(t *testing.T) {
+func TestRestCredentialsUpdateRole(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -219,7 +219,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockCredentialsUpdateRoleService(t)
+			service := handlersmocks.NewMockRestCredentialsUpdateRoleService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
@@ -227,7 +227,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewCredentialsUpdateRole(service, config.LoggerDev)
+			handler := handlers.NewRestCredentialsUpdateRole(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()

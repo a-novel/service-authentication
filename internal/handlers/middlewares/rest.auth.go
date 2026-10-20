@@ -36,6 +36,19 @@ type AuthClaimsVerifier interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error)
 }
 
+// verifyClaimsErrors answers 401 to a token rejection, which the caller resolves by refreshing or
+// signing in again. Any other failure, such as an unreachable key source, stays 500, so a client
+// keeps a session it may still hold.
+var verifyClaimsErrors = httpf.ErrMap{
+	jws.ErrInvalidSignature:        http.StatusUnauthorized,
+	jwp.ErrInvalidClaims:           http.StatusUnauthorized,
+	jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
+	jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
+	jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
+	jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
+	jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
+}
+
 // Auth provides JWT-based authentication and role-based authorization middleware.
 // It verifies access tokens and checks that the user has at least one of the required permissions.
 type Auth struct {
@@ -114,27 +127,14 @@ func (middleware *Auth) serve(
 		return
 	}
 
-	claims, err := middleware.claimsVerifier.VerifyClaims(ctx, &servicejsonkeys.VerifyClaimsRequest{
+	verifyRequest := &servicejsonkeys.VerifyClaimsRequest{
 		Usage:       servicejsonkeys.KeyUsageAuth,
 		AccessToken: authToken[1],
-	})
+	}
+
+	claims, err := middleware.claimsVerifier.VerifyClaims(ctx, verifyRequest)
 	if err != nil {
-		// A token rejection is the caller's to resolve, so it answers 401 and clients
-		// refresh or re-authenticate. Any other failure, such as an unreachable key
-		// source, stays 500 so a client keeps a session it may still hold.
-		httpf.HandleError(
-			ctx, middleware.logger, w, span,
-			httpf.ErrMap{
-				jws.ErrInvalidSignature:        http.StatusUnauthorized,
-				jwp.ErrInvalidClaims:           http.StatusUnauthorized,
-				jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
-				jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
-				jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
-				jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
-				jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
-			},
-			err,
-		)
+		httpf.HandleError(ctx, middleware.logger, w, span, verifyClaimsErrors, err)
 
 		return
 	}
@@ -199,12 +199,7 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 
 	claims, ok := raw.(*core.AccessTokenClaims)
 	if !ok {
-		return nil, otel.ReportError(span, fmt.Errorf(
-			"%w: got type %T, expected %T",
-			ErrUnexpectedClaims,
-			raw,
-			&core.AccessTokenClaims{},
-		))
+		return nil, otel.ReportError(span, fmt.Errorf("%w: got type %T, expected %T", ErrUnexpectedClaims, raw, claims))
 	}
 
 	return claims, nil

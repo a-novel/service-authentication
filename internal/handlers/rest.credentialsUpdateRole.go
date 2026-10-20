@@ -15,32 +15,45 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
-// CredentialsUpdateRoleService is the core operation PATCH /v2/credentials/role delegates to.
-type CredentialsUpdateRoleService interface {
+// RestCredentialsUpdateRoleService is the core operation PATCH /v2/credentials/role delegates to.
+type RestCredentialsUpdateRoleService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdateRoleRequest) (*core.Credentials, error)
 }
 
-// CredentialsUpdateRoleRequest is the JSON body of PATCH /v2/credentials/role.
-type CredentialsUpdateRoleRequest struct {
+// credentialsUpdateRoleErrors maps a refused role change to its status.
+var credentialsUpdateRoleErrors = httpf.ErrMap{
+	core.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
+	// The select raises this when the target or actor credentials are missing.
+	core.ErrCredentialsGetNotFound:                 http.StatusNotFound,
+	core.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
+	core.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,
+	core.ErrCredentialsUpdateRoleSelfUpdate:        http.StatusForbidden,
+	core.ErrInvalidRequest:                         http.StatusUnprocessableEntity,
+}
+
+// RestCredentialsUpdateRoleRequest is the JSON body of PATCH /v2/credentials/role.
+type RestCredentialsUpdateRoleRequest struct {
 	UserID uuid.UUID `json:"userID"`
 	Role   string    `json:"role"`
 }
 
-// CredentialsUpdateRole serves PATCH /v2/credentials/role, which changes an account's role.
-type CredentialsUpdateRole struct {
-	service CredentialsUpdateRoleService
+// RestCredentialsUpdateRole serves PATCH /v2/credentials/role, which changes an account's role.
+type RestCredentialsUpdateRole struct {
+	service RestCredentialsUpdateRoleService
 	logger  logging.Log
 }
 
-func NewCredentialsUpdateRole(service CredentialsUpdateRoleService, logger logging.Log) *CredentialsUpdateRole {
-	return &CredentialsUpdateRole{service: service, logger: logger}
+func NewRestCredentialsUpdateRole(
+	service RestCredentialsUpdateRoleService, logger logging.Log,
+) *RestCredentialsUpdateRole {
+	return &RestCredentialsUpdateRole{service: service, logger: logger}
 }
 
-func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestCredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsUpdateRole")
 	defer span.End()
 
-	var request CredentialsUpdateRoleRequest
+	var request RestCredentialsUpdateRoleRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -56,21 +69,15 @@ func (handler *CredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &core.CredentialsUpdateRoleRequest{
+	serviceRequest := &core.CredentialsUpdateRoleRequest{
 		TargetUserID:  request.UserID,
 		CurrentUserID: lo.FromPtr(claims.UserID),
 		Role:          request.Role,
-	})
+	}
+
+	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			core.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
-			// The select raises this when the target or actor credentials are missing.
-			core.ErrCredentialsGetNotFound:                 http.StatusNotFound,
-			core.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
-			core.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,
-			core.ErrCredentialsUpdateRoleSelfUpdate:        http.StatusForbidden,
-			core.ErrInvalidRequest:                         http.StatusUnprocessableEntity,
-		}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsUpdateRoleErrors, err)
 
 		return
 	}

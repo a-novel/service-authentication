@@ -75,11 +75,13 @@ func (service *CredentialsUpdateEmail) Exec(
 	}
 
 	// The check runs Argon2, so it happens before the transaction, which holds a pooled connection.
-	shortCode, err := service.serviceShortCodeVerify.Exec(ctx, &ShortCodeVerifyRequest{
+	verifyRequest := &ShortCodeVerifyRequest{
 		Usage:  ShortCodeUsageValidateEmail,
 		Target: request.UserID.String(),
 		Code:   request.ShortCode,
-	})
+	}
+
+	shortCode, err := service.serviceShortCodeVerify.Exec(ctx, verifyRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("verify short code: %w", err))
 	}
@@ -101,11 +103,13 @@ func (service *CredentialsUpdateEmail) Exec(
 			return fmt.Errorf("consume short code: %w", err)
 		}
 
-		credentials, err = service.dao.Exec(ctx, &dao.CredentialsUpdateEmailRequest{
+		daoRequest := &dao.CredentialsUpdateEmailRequest{
 			ID:    request.UserID,
 			Email: newEmail,
 			Now:   time.Now(),
-		})
+		}
+
+		credentials, err = service.dao.Exec(ctx, daoRequest)
 		if err != nil {
 			return fmt.Errorf("update email: %w", err)
 		}

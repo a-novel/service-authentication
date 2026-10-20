@@ -245,16 +245,15 @@ func TestTokenCreate(t *testing.T) {
 			}
 
 			if testCase.issueRefreshTokenMock != nil {
+				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
+					Usage: servicejsonkeys.KeyUsageAuthRefresh,
+					Payload: lo.Must(grpcf.MarshalJSONAsAny(core.RefreshTokenClaimsForm{
+						UserID: testCase.daoMock.resp.ID,
+					})),
+				}
+
 				serviceSignClaims.EXPECT().
-					ClaimsSign(
-						mock.Anything,
-						&servicejsonkeys.ClaimsSignRequest{
-							Usage: servicejsonkeys.KeyUsageAuthRefresh,
-							Payload: lo.Must(grpcf.MarshalJSONAsAny(core.RefreshTokenClaimsForm{
-								UserID: testCase.daoMock.resp.ID,
-							})),
-						},
-					).
+					ClaimsSign(mock.Anything, claimsSignRequest).
 					Return(
 						&servicejsonkeys.ClaimsSignResponse{
 							Token: mockUnsignedRefreshToken,
@@ -264,18 +263,18 @@ func TestTokenCreate(t *testing.T) {
 			}
 
 			if testCase.issueTokenMock != nil {
+				accessTokenClaims := core.AccessTokenClaims{
+					UserID:         &testCase.daoMock.resp.ID,
+					Roles:          []string{testCase.daoMock.resp.Role},
+					RefreshTokenID: mockUnsignedJTI,
+				}
+				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
+					Usage:   servicejsonkeys.KeyUsageAuth,
+					Payload: lo.Must(grpcf.MarshalJSONAsAny(accessTokenClaims)),
+				}
+
 				serviceSignClaims.EXPECT().
-					ClaimsSign(
-						mock.Anything,
-						&servicejsonkeys.ClaimsSignRequest{
-							Usage: servicejsonkeys.KeyUsageAuth,
-							Payload: lo.Must(grpcf.MarshalJSONAsAny(core.AccessTokenClaims{
-								UserID:         &testCase.daoMock.resp.ID,
-								Roles:          []string{testCase.daoMock.resp.Role},
-								RefreshTokenID: mockUnsignedJTI,
-							})),
-						},
-					).
+					ClaimsSign(mock.Anything, claimsSignRequest).
 					Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
 			}
 

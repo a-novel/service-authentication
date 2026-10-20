@@ -18,6 +18,7 @@ export const CredentialsSchema = z.object({
   updatedAt: z.iso.datetime().transform((value) => new Date(value)),
 });
 
+/** The value {@link CredentialsSchema} validates. */
 export type Credentials = z.infer<typeof CredentialsSchema>;
 
 /** New-account details: login email, password, and the short code emailed to confirm the address. */
@@ -27,6 +28,7 @@ export const CredentialsCreateRequestSchema = z.object({
   shortCode: ShortCodeSchema,
 });
 
+/** The value {@link CredentialsCreateRequestSchema} validates. */
 export type CredentialsCreateRequest = z.infer<typeof CredentialsCreateRequestSchema>;
 
 /** The email address to test for an existing account. */
@@ -34,6 +36,7 @@ export const CredentialsExistsRequestSchema = z.object({
   email: EmailSchema,
 });
 
+/** The value {@link CredentialsExistsRequestSchema} validates. */
 export type CredentialsExistsRequest = z.infer<typeof CredentialsExistsRequestSchema>;
 
 /** The identifier of the account to fetch. */
@@ -41,6 +44,7 @@ export const CredentialsGetRequestSchema = z.object({
   id: z.uuid(),
 });
 
+/** The value {@link CredentialsGetRequestSchema} validates. */
 export type CredentialsGetRequest = z.infer<typeof CredentialsGetRequestSchema>;
 
 /** Pagination window and an optional role filter for listing accounts. */
@@ -50,6 +54,7 @@ export const CredentialsListRequestSchema = z.object({
   roles: z.array(RoleSchema).max(10).optional(),
 });
 
+/** The value {@link CredentialsListRequestSchema} validates. */
 export type CredentialsListRequest = z.infer<typeof CredentialsListRequestSchema>;
 
 /** Reset details for the forgotten-password flow: the new password, the emailed short code, and the target account. */
@@ -59,6 +64,7 @@ export const CredentialsResetPasswordRequestSchema = z.object({
   userID: z.uuid(),
 });
 
+/** The value {@link CredentialsResetPasswordRequestSchema} validates. */
 export type CredentialsResetPasswordRequest = z.infer<typeof CredentialsResetPasswordRequestSchema>;
 
 /** The target account and the short code emailed to confirm its new address. */
@@ -67,6 +73,7 @@ export const CredentialsUpdateEmailRequestSchema = z.object({
   shortCode: ShortCodeSchema,
 });
 
+/** The value {@link CredentialsUpdateEmailRequestSchema} validates. */
 export type CredentialsUpdateEmailRequest = z.infer<typeof CredentialsUpdateEmailRequestSchema>;
 
 /** The new password, guarded by the current one to prove the caller owns the account. */
@@ -75,6 +82,7 @@ export const CredentialsUpdatePasswordRequestSchema = z.object({
   currentPassword: PasswordSchema,
 });
 
+/** The value {@link CredentialsUpdatePasswordRequestSchema} validates. */
 export type CredentialsUpdatePasswordRequest = z.infer<typeof CredentialsUpdatePasswordRequestSchema>;
 
 /** The target account and the role to grant it. */
@@ -83,6 +91,7 @@ export const CredentialsUpdateRoleRequestSchema = z.object({
   role: RoleSchema,
 });
 
+/** The value {@link CredentialsUpdateRoleRequestSchema} validates. */
 export type CredentialsUpdateRoleRequest = z.infer<typeof CredentialsUpdateRoleRequestSchema>;
 
 /** Fetches a single account by its identifier. */

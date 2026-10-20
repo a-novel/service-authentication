@@ -323,13 +323,13 @@ func TestAuth(t *testing.T) {
 			service := middlewaresmocks.NewMockAuthClaimsVerifier(t)
 
 			if testCase.verifyClaimsMock != nil {
+				verifyClaimsRequest := &servicejsonkeys.VerifyClaimsRequest{
+					Usage:       servicejsonkeys.KeyUsageAuth,
+					AccessToken: testCase.verifyClaimsMock.reqToken,
+				}
+
 				service.EXPECT().
-					VerifyClaims(
-						mock.Anything, &servicejsonkeys.VerifyClaimsRequest{
-							Usage:       servicejsonkeys.KeyUsageAuth,
-							AccessToken: testCase.verifyClaimsMock.reqToken,
-						},
-					).
+					VerifyClaims(mock.Anything, verifyClaimsRequest).
 					Return(testCase.verifyClaimsMock.resp, testCase.verifyClaimsMock.err)
 			}
 

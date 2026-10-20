@@ -18,9 +18,7 @@ import (
 
 // CredentialsUpdatePasswordDao stores the new password hash.
 type CredentialsUpdatePasswordDao interface {
-	Exec(
-		ctx context.Context, request *dao.CredentialsUpdatePasswordRequest,
-	) (*dao.Credentials, error)
+	Exec(ctx context.Context, request *dao.CredentialsUpdatePasswordRequest) (*dao.Credentials, error)
 }
 
 // CredentialsUpdatePasswordDaoCredentialsSelect loads the account whose current password the change path checks.
@@ -98,11 +96,13 @@ func (service *CredentialsUpdatePassword) Exec(
 	// Reset path: the short code proves the caller owns the account's email, so no
 	// current password is required.
 	case request.ShortCode != "":
-		shortCode, err = service.serviceShortCodeVerify.Exec(ctx, &ShortCodeVerifyRequest{
+		verifyRequest := &ShortCodeVerifyRequest{
 			Usage:  ShortCodeUsageResetPassword,
 			Target: request.UserID.String(),
 			Code:   request.ShortCode,
-		})
+		}
+
+		shortCode, err = service.serviceShortCodeVerify.Exec(ctx, verifyRequest)
 		if err != nil {
 			return nil, otel.ReportError(span, fmt.Errorf("verify short code: %w", err))
 		}
@@ -136,11 +136,13 @@ func (service *CredentialsUpdatePassword) Exec(
 			}
 		}
 
-		credentials, err = service.dao.Exec(ctx, &dao.CredentialsUpdatePasswordRequest{
+		daoRequest := &dao.CredentialsUpdatePasswordRequest{
 			ID:       request.UserID,
 			Password: encryptedPassword,
 			Now:      time.Now(),
-		})
+		}
+
+		credentials, err = service.dao.Exec(ctx, daoRequest)
 		if err != nil {
 			return fmt.Errorf("update password: %w", err)
 		}

@@ -43,22 +43,15 @@ type TokenCreate struct {
 	serviceSignClaims TokenCreateServiceSignClaims
 }
 
-func NewTokenCreate(
-	dao TokenCreateDao,
-	serviceSignClaims TokenCreateServiceSignClaims,
-) *TokenCreate {
-	return &TokenCreate{
-		dao:               dao,
-		serviceSignClaims: serviceSignClaims,
-	}
+func NewTokenCreate(dao TokenCreateDao, serviceSignClaims TokenCreateServiceSignClaims) *TokenCreate {
+	return &TokenCreate{dao: dao, serviceSignClaims: serviceSignClaims}
 }
 
 // Exec verifies the request's email and password and returns a freshly signed
 // access/refresh token pair. See signTokenPair for how the two tokens are bound.
 //
 // It returns lib.ErrInvalidPassword when the password does not match and
-// dao.ErrCredentialsSelectByEmailNotFound when the email is not registered; both
-// surface as 401 at the handler.
+// [ErrCredentialsByEmailNotFound] when the email is not registered.
 func (service *TokenCreate) Exec(
 	ctx context.Context, request *TokenCreateRequest,
 ) (*Token, error) {
@@ -72,9 +65,7 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
-		Email: request.Email,
-	})
+	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
 	if err != nil {
 		if errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
 			// Burn an Argon2id verification so an unknown email costs the same as a

@@ -22,14 +22,15 @@ func TestMaintenanceCommand(t *testing.T) {
 
 	errRun := errors.New("run")
 	expectedOperation := &maintenanceCommandTestOperation{err: errRun}
-	command := newMaintenanceCommand(maintenanceOperationDefinition{
+	definition := maintenanceOperationDefinition{
 		name:        "example",
 		synopsis:    "--value VALUE",
 		description: "Run the example operation.",
 		parse: func([]string) (maintenanceOperation, error) {
 			return expectedOperation, nil
 		},
-	})
+	}
+	command := newMaintenanceCommand(definition)
 
 	t.Run("Usage", func(t *testing.T) {
 		t.Parallel()

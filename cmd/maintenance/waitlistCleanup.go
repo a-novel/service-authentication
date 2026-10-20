@@ -75,9 +75,9 @@ func (operation *waitlistCleanupOperation) run(ctx context.Context) error {
 
 	defer closeDatabase(database)
 
-	result, err := core.NewWaitlistCleanup(dao.NewCredentialsList(), writer).Exec(ctx, &core.WaitlistCleanupRequest{
-		Apply: operation.apply,
-	})
+	cleanup := core.NewWaitlistCleanup(dao.NewCredentialsList(), writer)
+
+	result, err := cleanup.Exec(ctx, &core.WaitlistCleanupRequest{Apply: operation.apply})
 	log.Printf("waitlist-cleanup apply=%t scanned=%d matched=%d removed=%d",
 		operation.apply, result.Scanned, result.Matched, result.Removed)
 

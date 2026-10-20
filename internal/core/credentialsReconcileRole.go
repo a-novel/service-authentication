@@ -101,9 +101,7 @@ func (service *CredentialsReconcileRole) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	credentials, err := service.selectCredentials.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
-		Email: request.Email,
-	})
+	credentials, err := service.selectCredentials.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
 	if err == nil {
 		// Existing credentials are the reconciliation path; absent credentials continue to registration below.
 		result, err := service.reconcileExisting(ctx, credentials, request.Role)
@@ -122,35 +120,35 @@ func (service *CredentialsReconcileRole) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
-	shortCode, err := service.selectShortCode.Exec(ctx, &dao.ShortCodeSelectRequest{
+	shortCodeRequest := &dao.ShortCodeSelectRequest{
 		Usage:  ShortCodeUsageRegister,
 		Target: request.Email,
-	})
+	}
+
+	shortCode, err := service.selectShortCode.Exec(ctx, shortCodeRequest)
 	if err == nil {
 		pendingRole, roleErr := computeRole(shortCode.Data)
 		if roleErr == nil && pendingRole == request.Role {
 			span.SetAttributes(attribute.Bool("noop", true))
 
-			return &CredentialsReconcileRoleResult{
-				Outcome: CredentialsReconcileRoleRegistrationPending,
-			}, nil
+			return &CredentialsReconcileRoleResult{Outcome: CredentialsReconcileRoleRegistrationPending}, nil
 		}
 	} else if !errors.Is(err, dao.ErrShortCodeSelectNotFound) {
 		return nil, otel.ReportError(span, fmt.Errorf("select registration code: %w", err))
 	}
 
-	_, err = service.register.Exec(ctx, &ShortCodeCreateRegisterRequest{
+	registerRequest := &ShortCodeCreateRegisterRequest{
 		Email: request.Email,
 		Lang:  request.Lang,
 		Role:  request.Role,
-	})
+	}
+
+	_, err = service.register.Exec(ctx, registerRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create registration: %w", err))
 	}
 
-	return &CredentialsReconcileRoleResult{
-		Outcome: CredentialsReconcileRoleRegistrationCreated,
-	}, nil
+	return &CredentialsReconcileRoleResult{Outcome: CredentialsReconcileRoleRegistrationCreated}, nil
 }
 
 func (service *CredentialsReconcileRole) reconcileExisting(
@@ -162,21 +160,19 @@ func (service *CredentialsReconcileRole) reconcileExisting(
 	defer span.End()
 
 	if credentials.Role == role {
-		return &CredentialsReconcileRoleResult{
-			Outcome: CredentialsReconcileRoleUnchanged,
-		}, nil
+		return &CredentialsReconcileRoleResult{Outcome: CredentialsReconcileRoleUnchanged}, nil
 	}
 
-	_, err := service.updateRole.Exec(ctx, &dao.CredentialsUpdateRoleRequest{
+	daoRequest := &dao.CredentialsUpdateRoleRequest{
 		ID:   credentials.ID,
 		Role: role,
 		Now:  time.Now(),
-	})
+	}
+
+	_, err := service.updateRole.Exec(ctx, daoRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("update credentials role: %w", err))
 	}
 
-	return &CredentialsReconcileRoleResult{
-		Outcome: CredentialsReconcileRoleUpdated,
-	}, nil
+	return &CredentialsReconcileRoleResult{Outcome: CredentialsReconcileRoleUpdated}, nil
 }

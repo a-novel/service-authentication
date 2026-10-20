@@ -13,33 +13,36 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// CredentialsListService is the core operation GET /v2/credentials/all delegates to.
-type CredentialsListService interface {
+// RestCredentialsListService is the core operation GET /v2/credentials/all delegates to.
+type RestCredentialsListService interface {
 	Exec(ctx context.Context, request *core.CredentialsListRequest) ([]*core.Credentials, error)
 }
 
-// CredentialsListRequest holds the query parameters of GET /v2/credentials/all.
-type CredentialsListRequest struct {
+// credentialsListErrors maps a refused account listing to its status.
+var credentialsListErrors = httpf.ErrMap{core.ErrInvalidRequest: http.StatusUnprocessableEntity}
+
+// RestCredentialsListRequest holds the query parameters of GET /v2/credentials/all.
+type RestCredentialsListRequest struct {
 	Limit  int      `schema:"limit"`
 	Offset int      `schema:"offset"`
 	Roles  []string `schema:"roles"`
 }
 
-// CredentialsList serves GET /v2/credentials/all, which lists accounts.
-type CredentialsList struct {
-	service CredentialsListService
+// RestCredentialsList serves GET /v2/credentials/all, which lists accounts.
+type RestCredentialsList struct {
+	service RestCredentialsListService
 	logger  logging.Log
 }
 
-func NewCredentialsList(service CredentialsListService, logger logging.Log) *CredentialsList {
-	return &CredentialsList{service: service, logger: logger}
+func NewRestCredentialsList(service RestCredentialsListService, logger logging.Log) *RestCredentialsList {
+	return &RestCredentialsList{service: service, logger: logger}
 }
 
-func (handler *CredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestCredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsList")
 	defer span.End()
 
-	var request CredentialsListRequest
+	var request RestCredentialsListRequest
 
 	err := muxDecoder.Decode(&request, r.URL.Query())
 	if err != nil {
@@ -48,15 +51,15 @@ func (handler *CredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &core.CredentialsListRequest{
+	serviceRequest := &core.CredentialsListRequest{
 		Limit:  request.Limit,
 		Offset: request.Offset,
 		Roles:  request.Roles,
-	})
+	}
+
+	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			core.ErrInvalidRequest: http.StatusUnprocessableEntity,
-		}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsListErrors, err)
 
 		return
 	}

@@ -47,7 +47,7 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 
 	err := validate.Struct(request)
 	if err != nil {
-		return otel.ReportError(span, errors.Join(ErrInvalidRequest, err))
+		return otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
 	lookup := &dao.CredentialsExistRequest{Email: request.Email}

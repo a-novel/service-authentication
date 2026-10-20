@@ -16,26 +16,20 @@ import (
 //go:embed pg.shortCodeSelect.sql
 var shortCodeSelectQuery string
 
-// ErrShortCodeSelectNotFound is returned by [ShortCodeSelect.Exec] when no active
-// short code matches the (Usage, Target) pair. The query filters expired and deleted
-// rows in its WHERE clause (deleted_at IS NULL AND expires_at > CURRENT_TIMESTAMP),
-// so the sentinel covers every state the DAO cannot tell apart: never issued, expired,
-// and already consumed.
+// ErrShortCodeSelectNotFound is returned by [ShortCodeSelect.Exec] when no active short code matches
+// the (Usage, Target) pair. It covers a code never issued, expired and already consumed alike.
 var ErrShortCodeSelectNotFound = errors.New("short code not found")
 
-// ShortCodeSelectRequest is the input to [ShortCodeSelect.Exec]. A partial unique
-// index keeps at most one active row per (Usage, Target) pair, so the query returns
-// either zero or one row.
+// ShortCodeSelectRequest is the input to [ShortCodeSelect.Exec]. A partial unique index keeps at
+// most one active row per (Usage, Target) pair.
 type ShortCodeSelectRequest struct {
 	// Usage selects which flow this code is valid for; matches [ShortCode.Usage].
 	Usage string
-	// Target identifies the subject of the operation (e.g. the email address);
-	// matches [ShortCode.Target].
+	// Target identifies the subject of the operation; matches [ShortCode.Target].
 	Target string
 }
 
-// ShortCodeSelect fetches an active short code matching a (Usage, Target) pair,
-// if any.
+// ShortCodeSelect fetches the active short code of a (Usage, Target) pair.
 type ShortCodeSelect struct{}
 
 func NewShortCodeSelect() *ShortCodeSelect {
@@ -56,7 +50,7 @@ func (dao *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRe
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(ShortCode)
+	entity := &ShortCode{}
 
 	err = tx.NewRaw(shortCodeSelectQuery, request.Target, request.Usage).Scan(ctx, entity)
 	if err != nil {

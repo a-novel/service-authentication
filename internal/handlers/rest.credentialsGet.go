@@ -13,31 +13,37 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// CredentialsGetService is the core operation GET /v2/credentials delegates to.
-type CredentialsGetService interface {
+// RestCredentialsGetService is the core operation GET /v2/credentials delegates to.
+type RestCredentialsGetService interface {
 	Exec(ctx context.Context, request *core.CredentialsGetRequest) (*core.Credentials, error)
 }
 
-// CredentialsGetRequest holds the query parameters of GET /v2/credentials.
-type CredentialsGetRequest struct {
+// credentialsGetErrors maps a failed account lookup to its status.
+var credentialsGetErrors = httpf.ErrMap{
+	core.ErrCredentialsGetNotFound: http.StatusNotFound,
+	core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
+}
+
+// RestCredentialsGetRequest holds the query parameters of GET /v2/credentials.
+type RestCredentialsGetRequest struct {
 	ID uuid.UUID `schema:"id"`
 }
 
-// CredentialsGet serves GET /v2/credentials, which returns an account.
-type CredentialsGet struct {
-	service CredentialsGetService
+// RestCredentialsGet serves GET /v2/credentials, which returns an account.
+type RestCredentialsGet struct {
+	service RestCredentialsGetService
 	logger  logging.Log
 }
 
-func NewCredentialsGet(service CredentialsGetService, logger logging.Log) *CredentialsGet {
-	return &CredentialsGet{service: service, logger: logger}
+func NewRestCredentialsGet(service RestCredentialsGetService, logger logging.Log) *RestCredentialsGet {
+	return &RestCredentialsGet{service: service, logger: logger}
 }
 
-func (handler *CredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestCredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsGet")
 	defer span.End()
 
-	var request CredentialsGetRequest
+	var request RestCredentialsGetRequest
 
 	err := muxDecoder.Decode(&request, r.URL.Query())
 	if err != nil {
@@ -46,14 +52,9 @@ func (handler *CredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &core.CredentialsGetRequest{
-		ID: request.ID,
-	})
+	res, err := handler.service.Exec(ctx, &core.CredentialsGetRequest{ID: request.ID})
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			core.ErrCredentialsGetNotFound: http.StatusNotFound,
-			core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
-		}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsGetErrors, err)
 
 		return
 	}

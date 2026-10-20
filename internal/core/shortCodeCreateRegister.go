@@ -89,9 +89,7 @@ func (service *ShortCodeCreateRegister) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	_, err = service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
-		Email: request.Email,
-	})
+	_, err = service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
 	if err == nil {
 		return nil, otel.ReportError(span, dao.ErrCredentialsInsertAlreadyExists)
 	}
@@ -106,18 +104,21 @@ func (service *ShortCodeCreateRegister) Exec(
 	}
 	defer reservation.Release()
 
-	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
+	ttl := service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL
+	createRequest := &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageRegister,
 		Target:   request.Email,
 		Data:     credentialsCreateRegistrationData{Role: request.Role},
-		TTL:      service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL,
+		TTL:      ttl,
 		Override: true,
-	})
+	}
+
+	shortCode, err := service.service.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
-	reservation.Deliver(ctx, &MailDeliveryRequest{
+	mail := &MailDeliveryRequest{
 		To:           smtp.MailUsers{{Email: request.Email}},
 		Template:     mails.Mails.Register,
 		TemplateName: request.Lang,
@@ -125,12 +126,13 @@ func (service *ShortCodeCreateRegister) Exec(
 			mails.TemplateVarShortCode: shortCode.PlainCode,
 			mails.TemplateVarTarget:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 			mails.TemplateVarURL:       service.smtpConfig.Register,
-			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL.Hours(),
+			mails.TemplateVarDuration:  ttl.Hours(),
 			mails.TemplateVarBanner:    assets.BannerBase64,
-			mails.TemplateVarPurpose:   mailDeliveryKindRegister,
 		},
 		Kind: mailDeliveryKindRegister,
-	})
+	}
+
+	reservation.Deliver(ctx, mail)
 
 	return shortCode, nil
 }

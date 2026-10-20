@@ -16,9 +16,8 @@ import (
 //go:embed pg.credentialsSelect.sql
 var credentialsSelectQuery string
 
-// ErrCredentialsSelectNotFound is returned by [CredentialsSelect.Exec] when no
-// row matches the requested ID. It is joined onto the underlying sql.ErrNoRows
-// so callers can branch on it with errors.Is.
+// ErrCredentialsSelectNotFound is returned by [CredentialsSelect.Exec] when no row matches the
+// requested ID.
 var ErrCredentialsSelectNotFound = errors.New("credentials not found")
 
 // CredentialsSelectRequest is the input to [CredentialsSelect.Exec].
@@ -27,8 +26,8 @@ type CredentialsSelectRequest struct {
 	ID uuid.UUID
 }
 
-// CredentialsSelect fetches a single credentials row by ID. Use
-// [CredentialsSelectByEmail] to look up by email instead.
+// CredentialsSelect fetches a single credentials row by ID. [CredentialsSelectByEmail] looks one up
+// by email.
 type CredentialsSelect struct{}
 
 func NewCredentialsSelect() *CredentialsSelect {
@@ -46,7 +45,7 @@ func (dao *CredentialsSelect) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(Credentials)
+	entity := &Credentials{}
 
 	err = tx.NewRaw(credentialsSelectQuery, request.ID).Scan(ctx, entity)
 	if err != nil {

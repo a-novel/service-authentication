@@ -95,24 +95,17 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 	createShortCode := core.NewShortCodeCreate(dao.NewShortCodeInsert(), cfg.ShortCodesConfig)
 	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 	register := core.NewShortCodeCreateRegister(
-		createShortCode,
-		selectCredentials,
-		mailDelivery,
-		cfg.ShortCodesConfig,
-		cfg.SmtpUrlsConfig,
+		createShortCode, selectCredentials, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
 	)
-	reconcileRole := core.NewCredentialsReconcileRole(
-		selectCredentials,
-		updateRole,
-		selectShortCode,
-		register,
-	)
+	reconcileRole := core.NewCredentialsReconcileRole(selectCredentials, updateRole, selectShortCode, register)
 
-	result, operationErr := reconcileRole.Exec(ctx, &core.CredentialsReconcileRoleRequest{
+	reconcileRequest := &core.CredentialsReconcileRoleRequest{
 		Email: operation.email,
 		Lang:  operation.lang,
 		Role:  operation.role,
-	})
+	}
+
+	result, operationErr := reconcileRole.Exec(ctx, reconcileRequest)
 
 	deliveryErr := mailDelivery.Wait(ctx)
 

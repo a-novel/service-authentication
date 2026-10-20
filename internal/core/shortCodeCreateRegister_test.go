@@ -202,21 +202,20 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			}
 
 			if testCase.sendMail {
+				mailData := map[string]any{
+					"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
+					"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
+					"URL":       smtpConfig.Register,
+					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL.Hours(),
+					"Banner":    assets.BannerBase64,
+				}
+
 				sendMail := smtpService.EXPECT().
 					SendMail(
 						smtp.MailUsers{{Email: testCase.request.Email}},
 						mails.Mails.Register,
 						testCase.request.Lang,
-						map[string]any{
-							"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
-							"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
-							"URL":       smtpConfig.Register,
-							"Duration": authconfig.ShortCodesPresetDefault.
-								Usages[core.ShortCodeUsageRegister].
-								TTL.Hours(),
-							"Banner":   assets.BannerBase64,
-							"_Purpose": "register",
-						},
+						mailData,
 					).
 					Return(nil)
 

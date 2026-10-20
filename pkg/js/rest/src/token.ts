@@ -14,6 +14,7 @@ export const TokenSchema = z.object({
   refreshToken: z.string(),
 });
 
+/** The value {@link TokenSchema} validates. */
 export type Token = z.infer<typeof TokenSchema>;
 
 /** Credentials to open a session: the account's email and password. */
@@ -22,6 +23,7 @@ export const TokenCreateRequestSchema = z.object({
   password: PasswordSchema,
 });
 
+/** The value {@link TokenCreateRequestSchema} validates. */
 export type TokenCreateRequest = z.infer<typeof TokenCreateRequestSchema>;
 
 /** The current token pair to renew, each as its base64-encoded value. */
@@ -30,6 +32,7 @@ export const TokenRefreshRequestSchema = z.object({
   refreshToken: z.base64().max(1024),
 });
 
+/** The value {@link TokenRefreshRequestSchema} validates. */
 export type TokenRefreshRequest = z.infer<typeof TokenRefreshRequestSchema>;
 
 /** Opens an authenticated session from an email and password, returning a fresh token pair. */

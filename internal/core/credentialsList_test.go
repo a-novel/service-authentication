@@ -120,12 +120,14 @@ func TestCredentialsList(t *testing.T) {
 			mockDao := coremocks.NewMockCredentialsListDao(t)
 
 			if testCase.daoMock != nil {
+				credentialsListRequest := &dao.CredentialsListRequest{
+					Limit:  testCase.request.Limit,
+					Offset: testCase.request.Offset,
+					Roles:  testCase.request.Roles,
+				}
+
 				mockDao.EXPECT().
-					Exec(mock.Anything, &dao.CredentialsListRequest{
-						Limit:  testCase.request.Limit,
-						Offset: testCase.request.Offset,
-						Roles:  testCase.request.Roles,
-					}).
+					Exec(mock.Anything, credentialsListRequest).
 					Return(testCase.daoMock.resp, testCase.daoMock.err)
 			}
 

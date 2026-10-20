@@ -37,7 +37,7 @@ A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a
 | `service-authentication/rest`             | Public REST API. The long-running server.                                                     |
 | `service-authentication/jobs/migrations`  | One-shot schema migration job; runs to completion before the server or maintenance.           |
 | `service-authentication/jobs/maintenance` | Trusted, parameterized one-shot operations. Running it without an operation only prints help. |
-| `service-authentication/database`         | Pre-tuned PostgreSQL image — or bring your own Postgres.                                      |
+| `service-authentication/database`         | PostgreSQL with pgBackRest on Wolfi. Any PostgreSQL works in its place.                       |
 
 Pin every image to the same release tag, such as the [latest release](https://github.com/a-novel/service-authentication/releases/latest). A production deployment runs `database`, then `migrations` to completion, then any number of `rest` replicas. Maintenance runs on its own when an operator requests an operation. Provide `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DATABASE` through the orchestrator, and store the password as a secret.
 
@@ -256,7 +256,7 @@ going out. `builds/podman-compose.yaml` raises it to 30s. A Kubernetes deploymen
 
 ## Using the client packages
 
-Two clients ship with the service. Each snippet shows a first call. [pkg.go.dev](https://pkg.go.dev/github.com/a-novel/service-authentication/v2) and the [API reference](https://a-novel.github.io/service-authentication) cover the rest.
+Two clients ship with the service. [pkg.go.dev](https://pkg.go.dev/github.com/a-novel/service-authentication/v2) and the [API reference](https://a-novel.github.io/service-authentication) document their full surface.
 
 - **Go** mounts an auth middleware in a backend service that gates routes on permissions. It verifies tokens through a JSON Keys client and never calls the authentication service.
 - **JavaScript / TypeScript** calls the REST API, from a frontend or a Node service that drives the login, session and account flows.

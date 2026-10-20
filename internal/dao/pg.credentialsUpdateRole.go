@@ -18,23 +18,22 @@ import (
 //go:embed pg.credentialsUpdateRole.sql
 var credentialsUpdateRoleQuery string
 
-// ErrCredentialsUpdateRoleNotFound is returned by [CredentialsUpdateRole.Exec]
-// when no row matches the requested ID. It is joined onto the underlying
-// sql.ErrNoRows so callers can branch on it with errors.Is.
+// ErrCredentialsUpdateRoleNotFound is returned by [CredentialsUpdateRole.Exec] when no row matches
+// the requested ID.
 var ErrCredentialsUpdateRoleNotFound = errors.New("credentials not found")
 
 // CredentialsUpdateRoleRequest is the input to [CredentialsUpdateRole.Exec].
 type CredentialsUpdateRoleRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
-	// Role is the new role name to assign. Validating it against the configured
-	// permission map belongs to the service layer.
+	// Role is the new role name to assign. The core layer validates it against the permission
+	// configuration.
 	Role string
 	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 
-// CredentialsUpdateRole assigns a new role to a set of credentials.
+// CredentialsUpdateRole assigns a new role to a credentials row.
 type CredentialsUpdateRole struct{}
 
 func NewCredentialsUpdateRole() *CredentialsUpdateRole {
@@ -54,7 +53,7 @@ func (dao *CredentialsUpdateRole) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(Credentials)
+	entity := &Credentials{}
 
 	err = tx.NewRaw(credentialsUpdateRoleQuery, request.Role, request.Now, request.ID).Scan(ctx, entity)
 	if err != nil {

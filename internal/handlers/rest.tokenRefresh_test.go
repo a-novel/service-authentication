@@ -18,7 +18,7 @@ import (
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
-func TestTokenRefresh(t *testing.T) {
+func TestRestTokenRefresh(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -160,7 +160,7 @@ func TestTokenRefresh(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockTokenRefreshService(t)
+			service := handlersmocks.NewMockRestTokenRefreshService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
@@ -168,7 +168,7 @@ func TestTokenRefresh(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewTokenRefresh(service, config.LoggerDev)
+			handler := handlers.NewRestTokenRefresh(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, testCase.request)

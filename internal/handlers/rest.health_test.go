@@ -34,7 +34,7 @@ import (
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
-func TestHealth(t *testing.T) {
+func TestRestHealth(t *testing.T) {
 	t.Parallel()
 
 	dependencyErr := errors.New("private dependency detail")
@@ -170,7 +170,7 @@ func TestHealth(t *testing.T) {
 }
 
 //nolint:paralleltest // Replaces the process-wide tracer provider while probes run.
-func TestHealthTelemetry(t *testing.T) {
+func TestRestHealthTelemetry(t *testing.T) {
 	testCases := []struct {
 		name         string
 		smtpErr      error
@@ -258,7 +258,7 @@ func TestHealthTelemetry(t *testing.T) {
 	}
 }
 
-func TestHealthJsonKeysDependencies(t *testing.T) {
+func TestRestHealthJsonKeysDependencies(t *testing.T) {
 	t.Parallel()
 
 	// The payload is never inspected: an empty response reads as up.
@@ -293,7 +293,7 @@ func TestHealthJsonKeysDependencies(t *testing.T) {
 	}
 }
 
-func TestHealthSmtpDiagnostics(t *testing.T) {
+func TestRestHealthSmtpDiagnostics(t *testing.T) {
 	t.Parallel()
 
 	const privateDetail = "fixture-secret-must-never-appear"

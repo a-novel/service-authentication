@@ -11,33 +11,42 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// CredentialsCreateService is the core operation PUT /v2/credentials delegates to.
-type CredentialsCreateService interface {
+// RestCredentialsCreateService is the core operation PUT /v2/credentials delegates to.
+type RestCredentialsCreateService interface {
 	Exec(ctx context.Context, request *core.CredentialsCreateRequest) (*core.Token, error)
 }
 
-// CredentialsCreateRequest is the JSON body of PUT /v2/credentials.
-type CredentialsCreateRequest struct {
+// credentialsCreateErrors maps a refused registration to its status.
+var credentialsCreateErrors = httpf.ErrMap{
+	core.ErrCredentialsCreateAlreadyExists: http.StatusConflict,
+	core.ErrShortCodeNotFound:              http.StatusForbidden,
+	core.ErrShortCodeConsumeInvalid:        http.StatusForbidden,
+	core.ErrShortCodeConsumeExpired:        http.StatusForbidden,
+	core.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
+}
+
+// RestCredentialsCreateRequest is the JSON body of PUT /v2/credentials.
+type RestCredentialsCreateRequest struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 	ShortCode string `json:"shortCode"`
 }
 
-// CredentialsCreate serves PUT /v2/credentials, which creates an account from a registration short code.
-type CredentialsCreate struct {
-	service CredentialsCreateService
+// RestCredentialsCreate serves PUT /v2/credentials, which creates an account from a registration short code.
+type RestCredentialsCreate struct {
+	service RestCredentialsCreateService
 	logger  logging.Log
 }
 
-func NewCredentialsCreate(service CredentialsCreateService, logger logging.Log) *CredentialsCreate {
-	return &CredentialsCreate{service: service, logger: logger}
+func NewRestCredentialsCreate(service RestCredentialsCreateService, logger logging.Log) *RestCredentialsCreate {
+	return &RestCredentialsCreate{service: service, logger: logger}
 }
 
-func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestCredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.CredentialsCreate")
 	defer span.End()
 
-	var request CredentialsCreateRequest
+	var request RestCredentialsCreateRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -46,19 +55,15 @@ func (handler *CredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &core.CredentialsCreateRequest{
+	serviceRequest := &core.CredentialsCreateRequest{
 		Email:     request.Email,
 		Password:  request.Password,
 		ShortCode: request.ShortCode,
-	})
+	}
+
+	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
-			core.ErrCredentialsCreateAlreadyExists: http.StatusConflict,
-			core.ErrShortCodeNotFound:              http.StatusForbidden,
-			core.ErrShortCodeConsumeInvalid:        http.StatusForbidden,
-			core.ErrShortCodeConsumeExpired:        http.StatusForbidden,
-			core.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
-		}, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsCreateErrors, err)
 
 		return
 	}

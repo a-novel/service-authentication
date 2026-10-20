@@ -23,8 +23,11 @@ import (
 )
 
 const (
-	RestHealthStatusUp       = "up"
-	RestHealthStatusDown     = "down"
+	// RestHealthStatusUp reports a dependency whose probe succeeded.
+	RestHealthStatusUp = "up"
+	// RestHealthStatusDown reports a dependency whose probe failed.
+	RestHealthStatusDown = "down"
+	// smtpAuthenticationFailed is the SMTP reply code of a rejected login.
 	smtpAuthenticationFailed = 535
 )
 
@@ -36,7 +39,7 @@ var errSmtpUnhealthy = errors.New("SMTP health check failed")
 // SMTP diagnostics use bounded categories in the configured logger and trace,
 // never the server's reply text, which may contain credentials.
 type RestHealthStatus struct {
-	// Status is either RestHealthStatusUp or RestHealthStatusDown.
+	// Status is either [RestHealthStatusUp] or [RestHealthStatusDown].
 	Status string `json:"status"`
 }
 
@@ -67,7 +70,6 @@ type RestHealth struct {
 	logger      logging.Log
 }
 
-// NewRestHealth wires the probes and a logger that works without tracing enabled.
 func NewRestHealth(
 	apiJsonKeys RestHealthApiJsonKeys,
 	clientSmtp RestHealthClientSmtp,
