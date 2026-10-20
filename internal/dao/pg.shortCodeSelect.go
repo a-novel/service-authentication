@@ -56,7 +56,7 @@ func (dao *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRe
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(ShortCode)
+	entity := &ShortCode{}
 
 	err = tx.NewRaw(shortCodeSelectQuery, request.Target, request.Usage).Scan(ctx, entity)
 	if err != nil {

@@ -15,7 +15,7 @@ import (
 )
 
 //go:embed pg.credentialsUpdatePassword.sql
-var credentialsUpdatePassword string
+var credentialsUpdatePasswordQuery string
 
 // ErrCredentialsUpdatePasswordNotFound is returned by
 // [CredentialsUpdatePassword.Exec] when no row matches the requested ID. It is
@@ -54,9 +54,9 @@ func (dao *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(Credentials)
+	entity := &Credentials{}
 
-	err = tx.NewRaw(credentialsUpdatePassword, request.Password, request.Now, request.ID).Scan(ctx, entity)
+	err = tx.NewRaw(credentialsUpdatePasswordQuery, request.Password, request.Now, request.ID).Scan(ctx, entity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = errors.Join(err, ErrCredentialsUpdatePasswordNotFound)

@@ -62,7 +62,7 @@ func (dao *CredentialsInsert) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(Credentials)
+	entity := &Credentials{}
 
 	err = tx.NewRaw(
 		credentialsInsertQuery,

@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 
+	"github.com/samber/lo"
 	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -46,17 +47,6 @@ func (dao *CredentialsList) Exec(
 		attribute.StringSlice("data.roles", request.Roles),
 	)
 
-	if len(request.Roles) == 0 {
-		// bun.List needs a non-nil slice to render a valid expression; a nil slice
-		// produces a type error. An empty slice renders as NULL, which the query
-		// treats as "no role filter".
-		request.Roles = []string{}
-	}
-
-	if len(request.Emails) == 0 {
-		request.Emails = []string{}
-	}
-
 	tx, err := postgres.GetContext(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
@@ -68,8 +58,9 @@ func (dao *CredentialsList) Exec(
 		credentialsListQuery,
 		bun.NullZero(request.Limit),
 		request.Offset,
-		bun.List(request.Roles),
-		bun.List(request.Emails),
+		// bun.List fails on a nil slice. An empty one renders as NULL, which the query reads as no filter.
+		bun.List(lo.CoalesceSliceOrEmpty(request.Roles)),
+		bun.List(lo.CoalesceSliceOrEmpty(request.Emails)),
 	).Scan(ctx, &entities)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))

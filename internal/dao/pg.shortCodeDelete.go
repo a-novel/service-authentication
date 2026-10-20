@@ -62,7 +62,7 @@ func (dao *ShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDeleteRe
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(ShortCode)
+	entity := &ShortCode{}
 
 	err = tx.NewRaw(shortCodeDeleteQuery, request.Now, request.Comment, request.ID).Scan(ctx, entity)
 	if err != nil {

@@ -46,7 +46,7 @@ func (dao *CredentialsSelect) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
 	}
 
-	entity := new(Credentials)
+	entity := &Credentials{}
 
 	err = tx.NewRaw(credentialsSelectQuery, request.ID).Scan(ctx, entity)
 	if err != nil {

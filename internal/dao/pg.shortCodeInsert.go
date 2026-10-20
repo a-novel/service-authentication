@@ -76,7 +76,7 @@ func (dao *ShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsertRe
 		return nil, otel.ReportError(span, ErrShortCodeInsertNested)
 	}
 
-	entity := new(ShortCode)
+	entity := &ShortCode{}
 	// The partial unique index on the active (target, usage) pair keeps one active code at
 	// any isolation. Under read committed, the losing UPDATE of two concurrent overrides
 	// blocks and re-evaluates, and its insert then fails on that index as an
