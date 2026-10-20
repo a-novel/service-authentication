@@ -51,9 +51,9 @@ jobs:
     steps:
       - id: relay
         if: github.event_name == 'workflow_run'
-        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.64.0
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.65.0
       - if: github.event_name != 'workflow_run' || steps.relay.outputs.event != ''
-        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.64.0
+        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.65.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
