@@ -16,28 +16,28 @@ import (
 //go:embed pg.credentialsSelect.sql
 var credentialsSelectQuery string
 
-// ErrCredentialsSelectNotFound is returned by [CredentialsSelect.Exec] when no row matches the
+// ErrCredentialsSelectNotFound is returned by [PgCredentialsSelect.Exec] when no row matches the
 // requested ID.
 var ErrCredentialsSelectNotFound = errors.New("credentials not found")
 
-// CredentialsSelectRequest is the input to [CredentialsSelect.Exec].
+// CredentialsSelectRequest is the input to [PgCredentialsSelect.Exec].
 type CredentialsSelectRequest struct {
 	// ID of the credentials to fetch.
 	ID uuid.UUID
 }
 
-// CredentialsSelect fetches a single credentials row by ID. [CredentialsSelectByEmail] looks one up
+// PgCredentialsSelect fetches a single credentials row by ID. [PgCredentialsSelectByEmail] looks one up
 // by email.
-type CredentialsSelect struct{}
+type PgCredentialsSelect struct{}
 
-func NewCredentialsSelect() *CredentialsSelect {
-	return &CredentialsSelect{}
+func NewPgCredentialsSelect() *PgCredentialsSelect {
+	return &PgCredentialsSelect{}
 }
 
-func (dao *CredentialsSelect) Exec(
+func (dao *PgCredentialsSelect) Exec(
 	ctx context.Context, request *CredentialsSelectRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsSelect")
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsSelect")
 	defer span.End()
 
 	tx, err := postgres.GetContext(ctx)

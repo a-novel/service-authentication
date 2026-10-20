@@ -16,7 +16,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/migrations"
 )
 
-func TestCredentialsSelectByEmail(t *testing.T) {
+func TestPgCredentialsSelectByEmail(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -67,7 +67,7 @@ func TestCredentialsSelectByEmail(t *testing.T) {
 		},
 	}
 
-	dao := dao.NewCredentialsSelectByEmail()
+	dao := dao.NewPgCredentialsSelectByEmail()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

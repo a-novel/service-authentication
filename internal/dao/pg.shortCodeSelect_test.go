@@ -17,7 +17,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/migrations"
 )
 
-func TestShortCodeSelect(t *testing.T) {
+func TestPgShortCodeSelect(t *testing.T) {
 	t.Parallel()
 
 	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
@@ -121,7 +121,7 @@ func TestShortCodeSelect(t *testing.T) {
 		},
 	}
 
-	dao := dao.NewShortCodeSelect()
+	dao := dao.NewPgShortCodeSelect()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

@@ -18,7 +18,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/migrations"
 )
 
-func TestShortCodeInsert(t *testing.T) {
+func TestPgShortCodeInsert(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().UTC().Round(time.Second)
@@ -286,7 +286,7 @@ func TestShortCodeInsert(t *testing.T) {
 		},
 	}
 
-	dao := dao.NewShortCodeInsert()
+	dao := dao.NewPgShortCodeInsert()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -323,7 +323,7 @@ func TestShortCodeInsertConcurrentOverride(t *testing.T) {
 	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
 	hourLater := time.Now().Add(time.Hour).UTC().Round(time.Second)
 
-	shortCodeDAO := dao.NewShortCodeInsert()
+	shortCodeDAO := dao.NewPgShortCodeInsert()
 
 	postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 		t.Helper()

@@ -18,7 +18,7 @@ import (
 
 // The listing orders by created_at DESC, id DESC. The fixtures order created_at and updated_at
 // differently, so these assertions fail on an updated_at ordering.
-func TestCredentialsList(t *testing.T) {
+func TestPgCredentialsList(t *testing.T) {
 	t.Parallel()
 
 	// created_at descends 1 > 2 > 3, and updated_at ascends.
@@ -102,7 +102,7 @@ func TestCredentialsList(t *testing.T) {
 		},
 	}
 
-	listDAO := dao.NewCredentialsList()
+	listDAO := dao.NewPgCredentialsList()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestCredentialsList(t *testing.T) {
 func TestCredentialsListPaginationIsStable(t *testing.T) {
 	t.Parallel()
 
-	listDAO := dao.NewCredentialsList()
+	listDAO := dao.NewPgCredentialsList()
 
 	t.Run("Success/SameSecondTies", func(t *testing.T) {
 		t.Parallel()

@@ -18,15 +18,15 @@ import (
 var credentialsUpdateEmailQuery string
 
 var (
-	// ErrCredentialsUpdateEmailAlreadyExists is returned by [CredentialsUpdateEmail.Exec] when another
+	// ErrCredentialsUpdateEmailAlreadyExists is returned by [PgCredentialsUpdateEmail.Exec] when another
 	// account registered the new email between the short code's issuance and its consumption.
 	ErrCredentialsUpdateEmailAlreadyExists = errors.New("credentials already exists")
-	// ErrCredentialsUpdateEmailNotFound is returned by [CredentialsUpdateEmail.Exec] when no row
+	// ErrCredentialsUpdateEmailNotFound is returned by [PgCredentialsUpdateEmail.Exec] when no row
 	// matches the requested ID.
 	ErrCredentialsUpdateEmailNotFound = errors.New("credentials not found")
 )
 
-// CredentialsUpdateEmailRequest is the input to [CredentialsUpdateEmail.Exec].
+// CredentialsUpdateEmailRequest is the input to [PgCredentialsUpdateEmail.Exec].
 type CredentialsUpdateEmailRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
@@ -37,17 +37,17 @@ type CredentialsUpdateEmailRequest struct {
 	Now time.Time
 }
 
-// CredentialsUpdateEmail assigns a new email address to a credentials row.
-type CredentialsUpdateEmail struct{}
+// PgCredentialsUpdateEmail assigns a new email address to a credentials row.
+type PgCredentialsUpdateEmail struct{}
 
-func NewCredentialsUpdateEmail() *CredentialsUpdateEmail {
-	return &CredentialsUpdateEmail{}
+func NewPgCredentialsUpdateEmail() *PgCredentialsUpdateEmail {
+	return &PgCredentialsUpdateEmail{}
 }
 
-func (dao *CredentialsUpdateEmail) Exec(
+func (dao *PgCredentialsUpdateEmail) Exec(
 	ctx context.Context, request *CredentialsUpdateEmailRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsUpdateEmail")
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsUpdateEmail")
 	defer span.End()
 
 	tx, err := postgres.GetContext(ctx)

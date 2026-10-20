@@ -85,21 +85,21 @@ func main() {
 	// DAO
 	// =================================================================================================================
 
-	daoShortCodeDelete := dao.NewShortCodeDelete()
-	daoShortCodeInsert := dao.NewShortCodeInsert()
-	daoShortCodeSelect := dao.NewShortCodeSelect()
+	daoShortCodeDelete := dao.NewPgShortCodeDelete()
+	daoShortCodeInsert := dao.NewPgShortCodeInsert()
+	daoShortCodeSelect := dao.NewPgShortCodeSelect()
 
-	daoCredentialsExist := dao.NewCredentialsExist()
+	daoCredentialsExist := dao.NewPgCredentialsExist()
 	daoWaitlist := lo.Must(dao.NewGoogleWaitlist(cfg.Waitlist, nil))
 	daoTransactor := postgres.NewTransactor(nil)
 
-	daoCredentialsInsert := dao.NewCredentialsInsert()
-	daoCredentialsList := dao.NewCredentialsList()
-	daoCredentialsSelect := dao.NewCredentialsSelect()
-	daoCredentialsSelectByEmail := dao.NewCredentialsSelectByEmail()
-	daoCredentialsUpdateEmail := dao.NewCredentialsUpdateEmail()
-	daoCredentialsUpdatePassword := dao.NewCredentialsUpdatePassword()
-	daoCredentialsUpdateRole := dao.NewCredentialsUpdateRole()
+	daoCredentialsInsert := dao.NewPgCredentialsInsert()
+	daoCredentialsList := dao.NewPgCredentialsList()
+	daoCredentialsSelect := dao.NewPgCredentialsSelect()
+	daoCredentialsSelectByEmail := dao.NewPgCredentialsSelectByEmail()
+	daoCredentialsUpdateEmail := dao.NewPgCredentialsUpdateEmail()
+	daoCredentialsUpdatePassword := dao.NewPgCredentialsUpdatePassword()
+	daoCredentialsUpdateRole := dao.NewPgCredentialsUpdateRole()
 
 	// =================================================================================================================
 	// SERVICES

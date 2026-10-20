@@ -16,11 +16,11 @@ import (
 //go:embed pg.shortCodeSelect.sql
 var shortCodeSelectQuery string
 
-// ErrShortCodeSelectNotFound is returned by [ShortCodeSelect.Exec] when no active short code matches
+// ErrShortCodeSelectNotFound is returned by [PgShortCodeSelect.Exec] when no active short code matches
 // the (Usage, Target) pair. It covers a code never issued, expired and already consumed alike.
 var ErrShortCodeSelectNotFound = errors.New("short code not found")
 
-// ShortCodeSelectRequest is the input to [ShortCodeSelect.Exec]. A partial unique index keeps at
+// ShortCodeSelectRequest is the input to [PgShortCodeSelect.Exec]. A partial unique index keeps at
 // most one active row per (Usage, Target) pair.
 type ShortCodeSelectRequest struct {
 	// Usage selects which flow this code is valid for; matches [ShortCode.Usage].
@@ -29,15 +29,15 @@ type ShortCodeSelectRequest struct {
 	Target string
 }
 
-// ShortCodeSelect fetches the active short code of a (Usage, Target) pair.
-type ShortCodeSelect struct{}
+// PgShortCodeSelect fetches the active short code of a (Usage, Target) pair.
+type PgShortCodeSelect struct{}
 
-func NewShortCodeSelect() *ShortCodeSelect {
-	return &ShortCodeSelect{}
+func NewPgShortCodeSelect() *PgShortCodeSelect {
+	return &PgShortCodeSelect{}
 }
 
-func (dao *ShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRequest) (*ShortCode, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.ShortCodeSelect")
+func (dao *PgShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelectRequest) (*ShortCode, error) {
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeSelect")
 	defer span.End()
 
 	span.SetAttributes(

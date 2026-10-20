@@ -18,11 +18,11 @@ import (
 //go:embed pg.credentialsUpdateRole.sql
 var credentialsUpdateRoleQuery string
 
-// ErrCredentialsUpdateRoleNotFound is returned by [CredentialsUpdateRole.Exec] when no row matches
+// ErrCredentialsUpdateRoleNotFound is returned by [PgCredentialsUpdateRole.Exec] when no row matches
 // the requested ID.
 var ErrCredentialsUpdateRoleNotFound = errors.New("credentials not found")
 
-// CredentialsUpdateRoleRequest is the input to [CredentialsUpdateRole.Exec].
+// CredentialsUpdateRoleRequest is the input to [PgCredentialsUpdateRole.Exec].
 type CredentialsUpdateRoleRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
@@ -33,17 +33,17 @@ type CredentialsUpdateRoleRequest struct {
 	Now time.Time
 }
 
-// CredentialsUpdateRole assigns a new role to a credentials row.
-type CredentialsUpdateRole struct{}
+// PgCredentialsUpdateRole assigns a new role to a credentials row.
+type PgCredentialsUpdateRole struct{}
 
-func NewCredentialsUpdateRole() *CredentialsUpdateRole {
-	return &CredentialsUpdateRole{}
+func NewPgCredentialsUpdateRole() *PgCredentialsUpdateRole {
+	return &PgCredentialsUpdateRole{}
 }
 
-func (dao *CredentialsUpdateRole) Exec(
+func (dao *PgCredentialsUpdateRole) Exec(
 	ctx context.Context, request *CredentialsUpdateRoleRequest,
 ) (*Credentials, error) {
-	ctx, span := otel.Tracer().Start(ctx, "dao.CredentialsUpdateRole")
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsUpdateRole")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("credentials.id", request.ID.String()))
