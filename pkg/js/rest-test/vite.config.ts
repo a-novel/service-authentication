@@ -1,4 +1,4 @@
-import { name, peerDependencies } from "./package.json";
+import { name, peerDependencies } from "./package.json" with { type: "json" };
 
 import { builtinModules } from "node:module";
 
@@ -12,6 +12,8 @@ export default defineConfig({
     exclude: NODE_BUILT_IN_MODULES,
   },
   build: {
+    outDir: "pkg/js/rest-test/dist",
+    emptyOutDir: true,
     lib: {
       entry: {
         src: "pkg/js/rest-test/src/index.ts",

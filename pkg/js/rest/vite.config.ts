@@ -1,9 +1,11 @@
-import { name, peerDependencies } from "./package.json";
+import { name, peerDependencies } from "./package.json" with { type: "json" };
 
 import { defineConfig } from "vite";
 
 export default defineConfig({
   build: {
+    outDir: "pkg/js/rest/dist",
+    emptyOutDir: true,
     lib: {
       entry: {
         src: "pkg/js/rest/src/index.ts",
