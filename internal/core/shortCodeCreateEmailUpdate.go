@@ -91,9 +91,7 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	_, err = service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{
-		Email: request.Email,
-	})
+	_, err = service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
 	if err == nil {
 		return nil, otel.ReportError(span, dao.ErrCredentialsUpdateEmailAlreadyExists)
 	}
@@ -108,32 +106,36 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 	}
 	defer reservation.Release()
 
-	shortCode, err := service.service.Exec(ctx, &ShortCodeCreateRequest{
+	ttl := service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL
+	createRequest := &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageValidateEmail,
 		Target:   request.ID.String(),
 		Data:     request.Email,
-		TTL:      service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL,
+		TTL:      ttl,
 		Override: true,
-	})
+	}
+
+	shortCode, err := service.service.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
-	reservation.Deliver(ctx, &MailDeliveryRequest{
+	mail := &MailDeliveryRequest{
 		To:           smtp.MailUsers{{Email: request.Email}},
 		Template:     mails.Mails.EmailUpdate,
 		TemplateName: request.Lang,
 		Data: map[string]any{
 			mails.TemplateVarShortCode: shortCode.PlainCode,
 			mails.TemplateVarTarget:    request.ID.String(),
-			"Source":                   base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+			mails.TemplateVarSource:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 			mails.TemplateVarURL:       service.smtpConfig.UpdateEmail,
-			mails.TemplateVarDuration:  service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL.Hours(),
+			mails.TemplateVarDuration:  ttl.Hours(),
 			mails.TemplateVarBanner:    assets.BannerBase64,
-			mails.TemplateVarPurpose:   mailDeliveryKindEmailUpdate,
 		},
 		Kind: mailDeliveryKindEmailUpdate,
-	})
+	}
+
+	reservation.Deliver(ctx, mail)
 
 	return shortCode, nil
 }

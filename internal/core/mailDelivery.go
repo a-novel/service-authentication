@@ -157,13 +157,7 @@ func (reservation *mailDeliveryReservation) Deliver(ctx context.Context, request
 	ctx, span := otel.Tracer().Start(ctx, "core.MailDelivery(deliver)")
 	defer span.End()
 
-	reservation.once.Do(func() {
-		go func() {
-			defer reservation.delivery.complete()
-
-			reservation.delivery.send(context.WithoutCancel(ctx), request)
-		}()
-	})
+	reservation.once.Do(func() { go reservation.delivery.send(context.WithoutCancel(ctx), request) })
 }
 
 func (reservation *mailDeliveryReservation) Release() {
@@ -175,7 +169,10 @@ func (delivery *MailDelivery) complete() {
 	delivery.wg.Done()
 }
 
+// send delivers one accepted message, then frees the slot its reservation took.
 func (delivery *MailDelivery) send(ctx context.Context, request *MailDeliveryRequest) {
+	defer delivery.complete()
+
 	_, span := otel.Tracer().Start(ctx, "core.MailDelivery(send)")
 	defer span.End()
 	defer otel.RecoverPanic(ctx, span)

@@ -43,14 +43,8 @@ type ShortCodeCreate struct {
 }
 
 // NewShortCodeCreate wires the create service to its DAO and short-code configuration.
-func NewShortCodeCreate(
-	dao ShortCodeCreateDao,
-	config authconfig.ShortCodes,
-) *ShortCodeCreate {
-	return &ShortCodeCreate{
-		dao:    dao,
-		config: config,
-	}
+func NewShortCodeCreate(dao ShortCodeCreateDao, config authconfig.ShortCodes) *ShortCodeCreate {
+	return &ShortCodeCreate{dao: dao, config: config}
 }
 
 // Exec issues a new short code and returns it with the plaintext populated in
@@ -86,8 +80,7 @@ func (service *ShortCodeCreate) Exec(
 	}
 
 	now := time.Now()
-
-	entity, err := service.dao.Exec(ctx, &dao.ShortCodeInsertRequest{
+	daoRequest := &dao.ShortCodeInsertRequest{
 		ID:        uuid.New(),
 		Code:      encrypted,
 		Usage:     request.Usage,
@@ -96,7 +89,9 @@ func (service *ShortCodeCreate) Exec(
 		Now:       now,
 		ExpiresAt: now.Add(request.TTL),
 		Override:  request.Override,
-	})
+	}
+
+	entity, err := service.dao.Exec(ctx, daoRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}

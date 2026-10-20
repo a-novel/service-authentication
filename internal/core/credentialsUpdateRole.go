@@ -26,9 +26,7 @@ var (
 	ErrCredentialsUpdateRoleDowngradeSuperior = errors.New("user can only downgrade users from a lower role")
 	// ErrCredentialsUpdateRoleToHigher is returned by [CredentialsUpdateRole.Exec]
 	// when the actor tries to promote a user to a role above the actor's own.
-	ErrCredentialsUpdateRoleToHigher = errors.New(
-		"user is not allowed to upgrade users to a higher role than its own",
-	)
+	ErrCredentialsUpdateRoleToHigher = errors.New("user is not allowed to upgrade users to a higher role than its own")
 )
 
 // CredentialsUpdateRoleDao assigns the new role to the target account.
@@ -154,14 +152,13 @@ func (service *CredentialsUpdateRole) Exec(
 		return newCredentials(targetCredentials), nil
 	}
 
-	updatedCredentials, err := service.dao.Exec(
-		ctx,
-		&dao.CredentialsUpdateRoleRequest{
-			ID:   request.TargetUserID,
-			Role: request.Role,
-			Now:  time.Now(),
-		},
-	)
+	daoRequest := &dao.CredentialsUpdateRoleRequest{
+		ID:   request.TargetUserID,
+		Role: request.Role,
+		Now:  time.Now(),
+	}
+
+	updatedCredentials, err := service.dao.Exec(ctx, daoRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}

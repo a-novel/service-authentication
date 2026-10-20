@@ -219,8 +219,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 							"Duration": authconfig.ShortCodesPresetDefault.
 								Usages[core.ShortCodeUsageValidateEmail].
 								TTL.Hours(),
-							"Banner":   assets.BannerBase64,
-							"_Purpose": "email-update",
+							"Banner": assets.BannerBase64,
 						},
 					).
 					Return(nil)

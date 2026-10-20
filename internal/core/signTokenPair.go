@@ -26,23 +26,21 @@ type tokenPairSigner interface {
 // signTokenPair issues a fresh refresh and access token pair for the given credentials.
 // The access token's RefreshTokenID claim holds the refresh token's JTI, which binds the
 // pair. Every failure is an infrastructure fault, so the function returns no sentinel.
-func signTokenPair(
-	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials,
-) (*Token, error) {
+func signTokenPair(ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.signTokenPair")
 	defer span.End()
 
-	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(RefreshTokenClaimsForm{
-		UserID: credentials.ID,
-	})
+	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(RefreshTokenClaimsForm{UserID: credentials.ID})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("marshal refresh claims: %w", err))
 	}
 
-	refreshToken, err := signer.ClaimsSign(ctx, &servicejsonkeys.ClaimsSignRequest{
+	refreshTokenRequest := &servicejsonkeys.ClaimsSignRequest{
 		Usage:   servicejsonkeys.KeyUsageAuthRefresh,
 		Payload: refreshTokenPayload,
-	})
+	}
+
+	refreshToken, err := signer.ClaimsSign(ctx, refreshTokenRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("issue refresh token: %w", err))
 	}
@@ -59,19 +57,23 @@ func signTokenPair(
 		return nil, otel.ReportError(span, fmt.Errorf("parse refresh token: %w", err))
 	}
 
-	accessTokenPayload, err := grpcf.MarshalJSONAsAny(AccessTokenClaims{
+	accessTokenClaims := AccessTokenClaims{
 		UserID:         &credentials.ID,
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,
-	})
+	}
+
+	accessTokenPayload, err := grpcf.MarshalJSONAsAny(accessTokenClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("marshal access claims: %w", err))
 	}
 
-	accessToken, err := signer.ClaimsSign(ctx, &servicejsonkeys.ClaimsSignRequest{
+	accessTokenRequest := &servicejsonkeys.ClaimsSignRequest{
 		Usage:   servicejsonkeys.KeyUsageAuth,
 		Payload: accessTokenPayload,
-	})
+	}
+
+	accessToken, err := signer.ClaimsSign(ctx, accessTokenRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("issue access token: %w", err))
 	}

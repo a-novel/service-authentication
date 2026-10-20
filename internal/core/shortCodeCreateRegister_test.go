@@ -214,8 +214,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 							"Duration": authconfig.ShortCodesPresetDefault.
 								Usages[core.ShortCodeUsageRegister].
 								TTL.Hours(),
-							"Banner":   assets.BannerBase64,
-							"_Purpose": "register",
+							"Banner": assets.BannerBase64,
 						},
 					).
 					Return(nil)

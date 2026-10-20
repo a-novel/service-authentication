@@ -24,8 +24,8 @@ var anonTokenClaims = &servicejsonkeys.ClaimsSignRequest{
 	})),
 }
 
-// TokenCreateAnonSignClaimsService is the json-keys signing surface TokenCreateAnon needs.
-type TokenCreateAnonSignClaimsService interface {
+// TokenCreateAnonServiceSignClaims is the JSON Keys signing surface [TokenCreateAnon] needs.
+type TokenCreateAnonServiceSignClaims interface {
 	ClaimsSign(
 		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
 	) (*servicejsonkeys.ClaimsSignResponse, error)
@@ -34,25 +34,21 @@ type TokenCreateAnonSignClaimsService interface {
 // TokenCreateAnon issues an anonymous access token, carrying no user ID and only the
 // anonymous role. See AccessTokenClaims for what such tokens grant.
 type TokenCreateAnon struct {
-	signClaimsService TokenCreateAnonSignClaimsService
+	serviceSignClaims TokenCreateAnonServiceSignClaims
 }
 
-func NewTokenCreateAnon(signClaimsService TokenCreateAnonSignClaimsService) *TokenCreateAnon {
-	return &TokenCreateAnon{
-		signClaimsService: signClaimsService,
-	}
+func NewTokenCreateAnon(serviceSignClaims TokenCreateAnonServiceSignClaims) *TokenCreateAnon {
+	return &TokenCreateAnon{serviceSignClaims: serviceSignClaims}
 }
 
 func (service *TokenCreateAnon) Exec(ctx context.Context) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.TokenCreateAnon")
 	defer span.End()
 
-	accessToken, err := service.signClaimsService.ClaimsSign(ctx, anonTokenClaims)
+	accessToken, err := service.serviceSignClaims.ClaimsSign(ctx, anonTokenClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("issue accessToken: %w", err))
 	}
 
-	return &Token{
-		AccessToken: accessToken.GetToken(),
-	}, nil
+	return &Token{AccessToken: accessToken.GetToken()}, nil
 }

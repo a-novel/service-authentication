@@ -109,36 +109,26 @@ func (service *TokenRefresh) Exec(
 
 	// Expiry is ignored here: refresh exists to renew an expired access token, but its
 	// signature must still hold.
-	accessTokenClaims, err := service.serviceVerifyClaims.VerifyClaims(
-		ctx,
-		&servicejsonkeys.VerifyClaimsRequest{
-			Usage:       servicejsonkeys.KeyUsageAuth,
-			AccessToken: request.AccessToken,
-			Options:     &servicejsonkeys.VerifyClaimsOptions{IgnoreExpired: true},
-		},
-	)
-	if err != nil {
-		if errors.Is(err, jws.ErrInvalidSignature) || errors.Is(err, jwp.ErrInvalidClaims) {
-			return nil, otel.ReportError(span, errors.Join(err, ErrTokenRefreshInvalidAccessToken))
-		}
+	accessTokenRequest := &servicejsonkeys.VerifyClaimsRequest{
+		Usage:       servicejsonkeys.KeyUsageAuth,
+		AccessToken: request.AccessToken,
+		Options:     &servicejsonkeys.VerifyClaimsOptions{IgnoreExpired: true},
+	}
 
-		return nil, otel.ReportError(span, err)
+	accessTokenClaims, err := service.serviceVerifyClaims.VerifyClaims(ctx, accessTokenRequest)
+	if err != nil {
+		return nil, otel.ReportError(span, joinInvalidToken(err, ErrTokenRefreshInvalidAccessToken))
 	}
 
 	// The refresh token is verified in full, expiry included.
-	refreshTokenClaims, err := service.serviceVerifyRefreshClaims.VerifyClaims(
-		ctx,
-		&servicejsonkeys.VerifyClaimsRequest{
-			Usage:       servicejsonkeys.KeyUsageAuthRefresh,
-			AccessToken: request.RefreshToken,
-		},
-	)
-	if err != nil {
-		if errors.Is(err, jws.ErrInvalidSignature) || errors.Is(err, jwp.ErrInvalidClaims) {
-			return nil, otel.ReportError(span, errors.Join(err, ErrTokenRefreshInvalidRefreshToken))
-		}
+	refreshTokenRequest := &servicejsonkeys.VerifyClaimsRequest{
+		Usage:       servicejsonkeys.KeyUsageAuthRefresh,
+		AccessToken: request.RefreshToken,
+	}
 
-		return nil, otel.ReportError(span, err)
+	refreshTokenClaims, err := service.serviceVerifyRefreshClaims.VerifyClaims(ctx, refreshTokenRequest)
+	if err != nil {
+		return nil, otel.ReportError(span, joinInvalidToken(err, ErrTokenRefreshInvalidRefreshToken))
 	}
 
 	span.SetAttributes(
@@ -161,29 +151,28 @@ func (service *TokenRefresh) Exec(
 	}
 
 	// Reload credentials so any role change since the original sign lands in the new token.
-	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectRequest{
-		ID: lo.FromPtr(accessTokenClaims.UserID),
-	})
+	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectRequest{ID: lo.FromPtr(accessTokenClaims.UserID)})
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
 
-	newAccessTokenClaims, err := grpcf.MarshalJSONAsAny(AccessTokenClaims{
+	newAccessTokenClaims := AccessTokenClaims{
 		UserID:         accessTokenClaims.UserID,
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,
-	})
+	}
+
+	newAccessTokenPayload, err := grpcf.MarshalJSONAsAny(newAccessTokenClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
 
-	newAccessToken, err := service.serviceSignClaims.ClaimsSign(
-		ctx,
-		&servicejsonkeys.ClaimsSignRequest{
-			Usage:   servicejsonkeys.KeyUsageAuth,
-			Payload: newAccessTokenClaims,
-		},
-	)
+	signRequest := &servicejsonkeys.ClaimsSignRequest{
+		Usage:   servicejsonkeys.KeyUsageAuth,
+		Payload: newAccessTokenPayload,
+	}
+
+	newAccessToken, err := service.serviceSignClaims.ClaimsSign(ctx, signRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
@@ -192,4 +181,14 @@ func (service *TokenRefresh) Exec(
 		AccessToken:  newAccessToken.GetToken(),
 		RefreshToken: request.RefreshToken, // Refresh token does not change.
 	}, nil
+}
+
+// joinInvalidToken joins sentinel onto err when the token itself failed verification, by its
+// signature or its claims. Any other failure, such as an unreachable signer, stays as it is.
+func joinInvalidToken(err, sentinel error) error {
+	if errors.Is(err, jws.ErrInvalidSignature) || errors.Is(err, jwp.ErrInvalidClaims) {
+		return errors.Join(err, sentinel)
+	}
+
+	return err
 }

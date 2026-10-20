@@ -45,11 +45,13 @@ func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeCon
 
 	span.SetAttributes(attribute.String("shortCode.id", request.ID.String()))
 
-	entity, err := service.dao.Exec(ctx, &dao.ShortCodeDeleteRequest{
+	daoRequest := &dao.ShortCodeDeleteRequest{
 		ID:      request.ID,
 		Now:     time.Now(),
 		Comment: dao.ShortCodeDeleteConsumed,
-	})
+	}
+
+	entity, err := service.dao.Exec(ctx, daoRequest)
 	if err != nil {
 		if errors.Is(err, dao.ErrShortCodeDeleteNotFound) {
 			err = errors.Join(err, ErrShortCodeConsumeInvalid)

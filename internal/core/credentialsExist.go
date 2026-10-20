@@ -29,9 +29,7 @@ type CredentialsExist struct {
 }
 
 func NewCredentialsExist(dao CredentialsExistDao) *CredentialsExist {
-	return &CredentialsExist{
-		dao: dao,
-	}
+	return &CredentialsExist{dao: dao}
 }
 
 func (service *CredentialsExist) Exec(ctx context.Context, request *CredentialsExistRequest) (bool, error) {
@@ -43,9 +41,7 @@ func (service *CredentialsExist) Exec(ctx context.Context, request *CredentialsE
 		return false, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	exists, err := service.dao.Exec(ctx, &dao.CredentialsExistRequest{
-		Email: request.Email,
-	})
+	exists, err := service.dao.Exec(ctx, &dao.CredentialsExistRequest{Email: request.Email})
 	if err != nil {
 		return false, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
 	}

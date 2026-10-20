@@ -205,8 +205,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 							"Duration": authconfig.ShortCodesPresetDefault.
 								Usages[core.ShortCodeUsageResetPassword].
 								TTL.Hours(),
-							"Banner":   assets.BannerBase64,
-							"_Purpose": "password-reset",
+							"Banner": assets.BannerBase64,
 						},
 					).
 					Return(nil)

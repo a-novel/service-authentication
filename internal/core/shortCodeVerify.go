@@ -57,10 +57,12 @@ func (service *ShortCodeVerify) Exec(ctx context.Context, request *ShortCodeVeri
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	entity, err := service.dao.Exec(ctx, &dao.ShortCodeSelectRequest{
+	daoRequest := &dao.ShortCodeSelectRequest{
 		Target: request.Target,
 		Usage:  request.Usage,
-	})
+	}
+
+	entity, err := service.dao.Exec(ctx, daoRequest)
 	if err != nil {
 		if errors.Is(err, dao.ErrShortCodeSelectNotFound) {
 			// Burn an Argon2id verification so a missing code costs the same as a

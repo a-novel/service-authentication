@@ -31,9 +31,7 @@ type CredentialsList struct {
 }
 
 func NewCredentialsList(dao CredentialsListDao) *CredentialsList {
-	return &CredentialsList{
-		dao: dao,
-	}
+	return &CredentialsList{dao: dao}
 }
 
 func (service *CredentialsList) Exec(
@@ -47,11 +45,13 @@ func (service *CredentialsList) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	entities, err := service.dao.Exec(ctx, &dao.CredentialsListRequest{
+	daoRequest := &dao.CredentialsListRequest{
 		Limit:  request.Limit,
 		Offset: request.Offset,
 		Roles:  request.Roles,
-	})
+	}
+
+	entities, err := service.dao.Exec(ctx, daoRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("list credentials: %w", err))
 	}

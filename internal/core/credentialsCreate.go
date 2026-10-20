@@ -120,11 +120,13 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	shortCode, err := service.serviceShortCodeVerify.Exec(ctx, &ShortCodeVerifyRequest{
+	verifyRequest := &ShortCodeVerifyRequest{
 		Usage:  ShortCodeUsageRegister,
 		Target: request.Email,
 		Code:   request.ShortCode,
-	})
+	}
+
+	shortCode, err := service.serviceShortCodeVerify.Exec(ctx, verifyRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("verify short code: %w", err))
 	}
@@ -148,13 +150,15 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 			return fmt.Errorf("consume short code: %w", err)
 		}
 
-		credentials, err = service.dao.Exec(ctx, &dao.CredentialsInsertRequest{
+		daoRequest := &dao.CredentialsInsertRequest{
 			ID:       uuid.New(),
 			Email:    request.Email,
 			Password: encryptedPassword,
 			Now:      time.Now(),
 			Role:     role,
-		})
+		}
+
+		credentials, err = service.dao.Exec(ctx, daoRequest)
 		if err != nil {
 			return fmt.Errorf("insert credentials: %w", err)
 		}
@@ -168,9 +172,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	// Preserve the committed account even when Google is unavailable or the client has disconnected.
 	// A failed cleanup leaves the account standing; the waitlist span records the error.
 	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), waitlistCleanupTimeout)
-	_, _ = service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{
-		Action: dao.WaitlistActionRemove, Email: request.Email,
-	})
+	_, _ = service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{Action: dao.WaitlistActionRemove, Email: request.Email})
 
 	cancel()
 

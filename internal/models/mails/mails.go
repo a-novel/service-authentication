@@ -32,10 +32,10 @@ var (
 const (
 	TemplateVarShortCode = "ShortCode"
 	TemplateVarTarget    = "Target"
+	TemplateVarSource    = "Source"
 	TemplateVarURL       = "URL"
 	TemplateVarDuration  = "Duration"
 	TemplateVarBanner    = "Banner"
-	TemplateVarPurpose   = "_Purpose"
 )
 
 // MailTemplates groups the parsed email templates by type. Each field carries every

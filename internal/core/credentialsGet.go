@@ -28,9 +28,7 @@ type CredentialsGet struct {
 }
 
 func NewCredentialsGet(dao CredentialsGetDao) *CredentialsGet {
-	return &CredentialsGet{
-		dao: dao,
-	}
+	return &CredentialsGet{dao: dao}
 }
 
 func (service *CredentialsGet) Exec(
