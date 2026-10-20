@@ -1,5 +1,5 @@
 # This image serves the REST API. It needs a migrated database.
-FROM docker.io/library/golang:1.27.2-alpine AS builder
+FROM docker.io/library/golang:1.27.3-alpine AS builder
 
 # Static binary: no libc dependency, so it runs on a bare alpine base.
 ENV CGO_ENABLED=0
