@@ -18,6 +18,9 @@ type RestCredentialsListService interface {
 	Exec(ctx context.Context, request *core.CredentialsListRequest) ([]*core.Credentials, error)
 }
 
+// credentialsListErrors maps a refused account listing to its status.
+var credentialsListErrors = httpf.ErrMap{core.ErrInvalidRequest: http.StatusUnprocessableEntity}
+
 // RestCredentialsListRequest holds the query parameters of GET /v2/credentials/all.
 type RestCredentialsListRequest struct {
 	Limit  int      `schema:"limit"`
@@ -56,8 +59,7 @@ func (handler *RestCredentialsList) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		errMap := httpf.ErrMap{core.ErrInvalidRequest: http.StatusUnprocessableEntity}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsListErrors, err)
 
 		return
 	}

@@ -20,6 +20,13 @@ type RestCredentialsUpdatePasswordService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
+// credentialsUpdatePasswordErrors maps a refused password change to its status.
+var credentialsUpdatePasswordErrors = httpf.ErrMap{
+	core.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
+	lib.ErrInvalidPassword:                    http.StatusForbidden,
+	core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
+}
+
 // RestCredentialsUpdatePasswordRequest is the JSON body of PATCH /v2/credentials/password.
 type RestCredentialsUpdatePasswordRequest struct {
 	Password        string `json:"password"`
@@ -66,12 +73,7 @@ func (handler *RestCredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		errMap := httpf.ErrMap{
-			core.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
-			lib.ErrInvalidPassword:                    http.StatusForbidden,
-			core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsUpdatePasswordErrors, err)
 
 		return
 	}

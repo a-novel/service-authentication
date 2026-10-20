@@ -17,6 +17,14 @@ type RestTokenCreateService interface {
 	Exec(ctx context.Context, request *core.TokenCreateRequest) (*core.Token, error)
 }
 
+// tokenCreateErrors maps a refused login to its status. An unknown email and a wrong
+// password both answer 401, so a caller cannot probe which addresses are registered.
+var tokenCreateErrors = httpf.ErrMap{
+	core.ErrCredentialsByEmailNotFound: http.StatusUnauthorized,
+	lib.ErrInvalidPassword:             http.StatusUnauthorized,
+	core.ErrInvalidRequest:             http.StatusUnprocessableEntity,
+}
+
 // RestTokenCreateRequest is the JSON body of PUT /v2/session.
 type RestTokenCreateRequest struct {
 	Email    string `json:"email"`
@@ -53,13 +61,7 @@ func (handler *RestTokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		// Both "email not found" and "invalid password" return 401 to prevent email enumeration.
-		errMap := httpf.ErrMap{
-			core.ErrCredentialsByEmailNotFound: http.StatusUnauthorized,
-			lib.ErrInvalidPassword:             http.StatusUnauthorized,
-			core.ErrInvalidRequest:             http.StatusUnprocessableEntity,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, tokenCreateErrors, err)
 
 		return
 	}

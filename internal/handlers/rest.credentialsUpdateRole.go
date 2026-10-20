@@ -20,6 +20,17 @@ type RestCredentialsUpdateRoleService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdateRoleRequest) (*core.Credentials, error)
 }
 
+// credentialsUpdateRoleErrors maps a refused role change to its status.
+var credentialsUpdateRoleErrors = httpf.ErrMap{
+	core.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
+	// The select raises this when the target or actor credentials are missing.
+	core.ErrCredentialsGetNotFound:                 http.StatusNotFound,
+	core.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
+	core.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,
+	core.ErrCredentialsUpdateRoleSelfUpdate:        http.StatusForbidden,
+	core.ErrInvalidRequest:                         http.StatusUnprocessableEntity,
+}
+
 // RestCredentialsUpdateRoleRequest is the JSON body of PATCH /v2/credentials/role.
 type RestCredentialsUpdateRoleRequest struct {
 	UserID uuid.UUID `json:"userID"`
@@ -66,16 +77,7 @@ func (handler *RestCredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *ht
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		errMap := httpf.ErrMap{
-			core.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
-			// The select raises this when the target or actor credentials are missing.
-			core.ErrCredentialsGetNotFound:                 http.StatusNotFound,
-			core.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
-			core.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,
-			core.ErrCredentialsUpdateRoleSelfUpdate:        http.StatusForbidden,
-			core.ErrInvalidRequest:                         http.StatusUnprocessableEntity,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsUpdateRoleErrors, err)
 
 		return
 	}

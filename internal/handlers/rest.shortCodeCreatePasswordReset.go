@@ -17,6 +17,12 @@ type RestShortCodeCreatePasswordResetService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error)
 }
 
+// shortCodeCreatePasswordResetErrors maps a failed password-reset code request to its status.
+var shortCodeCreatePasswordResetErrors = httpf.ErrMap{
+	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
+	core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+}
+
 // RestShortCodeCreatePasswordResetRequest is the JSON body of PUT /v2/short-code/update-password.
 type RestShortCodeCreatePasswordResetRequest struct {
 	Email string `json:"email"`
@@ -56,11 +62,7 @@ func (handler *RestShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter
 	_, err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
 	if err != nil && !errors.Is(err, core.ErrCredentialsByEmailNotFound) {
-		errMap := httpf.ErrMap{
-			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreatePasswordResetErrors, err)
 
 		return
 	}

@@ -18,6 +18,15 @@ type RestCredentialsResetPasswordService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
+// credentialsResetPasswordErrors maps a refused password reset to its status.
+var credentialsResetPasswordErrors = httpf.ErrMap{
+	core.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
+	core.ErrShortCodeNotFound:                 http.StatusForbidden,
+	core.ErrShortCodeConsumeInvalid:           http.StatusForbidden,
+	core.ErrShortCodeConsumeExpired:           http.StatusForbidden,
+	core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
+}
+
 // RestCredentialsResetPasswordRequest is the JSON body of PUT /v2/credentials/password.
 type RestCredentialsResetPasswordRequest struct {
 	Password  string    `json:"password"`
@@ -58,14 +67,7 @@ func (handler *RestCredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r 
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		errMap := httpf.ErrMap{
-			core.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
-			core.ErrShortCodeNotFound:                 http.StatusForbidden,
-			core.ErrShortCodeConsumeInvalid:           http.StatusForbidden,
-			core.ErrShortCodeConsumeExpired:           http.StatusForbidden,
-			core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsResetPasswordErrors, err)
 
 		return
 	}

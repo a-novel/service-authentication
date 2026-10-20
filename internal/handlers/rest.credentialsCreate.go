@@ -16,6 +16,15 @@ type RestCredentialsCreateService interface {
 	Exec(ctx context.Context, request *core.CredentialsCreateRequest) (*core.Token, error)
 }
 
+// credentialsCreateErrors maps a refused registration to its status.
+var credentialsCreateErrors = httpf.ErrMap{
+	core.ErrCredentialsCreateAlreadyExists: http.StatusConflict,
+	core.ErrShortCodeNotFound:              http.StatusForbidden,
+	core.ErrShortCodeConsumeInvalid:        http.StatusForbidden,
+	core.ErrShortCodeConsumeExpired:        http.StatusForbidden,
+	core.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
+}
+
 // RestCredentialsCreateRequest is the JSON body of PUT /v2/credentials.
 type RestCredentialsCreateRequest struct {
 	Email     string `json:"email"`
@@ -54,14 +63,7 @@ func (handler *RestCredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		errMap := httpf.ErrMap{
-			core.ErrCredentialsCreateAlreadyExists: http.StatusConflict,
-			core.ErrShortCodeNotFound:              http.StatusForbidden,
-			core.ErrShortCodeConsumeInvalid:        http.StatusForbidden,
-			core.ErrShortCodeConsumeExpired:        http.StatusForbidden,
-			core.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsCreateErrors, err)
 
 		return
 	}

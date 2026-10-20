@@ -18,6 +18,16 @@ type RestCredentialsUpdateEmailService interface {
 	Exec(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.Credentials, error)
 }
 
+// credentialsUpdateEmailErrors maps a refused email change to its status.
+var credentialsUpdateEmailErrors = httpf.ErrMap{
+	core.ErrCredentialsUpdateEmailNotFound:      http.StatusNotFound,
+	core.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
+	core.ErrShortCodeNotFound:                   http.StatusForbidden,
+	core.ErrShortCodeConsumeInvalid:             http.StatusForbidden,
+	core.ErrShortCodeConsumeExpired:             http.StatusForbidden,
+	core.ErrInvalidRequest:                      http.StatusUnprocessableEntity,
+}
+
 // RestCredentialsUpdateEmailRequest is the JSON body of PATCH /v2/credentials/email.
 type RestCredentialsUpdateEmailRequest struct {
 	UserID    uuid.UUID `json:"userID"`
@@ -56,15 +66,7 @@ func (handler *RestCredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *h
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		errMap := httpf.ErrMap{
-			core.ErrCredentialsUpdateEmailNotFound:      http.StatusNotFound,
-			core.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
-			core.ErrShortCodeNotFound:                   http.StatusForbidden,
-			core.ErrShortCodeConsumeInvalid:             http.StatusForbidden,
-			core.ErrShortCodeConsumeExpired:             http.StatusForbidden,
-			core.ErrInvalidRequest:                      http.StatusUnprocessableEntity,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsUpdateEmailErrors, err)
 
 		return
 	}

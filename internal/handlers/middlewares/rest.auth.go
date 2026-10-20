@@ -36,6 +36,19 @@ type AuthClaimsVerifier interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error)
 }
 
+// verifyClaimsErrors answers 401 to a token rejection, which the caller resolves by refreshing or
+// signing in again. Any other failure, such as an unreachable key source, stays 500, so a client
+// keeps a session it may still hold.
+var verifyClaimsErrors = httpf.ErrMap{
+	jws.ErrInvalidSignature:        http.StatusUnauthorized,
+	jwp.ErrInvalidClaims:           http.StatusUnauthorized,
+	jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
+	jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
+	jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
+	jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
+	jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
+}
+
 // Auth provides JWT-based authentication and role-based authorization middleware.
 // It verifies access tokens and checks that the user has at least one of the required permissions.
 type Auth struct {
@@ -121,19 +134,7 @@ func (middleware *Auth) serve(
 
 	claims, err := middleware.claimsVerifier.VerifyClaims(ctx, verifyRequest)
 	if err != nil {
-		// A token rejection is the caller's to resolve, so it answers 401 and clients
-		// refresh or re-authenticate. Any other failure, such as an unreachable key
-		// source, stays 500 so a client keeps a session it may still hold.
-		errMap := httpf.ErrMap{
-			jws.ErrInvalidSignature:        http.StatusUnauthorized,
-			jwp.ErrInvalidClaims:           http.StatusUnauthorized,
-			jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
-			jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
-			jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
-			jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
-			jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
-		}
-		httpf.HandleError(ctx, middleware.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, middleware.logger, w, span, verifyClaimsErrors, err)
 
 		return
 	}

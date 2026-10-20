@@ -16,6 +16,9 @@ type RestCredentialsExistService interface {
 	Exec(ctx context.Context, request *core.CredentialsExistRequest) (bool, error)
 }
 
+// credentialsExistErrors maps a refused account lookup by email to its status.
+var credentialsExistErrors = httpf.ErrMap{core.ErrInvalidRequest: http.StatusUnprocessableEntity}
+
 // RestCredentialsExistRequest holds the query parameters of HEAD /v2/credentials.
 type RestCredentialsExistRequest struct {
 	Email string `schema:"email"`
@@ -46,8 +49,7 @@ func (handler *RestCredentialsExist) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	ok, err := handler.service.Exec(ctx, &core.CredentialsExistRequest{Email: request.Email})
 	if err != nil {
-		errMap := httpf.ErrMap{core.ErrInvalidRequest: http.StatusUnprocessableEntity}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsExistErrors, err)
 
 		return
 	}

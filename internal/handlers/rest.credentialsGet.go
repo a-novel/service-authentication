@@ -18,6 +18,12 @@ type RestCredentialsGetService interface {
 	Exec(ctx context.Context, request *core.CredentialsGetRequest) (*core.Credentials, error)
 }
 
+// credentialsGetErrors maps a failed account lookup to its status.
+var credentialsGetErrors = httpf.ErrMap{
+	core.ErrCredentialsGetNotFound: http.StatusNotFound,
+	core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
+}
+
 // RestCredentialsGetRequest holds the query parameters of GET /v2/credentials.
 type RestCredentialsGetRequest struct {
 	ID uuid.UUID `schema:"id"`
@@ -48,11 +54,7 @@ func (handler *RestCredentialsGet) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	res, err := handler.service.Exec(ctx, &core.CredentialsGetRequest{ID: request.ID})
 	if err != nil {
-		errMap := httpf.ErrMap{
-			core.ErrCredentialsGetNotFound: http.StatusNotFound,
-			core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, credentialsGetErrors, err)
 
 		return
 	}

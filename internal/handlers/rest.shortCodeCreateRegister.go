@@ -18,6 +18,12 @@ type RestShortCodeCreateRegisterService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)
 }
 
+// shortCodeCreateRegisterErrors maps a failed invitation to its status.
+var shortCodeCreateRegisterErrors = httpf.ErrMap{
+	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
+	core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+}
+
 // RestShortCodeCreateRegisterRequest is the JSON body of PUT /v2/short-code/register.
 type RestShortCodeCreateRegisterRequest struct {
 	Email string `json:"email"`
@@ -58,11 +64,7 @@ func (handler *RestShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *
 	_, err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
 	if err != nil && !errors.Is(err, core.ErrCredentialsCreateAlreadyExists) {
-		errMap := httpf.ErrMap{
-			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreateRegisterErrors, err)
 
 		return
 	}

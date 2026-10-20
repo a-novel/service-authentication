@@ -16,6 +16,17 @@ type RestTokenRefreshService interface {
 	Exec(ctx context.Context, request *core.TokenRefreshRequest) (*core.Token, error)
 }
 
+// tokenRefreshErrors maps a refused session renewal to its status.
+var tokenRefreshErrors = httpf.ErrMap{
+	core.ErrTokenRefreshInvalidAccessToken:  http.StatusForbidden,
+	core.ErrTokenRefreshInvalidRefreshToken: http.StatusForbidden,
+	core.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,
+	core.ErrTokenRefreshMismatchSource:      http.StatusForbidden,
+	// The account behind a still-valid refresh token is gone, so the caller signs in again.
+	core.ErrCredentialsGetNotFound: http.StatusUnauthorized,
+	core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
+}
+
 // RestTokenRefreshRequest is the JSON body of PATCH /v2/session.
 type RestTokenRefreshRequest struct {
 	AccessToken  string `json:"accessToken"`
@@ -52,16 +63,7 @@ func (handler *RestTokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		errMap := httpf.ErrMap{
-			core.ErrTokenRefreshInvalidAccessToken:  http.StatusForbidden,
-			core.ErrTokenRefreshInvalidRefreshToken: http.StatusForbidden,
-			core.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,
-			core.ErrTokenRefreshMismatchSource:      http.StatusForbidden,
-			// The account behind a still-valid refresh token is gone, so the caller signs in again.
-			core.ErrCredentialsGetNotFound: http.StatusUnauthorized,
-			core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, tokenRefreshErrors, err)
 
 		return
 	}

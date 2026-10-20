@@ -20,6 +20,12 @@ type RestShortCodeCreateEmailUpdateService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) (*core.ShortCode, error)
 }
 
+// shortCodeCreateEmailUpdateErrors maps a failed email-change code request to its status.
+var shortCodeCreateEmailUpdateErrors = httpf.ErrMap{
+	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
+	core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+}
+
 // RestShortCodeCreateEmailUpdateRequest is the JSON body of PUT /v2/short-code/update-email.
 type RestShortCodeCreateEmailUpdateRequest struct {
 	Email string `json:"email"`
@@ -67,11 +73,7 @@ func (handler *RestShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, 
 	_, err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
 	if err != nil && !errors.Is(err, core.ErrCredentialsUpdateEmailAlreadyExists) {
-		errMap := httpf.ErrMap{
-			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreateEmailUpdateErrors, err)
 
 		return
 	}

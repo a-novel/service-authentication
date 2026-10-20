@@ -17,6 +17,13 @@ type RestWaitlistJoinService interface {
 	Exec(ctx context.Context, request *core.WaitlistJoinRequest) error
 }
 
+// waitlistJoinErrors maps a failed invitation-list request to its status.
+var waitlistJoinErrors = httpf.ErrMap{
+	core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
+	core.ErrWaitlistBusy:        http.StatusTooManyRequests,
+	core.ErrWaitlistUnavailable: http.StatusServiceUnavailable,
+}
+
 // RestWaitlistJoinRequest is the public invitation-list payload.
 type RestWaitlistJoinRequest struct {
 	Email string `json:"email"`
@@ -77,12 +84,7 @@ func (handler *RestWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			w.Header().Set("Retry-After", waitlistRetryAfterSeconds)
 		}
 
-		errMap := httpf.ErrMap{
-			core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
-			core.ErrWaitlistBusy:        http.StatusTooManyRequests,
-			core.ErrWaitlistUnavailable: http.StatusServiceUnavailable,
-		}
-		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
+		httpf.HandleError(ctx, handler.logger, w, span, waitlistJoinErrors, err)
 
 		return
 	}
