@@ -1,9 +1,6 @@
-# This image exposes our app as a rest api server.
-#
-# It requires a database instance to run properly. The instance may not be patched.
-#
-# This image will make sure all patches are applied before starting the server. It is a larger
-# version of the base rest image, suited for local development rather than full scale production.
+# This image serves the REST API after applying the pending migrations, so it needs a database but
+# no migrations job. It also bundles the maintenance executable. It suits local development and
+# tests: production runs the migrations job once, before its replicas start.
 FROM docker.io/library/golang:1.27.2-alpine AS builder
 
 ENV CGO_ENABLED=0
@@ -47,9 +44,7 @@ HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
 # Make sure the executable uses the default port.
 ENV REST_PORT=8080
 
-# Rest api port.
 EXPOSE 8080
 
-# Run patches before starting the server. The maintenance binary is included for
-# explicit one-shot use, but server startup does not invoke it.
+# Migrate, then serve. Startup never runs the maintenance executable.
 CMD ["sh", "-c", "/migrations && exec /rest"]

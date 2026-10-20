@@ -1,19 +1,17 @@
-# Version control and CI — never needed in builds (.git is large and was
-# previously shipped to the build daemon on every build).
+# Version control and CI, which no build needs.
 .git
 .github
 .claude
 
-# Node toolchain — large and irrelevant to Go builds.
+# Node toolchain, large and irrelevant to Go builds.
 node_modules
 
-# Test files — excluded from production images.
+# Test files, kept out of production images.
 **/*_test.go
 **/*.test.go
 
-# Scripts, docs, and frontend config — not part of any server build.
-# NOTE: pkg/ is intentionally NOT ignored — this service's builder stages
-# COPY ./pkg, so it must remain in the build context.
+# Scripts, docs and frontend sources, which no server build reads. The REST builds copy pkg/go, so
+# pkg/ stays in the build context.
 scripts
 *.md
 **/*.ts

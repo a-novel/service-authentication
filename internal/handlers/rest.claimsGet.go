@@ -17,7 +17,6 @@ type RestClaimsGet struct {
 	logger logging.Log
 }
 
-// NewRestClaimsGet returns a RestClaimsGet handler.
 func NewRestClaimsGet(logger logging.Log) *RestClaimsGet {
 	return &RestClaimsGet{logger: logger}
 }

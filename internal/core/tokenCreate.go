@@ -51,8 +51,7 @@ func NewTokenCreate(dao TokenCreateDao, serviceSignClaims TokenCreateServiceSign
 // access/refresh token pair. See signTokenPair for how the two tokens are bound.
 //
 // It returns lib.ErrInvalidPassword when the password does not match and
-// dao.ErrCredentialsSelectByEmailNotFound when the email is not registered; both
-// surface as 401 at the handler.
+// [ErrCredentialsByEmailNotFound] when the email is not registered.
 func (service *TokenCreate) Exec(
 	ctx context.Context, request *TokenCreateRequest,
 ) (*Token, error) {

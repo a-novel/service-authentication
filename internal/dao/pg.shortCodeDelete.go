@@ -18,8 +18,8 @@ import (
 //go:embed pg.shortCodeDelete.sql
 var shortCodeDeleteQuery string
 
-// ErrShortCodeDeleteNotFound is returned by [ShortCodeDelete.Exec] when no active
-// short code matches the requested ID. It is joined onto the underlying sql.ErrNoRows.
+// ErrShortCodeDeleteNotFound is returned by [ShortCodeDelete.Exec] when no active short code matches
+// the requested ID.
 var ErrShortCodeDeleteNotFound = errors.New("short code not found")
 
 const (
@@ -39,12 +39,11 @@ type ShortCodeDeleteRequest struct {
 	ID uuid.UUID
 	// Now is the timestamp recorded as the row's deletion time.
 	Now time.Time
-	// Comment records the reason for the deletion; persisted on the row's
-	// deleted_comment column. See [ShortCode.DeletedAt] for the lifecycle.
+	// Comment records the reason for the deletion. See [ShortCode.DeletedAt] for the lifecycle.
 	Comment string
 }
 
-// ShortCodeDelete deletes a non-expired short code.
+// ShortCodeDelete soft-deletes an active short code, neither expired nor already deleted.
 type ShortCodeDelete struct{}
 
 func NewShortCodeDelete() *ShortCodeDelete {

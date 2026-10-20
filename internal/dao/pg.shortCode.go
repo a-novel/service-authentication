@@ -14,8 +14,8 @@ import (
 // row; the clear value is delivered to the client over a secure channel. A code may
 // be used once and is discarded on a successful use.
 //
-// The uniqueness constraint covers only active codes, neither expired nor deleted, so
-// the set it applies to changes over time.
+// A partial unique index keeps one non-deleted code per (Target, Usage) pair, an expired one
+// included.
 type ShortCode struct {
 	bun.BaseModel `bun:"table:short_codes"`
 
@@ -25,7 +25,7 @@ type ShortCode struct {
 	Code string `bun:"code"`
 
 	// Usage identifies the flow the short code is valid for. Together with Target it
-	// forms the pair that is unique among active short codes.
+	// forms the pair that is unique among non-deleted short codes.
 	Usage string `bun:"usage"`
 	// Target identifies the subject of the operation: the email address of a registration,
 	// the user ID otherwise. See Usage for the uniqueness rule on the pair.

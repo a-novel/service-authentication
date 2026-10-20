@@ -65,7 +65,7 @@ jobs:
       - uses: a-novel-kit/workflows/node-actions/setup-node@v1.66.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      # Not the `generate` umbrella: its generate:go leg is generated-go's, which has the setup-go.
+      # generate:mjml alone: the generate:go leg belongs to generated-go, which sets up Go.
       - name: pnpm generate:mjml
         shell: bash
         run: pnpm generate:mjml
@@ -132,8 +132,6 @@ jobs:
           # renovate: datasource=docker depName=semgrep/semgrep
           version: "1.181.0"
 
-  # Replaces GitGuardian, which gated on a hosted service: when it saturated,
-  # every PR in the fleet became unmergeable. This runs offline.
   scan-secrets:
     runs-on: ubuntu-latest
     permissions:
@@ -148,8 +146,6 @@ jobs:
           # renovate: datasource=github-releases depName=gitleaks/gitleaks
           version: "8.30.1"
 
-  # Replaces CodeQL's actions analysis: excessive-permissions is the class it
-  # reported as actions/missing-workflow-permissions.
   lint-workflows:
     runs-on: ubuntu-latest
     permissions:
@@ -180,10 +176,8 @@ jobs:
           persist-credentials: false
       - *start-local-database
       - uses: $/.github/actions/run-migrations
-      # Exercise the real command wiring as well as its core unit tests.
-      #
-      # Twice on purpose: the second run must recognize the matching active
-      # registration and make no further change.
+      # Exercises the real command wiring. The second run finds the matching active registration
+      # and changes nothing.
       - name: Run the maintenance job
         shell: bash
         run: |
@@ -199,11 +193,8 @@ jobs:
           coverage_file: coverage.txt
           modfile: gotestsum.mod
 
-  # pkg/go is the published Go client: the auth middleware wired against an injected claims
-  # verifier, and the role-inheritance resolution NewAuthHandler runs at startup. It has no
-  # network client and touches no database, so this lane stands up no services — unlike the
-  # sibling services, whose pkg tests are gRPC clients. It runs in its own lane because
-  # test-go filters to /internal, which leaves /pkg uncovered.
+  # pkg/go, the published Go client, reaches no network and no database, so this lane starts no
+  # services. It runs apart from test-go, which covers /internal only.
   test-pkg:
     runs-on: ubuntu-latest
     permissions:
@@ -269,8 +260,8 @@ jobs:
           run_args: -e POSTGRES_PASSWORD=postgres
 
   # Infra tells a real database change from a version bump by digest alone, so the image must
-  # rebuild to the same digest. The two builds run at once, each on a fresh builder: both start
-  # cold, as a release does, and a shared builder would run their common steps only once.
+  # rebuild to the same digest. The two builds run at once, each on its own fresh builder, so both
+  # start cold, as a release does.
   test-reproducible-database:
     runs-on: ubuntu-latest
     permissions:
@@ -382,9 +373,8 @@ jobs:
       id-token: write
     outputs:
       digest: ${{ steps.build.outputs.digest }}
-    # This image is booted and exercised by test-pkg-js (a full
-    # integration run), so this job only builds + pushes it. skip_healthcheck
-    # drops the redundant smoke run and the container constellation it needed.
+    # test-pkg-js boots and exercises this image, so this job only builds and pushes it, without a
+    # smoke run.
     steps:
       - uses: a-novel-kit/workflows/build-actions/docker@v1.66.0
         id: build
@@ -420,10 +410,9 @@ jobs:
   publish-docs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && success()
-    # lint-node is what checks the openapi files this deploys.
+    # lint-node checks the openapi files this job deploys.
     needs: [lint-node]
-    # GitHub Pages allows a single deployment in flight per site; without this
-    # group, concurrent master runs fail with "in progress deployment" errors.
+    # GitHub Pages runs one deployment per site at a time, so master runs queue here.
     concurrency:
       group: github-pages
       cancel-in-progress: false

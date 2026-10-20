@@ -99,15 +99,13 @@ func NewCredentialsCreate(
 	}
 }
 
-// Exec atomically registers a new user with the supplied email and password,
-// gated by a one-time registration short code, and returns a fresh access/refresh
-// token pair. The short code is checked, then the password hashed with Argon2id,
-// before the transaction opens: it holds a pooled connection, so it only retires
-// the code and inserts the credentials. If the code was retired meanwhile or the
-// credentials cannot be inserted (for example because the email is already
-// taken), the transaction is rolled back and no user is created.
-// After commit, bounded waitlist cleanup runs independently of client cancellation.
-// Cleanup failures are traced and leave the account usable; maintenance can reconcile stale rows.
+// Exec registers a new user with the supplied email and password, gated by a one-time registration
+// short code, and returns a fresh access/refresh token pair. One transaction retires the code and
+// inserts the credentials, so a code retired meanwhile or a taken email creates no user. The code
+// check and the Argon2id hash run before it, since a transaction holds a pooled connection.
+//
+// The committed account then leaves the invitation list, within a bounded time and whatever the
+// client does. A failed removal leaves the account usable, and maintenance removes the stale row.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsCreate")
 	defer span.End()

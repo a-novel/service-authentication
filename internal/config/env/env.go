@@ -18,7 +18,7 @@ func getEnv(name string) string {
 	return os.Getenv(prefix + name)
 }
 
-// Default values for environment variables, if applicable.
+// Default values applied when an environment variable is unset.
 const (
 	SmtpTimeoutDefault = 20 * time.Second
 	// SmtpMaxConcurrentDefault bounds the SMTP connections a burst or a stalled server can hold open.
@@ -113,18 +113,12 @@ var (
 		getEnv("PLATFORM_AUTH_URL_REGISTER"), PlatformAuthUrl+PlatformAccountCreateUrlDefault, config.StringParser,
 	)
 
-	// ServiceJsonKeysHost points to the host name (without protocol / port) on which the JSON Keys Service is hosted.
-	//
-	// See https://github.com/a-novel/service-json-keys
+	// ServiceJsonKeysHost is the hostname of the JSON Keys service, without scheme or port.
 	ServiceJsonKeysHost = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_HOST"), ServiceJsonKeysHostDefault, config.StringParser)
-	// ServiceJsonKeysPort points to the port on which the JSON Keys Service is hosted.
-	//
-	// See https://github.com/a-novel/service-json-keys
+	// ServiceJsonKeysPort is the gRPC port of the JSON Keys service.
 	ServiceJsonKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJsonKeysPortDefault, config.IntParser)
 
-	// SmtpAddr is the address of the SMTP server used to send emails.
-	//
-	// It should be in the form domain:port.
+	// SmtpAddr is the SMTP server address, as domain:port.
 	SmtpAddr = getEnv("SMTP_ADDR")
 	// SmtpSenderName is the display name that appears as the sender on outgoing emails.
 	SmtpSenderName = getEnv("SMTP_SENDER_NAME")
@@ -133,8 +127,7 @@ var (
 	// SmtpUsername is the identity used for SMTP authentication. An empty value lets the sender
 	// reuse SmtpSenderEmail.
 	SmtpUsername = getEnv("SMTP_USERNAME")
-	// SmtpSenderPassword is the credential used for SMTP authentication. It is sensitive and
-	// should be handled accordingly.
+	// SmtpSenderPassword is the SMTP authentication password.
 	SmtpSenderPassword = getEnv("SMTP_SENDER_PASSWORD")
 	// SmtpSenderDomain is the domain used when sending emails. It should match the host of SmtpAddr.
 	SmtpSenderDomain = getEnv("SMTP_SENDER_DOMAIN")
@@ -181,19 +174,16 @@ var (
 	// RestRateLimitMailbox caps the emails each address receives from one route.
 	RestRateLimitMailbox = config.LoadEnv(getEnv("REST_RATE_LIMIT_MAILBOX"), RestRateLimitMailboxDefault, httpf.ParseRate)
 
-	// AppName is the name of the application, as it will appear in logs and tracing.
+	// AppName names the application in logs and traces.
 	AppName = config.LoadEnv(getEnv("APP_NAME"), AppNameDefault, config.StringParser)
 	// Otel enables OpenTelemetry instrumentation.
-	//
-	// See https://opentelemetry.io/
 	Otel = config.LoadEnv(getEnv("OTEL"), false, config.BoolParser)
 
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
-	// GcloudProjectId configures the server for Google Cloud environment.
-	//
-	// See: https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
+	// GcloudProjectId is the Google Cloud project the service runs in. When set, logs, traces and the
+	// JSON Keys connection use Google Cloud.
 	GcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
 
 	// DowntimeStart is when a planned downtime of this service starts, in RFC 3339. From then

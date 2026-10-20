@@ -1,10 +1,7 @@
-# This image exposes our app as a rest api server.
-#
-# It requires a patched database instance to run properly.
+# This image serves the REST API. It needs a migrated database.
 FROM docker.io/library/golang:1.27.2-alpine AS builder
 
-# Static binary: no libc dependency, so it runs on a bare alpine base and could
-# move to scratch/distroless later.
+# Static binary: no libc dependency, so it runs on a bare alpine base.
 ENV CGO_ENABLED=0
 
 WORKDIR /app
@@ -47,7 +44,6 @@ HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
 # Make sure the executable uses the default port.
 ENV REST_PORT=8080
 
-# Rest api port.
 EXPOSE 8080
 
 CMD ["/rest"]

@@ -38,7 +38,6 @@ type RestWaitlistJoin struct {
 	logger  logging.Log
 }
 
-// NewRestWaitlistJoin wires the transport to invitation-list logic and error reporting.
 func NewRestWaitlistJoin(service RestWaitlistJoinService, logger logging.Log) *RestWaitlistJoin {
 	return &RestWaitlistJoin{service: service, logger: logger}
 }

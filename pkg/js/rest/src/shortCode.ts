@@ -14,6 +14,7 @@ export const ShortCodeCreateEmailUpdateRequestSchema = z.object({
   lang: LangSchema,
 });
 
+/** The value {@link ShortCodeCreateEmailUpdateRequestSchema} validates. */
 export type ShortCodeCreateEmailUpdateRequest = z.infer<typeof ShortCodeCreateEmailUpdateRequestSchema>;
 
 /**
@@ -25,6 +26,7 @@ export const ShortCodeCreatePasswordResetRequestSchema = z.object({
   lang: LangSchema,
 });
 
+/** The value {@link ShortCodeCreatePasswordResetRequestSchema} validates. */
 export type ShortCodeCreatePasswordResetRequest = z.infer<typeof ShortCodeCreatePasswordResetRequestSchema>;
 
 /**
@@ -36,6 +38,7 @@ export const ShortCodeCreateRegisterRequestSchema = z.object({
   lang: LangSchema,
 });
 
+/** The value {@link ShortCodeCreateRegisterRequestSchema} validates. */
 export type ShortCodeCreateRegisterRequest = z.infer<typeof ShortCodeCreateRegisterRequestSchema>;
 
 /** Emails a short code that authorizes changing the account's email address. */

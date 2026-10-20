@@ -9,7 +9,6 @@ import (
 // RestPing is the REST handler that responds with "pong" for liveness checks.
 type RestPing struct{}
 
-// NewRestPing returns a new RestPing handler.
 func NewRestPing() *RestPing {
 	return &RestPing{}
 }

@@ -18,15 +18,11 @@ import (
 var credentialsUpdateEmailQuery string
 
 var (
-	// ErrCredentialsUpdateEmailAlreadyExists is returned by
-	// [CredentialsUpdateEmail.Exec] when the new email is already registered to
-	// another user, which happens when a different account claims it between
-	// short-code issuance and consumption. It is detected from the Postgres
-	// unique-violation SQLSTATE (23505) and joined onto the driver error.
+	// ErrCredentialsUpdateEmailAlreadyExists is returned by [CredentialsUpdateEmail.Exec] when another
+	// account registered the new email between the short code's issuance and its consumption.
 	ErrCredentialsUpdateEmailAlreadyExists = errors.New("credentials already exists")
-	// ErrCredentialsUpdateEmailNotFound is returned by [CredentialsUpdateEmail.Exec]
-	// when no row matches the requested ID. It is joined onto the underlying
-	// sql.ErrNoRows.
+	// ErrCredentialsUpdateEmailNotFound is returned by [CredentialsUpdateEmail.Exec] when no row
+	// matches the requested ID.
 	ErrCredentialsUpdateEmailNotFound = errors.New("credentials not found")
 )
 
@@ -34,15 +30,14 @@ var (
 type CredentialsUpdateEmailRequest struct {
 	// ID of the credentials to update.
 	ID uuid.UUID
-	// Email is the new address to assign. Caller must verify ownership (typically
-	// via a short code emailed to this address) before invoking the dao.
+	// Email is the new address to assign. The caller verifies its ownership first, with a short
+	// code emailed to it.
 	Email string
 	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 
-// CredentialsUpdateEmail updates the email address of a set of credentials. The new address should be validated
-// beforehand.
+// CredentialsUpdateEmail assigns a new email address to a credentials row.
 type CredentialsUpdateEmail struct{}
 
 func NewCredentialsUpdateEmail() *CredentialsUpdateEmail {

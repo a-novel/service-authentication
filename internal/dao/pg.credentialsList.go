@@ -27,8 +27,8 @@ type CredentialsListRequest struct {
 	Emails []string
 }
 
-// CredentialsList returns a set of paginated credentials from the database. Only the public fields are returned,
-// private authentication information is left empty.
+// CredentialsList returns a page of credentials, newest first. It leaves [Credentials.Password]
+// empty.
 type CredentialsList struct{}
 
 func NewCredentialsList() *CredentialsList {
