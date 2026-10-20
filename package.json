@@ -16,8 +16,8 @@
   ],
   "scripts": {
     "build": "pnpm build:rest && pnpm build:rest-test",
-    "build:rest": "vite build -c pkg/js/rest/vite.config.ts && tsc --build pkg/js/rest/tsconfig.build.json",
-    "build:rest-test": "vite build -c pkg/js/rest-test/vite.config.ts && tsc --build pkg/js/rest-test/tsconfig.build.json",
+    "build:rest": "vite build -c pkg/js/rest/vite.config.ts && tsc -p pkg/js/rest/tsconfig.build.json",
+    "build:rest-test": "vite build -c pkg/js/rest-test/vite.config.ts && tsc -p pkg/js/rest-test/tsconfig.build.json",
     "format": "pnpm format:go && pnpm format:js",
     "format:go": "go mod tidy && go tool -modfile=golangci-lint.mod golangci-lint run ./... --fix",
     "format:js": "prettier --write . --config prettier.config.ts",
