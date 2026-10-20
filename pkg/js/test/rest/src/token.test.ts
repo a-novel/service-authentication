@@ -4,6 +4,7 @@ import { expectStatus } from "@a-novel-kit/nodelib-test/http";
 import {
   AuthenticationApi,
   Role,
+  TokenRefreshRequestSchema,
   claimsGet,
   tokenCreate,
   tokenCreateAnon,
@@ -125,6 +126,18 @@ describe("tokenRefresh", () => {
     const newClaims = await claimsGet(api, newNewToken.accessToken);
 
     expect(newClaims).toStrictEqual(originalClaims);
+  });
+
+  it("validates an issued token pair with its request schema", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await tokenCreate(api, {
+      email: process.env.SUPER_ADMIN_EMAIL!,
+      password: process.env.SUPER_ADMIN_PASSWORD!,
+    });
+
+    expect(TokenRefreshRequestSchema.safeParse(token).success).toBe(true);
+    expect(TokenRefreshRequestSchema.safeParse({ ...token, accessToken: btoa("not a jwt") }).success).toBe(false);
   });
 
   it("can only use refresh token issued with original access token", async () => {
