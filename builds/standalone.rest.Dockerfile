@@ -1,7 +1,7 @@
 # This image serves the REST API after applying the pending migrations, so it needs a database but
 # no migrations job. It also bundles the maintenance executable. It suits local development and
 # tests: production runs the migrations job once, before its replicas start.
-FROM docker.io/library/golang:1.27.2-alpine AS builder
+FROM docker.io/library/golang:1.27.3-alpine AS builder
 
 ENV CGO_ENABLED=0
 
