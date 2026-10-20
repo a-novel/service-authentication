@@ -11,32 +11,32 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// TokenRefreshService is the core operation PATCH /v2/session delegates to.
-type TokenRefreshService interface {
+// RestTokenRefreshService is the core operation PATCH /v2/session delegates to.
+type RestTokenRefreshService interface {
 	Exec(ctx context.Context, request *core.TokenRefreshRequest) (*core.Token, error)
 }
 
-// TokenRefreshRequest is the JSON body of PATCH /v2/session.
-type TokenRefreshRequest struct {
+// RestTokenRefreshRequest is the JSON body of PATCH /v2/session.
+type RestTokenRefreshRequest struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 }
 
-// TokenRefresh serves PATCH /v2/session, which renews a token pair.
-type TokenRefresh struct {
-	service TokenRefreshService
+// RestTokenRefresh serves PATCH /v2/session, which renews a token pair.
+type RestTokenRefresh struct {
+	service RestTokenRefreshService
 	logger  logging.Log
 }
 
-func NewTokenRefresh(service TokenRefreshService, logger logging.Log) *TokenRefresh {
-	return &TokenRefresh{service: service, logger: logger}
+func NewRestTokenRefresh(service RestTokenRefreshService, logger logging.Log) *RestTokenRefresh {
+	return &RestTokenRefresh{service: service, logger: logger}
 }
 
-func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestTokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.TokenRefresh")
 	defer span.End()
 
-	var request TokenRefreshRequest
+	var request RestTokenRefreshRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -45,12 +45,14 @@ func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &core.TokenRefreshRequest{
+	serviceRequest := &core.TokenRefreshRequest{
 		AccessToken:  request.AccessToken,
 		RefreshToken: request.RefreshToken,
-	})
+	}
+
+	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+		errMap := httpf.ErrMap{
 			core.ErrTokenRefreshInvalidAccessToken:  http.StatusForbidden,
 			core.ErrTokenRefreshInvalidRefreshToken: http.StatusForbidden,
 			core.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,
@@ -58,7 +60,8 @@ func (handler *TokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			// The account behind a still-valid refresh token is gone, so the caller signs in again.
 			core.ErrCredentialsGetNotFound: http.StatusUnauthorized,
 			core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
-		}, err)
+		}
+		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
 
 		return
 	}

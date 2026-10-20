@@ -16,7 +16,7 @@ import (
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
-func TestRESTWaitlistJoin(t *testing.T) {
+func TestRestWaitlistJoin(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -43,7 +43,7 @@ func TestRESTWaitlistJoin(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockRESTWaitlistJoinService(t)
+			service := handlersmocks.NewMockRestWaitlistJoinService(t)
 
 			body := testCase.body
 			if body == "" {
@@ -55,7 +55,7 @@ func TestRESTWaitlistJoin(t *testing.T) {
 
 			request := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/waitlist", strings.NewReader(body))
 			response := httptest.NewRecorder()
-			handlers.NewRESTWaitlistJoin(service, config.LoggerDev).ServeHTTP(response, request)
+			handlers.NewRestWaitlistJoin(service, config.LoggerDev).ServeHTTP(response, request)
 			require.Equal(t, testCase.status, response.Code)
 			require.Equal(t, testCase.retry, response.Header().Get("Retry-After"))
 

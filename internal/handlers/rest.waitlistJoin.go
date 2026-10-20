@@ -12,19 +12,19 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// RESTWaitlistJoinService records invitation requests and distinguishes membership conflicts.
-type RESTWaitlistJoinService interface {
+// RestWaitlistJoinService records invitation requests and distinguishes membership conflicts.
+type RestWaitlistJoinService interface {
 	Exec(ctx context.Context, request *core.WaitlistJoinRequest) error
 }
 
-// RESTWaitlistJoinRequest is the public invitation-list payload.
-type RESTWaitlistJoinRequest struct {
+// RestWaitlistJoinRequest is the public invitation-list payload.
+type RestWaitlistJoinRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
-// RESTWaitlistJoinConflict exposes only the stable reason the UI needs for its warning.
-type RESTWaitlistJoinConflict struct {
+// RestWaitlistJoinConflict exposes only the stable reason the UI needs for its warning.
+type RestWaitlistJoinConflict struct {
 	// Code is account_exists or already_waitlisted; neither includes the submitted address.
 	Code string `json:"code"`
 }
@@ -32,23 +32,23 @@ type RESTWaitlistJoinConflict struct {
 // waitlistRetryAfterSeconds gives the shared Google writer time to recover before another attempt.
 const waitlistRetryAfterSeconds = "60"
 
-// RESTWaitlistJoin serves PUT /v2/waitlist. It never creates an account or sends an email.
-type RESTWaitlistJoin struct {
-	service RESTWaitlistJoinService
+// RestWaitlistJoin serves PUT /v2/waitlist. It never creates an account or sends an email.
+type RestWaitlistJoin struct {
+	service RestWaitlistJoinService
 	logger  logging.Log
 }
 
-// NewRESTWaitlistJoin wires the transport to invitation-list logic and error reporting.
-func NewRESTWaitlistJoin(service RESTWaitlistJoinService, logger logging.Log) *RESTWaitlistJoin {
-	return &RESTWaitlistJoin{service: service, logger: logger}
+// NewRestWaitlistJoin wires the transport to invitation-list logic and error reporting.
+func NewRestWaitlistJoin(service RestWaitlistJoinService, logger logging.Log) *RestWaitlistJoin {
+	return &RestWaitlistJoin{service: service, logger: logger}
 }
 
 // ServeHTTP returns an empty 202 for new requests and a coded 409 for membership conflicts.
-func (handler *RESTWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.WaitlistJoin")
 	defer span.End()
 
-	var request RESTWaitlistJoinRequest
+	var request RestWaitlistJoinRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -59,7 +59,7 @@ func (handler *RESTWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	err = handler.service.Exec(ctx, &core.WaitlistJoinRequest{Email: request.Email, Lang: request.Lang})
 	if err != nil {
-		conflict := RESTWaitlistJoinConflict{}
+		conflict := RestWaitlistJoinConflict{}
 
 		switch {
 		case errors.Is(err, core.ErrWaitlistAccountExists):
@@ -78,11 +78,12 @@ func (handler *RESTWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			w.Header().Set("Retry-After", waitlistRetryAfterSeconds)
 		}
 
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+		errMap := httpf.ErrMap{
 			core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
 			core.ErrWaitlistBusy:        http.StatusTooManyRequests,
 			core.ErrWaitlistUnavailable: http.StatusServiceUnavailable,
-		}, err)
+		}
+		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
 
 		return
 	}

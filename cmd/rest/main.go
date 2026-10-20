@@ -170,49 +170,49 @@ func main() {
 	// HANDLERS
 	// =================================================================================================================
 
-	handlerPing := handlers.NewPing()
+	handlerPing := handlers.NewRestPing()
 	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.Smtp, cfg.Logger)
 
-	handlerClaimsGet := handlers.NewClaimsGet(cfg.Logger)
+	handlerClaimsGet := handlers.NewRestClaimsGet(cfg.Logger)
 
-	handlerCredentialsCreate := handlers.NewCredentialsCreate(serviceCredentialsCreate, cfg.Logger)
-	handlerCredentialsExist := handlers.NewCredentialsExist(serviceCredentialsExist, cfg.Logger)
-	handlerWaitlistJoin := handlers.NewRESTWaitlistJoin(serviceWaitlistJoin, cfg.Logger)
-	handlerCredentialsGet := handlers.NewCredentialsGet(serviceCredentialsGet, cfg.Logger)
-	handlerCredentialsList := handlers.NewCredentialsList(serviceCredentialsList, cfg.Logger)
-	handlerCredentialsResetPassword := handlers.NewCredentialsResetPassword(
+	handlerCredentialsCreate := handlers.NewRestCredentialsCreate(serviceCredentialsCreate, cfg.Logger)
+	handlerCredentialsExist := handlers.NewRestCredentialsExist(serviceCredentialsExist, cfg.Logger)
+	handlerWaitlistJoin := handlers.NewRestWaitlistJoin(serviceWaitlistJoin, cfg.Logger)
+	handlerCredentialsGet := handlers.NewRestCredentialsGet(serviceCredentialsGet, cfg.Logger)
+	handlerCredentialsList := handlers.NewRestCredentialsList(serviceCredentialsList, cfg.Logger)
+	handlerCredentialsResetPassword := handlers.NewRestCredentialsResetPassword(
 		serviceCredentialsUpdatePassword,
 		cfg.Logger,
 	)
-	handlerCredentialsUpdatePassword := handlers.NewCredentialsUpdatePassword(
+	handlerCredentialsUpdatePassword := handlers.NewRestCredentialsUpdatePassword(
 		serviceCredentialsUpdatePassword,
 		cfg.Logger,
 	)
-	handlerCredentialsUpdateEmail := handlers.NewCredentialsUpdateEmail(
+	handlerCredentialsUpdateEmail := handlers.NewRestCredentialsUpdateEmail(
 		serviceCredentialsUpdateEmail,
 		cfg.Logger,
 	)
-	handlerCredentialsUpdateRole := handlers.NewCredentialsUpdateRole(
+	handlerCredentialsUpdateRole := handlers.NewRestCredentialsUpdateRole(
 		serviceCredentialsUpdateRole,
 		cfg.Logger,
 	)
 
-	handlerShortCodeCreateEmailUpdate := handlers.NewShortCodeCreateEmailUpdate(
+	handlerShortCodeCreateEmailUpdate := handlers.NewRestShortCodeCreateEmailUpdate(
 		serviceShortCodeCreateEmailUpdate,
 		cfg.Logger,
 	)
-	handlerShortCodeCreatePasswordReset := handlers.NewShortCodeCreatePasswordReset(
+	handlerShortCodeCreatePasswordReset := handlers.NewRestShortCodeCreatePasswordReset(
 		serviceShortCodeCreatePasswordReset,
 		cfg.Logger,
 	)
-	handlerShortCodeCreateRegister := handlers.NewShortCodeCreateRegister(
+	handlerShortCodeCreateRegister := handlers.NewRestShortCodeCreateRegister(
 		serviceShortCodeCreateRegister,
 		cfg.Logger,
 	)
 
-	handlerTokenCreate := handlers.NewTokenCreate(serviceTokenCreate, cfg.Logger)
-	handlerTokenCreateAnon := handlers.NewTokenCreateAnon(serviceTokenCreateAnon, cfg.Logger)
-	handlerTokenRefresh := handlers.NewTokenRefresh(serviceTokenRefresh, cfg.Logger)
+	handlerTokenCreate := handlers.NewRestTokenCreate(serviceTokenCreate, cfg.Logger)
+	handlerTokenCreateAnon := handlers.NewRestTokenCreateAnon(serviceTokenCreateAnon, cfg.Logger)
+	handlerTokenRefresh := handlers.NewRestTokenRefresh(serviceTokenRefresh, cfg.Logger)
 
 	// =================================================================================================================
 	// ROUTER

@@ -21,7 +21,7 @@ import (
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
-func TestShortCodeCreateEmailUpdate(t *testing.T) {
+func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -142,7 +142,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockShortCodeCreateEmailUpdateService(t)
+			service := handlersmocks.NewMockRestShortCodeCreateEmailUpdateService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
@@ -150,7 +150,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewShortCodeCreateEmailUpdate(service, config.LoggerDev)
+			handler := handlers.NewRestShortCodeCreateEmailUpdate(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()

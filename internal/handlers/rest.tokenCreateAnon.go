@@ -11,22 +11,22 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// TokenCreateAnonService is the core operation PUT /v2/session/anon delegates to.
-type TokenCreateAnonService interface {
+// RestTokenCreateAnonService is the core operation PUT /v2/session/anon delegates to.
+type RestTokenCreateAnonService interface {
 	Exec(ctx context.Context) (*core.Token, error)
 }
 
-// TokenCreateAnon serves PUT /v2/session/anon, which opens an anonymous session.
-type TokenCreateAnon struct {
-	service TokenCreateAnonService
+// RestTokenCreateAnon serves PUT /v2/session/anon, which opens an anonymous session.
+type RestTokenCreateAnon struct {
+	service RestTokenCreateAnonService
 	logger  logging.Log
 }
 
-func NewTokenCreateAnon(service TokenCreateAnonService, logger logging.Log) *TokenCreateAnon {
-	return &TokenCreateAnon{service: service, logger: logger}
+func NewRestTokenCreateAnon(service RestTokenCreateAnonService, logger logging.Log) *RestTokenCreateAnon {
+	return &RestTokenCreateAnon{service: service, logger: logger}
 }
 
-func (handler *TokenCreateAnon) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestTokenCreateAnon) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.TokenCreateAnon")
 	defer span.End()
 

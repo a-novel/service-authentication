@@ -24,7 +24,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-func TestCredentialsUpdatePassword(t *testing.T) {
+func TestRestCredentialsUpdatePassword(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -153,7 +153,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockCredentialsUpdatePasswordService(t)
+			service := handlersmocks.NewMockRestCredentialsUpdatePasswordService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
@@ -161,7 +161,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewCredentialsUpdatePassword(service, config.LoggerDev)
+			handler := handlers.NewRestCredentialsUpdatePassword(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()

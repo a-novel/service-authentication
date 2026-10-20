@@ -13,32 +13,34 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// ShortCodeCreateRegisterService is the core operation PUT /v2/short-code/register delegates to.
-type ShortCodeCreateRegisterService interface {
+// RestShortCodeCreateRegisterService is the core operation PUT /v2/short-code/register delegates to.
+type RestShortCodeCreateRegisterService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)
 }
 
-// ShortCodeCreateRegisterRequest is the JSON body of PUT /v2/short-code/register.
-type ShortCodeCreateRegisterRequest struct {
+// RestShortCodeCreateRegisterRequest is the JSON body of PUT /v2/short-code/register.
+type RestShortCodeCreateRegisterRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
-// ShortCodeCreateRegister serves PUT /v2/short-code/register, which emails a registration invitation.
-type ShortCodeCreateRegister struct {
-	service ShortCodeCreateRegisterService
+// RestShortCodeCreateRegister serves PUT /v2/short-code/register, which emails a registration invitation.
+type RestShortCodeCreateRegister struct {
+	service RestShortCodeCreateRegisterService
 	logger  logging.Log
 }
 
-func NewShortCodeCreateRegister(service ShortCodeCreateRegisterService, logger logging.Log) *ShortCodeCreateRegister {
-	return &ShortCodeCreateRegister{service: service, logger: logger}
+func NewRestShortCodeCreateRegister(
+	service RestShortCodeCreateRegisterService, logger logging.Log,
+) *RestShortCodeCreateRegister {
+	return &RestShortCodeCreateRegister{service: service, logger: logger}
 }
 
-func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.ShortCodeCreateRegister")
 	defer span.End()
 
-	var request ShortCodeCreateRegisterRequest
+	var request RestShortCodeCreateRegisterRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -47,17 +49,20 @@ func (handler *ShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	_, err = handler.service.Exec(ctx, &core.ShortCodeCreateRegisterRequest{
+	serviceRequest := &core.ShortCodeCreateRegisterRequest{
 		Email: request.Email,
 		Lang:  request.Lang,
 		Role:  authconfig.RoleUser,
-	})
+	}
+
+	_, err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
 	if err != nil && !errors.Is(err, core.ErrCredentialsCreateAlreadyExists) {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+		errMap := httpf.ErrMap{
 			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
 			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-		}, err)
+		}
+		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
 
 		return
 	}

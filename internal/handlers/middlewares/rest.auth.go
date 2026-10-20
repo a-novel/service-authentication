@@ -114,27 +114,26 @@ func (middleware *Auth) serve(
 		return
 	}
 
-	claims, err := middleware.claimsVerifier.VerifyClaims(ctx, &servicejsonkeys.VerifyClaimsRequest{
+	verifyRequest := &servicejsonkeys.VerifyClaimsRequest{
 		Usage:       servicejsonkeys.KeyUsageAuth,
 		AccessToken: authToken[1],
-	})
+	}
+
+	claims, err := middleware.claimsVerifier.VerifyClaims(ctx, verifyRequest)
 	if err != nil {
 		// A token rejection is the caller's to resolve, so it answers 401 and clients
 		// refresh or re-authenticate. Any other failure, such as an unreachable key
 		// source, stays 500 so a client keeps a session it may still hold.
-		httpf.HandleError(
-			ctx, middleware.logger, w, span,
-			httpf.ErrMap{
-				jws.ErrInvalidSignature:        http.StatusUnauthorized,
-				jwp.ErrInvalidClaims:           http.StatusUnauthorized,
-				jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
-				jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
-				jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
-				jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
-				jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
-			},
-			err,
-		)
+		errMap := httpf.ErrMap{
+			jws.ErrInvalidSignature:        http.StatusUnauthorized,
+			jwp.ErrInvalidClaims:           http.StatusUnauthorized,
+			jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
+			jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
+			jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
+			jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
+			jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
+		}
+		httpf.HandleError(ctx, middleware.logger, w, span, errMap, err)
 
 		return
 	}
@@ -199,12 +198,7 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 
 	claims, ok := raw.(*core.AccessTokenClaims)
 	if !ok {
-		return nil, otel.ReportError(span, fmt.Errorf(
-			"%w: got type %T, expected %T",
-			ErrUnexpectedClaims,
-			raw,
-			&core.AccessTokenClaims{},
-		))
+		return nil, otel.ReportError(span, fmt.Errorf("%w: got type %T, expected %T", ErrUnexpectedClaims, raw, claims))
 	}
 
 	return claims, nil

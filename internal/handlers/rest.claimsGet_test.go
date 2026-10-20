@@ -18,7 +18,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
-func TestClaimsGet(t *testing.T) {
+func TestRestClaimsGet(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -60,7 +60,7 @@ func TestClaimsGet(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			handler := handlers.NewClaimsGet(config.LoggerDev)
+			handler := handlers.NewRestClaimsGet(config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()

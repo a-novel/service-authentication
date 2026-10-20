@@ -12,32 +12,32 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-// TokenCreateService is the core operation PUT /v2/session delegates to.
-type TokenCreateService interface {
+// RestTokenCreateService is the core operation PUT /v2/session delegates to.
+type RestTokenCreateService interface {
 	Exec(ctx context.Context, request *core.TokenCreateRequest) (*core.Token, error)
 }
 
-// TokenCreateRequest is the JSON body of PUT /v2/session.
-type TokenCreateRequest struct {
+// RestTokenCreateRequest is the JSON body of PUT /v2/session.
+type RestTokenCreateRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-// TokenCreate serves PUT /v2/session, which signs a user in.
-type TokenCreate struct {
-	service TokenCreateService
+// RestTokenCreate serves PUT /v2/session, which signs a user in.
+type RestTokenCreate struct {
+	service RestTokenCreateService
 	logger  logging.Log
 }
 
-func NewTokenCreate(service TokenCreateService, logger logging.Log) *TokenCreate {
-	return &TokenCreate{service: service, logger: logger}
+func NewRestTokenCreate(service RestTokenCreateService, logger logging.Log) *RestTokenCreate {
+	return &RestTokenCreate{service: service, logger: logger}
 }
 
-func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestTokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.TokenCreate")
 	defer span.End()
 
-	var request TokenCreateRequest
+	var request RestTokenCreateRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -46,17 +46,20 @@ func (handler *TokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := handler.service.Exec(ctx, &core.TokenCreateRequest{
+	serviceRequest := &core.TokenCreateRequest{
 		Email:    request.Email,
 		Password: request.Password,
-	})
+	}
+
+	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
 		// Both "email not found" and "invalid password" return 401 to prevent email enumeration.
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+		errMap := httpf.ErrMap{
 			core.ErrCredentialsByEmailNotFound: http.StatusUnauthorized,
 			lib.ErrInvalidPassword:             http.StatusUnauthorized,
 			core.ErrInvalidRequest:             http.StatusUnprocessableEntity,
-		}, err)
+		}
+		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
 
 		return
 	}

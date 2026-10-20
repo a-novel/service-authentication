@@ -12,34 +12,34 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// ShortCodeCreatePasswordResetService is the core operation PUT /v2/short-code/update-password delegates to.
-type ShortCodeCreatePasswordResetService interface {
+// RestShortCodeCreatePasswordResetService is the core operation PUT /v2/short-code/update-password delegates to.
+type RestShortCodeCreatePasswordResetService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error)
 }
 
-// ShortCodeCreatePasswordResetRequest is the JSON body of PUT /v2/short-code/update-password.
-type ShortCodeCreatePasswordResetRequest struct {
+// RestShortCodeCreatePasswordResetRequest is the JSON body of PUT /v2/short-code/update-password.
+type RestShortCodeCreatePasswordResetRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
-// ShortCodeCreatePasswordReset serves PUT /v2/short-code/update-password, which emails a password reset code.
-type ShortCodeCreatePasswordReset struct {
-	service ShortCodeCreatePasswordResetService
+// RestShortCodeCreatePasswordReset serves PUT /v2/short-code/update-password, which emails a password reset code.
+type RestShortCodeCreatePasswordReset struct {
+	service RestShortCodeCreatePasswordResetService
 	logger  logging.Log
 }
 
-func NewShortCodeCreatePasswordReset(
-	service ShortCodeCreatePasswordResetService, logger logging.Log,
-) *ShortCodeCreatePasswordReset {
-	return &ShortCodeCreatePasswordReset{service: service, logger: logger}
+func NewRestShortCodeCreatePasswordReset(
+	service RestShortCodeCreatePasswordResetService, logger logging.Log,
+) *RestShortCodeCreatePasswordReset {
+	return &RestShortCodeCreatePasswordReset{service: service, logger: logger}
 }
 
-func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.ShortCodeCreatePasswordReset")
 	defer span.End()
 
-	var request ShortCodeCreatePasswordResetRequest
+	var request RestShortCodeCreatePasswordResetRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -48,16 +48,19 @@ func (handler *ShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter, r 
 		return
 	}
 
-	_, err = handler.service.Exec(ctx, &core.ShortCodeCreatePasswordResetRequest{
+	serviceRequest := &core.ShortCodeCreatePasswordResetRequest{
 		Email: request.Email,
 		Lang:  request.Lang,
-	})
+	}
+
+	_, err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
 	if err != nil && !errors.Is(err, core.ErrCredentialsByEmailNotFound) {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+		errMap := httpf.ErrMap{
 			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
 			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-		}, err)
+		}
+		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
 
 		return
 	}

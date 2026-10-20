@@ -15,34 +15,34 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
-// ShortCodeCreateEmailUpdateService is the core operation PUT /v2/short-code/update-email delegates to.
-type ShortCodeCreateEmailUpdateService interface {
+// RestShortCodeCreateEmailUpdateService is the core operation PUT /v2/short-code/update-email delegates to.
+type RestShortCodeCreateEmailUpdateService interface {
 	Exec(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) (*core.ShortCode, error)
 }
 
-// ShortCodeCreateEmailUpdateRequest is the JSON body of PUT /v2/short-code/update-email.
-type ShortCodeCreateEmailUpdateRequest struct {
+// RestShortCodeCreateEmailUpdateRequest is the JSON body of PUT /v2/short-code/update-email.
+type RestShortCodeCreateEmailUpdateRequest struct {
 	Email string `json:"email"`
 	Lang  string `json:"lang"`
 }
 
-// ShortCodeCreateEmailUpdate serves PUT /v2/short-code/update-email, which emails a code confirming a new address.
-type ShortCodeCreateEmailUpdate struct {
-	service ShortCodeCreateEmailUpdateService
+// RestShortCodeCreateEmailUpdate serves PUT /v2/short-code/update-email, which emails a code confirming a new address.
+type RestShortCodeCreateEmailUpdate struct {
+	service RestShortCodeCreateEmailUpdateService
 	logger  logging.Log
 }
 
-func NewShortCodeCreateEmailUpdate(
-	service ShortCodeCreateEmailUpdateService, logger logging.Log,
-) *ShortCodeCreateEmailUpdate {
-	return &ShortCodeCreateEmailUpdate{service: service, logger: logger}
+func NewRestShortCodeCreateEmailUpdate(
+	service RestShortCodeCreateEmailUpdateService, logger logging.Log,
+) *RestShortCodeCreateEmailUpdate {
+	return &RestShortCodeCreateEmailUpdate{service: service, logger: logger}
 }
 
-func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.ShortCodeCreateEmailUpdate")
 	defer span.End()
 
-	var request ShortCodeCreateEmailUpdateRequest
+	var request RestShortCodeCreateEmailUpdateRequest
 
 	err := httpf.DecodeJSON(r.Body, &request)
 	if err != nil {
@@ -58,17 +58,20 @@ func (handler *ShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	_, err = handler.service.Exec(ctx, &core.ShortCodeCreateEmailUpdateRequest{
+	serviceRequest := &core.ShortCodeCreateEmailUpdateRequest{
 		Email: request.Email,
 		Lang:  request.Lang,
 		ID:    lo.FromPtr(claims.UserID),
-	})
+	}
+
+	_, err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
 	if err != nil && !errors.Is(err, core.ErrCredentialsUpdateEmailAlreadyExists) {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{
+		errMap := httpf.ErrMap{
 			core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
 			core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
-		}, err)
+		}
+		httpf.HandleError(ctx, handler.logger, w, span, errMap, err)
 
 		return
 	}

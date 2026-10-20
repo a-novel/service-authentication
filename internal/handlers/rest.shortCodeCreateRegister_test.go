@@ -20,7 +20,7 @@ import (
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 )
 
-func TestShortCodeCreateRegister(t *testing.T) {
+func TestRestShortCodeCreateRegister(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -129,7 +129,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockShortCodeCreateRegisterService(t)
+			service := handlersmocks.NewMockRestShortCodeCreateRegisterService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
@@ -137,7 +137,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewShortCodeCreateRegister(service, config.LoggerDev)
+			handler := handlers.NewRestShortCodeCreateRegister(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, testCase.request)

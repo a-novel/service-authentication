@@ -10,19 +10,19 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
-// ClaimsGet is the REST handler that returns the caller's own claims, read from
+// RestClaimsGet is the REST handler that returns the caller's own claims, read from
 // the request context where the authentication middleware deposits them. It
 // responds 403 when the request carries no resolved claims.
-type ClaimsGet struct {
+type RestClaimsGet struct {
 	logger logging.Log
 }
 
-// NewClaimsGet returns a ClaimsGet handler.
-func NewClaimsGet(logger logging.Log) *ClaimsGet {
-	return &ClaimsGet{logger: logger}
+// NewRestClaimsGet returns a RestClaimsGet handler.
+func NewRestClaimsGet(logger logging.Log) *RestClaimsGet {
+	return &RestClaimsGet{logger: logger}
 }
 
-func (handler *ClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *RestClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.ClaimsGet")
 	defer span.End()
 
@@ -33,9 +33,11 @@ func (handler *ClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, Claims{
+	response := Claims{
 		UserID:         claims.UserID,
 		Roles:          claims.Roles,
 		RefreshTokenID: claims.RefreshTokenID,
-	})
+	}
+
+	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, response)
 }

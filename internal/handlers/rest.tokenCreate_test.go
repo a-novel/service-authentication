@@ -19,7 +19,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-func TestTokenCreate(t *testing.T) {
+func TestRestTokenCreate(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
@@ -127,7 +127,7 @@ func TestTokenCreate(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			service := handlersmocks.NewMockTokenCreateService(t)
+			service := handlersmocks.NewMockRestTokenCreateService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
@@ -135,7 +135,7 @@ func TestTokenCreate(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewTokenCreate(service, config.LoggerDev)
+			handler := handlers.NewRestTokenCreate(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, testCase.request)
