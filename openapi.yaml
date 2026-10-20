@@ -803,8 +803,11 @@ components:
           examples: [account_exists, already_waitlisted]
     plannedDowntimeProblem:
       type: object
-      description: The answer to a request refused during a planned downtime.
+      description: |
+        An RFC 9457 problem details body answering a request refused during a planned downtime. Clients
+        ignore extension members they do not know.
       required: [type, title, status, tags]
+      additionalProperties: true
       properties:
         type:
           type: string
@@ -844,6 +847,8 @@ components:
       description: |
         The claims of an authenticated user, contained in its JSON Web Token payload.
         The user can be anonymous, meaning it is not linked to any existing user ID.
+        Clients ignore claims they do not know.
+      additionalProperties: true
       examples:
         - {
             "userID": "9dce0fa2-f93b-46a9-aa6b-a71bf0b1ee80",
@@ -865,6 +870,7 @@ components:
       type: object
       description: Publicly exposed credentials, without any sensitive data such as the password.
       required: [id, email, role, createdAt, updatedAt]
+      additionalProperties: false
       properties:
         id:
           $ref: "#/components/schemas/userID"
@@ -886,6 +892,7 @@ components:
       description: |
         The tokens set used by a user to authenticate against the API, without plain credentials.
       required: [accessToken, refreshToken]
+      additionalProperties: false
       properties:
         accessToken:
           $ref: "#/components/schemas/accessToken"

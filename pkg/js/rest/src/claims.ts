@@ -8,9 +8,9 @@ import { z } from "zod";
 /**
  * Identity encoded in a session's access token: the authenticated user, their roles, and the
  * identifier of the refresh token that issued the session. An anonymous session carries roles
- * but no user, so every field is optional.
+ * but no user, so every field is optional. Claims the schema does not name pass through unchecked.
  */
-export const ClaimsSchema = z.object({
+export const ClaimsSchema = z.looseObject({
   userID: z.string().optional(),
   roles: z.array(RoleSchema).optional(),
   refreshTokenID: z.string().optional(),
