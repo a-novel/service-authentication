@@ -26,10 +26,10 @@ export const TokenCreateRequestSchema = z.object({
 /** The value {@link TokenCreateRequestSchema} validates. */
 export type TokenCreateRequest = z.infer<typeof TokenCreateRequestSchema>;
 
-/** The current token pair to renew, each as its base64-encoded value. */
+/** The current token pair to renew, each as a compact JWT (base64url header.payload.signature). */
 export const TokenRefreshRequestSchema = z.object({
-  accessToken: z.base64().max(1024),
-  refreshToken: z.base64().max(1024),
+  accessToken: z.jwt().max(1024),
+  refreshToken: z.jwt().max(1024),
 });
 
 /** The value {@link TokenRefreshRequestSchema} validates. */
