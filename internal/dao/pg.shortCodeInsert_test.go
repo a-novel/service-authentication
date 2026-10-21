@@ -177,6 +177,46 @@ func TestPgShortCodeInsert(t *testing.T) {
 			expectErr: dao.ErrShortCodeInsertAlreadyExists,
 		},
 		{
+			// Codes whose deletion is still in the future stay active, and several of them
+			// conflict as one does.
+			name: "Error/AlreadyExists/PendingDeletions",
+
+			request: &dao.ShortCodeInsertRequest{
+				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				Code:      "test-code",
+				Usage:     "test-usage",
+				Target:    "test-target",
+				Data:      []byte("test-data"),
+				Now:       now,
+				ExpiresAt: hourLater,
+			},
+
+			fixtures: []*dao.ShortCode{
+				{
+					ID:             uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Code:           "test-code-2",
+					Usage:          "test-usage",
+					Target:         "test-target",
+					CreatedAt:      hourAgo,
+					ExpiresAt:      hourLater,
+					DeletedAt:      &hourLater,
+					DeletedComment: lo.ToPtr("test-comment"),
+				},
+				{
+					ID:             uuid.MustParse("00000000-0000-0000-0000-000000000003"),
+					Code:           "test-code-3",
+					Usage:          "test-usage",
+					Target:         "test-target",
+					CreatedAt:      hourAgo,
+					ExpiresAt:      hourLater,
+					DeletedAt:      &hourLater,
+					DeletedComment: lo.ToPtr("test-comment"),
+				},
+			},
+
+			expectErr: dao.ErrShortCodeInsertAlreadyExists,
+		},
+		{
 			name: "AlreadyExists/Override",
 
 			request: &dao.ShortCodeInsertRequest{

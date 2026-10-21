@@ -17,8 +17,8 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
-	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestRestLimits(t *testing.T) {
@@ -275,7 +275,7 @@ func TestRestLimits(t *testing.T) {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					userID, err := uuid.Parse(r.Header.Get("X-User"))
 					if err == nil {
-						claims := &core.AccessTokenClaims{UserID: &userID}
+						claims := &session.Claims{UserID: &userID}
 						r = r.WithContext(middlewares.SetClaimsContext(r.Context(), claims))
 					}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/a-novel-kit/golib/smtp"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
@@ -4384,23 +4385,23 @@ func (_m *MockTokenRefreshServiceVerifyClaims) EXPECT() *MockTokenRefreshService
 }
 
 // VerifyClaims provides a mock function for the type MockTokenRefreshServiceVerifyClaims
-func (_mock *MockTokenRefreshServiceVerifyClaims) VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error) {
+func (_mock *MockTokenRefreshServiceVerifyClaims) VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for VerifyClaims")
 	}
 
-	var r0 *core.AccessTokenClaims
+	var r0 *session.Claims
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) *core.AccessTokenClaims); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) *session.Claims); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.AccessTokenClaims)
+			r0 = ret.Get(0).(*session.Claims)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) error); ok {
@@ -4441,12 +4442,12 @@ func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) Return(accessTokenClaims *core.AccessTokenClaims, err error) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
-	_c.Call.Return(accessTokenClaims, err)
+func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) Return(claims *session.Claims, err error) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
+	_c.Call.Return(claims, err)
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error)) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
+func (_c *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error)) *MockTokenRefreshServiceVerifyClaims_VerifyClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -4488,23 +4489,23 @@ func (_m *MockTokenRefreshServiceVerifyRefreshClaims) EXPECT() *MockTokenRefresh
 }
 
 // VerifyClaims provides a mock function for the type MockTokenRefreshServiceVerifyRefreshClaims
-func (_mock *MockTokenRefreshServiceVerifyRefreshClaims) VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.RefreshTokenClaims, error) {
+func (_mock *MockTokenRefreshServiceVerifyRefreshClaims) VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.RefreshClaims, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for VerifyClaims")
 	}
 
-	var r0 *core.RefreshTokenClaims
+	var r0 *session.RefreshClaims
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) (*core.RefreshTokenClaims, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) (*session.RefreshClaims, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) *core.RefreshTokenClaims); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) *session.RefreshClaims); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.RefreshTokenClaims)
+			r0 = ret.Get(0).(*session.RefreshClaims)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *servicejsonkeys.VerifyClaimsRequest) error); ok {
@@ -4545,12 +4546,12 @@ func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) Run(run 
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) Return(refreshTokenClaims *core.RefreshTokenClaims, err error) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
-	_c.Call.Return(refreshTokenClaims, err)
+func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) Return(refreshClaims *session.RefreshClaims, err error) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
+	_c.Call.Return(refreshClaims, err)
 	return _c
 }
 
-func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.RefreshTokenClaims, error)) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
+func (_c *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call) RunAndReturn(run func(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.RefreshClaims, error)) *MockTokenRefreshServiceVerifyRefreshClaims_VerifyClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
-	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestRestClaimsGet(t *testing.T) {
@@ -25,7 +25,7 @@ func TestRestClaimsGet(t *testing.T) {
 		name string
 
 		request *http.Request
-		claims  *core.AccessTokenClaims
+		claims  *session.Claims
 
 		expectStatus   int
 		expectResponse any
@@ -34,7 +34,7 @@ func TestRestClaimsGet(t *testing.T) {
 			name: "Success",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
-			claims: &core.AccessTokenClaims{
+			claims: &session.Claims{
 				UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Roles:          []string{"user"},
 				RefreshTokenID: "refreshToken",

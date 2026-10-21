@@ -19,6 +19,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestTokenRefresh(t *testing.T) {
@@ -37,12 +38,12 @@ func TestTokenRefresh(t *testing.T) {
 	}
 
 	type serviceVerifyClaimsMock struct {
-		resp *core.AccessTokenClaims
+		resp *session.Claims
 		err  error
 	}
 
 	type serviceVerifyRefreshClaimsMock struct {
-		resp *core.RefreshTokenClaims
+		resp *session.RefreshClaims
 		err  error
 	}
 
@@ -68,7 +69,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &core.AccessTokenClaims{
+				resp: &session.Claims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: "refresh_token_id",
@@ -76,7 +77,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &core.RefreshTokenClaims{
+				resp: &session.RefreshClaims{
 					Jti:    "refresh_token_id",
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -110,7 +111,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &core.AccessTokenClaims{
+				resp: &session.Claims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: "refresh_token_id",
@@ -118,7 +119,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &core.RefreshTokenClaims{
+				resp: &session.RefreshClaims{
 					Jti:    "refresh_token_id",
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -146,7 +147,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &core.AccessTokenClaims{
+				resp: &session.Claims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: "refresh_token_id",
@@ -154,7 +155,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &core.RefreshTokenClaims{
+				resp: &session.RefreshClaims{
 					Jti:    "refresh_token_id",
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -175,7 +176,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &core.AccessTokenClaims{
+				resp: &session.Claims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: "refresh_token_id",
@@ -212,7 +213,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &core.AccessTokenClaims{
+				resp: &session.Claims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: "refresh_token_id",
@@ -266,7 +267,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &core.AccessTokenClaims{
+				resp: &session.Claims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: "refresh_token_id",
@@ -307,7 +308,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &core.AccessTokenClaims{
+				resp: &session.Claims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: "refresh_token_id",
@@ -315,7 +316,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &core.RefreshTokenClaims{
+				resp: &session.RefreshClaims{
 					Jti:    "refresh_token_id",
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 				},
@@ -332,7 +333,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &core.AccessTokenClaims{
+				resp: &session.Claims{
 					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: "refresh_token_id",
@@ -340,7 +341,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &core.RefreshTokenClaims{
+				resp: &session.RefreshClaims{
 					Jti:    "other_refresh_token_id",
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
@@ -391,7 +392,7 @@ func TestTokenRefresh(t *testing.T) {
 			}
 
 			if testCase.signClaimsMock != nil {
-				accessTokenClaims := &core.AccessTokenClaims{
+				accessTokenClaims := &session.Claims{
 					UserID:         testCase.serviceVerifyClaimsMock.resp.UserID,
 					Roles:          []string{testCase.daoMock.resp.Role},
 					RefreshTokenID: testCase.serviceVerifyRefreshClaimsMock.resp.Jti,

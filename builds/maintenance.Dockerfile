@@ -17,6 +17,7 @@ COPY ./internal/config ./internal/config
 COPY ./internal/dao ./internal/dao
 COPY ./internal/core ./internal/core
 COPY ./internal/models/mails ./internal/models/mails
+COPY ./internal/models/session ./internal/models/session
 COPY ./internal/lib ./internal/lib
 
 RUN --mount=type=cache,target=/go/pkg/mod \

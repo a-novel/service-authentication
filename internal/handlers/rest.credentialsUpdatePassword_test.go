@@ -22,6 +22,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestRestCredentialsUpdatePassword(t *testing.T) {
@@ -39,7 +40,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 		name string
 
 		request *http.Request
-		claims  *core.AccessTokenClaims
+		claims  *session.Claims
 
 		serviceMock *serviceMock
 
@@ -53,7 +54,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
-			claims: &core.AccessTokenClaims{
+			claims: &session.Claims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
@@ -88,7 +89,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
-			claims: &core.AccessTokenClaims{
+			claims: &session.Claims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
@@ -110,7 +111,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
-			claims: &core.AccessTokenClaims{
+			claims: &session.Claims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
@@ -132,7 +133,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"password": "Louvre",
 				"currentPassword": "abcdef"
 			}`)),
-			claims: &core.AccessTokenClaims{
+			claims: &session.Claims{
 				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 

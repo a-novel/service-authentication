@@ -32,6 +32,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
@@ -70,8 +71,8 @@ func main() {
 	))
 	defer jsonKeysClient.Close()
 
-	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.AccessTokenClaims](jsonKeysClient))
-	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[core.RefreshTokenClaims](jsonKeysClient))
+	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.Claims](jsonKeysClient))
+	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient))
 
 	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)

@@ -20,6 +20,7 @@ COPY ./internal/dao ./internal/dao
 COPY ./internal/lib ./internal/lib
 COPY ./internal/core ./internal/core
 COPY ./internal/models/mails ./internal/models/mails
+COPY ./internal/models/session ./internal/models/session
 COPY ./internal/config ./internal/config
 COPY ./pkg/go ./pkg/go
 

@@ -13,6 +13,7 @@ import (
 	"github.com/a-novel-kit/jwt/v2"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // tokenPairSigner is the JSON Keys signing surface signTokenPair needs. The signing
@@ -30,7 +31,7 @@ func signTokenPair(ctx context.Context, signer tokenPairSigner, credentials *dao
 	ctx, span := otel.Tracer().Start(ctx, "core.signTokenPair")
 	defer span.End()
 
-	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(RefreshTokenClaimsForm{UserID: credentials.ID})
+	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(session.RefreshClaimsForm{UserID: credentials.ID})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("marshal refresh claims: %w", err))
 	}
@@ -50,14 +51,14 @@ func signTokenPair(ctx context.Context, signer tokenPairSigner, credentials *dao
 	// the JTI is needed, to embed in the access token below.
 	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{})
 
-	var refreshTokenClaims RefreshTokenClaims
+	var refreshTokenClaims session.RefreshClaims
 
 	err = refreshTokenRecipient.DecodeUnverified(refreshToken.GetToken(), &refreshTokenClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("parse refresh token: %w", err))
 	}
 
-	accessTokenClaims := AccessTokenClaims{
+	accessTokenClaims := session.Claims{
 		UserID:         &credentials.ID,
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,

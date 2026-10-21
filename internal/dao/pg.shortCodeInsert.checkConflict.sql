@@ -9,4 +9,6 @@ WHERE
     deleted_at IS NULL
     OR deleted_at > CURRENT_TIMESTAMP
   )
-  AND expires_at > CURRENT_TIMESTAMP;
+  AND expires_at > CURRENT_TIMESTAMP
+LIMIT
+  1;

@@ -21,6 +21,7 @@ import (
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestCredentialsCreate(t *testing.T) {
@@ -523,7 +524,7 @@ func TestCredentialsCreate(t *testing.T) {
 			if testCase.serviceSignClaimsMock != nil {
 				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
 					Usage: servicejsonkeys.KeyUsageAuthRefresh,
-					Payload: lo.Must(grpcf.MarshalJSONAsAny(core.RefreshTokenClaimsForm{
+					Payload: lo.Must(grpcf.MarshalJSONAsAny(session.RefreshClaimsForm{
 						UserID: testCase.daoMock.resp.ID,
 					})),
 				}
@@ -539,7 +540,7 @@ func TestCredentialsCreate(t *testing.T) {
 			}
 
 			if testCase.issueTokenMock != nil {
-				accessTokenClaims := core.AccessTokenClaims{
+				accessTokenClaims := session.Claims{
 					UserID:         &testCase.daoMock.resp.ID,
 					Roles:          []string{testCase.daoMock.resp.Role},
 					RefreshTokenID: mockUnsignedJTI,
