@@ -47,14 +47,14 @@ func (dao *PgCredentialsList) Exec(
 		attribute.StringSlice("data.roles", request.Roles),
 	)
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
 	entities := make([]*Credentials, 0, request.Limit)
 
-	err = tx.NewRaw(
+	err = db.NewRaw(
 		credentialsListQuery,
 		bun.NullZero(request.Limit),
 		request.Offset,

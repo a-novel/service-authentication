@@ -100,12 +100,12 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 			return fmt.Errorf("handle conflict: %w", err)
 		}
 
-		tx, err := postgres.GetContext(ctx)
+		db, err := postgres.GetContext(ctx)
 		if err != nil {
-			return fmt.Errorf("get database handle: %w", err)
+			return fmt.Errorf("get postgres context: %w", err)
 		}
 
-		err = tx.NewRaw(
+		err = db.NewRaw(
 			shortCodeInsertQuery,
 			request.ID,
 			request.Code,
@@ -115,13 +115,13 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 			request.Now,
 			request.ExpiresAt,
 		).Scan(ctx, entity)
-		if err != nil {
-			// The partial unique index catches the conflicts the steps above miss under
-			// concurrent inserts.
-			if isUniqueViolation(err) {
-				err = errors.Join(err, ErrShortCodeInsertAlreadyExists)
-			}
+		// The partial unique index catches the conflicts the steps above miss under concurrent
+		// inserts.
+		if isUniqueViolation(err) {
+			err = errors.Join(err, ErrShortCodeInsertAlreadyExists)
+		}
 
+		if err != nil {
 			return fmt.Errorf("execute query: %w", err)
 		}
 
@@ -141,12 +141,12 @@ func (dao *PgShortCodeInsert) discardConflicts(ctx context.Context, request *Sho
 	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(discardConflicts)")
 	defer span.End()
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("get database handle: %w", err))
+		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
-	_, err = tx.NewRaw(
+	_, err = db.NewRaw(
 		shortCodeInsertDiscardConflictQuery,
 		// Go and Postgres can disagree on "now" by a small margin, so backdate the
 		// deletion by a second: the row then stays in the past for predicates
@@ -171,12 +171,12 @@ func (dao *PgShortCodeInsert) discardExpired(ctx context.Context, request *Short
 	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(discardExpired)")
 	defer span.End()
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("get database handle: %w", err))
+		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
-	_, err = tx.NewRaw(
+	_, err = db.NewRaw(
 		shortCodeInsertDiscardExpiredQuery,
 		request.Now,
 		"expired before insert",
@@ -197,12 +197,12 @@ func (dao *PgShortCodeInsert) checkConflicts(ctx context.Context, request *Short
 	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(checkConflicts)")
 	defer span.End()
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("get database handle: %w", err))
+		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
-	res, err := tx.NewRaw(shortCodeInsertCheckConflictQuery, request.Target, request.Usage).Exec(ctx)
+	res, err := db.NewRaw(shortCodeInsertCheckConflictQuery, request.Target, request.Usage).Exec(ctx)
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}

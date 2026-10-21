@@ -10,8 +10,9 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 )
 
-// prefix is prepended to every configuration environment variable name, so a project
-// embedding this package can namespace them against its own.
+// prefix is prepended to every configuration variable name that this package reads.
+// Set SERVICE_AUTHENTICATION_ENV_PREFIX when embedding the service in another project,
+// where unprefixed variable names could collide with the host project's own.
 var prefix = os.Getenv("SERVICE_AUTHENTICATION_ENV_PREFIX")
 
 func getEnv(name string) string {
@@ -30,12 +31,12 @@ const (
 	// WaitlistMaxRequestSizeDefault allows the bounded email/language payload with JSON escaping overhead.
 	WaitlistMaxRequestSizeDefault = 8 << 10
 
-	// PlatformEmailUpdateUrlDefault is the email-validation page, under PlatformAuthUrl.
-	PlatformEmailUpdateUrlDefault = "/ext/email/validate"
-	// PlatformPasswordResetUrlDefault is the password-reset page, under PlatformAuthUrl.
-	PlatformPasswordResetUrlDefault = "/ext/password/reset"
-	// PlatformAccountCreateUrlDefault is the registration page, under PlatformAuthUrl.
-	PlatformAccountCreateUrlDefault = "/ext/account/create"
+	// PlatformEmailUpdateURLDefault is the email-validation page, under PlatformAuthURL.
+	PlatformEmailUpdateURLDefault = "/ext/email/validate"
+	// PlatformPasswordResetURLDefault is the password-reset page, under PlatformAuthURL.
+	PlatformPasswordResetURLDefault = "/ext/password/reset"
+	// PlatformAccountCreateURLDefault is the registration page, under PlatformAuthURL.
+	PlatformAccountCreateURLDefault = "/ext/account/create"
 
 	// AppNameDefault names the application in logs and traces when APP_NAME is unset.
 	AppNameDefault = "service-authentication"
@@ -50,10 +51,9 @@ const (
 	// this in turn; builds/podman-compose.yaml sets one.
 	RestTimeoutShutdownDefault = 25 * time.Second
 
-	// PostgresMaxOpenConnsDefault keeps the pool well under a stock PostgreSQL max_connections of 100
-	// once multiplied by a service's replica count, leaving room for the migration job and a psql
-	// session. Go's own default is unlimited, which turns a spike into connection refusals for
-	// everything on that database. The limit queues the spike inside this process instead.
+	// PostgresMaxOpenConnsDefault caps the connections one instance opens. Multiplied by the replica
+	// count, the cap stays well under PostgreSQL's default max_connections of 100. That leaves room
+	// for the migration job and a psql session. A spike waits inside the process for a free connection.
 	PostgresMaxOpenConnsDefault = 20
 	// PostgresMaxIdleConnsDefault matches the open limit, so a burst keeps the connections it is about
 	// to reuse.
@@ -64,7 +64,6 @@ const (
 	PostgresTLSEnabledDefault = true
 )
 
-// Defaults computed at startup. A rate is written "<requests>/<window>", as in its variable.
 var (
 	// Argon2MaxConcurrentDefault runs one hash per CPU the container may use, as Keycloak does.
 	// Hashing is CPU-bound, so more concurrent hashes add memory, 64 MiB each, but no throughput.
@@ -81,10 +80,11 @@ var (
 )
 
 var (
-	// PostgresDsn is the legacy URL used when PostgresHost is empty.
+	// PostgresDSN is the legacy URL used when PostgresHost is empty, formatted as
+	//	postgres://<user>:<password>@<host>:<port>/<database>
 	//
 	// Configure the discrete PostgreSQL fields for new deployments.
-	PostgresDsn = getEnv("POSTGRES_DSN")
+	PostgresDSN = getEnv("POSTGRES_DSN")
 	// PostgresHost is the PostgreSQL server hostname or IP address.
 	PostgresHost = getEnv("POSTGRES_HOST")
 	// PostgresPort is the PostgreSQL server port.
@@ -103,23 +103,23 @@ var (
 	// PostgresMaxIdleConns is the maximum number of connections kept open while idle.
 	PostgresMaxIdleConns = config.LoadEnv(getEnv("POSTGRES_MAX_IDLE_CONNS"), PostgresMaxIdleConnsDefault, config.IntParser)
 
-	// PlatformAuthUrl is the base URL of the authentication web client, prefixed onto the
+	// PlatformAuthURL is the base URL of the authentication web client, prefixed onto the
 	// links inserted in emails.
-	PlatformAuthUrl = getEnv("PLATFORM_AUTH_URL")
-	// PlatformAuthUpdateEmailUrl is the web client page linked from update emails to
+	PlatformAuthURL = getEnv("PLATFORM_AUTH_URL")
+	// PlatformAuthUpdateEmailURL is the web client page linked from update emails to
 	// complete the email update.
-	PlatformAuthUpdateEmailUrl = config.LoadEnv(
-		getEnv("PLATFORM_AUTH_URL_UPDATE_EMAIL"), PlatformAuthUrl+PlatformEmailUpdateUrlDefault, config.StringParser,
+	PlatformAuthUpdateEmailURL = config.LoadEnv(
+		getEnv("PLATFORM_AUTH_URL_UPDATE_EMAIL"), PlatformAuthURL+PlatformEmailUpdateURLDefault, config.StringParser,
 	)
-	// PlatformAuthUpdatePasswordUrl is the web client page linked from reset emails to
+	// PlatformAuthUpdatePasswordURL is the web client page linked from reset emails to
 	// complete the password reset.
-	PlatformAuthUpdatePasswordUrl = config.LoadEnv(
-		getEnv("PLATFORM_AUTH_URL_UPDATE_PASSWORD"), PlatformAuthUrl+PlatformPasswordResetUrlDefault, config.StringParser,
+	PlatformAuthUpdatePasswordURL = config.LoadEnv(
+		getEnv("PLATFORM_AUTH_URL_UPDATE_PASSWORD"), PlatformAuthURL+PlatformPasswordResetURLDefault, config.StringParser,
 	)
-	// PlatformAuthRegisterUrl is the web client page linked from registration emails to
+	// PlatformAuthRegisterURL is the web client page linked from registration emails to
 	// complete the account creation.
-	PlatformAuthRegisterUrl = config.LoadEnv(
-		getEnv("PLATFORM_AUTH_URL_REGISTER"), PlatformAuthUrl+PlatformAccountCreateUrlDefault, config.StringParser,
+	PlatformAuthRegisterURL = config.LoadEnv(
+		getEnv("PLATFORM_AUTH_URL_REGISTER"), PlatformAuthURL+PlatformAccountCreateURLDefault, config.StringParser,
 	)
 
 	// ServiceJsonKeysHost is the hostname of the JSON Keys service, without scheme or port.
@@ -191,9 +191,9 @@ var (
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
-	// GcloudProjectId is the Google Cloud project the service runs in. When set, logs, traces and the
+	// GcloudProjectID is the Google Cloud project the service runs in. When set, logs, traces and the
 	// JSON Keys connection use Google Cloud.
-	GcloudProjectId = getEnv("GCLOUD_PROJECT_ID")
+	GcloudProjectID = getEnv("GCLOUD_PROJECT_ID")
 
 	// DowntimeStart is when a planned downtime of this service starts, in RFC 3339. From then
 	// until it is removed, the service refuses work. Nil when none is planned.

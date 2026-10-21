@@ -45,19 +45,19 @@ func (dao *PgShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelect
 		attribute.String("shortCode.usage", request.Usage),
 	)
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
 	entity := &ShortCode{}
 
-	err = tx.NewRaw(shortCodeSelectQuery, request.Target, request.Usage).Scan(ctx, entity)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = errors.Join(err, ErrShortCodeSelectNotFound)
-		}
+	err = db.NewRaw(shortCodeSelectQuery, request.Target, request.Usage).Scan(ctx, entity)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = errors.Join(err, ErrShortCodeSelectNotFound)
+	}
 
+	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 

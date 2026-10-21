@@ -50,21 +50,23 @@ func (dao *PgCredentialsUpdateEmail) Exec(
 	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsUpdateEmail")
 	defer span.End()
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
 	entity := &Credentials{}
 
-	err = tx.NewRaw(credentialsUpdateEmailQuery, request.Email, request.Now, request.ID).Scan(ctx, entity)
-	if err != nil {
-		if isUniqueViolation(err) {
-			err = errors.Join(err, ErrCredentialsUpdateEmailAlreadyExists)
-		} else if errors.Is(err, sql.ErrNoRows) {
-			err = errors.Join(err, ErrCredentialsUpdateEmailNotFound)
-		}
+	err = db.NewRaw(credentialsUpdateEmailQuery, request.Email, request.Now, request.ID).Scan(ctx, entity)
+	if isUniqueViolation(err) {
+		err = errors.Join(err, ErrCredentialsUpdateEmailAlreadyExists)
+	}
 
+	if errors.Is(err, sql.ErrNoRows) {
+		err = errors.Join(err, ErrCredentialsUpdateEmailNotFound)
+	}
+
+	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 

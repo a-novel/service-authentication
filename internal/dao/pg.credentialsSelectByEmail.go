@@ -38,19 +38,19 @@ func (dao *PgCredentialsSelectByEmail) Exec(
 	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsSelectByEmail")
 	defer span.End()
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
 	entity := &Credentials{}
 
-	err = tx.NewRaw(credentialsSelectByEmailQuery, request.Email).Scan(ctx, entity)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = errors.Join(err, ErrCredentialsSelectByEmailNotFound)
-		}
+	err = db.NewRaw(credentialsSelectByEmailQuery, request.Email).Scan(ctx, entity)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = errors.Join(err, ErrCredentialsSelectByEmailNotFound)
+	}
 
+	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 

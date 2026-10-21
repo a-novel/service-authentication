@@ -35,12 +35,12 @@ func (dao *PgCredentialsExist) Exec(ctx context.Context, request *CredentialsExi
 
 	span.SetAttributes(attribute.String("email", request.Email))
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return false, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return false, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
-	res, err := tx.NewRaw(credentialsExistQuery, request.Email).Exec(ctx)
+	res, err := db.NewRaw(credentialsExistQuery, request.Email).Exec(ctx)
 	if err != nil {
 		return false, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}

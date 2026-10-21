@@ -46,19 +46,19 @@ func (dao *PgCredentialsUpdatePassword) Exec(
 	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsUpdatePassword")
 	defer span.End()
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
 	entity := &Credentials{}
 
-	err = tx.NewRaw(credentialsUpdatePasswordQuery, request.Password, request.Now, request.ID).Scan(ctx, entity)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = errors.Join(err, ErrCredentialsUpdatePasswordNotFound)
-		}
+	err = db.NewRaw(credentialsUpdatePasswordQuery, request.Password, request.Now, request.ID).Scan(ctx, entity)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = errors.Join(err, ErrCredentialsUpdatePasswordNotFound)
+	}
 
+	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 

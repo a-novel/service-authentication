@@ -76,7 +76,7 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 	}
 	defer cfg.Otel.Flush()
 
-	if env.GcloudProjectId == "" {
+	if env.GcloudProjectID == "" {
 		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
 	}
 
