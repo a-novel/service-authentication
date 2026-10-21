@@ -32,7 +32,7 @@ jobs:
     if: github.event_name == 'pull_request_target' && github.actor != vars.DEPENDABOT_SECURITY_LOGIN
     # The callee mints its own App token, so the caller grants it nothing.
     permissions: {}
-    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.69.0
+    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.70.0
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
@@ -51,13 +51,13 @@ jobs:
       merge_group_head_ref: ${{ steps.context.outputs.merge_group_head_ref }}
     steps:
       - id: context
-        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.69.0
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.70.0
 
   relayed:
     needs: relay
     if: needs.relay.outputs.event != ''
     permissions: {}
-    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.69.0
+    uses: a-novel-kit/workflows/.github/workflows/merge-gate-run.yaml@v1.70.0
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
