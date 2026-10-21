@@ -19,7 +19,7 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
-	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 	serviceauthentication "github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
@@ -220,6 +220,6 @@ type fakeVerifier struct {
 
 func (f fakeVerifier) VerifyClaims(
 	_ context.Context, _ *servicejsonkeys.VerifyClaimsRequest,
-) (*core.AccessTokenClaims, error) {
-	return &core.AccessTokenClaims{Roles: f.roles}, nil
+) (*session.Claims, error) {
+	return &session.Claims{Roles: f.roles}, nil
 }

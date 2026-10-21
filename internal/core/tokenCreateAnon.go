@@ -13,13 +13,14 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // anonTokenClaims is the sign request of every anonymous access token. Its payload, the
 // anonymous role and no user, never varies, so it is marshaled once at package load.
 var anonTokenClaims = &servicejsonkeys.ClaimsSignRequest{
 	Usage: servicejsonkeys.KeyUsageAuth,
-	Payload: lo.Must(grpcf.MarshalJSONAsAny(AccessTokenClaims{
+	Payload: lo.Must(grpcf.MarshalJSONAsAny(session.Claims{
 		Roles: []string{authconfig.RoleAnon},
 	})),
 }
@@ -32,7 +33,7 @@ type TokenCreateAnonServiceSignClaims interface {
 }
 
 // TokenCreateAnon issues an anonymous access token, carrying no user ID and only the
-// anonymous role. See AccessTokenClaims for what such tokens grant.
+// anonymous role. See [session.Claims] for what such tokens grant.
 type TokenCreateAnon struct {
 	serviceSignClaims TokenCreateAnonServiceSignClaims
 }

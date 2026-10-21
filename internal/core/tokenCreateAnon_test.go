@@ -15,6 +15,7 @@ import (
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestTokenCreateAnon(t *testing.T) {
@@ -68,7 +69,7 @@ func TestTokenCreateAnon(t *testing.T) {
 			if testCase.issueTokenMock != nil {
 				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
 					Usage: servicejsonkeys.KeyUsageAuth,
-					Payload: lo.Must(grpcf.MarshalJSONAsAny(core.AccessTokenClaims{
+					Payload: lo.Must(grpcf.MarshalJSONAsAny(session.Claims{
 						Roles: []string{authconfig.RoleAnon},
 					})),
 				}

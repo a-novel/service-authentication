@@ -19,7 +19,7 @@ import (
 	"github.com/a-novel-kit/jwt/v2/jws"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
-	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 var (
@@ -33,7 +33,7 @@ var (
 
 // AuthClaimsVerifier validates JWT access tokens and extracts claims.
 type AuthClaimsVerifier interface {
-	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*core.AccessTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error)
 }
 
 // verifyClaimsErrors answers 401 to a token rejection, which the caller resolves by refreshing or
@@ -177,7 +177,7 @@ type ClaimsContextKey struct{}
 
 // SetClaimsContext stores the authenticated user's claims in the context.
 // This is called by the Auth middleware after successful token verification.
-func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) context.Context {
+func SetClaimsContext(ctx context.Context, claims *session.Claims) context.Context {
 	// The returned context keeps the caller's span current, so the handler's span nests under it.
 	_, span := otel.Tracer().Start(ctx, "handlers.SetClaimsContext")
 	defer span.End()
@@ -188,7 +188,7 @@ func SetClaimsContext(ctx context.Context, claims *core.AccessTokenClaims) conte
 // GetClaimsContext retrieves the authenticated user's claims from the context.
 // Returns nil claims with no error if no authentication was provided (for optional auth endpoints).
 // Returns an error if the value stored under [ClaimsContextKey] has an unexpected type.
-func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
+func GetClaimsContext(ctx context.Context) (*session.Claims, error) {
 	ctx, span := otel.Tracer().Start(ctx, "handlers.GetClaimsContext")
 	defer span.End()
 
@@ -197,7 +197,7 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 		return nil, nil
 	}
 
-	claims, ok := raw.(*core.AccessTokenClaims)
+	claims, ok := raw.(*session.Claims)
 	if !ok {
 		return nil, otel.ReportError(span, fmt.Errorf("%w: got type %T, expected %T", ErrUnexpectedClaims, raw, claims))
 	}
@@ -208,7 +208,7 @@ func GetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
 // MustGetClaimsContext retrieves the authenticated user's claims from the context,
 // returning [ErrMissingAuth] when none are present. Use it on endpoints that require
 // authentication, and [GetClaimsContext] where authentication is optional.
-func MustGetClaimsContext(ctx context.Context) (*core.AccessTokenClaims, error) {
+func MustGetClaimsContext(ctx context.Context) (*session.Claims, error) {
 	ctx, span := otel.Tracer().Start(ctx, "handlers.MustGetClaimsContext")
 	defer span.End()
 

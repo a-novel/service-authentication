@@ -16,9 +16,9 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
-	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // Role is a named bundle of permissions assigned to a user.
@@ -29,7 +29,7 @@ type Permissions = authconfig.Permissions
 
 // Claims is the authenticated user's access-token payload, extracted from the JWT and
 // stored in the request context by the auth middleware.
-type Claims = core.AccessTokenClaims
+type Claims = session.Claims
 
 // PermissionsHandler returns a chi sub-router that enforces the listed permissions for the
 // routes mounted on it. Pass zero permissions for optional authentication: the request is

@@ -9,7 +9,7 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
-	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // RestLimits are the strict limits on routes that issue tokens, check passwords or send email, on
@@ -72,7 +72,7 @@ var (
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP. Mount the limit after
 // the auth middleware, which signs the user in.
 func CallerKey(r *http.Request) (string, error) {
-	claims, _ := r.Context().Value(ClaimsContextKey{}).(*core.AccessTokenClaims)
+	claims, _ := r.Context().Value(ClaimsContextKey{}).(*session.Claims)
 	if claims != nil && claims.UserID != nil {
 		return "user:" + claims.UserID.String(), nil
 	}

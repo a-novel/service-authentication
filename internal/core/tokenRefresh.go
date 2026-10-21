@@ -16,6 +16,7 @@ import (
 	"github.com/a-novel-kit/jwt/v2/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 var (
@@ -56,7 +57,7 @@ type TokenRefreshServiceSignClaims interface {
 //
 // nosemgrep: a-novel-dep-interface-method-must-be-exec
 type TokenRefreshServiceVerifyClaims interface {
-	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*AccessTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error)
 }
 
 // TokenRefreshServiceVerifyRefreshClaims verifies the incoming refresh token and decodes
@@ -64,7 +65,7 @@ type TokenRefreshServiceVerifyClaims interface {
 //
 // nosemgrep: a-novel-dep-interface-method-must-be-exec
 type TokenRefreshServiceVerifyRefreshClaims interface {
-	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*RefreshTokenClaims, error)
+	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.RefreshClaims, error)
 }
 
 // TokenRefreshRequest carries the access/refresh token pair to be renewed.
@@ -156,7 +157,7 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	newAccessTokenClaims := AccessTokenClaims{
+	newAccessTokenClaims := session.Claims{
 		UserID:         accessTokenClaims.UserID,
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,
