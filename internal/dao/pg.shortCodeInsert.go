@@ -212,7 +212,7 @@ func (dao *PgShortCodeInsert) checkConflicts(ctx context.Context, request *Short
 		return otel.ReportError(span, fmt.Errorf("get rows affected: %w", err))
 	}
 
-	if n == 1 {
+	if n > 0 {
 		return otel.ReportError(span, ErrShortCodeInsertAlreadyExists)
 	}
 
