@@ -222,7 +222,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^2.0.0
-        version: 2.0.0(2cb9d42e297fb7d92944ae724e176c4a)
+        version: 2.1.0(2cb9d42e297fb7d92944ae724e176c4a)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.13.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -294,7 +294,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^2.0.0
-        version: 2.0.0(zod@4.6.7)
+        version: 2.1.0(zod@4.6.7)
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -309,10 +309,10 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^2.0.0
-        version: 2.0.0(zod@4.6.7)
+        version: 2.1.0(zod@4.6.7)
       '@a-novel-kit/nodelib-test':
         specifier: ^2.0.0
-        version: 2.0.0(@a-novel-kit/nodelib-browser@2.0.0(zod@4.6.7))(jsdom@30.1.3)(playwright@1.64.1)
+        version: 2.1.0(@a-novel-kit/nodelib-browser@2.1.0(zod@4.6.7))(jsdom@30.1.3)(playwright@1.64.1)
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../rest
@@ -409,14 +409,14 @@ packages:
     peerDependencies:
       zod: ^4.6.7
 
-  '@a-novel-kit/nodelib-browser@2.0.0':
-    resolution: {integrity: sha512-VeNt3ATQtFcjKE/RuCMU+x5et+zWExjzzGM8UPyUMRfkTDOQiARyP5XpTdMPqPFxACnUIy2qkXnX6hDCnl8Fcw==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-browser/2.0.0/fe58f08dfd483b74542add13674018557330d5c8}
+  '@a-novel-kit/nodelib-browser@2.1.0':
+    resolution: {integrity: sha512-rR9wx/vDJW4lHq1nqB4moYCQGGiP0oE4IjDr5sXySqdwGP7plgnZdvk07BJ7RLQ7Sc5cqu2YexbGN3qDDRe+Lw==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-browser/2.1.0/f4b458097708518b14094d2c1e429e9282ea9e11}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       zod: ^4.6.7
 
-  '@a-novel-kit/nodelib-config@2.0.0':
-    resolution: {integrity: sha512-3iJQYceGE9oj2+aWzwf2Z6BQU/LVtAOw7TfNGfuiUkRcQ3EYj5mjOEr3/e2HuCsW6FMRkEEzD0UufJNzJ0PeuQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/2.0.0/652fa0e129dda2c28f5c43965b172b6653d6a9b8}
+  '@a-novel-kit/nodelib-config@2.1.0':
+    resolution: {integrity: sha512-1OzSN4mCdQ1zDL1Zdp+AhAHT5RKrjaKy/krBf1E9QYyPKwGQZHDGiaz1ctZIaeXYZdZ13EmA7S02A2cA5BoTIQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/2.1.0/a3b6c636fa31328bbfc2128df2c4eba0e22b79a0}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     hasBin: true
     peerDependencies:
@@ -435,7 +435,7 @@ packages:
       eslint-plugin-svelte: ^3.23.1
       estree-walker: ^3.0.3
       globals: ^17.13.0
-      i18next-cli: ^1.75.3
+      i18next-cli: ^1.77.0
       i18next-cli-plugin-svelte: ^2.4.1
       playwright: ^1.64.1
       prettier: ^3.9.10
@@ -458,8 +458,8 @@ packages:
       jsdom: ^30.0.0
       playwright: ^1.63.0
 
-  '@a-novel-kit/nodelib-test@2.0.0':
-    resolution: {integrity: sha512-gykgR1iG8PYn+fjfg8KjLRiZcAgh3cw2F0ekyEyl7lGrPzBW5LoSg7Be7cXPV1rkh19NpKeA3hQOv8mCqzgEcQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/2.0.0/044f5e49cad7a1d38a086917fbda807c7821a9a3}
+  '@a-novel-kit/nodelib-test@2.1.0':
+    resolution: {integrity: sha512-4fEEsKtsu6K04DCWoRz8yUBt7c4q3s0bpkWOHmRL9INifcoHPrVbBd9CwinRG1NlpsyqiUr5JjSaFVG9FYuF+w==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/2.1.0/ed5bd8671c67865e55ea83af24a6c19afe62550b}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@a-novel-kit/nodelib-browser': '*'
@@ -4517,11 +4517,11 @@ snapshots:
     dependencies:
       zod: 4.6.7
 
-  '@a-novel-kit/nodelib-browser@2.0.0(zod@4.6.7)':
+  '@a-novel-kit/nodelib-browser@2.1.0(zod@4.6.7)':
     dependencies:
       zod: 4.6.7
 
-  '@a-novel-kit/nodelib-config@2.0.0(2cb9d42e297fb7d92944ae724e176c4a)':
+  '@a-novel-kit/nodelib-config@2.1.0(2cb9d42e297fb7d92944ae724e176c4a)':
     dependencies:
       '@eslint/compat': 2.1.1(eslint@10.13.0(jiti@2.7.0)(supports-color@7.2.0))
       '@eslint/config-helpers': 0.7.0
@@ -4560,9 +4560,9 @@ snapshots:
       jsdom: 27.4.0(supports-color@7.2.0)
       playwright: 1.64.1
 
-  '@a-novel-kit/nodelib-test@2.0.0(@a-novel-kit/nodelib-browser@2.0.0(zod@4.6.7))(jsdom@30.1.3)(playwright@1.64.1)':
+  '@a-novel-kit/nodelib-test@2.1.0(@a-novel-kit/nodelib-browser@2.1.0(zod@4.6.7))(jsdom@30.1.3)(playwright@1.64.1)':
     dependencies:
-      '@a-novel-kit/nodelib-browser': 2.0.0(zod@4.6.7)
+      '@a-novel-kit/nodelib-browser': 2.1.0(zod@4.6.7)
       jsdom: 30.1.3
       playwright: 1.64.1
 
