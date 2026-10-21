@@ -11,8 +11,8 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // RestCredentialsUpdatePasswordService is the core operation PATCH /v2/credentials/password delegates to.
@@ -58,7 +58,7 @@ func (handler *RestCredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 
-	claims, err := middlewares.MustGetClaimsContext(ctx)
+	claims, err := session.MustGetClaimsContext(ctx)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
 

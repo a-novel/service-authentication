@@ -1,7 +1,6 @@
 package middlewares_test
 
 import (
-	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -13,8 +12,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -339,7 +336,7 @@ func TestAuth(t *testing.T) {
 			ctxClaims := new(*session.Claims)
 
 			callback := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				claims, err := middlewares.GetClaimsContext(r.Context())
+				claims, err := session.GetClaimsContext(r.Context())
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -400,66 +397,4 @@ func TestAuth(t *testing.T) {
 			require.Equal(t, http.StatusUnauthorized, w.Code, token)
 		}
 	})
-}
-
-func TestGetClaimsContext(t *testing.T) {
-	t.Parallel()
-
-	t.Run("Success/NoClaimsSet", func(t *testing.T) {
-		t.Parallel()
-
-		// No value stored under ClaimsContextKey — optional-auth path: returns
-		// (nil, nil) so endpoints that allow unauthenticated access can keep working.
-		claims, err := middlewares.GetClaimsContext(t.Context())
-		require.NoError(t, err)
-		require.Nil(t, claims)
-	})
-
-	t.Run("Success/ValidClaims", func(t *testing.T) {
-		t.Parallel()
-
-		want := &session.Claims{
-			UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			Roles:  []string{"user"},
-		}
-		ctx := middlewares.SetClaimsContext(t.Context(), want)
-
-		got, err := middlewares.GetClaimsContext(ctx)
-		require.NoError(t, err)
-		require.Equal(t, want, got)
-	})
-
-	t.Run("Error/UnexpectedClaims", func(t *testing.T) {
-		t.Parallel()
-
-		// A wrong type stored under ClaimsContextKey surfaces as ErrUnexpectedClaims.
-		// An endpoint checking only `claims == nil` still fails closed.
-		ctx := context.WithValue(t.Context(), middlewares.ClaimsContextKey{}, "not-claims")
-
-		claims, err := middlewares.GetClaimsContext(ctx)
-		require.ErrorIs(t, err, middlewares.ErrUnexpectedClaims)
-		require.Nil(t, claims)
-	})
-}
-
-//nolint:paralleltest // Replaces the process-wide tracer provider.
-func TestSetClaimsContext(t *testing.T) {
-	provider := sdktrace.NewTracerProvider()
-	previous := otel.GetTracerProvider()
-
-	otel.SetTracerProvider(provider)
-	t.Cleanup(func() {
-		otel.SetTracerProvider(previous)
-		require.NoError(t, provider.Shutdown(context.WithoutCancel(t.Context())))
-	})
-
-	ctx, parent := provider.Tracer("test").Start(t.Context(), "parent")
-	defer parent.End()
-
-	ctx = middlewares.SetClaimsContext(ctx, &session.Claims{Roles: []string{"user"}})
-
-	_, child := provider.Tracer("test").Start(ctx, "child")
-	defer child.End()
-
-	require.Equal(t, parent.SpanContext(), child.(sdktrace.ReadOnlySpan).Parent())
 }

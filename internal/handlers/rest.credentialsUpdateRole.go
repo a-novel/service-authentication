@@ -12,7 +12,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // RestCredentialsUpdateRoleService is the core operation PATCH /v2/credentials/role delegates to.
@@ -62,7 +62,7 @@ func (handler *RestCredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	claims, err := middlewares.MustGetClaimsContext(ctx)
+	claims, err := session.MustGetClaimsContext(ctx)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
 

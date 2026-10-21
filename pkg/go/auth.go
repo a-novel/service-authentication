@@ -70,7 +70,7 @@ func roleInherits(name string, role authconfig.Role) (string, []string) {
 // middleware calls this after successful token verification; downstream handlers should
 // not need to call it directly.
 func SetClaimsContext(ctx context.Context, claims *Claims) context.Context {
-	return middlewares.SetClaimsContext(ctx, claims)
+	return session.SetClaimsContext(ctx, claims)
 }
 
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP, for golib's
@@ -83,12 +83,12 @@ func CallerKey(r *http.Request) (string, error) {
 // Returns (nil, nil) for unauthenticated requests on optional-auth endpoints, and an error
 // if the value stored under the claims key has an unexpected type.
 func GetClaimsContext(ctx context.Context) (*Claims, error) {
-	return middlewares.GetClaimsContext(ctx)
+	return session.GetClaimsContext(ctx)
 }
 
 // MustGetClaimsContext retrieves the authenticated user's claims from the context, returning
 // an error if no claims are present. Use this on endpoints that require authentication; use
 // [GetClaimsContext] on endpoints where authentication is optional.
 func MustGetClaimsContext(ctx context.Context) (*Claims, error) {
-	return middlewares.MustGetClaimsContext(ctx)
+	return session.MustGetClaimsContext(ctx)
 }

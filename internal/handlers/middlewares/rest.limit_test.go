@@ -276,7 +276,7 @@ func TestRestLimits(t *testing.T) {
 					userID, err := uuid.Parse(r.Header.Get("X-User"))
 					if err == nil {
 						claims := &session.Claims{UserID: &userID}
-						r = r.WithContext(middlewares.SetClaimsContext(r.Context(), claims))
+						r = r.WithContext(session.SetClaimsContext(r.Context(), claims))
 					}
 
 					next.ServeHTTP(w, r)
