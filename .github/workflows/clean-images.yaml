@@ -54,7 +54,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: a-novel-kit/workflows/build-actions/clean-pr-images@v1.66.2
+      - uses: a-novel-kit/workflows/build-actions/clean-pr-images@v1.67.0
         with:
           pull_request: ${{ github.event.pull_request.number }}
           packages: ${{ needs.packages.outputs.names }}
@@ -83,7 +83,7 @@ jobs:
       pull-requests: read
       attestations: read
     steps:
-      - uses: a-novel-kit/workflows/build-actions/clean-images@v1.66.2
+      - uses: a-novel-kit/workflows/build-actions/clean-images@v1.67.0
         with:
           package: ${{ matrix.package }}
           github_token: ${{ github.token }}
