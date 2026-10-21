@@ -37,5 +37,5 @@ func (handler *RestTokenCreateAnon) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, loadToken(res))
+	httpf.SendJSONStatus(w, span, http.StatusOK, loadToken(res))
 }

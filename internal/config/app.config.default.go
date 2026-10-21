@@ -29,7 +29,7 @@ var LoggerDev = &loggingpresets.LogLocal{
 
 // LoggerProd emits structured logs for the Google Cloud Logging backend.
 var LoggerProd = &loggingpresets.LogGcloud{
-	ProjectId: env.GcloudProjectId,
+	ProjectID: env.GcloudProjectId,
 }
 
 // AppPresetDefault is the application configuration read from the environment, with each field falling
@@ -77,7 +77,7 @@ var AppPresetDefault = App{
 		Username:            env.SmtpUsername,
 		Password:            env.SmtpSenderPassword,
 		Domain:              env.SmtpSenderDomain,
-		ForceUnencryptedTls: env.SmtpForceUnencrypted,
+		ForceUnencryptedTLS: env.SmtpForceUnencrypted,
 		Timeout:             env.SmtpTimeout,
 	}),
 	Otel: lo.If[otel.Config](!env.Otel, &otelpresets.Disabled{}).

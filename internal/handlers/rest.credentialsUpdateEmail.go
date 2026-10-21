@@ -71,5 +71,5 @@ func (handler *RestCredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, loadCredentials(res))
+	httpf.SendJSONStatus(w, span, http.StatusOK, loadCredentials(res))
 }

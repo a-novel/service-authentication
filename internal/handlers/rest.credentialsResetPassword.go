@@ -72,5 +72,5 @@ func (handler *RestCredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r 
 		return
 	}
 
-	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, loadCredentials(res))
+	httpf.SendJSONStatus(w, span, http.StatusOK, loadCredentials(res))
 }

@@ -68,5 +68,5 @@ func (handler *RestCredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, loadToken(res))
+	httpf.SendJSONStatus(w, span, http.StatusOK, loadToken(res))
 }
