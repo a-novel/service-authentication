@@ -19,7 +19,7 @@ jobs:
       # Removes append-only-override once a push makes it stale.
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -45,7 +45,7 @@ jobs:
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - &start-local-database
@@ -96,7 +96,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.67.0
@@ -109,7 +109,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.67.0
@@ -123,7 +123,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/lint-semgrep@v1.67.0
@@ -137,7 +137,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.67.0
@@ -151,7 +151,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.67.0
@@ -171,7 +171,7 @@ jobs:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       PLATFORM_AUTH_URL: http://localhost:7010
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - *start-local-database
@@ -225,7 +225,7 @@ jobs:
       SUPER_ADMIN_PASSWORD: admin
       MAIL_HOST: http://0.0.0.0:8025
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: $/.github/actions/start-ci-services
@@ -267,7 +267,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Build the database image twice
@@ -305,7 +305,7 @@ jobs:
     env:
       POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - *start-local-database
@@ -344,7 +344,7 @@ jobs:
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6000
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: $/.github/actions/start-ci-services
@@ -421,7 +421,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - run: |
