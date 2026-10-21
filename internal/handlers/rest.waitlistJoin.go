@@ -75,7 +75,7 @@ func (handler *RestWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		if conflict.Code != "" {
-			httpf.SendJSONStatus(ctx, w, span, http.StatusConflict, conflict)
+			httpf.SendJSONStatus(w, span, http.StatusConflict, conflict)
 
 			return
 		}

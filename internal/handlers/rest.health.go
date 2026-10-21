@@ -113,7 +113,7 @@ func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	statusResp["api:jsonKeys"] = NewRestHealthStatus(err)
 
-	httpf.SendJSONStatus(ctx, w, span, statusCode, statusResp)
+	httpf.SendJSONStatus(w, span, statusCode, statusResp)
 }
 
 func (handler *RestHealth) reportPostgres(ctx context.Context) error {

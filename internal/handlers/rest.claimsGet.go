@@ -38,5 +38,5 @@ func (handler *RestClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		RefreshTokenID: claims.RefreshTokenID,
 	}
 
-	httpf.SendJSONStatus(ctx, w, span, http.StatusOK, response)
+	httpf.SendJSONStatus(w, span, http.StatusOK, response)
 }
