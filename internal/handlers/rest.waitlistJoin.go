@@ -64,22 +64,15 @@ func (handler *RestWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	err = handler.service.Exec(ctx, &core.WaitlistJoinRequest{Email: request.Email, Lang: request.Lang})
+
+	conflictCode := waitlistJoinConflictCode(err)
+	if conflictCode != "" {
+		httpf.SendJSONStatus(w, span, http.StatusConflict, RestWaitlistJoinConflict{Code: conflictCode})
+
+		return
+	}
+
 	if err != nil {
-		conflict := RestWaitlistJoinConflict{}
-
-		switch {
-		case errors.Is(err, core.ErrWaitlistAccountExists):
-			conflict.Code = "account_exists"
-		case errors.Is(err, core.ErrWaitlistAlreadyJoined):
-			conflict.Code = "already_waitlisted"
-		}
-
-		if conflict.Code != "" {
-			httpf.SendJSONStatus(w, span, http.StatusConflict, conflict)
-
-			return
-		}
-
 		if errors.Is(err, core.ErrWaitlistBusy) || errors.Is(err, core.ErrWaitlistUnavailable) {
 			w.Header().Set("Retry-After", waitlistRetryAfterSeconds)
 		}
@@ -90,4 +83,17 @@ func (handler *RestWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusAccepted)
+}
+
+// waitlistJoinConflictCode returns the [RestWaitlistJoinConflict] code of a membership conflict, and
+// an empty string for any other outcome.
+func waitlistJoinConflictCode(err error) string {
+	switch {
+	case errors.Is(err, core.ErrWaitlistAccountExists):
+		return "account_exists"
+	case errors.Is(err, core.ErrWaitlistAlreadyJoined):
+		return "already_waitlisted"
+	default:
+		return ""
+	}
 }

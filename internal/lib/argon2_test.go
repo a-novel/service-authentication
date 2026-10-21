@@ -55,7 +55,7 @@ func TestArgon2(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			err = lib.CompareArgon2(testCase.password, testCase.encrypted)
+			err := lib.CompareArgon2(testCase.password, testCase.encrypted)
 			require.ErrorIs(t, err, testCase.expectErr)
 		})
 	}

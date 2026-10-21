@@ -10,14 +10,15 @@ import (
 // from when generating random strings.
 var URLCharList = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-var urlCharListLen = int64(len(URLCharList))
+// urlCharListLen bounds each random draw. rand.Int only reads it, so every call shares it.
+var urlCharListLen = big.NewInt(int64(len(URLCharList)))
 
 // NewRandomURLString generates a random, URL-safe string of the given length.
 func NewRandomURLString(length int) (string, error) {
 	out := make([]rune, length)
 
 	for i := range out {
-		num, err := rand.Int(rand.Reader, big.NewInt(urlCharListLen))
+		num, err := rand.Int(rand.Reader, urlCharListLen)
 		if err != nil {
 			return "", fmt.Errorf("generate random URL: %w", err)
 		}

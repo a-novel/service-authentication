@@ -1,9 +1,9 @@
 // Package serviceauthentication is the Go client for the authentication service.
 //
-// The package wires the auth middleware against the JSON-keys claims verifier and exposes
-// helpers for retrieving the authenticated user's claims from a request context. Consumers
-// typically construct a [PermissionsHandler] with [NewAuthHandler] at startup and use it to
-// gate individual routes by required permission.
+// The client mounts the auth middleware on a JSON Keys claims verifier. A service builds a
+// [PermissionsHandler] with [NewAuthHandler] at startup, then gates each route on the
+// permissions it requires. Helpers read the authenticated user's claims from the request
+// context.
 package serviceauthentication
 
 import (

@@ -22,10 +22,9 @@ func printDepsGraph[Mod comparable](deps map[Mod]map[Mod]bool) string {
 	return output.String()
 }
 
-// ResolveDependants flattens a map of inter-module dependencies into a fully
-// resolved map, where each module's entry contains both its direct dependencies
-// and the transitive dependencies of every module it inherits from. Detects and
-// errors on circular inheritance via ErrCircularDependency.
+// ResolveDependants flattens inherited dependencies. Each module's entry in the result holds its
+// own dependencies, then those of every module it inherits from, transitively. ResolveDependants
+// returns [ErrCircularDependency] when inheritance forms a cycle.
 //
 // Example: given
 //
