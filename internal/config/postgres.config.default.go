@@ -28,7 +28,7 @@ type PostgresConnection struct {
 
 // postgresConnection reaches PostgreSQL through the POSTGRES_* variables.
 var postgresConnection = PostgresConnection{
-	DSN:        env.PostgresDsn,
+	DSN:        env.PostgresDSN,
 	Host:       env.PostgresHost,
 	Port:       env.PostgresPort,
 	User:       env.PostgresUser,

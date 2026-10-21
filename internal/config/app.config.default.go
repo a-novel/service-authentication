@@ -17,10 +17,13 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )
 
-const (
-	// OtelFlushTimeout bounds how long the process waits to flush buffered telemetry on shutdown.
-	OtelFlushTimeout = 2 * time.Second
-)
+// OtelFlushTimeout bounds how long the OpenTelemetry exporter waits to flush pending spans on
+// shutdown.
+const OtelFlushTimeout = 2 * time.Second
+
+// OtelPresetDefault is the OpenTelemetry exporter of the servers. It exports nothing unless OTEL is
+// set, then exports to Google Cloud when GCLOUD_PROJECT_ID is set, and to standard output otherwise.
+var OtelPresetDefault = newOtelPreset()
 
 // LoggerDev writes human-readable logs to stdout for local development.
 var LoggerDev = &loggingpresets.LogLocal{
@@ -29,7 +32,7 @@ var LoggerDev = &loggingpresets.LogLocal{
 
 // LoggerProd emits structured logs for the Google Cloud Logging backend.
 var LoggerProd = &loggingpresets.LogGcloud{
-	ProjectID: env.GcloudProjectId,
+	ProjectID: env.GcloudProjectID,
 }
 
 // AppPresetDefault is the application configuration read from the environment, with each field falling
@@ -54,7 +57,7 @@ var AppPresetDefault = App{
 		ServiceJsonKeysPort: env.ServiceJsonKeysPort,
 		ServiceJsonKeysHost: env.ServiceJsonKeysHost,
 		ServiceJsonKeysCredentials: lo.Ternary[grpcf.CredentialsProvider](
-			env.GcloudProjectId == "",
+			env.GcloudProjectID == "",
 			&grpcf.LocalCredentialsProvider{},
 			&grpcf.GcloudCredentialsProvider{
 				Host: env.ServiceJsonKeysHost,
@@ -65,9 +68,9 @@ var AppPresetDefault = App{
 	Waitlist:         authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
 	ShortCodesConfig: authconfig.ShortCodesPresetDefault,
 	SmtpUrlsConfig: authconfig.SmtpUrls{
-		UpdateEmail:    env.PlatformAuthUpdateEmailUrl,
-		UpdatePassword: env.PlatformAuthUpdatePasswordUrl,
-		Register:       env.PlatformAuthRegisterUrl,
+		UpdateEmail:    env.PlatformAuthUpdateEmailURL,
+		UpdatePassword: env.PlatformAuthUpdatePasswordURL,
+		Register:       env.PlatformAuthRegisterURL,
 	},
 
 	Smtp: lo.Ternary[smtp.Sender](env.SmtpAddr == "", smtp.NewDebugSender(nil), &smtp.ProdSender{
@@ -80,17 +83,10 @@ var AppPresetDefault = App{
 		ForceUnencryptedTLS: env.SmtpForceUnencrypted,
 		Timeout:             env.SmtpTimeout,
 	}),
-	Otel: lo.If[otel.Config](!env.Otel, &otelpresets.Disabled{}).
-		ElseIf(env.GcloudProjectId == "", &otelpresets.Local{
-			FlushTimeout: OtelFlushTimeout,
-		}).
-		Else(&otelpresets.Gcloud{
-			ProjectID:    env.GcloudProjectId,
-			FlushTimeout: OtelFlushTimeout,
-		}),
-	Logger: lo.Ternary[logging.Log](env.GcloudProjectId == "", LoggerDev, LoggerProd),
+	Otel:   OtelPresetDefault,
+	Logger: lo.Ternary[logging.Log](env.GcloudProjectID == "", LoggerDev, LoggerProd),
 	HttpLogger: lo.Ternary[logging.HTTPConfig](
-		env.GcloudProjectId == "",
+		env.GcloudProjectID == "",
 		&loggingpresets.HTTPLocal{
 			BaseLogger: LoggerDev,
 		},
@@ -99,4 +95,16 @@ var AppPresetDefault = App{
 		},
 	),
 	Postgres: PostgresPresetDefault,
+}
+
+// newOtelPreset picks the exporter [OtelPresetDefault] describes.
+func newOtelPreset() otel.Config {
+	switch {
+	case !env.Otel:
+		return &otelpresets.Disabled{}
+	case env.GcloudProjectID == "":
+		return &otelpresets.Local{FlushTimeout: OtelFlushTimeout}
+	default:
+		return &otelpresets.Gcloud{ProjectID: env.GcloudProjectID, FlushTimeout: OtelFlushTimeout}
+	}
 }
