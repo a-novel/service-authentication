@@ -56,19 +56,19 @@ func (dao *PgShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDelete
 
 	span.SetAttributes(attribute.String("shortCode.comment", request.Comment))
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
 	entity := &ShortCode{}
 
-	err = tx.NewRaw(shortCodeDeleteQuery, request.Now, request.Comment, request.ID).Scan(ctx, entity)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = errors.Join(err, ErrShortCodeDeleteNotFound)
-		}
+	err = db.NewRaw(shortCodeDeleteQuery, request.Now, request.Comment, request.ID).Scan(ctx, entity)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = errors.Join(err, ErrShortCodeDeleteNotFound)
+	}
 
+	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 

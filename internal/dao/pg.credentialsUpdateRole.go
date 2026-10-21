@@ -48,19 +48,19 @@ func (dao *PgCredentialsUpdateRole) Exec(
 
 	span.SetAttributes(attribute.String("credentials.id", request.ID.String()))
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
 	entity := &Credentials{}
 
-	err = tx.NewRaw(credentialsUpdateRoleQuery, request.Role, request.Now, request.ID).Scan(ctx, entity)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = errors.Join(err, ErrCredentialsUpdateRoleNotFound)
-		}
+	err = db.NewRaw(credentialsUpdateRoleQuery, request.Role, request.Now, request.ID).Scan(ctx, entity)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = errors.Join(err, ErrCredentialsUpdateRoleNotFound)
+	}
 
+	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 

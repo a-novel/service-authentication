@@ -55,14 +55,14 @@ func (dao *PgCredentialsInsert) Exec(
 		attribute.String("credentials.role", request.Role),
 	)
 
-	tx, err := postgres.GetContext(ctx)
+	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get transaction: %w", err))
+		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
 	entity := &Credentials{}
 
-	err = tx.NewRaw(
+	err = db.NewRaw(
 		credentialsInsertQuery,
 		request.ID,
 		request.Email,
@@ -71,11 +71,11 @@ func (dao *PgCredentialsInsert) Exec(
 		request.Now,
 		request.Role,
 	).Scan(ctx, entity)
-	if err != nil {
-		if isUniqueViolation(err) {
-			err = errors.Join(err, ErrCredentialsInsertAlreadyExists)
-		}
+	if isUniqueViolation(err) {
+		err = errors.Join(err, ErrCredentialsInsertAlreadyExists)
+	}
 
+	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
