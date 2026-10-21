@@ -99,13 +99,14 @@ func NewCredentialsCreate(
 	}
 }
 
-// Exec registers a new user with the supplied email and password, gated by a one-time registration
-// short code, and returns a fresh access/refresh token pair. One transaction retires the code and
-// inserts the credentials, so a code retired meanwhile or a taken email creates no user. The code
-// check and the Argon2id hash run before it, since a transaction holds a pooled connection.
+// Exec registers a user with the request's email and password, and returns a fresh access/refresh
+// token pair. A one-time registration short code gates the registration. The code check and the
+// Argon2id hash run first, since a transaction holds a pooled connection. One transaction then
+// retires the code and inserts the credentials, so a code retired meanwhile or a taken email
+// creates no user.
 //
-// The committed account then leaves the invitation list, within a bounded time and whatever the
-// client does. A failed removal leaves the account usable, and maintenance removes the stale row.
+// The committed account then leaves the invitation list within a bounded time, whatever the client
+// does. A failed removal leaves the account usable, and maintenance removes the stale row.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsCreate")
 	defer span.End()

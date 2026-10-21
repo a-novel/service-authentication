@@ -70,10 +70,12 @@ var Argon2ParamsDefault = Argon2Params{
 	KeyLength:  Argon2KeyLenDefault,
 }
 
-// GenerateArgon2 hashes a password with Argon2id and returns it in the standard
-// encoded representation, `$argon2id$v=<version>$m=<memory>,t=<iterations>,p=<lanes>$<salt>$<hash>`
-// with the salt and hash base64 (raw standard) encoded. [CompareArgon2] consumes that
-// string; the salt is generated fresh on every call.
+// GenerateArgon2 hashes a password with Argon2id under a fresh random salt. It returns the
+// standard encoded form, which [CompareArgon2] reads back:
+//
+//	$argon2id$v=<version>$m=<memory>,t=<iterations>,p=<lanes>$<salt>$<hash>
+//
+// The salt and the hash use unpadded standard base64.
 func GenerateArgon2(password string, params Argon2Params) (string, error) {
 	salt := make([]byte, params.SaltLength)
 

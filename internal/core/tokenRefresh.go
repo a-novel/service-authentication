@@ -51,8 +51,8 @@ type TokenRefreshServiceSignClaims interface {
 }
 
 // TokenRefreshServiceVerifyClaims verifies the incoming access token and decodes its
-// claims. Satisfied by servicejsonkeys.ClaimsVerifier, whose method name is the published
-// client's, not ours to rename to Exec.
+// claims. servicejsonkeys.ClaimsVerifier satisfies it, so the method keeps that published
+// client's name instead of Exec.
 //
 // nosemgrep: a-novel-dep-interface-method-must-be-exec
 type TokenRefreshServiceVerifyClaims interface {
