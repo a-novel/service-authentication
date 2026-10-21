@@ -1,9 +1,9 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
 # Records the approval a pull request's author cannot give themselves. A repo
-# admin or maintainer reviews the pull request, then dispatches this with its
-# number. The action refuses anyone below Maintain, so an open
-# workflow_dispatch is safe.
+# admin, core included, dispatches this with the number of a pull request they
+# opened. The action refuses anyone else, and anyone else's pull request, so an
+# open workflow_dispatch is safe.
 name: approve-pr
 
 on:

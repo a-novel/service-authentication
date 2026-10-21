@@ -13,7 +13,8 @@
 #
 # On a-novel/infra, whose merges deploy production, the approval runs strict. A
 # bot's pull request merges on its own only as a release pin, or as a version
-# update Renovate itself put on auto-merge. Anything else waits for approve-pr.
+# update Renovate itself put on auto-merge. Anything else waits for a
+# maintainer's or an admin's review.
 # Renovate arms auto-merge seconds after it opens its pull request, and that event
 # re-runs the job; the agent arming a pin does not.
 name: auto-approve dependencies
@@ -37,10 +38,14 @@ jobs:
        github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN ||
        (github.event_name == 'status' && github.event.context == 'renovate/stability-days' &&
         github.event.state == 'success'))
-    # The callee mints a scoped App token for every call but the release-age read, which the App
-    # cannot make, so the caller grants only that read.
+    # The callee mints a scoped App token for every write. The default token makes the reads the
+    # App cannot: the release age, and each first-party version's attestation and npm tarball with
+    # the diff they belong to. The caller grants only those reads.
     permissions:
       statuses: read
+      contents: read
+      attestations: read
+      packages: read
     uses: a-novel-kit/workflows/.github/workflows/auto-approve-dependabot-run.yaml@v1.67.2
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
