@@ -207,6 +207,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      attestations: write
+      id-token: write
     steps:
       - uses: a-novel-kit/workflows/publish-actions/npm@v1.67.0
         with:
