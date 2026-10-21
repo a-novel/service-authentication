@@ -45,9 +45,9 @@ jobs:
     steps:
       - id: relay
         if: github.event_name == 'workflow_run'
-        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.66.2
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.67.0
       - if: github.event_name != 'workflow_run' || steps.relay.outputs.event == 'pull_request_review'
-        uses: a-novel-kit/workflows/generic-actions/derive-status@v1.66.2
+        uses: a-novel-kit/workflows/generic-actions/derive-status@v1.67.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
