@@ -153,6 +153,24 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			},
 		},
 		{
+			name:    "Success/ReplacesMalformedRegistration",
+			request: request,
+
+			selectCredentialsMock: &selectCredentialsMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+			selectShortCodeMock: &selectShortCodeMock{
+				resp: &dao.ShortCode{Data: []byte(`{"role":`)},
+			},
+			registerMock: &registerMock{
+				resp: &core.ShortCode{},
+			},
+
+			expect: &core.CredentialsReconcileRoleResult{
+				Outcome: core.CredentialsReconcileRoleRegistrationCreated,
+			},
+		},
+		{
 			name:      "Error/InvalidRole",
 			request:   &invalidRequest,
 			expectErr: core.ErrInvalidRequest,

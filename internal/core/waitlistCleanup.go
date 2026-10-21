@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/samber/lo"
+
 	"github.com/a-novel-kit/golib/otel"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
@@ -85,13 +87,8 @@ func (service *WaitlistCleanup) Exec(
 
 		// PostgreSQL decides which rows are stale; pending invitations remain in the sheet.
 		if request.Apply && len(accounts) > 0 {
-			emails := make([]string, len(accounts))
-			for i, account := range accounts {
-				emails[i] = account.Email
-			}
-
 			removed, removeErr := service.writer.Exec(ctx, &dao.WaitlistRequest{
-				Action: dao.WaitlistActionRemove, Emails: emails,
+				Action: dao.WaitlistActionRemove, Emails: lo.Map(accounts, credentialsEmail),
 			})
 			if removeErr != nil {
 				return result, otel.ReportError(span, fmt.Errorf("remove registered accounts: %w", removeErr))
@@ -122,4 +119,8 @@ func checkWaitlistPage(emails []string, scanned int, after string) error {
 	}
 
 	return nil
+}
+
+func credentialsEmail(credentials *dao.Credentials, _ int) string {
+	return credentials.Email
 }

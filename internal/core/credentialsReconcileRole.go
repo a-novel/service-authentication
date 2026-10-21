@@ -102,8 +102,12 @@ func (service *CredentialsReconcileRole) Exec(
 	}
 
 	credentials, err := service.selectCredentials.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
+	if err != nil && !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
+	}
+
+	// An existing account takes the role in place. A missing one continues to registration.
 	if err == nil {
-		// Existing credentials are the reconciliation path; absent credentials continue to registration below.
 		result, err := service.reconcileExisting(ctx, credentials, request.Role)
 		if err != nil {
 			return nil, otel.ReportError(span, err)
@@ -116,25 +120,20 @@ func (service *CredentialsReconcileRole) Exec(
 		return result, nil
 	}
 
-	if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
-		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
-	}
-
 	shortCodeRequest := &dao.ShortCodeSelectRequest{
 		Usage:  ShortCodeUsageRegister,
 		Target: request.Email,
 	}
 
 	shortCode, err := service.selectShortCode.Exec(ctx, shortCodeRequest)
-	if err == nil {
-		pendingRole, roleErr := computeRole(shortCode.Data)
-		if roleErr == nil && pendingRole == request.Role {
-			span.SetAttributes(attribute.Bool("noop", true))
-
-			return &CredentialsReconcileRoleResult{Outcome: CredentialsReconcileRoleRegistrationPending}, nil
-		}
-	} else if !errors.Is(err, dao.ErrShortCodeSelectNotFound) {
+	if err != nil && !errors.Is(err, dao.ErrShortCodeSelectNotFound) {
 		return nil, otel.ReportError(span, fmt.Errorf("select registration code: %w", err))
+	}
+
+	if err == nil && registrationGrants(shortCode, request.Role) {
+		span.SetAttributes(attribute.Bool("noop", true))
+
+		return &CredentialsReconcileRoleResult{Outcome: CredentialsReconcileRoleRegistrationPending}, nil
 	}
 
 	registerRequest := &ShortCodeCreateRegisterRequest{
@@ -175,4 +174,12 @@ func (service *CredentialsReconcileRole) reconcileExisting(
 	}
 
 	return &CredentialsReconcileRoleResult{Outcome: CredentialsReconcileRoleUpdated}, nil
+}
+
+// registrationGrants reports whether a pending registration code carries role. A code whose data is
+// malformed or names an unknown role grants nothing, so a new registration replaces it.
+func registrationGrants(shortCode *dao.ShortCode, role string) bool {
+	pendingRole, err := computeRole(shortCode.Data)
+
+	return err == nil && pendingRole == role
 }
