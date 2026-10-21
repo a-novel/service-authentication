@@ -1,22 +1,21 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# Auto-approves pull requests opened by the trusted dependency bots so routine
-# version bumps don't wait on a human approval. It is safe on two counts: the PR
-# author is a fixed bot identity a contributor cannot impersonate, and the approval
-# is withheld the moment a commit GitHub did not sign for that bot lands on the
-# branch, so a tampered dependency PR falls back to normal review. Once approved, the PR is
-# added to the merge queue so it merges hands-off (the queue owns the method).
+# Approves the pull requests the trusted dependency bots open, so routine version
+# bumps wait on no person, and adds each approved one to the merge queue. Two
+# facts keep it safe. A contributor cannot impersonate the bot that authors the
+# pull request. A commit GitHub did not sign for that bot withholds the approval,
+# so a tampered pull request falls back to normal review.
 #
-# The approval also enforces Renovate's release age: it waits while the PR head's
-# `renovate/stability-days` status is pending. Renovate marks the update stable
-# with a status event, not a PR event, hence the `status` trigger. Every status in
-# the repo fires it; the job skips all but that one.
+# The approval waits while the head's `renovate/stability-days` status is pending,
+# which enforces Renovate's release age. Renovate marks an update stable with a
+# status event, hence the `status` trigger. Every status in the repo fires it, and
+# the job skips all but that one.
 #
-# On a-novel/infra, whose merges deploy production, the engine runs strict: a bot
-# PR merges on its own only as a release pin, or as a version update Renovate
-# itself put on auto-merge; anything else waits for approve-pr. Renovate arms
-# auto-merge seconds after opening its PR, so that event re-runs the job; the
-# agent arming a pin does not.
+# On a-novel/infra, whose merges deploy production, the approval runs strict. A
+# bot's pull request merges on its own only as a release pin, or as a version
+# update Renovate itself put on auto-merge. Anything else waits for approve-pr.
+# Renovate arms auto-merge seconds after it opens its pull request, and that event
+# re-runs the job; the agent arming a pin does not.
 name: auto-approve dependencies
 
 on:
@@ -38,8 +37,8 @@ jobs:
        github.event.pull_request.user.login == vars.DEPENDABOT_SECURITY_LOGIN ||
        (github.event_name == 'status' && github.event.context == 'renovate/stability-days' &&
         github.event.state == 'success'))
-    # the callee mints a scoped App token for everything but the release-age read, which the App
-    # cannot make; the caller sets the ceiling, so it must not hand down the repository default.
+    # The callee mints a scoped App token for every call but the release-age read, which the App
+    # cannot make, so the caller grants only that read.
     permissions:
       statuses: read
     uses: a-novel-kit/workflows/.github/workflows/auto-approve-dependabot-run.yaml@v1.66.2

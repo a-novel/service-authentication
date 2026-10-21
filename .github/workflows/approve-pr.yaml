@@ -1,9 +1,9 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# Lets a repo admin or maintainer record the approval a PR author cannot give
-# themselves: they review the PR, then dispatch this with its number. The action
-# fails closed for anyone below Maintain, which is what makes an open
-# workflow_dispatch safe here.
+# Records the approval a pull request's author cannot give themselves. A repo
+# admin or maintainer reviews the pull request, then dispatches this with its
+# number. The action refuses anyone below Maintain, so an open
+# workflow_dispatch is safe.
 name: approve-pr
 
 on:
@@ -23,9 +23,8 @@ jobs:
     environment:
       name: governance
       deployment: false
-    # Default token is used only for the admin check (Metadata:read, always
-    # present) and the base checkout; the approval itself uses a minted
-    # least-privilege [Agent] token.
+    # The default token serves only the role check. The approval uses an [Agent]
+    # token the action mints, with pull request write alone.
     permissions:
       contents: read
     steps:
@@ -34,9 +33,5 @@ jobs:
           pull_request: ${{ inputs.pull_request }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          # Org-level halt, fail-safe: automation keeps running only for an
-          # explicit off-token (empty/unset, 0, off, false, no, disabled), and
-          # anything else engages it, including a fat-fingered value. Engaged,
-          # the action aborts loudly before approving. Threaded from the org
-          # variable, which a composite action cannot read itself.
+          # The org-wide halt. Engaged, the action fails before the role check.
           kill_switch: ${{ vars.AGENT_KILL_SWITCH }}

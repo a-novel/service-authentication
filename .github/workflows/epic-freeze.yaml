@@ -1,23 +1,21 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# The required `epic-freeze` check: the per-PR half of the partial-landing detector.
-# It answers one question — "is this PR's epic frozen because it landed partially?"
-# A standalone PR, or a healthy epic member, passes; a member of a partially-landed
-# epic fails, which blocks the PR and, on a merge_group event, drops it from the
-# queue. The sweep half runs on the reconcile-board schedule and shares the same
-# predicate, so the two can never disagree on a PR.
+# Posts the required `epic-freeze` check, the per-PR half of the partial-landing
+# detector. A standalone pull request or a healthy Epic member passes. A member of
+# an Epic that landed partially fails, which blocks the pull request and drops its
+# merge-queue group. The reconcile-board sweep runs the other half on the same
+# predicate, so both halves agree on every pull request.
 #
-# It lives in its own file so that, as a second required check, it has an
-# independent failure domain: a broken run here leaves merge-gate running, and the
-# reverse. It carries no auto-merge job, so a landing a human froze stays frozen.
+# The check has a file of its own, so a broken run here leaves merge-gate running,
+# and the reverse. It arms no auto-merge, so a landing a person froze stays frozen.
 name: epic-freeze
 
 on:
-  # Triggers mirror merge-gate.yaml. labeled/unlabeled matter because an `epic:<N>`
-  # label flips a PR between the standalone fast-path and the epic check. A failure
-  # on merge_group drops the queued group, so the check must post on the group head
-  # too or a queued PR times out. Reviews and merge groups run a pull request's own
-  # copy of a workflow, so they arrive through pr-relay.yaml.
+  # The triggers match merge-gate.yaml. An `epic:<N>` label moves a pull request
+  # between the standalone path and the Epic check. The check also posts on each
+  # merge-queue group's head, or a queued pull request times out. Reviews and merge
+  # groups run a pull request's own copy of a workflow, so they arrive through
+  # pr-relay.yaml.
   pull_request_target: # zizmor: ignore[dangerous-triggers] The gate only calls the GitHub API; it never checks out the pull request.
     types:
       - opened
@@ -32,8 +30,8 @@ on:
     types: [completed]
 
 jobs:
-  # Named `evaluate`: the [Agent] App posts the `epic-freeze` check-run itself, so
-  # the job name stays clear of it (as in merge-gate.yaml).
+  # The [Agent] App posts the `epic-freeze` check-run itself, so the job takes
+  # another name.
   evaluate:
     # Dependabot is evaluated by the trusted CI-completion job.
     if: github.event_name == 'workflow_run' || github.actor != vars.DEPENDABOT_SECURITY_LOGIN
@@ -42,10 +40,10 @@ jobs:
     environment:
       name: governance
       deployment: false
-    # No permissions of its own: the detector mints its own [Agent] tokens. In
-    # per-PR mode that is checks:write plus read scopes; the write token that rolls
-    # a stray forward is sweep-only, so a per-PR run can never re-enqueue. relay-context
-    # reads the relayed pull request with this job's token.
+    # relay-context reads the relayed pull request with this job's token. The
+    # detector mints its own [Agent] tokens, with checks write and reads for a
+    # pull request. Only the sweep mints the token that rolls a stray forward, so
+    # a per-PR run never re-enqueues.
     permissions:
       pull-requests: read
     steps:
@@ -60,13 +58,9 @@ jobs:
           pull_request_number: ${{ steps.relay.outputs.pull_request_number || github.event.pull_request.number }}
           head_sha: ${{ steps.relay.outputs.head_sha || github.event.pull_request.head.sha }}
           merge_group_head_ref: ${{ steps.relay.outputs.merge_group_head_ref }}
-          # Live: posts the epic-freeze check-run on this head, success by
-          # default and failure on a partial landing.
+          # Posts the epic-freeze check-run on this head: a success, or a failure
+          # on a partial landing.
           dry_run: "false"
-          # Org-level halt, fail-safe: automation keeps running only for an
-          # explicit off-token (empty/unset, 0, off, false, no, disabled), and
-          # anything else engages it, including a fat-fingered value. Engaged,
-          # a per-PR run posts a `failure` hold on this head, since a
-          # required-check poster must never skip. Threaded from the org
-          # variable.
+          # The org-wide halt. Engaged, the run posts a failing check on this
+          # head, since a required check must always report.
           kill_switch: ${{ vars.AGENT_KILL_SWITCH }}

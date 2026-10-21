@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           sleep 10 # the dequeued event can precede its timeline entry
-          reasons=$(gh api graphql -F owner="${GITHUB_REPOSITORY%/*}" -F name="${GITHUB_REPOSITORY#*/}" -F number="$NUMBER" -f query='
+          reasons=$(gh api graphql -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" -F number="$NUMBER" -f query='
             query($owner: String!, $name: String!, $number: Int!) {
               repository(owner: $owner, name: $name) { pullRequest(number: $number) {
                 timelineItems(last: 50, itemTypes: [REMOVED_FROM_MERGE_QUEUE_EVENT]) {
@@ -79,7 +79,7 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/renovate.yaml" --silent 2>/dev/null || exit 0
           # GitHub recomputes mergeability lazily after a push, so UNKNOWN means "ask again".
           for _ in 1 2 3 4 5 6; do
-            states=$(gh api graphql -F owner="${GITHUB_REPOSITORY%/*}" -F name="${GITHUB_REPOSITORY#*/}" -f query='
+            states=$(gh api graphql -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" -f query='
               query($owner: String!, $name: String!) {
                 repository(owner: $owner, name: $name) {
                   pullRequests(states: OPEN, first: 100) { nodes { mergeable author { login } } } } }' |

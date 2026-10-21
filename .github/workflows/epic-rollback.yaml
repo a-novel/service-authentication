@@ -1,15 +1,14 @@
 # Managed by `a-novel repo update` — edit the template in stack, not this copy.
 #
-# Human-triggered Epic rollback: the rare escape hatch that reverts an Epic's merged
-# siblings across repos and re-lands the compensations atomically. Because it
-# reverts already-merged code it is fenced four ways: admin-only, so the job fails
-# closed for the non-admins that workflow_dispatch is open to; a typed confirmation;
-# a no-write dry run by default that just prints the plan; and every compensating
-# revert passing the same merge-gate, review, queue and partial-landing detector as
-# the forward landing. The heavy lifting — ledger reconstruction, per-repo reverts,
-# atomic landing, board reset — and the admin and confirmation fences live in the
-# reusable epic-rollback-run workflow pinned below. This thin caller only threads
-# the org credentials and the operator's dispatch inputs into it.
+# Reverts a landed Epic's merged members across repos and lands the reverts
+# together, through the epic-rollback-run workflow. A rollback undoes merged code,
+# so four fences guard it:
+#
+#   - Only an admin's dispatch runs.
+#   - The operator types a confirmation.
+#   - A dispatch prints the plan and writes nothing until dry_run is false.
+#   - Each revert passes the same merge gate, review, queue and partial-landing
+#     detector as the landing it undoes.
 name: epic-rollback
 
 on:
@@ -31,9 +30,8 @@ on:
         description: "true (default) = print the plan only; false = actually open + land the reverts."
         required: false
         default: "true"
-        # A choice type makes the UI and the dispatch API reject anything but these
-        # two values, so a fat-fingered "false " or "FALSE" cannot silently run dry
-        # when the operator meant to go live.
+        # The UI and the dispatch API accept only these two values, so a mistyped
+        # value cannot turn a live run into a rehearsal.
         type: choice
         options:
           - "true"
@@ -48,8 +46,8 @@ run-name: "⏮ ROLLBACK epic:#${{ inputs.epic_number }} requested by @${{ github
 
 jobs:
   rollback:
-    # matches the callee; the caller sets the ceiling, so it must not hand down
-    # the repository default.
+    # A reusable workflow gets at most its caller's permissions, so the caller
+    # grants exactly the callee's.
     permissions:
       contents: read
     uses: a-novel-kit/workflows/.github/workflows/epic-rollback-run.yaml@v1.66.2

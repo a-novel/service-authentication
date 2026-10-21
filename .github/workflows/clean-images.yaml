@@ -2,8 +2,9 @@
 #
 # Deletes this repository's container images once the branch or pull request that built them is gone.
 # Closing a pull request deletes its `pr-<N>` image at once; a daily sweep takes the rest: untagged
-# builds and tags of closed pull requests, merge-queue builds and old branch tags. Release tags, master,
-# every master build and open pull requests' images stay. A deleted version can be restored for 30 days.
+# builds and tags of closed pull requests, merge-queue builds, old branch tags and master's untagged
+# builds from before the last minor release. Every tag, master's builds since that release and open pull
+# requests' images stay. A deleted version can be restored for 30 days.
 name: clean images
 
 on:
@@ -77,6 +78,8 @@ jobs:
       cancel-in-progress: false
     permissions:
       packages: write
+      # The last minor release's commit dates the master builds it supersedes.
+      contents: read
       pull-requests: read
       attestations: read
     steps:

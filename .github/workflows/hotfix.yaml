@@ -1,22 +1,19 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Ships a patch on a release line, holding reviewed and tested fixes only. A fix
+# lands on the default branch first. The dispatch then opens one backport pull
+# request per fix into the line's release/vX.Y branch, which it cuts from the
+# line's latest tag on first use. Merging a backport cuts the next patch as the
+# release App, behind the protected `release` environment, and the patch's tag
+# runs the line's publishing jobs. The kill switch halts neither path, so an
+# emergency patch can always ship. The backport-run and release-line-run
+# workflows hold the logic.
+#
+# The cut triggers on pull_request_target, so GitHub runs the default branch's
+# copy of this file and checks the `release` environment against that branch.
+# The cut never checks out pull request code.
 name: hotfix
 
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-# A thin caller: the hotfix engine lives in the reusable a-novel-kit/workflows
-# backport-run.yaml and release-line-run.yaml, whose pins Renovate bumps.
-#
-# A hotfix ships reviewed, tested changes only, never the default branch's
-# unreleased work. The fix lands on the default branch first; the dispatch then
-# opens a backport pull request per fix into the line's release/vX.Y branch, cut
-# from its latest tag on first use. Merging a backport cuts the next patch behind
-# the protected `release` environment, the human "who may publish" gate, as the
-# release App, and the patch's tag runs the line's publishing jobs. Both paths
-# are exempt from the kill switch, so the emergency patch path stays open even
-# when normal automation is halted.
-#
-# The cut triggers on pull_request_target because GitHub runs it from the default
-# branch's copy of this file and checks the `release` environment against the
-# default branch. A push trigger would run the release line's own copy, as old
-# as the tag the line was cut from. The cut never checks out pull request code.
 on:
   workflow_dispatch:
     inputs:
@@ -49,8 +46,8 @@ on:
 run-name: "🚑 ${{ github.event_name == 'workflow_dispatch' && format('backport v{0}.x{1}', inputs.line, inputs.dry_run && ' (dry-run)' || '') || format('release {0}', github.event.pull_request.base.ref) }}"
 
 jobs:
-  # Backports serialise on this repo: a second dispatch queues behind the one in
-  # flight.
+  # Backports run one at a time per repo: a second dispatch queues behind the one
+  # in flight.
   backport:
     if: github.event_name == 'workflow_dispatch'
     concurrency:
@@ -79,9 +76,9 @@ jobs:
       dependency_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
       push_webhook: ${{ secrets.ESCALATE_PUSH_WEBHOOK }}
 
-  # Cuts serialise per line. The concurrency sits on the job, so a pull request
-  # closed without merging, whose job is skipped, never takes a queued cut's
-  # place.
+  # Cuts run one at a time per line. The concurrency sits on the job, so a pull
+  # request closed without merging, whose job is skipped, never takes a queued
+  # cut's place.
   cut:
     if: github.event_name == 'pull_request_target' && github.event.pull_request.merged
     concurrency:
