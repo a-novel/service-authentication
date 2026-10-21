@@ -7,7 +7,7 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 
-	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // RestClaimsGet is the REST handler that returns the caller's own claims, read from
@@ -25,7 +25,7 @@ func (handler *RestClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.ClaimsGet")
 	defer span.End()
 
-	claims, err := middlewares.MustGetClaimsContext(ctx)
+	claims, err := session.MustGetClaimsContext(ctx)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusForbidden}, err)
 

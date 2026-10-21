@@ -17,7 +17,6 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
-	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
@@ -155,7 +154,7 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			rCtx := testCase.request.Context()
-			rCtx = middlewares.SetClaimsContext(rCtx, testCase.claims)
+			rCtx = session.SetClaimsContext(rCtx, testCase.claims)
 
 			handler.ServeHTTP(w, testCase.request.WithContext(rCtx))
 

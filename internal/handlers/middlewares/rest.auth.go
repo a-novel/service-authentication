@@ -22,14 +22,8 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
-var (
-	// ErrMissingAuth indicates no authentication token was provided when one is required.
-	ErrMissingAuth = errors.New("missing auth")
-	// ErrInvalidAuth indicates the authentication token is invalid or the user lacks permissions.
-	ErrInvalidAuth = errors.New("invalid authentication")
-	// ErrUnexpectedClaims indicates the claims in the context have an unexpected type.
-	ErrUnexpectedClaims = errors.New("unexpected claims")
-)
+// ErrInvalidAuth indicates the authentication token is invalid or the user lacks permissions.
+var ErrInvalidAuth = errors.New("invalid authentication")
 
 // AuthClaimsVerifier validates JWT access tokens and extracts claims.
 type AuthClaimsVerifier interface {
@@ -82,7 +76,7 @@ func NewAuth(
 // permissions is in the required set.
 //
 // Verified claims are stored on the request context for downstream handlers; use
-// [GetClaimsContext] or [MustGetClaimsContext] to retrieve them.
+// [session.GetClaimsContext] or [session.MustGetClaimsContext] to retrieve them.
 func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +133,7 @@ func (middleware *Auth) serve(
 		return
 	}
 
-	ctx = SetClaimsContext(ctx, claims)
+	ctx = session.SetClaimsContext(ctx, claims)
 
 	if len(requiredPermissions) > 0 {
 		err = middleware.authorize(claims.Roles, requiredPermissions)
@@ -170,56 +164,4 @@ func (middleware *Auth) authorize(roles, requiredPermissions []string) error {
 	}
 
 	return fmt.Errorf("%w: user does not have any of the required permissions", ErrInvalidAuth)
-}
-
-// ClaimsContextKey is the context key for storing authenticated user claims.
-type ClaimsContextKey struct{}
-
-// SetClaimsContext stores the authenticated user's claims in the context.
-// This is called by the Auth middleware after successful token verification.
-func SetClaimsContext(ctx context.Context, claims *session.Claims) context.Context {
-	// The returned context keeps the caller's span current, so the handler's span nests under it.
-	_, span := otel.Tracer().Start(ctx, "handlers.SetClaimsContext")
-	defer span.End()
-
-	return context.WithValue(ctx, ClaimsContextKey{}, claims)
-}
-
-// GetClaimsContext retrieves the authenticated user's claims from the context.
-// Returns nil claims with no error if no authentication was provided (for optional auth endpoints).
-// Returns an error if the value stored under [ClaimsContextKey] has an unexpected type.
-func GetClaimsContext(ctx context.Context) (*session.Claims, error) {
-	ctx, span := otel.Tracer().Start(ctx, "handlers.GetClaimsContext")
-	defer span.End()
-
-	raw := ctx.Value(ClaimsContextKey{})
-	if raw == nil {
-		return nil, nil
-	}
-
-	claims, ok := raw.(*session.Claims)
-	if !ok {
-		return nil, otel.ReportError(span, fmt.Errorf("%w: got type %T, expected %T", ErrUnexpectedClaims, raw, claims))
-	}
-
-	return claims, nil
-}
-
-// MustGetClaimsContext retrieves the authenticated user's claims from the context,
-// returning [ErrMissingAuth] when none are present. Use it on endpoints that require
-// authentication, and [GetClaimsContext] where authentication is optional.
-func MustGetClaimsContext(ctx context.Context) (*session.Claims, error) {
-	ctx, span := otel.Tracer().Start(ctx, "handlers.MustGetClaimsContext")
-	defer span.End()
-
-	claims, err := GetClaimsContext(ctx)
-	if err != nil {
-		return nil, otel.ReportError(span, err)
-	}
-
-	if claims == nil {
-		return nil, otel.ReportError(span, ErrMissingAuth)
-	}
-
-	return claims, nil
 }

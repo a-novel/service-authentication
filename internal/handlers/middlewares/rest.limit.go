@@ -72,7 +72,7 @@ var (
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP. Mount the limit after
 // the auth middleware, which signs the user in.
 func CallerKey(r *http.Request) (string, error) {
-	claims, _ := r.Context().Value(ClaimsContextKey{}).(*session.Claims)
+	claims, _ := r.Context().Value(session.ClaimsContextKey{}).(*session.Claims)
 	if claims != nil && claims.UserID != nil {
 		return "user:" + claims.UserID.String(), nil
 	}
