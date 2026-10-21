@@ -10,6 +10,7 @@ import (
 	"math"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/samber/lo"
 	"golang.org/x/crypto/argon2"
@@ -141,17 +142,25 @@ func idKey(password string, salt []byte, params *Argon2Params) []byte {
 	return argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, params.Parallelism, params.KeyLength)
 }
 
-// dummyArgon2Hash is a throwaway Argon2id hash generated once at init with
-// Argon2ParamsDefault, so verifying against it costs the same as a real
-// [CompareArgon2] call.
-var dummyArgon2Hash = lo.Must(GenerateArgon2("not-a-real-password", Argon2ParamsDefault))
+// dummyArgon2Hash is a throwaway Argon2id hash with Argon2ParamsDefault, so verifying against it
+// costs the same as a real [CompareArgon2] call. It is built on first use. A binary that never
+// compares against it, such as a consumer of the Go client, skips its 64 MiB hash.
+var dummyArgon2Hash = sync.OnceValue(func() string {
+	return lo.Must(GenerateArgon2("not-a-real-password", Argon2ParamsDefault))
+})
 
-// DummyCompareArgon2 runs a full Argon2id verification against a throwaway hash and
-// discards the result. Call it on the "subject not found" branch of an authentication
-// flow, such as an unknown email, so a lookup miss costs the same as a wrong password
-// and the response time reveals nothing about whether the subject exists.
+// PrepareDummyArgon2 builds the throwaway hash [DummyCompareArgon2] verifies against. Call it at
+// startup: the build costs a hash of its own, and a build during a request slows that lookup miss.
+func PrepareDummyArgon2() {
+	dummyArgon2Hash()
+}
+
+// DummyCompareArgon2 runs a full Argon2id verification against a throwaway hash and discards the
+// result. Call it on the "subject not found" branch of an authentication flow, such as an unknown
+// email. A lookup miss then costs the same as a wrong password, so the response time reveals
+// nothing about whether the subject exists.
 func DummyCompareArgon2(password string) {
-	_ = CompareArgon2(password, dummyArgon2Hash)
+	_ = CompareArgon2(password, dummyArgon2Hash())
 }
 
 func decodeHash(encodedHash string) (*Argon2Params, []byte, []byte, error) {

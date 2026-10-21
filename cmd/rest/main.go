@@ -75,6 +75,7 @@ func main() {
 
 	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
+	lib.PrepareDummyArgon2()
 
 	// Missing SMTP_ADDR looks like healthy mail loss: 202 answered, mail rendered to stdout.
 	if _, debug := cfg.Smtp.(*smtp.DebugSender); debug {
