@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go build -ldflags="-s -w" -trimpath -o /migrations ./cmd/migrations/ && \
     go build -ldflags="-s -w" -trimpath -o /maintenance ./cmd/maintenance/
 
-FROM docker.io/library/alpine:3.24.2
+FROM docker.io/library/alpine:3.24.3
 
 WORKDIR /
 

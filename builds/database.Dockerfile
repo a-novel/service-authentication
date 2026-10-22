@@ -1,5 +1,5 @@
 # Assemble signed Wolfi packages with a versioned upstream builder.
-FROM docker.io/library/alpine:3.24.2 AS packages
+FROM docker.io/library/alpine:3.24.3 AS packages
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # jq only reads the locks in this stage and never reaches the image, so its version can't change it.
 # hadolint ignore=DL3018
