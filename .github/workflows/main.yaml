@@ -101,8 +101,10 @@ jobs:
           persist-credentials: false
       - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.73.0
         with:
-          # renovate: datasource=github-releases depName=koalaman/shellcheck
+          # renovate: datasource=custom.shellcheck depName=koalaman/shellcheck
           version: "0.11.0"
+          sha256: "8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198"
+          run_steps: .github/actions/*/action.yml .github/workflows/*.yaml
 
   lint-dockerfile:
     runs-on: ubuntu-latest
@@ -114,8 +116,9 @@ jobs:
           persist-credentials: false
       - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.73.0
         with:
-          # renovate: datasource=github-releases depName=hadolint/hadolint
+          # renovate: datasource=custom.hadolint depName=hadolint/hadolint
           version: "2.15.1"
+          sha256: "c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507"
 
   # Structural conventions golangci-lint cannot express.
   lint-semgrep:
