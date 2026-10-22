@@ -192,6 +192,7 @@ jobs:
           coverage_artifact: gocover
           coverage_file: coverage.txt
           modfile: gotestsum.mod
+          race: "true"
 
   # pkg/go, the published Go client, reaches no network and no database, so this lane starts no
   # services. It runs apart from test-go, which covers /internal only.
@@ -210,6 +211,7 @@ jobs:
           coverage_artifact: gocoverpkg
           coverage_file: coverage_pkg.txt
           modfile: gotestsum.mod
+          race: "true"
 
   test-pkg-js:
     runs-on: ubuntu-latest
