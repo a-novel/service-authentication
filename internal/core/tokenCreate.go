@@ -58,7 +58,7 @@ func (service *TokenCreate) Exec(
 	ctx, span := otel.Tracer().Start(ctx, "core.TokenCreate")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("email", request.Email))
+	span.SetAttributes(attribute.String("credentials.email", request.Email))
 
 	err := validate.Struct(request)
 	if err != nil {

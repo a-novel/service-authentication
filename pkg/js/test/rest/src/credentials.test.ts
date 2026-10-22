@@ -59,6 +59,13 @@ describe("credentialsCreate", () => {
     await registerUser(api, preRegister);
   });
 
+  it("registers an address with a plus sign", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const preRegister = await preRegisterUser(api, mailUrl, `tag+${generateRandomMail()}`);
+    await registerUser(api, preRegister);
+  });
+
   it("does not register with wrong link", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 

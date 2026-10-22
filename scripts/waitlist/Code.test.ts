@@ -6,7 +6,14 @@ import { describe, expect, it, vi } from "vitest";
 
 const source = new Script(readFileSync(new URL("./Code.js", import.meta.url), "utf8") + "\ndoPost;");
 const testSecret = "test-only-key-not-a-deployed-secret";
+const testSheetID = 7;
 type Reply = { status: string; emails?: string[]; removed?: number };
+type RowDeletion = { deleteDimension: { range: { startIndex: number; endIndex: number } } };
+
+// Builds the request deleting 0-based sheet rows [startIndex, endIndex) of the waitlist tab.
+function deletion(startIndex: number, endIndex: number) {
+  return { deleteDimension: { range: { sheetId: testSheetID, dimension: "ROWS", startIndex, endIndex } } };
+}
 
 // Only Google's service boundary is replaced. The deployed script verifies real HMACs and operates on row data.
 function writer(emails: string[] = []) {
@@ -17,14 +24,20 @@ function writer(emails: string[] = []) {
   ]);
   const lock = { tryLock: vi.fn(() => true), releaseLock: vi.fn() };
   const sheet = {
+    getSheetId: () => testSheetID,
     getLastRow: () => rows.length,
     getRange: (row: number, column: number, length: number, width: number) => ({
       getValues: () =>
         rows.slice(row - 1, row - 1 + length).map((cells) => cells.slice(column - 1, column - 1 + width)),
     }),
-    deleteRow: vi.fn((row: number) => rows.splice(row - 1, 1)),
   };
   const append = vi.fn((value: { values: string[][] }) => rows.push(...value.values));
+  const batchUpdate = vi.fn((body: { requests: RowDeletion[] }) => {
+    for (const { deleteDimension } of body.requests) {
+      const { startIndex, endIndex } = deleteDimension.range;
+      rows.splice(startIndex, endIndex - startIndex);
+    }
+  });
   const flush = vi.fn();
   const open = vi.fn(() => ({ getSheetByName: () => sheet }));
   const scope = createContext({
@@ -41,7 +54,7 @@ function writer(emails: string[] = []) {
     },
     LockService: { getScriptLock: () => lock },
     SpreadsheetApp: { openById: open, flush },
-    Sheets: { Spreadsheets: { Values: { append } } },
+    Sheets: { Spreadsheets: { Values: { append }, batchUpdate } },
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: (value: string) => ({ setMimeType: () => value }) },
   });
   const post = source.runInContext(scope) as (event: { postData: { contents: string } }) => string;
@@ -50,7 +63,7 @@ function writer(emails: string[] = []) {
     const signature = createHmac("sha256", secret).update(payload).digest("base64url");
     return JSON.parse(post({ postData: { contents: JSON.stringify({ payload, signature }) } })) as Reply;
   }
-  return { call, post, rows, properties, lock, sheet, append, flush, open };
+  return { call, post, rows, properties, lock, sheet, append, batchUpdate, flush, open };
 }
 
 describe("private invitation writer", () => {
@@ -83,7 +96,10 @@ describe("private invitation writer", () => {
     expect(script.call(request)).toEqual({ status: "accepted", removed: 2 });
     expect(script.call(request)).toEqual({ status: "accepted", removed: 0 });
     expect(script.rows.slice(1).map(([email]) => email)).toEqual(["other@example.com"]);
-    expect(script.sheet.deleteRow.mock.calls).toEqual([[4], [2]]);
+    expect(script.batchUpdate).toHaveBeenCalledExactlyOnceWith(
+      { requests: [deletion(3, 4), deletion(1, 2)] },
+      "private-test-sheet"
+    );
     expect(script.flush.mock.invocationCallOrder[0]).toBeLessThan(script.lock.releaseLock.mock.invocationCallOrder[0]);
   });
 
@@ -92,8 +108,9 @@ describe("private invitation writer", () => {
     const script = writer([...emails].reverse().concat(emails[0]));
     const first = script.call({ action: "list" });
     expect(first).toEqual({ status: "accepted", emails: emails.slice(0, 100) });
-    expect(script.sheet.deleteRow).not.toHaveBeenCalled();
+    expect(script.batchUpdate).not.toHaveBeenCalled();
     expect(script.call({ action: "remove", emails: first.emails })).toEqual({ status: "accepted", removed: 101 });
+    expect(script.batchUpdate).toHaveBeenCalledExactlyOnceWith({ requests: [deletion(4, 105)] }, "private-test-sheet");
     expect(script.call({ action: "list", after: emails[99] })).toEqual({
       status: "accepted",
       emails: emails.slice(100),
@@ -107,17 +124,26 @@ describe("private invitation writer", () => {
     ).toEqual(emails.slice(100));
   });
 
-  it("safely reruns a partially failed removal and preserves case-distinct addresses", () => {
+  it("deletes each run of adjacent matches in one range, from the bottom up", () => {
+    const script = writer(["member@example.com", "member@example.com", "other@example.com", "member@example.com"]);
+    expect(script.call({ action: "remove", email: "member@example.com" })).toEqual({ status: "accepted", removed: 3 });
+    expect(script.batchUpdate).toHaveBeenCalledExactlyOnceWith(
+      { requests: [deletion(4, 5), deletion(1, 3)] },
+      "private-test-sheet"
+    );
+    expect(script.rows.slice(1).map(([email]) => email)).toEqual(["other@example.com"]);
+  });
+
+  it("safely reruns a failed removal and preserves case-distinct addresses", () => {
     const script = writer(["one@example.com", "pending@example.com", "One@example.com", "two@example.com"]);
     const request = { action: "remove", emails: ["one@example.com", "two@example.com"] };
-    script.sheet.deleteRow
-      .mockImplementationOnce((row) => script.rows.splice(row - 1, 1))
-      .mockImplementationOnce(() => {
-        throw new Error("private Google data");
-      });
+    script.batchUpdate.mockImplementationOnce(() => {
+      throw new Error("private Google data");
+    });
     expect(script.call(request)).toEqual({ status: "unavailable" });
     expect(script.lock.releaseLock).toHaveBeenCalledOnce();
-    expect(script.call(request)).toEqual({ status: "accepted", removed: 1 });
+    expect(script.rows).toHaveLength(5);
+    expect(script.call(request)).toEqual({ status: "accepted", removed: 2 });
     expect(script.call(request)).toEqual({ status: "accepted", removed: 0 });
     expect(script.rows.slice(1).map(([email]) => email)).toEqual(["pending@example.com", "One@example.com"]);
   });
@@ -169,7 +195,7 @@ describe("private invitation writer", () => {
   it("refuses to list invalid sheet data", () => {
     const script = writer(["invalid"]);
     expect(script.call({ action: "list" })).toEqual({ status: "unavailable" });
-    expect(script.sheet.deleteRow).not.toHaveBeenCalled();
+    expect(script.batchUpdate).not.toHaveBeenCalled();
   });
 
   it("does not mutate a sheet with unexpected headers", () => {

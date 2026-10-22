@@ -43,7 +43,7 @@ func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeCon
 	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeConsume")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("shortCode.id", request.ID.String()))
+	span.SetAttributes(attribute.String("short_code.id", request.ID.String()))
 
 	daoRequest := &dao.ShortCodeDeleteRequest{
 		ID:      request.ID,

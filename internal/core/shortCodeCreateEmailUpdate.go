@@ -82,7 +82,6 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 
 	span.SetAttributes(
 		attribute.String("user.id", request.ID.String()),
-		attribute.String("user.email", request.Email),
 		attribute.String("email.lang", request.Lang),
 	)
 

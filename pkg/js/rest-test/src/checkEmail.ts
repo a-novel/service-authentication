@@ -7,6 +7,7 @@ import { type AddressObject, type ParsedMail, simpleParser } from "mailparser";
 
 /**
  * Waits up to a second for the one MailPit message matching a search query and returns it parsed.
+ * The query uses MailPit's search syntax, unencoded, such as `to:"user+tag@example.com"`.
  * The message is deleted afterwards unless `clear` is false.
  */
 export async function checkEmail(mailHost: string, search: string, clear: boolean = true): Promise<ParsedMail> {
@@ -32,7 +33,7 @@ export async function checkEmail(mailHost: string, search: string, clear: boolea
 
 /** Returns the ID of the one MailPit message matching the search query, failing the assertion otherwise. */
 async function findMessageID(mailHost: string, search: string): Promise<string> {
-  const res = await fetch(`${mailHost}/api/v1/search?query=${search}&limit=1`, {
+  const res = await fetch(`${mailHost}/api/v1/search?query=${encodeURIComponent(search)}&limit=1`, {
     headers: { accept: "application/json" },
   }).then(handleHttpResponse);
   const searchRes = await res.json();

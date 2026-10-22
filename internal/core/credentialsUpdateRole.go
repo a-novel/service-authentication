@@ -91,7 +91,7 @@ func (service *CredentialsUpdateRole) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	span.SetAttributes(attribute.Int("newTargetRoleImportance", newPriority))
+	span.SetAttributes(attribute.Int("target.role_priority", newPriority))
 
 	targetCredentials, err := service.daoCredentialsSelect.Exec(ctx, &dao.CredentialsSelectRequest{
 		ID: request.TargetUserID,
@@ -100,16 +100,12 @@ func (service *CredentialsUpdateRole) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("select target credentials: %w", err))
 	}
 
-	span.SetAttributes(attribute.String("targetCredentials.email", targetCredentials.Email))
-
 	currentCredentials, err := service.daoCredentialsSelect.Exec(ctx, &dao.CredentialsSelectRequest{
 		ID: request.CurrentUserID,
 	})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("select current user credentials: %w", err))
 	}
-
-	span.SetAttributes(attribute.String("currentCredentials.email", currentCredentials.Email))
 
 	// These roles come from the database and skip request validation. An unknown stored
 	// role fails here, so the rank guards below never compare against a rank the account
@@ -125,8 +121,8 @@ func (service *CredentialsUpdateRole) Exec(
 	}
 
 	span.SetAttributes(
-		attribute.Int("targetRoleImportance", targetPriority),
-		attribute.Int("currentRoleImportance", actorPriority),
+		attribute.Int("target.current_role_priority", targetPriority),
+		attribute.Int("actor.role_priority", actorPriority),
 	)
 
 	// User can only upgrade users up to its own role.
@@ -147,7 +143,7 @@ func (service *CredentialsUpdateRole) Exec(
 
 	// Same rank as the target already holds: nothing to update.
 	if newPriority == targetPriority {
-		span.SetAttributes(attribute.Bool("noop", true))
+		span.SetAttributes(attribute.Bool("target.role_unchanged", true))
 
 		return newCredentials(targetCredentials), nil
 	}

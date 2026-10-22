@@ -111,7 +111,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsCreate")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("email", request.Email))
+	span.SetAttributes(attribute.String("credentials.email", request.Email))
 	// The password and short code never go on the span. A redaction still carries its length.
 
 	err := validate.Struct(request)

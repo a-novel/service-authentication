@@ -114,7 +114,7 @@ func (service *CredentialsReconcileRole) Exec(
 		}
 
 		if result.Outcome == CredentialsReconcileRoleUnchanged {
-			span.SetAttributes(attribute.Bool("noop", true))
+			span.SetAttributes(attribute.Bool("credentials.role_unchanged", true))
 		}
 
 		return result, nil
@@ -131,7 +131,7 @@ func (service *CredentialsReconcileRole) Exec(
 	}
 
 	if err == nil && registrationGrants(shortCode, request.Role) {
-		span.SetAttributes(attribute.Bool("noop", true))
+		span.SetAttributes(attribute.Bool("credentials.role_unchanged", true))
 
 		return &CredentialsReconcileRoleResult{Outcome: CredentialsReconcileRoleRegistrationPending}, nil
 	}

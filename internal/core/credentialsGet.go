@@ -44,10 +44,7 @@ func (service *CredentialsGet) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
-	span.SetAttributes(
-		attribute.String("user.email", entity.Email),
-		attribute.String("user.role", entity.Role),
-	)
+	span.SetAttributes(attribute.String("user.role", entity.Role))
 
 	return newCredentials(entity), nil
 }

@@ -46,7 +46,7 @@ func (service *CredentialsExist) Exec(ctx context.Context, request *CredentialsE
 		return false, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
 	}
 
-	span.SetAttributes(attribute.Bool("exists", exists))
+	span.SetAttributes(attribute.Bool("credentials.exists", exists))
 
 	return exists, nil
 }

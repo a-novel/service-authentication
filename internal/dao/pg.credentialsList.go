@@ -42,9 +42,9 @@ func (dao *PgCredentialsList) Exec(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.Int("data.limit", request.Limit),
-		attribute.Int("data.offset", request.Offset),
-		attribute.StringSlice("data.roles", request.Roles),
+		attribute.Int("credentials.limit", request.Limit),
+		attribute.Int("credentials.offset", request.Offset),
+		attribute.StringSlice("credentials.roles", request.Roles),
 	)
 
 	db, err := postgres.GetContext(ctx)
