@@ -35,7 +35,9 @@ jobs:
     steps:
       - name: Lock a closed conversation, unlock an open one
         run: |
-          case "$(gh api "repos/$GITHUB_REPOSITORY/issues/$NUMBER" --jq '"\(.state) \(.locked)"')" in
+          set -euo pipefail
+          state=$(gh api "repos/$GITHUB_REPOSITORY/issues/$NUMBER" --jq '"\(.state) \(.locked)"')
+          case "$state" in
             "closed false") gh api --method PUT "repos/$GITHUB_REPOSITORY/issues/$NUMBER/lock" ;;
             "open true") gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/$NUMBER/lock" ;;
           esac
