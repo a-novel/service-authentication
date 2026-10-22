@@ -63,10 +63,10 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("shortCode.id", request.ID.String()),
-		attribute.String("shortCode.usage", request.Usage),
-		attribute.String("shortCode.target", request.Target),
-		attribute.Bool("shortCode.override", request.Override),
+		attribute.String("short_code.id", request.ID.String()),
+		attribute.String("short_code.usage", request.Usage),
+		attribute.String("short_code.target", request.Target),
+		attribute.Bool("short_code.override", request.Override),
 	)
 
 	if postgres.InTx(ctx) {

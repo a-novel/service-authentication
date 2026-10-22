@@ -93,8 +93,6 @@ func (service *CredentialsUpdateEmail) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("unmarshal short code data: %w", err))
 	}
 
-	span.SetAttributes(attribute.String("shortCode.newEmail", newEmail))
-
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {

@@ -56,7 +56,7 @@ func (service *CredentialsList) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("list credentials: %w", err))
 	}
 
-	span.SetAttributes(attribute.Int("response.count", len(entities)))
+	span.SetAttributes(attribute.Int("credentials.count", len(entities)))
 
 	credentials := make([]*Credentials, len(entities))
 	for i, entity := range entities {

@@ -41,8 +41,8 @@ func (dao *PgShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelect
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("shortCode.target", request.Target),
-		attribute.String("shortCode.usage", request.Usage),
+		attribute.String("short_code.target", request.Target),
+		attribute.String("short_code.usage", request.Usage),
 	)
 
 	db, err := postgres.GetContext(ctx)

@@ -133,8 +133,8 @@ func (service *TokenRefresh) Exec(
 	}
 
 	span.SetAttributes(
-		attribute.String("accessTokenClaims.userID", lo.FromPtr(accessTokenClaims.UserID).String()),
-		attribute.String("refreshTokenClaims.userID", refreshTokenClaims.UserID.String()),
+		attribute.String("access_token.user_id", lo.FromPtr(accessTokenClaims.UserID).String()),
+		attribute.String("refresh_token.user_id", refreshTokenClaims.UserID.String()),
 	)
 
 	if lo.FromPtr(accessTokenClaims.UserID) != refreshTokenClaims.UserID {
@@ -142,8 +142,8 @@ func (service *TokenRefresh) Exec(
 	}
 
 	span.SetAttributes(
-		attribute.String("accessTokenClaims.refreshTokenID", accessTokenClaims.RefreshTokenID),
-		attribute.String("refreshTokenClaims.jti", refreshTokenClaims.Jti),
+		attribute.String("access_token.refresh_token_id", accessTokenClaims.RefreshTokenID),
+		attribute.String("refresh_token.id", refreshTokenClaims.Jti),
 	)
 
 	// Only the refresh token that minted an access token renews it.

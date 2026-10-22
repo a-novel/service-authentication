@@ -74,7 +74,7 @@ func (service *ShortCodeVerify) Exec(ctx context.Context, request *ShortCodeVeri
 		return nil, otel.ReportError(span, err)
 	}
 
-	span.SetAttributes(attribute.String("shortCode.id", entity.ID.String()))
+	span.SetAttributes(attribute.String("short_code.id", entity.ID.String()))
 
 	if entity.ExpiresAt.Before(time.Now()) {
 		return nil, otel.ReportError(span, ErrShortCodeConsumeExpired)

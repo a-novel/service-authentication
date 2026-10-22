@@ -33,7 +33,7 @@ func (dao *PgCredentialsExist) Exec(ctx context.Context, request *CredentialsExi
 	ctx, span := otel.Tracer().Start(ctx, "dao.PgCredentialsExist")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("email", request.Email))
+	span.SetAttributes(attribute.String("credentials.email", request.Email))
 
 	db, err := postgres.GetContext(ctx)
 	if err != nil {
