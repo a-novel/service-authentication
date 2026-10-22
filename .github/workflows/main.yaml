@@ -133,7 +133,7 @@ jobs:
         with:
           ruleset: service
           # renovate: datasource=docker depName=semgrep/semgrep
-          version: "1.182.1"
+          version: "1.182.1@sha256:451b3d875c00dac7ed5db5293e584a07de11449a409c10b3c2d2652f429630b6"
 
   scan-secrets:
     runs-on: ubuntu-latest
@@ -160,7 +160,7 @@ jobs:
       - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.74.0
         with:
           # renovate: datasource=docker depName=ghcr.io/zizmorcore/zizmor
-          version: "1.31.1"
+          version: "1.31.1@sha256:42d409dbb851d4c5d35a058cf042b828bea1e3f2884378c526eb0974780e18d9"
 
   test-go:
     needs: [build-database]
