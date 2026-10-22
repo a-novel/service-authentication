@@ -19,7 +19,7 @@ jobs:
     # The engine lists a bot pull request's CI runs; the pull request itself it reads through the App.
     permissions:
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.71.0
+    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.72.0
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       roles: ${{ vars.DISCORD_REPO_ROLES }}
