@@ -62,7 +62,10 @@ RUN mkdir -p /usr/lib/postgresql/18 /usr/local/bin /var/lib/postgres \
     && gosu postgres openssl crl2pkcs7 -nocrl -certfile /etc/ssl/certs/ca-certificates.crt -out /dev/null
 EXPOSE 5432
 STOPSIGNAL SIGINT
-HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s CMD ["pg_isready"]
+# The probe names the configured role and database: a role or database that does not exist makes
+# the server log a failed connection on every probe.
+HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
+  CMD ["sh", "-c", "PGUSER=$POSTGRES_USER PGDATABASE=$POSTGRES_DB pg_isready"]
 COPY --chmod=755 ./builds/database.entrypoint.sh /usr/local/bin/database.entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/database.entrypoint.sh"]
 CMD ["postgres"]
