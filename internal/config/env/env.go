@@ -134,19 +134,23 @@ var (
 	// SmtpSenderEmail is the address outgoing emails are sent from.
 	SmtpSenderEmail = getEnv("SMTP_SENDER_EMAIL")
 	// SmtpUsername is the identity used for SMTP authentication. An empty value lets the sender
-	// reuse SmtpSenderEmail.
+	// reuse SmtpSenderEmail. It is unused without SmtpSenderPassword.
 	SmtpUsername = getEnv("SMTP_USERNAME")
-	// SmtpSenderPassword is the SMTP authentication password.
+	// SmtpSenderPassword is the SMTP authentication password. An empty value sends without
+	// authentication, to a relay that admits the service by its IP address. The connection must
+	// then upgrade with STARTTLS.
 	SmtpSenderPassword = getEnv("SMTP_SENDER_PASSWORD")
-	// SmtpSenderDomain is the domain used when sending emails. It should match the host of SmtpAddr.
+	// SmtpSenderDomain is the server name authentication is bound to. It should match the host of
+	// SmtpAddr, and it is unused without SmtpSenderPassword.
 	SmtpSenderDomain = getEnv("SMTP_SENDER_DOMAIN")
 	// SmtpTimeout bounds how long a single email send may take.
 	SmtpTimeout = config.LoadEnv(getEnv("SMTP_TIMEOUT"), SmtpTimeoutDefault, config.DurationParser)
 	// SmtpMaxConcurrent caps concurrent email deliveries; excess sends wait for a slot.
 	SmtpMaxConcurrent = config.LoadEnv(getEnv("SMTP_MAX_CONCURRENT"), SmtpMaxConcurrentDefault, config.IntParser)
-	// SmtpForceUnencrypted lets the SMTP client send plain credentials over a non-TLS
-	// connection, which Go otherwise permits only towards localhost. Local runs under
-	// Docker need it because the mail host answers to another name.
+	// SmtpForceUnencrypted lets the SMTP client talk over a non-TLS connection. With a password, it
+	// sends the credentials in the clear, which Go otherwise permits only towards localhost. Without
+	// one, it lifts the STARTTLS requirement. Local runs under Docker need it because the mail host
+	// offers no TLS and answers to another name.
 	//
 	// It must never be set in production.
 	SmtpForceUnencrypted = config.LoadEnv(getEnv("SMTP_FORCE_UNENCRYPTED"), false, config.BoolParser)

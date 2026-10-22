@@ -153,19 +153,19 @@ The service reads every variable from the process environment, prefixed with
 | `PLATFORM_AUTH_URL_UPDATE_PASSWORD` | Password-reset page.             | `PLATFORM_AUTH_URL` + `/ext/password/reset` |
 | `PLATFORM_AUTH_URL_REGISTER`        | Register page.                   | `PLATFORM_AUTH_URL` + `/ext/account/create` |
 
-**SMTP** (images `rest`, `jobs/maintenance`, `standalone-rest`). Without `SMTP_ADDR`, a debug sender prints emails to stdout. Emails carry short codes, so production needs a real server:
+**SMTP** (images `rest`, `jobs/maintenance`, `standalone-rest`). Without `SMTP_ADDR`, a debug sender prints emails to stdout. Emails carry short codes, so production needs a real server. Without `SMTP_SENDER_PASSWORD`, the service sends unauthenticated, to a relay that admits it by its IP address, and the connection must still upgrade with STARTTLS:
 
-| Name                     | Description                                                                                  | Default             |
-| ------------------------ | -------------------------------------------------------------------------------------------- | ------------------- |
-| `SMTP_ADDR`              | SMTP server address (`domain:port`).                                                         |                     |
-| `SMTP_SENDER_NAME`       | Display name on outgoing emails.                                                             |                     |
-| `SMTP_SENDER_EMAIL`      | Sender address.                                                                              |                     |
-| `SMTP_USERNAME`          | SMTP authentication identity; treat as protected account metadata.                           | `SMTP_SENDER_EMAIL` |
-| `SMTP_SENDER_PASSWORD`   | SMTP authentication password. Sensitive — handle with care.                                  |                     |
-| `SMTP_SENDER_DOMAIN`     | Sender domain; must match the host portion of `SMTP_ADDR`.                                   |                     |
-| `SMTP_TIMEOUT`           | Send timeout.                                                                                | `20s`               |
-| `SMTP_MAX_CONCURRENT`    | Maximum number of emails delivered at once; further sends wait for a free slot.              | `16`                |
-| `SMTP_FORCE_UNENCRYPTED` | **Never set in production.** Allows plain credentials over an insecure connection; dev only. | `false`             |
+| Name                     | Description                                                                                                    | Default             |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `SMTP_ADDR`              | SMTP server address (`domain:port`).                                                                           |                     |
+| `SMTP_SENDER_NAME`       | Display name on outgoing emails.                                                                               |                     |
+| `SMTP_SENDER_EMAIL`      | Sender address.                                                                                                |                     |
+| `SMTP_USERNAME`          | SMTP authentication identity; treat as protected account metadata. Unused without a password.                  | `SMTP_SENDER_EMAIL` |
+| `SMTP_SENDER_PASSWORD`   | SMTP authentication password. Sensitive — handle with care. Empty for an IP-only relay.                        |                     |
+| `SMTP_SENDER_DOMAIN`     | Server name authentication is bound to; must match the host portion of `SMTP_ADDR`. Unused without a password. |                     |
+| `SMTP_TIMEOUT`           | Send timeout.                                                                                                  | `20s`               |
+| `SMTP_MAX_CONCURRENT`    | Maximum number of emails delivered at once; further sends wait for a free slot.                                | `16`                |
+| `SMTP_FORCE_UNENCRYPTED` | **Never set in production.** Allows a connection without TLS, and plain credentials over it; dev only.         | `false`             |
 
 **REST tuning** (images `rest`, `standalone-rest`):
 

@@ -85,7 +85,7 @@ services:
       SMTP_ADDR: mailserver:1025
       SMTP_SENDER_NAME: Agora [noreply]
       SMTP_SENDER_EMAIL: noreply@agorastoryverse.com
-      SMTP_SENDER_PASSWORD: noreply
+      # Without SMTP_SENDER_PASSWORD, mail and the health check take the IP-only relay path, with no AUTH.
       SMTP_FORCE_UNENCRYPTED: true
       # The suites create many sessions from one address within seconds.
       REST_RATE_LIMITS_ENABLED: false
