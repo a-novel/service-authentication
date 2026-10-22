@@ -59,7 +59,7 @@ function doPost(event) {
     try {
       return reply(applyRequest(request, properties));
     } finally {
-      // Pending row deletions must commit before another execution can inspect the sheet.
+      // Pending sheet changes must commit before another execution can inspect the sheet.
       try {
         SpreadsheetApp.flush();
       } finally {
@@ -117,14 +117,27 @@ function applyRequest(request, properties) {
   }
   if (request.action === "remove") {
     const targets = new Set(request.emails ?? [request.email]);
+    const sheetId = sheet.getSheetId();
+    const requests = [];
     let removed = 0;
-    // Work upward so removing one row cannot shift an unprocessed match.
+    // Google applies the requests in order, so bottom-up ranges never shift a range still to delete.
     for (let index = emails.length - 1; index >= 0; index--) {
-      if (targets.has(emails[index])) {
-        sheet.deleteRow(index + 2);
-        removed++;
+      if (!targets.has(emails[index])) continue;
+      removed++;
+      // Entry `index` sits on 0-based sheet row `index + 1`, below the header.
+      const row = index + 1;
+      // A match right above the last range extends it.
+      const range = requests[requests.length - 1]?.deleteDimension.range;
+      if (range?.startIndex === row + 1) {
+        range.startIndex = row;
+      } else {
+        requests.push({
+          deleteDimension: { range: { sheetId, dimension: "ROWS", startIndex: row, endIndex: row + 1 } },
+        });
       }
     }
+    // One call for every run keeps the lock short.
+    if (requests.length) Sheets.Spreadsheets.batchUpdate({ requests }, spreadsheetId);
     return { status: "accepted", removed };
   }
 
