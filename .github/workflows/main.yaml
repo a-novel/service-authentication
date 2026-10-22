@@ -133,7 +133,7 @@ jobs:
         with:
           ruleset: service
           # renovate: datasource=docker depName=semgrep/semgrep
-          version: "1.182.0"
+          version: "1.182.1"
 
   scan-secrets:
     runs-on: ubuntu-latest
