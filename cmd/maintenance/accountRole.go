@@ -89,6 +89,13 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 		return fmt.Errorf("connect to database: %w", err)
 	}
 
+	database, err := cfg.Postgres.DB(ctx)
+	if err != nil {
+		return fmt.Errorf("open database: %w", err)
+	}
+
+	defer closeDatabase(database)
+
 	selectCredentials := dao.NewPgCredentialsSelectByEmail()
 	selectShortCode := dao.NewPgShortCodeSelect()
 	updateRole := dao.NewPgCredentialsUpdateRole()
