@@ -295,6 +295,23 @@ func TestAuth(t *testing.T) {
 			expectStatus: http.StatusUnauthorized,
 		},
 		{
+			name: "Error/ReplicatedClaimMismatch",
+
+			authHeader: "Bearer token",
+
+			permissions: []string{"read", "write"},
+			permissionsByRole: map[string][]string{
+				"role1": {"read", "write"},
+				"role2": {"read"},
+			},
+			verifyClaimsMock: &verifyClaimsMock{
+				reqToken: "token",
+				err:      fmt.Errorf("(Recipient.Consume) %w: iss", jwt.ErrReplicatedClaimMismatch),
+			},
+
+			expectStatus: http.StatusUnauthorized,
+		},
+		{
 			name: "Error/VerifyClaimsError",
 
 			authHeader: "Bearer token",

@@ -41,6 +41,7 @@ var verifyClaimsErrors = httpf.ErrMap{
 	jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
 	jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
 	jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
+	jwt.ErrReplicatedClaimMismatch: http.StatusUnauthorized,
 }
 
 // Auth provides JWT-based authentication and role-based authorization middleware.
