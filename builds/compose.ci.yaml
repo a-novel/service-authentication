@@ -45,7 +45,12 @@ services:
       postgres-json-keys:
         condition: service_healthy
     environment:
-      POSTGRES_DSN: postgres://postgres:postgres@postgres-json-keys:5432/postgres?sslmode=disable
+      POSTGRES_HOST: postgres-json-keys
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: "false"
       APP_MASTER_KEY: "fec0681a2f57242211c559ca347721766f8a3acd8ed2e63b36b3768051c702ca"
 
   standalone-rest:
@@ -67,7 +72,12 @@ services:
         /maintenance account-role --email "$${SUPER_ADMIN_EMAIL}" --role auth:superadmin --lang en &&
         exec /rest
     environment:
-      POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: "false"
       SERVICE_JSON_KEYS_PORT: 8080
       SERVICE_JSON_KEYS_HOST: service-json-keys
       SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
