@@ -14,11 +14,9 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/jwt/v2"
-	"github.com/a-novel-kit/jwt/v2/jwp"
-	"github.com/a-novel-kit/jwt/v2/jws"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
@@ -30,19 +28,10 @@ type AuthClaimsVerifier interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error)
 }
 
-// verifyClaimsErrors answers 401 to a token rejection, which the caller resolves by refreshing or
-// signing in again. Any other failure, such as an unreachable key source, stays 500, so a client
-// keeps a session it may still hold.
-var verifyClaimsErrors = httpf.ErrMap{
-	jws.ErrInvalidSignature:        http.StatusUnauthorized,
-	jwp.ErrInvalidClaims:           http.StatusUnauthorized,
-	jwt.ErrUnsupportedTokenFormat:  http.StatusUnauthorized,
-	jwt.ErrTokenTooLarge:           http.StatusUnauthorized,
-	jwt.ErrMismatchRecipientPlugin: http.StatusUnauthorized,
-	jwt.ErrMissingCritHeader:       http.StatusUnauthorized,
-	jwt.ErrUnsupportedCritHeader:   http.StatusUnauthorized,
-	jwt.ErrReplicatedClaimMismatch: http.StatusUnauthorized,
-}
+// verifyClaimsErrors answers 401 to each of [core.TokenRejections], which the caller resolves by
+// refreshing or signing in again. Any other failure, such as an unreachable key source, stays 500,
+// so a client keeps a session it may still hold.
+var verifyClaimsErrors = unauthorizedErrMap(core.TokenRejections)
 
 // Auth provides JWT-based authentication and role-based authorization middleware.
 // It verifies access tokens and checks that the user has at least one of the required permissions.
@@ -165,4 +154,15 @@ func (middleware *Auth) authorize(roles, requiredPermissions []string) error {
 	}
 
 	return fmt.Errorf("%w: user does not have any of the required permissions", ErrInvalidAuth)
+}
+
+// unauthorizedErrMap answers 401 to each of errs.
+func unauthorizedErrMap(errs []error) httpf.ErrMap {
+	errMap := make(httpf.ErrMap, len(errs))
+
+	for _, err := range errs {
+		errMap[err] = http.StatusUnauthorized
+	}
+
+	return errMap
 }
