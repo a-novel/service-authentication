@@ -16,7 +16,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
-	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
@@ -28,10 +27,10 @@ type AuthClaimsVerifier interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error)
 }
 
-// verifyClaimsErrors answers 401 to each of [core.TokenRejections], which the caller resolves by
-// refreshing or signing in again. Any other failure, such as an unreachable key source, stays 500,
-// so a client keeps a session it may still hold.
-var verifyClaimsErrors = unauthorizedErrMap(core.TokenRejections)
+// verifyClaimsErrors answers 401 to each of [session.TokenRejections], which the caller resolves
+// by refreshing or signing in again. Any other failure, such as an unreachable key source, stays
+// 500, so a client keeps a session it may still hold.
+var verifyClaimsErrors = unauthorizedErrMap(session.TokenRejections)
 
 // Auth provides JWT-based authentication and role-based authorization middleware.
 // It verifies access tokens and checks that the user has at least one of the required permissions.
