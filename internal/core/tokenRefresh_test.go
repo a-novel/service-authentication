@@ -3,6 +3,7 @@ package core_test
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
+	"github.com/a-novel-kit/jwt/v2"
 	"github.com/a-novel-kit/jwt/v2/jwp"
 	"github.com/a-novel-kit/jwt/v2/jws"
 
@@ -59,6 +61,8 @@ func TestTokenRefresh(t *testing.T) {
 
 		expect    *core.Token
 		expectErr error
+		// expectNotErr is a sentinel the returned error must not carry.
+		expectNotErr error
 	}{
 		{
 			name: "Success",
@@ -187,7 +191,8 @@ func TestTokenRefresh(t *testing.T) {
 				err: errFoo,
 			},
 
-			expectErr: errFoo,
+			expectErr:    errFoo,
+			expectNotErr: core.ErrTokenRefreshInvalidRefreshToken,
 		},
 		{
 			name: "VerifyClaimsError",
@@ -201,7 +206,8 @@ func TestTokenRefresh(t *testing.T) {
 				err: errFoo,
 			},
 
-			expectErr: errFoo,
+			expectErr:    errFoo,
+			expectNotErr: core.ErrTokenRefreshInvalidAccessToken,
 		},
 
 		{
@@ -276,6 +282,115 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
 				err: jwp.ErrInvalidClaims,
+			},
+
+			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
+		},
+		{
+			name: "InvalidAccessToken/UnsupportedTokenFormat",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				err: fmt.Errorf("(HeaderDecoder.Decode) %w: expected at least 2 segments", jwt.ErrUnsupportedTokenFormat),
+			},
+
+			expectErr: core.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			name: "InvalidAccessToken/TokenTooLarge",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				err: fmt.Errorf("(Recipient.Consume) %w: 262145 bytes exceeds limit 262144", jwt.ErrTokenTooLarge),
+			},
+
+			expectErr: core.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			name: "InvalidAccessToken/MismatchRecipientPlugin",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				err: fmt.Errorf("(Recipient.Consume) %w: no compatible plugin found", jwt.ErrMismatchRecipientPlugin),
+			},
+
+			expectErr: core.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			name: "InvalidAccessToken/MissingCritHeader",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				err: fmt.Errorf("(Recipient.Consume) check crit: %w: b64", jwt.ErrMissingCritHeader),
+			},
+
+			expectErr: core.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			name: "InvalidAccessToken/UnsupportedCritHeader",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				err: fmt.Errorf(
+					"(Recipient.Consume) check crit: %w: \"b64\" is not understood by this recipient",
+					jwt.ErrUnsupportedCritHeader,
+				),
+			},
+
+			expectErr: core.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			name: "InvalidAccessToken/ReplicatedClaimMismatch",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				err: fmt.Errorf("(Recipient.Consume) %w: iss", jwt.ErrReplicatedClaimMismatch),
+			},
+
+			expectErr: core.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			name: "InvalidRefreshToken/ReplicatedClaimMismatch",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &session.Claims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				err: fmt.Errorf("(Recipient.Consume) %w: sub", jwt.ErrReplicatedClaimMismatch),
 			},
 
 			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
@@ -416,8 +531,11 @@ func TestTokenRefresh(t *testing.T) {
 
 			resp, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
-			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
+
+			if testCase.expectNotErr != nil {
+				require.NotErrorIs(t, err, testCase.expectNotErr)
+			}
 
 			mockDao.AssertExpectations(t)
 			serviceSignClaims.AssertExpectations(t)
