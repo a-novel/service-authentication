@@ -34,7 +34,7 @@ jobs:
     # grants exactly the callee's.
     permissions:
       contents: read
-    uses: a-novel-kit/workflows/.github/workflows/release-train-run.yaml@v1.77.0
+    uses: a-novel-kit/workflows/.github/workflows/release-train-run.yaml@v1.77.1
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       epic_number: ${{ inputs.epic_number }}
