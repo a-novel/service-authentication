@@ -80,11 +80,6 @@ var (
 )
 
 var (
-	// PostgresDSN is the legacy URL used when PostgresHost is empty, formatted as
-	//	postgres://<user>:<password>@<host>:<port>/<database>
-	//
-	// Configure the discrete PostgreSQL fields for new deployments.
-	PostgresDSN = getEnv("POSTGRES_DSN")
 	// PostgresHost is the PostgreSQL server hostname or IP address.
 	PostgresHost = getEnv("POSTGRES_HOST")
 	// PostgresPort is the PostgreSQL server port.
