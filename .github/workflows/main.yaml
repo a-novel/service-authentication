@@ -43,7 +43,12 @@ jobs:
       contents: read
       packages: read
     env:
-      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -171,7 +176,12 @@ jobs:
     outputs:
       artifact-id: ${{ steps.test.outputs.artifact-id }}
     env:
-      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: "false"
       PLATFORM_AUTH_URL: http://localhost:7010
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -308,7 +318,12 @@ jobs:
       attestations: write
       id-token: write
     env:
-      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -319,7 +334,13 @@ jobs:
           file: builds/migrations.Dockerfile
           image_name: ${{ github.repository }}/jobs/migrations
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_args: -e POSTGRES_DSN="${POSTGRES_DSN}"
+          run_args: >-
+            -e POSTGRES_HOST="${POSTGRES_HOST}"
+            -e POSTGRES_PORT="${POSTGRES_PORT}"
+            -e POSTGRES_USER="${POSTGRES_USER}"
+            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+            -e POSTGRES_DATABASE="${POSTGRES_DATABASE}"
+            -e POSTGRES_TLS_ENABLED="${POSTGRES_TLS_ENABLED}"
 
   build-maintenance:
     runs-on: ubuntu-latest
@@ -344,7 +365,12 @@ jobs:
       attestations: write
       id-token: write
     env:
-      POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: "false"
       SERVICE_JSON_KEYS_PORT: 4001
       SERVICE_JSON_KEYS_HOST: 0.0.0.0
       PLATFORM_AUTH_URL: http://localhost:6000
@@ -364,7 +390,12 @@ jobs:
           image_name: ${{ github.repository }}/rest
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_args: >-
-            -e POSTGRES_DSN="${POSTGRES_DSN}"
+            -e POSTGRES_HOST="${POSTGRES_HOST}"
+            -e POSTGRES_PORT="${POSTGRES_PORT}"
+            -e POSTGRES_USER="${POSTGRES_USER}"
+            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+            -e POSTGRES_DATABASE="${POSTGRES_DATABASE}"
+            -e POSTGRES_TLS_ENABLED="${POSTGRES_TLS_ENABLED}"
             -e SERVICE_JSON_KEYS_PORT="${SERVICE_JSON_KEYS_PORT}"
             -e SERVICE_JSON_KEYS_HOST="${SERVICE_JSON_KEYS_HOST}"
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"

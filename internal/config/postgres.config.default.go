@@ -1,10 +1,9 @@
 package config
 
 import (
-	"net"
-	"strconv"
 	"time"
 
+	"github.com/samber/lo"
 	"github.com/uptrace/bun/driver/pgdriver"
 
 	postgrespresets "github.com/a-novel-kit/golib/postgres/presets"
@@ -12,23 +11,12 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )
 
+// postgresDialTimeout covers the network a Cloud Run instance with Direct VPC egress provisions
+// after it starts. The first connection can wait minutes for it.
 const postgresDialTimeout = 3 * time.Minute
 
-// PostgresConnection describes how to reach PostgreSQL. Host selects the discrete
-// fields; an empty Host selects the legacy DSN fallback.
-type PostgresConnection struct {
-	DSN        string
-	Host       string
-	Port       int
-	User       string
-	Password   string
-	Database   string
-	TLSEnabled bool
-}
-
 // postgresConnection reaches PostgreSQL through the POSTGRES_* variables.
-var postgresConnection = PostgresConnection{
-	DSN:        env.PostgresDSN,
+var postgresConnection = postgrespresets.Connection{
 	Host:       env.PostgresHost,
 	Port:       env.PostgresPort,
 	User:       env.PostgresUser,
@@ -48,40 +36,24 @@ var PostgresPresetMigrations = NewPostgresPreset(
 	pgdriver.WithConnParams(map[string]any{"lock_timeout": "3s"}),
 )
 
-// NewPostgresPreset returns a PostgreSQL preset whose pool is bounded before it opens. Extra options
-// apply last: connection parameters replace any a DSN carries.
+// NewPostgresPreset returns a PostgreSQL preset with a three-minute dial timeout and a pool bounded
+// before it opens. Extra options apply last. It panics when the connection names a host without a
+// password.
 //
-// Setting the limits on the handle afterwards stops working once anything has
-// taken a connection, because the handle is cached; past that point they apply to
-// nothing and report nothing.
+// The pool limits are set before the handle is first used: once the handle is cached, later changes
+// to them are silently ignored.
 func NewPostgresPreset(
-	connection PostgresConnection,
+	connection postgrespresets.Connection,
 	maxOpenConns int,
 	maxIdleConns int,
 	extra ...pgdriver.Option,
 ) *postgrespresets.Default {
-	options := append(connection.options(), pgdriver.WithDialTimeout(postgresDialTimeout))
+	connection.DialTimeout = postgresDialTimeout
+	options := lo.Must(connection.Options())
+
 	preset := postgrespresets.NewDefault(append(options, extra...)...)
 	preset.MaxOpenConns = maxOpenConns
 	preset.MaxIdleConns = maxIdleConns
 
 	return preset
-}
-
-func (connection PostgresConnection) options() []pgdriver.Option {
-	if connection.Host == "" {
-		return []pgdriver.Option{pgdriver.WithDSN(connection.DSN)}
-	}
-
-	if connection.Password == "" {
-		panic("postgres password is empty")
-	}
-
-	return []pgdriver.Option{
-		pgdriver.WithAddr(net.JoinHostPort(connection.Host, strconv.Itoa(connection.Port))),
-		pgdriver.WithUser(connection.User),
-		pgdriver.WithPassword(connection.Password),
-		pgdriver.WithDatabase(connection.Database),
-		pgdriver.WithInsecure(!connection.TLSEnabled),
-	}
 }
