@@ -13,37 +13,20 @@ import (
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/jwt/v2"
-	"github.com/a-novel-kit/jwt/v2/jwp"
-	"github.com/a-novel-kit/jwt/v2/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
-// TokenRejections lists the errors with which a claims verifier rejects the token itself, such as
-// a bad signature or a malformed header. The caller resolves them by refreshing or signing in
-// again. Any other verifier error, such as an unreachable key source, is a server fault.
-var TokenRejections = []error{
-	jws.ErrInvalidSignature,
-	jwp.ErrInvalidClaims,
-	jwt.ErrUnsupportedTokenFormat,
-	jwt.ErrTokenTooLarge,
-	jwt.ErrMismatchRecipientPlugin,
-	jwt.ErrMissingCritHeader,
-	jwt.ErrUnsupportedCritHeader,
-	jwt.ErrReplicatedClaimMismatch,
-}
-
 var (
 	// ErrTokenRefreshInvalidAccessToken is returned by [TokenRefresh.Exec] when the
-	// access token fails with one of [TokenRejections], joined onto that verifier
-	// error. Expiry is ignored on the access token, since refresh exists to renew an
-	// expired one.
+	// access token fails with one of [session.TokenRejections], joined onto that
+	// verifier error. Expiry is ignored on the access token, since refresh exists to
+	// renew an expired one.
 	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when the
-	// refresh token fails with one of [TokenRejections], expiry included, joined onto
-	// that verifier error.
+	// refresh token fails with one of [session.TokenRejections], expiry included,
+	// joined onto that verifier error.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the access
 	// and refresh tokens are individually valid but encode different user IDs, which
@@ -200,10 +183,10 @@ func (service *TokenRefresh) Exec(
 	}, nil
 }
 
-// joinInvalidToken joins sentinel onto err when err carries one of [TokenRejections]. Any other
-// failure, such as an unreachable key source, stays as it is.
+// joinInvalidToken joins sentinel onto err when err carries one of [session.TokenRejections]. Any
+// other failure, such as an unreachable key source, stays as it is.
 func joinInvalidToken(err, sentinel error) error {
-	if slices.ContainsFunc(TokenRejections, func(rejection error) bool { return errors.Is(err, rejection) }) {
+	if slices.ContainsFunc(session.TokenRejections, func(rejection error) bool { return errors.Is(err, rejection) }) {
 		return errors.Join(err, sentinel)
 	}
 
