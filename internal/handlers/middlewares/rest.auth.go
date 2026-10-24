@@ -14,6 +14,7 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/jwt/v2"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
@@ -27,10 +28,10 @@ type AuthClaimsVerifier interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error)
 }
 
-// verifyClaimsErrors answers 401 to each of [session.TokenRejections], which the caller resolves
-// by refreshing or signing in again. Any other failure, such as an unreachable key source, stays
-// 500, so a client keeps a session it may still hold.
-var verifyClaimsErrors = unauthorizedErrMap(session.TokenRejections)
+// verifyClaimsErrors answers 401 to a token the verifier rejects, which the caller resolves by
+// refreshing or signing in again. Any other failure, such as an unreachable key source, stays 500,
+// so a client keeps a session it may still hold.
+var verifyClaimsErrors = httpf.ErrMap{jwt.ErrTokenRejected: http.StatusUnauthorized}
 
 // Auth provides JWT-based authentication and role-based authorization middleware.
 // It verifies access tokens and checks that the user has at least one of the required permissions.
@@ -153,15 +154,4 @@ func (middleware *Auth) authorize(roles, requiredPermissions []string) error {
 	}
 
 	return fmt.Errorf("%w: user does not have any of the required permissions", ErrInvalidAuth)
-}
-
-// unauthorizedErrMap answers 401 to each of errs.
-func unauthorizedErrMap(errs []error) httpf.ErrMap {
-	errMap := make(httpf.ErrMap, len(errs))
-
-	for _, err := range errs {
-		errMap[err] = http.StatusUnauthorized
-	}
-
-	return errMap
 }

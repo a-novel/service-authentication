@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"slices"
 
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/jwt/v2"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
@@ -20,12 +20,12 @@ import (
 
 var (
 	// ErrTokenRefreshInvalidAccessToken is returned by [TokenRefresh.Exec] when the
-	// access token fails with one of [session.TokenRejections], joined onto that
+	// verifier rejects the access token with [jwt.ErrTokenRejected], joined onto that
 	// verifier error. Expiry is ignored on the access token, since refresh exists to
 	// renew an expired one.
 	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when the
-	// refresh token fails with one of [session.TokenRejections], expiry included,
+	// verifier rejects the refresh token with [jwt.ErrTokenRejected], expiry included,
 	// joined onto that verifier error.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the access
@@ -183,10 +183,10 @@ func (service *TokenRefresh) Exec(
 	}, nil
 }
 
-// joinInvalidToken joins sentinel onto err when err carries one of [session.TokenRejections]. Any
-// other failure, such as an unreachable key source, stays as it is.
+// joinInvalidToken joins sentinel onto err when the verifier rejected the token itself. Any other
+// failure, such as an unreachable key source, stays as it is.
 func joinInvalidToken(err, sentinel error) error {
-	if slices.ContainsFunc(session.TokenRejections, func(rejection error) bool { return errors.Is(err, rejection) }) {
+	if errors.Is(err, jwt.ErrTokenRejected) {
 		return errors.Join(err, sentinel)
 	}
 
