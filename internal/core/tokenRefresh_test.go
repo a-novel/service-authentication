@@ -323,7 +323,10 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: fmt.Errorf("(Recipient.Consume) %w: no compatible plugin found", jwt.ErrMismatchRecipientPlugin),
+				err: fmt.Errorf(
+					"(Recipient.Consume) %w: %w: no compatible plugin found",
+					jwt.ErrTokenRejected, jwt.ErrMismatchRecipientPlugin,
+				),
 			},
 
 			expectErr: core.ErrTokenRefreshInvalidAccessToken,
@@ -368,7 +371,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: fmt.Errorf("(Recipient.Consume) %w: iss", jwt.ErrReplicatedClaimMismatch),
+				err: fmt.Errorf("(Recipient.Consume) %w: %w: iss", jwt.ErrTokenRejected, jwt.ErrReplicatedClaimMismatch),
 			},
 
 			expectErr: core.ErrTokenRefreshInvalidAccessToken,
@@ -390,7 +393,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				err: fmt.Errorf("(Recipient.Consume) %w: sub", jwt.ErrReplicatedClaimMismatch),
+				err: fmt.Errorf("(Recipient.Consume) %w: %w: sub", jwt.ErrTokenRejected, jwt.ErrReplicatedClaimMismatch),
 			},
 
 			expectErr: core.ErrTokenRefreshInvalidRefreshToken,

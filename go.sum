@@ -8,8 +8,8 @@ cloud.google.com/go/compute/metadata v0.10.0 h1:pyKMUQSwchgkIBBJGdILqQbs/BNJXqwS
 cloud.google.com/go/compute/metadata v0.10.0/go.mod h1:rGFHRrIif570kSibjFTMbt6/4/tzgJWFGI/HVol4GIk=
 github.com/a-novel-kit/golib v0.48.0 h1:zM2BoBeZmhj7LkIVucYYIMbm5m7gvTFdD5nnQ0UJfL4=
 github.com/a-novel-kit/golib v0.48.0/go.mod h1:ETASTnPc7Zc7gFv3XIPpMReJcB7nuNYvtZS55yDC2Bc=
-github.com/a-novel-kit/jwt/v2 v2.5.0 h1:w1WFrGB4loY3r/1mbdY5pdoRA8En2gmWJcQ+zzYgGWM=
-github.com/a-novel-kit/jwt/v2 v2.5.0/go.mod h1:pkDVhDrwshhk8U2FJiZciPHVh8zq5WYDJCMBKOmd1PQ=
+github.com/a-novel-kit/jwt/v2 v2.6.0 h1:jTPqbdG/gSlcPCSmp8o7gBHHtLZcIPpLVG5jqSjlF6U=
+github.com/a-novel-kit/jwt/v2 v2.6.0/go.mod h1:pkDVhDrwshhk8U2FJiZciPHVh8zq5WYDJCMBKOmd1PQ=
 github.com/a-novel/service-json-keys/v2 v2.12.2 h1:yXZeKegD+i1uau0MW4TMIQeahKkDEiJvD4WcNJkDdV4=
 github.com/a-novel/service-json-keys/v2 v2.12.2/go.mod h1:Ndw03hHe9r2daKPqHeyGqwnGX/RqEjxWCgqcxBjE/sw=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=

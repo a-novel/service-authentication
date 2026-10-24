@@ -289,7 +289,10 @@ func TestAuth(t *testing.T) {
 			},
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
-				err:      fmt.Errorf("(Recipient.Consume) %w: no compatible plugin found", jwt.ErrMismatchRecipientPlugin),
+				err: fmt.Errorf(
+					"(Recipient.Consume) %w: %w: no compatible plugin found",
+					jwt.ErrTokenRejected, jwt.ErrMismatchRecipientPlugin,
+				),
 			},
 
 			expectStatus: http.StatusUnauthorized,
@@ -306,7 +309,7 @@ func TestAuth(t *testing.T) {
 			},
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
-				err:      fmt.Errorf("(Recipient.Consume) %w: iss", jwt.ErrReplicatedClaimMismatch),
+				err:      fmt.Errorf("(Recipient.Consume) %w: %w: iss", jwt.ErrTokenRejected, jwt.ErrReplicatedClaimMismatch),
 			},
 
 			expectStatus: http.StatusUnauthorized,
