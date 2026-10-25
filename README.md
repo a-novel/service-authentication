@@ -44,7 +44,7 @@ Pin every image to the same release tag, such as the [latest release](https://gi
 ```yaml
 services:
   postgres-authentication:
-    image: ghcr.io/a-novel/service-authentication/database:v2.16.0
+    image: ghcr.io/a-novel/service-authentication/database:v2.17.0
     networks: [api]
     environment:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
@@ -62,7 +62,7 @@ services:
       retries: 10
 
   migrations-authentication:
-    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.16.0
+    image: ghcr.io/a-novel/service-authentication/jobs/migrations:v2.17.0
     depends_on:
       postgres-authentication: { condition: service_healthy }
     environment:
@@ -75,7 +75,7 @@ services:
     networks: [api]
 
   service-authentication:
-    image: ghcr.io/a-novel/service-authentication/rest:v2.16.0
+    image: ghcr.io/a-novel/service-authentication/rest:v2.17.0
     ports: ["${SERVICE_AUTHENTICATION_REST_PORT}:8080"]
     depends_on:
       postgres-authentication: { condition: service_healthy }
@@ -339,7 +339,7 @@ For a throwaway instance without the development toolchain, the **`standalone-re
 ```yaml
 services:
   postgres-authentication:
-    image: ghcr.io/a-novel/service-authentication/database:v2.16.0
+    image: ghcr.io/a-novel/service-authentication/database:v2.17.0
     networks: [api]
     environment:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
@@ -355,7 +355,7 @@ services:
       retries: 10
 
   service-authentication:
-    image: ghcr.io/a-novel/service-authentication/standalone-rest:v2.16.0
+    image: ghcr.io/a-novel/service-authentication/standalone-rest:v2.17.0
     ports: ["${SERVICE_AUTHENTICATION_REST_PORT}:8080"]
     depends_on:
       postgres-authentication: { condition: service_healthy }
