@@ -26,6 +26,9 @@ func TestTokenRevoke(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	otherUserID := uuid.MustParse("00000000-0000-0000-0000-000000000002")
+
 	leeway := 5 * time.Minute
 	dayLater := time.Now().Add(24 * time.Hour).Unix()
 	dayAgo := time.Now().Add(-24 * time.Hour).Unix()
@@ -55,13 +58,13 @@ func TestTokenRevoke(t *testing.T) {
 		{
 			name: "Success",
 
-			request: &core.TokenRevokeRequest{RefreshToken: "refresh-token"},
+			request: &core.TokenRevokeRequest{UserID: userID, RefreshToken: "refresh-token"},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
 				resp: &session.RefreshClaims{
 					Jti:    "refresh-token-id",
 					Exp:    dayLater,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					UserID: userID,
 				},
 			},
 
@@ -72,22 +75,34 @@ func TestTokenRevoke(t *testing.T) {
 			// after expiry succeeds.
 			name: "Success/ExpiredToken",
 
-			request: &core.TokenRevokeRequest{RefreshToken: "refresh-token"},
+			request: &core.TokenRevokeRequest{UserID: userID, RefreshToken: "refresh-token"},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
 				resp: &session.RefreshClaims{
 					Jti:    "refresh-token-id",
 					Exp:    dayAgo,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					UserID: userID,
 				},
 			},
 
 			daoMock: &daoMock{expiresAt: time.Unix(dayAgo, 0).Add(leeway)},
 		},
 		{
+			// A refresh token another user holds stays alive, whoever sends it.
+			name: "Error/MismatchClaims",
+
+			request: &core.TokenRevokeRequest{UserID: userID, RefreshToken: "refresh-token"},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{Jti: "refresh-token-id", Exp: dayLater, UserID: otherUserID},
+			},
+
+			expectErr: core.ErrTokenRevokeMismatchClaims,
+		},
+		{
 			name: "Error/InvalidRefreshToken",
 
-			request: &core.TokenRevokeRequest{RefreshToken: "refresh-token"},
+			request: &core.TokenRevokeRequest{UserID: userID, RefreshToken: "refresh-token"},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
 				err: jws.ErrInvalidSignature,
@@ -100,7 +115,7 @@ func TestTokenRevoke(t *testing.T) {
 			// server fault.
 			name: "Error/VerifyRefreshClaims",
 
-			request: &core.TokenRevokeRequest{RefreshToken: "refresh-token"},
+			request: &core.TokenRevokeRequest{UserID: userID, RefreshToken: "refresh-token"},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
 				err: errFoo,
@@ -112,13 +127,13 @@ func TestTokenRevoke(t *testing.T) {
 		{
 			name: "Error/Dao",
 
-			request: &core.TokenRevokeRequest{RefreshToken: "refresh-token"},
+			request: &core.TokenRevokeRequest{UserID: userID, RefreshToken: "refresh-token"},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
 				resp: &session.RefreshClaims{
 					Jti:    "refresh-token-id",
 					Exp:    dayLater,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					UserID: userID,
 				},
 			},
 

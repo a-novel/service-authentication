@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
@@ -16,10 +17,15 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
-// ErrTokenRevokeInvalidRefreshToken is returned by [TokenRevoke.Exec] when the verifier rejects
-// the refresh token itself, joined onto that verifier error. Expiry is ignored, so an expired
-// refresh token revokes without error.
-var ErrTokenRevokeInvalidRefreshToken = errors.New("invalid refresh token")
+var (
+	// ErrTokenRevokeInvalidRefreshToken is returned by [TokenRevoke.Exec] when the verifier rejects
+	// the refresh token itself, joined onto that verifier error. Expiry is ignored, so an expired
+	// refresh token revokes without error.
+	ErrTokenRevokeInvalidRefreshToken = errors.New("invalid refresh token")
+	// ErrTokenRevokeMismatchClaims is returned by [TokenRevoke.Exec] when the refresh token belongs
+	// to another user than the caller. A caller revokes only their own sessions.
+	ErrTokenRevokeMismatchClaims = errors.New("refresh token claims don't match access token")
+)
 
 // TokenRevokeDao records the revoked refresh token.
 type TokenRevokeDao interface {
@@ -34,15 +40,17 @@ type TokenRevokeServiceVerifyRefreshClaims interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.RefreshClaims, error)
 }
 
-// TokenRevokeRequest carries the refresh token of the session to end.
+// TokenRevokeRequest carries the refresh token of the session to end, and the caller it must belong
+// to.
 type TokenRevokeRequest struct {
+	// UserID is the caller, taken from their verified access token.
+	UserID       uuid.UUID
 	RefreshToken string `validate:"required,max=1024"`
 }
 
-// TokenRevoke ends a session: the refresh token it revokes no longer renews the session. Holding
-// the refresh token is the proof of ownership, so the caller names no user. Revoking a token
-// already revoked or expired succeeds. Access tokens the session already issued stay valid until
-// they expire.
+// TokenRevoke ends a session: the refresh token it revokes no longer renews the session. The
+// refresh token must belong to the caller. Revoking a token already revoked or expired succeeds.
+// Access tokens the session already issued stay valid until they expire.
 type TokenRevoke struct {
 	dao                        TokenRevokeDao
 	serviceVerifyRefreshClaims TokenRevokeServiceVerifyRefreshClaims
@@ -83,9 +91,14 @@ func (service *TokenRevoke) Exec(ctx context.Context, request *TokenRevokeReques
 	}
 
 	span.SetAttributes(
+		attribute.String("access_token.user_id", request.UserID.String()),
 		attribute.String("refresh_token.id", claims.Jti),
 		attribute.String("refresh_token.user_id", claims.UserID.String()),
 	)
+
+	if claims.UserID != request.UserID {
+		return otel.ReportError(span, ErrTokenRevokeMismatchClaims)
+	}
 
 	// The verifier accepts the token until its expiry plus the leeway, so the revocation lasts as long.
 	revocation := &dao.RefreshTokenRevocationInsertRequest{
