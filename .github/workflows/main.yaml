@@ -85,7 +85,7 @@ jobs:
     steps:
       - uses: a-novel-kit/workflows/go-actions/lint-go@v1.77.1
 
-  lint-node:
+  lint-js:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -446,8 +446,8 @@ jobs:
   publish-docs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && success()
-    # lint-node checks the openapi files this job deploys.
-    needs: [lint-node]
+    # lint-js checks the openapi files this job deploys.
+    needs: [lint-js]
     # GitHub Pages runs one deployment per site at a time, so master runs queue here.
     concurrency:
       group: github-pages
