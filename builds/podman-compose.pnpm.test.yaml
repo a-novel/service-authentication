@@ -50,7 +50,7 @@ services:
   # ====================================================================================================================
 
   service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.12.3@sha256:f4095d2c1164725dc9b55fd6204025def2f23608ec4dff510831cfb9ebdf079a
+    image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.13.0@sha256:d7f32409705e44cbb5d1612b4921b5dc180a76e375fc79a354a684c0dbb23eb5
     depends_on:
       - postgres-json-keys
     environment:
