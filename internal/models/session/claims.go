@@ -19,10 +19,12 @@ type Claims struct {
 	RefreshTokenID string `json:"refreshTokenID,omitempty"`
 }
 
-// RefreshClaims is the JWT payload of a refresh token: the token's own JTI and the user it
-// authenticates. Renewing a session matches Jti against the access token's [Claims.RefreshTokenID].
+// RefreshClaims is the JWT payload of a refresh token: the token's own JTI, its expiry and the user
+// it authenticates. Renewing a session matches Jti against the access token's [Claims.RefreshTokenID].
 type RefreshClaims struct {
-	Jti    string    `json:"jti,omitempty"`
+	Jti string `json:"jti,omitempty"`
+	// Exp is the token's expiry, as a Unix timestamp in seconds. The signer sets it.
+	Exp    int64     `json:"exp,omitempty"`
 	UserID uuid.UUID `json:"userID,omitempty"`
 }
 
