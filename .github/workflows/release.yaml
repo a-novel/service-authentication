@@ -116,8 +116,9 @@ jobs:
           services: postgres
           database_image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
           registry_login: "true"
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.78.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.78.0
         with:
+          mode: job
           file: builds/migrations.Dockerfile
           image_name: ${{ github.repository }}/jobs/migrations
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -138,8 +139,9 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker-job@v1.78.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.78.0
         with:
+          mode: job
           file: builds/maintenance.Dockerfile
           image_name: ${{ github.repository }}/jobs/maintenance
           github_token: ${{ secrets.GITHUB_TOKEN }}
