@@ -9,7 +9,24 @@ import {
   tokenCreate,
   tokenCreateAnon,
   tokenRefresh,
+  tokenRevoke,
 } from "@a-novel/service-authentication-rest";
+import { preRegisterUser, registerUser } from "@a-novel/service-authentication-rest-test";
+
+// The managed local test rail supplies a dynamic URL; legacy CI still exports MAIL_HOST.
+const mailUrl = (() => {
+  const value = process.env.MAIL_UI_URL ?? process.env.MAIL_HOST;
+  if (!value) throw new Error("MAIL_UI_URL or MAIL_HOST must be set");
+  return value;
+})();
+
+/** Signs the configured super-admin in, opening a new session. */
+async function superAdminSession(api: AuthenticationApi) {
+  return await tokenCreate(api, {
+    email: process.env.SUPER_ADMIN_EMAIL!,
+    password: process.env.SUPER_ADMIN_PASSWORD!,
+  });
+}
 
 describe("tokenCreate", () => {
   it("logs in with correct credentials", async () => {
@@ -160,5 +177,69 @@ describe("tokenRefresh", () => {
       }),
       403
     );
+  });
+});
+
+describe("tokenRevoke", () => {
+  it("stops the refresh token from renewing the session", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await superAdminSession(api);
+
+    await expect(tokenRevoke(api, { refreshToken: token.refreshToken })).resolves.toBeUndefined();
+
+    await expectStatus(tokenRefresh(api, token), 403);
+  });
+
+  it("succeeds again on a revoked refresh token", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await superAdminSession(api);
+
+    await tokenRevoke(api, { refreshToken: token.refreshToken });
+
+    await expect(tokenRevoke(api, { refreshToken: token.refreshToken })).resolves.toBeUndefined();
+  });
+
+  it("leaves the user's other sessions untouched", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await superAdminSession(api);
+    const otherToken = await superAdminSession(api);
+
+    await tokenRevoke(api, { refreshToken: token.refreshToken });
+
+    const renewed = await tokenRefresh(api, otherToken);
+    expect(renewed.accessToken).toBeTruthy();
+  });
+
+  it("leaves another user's session untouched", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await superAdminSession(api);
+    const otherUser = await registerUser(api, await preRegisterUser(api, mailUrl));
+
+    await tokenRevoke(api, { refreshToken: token.refreshToken });
+
+    const renewed = await tokenRefresh(api, otherUser.token);
+    const claims = await claimsGet(api, renewed.accessToken);
+    expect(claims.userID).toBe(otherUser.claims.userID);
+  });
+
+  it("returns forbidden for a token that is not a refresh token", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await superAdminSession(api);
+
+    await expectStatus(tokenRevoke(api, { refreshToken: token.accessToken }), 403);
+
+    const renewed = await tokenRefresh(api, token);
+    expect(renewed.accessToken).toBeTruthy();
+  });
+
+  it("returns unprocessable entity for a blank token", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    await expectStatus(tokenRevoke(api, { refreshToken: "" }), 422);
   });
 });

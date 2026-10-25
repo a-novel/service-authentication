@@ -35,6 +35,14 @@ export const TokenRefreshRequestSchema = z.object({
 /** The value {@link TokenRefreshRequestSchema} validates. */
 export type TokenRefreshRequest = z.infer<typeof TokenRefreshRequestSchema>;
 
+/** The refresh token of the session to end, as a compact JWT. */
+export const TokenRevokeRequestSchema = z.object({
+  refreshToken: z.jwt().max(1024),
+});
+
+/** The value {@link TokenRevokeRequestSchema} validates. */
+export type TokenRevokeRequest = z.infer<typeof TokenRevokeRequestSchema>;
+
 /** Opens an authenticated session from an email and password, returning a fresh token pair. */
 export async function tokenCreate(api: AuthenticationApi, form: TokenCreateRequest): Promise<Token> {
   return await api.fetch("/v2/session", TokenSchema, {
@@ -57,6 +65,19 @@ export async function tokenRefresh(api: AuthenticationApi, form: TokenRefreshReq
   return await api.fetch("/v2/session", TokenSchema, {
     headers: { ...HTTP_HEADERS.JSON },
     method: "PATCH",
+    body: JSON.stringify(form),
+  });
+}
+
+/**
+ * Signs a session out: its refresh token can no longer renew it. Revoking a token already revoked or
+ * expired succeeds, so a retry is safe. Access tokens the session already issued stay valid until they
+ * expire, so discard them too.
+ */
+export async function tokenRevoke(api: AuthenticationApi, form: TokenRevokeRequest): Promise<void> {
+  return await api.fetchVoid("/v2/session/revoke", {
+    headers: { ...HTTP_HEADERS.JSON },
+    method: "PUT",
     body: JSON.stringify(form),
   });
 }
