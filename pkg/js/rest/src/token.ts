@@ -70,13 +70,18 @@ export async function tokenRefresh(api: AuthenticationApi, form: TokenRefreshReq
 }
 
 /**
- * Signs a session out: its refresh token can no longer renew it. Revoking a token already revoked or
- * expired succeeds, so a retry is safe. Access tokens the session already issued stay valid until they
- * expire, so discard them too.
+ * Signs a session out: its refresh token can no longer renew it. The access token must be valid and
+ * belong to the refresh token's user, so refresh an expired session first. Revoking a token already
+ * revoked or expired succeeds, so a retry is safe. Access tokens the session already issued stay valid
+ * until they expire, so discard them too.
  */
-export async function tokenRevoke(api: AuthenticationApi, form: TokenRevokeRequest): Promise<void> {
+export async function tokenRevoke(
+  api: AuthenticationApi,
+  accessToken: string,
+  form: TokenRevokeRequest
+): Promise<void> {
   return await api.fetchVoid("/v2/session/revoke", {
-    headers: { ...HTTP_HEADERS.JSON },
+    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PUT",
     body: JSON.stringify(form),
   });

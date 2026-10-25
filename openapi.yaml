@@ -178,15 +178,17 @@ paths:
       operationId: tokenRevoke
       summary: Sign out by revoking a refresh token.
       description: |
-        Revoke the refresh token of a session, so it can no longer renew the session. Holding the refresh token proves
-        the session is the caller's, so the route takes no access token and no user ID.
+        Revoke the refresh token of a session, so it can no longer renew the session. The caller authenticates with a
+        valid access token, and the refresh token must belong to the same user. A client whose access token expired
+        refreshes the session first.
 
         Revoking is idempotent: a refresh token already revoked or already expired also answers 204, so a retry never
-        fails. A refresh token this service did not issue, such as an access token, answers 403.
+        fails. A refresh token of another user, or one this service did not issue, such as an access token, answers 403.
 
         Access tokens the session already issued stay valid until they expire. A client discards them when it signs out.
       tags: [session]
-      security: []
+      security:
+        - BearerAuth: ["session:revoke"]
       requestBody:
         $ref: "#/components/requestBodies/tokenRevoke"
       responses:
@@ -194,6 +196,8 @@ paths:
           description: The refresh token is revoked, or was already revoked or expired.
         "400":
           $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
         "422":

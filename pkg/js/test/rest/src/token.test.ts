@@ -186,7 +186,7 @@ describe("tokenRevoke", () => {
 
     const token = await superAdminSession(api);
 
-    await expect(tokenRevoke(api, { refreshToken: token.refreshToken })).resolves.toBeUndefined();
+    await expect(tokenRevoke(api, token.accessToken, { refreshToken: token.refreshToken })).resolves.toBeUndefined();
 
     await expectStatus(tokenRefresh(api, token), 403);
   });
@@ -196,9 +196,9 @@ describe("tokenRevoke", () => {
 
     const token = await superAdminSession(api);
 
-    await tokenRevoke(api, { refreshToken: token.refreshToken });
+    await tokenRevoke(api, token.accessToken, { refreshToken: token.refreshToken });
 
-    await expect(tokenRevoke(api, { refreshToken: token.refreshToken })).resolves.toBeUndefined();
+    await expect(tokenRevoke(api, token.accessToken, { refreshToken: token.refreshToken })).resolves.toBeUndefined();
   });
 
   it("leaves the user's other sessions untouched", async () => {
@@ -207,23 +207,43 @@ describe("tokenRevoke", () => {
     const token = await superAdminSession(api);
     const otherToken = await superAdminSession(api);
 
-    await tokenRevoke(api, { refreshToken: token.refreshToken });
+    await tokenRevoke(api, token.accessToken, { refreshToken: token.refreshToken });
 
     const renewed = await tokenRefresh(api, otherToken);
     expect(renewed.accessToken).toBeTruthy();
   });
 
-  it("leaves another user's session untouched", async () => {
+  it("refuses another user's refresh token", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
     const token = await superAdminSession(api);
     const otherUser = await registerUser(api, await preRegisterUser(api, mailUrl));
 
-    await tokenRevoke(api, { refreshToken: token.refreshToken });
+    await expectStatus(tokenRevoke(api, token.accessToken, { refreshToken: otherUser.token.refreshToken }), 403);
 
     const renewed = await tokenRefresh(api, otherUser.token);
     const claims = await claimsGet(api, renewed.accessToken);
     expect(claims.userID).toBe(otherUser.claims.userID);
+  });
+
+  it("returns unauthorized without an access token", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await superAdminSession(api);
+
+    await expectStatus(tokenRevoke(api, "", { refreshToken: token.refreshToken }), 401);
+
+    const renewed = await tokenRefresh(api, token);
+    expect(renewed.accessToken).toBeTruthy();
+  });
+
+  it("returns forbidden for an anonymous session", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await superAdminSession(api);
+    const anonToken = await tokenCreateAnon(api);
+
+    await expectStatus(tokenRevoke(api, anonToken.accessToken, { refreshToken: token.refreshToken }), 403);
   });
 
   it("returns forbidden for a token that is not a refresh token", async () => {
@@ -231,7 +251,7 @@ describe("tokenRevoke", () => {
 
     const token = await superAdminSession(api);
 
-    await expectStatus(tokenRevoke(api, { refreshToken: token.accessToken }), 403);
+    await expectStatus(tokenRevoke(api, token.accessToken, { refreshToken: token.accessToken }), 403);
 
     const renewed = await tokenRefresh(api, token);
     expect(renewed.accessToken).toBeTruthy();
@@ -240,6 +260,8 @@ describe("tokenRevoke", () => {
   it("returns unprocessable entity for a blank token", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
-    await expectStatus(tokenRevoke(api, { refreshToken: "" }), 422);
+    const token = await superAdminSession(api);
+
+    await expectStatus(tokenRevoke(api, token.accessToken, { refreshToken: "" }), 422);
   });
 });
