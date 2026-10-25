@@ -210,7 +210,7 @@ func main() {
 
 			withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
 			r.Patch("/", handlerTokenRefresh.ServeHTTP)
-			r.Put("/revoke", handlerTokenRevoke.ServeHTTP)
+			withAuth(r, "session:revoke").Put("/revoke", handlerTokenRevoke.ServeHTTP)
 		})
 
 		api.Route("/credentials", func(r chi.Router) {
