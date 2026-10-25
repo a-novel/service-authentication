@@ -6,6 +6,8 @@ x-postgres-healthcheck: &postgres-healthcheck
   timeout: 5s
   retries: 10
 
+# The targets leave POSTGRES_PORT unset and reach the database on its default port, 5432. The
+# a-novel daemon owns that name for the host port it publishes the database on.
 services:
   # ====================================================================================================================
   # EXT. DEPENDENCIES
@@ -72,7 +74,11 @@ services:
       service-authentication-migrations:
         condition: service_completed_successfully
     environment:
-      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+      POSTGRES_HOST: postgres-authentication
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: false
       PLATFORM_AUTH_URL: "${PLATFORM_AUTH_URL}"
       SMTP_SENDER_DOMAIN: "${SMTP_HOST}"
       SMTP_ADDR: "${SMTP_HOST}:${SMTP_PORT}"
@@ -93,7 +99,11 @@ services:
       postgres-authentication:
         condition: service_healthy
     environment:
-      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+      POSTGRES_HOST: postgres-authentication
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: false
     networks:
       - api
 
@@ -118,7 +128,11 @@ services:
       mailserver:
         condition: service_started
     environment:
-      POSTGRES_DSN: "postgres://postgres:postgres@postgres-authentication:5432/postgres?sslmode=disable"
+      POSTGRES_HOST: postgres-authentication
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_TLS_ENABLED: false
       # The Go config reads SERVICE_JSON_KEYS_HOST/PORT; bridge them to the
       # allocated SERVICE_JSON_KEYS_GRPC_* values.
       SERVICE_JSON_KEYS_HOST: "${SERVICE_JSON_KEYS_GRPC_HOST}"
