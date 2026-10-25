@@ -93,6 +93,14 @@ ACCESS_TOKEN=$(jq -r '.accessToken' <<<"$TOKEN")
 REFRESH_TOKEN=$(jq -r '.refreshToken' <<<"$TOKEN")
 ```
 
+#### Sign out
+
+```bash
+curl -s -X PUT "$AUTH_URL/v2/session/revoke" \
+  -H "Content-Type: application/json" \
+  -d "{\"refreshToken\": \"$REFRESH_TOKEN\"}"
+```
+
 ### MailPit (email testing)
 
 [MailPit](https://mailpit.axllent.org/) captures every email the service sends locally, so none reaches a real inbox. Its UI listens on `$MAIL_URL`.
@@ -118,12 +126,14 @@ The [MailPit API reference](https://mailpit.axllent.org/docs/api-v1/view.html) l
 
 A session is a pair of JWTs. The [JSON Keys service](https://github.com/a-novel/service-json-keys) signs and verifies both, and this service holds no signing key.
 
-| Token         | Purpose                             | Lifetime        |
-| ------------- | ----------------------------------- | --------------- |
-| Access token  | Authorizes API calls.               | Short (minutes) |
-| Refresh token | Renews the pair without signing in. | Long (days)     |
+| Token         | Purpose                             | Lifetime |
+| ------------- | ----------------------------------- | -------- |
+| Access token  | Authorizes API calls.               | 24 hours |
+| Refresh token | Renews the pair without signing in. | 7 days   |
 
-A client signs in once and sends the access token until it expires. `PATCH /v2/session` then trades both tokens for a fresh pair. The access token names the refresh token that minted it, and only that refresh token renews it.
+The JSON Keys configuration sets both lifetimes. A client signs in once and sends the access token until it expires. `PATCH /v2/session` then trades both tokens for a fresh pair. The access token names the refresh token that minted it, and only that refresh token renews it.
+
+`PUT /v2/session/revoke` signs a session out. It records the refresh token's ID in the `refresh_token_revocations` table, and a refresh then refuses that token. Access tokens the session already holds stay valid until they expire, since every service verifies them locally. A revocation row lasts until its refresh token expires, plus the verifier's clock-skew leeway, and each new revocation purges a batch of expired rows.
 
 ### Short codes
 

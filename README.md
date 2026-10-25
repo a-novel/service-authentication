@@ -18,7 +18,7 @@ Identity and session manager for the A-Novel platform.
 
 ## What it does
 
-Authentication owns **user identities** and their **sessions**. An account is an email and a password, hashed with Argon2id. A client trades the credentials for a short-lived access token and a long-lived refresh token, then renews the pair without signing in again. A caller without an account gets an anonymous access token, which cannot be renewed. Every account carries a role, and each role grants the permissions that services check per route.
+Authentication owns **user identities** and their **sessions**. An account is an email and a password, hashed with Argon2id. A client trades the credentials for a short-lived access token and a long-lived refresh token, then renews the pair without signing in again. Signing out revokes the refresh token. A caller without an account gets an anonymous access token, which cannot be renewed. Every account carries a role, and each role grants the permissions that services check per route.
 
 Registration, an email change and a password reset each need a single-use **short code**, emailed to the user. A stolen session token alone cannot take over an account.
 
