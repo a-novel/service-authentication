@@ -20,7 +20,7 @@ info:
 
     Authenticated users can refresh their session using a refresh token. This token has a longer expiry date, and can
     be used to create new access tokens on-demand. There is no way to refresh a refresh token, so once it expires, the
-    user must log in again.
+    user must log in again. Signing out revokes the refresh token, so it can no longer renew the session.
 
     ## Short codes
 
@@ -166,6 +166,42 @@ paths:
           $ref: "#/components/responses/tokenCreate"
         "418":
           $ref: "#/components/responses/teapot"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/session/revoke:
+    put:
+      operationId: tokenRevoke
+      summary: Sign out by revoking a refresh token.
+      description: |
+        Revoke the refresh token of a session, so it can no longer renew the session. The caller authenticates with a
+        valid access token, and the refresh token must belong to the same user. A client whose access token expired
+        refreshes the session first.
+
+        Revoking is idempotent: a refresh token already revoked or already expired also answers 204, so a retry never
+        fails. A refresh token of another user, or one this service did not issue, such as an access token, answers 403.
+
+        Access tokens the session already issued stay valid until they expire. A client discards them when it signs out.
+      tags: [session]
+      security:
+        - BearerAuth: ["session:revoke"]
+      requestBody:
+        $ref: "#/components/requestBodies/tokenRevoke"
+      responses:
+        "204":
+          description: The refresh token is revoked, or was already revoked or expired.
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
@@ -1051,6 +1087,19 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/token"
+
+    tokenRevoke:
+      description: The refresh token of the session to end.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [refreshToken]
+            additionalProperties: false
+            properties:
+              refreshToken:
+                $ref: "#/components/schemas/refreshToken"
 
     credentials:
       description: |

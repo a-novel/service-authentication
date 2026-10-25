@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
@@ -26,7 +27,7 @@ var (
 	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when the
 	// verifier rejects the refresh token with [jwt.ErrTokenRejected], expiry included,
-	// joined onto that verifier error.
+	// joined onto that verifier error. A revoked refresh token returns it too.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the access
 	// and refresh tokens are individually valid but encode different user IDs, which
@@ -41,6 +42,11 @@ var (
 // TokenRefreshDao reloads the current credentials of the user being refreshed.
 type TokenRefreshDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
+}
+
+// TokenRefreshDaoRefreshTokenRevocationExist reports whether the refresh token was revoked.
+type TokenRefreshDaoRefreshTokenRevocationExist interface {
+	Exec(ctx context.Context, request *dao.RefreshTokenRevocationExistRequest) (bool, error)
 }
 
 // TokenRefreshServiceSignClaims signs the new access token.
@@ -73,26 +79,29 @@ type TokenRefreshRequest struct {
 	RefreshToken string `validate:"required,max=1024"`
 }
 
-// TokenRefresh renews an access token from a valid refresh token, minting a new access
-// token that reflects the user's current roles while reusing the same refresh token.
+// TokenRefresh renews an access token from a valid refresh token that was not revoked, minting a
+// new access token that reflects the user's current roles while reusing the same refresh token.
 type TokenRefresh struct {
-	dao                        TokenRefreshDao
-	serviceSignClaims          TokenRefreshServiceSignClaims
-	serviceVerifyClaims        TokenRefreshServiceVerifyClaims
-	serviceVerifyRefreshClaims TokenRefreshServiceVerifyRefreshClaims
+	dao                            TokenRefreshDao
+	daoRefreshTokenRevocationExist TokenRefreshDaoRefreshTokenRevocationExist
+	serviceSignClaims              TokenRefreshServiceSignClaims
+	serviceVerifyClaims            TokenRefreshServiceVerifyClaims
+	serviceVerifyRefreshClaims     TokenRefreshServiceVerifyRefreshClaims
 }
 
 func NewTokenRefresh(
 	dao TokenRefreshDao,
+	daoRefreshTokenRevocationExist TokenRefreshDaoRefreshTokenRevocationExist,
 	serviceSignClaims TokenRefreshServiceSignClaims,
 	serviceVerifyClaims TokenRefreshServiceVerifyClaims,
 	serviceVerifyRefreshClaims TokenRefreshServiceVerifyRefreshClaims,
 ) *TokenRefresh {
 	return &TokenRefresh{
-		dao:                        dao,
-		serviceSignClaims:          serviceSignClaims,
-		serviceVerifyClaims:        serviceVerifyClaims,
-		serviceVerifyRefreshClaims: serviceVerifyRefreshClaims,
+		dao:                            dao,
+		daoRefreshTokenRevocationExist: daoRefreshTokenRevocationExist,
+		serviceSignClaims:              serviceSignClaims,
+		serviceVerifyClaims:            serviceVerifyClaims,
+		serviceVerifyRefreshClaims:     serviceVerifyRefreshClaims,
 	}
 }
 
@@ -148,6 +157,17 @@ func (service *TokenRefresh) Exec(
 	// Only the refresh token that minted an access token renews it.
 	if accessTokenClaims.RefreshTokenID != refreshTokenClaims.Jti {
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchSource)
+	}
+
+	revocationRequest := &dao.RefreshTokenRevocationExistRequest{JTI: refreshTokenClaims.Jti}
+
+	revoked, err := service.daoRefreshTokenRevocationExist.Exec(ctx, revocationRequest)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("check refresh token revocation: %w", err))
+	}
+
+	if revoked {
+		return nil, otel.ReportError(span, fmt.Errorf("refresh token revoked: %w", ErrTokenRefreshInvalidRefreshToken))
 	}
 
 	// Reload credentials so any role change since the original sign lands in the new token.

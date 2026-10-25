@@ -34,6 +34,11 @@ func TestTokenRefresh(t *testing.T) {
 		err  error
 	}
 
+	type revocationExistMock struct {
+		resp bool
+		err  error
+	}
+
 	type signClaimsMock struct {
 		resp *servicejsonkeys.ClaimsSignResponse
 		err  error
@@ -55,6 +60,7 @@ func TestTokenRefresh(t *testing.T) {
 		request *core.TokenRefreshRequest
 
 		daoMock                        *daoMock
+		revocationExistMock            *revocationExistMock
 		signClaimsMock                 *signClaimsMock
 		serviceVerifyClaimsMock        *serviceVerifyClaimsMock
 		serviceVerifyRefreshClaimsMock *serviceVerifyRefreshClaimsMock
@@ -86,6 +92,8 @@ func TestTokenRefresh(t *testing.T) {
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 			},
+
+			revocationExistMock: &revocationExistMock{},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -129,6 +137,8 @@ func TestTokenRefresh(t *testing.T) {
 				},
 			},
 
+			revocationExistMock: &revocationExistMock{},
+
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
 					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -165,11 +175,68 @@ func TestTokenRefresh(t *testing.T) {
 				},
 			},
 
+			revocationExistMock: &revocationExistMock{},
+
 			daoMock: &daoMock{
 				err: errFoo,
 			},
 
 			expectErr: errFoo,
+		},
+		{
+			name: "RevokedRefreshToken",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &session.Claims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{
+					Jti:    "refresh_token_id",
+					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
+			},
+
+			revocationExistMock: &revocationExistMock{resp: true},
+
+			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
+		},
+		{
+			name: "RevocationExistError",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &session.Claims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{
+					Jti:    "refresh_token_id",
+					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
+			},
+
+			revocationExistMock: &revocationExistMock{err: errFoo},
+
+			expectErr:    errFoo,
+			expectNotErr: core.ErrTokenRefreshInvalidRefreshToken,
 		},
 		{
 			name: "VerifyRefreshTokenClaimsError",
@@ -474,6 +541,7 @@ func TestTokenRefresh(t *testing.T) {
 			t.Parallel()
 
 			mockDao := coremocks.NewMockTokenRefreshDao(t)
+			mockDaoRevocationExist := coremocks.NewMockTokenRefreshDaoRefreshTokenRevocationExist(t)
 			serviceSignClaims := coremocks.NewMockTokenRefreshServiceSignClaims(t)
 			serviceVerifyClaims := coremocks.NewMockTokenRefreshServiceVerifyClaims(t)
 			serviceVerifyRefreshClaims := coremocks.NewMockTokenRefreshServiceVerifyRefreshClaims(t)
@@ -499,6 +567,12 @@ func TestTokenRefresh(t *testing.T) {
 				serviceVerifyRefreshClaims.EXPECT().
 					VerifyClaims(mock.Anything, verifyClaimsRequest).
 					Return(testCase.serviceVerifyRefreshClaimsMock.resp, testCase.serviceVerifyRefreshClaimsMock.err)
+			}
+
+			if testCase.revocationExistMock != nil {
+				mockDaoRevocationExist.EXPECT().
+					Exec(mock.Anything, &dao.RefreshTokenRevocationExistRequest{JTI: "refresh_token_id"}).
+					Return(testCase.revocationExistMock.resp, testCase.revocationExistMock.err)
 			}
 
 			if testCase.daoMock != nil {
@@ -527,6 +601,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			service := core.NewTokenRefresh(
 				mockDao,
+				mockDaoRevocationExist,
 				serviceSignClaims,
 				serviceVerifyClaims,
 				serviceVerifyRefreshClaims,
@@ -541,6 +616,7 @@ func TestTokenRefresh(t *testing.T) {
 			}
 
 			mockDao.AssertExpectations(t)
+			mockDaoRevocationExist.AssertExpectations(t)
 			serviceSignClaims.AssertExpectations(t)
 			serviceVerifyClaims.AssertExpectations(t)
 			serviceVerifyRefreshClaims.AssertExpectations(t)
