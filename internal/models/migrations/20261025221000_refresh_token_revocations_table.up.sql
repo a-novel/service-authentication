@@ -1,6 +1,6 @@
 -- A refresh token is a stateless JWT, so signing out records its JTI here and a refresh refuses any
--- JTI the table holds. A row is useless once the verifier refuses the token on its own, so writes
--- purge rows past expires_at.
+-- JTI the table holds. A row is useless once the verifier refuses the token on its own, so a
+-- periodic purge deletes rows past expires_at, through the index below.
 CREATE TABLE refresh_token_revocations (
   /* JTI of the revoked refresh token. */
   jti text PRIMARY KEY NOT NULL CHECK (jti <> ''),

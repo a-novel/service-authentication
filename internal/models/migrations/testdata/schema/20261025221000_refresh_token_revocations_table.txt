@@ -1,4 +1,4 @@
-migration-history	sha256:9a795004a39f629edfb0c299a33ae992d9e2ee2f5bdf57757332ebe018ddae02
+migration-history	sha256:15770434dcee8c7646ff3ac8706887d447a5c2b9725b8cb9a0a5af8a348371dc
 column	credentials.created_at	timestamp(0) with time zone NOT NULL
 column	credentials.email	text NOT NULL
 column	credentials.id	uuid NOT NULL
