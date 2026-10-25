@@ -13,6 +13,7 @@ roles:
       - "auth:anon"
     permissions:
       - "credentials:password:patch"
+      - "session:revoke"
       - "shortCode:email:update"
   "auth:admin":
     priority: 2
