@@ -108,6 +108,12 @@ An existing account moves to the requested role. A missing account receives a re
 
 Without SMTP settings, emails go to a debug sender that prints them to stdout. The maintenance job waits for the invitation to go out, and fails when the sender reports an error.
 
+`refresh-token-purge` deletes the revocations of refresh tokens that have expired, which no longer serve any check. Signing out adds one revocation each time, so run it on a schedule, daily for instance. It takes no parameters:
+
+```text
+maintenance refresh-token-purge
+```
+
 ### Database image
 
 The database image packages PostgreSQL and pgBackRest on Wolfi. The container build assembles its

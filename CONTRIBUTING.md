@@ -95,8 +95,11 @@ REFRESH_TOKEN=$(jq -r '.refreshToken' <<<"$TOKEN")
 
 #### Sign out
 
+Signing out takes a valid access token. When it has expired, run the refresh above first.
+
 ```bash
 curl -s -X PUT "$AUTH_URL/v2/session/revoke" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"refreshToken\": \"$REFRESH_TOKEN\"}"
 ```
@@ -128,12 +131,12 @@ A session is a pair of JWTs. The [JSON Keys service](https://github.com/a-novel/
 
 | Token         | Purpose                             | Lifetime |
 | ------------- | ----------------------------------- | -------- |
-| Access token  | Authorizes API calls.               | 24 hours |
+| Access token  | Authorizes API calls.               | 1 hour   |
 | Refresh token | Renews the pair without signing in. | 7 days   |
 
 The JSON Keys configuration sets both lifetimes. A client signs in once and sends the access token until it expires. `PATCH /v2/session` then trades both tokens for a fresh pair. The access token names the refresh token that minted it, and only that refresh token renews it.
 
-`PUT /v2/session/revoke` signs a session out. It records the refresh token's ID in the `refresh_token_revocations` table, and a refresh then refuses that token. Access tokens the session already holds stay valid until they expire, since every service verifies them locally. A revocation row lasts until its refresh token expires, plus the verifier's clock-skew leeway, and each new revocation purges a batch of expired rows.
+`PUT /v2/session/revoke` signs a session out. The caller's access token must belong to the same user as the refresh token. The route records the refresh token's ID in the `refresh_token_revocations` table, and a refresh then refuses that token. Access tokens the session already holds stay valid until they expire, since every service verifies them locally. A revocation row is useful until its refresh token expires, plus the verifier's clock-skew leeway. The scheduled `refresh-token-purge` maintenance operation then deletes it.
 
 ### Short codes
 
