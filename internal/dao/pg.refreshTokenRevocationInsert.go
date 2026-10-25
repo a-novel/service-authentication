@@ -13,13 +13,6 @@ import (
 //go:embed pg.refreshTokenRevocationInsert.sql
 var refreshTokenRevocationInsertQuery string
 
-//go:embed pg.refreshTokenRevocationInsert.purgeExpired.sql
-var refreshTokenRevocationInsertPurgeExpiredQuery string
-
-// refreshTokenRevocationPurgeBatch bounds the expired rows one revocation deletes. Every revocation
-// purges, so expired rows never outnumber one batch.
-const refreshTokenRevocationPurgeBatch = 100
-
 // RefreshTokenRevocationInsertRequest is the input to [PgRefreshTokenRevocationInsert.Exec].
 type RefreshTokenRevocationInsertRequest struct {
 	// See [RefreshTokenRevocation.JTI].
@@ -31,7 +24,7 @@ type RefreshTokenRevocationInsertRequest struct {
 }
 
 // PgRefreshTokenRevocationInsert revokes a refresh token. Revoking a token already revoked
-// succeeds and keeps the first row. Each call first deletes a bounded batch of expired rows.
+// succeeds and keeps the first row.
 type PgRefreshTokenRevocationInsert struct{}
 
 func NewPgRefreshTokenRevocationInsert() *PgRefreshTokenRevocationInsert {
@@ -47,11 +40,6 @@ func (dao *PgRefreshTokenRevocationInsert) Exec(
 	db, err := postgres.GetContext(ctx)
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
-	}
-
-	_, err = db.NewRaw(refreshTokenRevocationInsertPurgeExpiredQuery, refreshTokenRevocationPurgeBatch).Exec(ctx)
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("purge expired revocations: %w", err))
 	}
 
 	_, err = db.NewRaw(refreshTokenRevocationInsertQuery, request.JTI, request.ExpiresAt, request.Now).Exec(ctx)

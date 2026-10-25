@@ -15,7 +15,7 @@ type RefreshTokenRevocation struct {
 	JTI string `bun:"jti,pk"`
 
 	// ExpiresAt is the last instant the verifier accepts the refresh token. The row has no use past
-	// it, and a later revocation purges it.
+	// it, and [PgRefreshTokenRevocationPurge] deletes it.
 	ExpiresAt time.Time `bun:"expires_at"`
 	// CreatedAt is when the refresh token was first revoked.
 	CreatedAt time.Time `bun:"created_at"`

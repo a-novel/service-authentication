@@ -2,7 +2,6 @@ package dao_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -22,14 +21,6 @@ func TestPgRefreshTokenRevocationInsert(t *testing.T) {
 	now := time.Now().UTC().Round(time.Second)
 	hourAgo := now.Add(-time.Hour)
 	hourLater := now.Add(time.Hour)
-
-	// One more expired row than a revocation purges.
-	expiredBatch := make([]*dao.RefreshTokenRevocation, 101)
-	for index := range expiredBatch {
-		expiredBatch[index] = &dao.RefreshTokenRevocation{
-			JTI: fmt.Sprintf("expired-%03d", index), ExpiresAt: hourAgo, CreatedAt: hourAgo.Add(-time.Hour),
-		}
-	}
 
 	testCases := []struct {
 		name string
@@ -82,41 +73,6 @@ func TestPgRefreshTokenRevocationInsert(t *testing.T) {
 			},
 
 			expect:        []*dao.RefreshTokenRevocation{},
-			expectExpired: 1,
-		},
-		{
-			name: "Success/PurgeExpired",
-
-			fixtures: []*dao.RefreshTokenRevocation{
-				{JTI: "refresh-token-1", ExpiresAt: hourAgo, CreatedAt: hourAgo.Add(-time.Hour)},
-				{JTI: "refresh-token-2", ExpiresAt: hourLater, CreatedAt: hourAgo},
-			},
-
-			request: &dao.RefreshTokenRevocationInsertRequest{
-				JTI:       "refresh-token-3",
-				ExpiresAt: hourLater,
-				Now:       now,
-			},
-
-			expect: []*dao.RefreshTokenRevocation{
-				{JTI: "refresh-token-2", ExpiresAt: hourLater, CreatedAt: hourAgo},
-				{JTI: "refresh-token-3", ExpiresAt: hourLater, CreatedAt: now},
-			},
-		},
-		{
-			name: "Success/PurgeBatch",
-
-			fixtures: expiredBatch,
-
-			request: &dao.RefreshTokenRevocationInsertRequest{
-				JTI:       "refresh-token-1",
-				ExpiresAt: hourLater,
-				Now:       now,
-			},
-
-			expect: []*dao.RefreshTokenRevocation{
-				{JTI: "refresh-token-1", ExpiresAt: hourLater, CreatedAt: now},
-			},
 			expectExpired: 1,
 		},
 	}
