@@ -73,6 +73,7 @@ func main() {
 
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.Claims](jsonKeysClient))
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient))
+	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
 
 	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
@@ -102,6 +103,9 @@ func main() {
 	daoCredentialsUpdateEmail := dao.NewPgCredentialsUpdateEmail()
 	daoCredentialsUpdatePassword := dao.NewPgCredentialsUpdatePassword()
 	daoCredentialsUpdateRole := dao.NewPgCredentialsUpdateRole()
+
+	daoRefreshTokenRevocationExist := dao.NewPgRefreshTokenRevocationExist()
+	daoRefreshTokenRevocationInsert := dao.NewPgRefreshTokenRevocationInsert()
 
 	// =================================================================================================================
 	// SERVICES
@@ -138,7 +142,11 @@ func main() {
 	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, jsonKeysClient)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
 	serviceTokenRefresh := core.NewTokenRefresh(
-		daoCredentialsSelect, jsonKeysClient, serviceVerifyAccessToken, serviceVerifyRefreshToken,
+		daoCredentialsSelect, daoRefreshTokenRevocationExist, jsonKeysClient, serviceVerifyAccessToken,
+		serviceVerifyRefreshToken,
+	)
+	serviceTokenRevoke := core.NewTokenRevoke(
+		daoRefreshTokenRevocationInsert, serviceVerifyRefreshToken, refreshTokenLeeway,
 	)
 
 	// =================================================================================================================
@@ -182,6 +190,7 @@ func main() {
 	handlerTokenCreate := handlers.NewRestTokenCreate(serviceTokenCreate, cfg.Logger)
 	handlerTokenCreateAnon := handlers.NewRestTokenCreateAnon(serviceTokenCreateAnon, cfg.Logger)
 	handlerTokenRefresh := handlers.NewRestTokenRefresh(serviceTokenRefresh, cfg.Logger)
+	handlerTokenRevoke := handlers.NewRestTokenRevoke(serviceTokenRevoke, cfg.Logger)
 
 	// =================================================================================================================
 	// ROUTER
@@ -201,6 +210,7 @@ func main() {
 
 			withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
 			r.Patch("/", handlerTokenRefresh.ServeHTTP)
+			r.Put("/revoke", handlerTokenRevoke.ServeHTTP)
 		})
 
 		api.Route("/credentials", func(r chi.Router) {
