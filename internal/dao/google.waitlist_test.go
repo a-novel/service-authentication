@@ -95,6 +95,7 @@ func TestGoogleWaitlist(t *testing.T) {
 			}
 
 			calls := 0
+			start := time.Now()
 
 			action := testCase.action
 			if action == "" {
@@ -137,7 +138,8 @@ func TestGoogleWaitlist(t *testing.T) {
 					require.Equal(t, action, payload.Action)
 					require.Equal(t, "member@example.com", payload.Email)
 					require.Equal(t, "fr", payload.Lang)
-					require.WithinDuration(t, time.Now(), time.Unix(payload.Timestamp, 0), time.Second)
+					// The timestamp holds whole seconds, so it may precede start by up to a second.
+					require.WithinRange(t, time.Unix(payload.Timestamp, 0), time.Unix(start.Unix(), 0), time.Now())
 
 					return &http.Response{
 						StatusCode: testCase.status, Header: http.Header{"Location": {testCase.redirect}},
