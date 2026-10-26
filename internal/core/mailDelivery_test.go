@@ -53,7 +53,8 @@ func TestMailDelivery(t *testing.T) {
 					Return(nil).
 					Times(2)
 
-				delivery := core.NewMailDelivery(smtpService, 2)
+				reports := make(chan mailDeliveryFailure, 2)
+				delivery := core.NewMailDelivery(smtpService, 2, recordMailDeliveryFailures(reports))
 
 				for range 2 {
 					reservation := reserveMailDelivery(t, delivery, t.Context())
@@ -76,6 +77,7 @@ func TestMailDelivery(t *testing.T) {
 				release <- struct{}{}
 
 				waitForMailDelivery(t, delivery)
+				require.Empty(t, reports)
 				smtpService.AssertExpectations(t)
 			},
 		},
@@ -105,7 +107,7 @@ func TestMailDelivery(t *testing.T) {
 					Return(nil).
 					Once()
 
-				delivery := core.NewMailDelivery(smtpService, 1)
+				delivery := core.NewMailDelivery(smtpService, 1, nil)
 				requestCtx, cancelRequest := context.WithCancel(t.Context())
 				reservation := reserveMailDelivery(t, delivery, requestCtx)
 				reservation.Deliver(requestCtx, newMailDeliveryRequest())
@@ -132,7 +134,7 @@ func TestMailDelivery(t *testing.T) {
 				t.Helper()
 
 				smtpService := coremocks.NewMockMailDeliverySMTP(t)
-				delivery := core.NewMailDelivery(smtpService, 1)
+				delivery := core.NewMailDelivery(smtpService, 1, nil)
 				reservation := reserveMailDelivery(t, delivery, t.Context())
 
 				admissionErr := make(chan error, 1)
@@ -172,7 +174,7 @@ func TestMailDelivery(t *testing.T) {
 					Return(nil).
 					Once()
 
-				delivery := core.NewMailDelivery(smtpService, 1)
+				delivery := core.NewMailDelivery(smtpService, 1, nil)
 				reservation := reserveMailDelivery(t, delivery, t.Context())
 				reservation.Deliver(t.Context(), newMailDeliveryRequest())
 				reservation.Deliver(t.Context(), newMailDeliveryRequest())
@@ -193,12 +195,18 @@ func TestMailDelivery(t *testing.T) {
 					Return(errFoo).
 					Once()
 
-				delivery := core.NewMailDelivery(smtpService, 1)
+				reports := make(chan mailDeliveryFailure, 2)
+				delivery := core.NewMailDelivery(smtpService, 1, recordMailDeliveryFailures(reports))
 				reservation := reserveMailDelivery(t, delivery, t.Context())
 				reservation.Deliver(t.Context(), newMailDeliveryRequest())
 
 				err := delivery.Wait(t.Context())
 				require.ErrorIs(t, err, errFoo)
+				require.Len(t, reports, 1)
+
+				report := <-reports
+				require.Equal(t, "test", report.kind)
+				require.ErrorIs(t, report.err, errFoo)
 				smtpService.AssertExpectations(t)
 			},
 		},
@@ -221,6 +229,20 @@ func reserveMailDelivery(
 	require.NoError(t, err)
 
 	return reservation
+}
+
+// mailDeliveryFailure is one failed send a [core.MailDeliveryReport] received.
+type mailDeliveryFailure struct {
+	kind string
+	err  error
+}
+
+// recordMailDeliveryFailures returns a report that sends each failure to failures, for the test to
+// read once the delivery drains.
+func recordMailDeliveryFailures(failures chan<- mailDeliveryFailure) core.MailDeliveryReport {
+	return func(_ context.Context, kind string, err error) {
+		failures <- mailDeliveryFailure{kind: kind, err: err}
+	}
 }
 
 func newMailDeliveryRequest() *core.MailDeliveryRequest {

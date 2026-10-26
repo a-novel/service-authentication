@@ -181,7 +181,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			daoSelect := coremocks.NewMockShortCodeCreateRegisterDao(t)
 			smtpService := coremocks.NewMockMailDeliverySMTP(t)
 
-			mailDelivery := core.NewMailDelivery(smtpService, 1)
+			mailDelivery := core.NewMailDelivery(smtpService, 1, nil)
 			if testCase.closeMailDelivery {
 				mailDelivery.Close()
 			}
