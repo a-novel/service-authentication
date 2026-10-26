@@ -180,7 +180,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			daoSelect := coremocks.NewMockShortCodeCreateEmailUpdateDao(t)
 			smtpService := coremocks.NewMockMailDeliverySMTP(t)
 
-			mailDelivery := core.NewMailDelivery(smtpService, 1)
+			mailDelivery := core.NewMailDelivery(smtpService, 1, nil)
 			if testCase.closeMailDelivery {
 				mailDelivery.Close()
 			}

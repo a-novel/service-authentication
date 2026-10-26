@@ -168,7 +168,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			mockDao := coremocks.NewMockShortCodeCreatePasswordResetDao(t)
 			smtpService := coremocks.NewMockMailDeliverySMTP(t)
 
-			mailDelivery := core.NewMailDelivery(smtpService, 1)
+			mailDelivery := core.NewMailDelivery(smtpService, 1, nil)
 			if testCase.closeMailDelivery {
 				mailDelivery.Close()
 			}

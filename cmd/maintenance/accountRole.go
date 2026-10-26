@@ -100,7 +100,8 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 	selectShortCode := dao.NewPgShortCodeSelect()
 	updateRole := dao.NewPgCredentialsUpdateRole()
 	createShortCode := core.NewShortCodeCreate(dao.NewPgShortCodeInsert(), cfg.ShortCodesConfig)
-	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
+	// The job waits for its mail, and main reports the failure the wait returns.
+	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent, nil)
 	register := core.NewShortCodeCreateRegister(
 		createShortCode, selectCredentials, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
 	)

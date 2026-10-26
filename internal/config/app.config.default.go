@@ -21,8 +21,13 @@ import (
 // shutdown.
 const OtelFlushTimeout = 2 * time.Second
 
-// SentryFlushTimeout bounds how long a binary waits on exit to send its pending Sentry events.
+// SentryFlushTimeout bounds how long a server waits on exit to send its pending Sentry events, inside
+// the platform's shutdown grace period.
 const SentryFlushTimeout = 2 * time.Second
+
+// SentryJobFlushTimeout bounds a job's wait on exit for its pending Sentry events. A fresh job's
+// first connection out can wait 30 seconds or more for Cloud NAT, and a job can afford to wait.
+const SentryJobFlushTimeout = time.Minute
 
 // OtelPresetDefault is the OpenTelemetry exporter of the servers. It exports nothing unless OTEL is
 // set, then exports to Google Cloud when GCLOUD_PROJECT_ID is set, and to standard output otherwise.

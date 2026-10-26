@@ -80,7 +80,11 @@ func main() {
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient))
 	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
 
-	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
+	// No request waits for its mail, so a failed send reaches Sentry here.
+	reportMailDelivery := func(ctx context.Context, kind string, err error) {
+		sentryf.Capture(ctx, "deliver "+kind+" mail", err)
+	}
+	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent, reportMailDelivery)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
 	lib.PrepareDummyArgon2()
 

@@ -29,6 +29,10 @@ type MailDeliverySMTP interface {
 	SendMail(to smtp.MailUsers, t *template.Template, tName string, data any) error
 }
 
+// MailDeliveryReport receives each failed send with its [MailDeliveryRequest.Kind], under the send's
+// span. A send outlives the request that accepted it, so its failure surfaces here alone.
+type MailDeliveryReport func(ctx context.Context, kind string, err error)
+
 // MailDeliveryRequest describes one accepted message without carrying its originating request
 // context. Data may contain credentials and must remain outside logs and traces.
 type MailDeliveryRequest struct {
@@ -55,7 +59,8 @@ type MailDeliveryReservation interface {
 
 // MailDelivery owns the bounded lifecycle of short-code email sends.
 type MailDelivery struct {
-	smtp MailDeliverySMTP
+	smtp   MailDeliverySMTP
+	report MailDeliveryReport
 
 	admissionClosed chan struct{}
 	drained         chan struct{}
@@ -73,10 +78,12 @@ type mailDeliveryReservation struct {
 }
 
 // NewMailDelivery creates an owner that accepts at most limit messages at once. A limit below one
-// becomes one.
-func NewMailDelivery(smtp MailDeliverySMTP, limit int) *MailDelivery {
+// becomes one. A nil report leaves a failed send on its span, for a caller that waits for the
+// result itself.
+func NewMailDelivery(smtp MailDeliverySMTP, limit int, report MailDeliveryReport) *MailDelivery {
 	return &MailDelivery{
 		smtp:            smtp,
+		report:          report,
 		admissionClosed: make(chan struct{}),
 		drained:         make(chan struct{}),
 		slots:           make(chan struct{}, max(limit, 1)),
@@ -173,7 +180,7 @@ func (delivery *MailDelivery) complete() {
 func (delivery *MailDelivery) send(ctx context.Context, request *MailDeliveryRequest) {
 	defer delivery.complete()
 
-	_, span := otel.Tracer().Start(ctx, "core.MailDelivery(send)")
+	ctx, span := otel.Tracer().Start(ctx, "core.MailDelivery(send)")
 	defer span.End()
 	defer otel.RecoverPanic(ctx, span)
 
@@ -188,5 +195,9 @@ func (delivery *MailDelivery) send(ctx context.Context, request *MailDeliveryReq
 		delivery.mu.Unlock()
 
 		_ = otel.ReportError(span, err)
+
+		if delivery.report != nil {
+			delivery.report(ctx, request.Kind, err)
+		}
 	}
 }

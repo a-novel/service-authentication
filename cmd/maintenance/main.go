@@ -38,7 +38,7 @@ func mainExitCode() int {
 
 		return 1
 	}
-	defer sentryf.Flush(config.SentryFlushTimeout)
+	defer sentryf.Flush(config.SentryJobFlushTimeout)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
