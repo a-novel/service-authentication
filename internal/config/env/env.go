@@ -8,6 +8,7 @@ import (
 	"github.com/a-novel-kit/golib/config"
 	"github.com/a-novel-kit/golib/downtime"
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/sentryf"
 )
 
 // prefix is prepended to every configuration variable name that this package reads.
@@ -186,6 +187,9 @@ var (
 	AppName = config.LoadEnv(getEnv("APP_NAME"), AppNameDefault, config.StringParser)
 	// Otel enables OpenTelemetry instrumentation.
 	Otel = config.LoadEnv(getEnv("OTEL"), false, config.BoolParser)
+	// Sentry configures the fault reporter from the SENTRY_* variables. The reporter sends nothing
+	// without SENTRY_DSN.
+	Sentry = sentryf.LoadConfig(getEnv)
 
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
