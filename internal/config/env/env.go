@@ -47,10 +47,9 @@ const (
 	// ServiceJsonKeysPortDefault is the JSON Keys service's default gRPC port.
 	ServiceJsonKeysPortDefault = 8080
 
-	// RestTimeoutShutdownDefault clears SmtpTimeoutDefault, leaving room for a send that starts
-	// just before the signal to finish. The container runtime's stop grace period has to clear
-	// this in turn; builds/podman-compose.yaml sets one.
-	RestTimeoutShutdownDefault = 25 * time.Second
+	// TimeoutShutdownDefault ends a server's drain 6 seconds after SIGTERM, so its Sentry and
+	// OpenTelemetry flushes, up to 2 seconds each, finish before Cloud Run kills it at 10 seconds.
+	TimeoutShutdownDefault = 6 * time.Second
 
 	// PostgresMaxOpenConnsDefault caps the connections one instance opens. Multiplied by the replica
 	// count, the cap stays well under PostgreSQL's default max_connections of 100. That leaves room
@@ -203,12 +202,12 @@ var (
 	DowntimeStart = config.LoadEnv(getEnv("DOWNTIME_START"), nil, downtime.ParseStart)
 )
 
-// restDefaults keeps golib's REST defaults but for the versioned ping path and the shutdown, which
-// waits for detached mail.
+// restDefaults keeps golib's REST defaults but for the versioned ping path and the drain, which fits
+// Cloud Run's kill window. A send still running when the drain ends is cut.
 func restDefaults() httpf.ServerConfig {
 	defaults := httpf.ServerConfigDefault
 	defaults.Liveness = "/v2/ping"
-	defaults.Timeouts.Shutdown = RestTimeoutShutdownDefault
+	defaults.Timeouts.Shutdown = TimeoutShutdownDefault
 
 	return defaults
 }

@@ -192,7 +192,7 @@ The service reads every variable from the process environment, prefixed with
 | `REST_TIMEOUT_WRITE`          | Write timeout.                                                                                                                               | `30s`                            |
 | `REST_TIMEOUT_IDLE`           | Idle keep-alive timeout.                                                                                                                     | `60s`                            |
 | `REST_TIMEOUT_REQUEST`        | Per-request timeout.                                                                                                                         | `60s`                            |
-| `REST_TIMEOUT_SHUTDOWN`       | Graceful-shutdown timeout.                                                                                                                   | `25s`                            |
+| `REST_TIMEOUT_SHUTDOWN`       | Graceful shutdown budget. With the 4 seconds of telemetry flushes after it, it fits Cloud Run's 10 seconds before `SIGKILL`.                 | `6s`                             |
 | `REST_CORS_ALLOWED_ORIGINS`   | CORS allowed origins.                                                                                                                        | `*`                              |
 | `REST_CORS_ALLOWED_HEADERS`   | CORS allowed headers.                                                                                                                        | `*`                              |
 | `REST_CORS_ALLOWED_METHODS`   | CORS allowed methods, comma-separated.                                                                                                       | `HEAD,GET,POST,PUT,PATCH,DELETE` |
@@ -257,15 +257,10 @@ On `SIGTERM`, the server stops accepting requests, drains the open ones, then wa
 already going out. Each email goes out on its own goroutine, so a send outlives the request that
 started it.
 
-The wait completes only when three values increase in this order:
-
-```
-SMTP_TIMEOUT (20s)  <  REST_TIMEOUT_SHUTDOWN (25s)  <  the deployment's termination grace period
-```
-
-Docker and Podman grant 10 seconds by default, which cuts the wait short and drops the emails still
-going out. `builds/podman-compose.yaml` raises it to 30s. A Kubernetes deployment sets
-`terminationGracePeriodSeconds` the same way.
+The drain ends `REST_TIMEOUT_SHUTDOWN` after the signal, 6 seconds by default. The server then
+flushes Sentry and OpenTelemetry for up to 2 seconds each, inside the 10 seconds that Cloud Run,
+Docker and Podman grant before `SIGKILL`. A send still going out when the drain ends is cut and
+reported to Sentry, and its user asks for another email.
 
 ## Using the client packages
 
