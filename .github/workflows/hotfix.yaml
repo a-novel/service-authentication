@@ -58,7 +58,7 @@ jobs:
     # backport, so the agent can approve it.
     permissions:
       contents: read
-    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.79.0
+    uses: a-novel-kit/workflows/.github/workflows/backport-run.yaml@v1.80.0
     with:
       line: ${{ inputs.line }}
       fix_refs: ${{ inputs.fix_refs }}
@@ -88,7 +88,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.79.0
+    uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.80.0
     with:
       branch: ${{ github.event.pull_request.base.ref }}
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
@@ -99,4 +99,7 @@ jobs:
       app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
       # Exists only in the `release` environment, which the callee's cut job names.
       release_private_key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+      # Records the patch in Sentry. Also a `release` environment secret, absent
+      # from a repository without a Sentry project, which then records nothing.
+      sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
       push_webhook: ${{ secrets.ESCALATE_PUSH_WEBHOOK }}
