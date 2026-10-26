@@ -6,8 +6,8 @@ cloud.google.com/go/auth/oauth2adapt v0.3.0 h1:FY8oSZpCYoUNv6QxVODuMjQz4IlSOVeiQ
 cloud.google.com/go/auth/oauth2adapt v0.3.0/go.mod h1:7+2uCm7++XFO+/lN06c2HXpDXb/NMNn2/UwyBPbTnkk=
 cloud.google.com/go/compute/metadata v0.10.0 h1:pyKMUQSwchgkIBBJGdILqQbs/BNJXqwSA7Ej6LAvvtY=
 cloud.google.com/go/compute/metadata v0.10.0/go.mod h1:rGFHRrIif570kSibjFTMbt6/4/tzgJWFGI/HVol4GIk=
-github.com/a-novel-kit/golib v0.50.0 h1:8EwC1CxyzYDjSYueFOhCIluWGrwRDl/SV0TCRzq7cQc=
-github.com/a-novel-kit/golib v0.50.0/go.mod h1:4XTgG6DAzdZefi/xaaJ7dA0hIu5jdsAVTMq/0G+OOD0=
+github.com/a-novel-kit/golib v0.51.0 h1:X7n9NM1C8qs2RfgDhATdZLZheHXZY/jSmdBovBFkQ04=
+github.com/a-novel-kit/golib v0.51.0/go.mod h1:nPiIx7kuUGYDsMI7YBscAFzd8KOSoWNnFPOs2Jbi4fc=
 github.com/a-novel-kit/jwt/v2 v2.6.0 h1:jTPqbdG/gSlcPCSmp8o7gBHHtLZcIPpLVG5jqSjlF6U=
 github.com/a-novel-kit/jwt/v2 v2.6.0/go.mod h1:pkDVhDrwshhk8U2FJiZciPHVh8zq5WYDJCMBKOmd1PQ=
 github.com/a-novel/service-json-keys/v2 v2.13.2 h1:D9kCJxQJ9VVIc/6S1WlqSoxFS4nTCULufDCQ59deEhw=
@@ -38,10 +38,6 @@ github.com/gabriel-vasile/mimetype v1.4.15 h1:05iP/CYtZ/w455R/KZM6rZ5ieAdh99UPtd
 github.com/gabriel-vasile/mimetype v1.4.15/go.mod h1:azpTcoLcDZRNgFou5j+APrqQx9HqVPWa6ijYQIIVswQ=
 github.com/getsentry/sentry-go v0.50.0 h1:gkO59rn/i0RCAXUUTflC5QVbTQGPXbaFabs2olVzc9g=
 github.com/getsentry/sentry-go v0.50.0/go.mod h1:+xsDuN+SoRN/xfs1hdq78wnrE3omIZf+FCuh9FOW1C8=
-github.com/getsentry/sentry-go/otel v0.50.0 h1:MlUtdu7dN4POvAde4qlrzC0h3DPniZA3IFdjCuZwAKA=
-github.com/getsentry/sentry-go/otel v0.50.0/go.mod h1:OfwS7wmoL6iHwUJsvmUV7FsKMdLs/wZTIi7t75sPMHg=
-github.com/getsentry/sentry-go/otel/otlp v0.50.0 h1:mmKr7wsrSnleAabOTYzlNWrOzN5pdkl2IPV6as+W8iU=
-github.com/getsentry/sentry-go/otel/otlp v0.50.0/go.mod h1:3SLOxr/akXyaI5Qlb7aqhLIU4W3efiQTqINKORTVqDA=
 github.com/go-chi/chi/v5 v5.5.0 h1:xdKQ1dJmVJsmgahrXSKhUx8NyVPzpwdlyrrQFpMPJgg=
 github.com/go-chi/chi/v5 v5.5.0/go.mod h1:d1IG7GtKPSjPyBP365PH8sAGVHk3qfB/IhjFNRH1wWM=
 github.com/go-chi/cors v1.2.2 h1:Jmey33TE+b+rB7fT8MUy1u0I4L+NARQlK6LhzKPSyQE=
@@ -145,8 +141,6 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.47.0 h1:julhjPeUH/q/7hinbSd
 go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.47.0/go.mod h1:Ao2mz688LH/tFf0yMAenidq6k2YNSx6SIY2q6jDACck=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.47.0 h1:UFpxOpYPmMNUtOWhdb+nC1WELIgVf8z9higURrbzYU4=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.47.0/go.mod h1:YBGjxe3lt0jtXoEXxGrGhv/jM7oUBUDVK7zhAvNyEjc=
-go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.45.0 h1:QBajQ2SrwQijzHyZbQlPsuIzpl/ll8DY6wPWsajeGcI=
-go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.45.0/go.mod h1:08ZQLjrPLQ6R4kAXvuOvODEer5Yh4CoFvll5qB2BCI8=
 go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.23.0 h1:PW/E9Tw6ZykC88pey0MZY8hKOUeEw+hX6PU+oXA4A9o=
 go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.23.0/go.mod h1:hUw4VNfiOnQ/yzGgy6ZdWVnudXw7iRfImhd6FjXOnvI=
 go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.47.0 h1:N3YQCxjxQ/bMjyc3heladfRm9t9RTksGQH8z4w6yU/0=
