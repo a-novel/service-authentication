@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -297,6 +298,11 @@ func serve(
 		// Logged while the process is already stopping. Failed deliveries or mail that missed
 		// the budget are worth reporting and the shutdown still completes.
 		log.Println("Some emails failed or were still in flight at shutdown: " + drainErr.Error())
+	}
+
+	// A failed send reported itself. A send the shutdown cut short did not.
+	if errors.Is(drainErr, context.DeadlineExceeded) {
+		sentryf.Capture(ctx, "drain mail", drainErr)
 	}
 
 	return serveErr
