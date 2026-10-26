@@ -21,6 +21,9 @@ import (
 // shutdown.
 const OtelFlushTimeout = 2 * time.Second
 
+// SentryFlushTimeout bounds how long a binary waits on exit to send its pending Sentry events.
+const SentryFlushTimeout = 2 * time.Second
+
 // OtelPresetDefault is the OpenTelemetry exporter of the servers. It exports nothing unless OTEL is
 // set, then exports to Google Cloud when GCLOUD_PROJECT_ID is set, and to standard output otherwise.
 var OtelPresetDefault = newOtelPreset()
@@ -84,6 +87,7 @@ var AppPresetDefault = App{
 		Timeout:             env.SmtpTimeout,
 	}),
 	Otel:   OtelPresetDefault,
+	Sentry: env.Sentry,
 	Logger: lo.Ternary[logging.Log](env.GcloudProjectID == "", LoggerDev, LoggerProd),
 	HttpLogger: lo.Ternary[logging.HTTPConfig](
 		env.GcloudProjectID == "",

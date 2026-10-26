@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/a-novel-kit/golib/sentryf/sentryftest"
 )
 
 type maintenanceCommandTestOperation struct {
@@ -111,4 +115,55 @@ Operations:
 			})
 		}
 	})
+}
+
+//nolint:paralleltest // Records through the process-wide Sentry reporter.
+func TestMaintenanceCommandSentry(t *testing.T) {
+	testCases := []struct {
+		name string
+
+		args         []string
+		operationErr error
+
+		// A nil fingerprint expects no event.
+		expectFingerprint []string
+	}{
+		{name: "Success", args: []string{"example"}},
+		{name: "Success/Help"},
+		{
+			name: "Error/Operation",
+
+			args:         []string{"example"},
+			operationErr: fmt.Errorf("purge: %w", errors.New("run")),
+
+			expectFingerprint: []string{"example", "*errors.errorString"},
+		},
+		{name: "Error/UnknownOperation", args: []string{"unknown"}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			transport := sentryftest.Record(t)
+
+			command := newMaintenanceCommand(maintenanceOperationDefinition{
+				name: "example",
+				parse: func([]string) (maintenanceOperation, error) {
+					return &maintenanceCommandTestOperation{err: testCase.operationErr}, nil
+				},
+			})
+
+			// TestMaintenanceCommand covers the returned error.
+			_ = command.run(t.Context(), testCase.args, io.Discard)
+
+			events := transport.Events()
+			if testCase.expectFingerprint == nil {
+				require.Empty(t, events)
+
+				return
+			}
+
+			require.Len(t, events, 1)
+			require.Equal(t, testCase.expectFingerprint, events[0].Fingerprint)
+		})
+	}
 }

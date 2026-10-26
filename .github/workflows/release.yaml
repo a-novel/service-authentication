@@ -48,7 +48,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/release-core@v1.78.0
+      - uses: a-novel-kit/workflows/publish-actions/release-core@v1.79.0
         with:
           # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
           cli_version: "1.7.5"
@@ -63,13 +63,21 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/release-core@v1.78.0
+      - id: release
+        uses: a-novel-kit/workflows/publish-actions/release-core@v1.79.0
         with:
           # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
           cli_version: "1.7.5"
           release_type: ${{ inputs.release_type }}
           client_id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+      - uses: a-novel-kit/workflows/publish-actions/sentry-release@v1.79.0
+        with:
+          release_version: ${{ steps.release.outputs.version }}
+          auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          # renovate: datasource=custom.sentry-cli depName=getsentry/sentry-cli
+          version: "3.8.2"
+          sha256: "c958865f9d4000183509ea21b1f04925d5390de6d8d87386b9e69f2b305070c3"
 
   build-database:
     if: github.event_name == 'push'
@@ -80,7 +88,7 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.78.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.79.0
         with:
           file: builds/database.Dockerfile
           image_name: ${{ github.repository }}/database
@@ -116,7 +124,7 @@ jobs:
           services: postgres
           database_image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
           registry_login: "true"
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.78.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.79.0
         with:
           mode: job
           file: builds/migrations.Dockerfile
@@ -139,7 +147,7 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.78.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.79.0
         with:
           mode: job
           file: builds/maintenance.Dockerfile
@@ -176,7 +184,7 @@ jobs:
           database_image: ghcr.io/a-novel/service-authentication/database:${{ github.ref_name }}
           registry_login: "true"
       - uses: $/.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.78.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.79.0
         with:
           file: builds/rest.Dockerfile
           image_name: ${{ github.repository }}/rest
@@ -217,7 +225,7 @@ jobs:
           persist-credentials: false
       - *start-release-build-dependencies
       - uses: $/.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.78.0
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.79.0
         with:
           file: builds/standalone.rest.Dockerfile
           image_name: ${{ github.repository }}/standalone-rest
@@ -243,7 +251,7 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/npm@v1.78.0
+      - uses: a-novel-kit/workflows/publish-actions/npm@v1.79.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -264,7 +272,7 @@ jobs:
       deployment: false
     permissions: {}
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/deploy-release@v1.78.0
+      - uses: a-novel-kit/workflows/publish-actions/deploy-release@v1.79.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
@@ -288,7 +296,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/archive-board-items@v1.78.0
+      - uses: a-novel-kit/workflows/generic-actions/archive-board-items@v1.79.0
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}

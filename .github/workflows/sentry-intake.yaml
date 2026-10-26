@@ -1,0 +1,18 @@
+name: sentry-intake
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  intake:
+    # The callee types and labels the issue; the board goes through the Agent App.
+    permissions:
+      issues: write
+    uses: a-novel-kit/workflows/.github/workflows/sentry-intake-run.yaml@v1.79.0
+    with:
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
+      kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+    secrets:
+      app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}

@@ -8,6 +8,7 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/sentryf"
 	"github.com/a-novel-kit/golib/smtp"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
@@ -42,6 +43,7 @@ type App struct {
 
 	Smtp       smtp.Sender        `json:"smtp"       yaml:"smtp"`
 	Otel       otel.Config        `json:"otel"       yaml:"otel"`
+	Sentry     sentryf.Config     `json:"sentry"     yaml:"sentry"`
 	Logger     logging.Log        `json:"logger"     yaml:"logger"`
 	HttpLogger logging.HTTPConfig `json:"httplogger" yaml:"httplogger"`
 	Postgres   postgres.Config    `json:"postgres"   yaml:"postgres"`
