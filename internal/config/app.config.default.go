@@ -25,6 +25,10 @@ const OtelFlushTimeout = 2 * time.Second
 // the platform's shutdown grace period.
 const SentryFlushTimeout = 2 * time.Second
 
+// SmtpPingTimeout bounds the health check's SMTP ping. A mail can take minutes on a slow relay, and
+// the health check still answers within seconds.
+const SmtpPingTimeout = 10 * time.Second
+
 // SentryJobFlushTimeout bounds a job's wait on exit for its pending Sentry events. A fresh job's
 // first connection out can wait 30 seconds or more for Cloud NAT, and a job can afford to wait.
 const SentryJobFlushTimeout = time.Minute
@@ -81,19 +85,11 @@ var AppPresetDefault = App{
 		Register:       env.PlatformAuthRegisterURL,
 	},
 
-	Smtp: lo.Ternary[smtp.Sender](env.SmtpAddr == "", smtp.NewDebugSender(nil), &smtp.ProdSender{
-		Addr:                env.SmtpAddr,
-		Name:                env.SmtpSenderName,
-		Email:               env.SmtpSenderEmail,
-		Username:            env.SmtpUsername,
-		Password:            env.SmtpSenderPassword,
-		Domain:              env.SmtpSenderDomain,
-		ForceUnencryptedTLS: env.SmtpForceUnencrypted,
-		Timeout:             env.SmtpTimeout,
-	}),
-	Otel:   OtelPresetDefault,
-	Sentry: env.Sentry,
-	Logger: lo.Ternary[logging.Log](env.GcloudProjectID == "", LoggerDev, LoggerProd),
+	Smtp:     newSmtpSender(env.SmtpTimeout),
+	SmtpPing: newSmtpSender(SmtpPingTimeout),
+	Otel:     OtelPresetDefault,
+	Sentry:   env.Sentry,
+	Logger:   lo.Ternary[logging.Log](env.GcloudProjectID == "", LoggerDev, LoggerProd),
 	HttpLogger: lo.Ternary[logging.HTTPConfig](
 		env.GcloudProjectID == "",
 		&loggingpresets.HTTPLocal{
@@ -115,5 +111,24 @@ func newOtelPreset() otel.Config {
 		return &otelpresets.Local{FlushTimeout: OtelFlushTimeout}
 	default:
 		return &otelpresets.Gcloud{ProjectID: env.GcloudProjectID, FlushTimeout: OtelFlushTimeout}
+	}
+}
+
+// newSmtpSender sends through the relay SMTP_ADDR names, within timeout, or prints every mail when
+// SMTP_ADDR is unset.
+func newSmtpSender(timeout time.Duration) smtp.Sender {
+	if env.SmtpAddr == "" {
+		return smtp.NewDebugSender(nil)
+	}
+
+	return &smtp.ProdSender{
+		Addr:                env.SmtpAddr,
+		Name:                env.SmtpSenderName,
+		Email:               env.SmtpSenderEmail,
+		Username:            env.SmtpUsername,
+		Password:            env.SmtpSenderPassword,
+		Domain:              env.SmtpSenderDomain,
+		ForceUnencryptedTLS: env.SmtpForceUnencrypted,
+		Timeout:             timeout,
 	}
 }
