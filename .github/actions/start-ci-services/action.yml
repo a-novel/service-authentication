@@ -15,11 +15,11 @@ inputs:
     description: Authentication standalone REST image reference.
   json_keys_database_image:
     required: false
-    default: ghcr.io/a-novel/service-json-keys/database:v2.13.3@sha256:8778711f5c9beb691b741b2edbbcccf4e5f857b0ff3380fbf2210dea194aab5a
+    default: ghcr.io/a-novel/service-json-keys/database:v2.13.4@sha256:8778711f5c9beb691b741b2edbbcccf4e5f857b0ff3380fbf2210dea194aab5a
     description: JSON keys database image reference.
   json_keys_grpc_image:
     required: false
-    default: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.13.3@sha256:c60560ad33a875624e20fc7b60bc2da49539c06d06c8c75532a760cc3a3aa2b6
+    default: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.13.4@sha256:650ee2b4a0ddd842c30a8d7d5266c29d590a1e15e82e7bb010b2f3fe94984ed8
     description: JSON keys gRPC image reference.
   mailserver_image:
     required: false
