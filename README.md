@@ -212,13 +212,17 @@ The service reads every variable from the process environment, prefixed with
 | ---------------- | --------------------------------------------------- | ------- |
 | `DOWNTIME_START` | When a planned downtime starts, in RFC 3339 format. |         |
 
-**Logs and tracing** (images `rest`, `jobs/maintenance`, `standalone-rest`). OpenTelemetry exports to stdout, or to Google Cloud when a project ID is set:
+**Logs and tracing** (images `rest`, `jobs/maintenance`, `standalone-rest`). OpenTelemetry exports to stdout, or over OTLP/HTTP once an endpoint is set:
 
-| Name                | Description                                                           | Default                  |
-| ------------------- | --------------------------------------------------------------------- | ------------------------ |
-| `OTEL`              | Enable OTel tracing; the variables below pick the exporter.           | `false`                  |
-| `GCLOUD_PROJECT_ID` | Google Cloud project ID. When set, switches the OTel exporter to GCP. |                          |
-| `APP_NAME`          | Application name attached to traces and logs.                         | `service-authentication` |
+| Name                             | Description                                                                                                      | Default                  |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `OTEL`                           | Enable OTel tracing; the variables below pick the exporter.                                                      | `false`                  |
+| `GCLOUD_PROJECT_ID`              | Google Cloud project ID. When set, the JSON Keys connection authenticates with Google ID tokens.                 |                          |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`    | Base URL of the OTLP/HTTP backend. When set, traces and logs export there, and the servers write no request log. |                          |
+| `OTEL_EXPORTER_OTLP_HEADERS`     | Headers each export sends, such as the backend's key. Inject it as a secret.                                     |                          |
+| `OTEL_EXPORTER_OTLP_COMPRESSION` | `gzip` compresses each export.                                                                                   |                          |
+| `OTEL_SERVICE_NAME`              | Service name every span and log record carries.                                                                  |                          |
+| `APP_NAME`                       | Application name attached to traces and logs.                                                                    | `service-authentication` |
 
 **Fault reporting** (images `rest`, `jobs/maintenance`, `standalone-rest`). With a DSN, the server reports each 5xx answer and each panic to Sentry, and maintenance reports a failed operation under its name. Without one, nothing is sent:
 
