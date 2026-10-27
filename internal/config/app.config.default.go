@@ -35,18 +35,21 @@ const SmtpPingTimeout = 10 * time.Second
 const SentryJobFlushTimeout = sentryf.SendTimeout + time.Minute
 
 // OtelPresetDefault is the OpenTelemetry exporter of the servers. It exports nothing unless OTEL is
-// set, then exports to Google Cloud when GCLOUD_PROJECT_ID is set, and to standard output otherwise.
+// set, then exports over OTLP/HTTP when OTEL_EXPORTER_OTLP_ENDPOINT is set, and to standard output
+// otherwise. The liveness probe produces no span.
 var OtelPresetDefault = newOtelPreset()
+
+// exportsOTLP reports whether the servers export over OTLP: OTEL is set, and so is the OTLP
+// endpoint. Their logs then go through the same backend, and their spans record each request.
+var exportsOTLP = env.Otel && env.OTLPEndpoint != ""
 
 // LoggerDev writes human-readable logs to stdout for local development.
 var LoggerDev = &loggingpresets.LogLocal{
 	Out: os.Stdout,
 }
 
-// LoggerProd emits structured logs for the Google Cloud Logging backend.
-var LoggerProd = &loggingpresets.LogGcloud{
-	ProjectID: env.GcloudProjectID,
-}
+// LoggerProd sends application logs through the OpenTelemetry backend, linked to their trace.
+var LoggerProd = &loggingpresets.LogOTel{}
 
 // AppPresetDefault is the application configuration read from the environment, with each field falling
 // back to its documented default when the variable is unset.
@@ -90,15 +93,10 @@ var AppPresetDefault = App{
 	SmtpPing: newSmtpSender(SmtpPingTimeout),
 	Otel:     OtelPresetDefault,
 	Sentry:   env.Sentry,
-	Logger:   lo.Ternary[logging.Log](env.GcloudProjectID == "", LoggerDev, LoggerProd),
+	Logger:   lo.Ternary[logging.Log](!exportsOTLP, LoggerDev, LoggerProd),
+	// The server span records each request once telemetry exports over OTLP.
 	HttpLogger: lo.Ternary[logging.HTTPConfig](
-		env.GcloudProjectID == "",
-		&loggingpresets.HTTPLocal{
-			BaseLogger: LoggerDev,
-		},
-		&loggingpresets.HTTPGcloud{
-			BaseLogger: LoggerProd,
-		},
+		!exportsOTLP, &loggingpresets.HTTPLocal{BaseLogger: LoggerDev}, nil,
 	),
 	Postgres: PostgresPresetDefault,
 }
@@ -108,10 +106,10 @@ func newOtelPreset() otel.Config {
 	switch {
 	case !env.Otel:
 		return &otelpresets.Disabled{}
-	case env.GcloudProjectID == "":
+	case env.OTLPEndpoint == "":
 		return &otelpresets.Local{FlushTimeout: OtelFlushTimeout}
 	default:
-		return &otelpresets.Gcloud{ProjectID: env.GcloudProjectID, FlushTimeout: OtelFlushTimeout}
+		return &otelpresets.OTLP{UntracedPaths: []string{env.Rest.Liveness}, FlushTimeout: OtelFlushTimeout}
 	}
 }
 

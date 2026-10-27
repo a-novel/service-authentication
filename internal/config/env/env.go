@@ -193,9 +193,15 @@ var (
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
-	// GcloudProjectID is the Google Cloud project the service runs in. When set, logs, traces and the
-	// JSON Keys connection use Google Cloud.
+	// GcloudProjectID is the Google Cloud project the service runs in. When set, the JSON Keys
+	// connection authenticates with Google ID tokens.
 	GcloudProjectID = getEnv("GCLOUD_PROJECT_ID")
+
+	// OTLPEndpoint is the standard OTEL_EXPORTER_OTLP_ENDPOINT. When set, traces and logs export
+	// over OTLP/HTTP, which the OTEL_EXPORTER_OTLP_* variables configure. When empty, they go to
+	// standard output. The OpenTelemetry SDK reads these variables without the prefix, so this one
+	// is read without it too.
+	OTLPEndpoint = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 
 	// DowntimeStart is when a planned downtime of this service starts, in RFC 3339. From then
 	// until it is removed, the service refuses work. Nil when none is planned.
