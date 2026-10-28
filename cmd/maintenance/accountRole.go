@@ -70,11 +70,11 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 
 	otel.SetAppName(cfg.App.Name + "-maintenance")
 
-	err = otel.Init(cfg.Otel)
+	err = otel.Init(config.OtelJobPresetDefault)
 	if err != nil {
 		return fmt.Errorf("initialize telemetry: %w", err)
 	}
-	defer cfg.Otel.Flush()
+	defer config.OtelJobPresetDefault.Flush()
 
 	if env.GcloudProjectID == "" {
 		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))

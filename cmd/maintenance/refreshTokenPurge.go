@@ -36,11 +36,11 @@ func (operation *refreshTokenPurgeOperation) run(ctx context.Context) error {
 
 	otel.SetAppName(cfg.App.Name + "-maintenance")
 
-	err := otel.Init(cfg.Otel)
+	err := otel.Init(config.OtelJobPresetDefault)
 	if err != nil {
 		return fmt.Errorf("initialize telemetry: %w", err)
 	}
-	defer cfg.Otel.Flush()
+	defer config.OtelJobPresetDefault.Flush()
 
 	ctx, cancel := context.WithTimeout(ctx, refreshTokenPurgeTimeout)
 	defer cancel()
