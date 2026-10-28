@@ -22,6 +22,8 @@ Authentication owns **user identities** and their **sessions**. An account is an
 
 Registration, an email change and a password reset each need a single-use **short code**, emailed to the user. A stolen session token alone cannot take over an account.
 
+Each email goes out once, and a failed send is never retried. A user who receives nothing asks for a new short code, which invalidates the previous one, and the rate limits bound how often. A retry queue would race that request, add failures and cancellations of its own, and let mail pile up behind the bounded sender while the relay is slow. Only mail that a user cannot ask for again would justify one.
+
 The service exposes one **public REST API** and holds no signing key. [JSON Keys](https://github.com/a-novel/service-json-keys) signs and verifies every token over its private gRPC API, on a network the two services share. The Go client ships an auth middleware that any service mounts to verify tokens and enforce permissions locally.
 
 ## Deploying
