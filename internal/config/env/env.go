@@ -193,8 +193,21 @@ var (
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
-	// GcloudProjectID is the Google Cloud project the service runs in. When set, the JSON Keys
-	// connection authenticates with Google ID tokens.
+	// ServiceTokenIssuer is the issuer of the service tokens the REST server accepts, as a token's
+	// "iss" claim names it. When empty, the server takes every request without a service token.
+	ServiceTokenIssuer = getEnv("SERVICE_TOKEN_ISSUER")
+	// ServiceTokenAudience is the audience the REST server answers to. Each caller requests its token
+	// for it.
+	ServiceTokenAudience = getEnv("SERVICE_TOKEN_AUDIENCE")
+	// ServiceTokenCallers are the service accounts allowed to call, as a comma-separated list of
+	// system:serviceaccount:<namespace>:<name>.
+	ServiceTokenCallers = config.LoadEnv(getEnv("SERVICE_TOKEN_CALLERS"), nil, config.SliceParser(config.StringParser))
+	// ServiceTokenPath is the file the kubelet projects this service's own token into, for the JSON
+	// Keys audience. When set, the JSON Keys connection sends that token with every call.
+	ServiceTokenPath = getEnv("SERVICE_TOKEN_PATH")
+
+	// GcloudProjectID is the Google Cloud project the service runs in. When set without
+	// ServiceTokenPath, the JSON Keys connection authenticates with Google ID tokens.
 	GcloudProjectID = getEnv("GCLOUD_PROJECT_ID")
 
 	// OTLPEndpoint is the standard OTEL_EXPORTER_OTLP_ENDPOINT. When set, traces and logs export

@@ -12,6 +12,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	otelpresets "github.com/a-novel-kit/golib/otel/presets"
 	"github.com/a-novel-kit/golib/sentryf"
+	"github.com/a-novel-kit/golib/servicetoken"
 	"github.com/a-novel-kit/golib/smtp"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
@@ -77,17 +78,16 @@ var AppPresetDefault = App{
 		WaitlistMaxRequestSize: env.WaitlistMaxRequestSize,
 		Argon2MaxConcurrent:    env.Argon2MaxConcurrent,
 	},
+	ServiceToken: servicetoken.Config{
+		Issuer:   env.ServiceTokenIssuer,
+		Audience: env.ServiceTokenAudience,
+		Callers:  env.ServiceTokenCallers,
+	},
 
 	DependenciesConfig: Dependencies{
-		ServiceJsonKeysPort: env.ServiceJsonKeysPort,
-		ServiceJsonKeysHost: env.ServiceJsonKeysHost,
-		ServiceJsonKeysCredentials: lo.Ternary[grpcf.CredentialsProvider](
-			env.GcloudProjectID == "",
-			&grpcf.LocalCredentialsProvider{},
-			&grpcf.GcloudCredentialsProvider{
-				Host: env.ServiceJsonKeysHost,
-			},
-		),
+		ServiceJsonKeysPort:        env.ServiceJsonKeysPort,
+		ServiceJsonKeysHost:        env.ServiceJsonKeysHost,
+		ServiceJsonKeysCredentials: newJsonKeysCredentials(),
 	},
 	Permissions:      authconfig.PermissionsConfigDefault,
 	Waitlist:         authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
@@ -119,6 +119,20 @@ func newOtelPreset(flushTimeout time.Duration) otel.Config {
 		return &otelpresets.Local{FlushTimeout: flushTimeout}
 	default:
 		return &otelpresets.OTLP{UntracedPaths: []string{env.Rest.Liveness}, FlushTimeout: flushTimeout}
+	}
+}
+
+// newJsonKeysCredentials authenticates the JSON Keys connection with the service token at
+// SERVICE_TOKEN_PATH. Without one, it sends a Google ID token when the service runs on Google Cloud,
+// and nothing otherwise.
+func newJsonKeysCredentials() grpcf.CredentialsProvider {
+	switch {
+	case env.ServiceTokenPath != "":
+		return &grpcf.ServiceTokenCredentialsProvider{ServiceTokenPath: env.ServiceTokenPath}
+	case env.GcloudProjectID != "":
+		return &grpcf.GcloudCredentialsProvider{Host: env.ServiceJsonKeysHost}
+	default:
+		return &grpcf.LocalCredentialsProvider{}
 	}
 }
 

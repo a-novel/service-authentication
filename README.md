@@ -149,7 +149,7 @@ The service reads every variable from the process environment, prefixed with
 | `SERVICE_JSON_KEYS_PORT` | gRPC port of the JSON Keys service. Defaults to `8080`.                                                                             | `rest`<br/>`standalone-rest`                                              |
 
 <details>
-<summary>Optional configuration (client platform, SMTP, REST tuning, OpenTelemetry, Sentry)</summary>
+<summary>Optional configuration (client platform, SMTP, REST tuning, service tokens, OpenTelemetry, Sentry)</summary>
 
 **Client platform** (images `rest`, `jobs/maintenance`, `standalone-rest`). The links in outgoing emails point at the web platform that serves the account pages, such as [platform-studio](https://github.com/a-novel/platform-studio):
 
@@ -201,6 +201,15 @@ The service reads every variable from the process environment, prefixed with
 | `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.                                                                                                                 | `false`                          |
 | `REST_CORS_MAX_AGE`           | CORS max-age, in seconds.                                                                                                                    | `3600`                           |
 
+**Service tokens** (images `rest`, `standalone-rest`). Without `SERVICE_TOKEN_ISSUER`, the server takes every request. With it, the server refuses a request unless its `X-Service-Authorization` header carries a token from an allowed caller. The check runs before the server reads `REST_CLIENT_IP_HEADER` or counts a rate limit, so only an allowed caller names the visitor IP. The ping stays open for probes:
+
+| Name                     | Description                                                                                                                                                                                                                                                                 | Default |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `SERVICE_TOKEN_ISSUER`   | Issuer of the service tokens the server accepts, such as a GKE cluster's `https://container.googleapis.com/v1/projects/<project>/locations/<location>/clusters/<cluster>`. The server reads its keys through its OpenID discovery document, so it needs egress to its host. |         |
+| `SERVICE_TOKEN_AUDIENCE` | Audience the server answers to. Each caller's projected token names it.                                                                                                                                                                                                     |         |
+| `SERVICE_TOKEN_CALLERS`  | Service accounts allowed to call, comma-separated, each as `system:serviceaccount:<namespace>:<name>`. In production, Studio and the health check.                                                                                                                          |         |
+| `SERVICE_TOKEN_PATH`     | File the kubelet projects the service's own token into, for the JSON Keys audience. When set, the JSON Keys connection sends that token with every call, without TLS, inside the cluster.                                                                                   |         |
+
 **Database connection pool** (server images). The limits apply **per process**. The database's `max_connections` has to cover every replica plus the migration job, and the stock `postgres` default is 100.
 
 | Name                      | Description                               | Default |
@@ -216,15 +225,15 @@ The service reads every variable from the process environment, prefixed with
 
 **Logs and tracing** (images `rest`, `jobs/maintenance`, `standalone-rest`). OpenTelemetry exports to stdout, or over OTLP/HTTP once an endpoint is set:
 
-| Name                             | Description                                                                                                      | Default                  |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `OTEL`                           | Enable OTel tracing; the variables below pick the exporter.                                                      | `false`                  |
-| `GCLOUD_PROJECT_ID`              | Google Cloud project ID. When set, the JSON Keys connection authenticates with Google ID tokens.                 |                          |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`    | Base URL of the OTLP/HTTP backend. When set, traces and logs export there, and the servers write no request log. |                          |
-| `OTEL_EXPORTER_OTLP_HEADERS`     | Headers each export sends, such as the backend's key. Inject it as a secret.                                     |                          |
-| `OTEL_EXPORTER_OTLP_COMPRESSION` | `gzip` compresses each export.                                                                                   |                          |
-| `OTEL_SERVICE_NAME`              | Service name every span and log record carries.                                                                  |                          |
-| `APP_NAME`                       | Application name attached to traces and logs.                                                                    | `service-authentication` |
+| Name                             | Description                                                                                                                   | Default                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `OTEL`                           | Enable OTel tracing; the variables below pick the exporter.                                                                   | `false`                  |
+| `GCLOUD_PROJECT_ID`              | Google Cloud project ID. When set without `SERVICE_TOKEN_PATH`, the JSON Keys connection authenticates with Google ID tokens. |                          |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`    | Base URL of the OTLP/HTTP backend. When set, traces and logs export there, and the servers write no request log.              |                          |
+| `OTEL_EXPORTER_OTLP_HEADERS`     | Headers each export sends, such as the backend's key. Inject it as a secret.                                                  |                          |
+| `OTEL_EXPORTER_OTLP_COMPRESSION` | `gzip` compresses each export.                                                                                                |                          |
+| `OTEL_SERVICE_NAME`              | Service name every span and log record carries.                                                                               |                          |
+| `APP_NAME`                       | Application name attached to traces and logs.                                                                                 | `service-authentication` |
 
 **Fault reporting** (images `rest`, `jobs/maintenance`, `standalone-rest`). With a DSN, the server reports each 5xx answer and each panic to Sentry, and maintenance reports a failed operation under its name. Without one, nothing is sent:
 
