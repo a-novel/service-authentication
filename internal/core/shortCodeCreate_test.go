@@ -36,7 +36,9 @@ func TestShortCodeCreate(t *testing.T) {
 
 		daoMock *daoMock
 
-		expectErr error
+		expectMail    *dao.ShortCodeInsertMail
+		expectEnqueue bool
+		expectErr     error
 	}{
 		{
 			name: "Success",
@@ -60,6 +62,31 @@ func TestShortCodeCreate(t *testing.T) {
 			},
 		},
 		{
+			name: "Success/Mail",
+
+			request: &core.ShortCodeCreateRequest{
+				Usage:    core.ShortCodeUsageValidateEmail,
+				Target:   "test-target",
+				Data:     map[string]string{"test": "data"},
+				TTL:      time.Hour,
+				Override: true,
+				Mail:     &core.ShortCodeCreateMail{Recipient: "user@provider.com", Lang: authconfig.LangFR},
+			},
+
+			daoMock: &daoMock{
+				resp: &dao.ShortCode{
+					ID:     uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Code:   "encrypted-code",
+					Usage:  core.ShortCodeUsageValidateEmail,
+					Target: "test-target",
+					Data:   []byte(`{"test":"data"}`),
+				},
+			},
+
+			expectMail:    &dao.ShortCodeInsertMail{Recipient: "user@provider.com", Lang: authconfig.LangFR},
+			expectEnqueue: true,
+		},
+		{
 			name: "CreateShortCodeError",
 
 			request: &core.ShortCodeCreateRequest{
@@ -68,13 +95,28 @@ func TestShortCodeCreate(t *testing.T) {
 				Data:     map[string]string{"test": "data"},
 				TTL:      time.Hour,
 				Override: true,
+				Mail:     &core.ShortCodeCreateMail{Recipient: "user@provider.com", Lang: authconfig.LangFR},
 			},
 
 			daoMock: &daoMock{
 				err: errFoo,
 			},
 
-			expectErr: errFoo,
+			expectMail: &dao.ShortCodeInsertMail{Recipient: "user@provider.com", Lang: authconfig.LangFR},
+			expectErr:  errFoo,
+		},
+		{
+			name: "Error/InvalidMail",
+
+			request: &core.ShortCodeCreateRequest{
+				Usage:    core.ShortCodeUsageValidateEmail,
+				Target:   "test-target",
+				TTL:      time.Hour,
+				Override: true,
+				Mail:     &core.ShortCodeCreateMail{Recipient: "not-an-email", Lang: authconfig.LangFR},
+			},
+
+			expectErr: core.ErrInvalidRequest,
 		},
 	}
 
@@ -83,6 +125,7 @@ func TestShortCodeCreate(t *testing.T) {
 			t.Parallel()
 
 			mockDao := coremocks.NewMockShortCodeCreateDao(t)
+			mailOutbox := coremocks.NewMockShortCodeCreateMailOutbox(t)
 
 			var (
 				encryptedShortCode string
@@ -103,7 +146,8 @@ func TestShortCodeCreate(t *testing.T) {
 							assert.Equal(t, testCase.request.Usage, data.Usage) &&
 							assert.Equal(t, testCase.request.Target, data.Target) &&
 							assert.Equal(t, testCase.request.Data, dataMap) &&
-							assert.Equal(t, testCase.request.Override, data.Override)
+							assert.Equal(t, testCase.request.Override, data.Override) &&
+							assert.Equal(t, testCase.expectMail, data.Mail)
 					})).
 					RunAndReturn(func(_ context.Context, data *dao.ShortCodeInsertRequest) (*dao.ShortCode, error) {
 						encryptedShortCode = data.Code
@@ -114,7 +158,16 @@ func TestShortCodeCreate(t *testing.T) {
 					})
 			}
 
-			service := core.NewShortCodeCreate(mockDao, authconfig.ShortCodesPresetDefault)
+			var enqueued *core.MailOutboxJob
+
+			if testCase.expectEnqueue {
+				mailOutbox.EXPECT().
+					Enqueue(mock.Anything, mock.Anything).
+					Run(func(_ context.Context, job *core.MailOutboxJob) { enqueued = job }).
+					Once()
+			}
+
+			service := core.NewShortCodeCreate(mockDao, mailOutbox, authconfig.ShortCodesPresetDefault)
 
 			// Bracket the whole call. The service stamps its timestamp after an Argon2id hash, which
 			// takes over a second on a loaded machine, and a timestamp taken during the call falls
@@ -141,7 +194,13 @@ func TestShortCodeCreate(t *testing.T) {
 				require.NoError(t, lib.CompareArgon2(resp.PlainCode, encryptedShortCode))
 			}
 
+			if testCase.expectEnqueue {
+				// The outbox gets the plaintext the request issued, so the first send needs no new code.
+				require.Equal(t, &core.MailOutboxJob{ShortCodeID: resp.ID, PlainCode: resp.PlainCode}, enqueued)
+			}
+
 			mockDao.AssertExpectations(t)
+			mailOutbox.AssertExpectations(t)
 		})
 	}
 }

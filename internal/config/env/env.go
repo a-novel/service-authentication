@@ -21,8 +21,6 @@ func getEnv(name string) string {
 }
 
 const (
-	// SmtpTimeoutDefault bounds one email send.
-	SmtpTimeoutDefault = 20 * time.Second
 	// SmtpMaxConcurrentDefault bounds the SMTP connections a burst or a stalled server can hold open.
 	SmtpMaxConcurrentDefault = 16
 	// WaitlistTimeoutDefault bounds one request to the optional Google sheet writer.
@@ -138,9 +136,7 @@ var (
 	// SmtpSenderDomain is the server name authentication is bound to. It should match the host of
 	// SmtpAddr, and it is unused without SmtpSenderPassword.
 	SmtpSenderDomain = getEnv("SMTP_SENDER_DOMAIN")
-	// SmtpTimeout bounds how long a single email send may take.
-	SmtpTimeout = config.LoadEnv(getEnv("SMTP_TIMEOUT"), SmtpTimeoutDefault, config.DurationParser)
-	// SmtpMaxConcurrent caps concurrent email deliveries; excess sends wait for a slot.
+	// SmtpMaxConcurrent caps the emails an instance sends at once; further mail waits in the outbox.
 	SmtpMaxConcurrent = config.LoadEnv(getEnv("SMTP_MAX_CONCURRENT"), SmtpMaxConcurrentDefault, config.IntParser)
 	// SmtpForceUnencrypted lets the SMTP client talk over a non-TLS connection. With a password, it
 	// sends the credentials in the clear, which Go otherwise permits only towards localhost. Without

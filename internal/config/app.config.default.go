@@ -98,11 +98,10 @@ var AppPresetDefault = App{
 		Register:       env.PlatformAuthRegisterURL,
 	},
 
-	Smtp:     newSmtpSender(env.SmtpTimeout),
-	SmtpPing: newSmtpSender(SmtpPingTimeout),
-	Otel:     OtelPresetDefault,
-	Sentry:   env.Sentry,
-	Logger:   lo.Ternary[logging.Log](!exportsOTLP, LoggerDev, LoggerProd),
+	Smtp:   newSmtpSender(),
+	Otel:   OtelPresetDefault,
+	Sentry: env.Sentry,
+	Logger: lo.Ternary[logging.Log](!exportsOTLP, LoggerDev, LoggerProd),
 	// The server span records each request once telemetry exports over OTLP.
 	HttpLogger: lo.Ternary[logging.HTTPConfig](
 		!exportsOTLP, &loggingpresets.HTTPLocal{BaseLogger: LoggerDev}, nil,
@@ -122,9 +121,9 @@ func newOtelPreset(flushTimeout time.Duration) otel.Config {
 	}
 }
 
-// newSmtpSender sends through the relay SMTP_ADDR names, within timeout, or prints every mail when
-// SMTP_ADDR is unset.
-func newSmtpSender(timeout time.Duration) smtp.Sender {
+// newSmtpSender sends through the relay SMTP_ADDR names, or prints every mail when SMTP_ADDR is
+// unset. A send times each SMTP command, and a ping answers within SmtpPingTimeout.
+func newSmtpSender() smtp.Sender {
 	if env.SmtpAddr == "" {
 		return smtp.NewDebugSender(nil)
 	}
@@ -137,6 +136,6 @@ func newSmtpSender(timeout time.Duration) smtp.Sender {
 		Password:            env.SmtpSenderPassword,
 		Domain:              env.SmtpSenderDomain,
 		ForceUnencryptedTLS: env.SmtpForceUnencrypted,
-		Timeout:             timeout,
+		Timeout:             SmtpPingTimeout,
 	}
 }

@@ -99,12 +99,15 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 	selectCredentials := dao.NewPgCredentialsSelectByEmail()
 	selectShortCode := dao.NewPgShortCodeSelect()
 	updateRole := dao.NewPgCredentialsUpdateRole()
-	createShortCode := core.NewShortCodeCreate(dao.NewPgShortCodeInsert(), cfg.ShortCodesConfig)
-	// The job waits for its mail, and main reports the failure the wait returns.
-	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent, nil)
-	register := core.NewShortCodeCreateRegister(
-		createShortCode, selectCredentials, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
+	// The job sends its own mail and waits for it, and main reports the failure it returns.
+	mailOutbox := core.NewMailOutbox(
+		dao.NewPgMailOutboxList(), dao.NewPgMailOutboxClaim(), dao.NewPgShortCodeRenew(),
+		dao.NewPgMailOutboxReschedule(), dao.NewPgMailOutboxDelete(),
+		cfg.Smtp, env.SmtpMaxConcurrent, nil, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
 	)
+	mail := &deliverNow{outbox: mailOutbox}
+	createShortCode := core.NewShortCodeCreate(dao.NewPgShortCodeInsert(), mail, cfg.ShortCodesConfig)
+	register := core.NewShortCodeCreateRegister(createShortCode, selectCredentials, cfg.ShortCodesConfig)
 	reconcileRole := core.NewCredentialsReconcileRole(selectCredentials, updateRole, selectShortCode, register)
 
 	reconcileRequest := &core.CredentialsReconcileRoleRequest{
@@ -114,8 +117,7 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 	}
 
 	result, operationErr := reconcileRole.Exec(ctx, reconcileRequest)
-
-	deliveryErr := mailDelivery.Wait(ctx)
+	deliveryErr := mail.err
 
 	if operationErr != nil {
 		return fmt.Errorf("reconcile account role: %w", errors.Join(operationErr, deliveryErr))
@@ -133,4 +135,16 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 	)
 
 	return nil
+}
+
+// deliverNow sends each mail as soon as it is stored and keeps the failures, so the job waits for its
+// own mail. A transient failure stays in the outbox, and the REST API retries it.
+type deliverNow struct {
+	outbox *core.MailOutbox
+	err    error
+}
+
+// Enqueue delivers job at once.
+func (mail *deliverNow) Enqueue(ctx context.Context, job *core.MailOutboxJob) {
+	mail.err = errors.Join(mail.err, mail.outbox.Deliver(ctx, job))
 }

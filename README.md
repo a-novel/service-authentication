@@ -106,7 +106,7 @@ maintenance account-role --email operator@example.com --role auth:admin --lang e
 
 An existing account moves to the requested role. A missing account receives a registration link whose short code carries the role, and completing the registration creates the account with it. Repeating a request changes nothing, while a request for another role replaces the pending invitation. The roles are `auth:anon`, `auth:user`, `auth:admin` and `auth:superadmin`.
 
-Without SMTP settings, emails go to a debug sender that prints them to stdout. The maintenance job waits for the invitation to go out, and fails when the sender reports an error.
+Without SMTP settings, emails go to a debug sender that prints them to stdout. The maintenance job sends the invitation itself and fails when the send fails. After a temporary failure, the REST API retries it like any other email.
 
 `refresh-token-purge` deletes the revocations of refresh tokens that have expired, which no longer serve any check. Signing out adds one revocation each time, so run it on a schedule, daily for instance. It takes no parameters:
 
@@ -168,9 +168,10 @@ The service reads every variable from the process environment, prefixed with
 | `SMTP_USERNAME`          | SMTP authentication identity; treat as protected account metadata. Unused without a password.                  | `SMTP_SENDER_EMAIL` |
 | `SMTP_SENDER_PASSWORD`   | SMTP authentication password. Sensitive — handle with care. Empty for an IP-only relay.                        |                     |
 | `SMTP_SENDER_DOMAIN`     | Server name authentication is bound to; must match the host portion of `SMTP_ADDR`. Unused without a password. |                     |
-| `SMTP_TIMEOUT`           | Send timeout.                                                                                                  | `20s`               |
-| `SMTP_MAX_CONCURRENT`    | Maximum number of emails delivered at once; further sends wait for a free slot.                                | `16`                |
+| `SMTP_MAX_CONCURRENT`    | Maximum number of emails an instance sends at once; further mail waits in the outbox.                          | `16`                |
 | `SMTP_FORCE_UNENCRYPTED` | **Never set in production.** Allows a connection without TLS, and plain credentials over it; dev only.         | `false`             |
+
+Each email waits in an outbox table until the relay accepts it. A temporary failure retries after 30 minutes, after 60 more, then every 2 hours, with a fresh code each time, until the first code expires. A permanent refusal, or a send whose result is unknown, ends the email and reaches Sentry.
 
 **REST tuning** (images `rest`, `standalone-rest`):
 
@@ -257,14 +258,15 @@ operations. A Google outage blocks neither login nor registration.
 
 ### Shutting down cleanly
 
-On `SIGTERM`, the server stops accepting requests, drains the open ones, then waits for the emails
-already going out. Each email goes out on its own goroutine, so a send outlives the request that
-started it.
+On `SIGTERM`, the server stops accepting requests, drains the open ones, and waits for the emails
+already going out. Each email waits in an outbox table until a send delivers it, so a send outlives
+the request that stored it.
 
 The drain ends `REST_TIMEOUT_SHUTDOWN` after the signal, 6 seconds by default. The server then
 flushes Sentry and OpenTelemetry for up to 2 seconds each, inside the 10 seconds that Cloud Run,
-Docker and Podman grant before `SIGKILL`. A send still going out when the drain ends is cut and
-reported to Sentry, and its user asks for another email.
+Docker and Podman grant before `SIGKILL`. An email still going out when the drain ends stays in the
+outbox, and the next instance sends it again. If the relay had already accepted it, its user gets
+it twice.
 
 ## Using the client packages
 

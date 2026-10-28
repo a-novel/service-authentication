@@ -20,8 +20,7 @@ type RestShortCodeCreateRegisterService interface {
 
 // shortCodeCreateRegisterErrors maps a failed invitation to its status.
 var shortCodeCreateRegisterErrors = httpf.ErrMap{
-	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-	core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+	core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 }
 
 // RestShortCodeCreateRegisterRequest is the JSON body of PUT /v2/short-code/register.

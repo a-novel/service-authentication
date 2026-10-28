@@ -553,7 +553,7 @@ paths:
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
-          $ref: "#/components/responses/mailDeliveryUnavailable"
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -590,7 +590,7 @@ paths:
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
-          $ref: "#/components/responses/mailDeliveryUnavailable"
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -625,7 +625,7 @@ paths:
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
-          $ref: "#/components/responses/mailDeliveryUnavailable"
+          $ref: "#/components/responses/plannedDowntime"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -762,15 +762,6 @@ components:
     conflict:
       description: |
         The record already exists.
-
-    mailDeliveryUnavailable:
-      description: |
-        The server is not accepting email deliveries, for instance while it shuts down. Retry later.
-        During a planned downtime, a problem body tagged `downtime`.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/plannedDowntimeProblem"
 
     tooManyRequests:
       description: |

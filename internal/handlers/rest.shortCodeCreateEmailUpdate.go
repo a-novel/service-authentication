@@ -22,8 +22,7 @@ type RestShortCodeCreateEmailUpdateService interface {
 
 // shortCodeCreateEmailUpdateErrors maps a failed email-change code request to its status.
 var shortCodeCreateEmailUpdateErrors = httpf.ErrMap{
-	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-	core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+	core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 }
 
 // RestShortCodeCreateEmailUpdateRequest is the JSON body of PUT /v2/short-code/update-email.

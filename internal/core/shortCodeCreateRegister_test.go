@@ -1,33 +1,25 @@
 package core_test
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/smtp"
-
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 func TestShortCodeCreateRegister(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
-
-	smtpConfig := authconfig.SmtpUrls{Register: "register-url"}
 
 	type serviceCreateMock struct {
 		resp *core.ShortCode
@@ -45,9 +37,6 @@ func TestShortCodeCreateRegister(t *testing.T) {
 
 		serviceCreateMock *serviceCreateMock
 		daoSelectMock     *daoSelectMock
-		sendMail          bool
-		sendMailPanic     bool
-		closeMailDelivery bool
 
 		expectErr error
 	}{
@@ -75,52 +64,6 @@ func TestShortCodeCreateRegister(t *testing.T) {
 					PlainCode: "abcdef123456",
 				},
 			},
-
-			sendMail: true,
-		},
-		{
-			name: "Success/SendMailPanic",
-
-			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				Role:  authconfig.RoleUser,
-			},
-
-			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
-			},
-
-			serviceCreateMock: &serviceCreateMock{
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Usage:     "test-usage",
-					Target:    "test-target",
-					Data:      []byte("test-data"),
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					PlainCode: "abcdef123456",
-				},
-			},
-
-			sendMail:      true,
-			sendMailPanic: true,
-		},
-		{
-			name: "Error/MailDeliveryUnavailable",
-
-			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				Role:  authconfig.RoleUser,
-			},
-
-			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
-			},
-
-			closeMailDelivery: true,
-			expectErr:         core.ErrMailDeliveryUnavailable,
 		},
 		{
 			name: "Error/CreateShortCode",
@@ -179,12 +122,6 @@ func TestShortCodeCreateRegister(t *testing.T) {
 
 			serviceCreate := coremocks.NewMockShortCodeCreateRegisterService(t)
 			daoSelect := coremocks.NewMockShortCodeCreateRegisterDao(t)
-			smtpService := coremocks.NewMockMailDeliverySMTP(t)
-
-			mailDelivery := core.NewMailDelivery(smtpService, 1, nil)
-			if testCase.closeMailDelivery {
-				mailDelivery.Close()
-			}
 
 			if testCase.serviceCreateMock != nil {
 				serviceCreate.EXPECT().
@@ -196,35 +133,10 @@ func TestShortCodeCreateRegister(t *testing.T) {
 							request.Target == testCase.request.Email &&
 							request.TTL == authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL &&
 							request.Override &&
+							*request.Mail == core.ShortCodeCreateMail{Recipient: testCase.request.Email, Lang: testCase.request.Lang} &&
 							string(data) == `{"role":"`+testCase.request.Role+`"}`
 					})).
 					Return(testCase.serviceCreateMock.resp, testCase.serviceCreateMock.err)
-			}
-
-			if testCase.sendMail {
-				mailData := map[string]any{
-					"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
-					"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
-					"URL":       smtpConfig.Register,
-					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL.Hours(),
-					"Banner":    assets.BannerBase64,
-				}
-
-				sendMail := smtpService.EXPECT().
-					SendMail(
-						smtp.MailUsers{{Email: testCase.request.Email}},
-						mails.Mails.Register,
-						testCase.request.Lang,
-						mailData,
-					).
-					Return(nil)
-
-				if testCase.sendMailPanic {
-					// An unabsorbed panic ends the test binary; surviving to Wait is the assertion.
-					sendMail.Run(func(smtp.MailUsers, *template.Template, string, any) {
-						panic("mail delivery exploded")
-					})
-				}
 			}
 
 			if testCase.daoSelectMock != nil {
@@ -235,9 +147,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 					Return(nil, testCase.daoSelectMock.err)
 			}
 
-			service := core.NewShortCodeCreateRegister(
-				serviceCreate, daoSelect, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
-			)
+			service := core.NewShortCodeCreateRegister(serviceCreate, daoSelect, authconfig.ShortCodesPresetDefault)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
@@ -246,11 +156,8 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				require.Equal(t, testCase.serviceCreateMock.resp, resp)
 			}
 
-			waitForMailDelivery(t, mailDelivery)
-
 			serviceCreate.AssertExpectations(t)
 			daoSelect.AssertExpectations(t)
-			smtpService.AssertExpectations(t)
 		})
 	}
 }

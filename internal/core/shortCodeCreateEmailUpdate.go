@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -10,12 +9,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/smtp"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 // ShortCodeCreateEmailUpdateService issues the underlying short code; satisfied
@@ -28,11 +24,6 @@ type ShortCodeCreateEmailUpdateService interface {
 // registered, so a change to an address already in use can be rejected.
 type ShortCodeCreateEmailUpdateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
-}
-
-// ShortCodeCreateEmailUpdateMailDelivery reserves bounded capacity for the confirmation mail.
-type ShortCodeCreateEmailUpdateMailDelivery interface {
-	Reserve(ctx context.Context) (MailDeliveryReservation, error)
 }
 
 // ShortCodeCreateEmailUpdateRequest carries the user changing their address, the
@@ -49,26 +40,20 @@ type ShortCodeCreateEmailUpdateRequest struct {
 type ShortCodeCreateEmailUpdate struct {
 	service          ShortCodeCreateEmailUpdateService
 	selectDao        ShortCodeCreateEmailUpdateDao
-	mailDelivery     ShortCodeCreateEmailUpdateMailDelivery
 	shortCodesConfig authconfig.ShortCodes
-	smtpConfig       authconfig.SmtpUrls
 }
 
 // NewShortCodeCreateEmailUpdate wires the email-change flow to the short-code
-// service, the email-existence DAO, and the delivery owner.
+// service, the email-existence DAO.
 func NewShortCodeCreateEmailUpdate(
 	service ShortCodeCreateEmailUpdateService,
 	selectDao ShortCodeCreateEmailUpdateDao,
-	mailDelivery ShortCodeCreateEmailUpdateMailDelivery,
 	shortCodesConfig authconfig.ShortCodes,
-	smtpConfig authconfig.SmtpUrls,
 ) *ShortCodeCreateEmailUpdate {
 	return &ShortCodeCreateEmailUpdate{
 		service:          service,
 		selectDao:        selectDao,
-		mailDelivery:     mailDelivery,
 		shortCodesConfig: shortCodesConfig,
-		smtpConfig:       smtpConfig,
 	}
 }
 
@@ -99,12 +84,6 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
-	reservation, err := service.mailDelivery.Reserve(ctx)
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
-	}
-	defer reservation.Release()
-
 	ttl := service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL
 	createRequest := &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageValidateEmail,
@@ -112,29 +91,13 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		Data:     request.Email,
 		TTL:      ttl,
 		Override: true,
+		Mail:     &ShortCodeCreateMail{Recipient: request.Email, Lang: request.Lang},
 	}
 
 	shortCode, err := service.service.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
-
-	mail := &MailDeliveryRequest{
-		To:           smtp.MailUsers{{Email: request.Email}},
-		Template:     mails.Mails.EmailUpdate,
-		TemplateName: request.Lang,
-		Data: map[string]any{
-			mails.TemplateVarShortCode: shortCode.PlainCode,
-			mails.TemplateVarTarget:    request.ID.String(),
-			mails.TemplateVarSource:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-			mails.TemplateVarURL:       service.smtpConfig.UpdateEmail,
-			mails.TemplateVarDuration:  ttl.Hours(),
-			mails.TemplateVarBanner:    assets.BannerBase64,
-		},
-		Kind: mailDeliveryKindEmailUpdate,
-	}
-
-	reservation.Deliver(ctx, mail)
 
 	return shortCode, nil
 }

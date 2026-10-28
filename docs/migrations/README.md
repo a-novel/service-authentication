@@ -1,7 +1,8 @@
 # Migration guides
 
-| Release               | Consumer action                                            |
-| --------------------- | ---------------------------------------------------------- |
-| [v2.16.0](v2.16.0.md) | Configure PostgreSQL through discrete settings, not a URL. |
-| [v2.10.0](v2.10.0.md) | Replace the init bootstrap with explicit maintenance.      |
-| [v2.6.0](v2.6.0.md)   | Handle unhealthy readiness checks as HTTP errors.          |
+| Release               | Consumer action                                                   |
+| --------------------- | ----------------------------------------------------------------- |
+| [v2.19.0](v2.19.0.md) | Drop `SMTP_TIMEOUT`; email routes no longer answer 503 when busy. |
+| [v2.16.0](v2.16.0.md) | Configure PostgreSQL through discrete settings, not a URL.        |
+| [v2.10.0](v2.10.0.md) | Replace the init bootstrap with explicit maintenance.             |
+| [v2.6.0](v2.6.0.md)   | Handle unhealthy readiness checks as HTTP errors.                 |

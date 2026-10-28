@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
@@ -18,15 +17,6 @@ const (
 		"wedontcareaboutthesignaturebutweneedonesohereweare"
 	mockUnsignedJTI = "41298a7d-cabd-44fd-82ae-caeb7359b9c8"
 )
-
-func waitForMailDelivery(t *testing.T, delivery *core.MailDelivery) {
-	t.Helper()
-
-	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
-	defer cancel()
-
-	require.NoError(t, delivery.Wait(ctx))
-}
 
 // requireNoHash runs exec while every Argon2 hash waits forever, and returns its error. It fails
 // the test when exec is stuck waiting to hash. The gate is process-wide, so tests calling it cannot

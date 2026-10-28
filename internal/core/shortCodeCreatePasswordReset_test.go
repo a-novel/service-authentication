@@ -3,29 +3,22 @@ package core_test
 import (
 	"errors"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/smtp"
-
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 func TestShortCodeCreatePasswordReset(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
-
-	smtpConfig := authconfig.SmtpUrls{UpdatePassword: "update-password-url"}
 
 	type daoMock struct {
 		resp *dao.Credentials
@@ -44,9 +37,6 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 
 		daoMock           *daoMock
 		serviceCreateMock *serviceCreateMock
-		sendMail          bool
-		sendMailPanic     bool
-		closeMailDelivery bool
 
 		expectErr error
 	}{
@@ -75,54 +65,6 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 					PlainCode: "abcdef123456",
 				},
 			},
-
-			sendMail: true,
-		},
-		{
-			name: "Success/SendMailPanic",
-
-			request: &core.ShortCodeCreatePasswordResetRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-			},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			serviceCreateMock: &serviceCreateMock{
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Usage:     "test-usage",
-					Target:    "test-target",
-					Data:      []byte("test-data"),
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					PlainCode: "abcdef123456",
-				},
-			},
-
-			sendMail:      true,
-			sendMailPanic: true,
-		},
-		{
-			name: "Error/MailDeliveryUnavailable",
-
-			request: &core.ShortCodeCreatePasswordResetRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-			},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			closeMailDelivery: true,
-			expectErr:         core.ErrMailDeliveryUnavailable,
 		},
 		{
 			name: "Error/CreateShortCode",
@@ -166,12 +108,6 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 
 			serviceCreate := coremocks.NewMockShortCodeCreatePasswordResetService(t)
 			mockDao := coremocks.NewMockShortCodeCreatePasswordResetDao(t)
-			smtpService := coremocks.NewMockMailDeliverySMTP(t)
-
-			mailDelivery := core.NewMailDelivery(smtpService, 1, nil)
-			if testCase.closeMailDelivery {
-				mailDelivery.Close()
-			}
 
 			if testCase.serviceCreateMock != nil {
 				shortCodeCreateRequest := &core.ShortCodeCreateRequest{
@@ -179,6 +115,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 					Target:   testCase.daoMock.resp.ID.String(),
 					TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL,
 					Override: true,
+					Mail:     &core.ShortCodeCreateMail{Recipient: testCase.daoMock.resp.Email, Lang: testCase.request.Lang},
 				}
 
 				serviceCreate.EXPECT().
@@ -194,35 +131,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 					Return(testCase.daoMock.resp, testCase.daoMock.err)
 			}
 
-			if testCase.sendMail {
-				mailData := map[string]any{
-					"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
-					"Target":    testCase.daoMock.resp.ID.String(),
-					"URL":       smtpConfig.UpdatePassword,
-					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL.Hours(),
-					"Banner":    assets.BannerBase64,
-				}
-
-				sendMail := smtpService.EXPECT().
-					SendMail(
-						smtp.MailUsers{{Email: testCase.request.Email}},
-						mails.Mails.PasswordReset,
-						testCase.request.Lang,
-						mailData,
-					).
-					Return(nil)
-
-				if testCase.sendMailPanic {
-					// An unabsorbed panic ends the test binary; surviving to Wait is the assertion.
-					sendMail.Run(func(smtp.MailUsers, *template.Template, string, any) {
-						panic("mail delivery exploded")
-					})
-				}
-			}
-
-			service := core.NewShortCodeCreatePasswordReset(
-				serviceCreate, mockDao, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
-			)
+			service := core.NewShortCodeCreatePasswordReset(serviceCreate, mockDao, authconfig.ShortCodesPresetDefault)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
@@ -231,11 +140,8 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 				require.Equal(t, testCase.serviceCreateMock.resp, resp)
 			}
 
-			waitForMailDelivery(t, mailDelivery)
-
 			serviceCreate.AssertExpectations(t)
 			mockDao.AssertExpectations(t)
-			smtpService.AssertExpectations(t)
 		})
 	}
 }

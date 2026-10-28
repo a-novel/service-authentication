@@ -1,32 +1,24 @@
 package core_test
 
 import (
-	"encoding/base64"
 	"errors"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/smtp"
-
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 func TestShortCodeCreateEmailUpdate(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
-
-	smtpConfig := authconfig.SmtpUrls{UpdateEmail: "update-email-url"}
 
 	type serviceCreateMock struct {
 		resp *core.ShortCode
@@ -44,9 +36,6 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 		serviceCreateMock *serviceCreateMock
 		daoSelectMock     *daoSelectMock
-		sendMail          bool
-		sendMailPanic     bool
-		closeMailDelivery bool
 
 		expectErr error
 	}{
@@ -74,52 +63,6 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			daoSelectMock: &daoSelectMock{
 				err: dao.ErrCredentialsSelectByEmailNotFound,
 			},
-
-			sendMail: true,
-		},
-		{
-			name: "Success/SendMailPanic",
-
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
-
-			serviceCreateMock: &serviceCreateMock{
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Usage:     "test-usage",
-					Target:    "test-target",
-					Data:      []byte("test-data"),
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					PlainCode: "abcdef123456",
-				},
-			},
-
-			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
-			},
-
-			sendMail:      true,
-			sendMailPanic: true,
-		},
-		{
-			name: "Error/MailDeliveryUnavailable",
-
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
-
-			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
-			},
-
-			closeMailDelivery: true,
-			expectErr:         core.ErrMailDeliveryUnavailable,
 		},
 		{
 			name: "Error/CreateShortCode",
@@ -178,12 +121,6 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			serviceCreate := coremocks.NewMockShortCodeCreateEmailUpdateService(t)
 			daoSelect := coremocks.NewMockShortCodeCreateEmailUpdateDao(t)
-			smtpService := coremocks.NewMockMailDeliverySMTP(t)
-
-			mailDelivery := core.NewMailDelivery(smtpService, 1, nil)
-			if testCase.closeMailDelivery {
-				mailDelivery.Close()
-			}
 
 			if testCase.serviceCreateMock != nil {
 				shortCodeCreateRequest := &core.ShortCodeCreateRequest{
@@ -192,6 +129,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 					TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageValidateEmail].TTL,
 					Data:     testCase.request.Email,
 					Override: true,
+					Mail:     &core.ShortCodeCreateMail{Recipient: testCase.request.Email, Lang: testCase.request.Lang},
 				}
 
 				serviceCreate.EXPECT().
@@ -207,36 +145,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 					Return(nil, testCase.daoSelectMock.err)
 			}
 
-			if testCase.sendMail {
-				mailData := map[string]any{
-					"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
-					"Target":    testCase.request.ID.String(),
-					"Source":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
-					"URL":       smtpConfig.UpdateEmail,
-					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageValidateEmail].TTL.Hours(),
-					"Banner":    assets.BannerBase64,
-				}
-
-				sendMail := smtpService.EXPECT().
-					SendMail(
-						smtp.MailUsers{{Email: testCase.request.Email}},
-						mails.Mails.EmailUpdate,
-						testCase.request.Lang,
-						mailData,
-					).
-					Return(nil)
-
-				if testCase.sendMailPanic {
-					// An unabsorbed panic ends the test binary; surviving to Wait is the assertion.
-					sendMail.Run(func(smtp.MailUsers, *template.Template, string, any) {
-						panic("mail delivery exploded")
-					})
-				}
-			}
-
-			service := core.NewShortCodeCreateEmailUpdate(
-				serviceCreate, daoSelect, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
-			)
+			service := core.NewShortCodeCreateEmailUpdate(serviceCreate, daoSelect, authconfig.ShortCodesPresetDefault)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
@@ -245,11 +154,8 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 				require.Equal(t, testCase.serviceCreateMock.resp, resp)
 			}
 
-			waitForMailDelivery(t, mailDelivery)
-
 			serviceCreate.AssertExpectations(t)
 			daoSelect.AssertExpectations(t)
-			smtpService.AssertExpectations(t)
 		})
 	}
 }

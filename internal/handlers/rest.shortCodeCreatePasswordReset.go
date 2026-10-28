@@ -19,8 +19,7 @@ type RestShortCodeCreatePasswordResetService interface {
 
 // shortCodeCreatePasswordResetErrors maps a failed password-reset code request to its status.
 var shortCodeCreatePasswordResetErrors = httpf.ErrMap{
-	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
-	core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
+	core.ErrInvalidRequest: http.StatusUnprocessableEntity,
 }
 
 // RestShortCodeCreatePasswordResetRequest is the JSON body of PUT /v2/short-code/update-password.

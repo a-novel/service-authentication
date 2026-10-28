@@ -2,19 +2,15 @@ package core
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/smtp"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 // ShortCodeCreateRegisterService issues the underlying short code; satisfied by
@@ -27,11 +23,6 @@ type ShortCodeCreateRegisterService interface {
 // registered, so a duplicate sign-up can be rejected.
 type ShortCodeCreateRegisterDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
-}
-
-// ShortCodeCreateRegisterMailDelivery reserves bounded delivery capacity for the registration mail.
-type ShortCodeCreateRegisterMailDelivery interface {
-	Reserve(ctx context.Context) (MailDeliveryReservation, error)
 }
 
 // ShortCodeCreateRegisterRequest carries the address and role to register and the
@@ -48,26 +39,20 @@ type ShortCodeCreateRegisterRequest struct {
 type ShortCodeCreateRegister struct {
 	service          ShortCodeCreateRegisterService
 	selectDao        ShortCodeCreateRegisterDao
-	mailDelivery     ShortCodeCreateRegisterMailDelivery
 	shortCodesConfig authconfig.ShortCodes
-	smtpConfig       authconfig.SmtpUrls
 }
 
 // NewShortCodeCreateRegister wires the registration flow to the short-code
-// service, the email-existence DAO, and the delivery owner.
+// service, the email-existence DAO.
 func NewShortCodeCreateRegister(
 	service ShortCodeCreateRegisterService,
 	selectDao ShortCodeCreateRegisterDao,
-	mailDelivery ShortCodeCreateRegisterMailDelivery,
 	shortCodesConfig authconfig.ShortCodes,
-	smtpConfig authconfig.SmtpUrls,
 ) *ShortCodeCreateRegister {
 	return &ShortCodeCreateRegister{
 		service:          service,
 		selectDao:        selectDao,
-		mailDelivery:     mailDelivery,
 		shortCodesConfig: shortCodesConfig,
-		smtpConfig:       smtpConfig,
 	}
 }
 
@@ -98,12 +83,6 @@ func (service *ShortCodeCreateRegister) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
-	reservation, err := service.mailDelivery.Reserve(ctx)
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
-	}
-	defer reservation.Release()
-
 	ttl := service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL
 	createRequest := &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageRegister,
@@ -111,28 +90,13 @@ func (service *ShortCodeCreateRegister) Exec(
 		Data:     credentialsCreateRegistrationData{Role: request.Role},
 		TTL:      ttl,
 		Override: true,
+		Mail:     &ShortCodeCreateMail{Recipient: request.Email, Lang: request.Lang},
 	}
 
 	shortCode, err := service.service.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
-
-	mail := &MailDeliveryRequest{
-		To:           smtp.MailUsers{{Email: request.Email}},
-		Template:     mails.Mails.Register,
-		TemplateName: request.Lang,
-		Data: map[string]any{
-			mails.TemplateVarShortCode: shortCode.PlainCode,
-			mails.TemplateVarTarget:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-			mails.TemplateVarURL:       service.smtpConfig.Register,
-			mails.TemplateVarDuration:  ttl.Hours(),
-			mails.TemplateVarBanner:    assets.BannerBase64,
-		},
-		Kind: mailDeliveryKindRegister,
-	}
-
-	reservation.Deliver(ctx, mail)
 
 	return shortCode, nil
 }

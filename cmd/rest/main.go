@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -62,7 +61,8 @@ func main() {
 	// =================================================================================================================
 
 	// A server started during a planned downtime refuses work, so it leaves the database alone.
-	if !downtime.Started(cfg.App.DowntimeStart, time.Now()) {
+	inDowntime := downtime.Started(cfg.App.DowntimeStart, time.Now())
+	if !inDowntime {
 		ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
 
 		database := lo.Must(cfg.Postgres.DB(ctx))
@@ -81,11 +81,6 @@ func main() {
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient))
 	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
 
-	// No request waits for its mail, so a failed send reaches Sentry here.
-	reportMailDelivery := func(ctx context.Context, kind string, err error) {
-		sentryf.Capture(ctx, "deliver "+kind+" mail", err)
-	}
-	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent, reportMailDelivery)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
 	lib.PrepareDummyArgon2()
 
@@ -100,7 +95,13 @@ func main() {
 
 	daoShortCodeDelete := dao.NewPgShortCodeDelete()
 	daoShortCodeInsert := dao.NewPgShortCodeInsert()
+	daoShortCodeRenew := dao.NewPgShortCodeRenew()
 	daoShortCodeSelect := dao.NewPgShortCodeSelect()
+
+	daoMailOutboxClaim := dao.NewPgMailOutboxClaim()
+	daoMailOutboxDelete := dao.NewPgMailOutboxDelete()
+	daoMailOutboxList := dao.NewPgMailOutboxList()
+	daoMailOutboxReschedule := dao.NewPgMailOutboxReschedule()
 
 	daoCredentialsExist := dao.NewPgCredentialsExist()
 	daoWaitlist := lo.Must(dao.NewGoogleWaitlist(cfg.Waitlist, nil))
@@ -121,17 +122,26 @@ func main() {
 	// SERVICES
 	// =================================================================================================================
 
+	// No request waits for its mail, so a failure that ends a mail reaches Sentry here.
+	reportMail := func(ctx context.Context, usage string, err error) {
+		sentryf.Capture(ctx, "deliver "+usage+" mail", err)
+	}
+	mailOutbox := core.NewMailOutbox(
+		daoMailOutboxList, daoMailOutboxClaim, daoShortCodeRenew, daoMailOutboxReschedule, daoMailOutboxDelete,
+		cfg.Smtp, env.SmtpMaxConcurrent, reportMail, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
+	)
+
 	serviceShortCodeVerify := core.NewShortCodeVerify(daoShortCodeSelect)
 	serviceShortCodeConsume := core.NewShortCodeConsume(daoShortCodeDelete)
-	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, cfg.ShortCodesConfig)
+	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, mailOutbox, cfg.ShortCodesConfig)
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, cfg.ShortCodesConfig,
 	)
 	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, cfg.ShortCodesConfig,
 	)
 	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, cfg.ShortCodesConfig,
 	)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
@@ -171,7 +181,7 @@ func main() {
 	// =================================================================================================================
 
 	handlerPing := handlers.NewRestPing()
-	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.SmtpPing, cfg.Logger)
+	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.Smtp, cfg.Logger)
 
 	handlerClaimsGet := handlers.NewRestClaimsGet(cfg.Logger)
 
@@ -253,56 +263,43 @@ func main() {
 	// RUN
 	// =================================================================================================================
 
+	// The outbox drains within the shutdown budget, beside the HTTP server. During a planned downtime
+	// it leaves the database alone, like the server.
+	mailDrained := make(chan error, 1)
+	if inDowntime {
+		mailDrained <- nil
+	} else {
+		go func() { mailDrained <- mailOutbox.Run(ctx, cfg.Rest.Timeouts.Shutdown) }()
+	}
+
 	httpServer := httpf.NewServer(ctx, cfg.Rest, router)
 
-	lo.Must0(serve(ctx, stop, httpServer, cfg.Rest.Timeouts.Shutdown, mailDelivery))
+	lo.Must0(serve(ctx, stop, httpServer, cfg.Rest.Timeouts.Shutdown, mailDrained))
 }
 
-// serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.
+// serve runs the shared HTTP lifecycle, then waits for the mail outbox, which drains in the same
+// shutdown budget.
 func serve(
 	ctx context.Context,
 	stop context.CancelFunc,
 	httpServer *http.Server,
 	shutdownTimeout time.Duration,
-	mailDelivery *core.MailDelivery,
+	mailDrained <-chan error,
 ) error {
-	shutdownStarted := make(chan time.Time, 1)
-
-	go func() {
-		<-ctx.Done()
-		mailDelivery.Close()
-
-		shutdownStarted <- time.Now()
-	}()
-
 	log.Println("Starting REST server on " + httpServer.Addr)
 
 	serveErr := httpf.Serve(ctx, httpServer, shutdownTimeout)
 
-	// Stop also cancels the process context when serving ends because of a bind or runtime error.
-	// The recorded deadline lets the HTTP drain and accepted mail share one operator budget.
+	// Stop also cancels the process context when serving ends because of a bind or runtime error,
+	// which stops the outbox.
 	stop()
-
-	shutdownCtx, cancel := context.WithDeadline(
-		context.WithoutCancel(ctx),
-		(<-shutdownStarted).Add(shutdownTimeout),
-	)
 
 	log.Println("Draining in-flight emails...")
 
-	drainErr := mailDelivery.Wait(shutdownCtx)
-
-	cancel()
-
+	// A mail the shutdown cuts stays in the outbox, and the next instance retries it.
+	drainErr := <-mailDrained
 	if drainErr != nil {
-		// Logged while the process is already stopping. Failed deliveries or mail that missed
-		// the budget are worth reporting and the shutdown still completes.
-		log.Println("Some emails failed or were still in flight at shutdown: " + drainErr.Error())
-	}
-
-	// A failed send reported itself. A send the shutdown cut short did not.
-	if errors.Is(drainErr, context.DeadlineExceeded) {
-		sentryf.Capture(ctx, "drain mail", drainErr)
+		log.Println("Some emails were still in flight at shutdown: " + drainErr.Error())
 	}
 
 	return serveErr

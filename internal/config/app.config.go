@@ -41,9 +41,7 @@ type App struct {
 	SmtpUrlsConfig     authconfig.SmtpUrls    `json:"smtpUrls"     yaml:"smtpUrls"`
 	Waitlist           authconfig.Waitlist    `json:"waitlist"     yaml:"waitlist"`
 
-	Smtp smtp.Sender `json:"smtp" yaml:"smtp"`
-	// SmtpPing reaches the same relay within the health check's short budget.
-	SmtpPing   smtp.Sender        `json:"smtpPing"   yaml:"smtpPing"`
+	Smtp       smtp.Sender        `json:"smtp"       yaml:"smtp"`
 	Otel       otel.Config        `json:"otel"       yaml:"otel"`
 	Sentry     sentryf.Config     `json:"sentry"     yaml:"sentry"`
 	Logger     logging.Log        `json:"logger"     yaml:"logger"`
