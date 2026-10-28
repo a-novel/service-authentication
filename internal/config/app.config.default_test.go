@@ -17,12 +17,23 @@ func TestApp(t *testing.T) {
 
 		restTimeoutRead     string
 		restRateLimitStrict string
+		serviceTokenPath    string
 
 		expect    string
 		expectErr string
 	}{
-		{name: "Success/Default", expect: "15s 3/5m0s"},
-		{name: "Success/Override", restTimeoutRead: "2s", restRateLimitStrict: "2/1m", expect: "2s 2/1m0s"},
+		{name: "Success/Default", expect: "15s 3/5m0s *grpcf.LocalCredentialsProvider"},
+		{
+			name:                "Success/Override",
+			restTimeoutRead:     "2s",
+			restRateLimitStrict: "2/1m",
+			expect:              "2s 2/1m0s *grpcf.LocalCredentialsProvider",
+		},
+		{
+			name:             "Success/ServiceToken",
+			serviceTokenPath: "/var/run/secrets/tokens/json-keys",
+			expect:           "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider",
+		},
 		{
 			name:            "Error/InvalidRestTimeoutRead",
 			restTimeoutRead: "invalid",
@@ -47,6 +58,7 @@ func TestApp(t *testing.T) {
 				"REST_TIMEOUT_READ=invalid",
 				"AUTH_CONFIG_TEST_REST_TIMEOUT_READ="+testCase.restTimeoutRead,
 				"AUTH_CONFIG_TEST_REST_RATE_LIMIT_STRICT="+testCase.restRateLimitStrict,
+				"AUTH_CONFIG_TEST_SERVICE_TOKEN_PATH="+testCase.serviceTokenPath,
 			)
 
 			output, err := command.CombinedOutput()

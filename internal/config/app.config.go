@@ -9,6 +9,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/sentryf"
+	"github.com/a-novel-kit/golib/servicetoken"
 	"github.com/a-novel-kit/golib/smtp"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
@@ -34,6 +35,9 @@ type App struct {
 	App    Main               `json:"app"    yaml:"app"`
 	Rest   httpf.ServerConfig `json:"rest"   yaml:"rest"`
 	Limits authconfig.Limits  `json:"limits" yaml:"limits"`
+	// ServiceToken names the service tokens the REST server accepts. Without an issuer, it takes
+	// every request without one.
+	ServiceToken servicetoken.Config `json:"serviceToken" yaml:"serviceToken"`
 
 	DependenciesConfig Dependencies           `json:"dependencies" yaml:"dependencies"`
 	Permissions        authconfig.Permissions `json:"permissions"  yaml:"permissions"`
