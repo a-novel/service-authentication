@@ -165,6 +165,9 @@ func main() {
 
 	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
 	limit := middlewares.NewRestLimits(cfg.Rest, cfg.Limits)
+	withServiceToken := middlewares.RestServiceToken(
+		cfg.ServiceToken, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger, cfg.Rest.Liveness,
+	)
 
 	// =================================================================================================================
 	// HANDLERS
@@ -253,7 +256,7 @@ func main() {
 	// RUN
 	// =================================================================================================================
 
-	httpServer := httpf.NewServer(ctx, cfg.Rest, router)
+	httpServer := httpf.NewServer(ctx, cfg.Rest, withServiceToken(router))
 
 	lo.Must0(serve(ctx, stop, httpServer, cfg.Rest.Timeouts.Shutdown, mailDelivery))
 }
