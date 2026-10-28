@@ -49,6 +49,18 @@ type ShortCodeInsertRequest struct {
 	// Override soft-deletes any conflicting record, with the [ShortCodeDeleteOverride] deletion
 	// comment. When false, a conflict fails the insert.
 	Override bool
+
+	// Mail, when set, stores the code's mail in the outbox in the same transaction, due at Now and
+	// expiring with the code.
+	Mail *ShortCodeInsertMail
+}
+
+// ShortCodeInsertMail is the outbox entry a [ShortCodeInsertRequest] stores with its code.
+type ShortCodeInsertMail struct {
+	// See [MailOutboxEntry.Recipient].
+	Recipient string
+	// See [MailOutboxEntry.Lang].
+	Lang string
 }
 
 // PgShortCodeInsert inserts a new short code in the database.
@@ -125,6 +137,10 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 			return fmt.Errorf("execute query: %w", err)
 		}
 
+		if request.Mail != nil {
+			return dao.insertMail(ctx, request)
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -132,6 +148,35 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 	}
 
 	return entity, nil
+}
+
+//go:embed pg.shortCodeInsert.mail.sql
+var shortCodeInsertMailQuery string
+
+func (dao *PgShortCodeInsert) insertMail(ctx context.Context, request *ShortCodeInsertRequest) error {
+	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(insertMail)")
+	defer span.End()
+
+	db, err := postgres.GetContext(ctx)
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
+	}
+
+	_, err = db.NewRaw(
+		shortCodeInsertMailQuery,
+		request.ID,
+		request.Usage,
+		request.Target,
+		request.Mail.Recipient,
+		request.Mail.Lang,
+		request.Now,
+		request.ExpiresAt,
+	).Exec(ctx)
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
+	}
+
+	return nil
 }
 
 //go:embed pg.shortCodeInsert.discardConflict.sql

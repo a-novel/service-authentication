@@ -32,8 +32,9 @@ func TestPgShortCodeInsert(t *testing.T) {
 
 		request *dao.ShortCodeInsertRequest
 
-		expect    *dao.ShortCode
-		expectErr error
+		expect     *dao.ShortCode
+		expectMail *dao.MailOutboxEntry
+		expectErr  error
 	}{
 		{
 			name: "Success",
@@ -56,6 +57,37 @@ func TestPgShortCodeInsert(t *testing.T) {
 				Data:      []byte("test-data"),
 				CreatedAt: now,
 				ExpiresAt: hourLater,
+			},
+		},
+		{
+			name: "Success/Mail",
+
+			request: &dao.ShortCodeInsertRequest{
+				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				Code:      "test-code",
+				Usage:     "test-usage",
+				Target:    "test-target",
+				Now:       now,
+				ExpiresAt: hourLater,
+				Mail:      &dao.ShortCodeInsertMail{Recipient: "user@provider.com", Lang: "fr"},
+			},
+
+			expect: &dao.ShortCode{
+				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				Code:      "test-code",
+				Usage:     "test-usage",
+				Target:    "test-target",
+				CreatedAt: now,
+				ExpiresAt: hourLater,
+			},
+			expectMail: &dao.MailOutboxEntry{
+				ShortCodeID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				Usage:       "test-usage",
+				Target:      "test-target",
+				Recipient:   "user@provider.com",
+				Lang:        "fr",
+				DueAt:       now,
+				ExpiresAt:   hourLater,
 			},
 		},
 		{
@@ -169,6 +201,33 @@ func TestPgShortCodeInsert(t *testing.T) {
 					Usage:     "test-usage",
 					Target:    "test-target",
 					Data:      []byte("test-data-2"),
+					CreatedAt: hourAgo,
+					ExpiresAt: hourLater,
+				},
+			},
+
+			expectErr: dao.ErrShortCodeInsertAlreadyExists,
+		},
+		{
+			// The mail is stored in the code's transaction, so a refused code leaves no mail.
+			name: "Error/AlreadyExists/Mail",
+
+			request: &dao.ShortCodeInsertRequest{
+				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				Code:      "test-code",
+				Usage:     "test-usage",
+				Target:    "test-target",
+				Now:       now,
+				ExpiresAt: hourLater,
+				Mail:      &dao.ShortCodeInsertMail{Recipient: "user@provider.com", Lang: "fr"},
+			},
+
+			fixtures: []*dao.ShortCode{
+				{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Code:      "test-code-2",
+					Usage:     "test-usage",
+					Target:    "test-target",
 					CreatedAt: hourAgo,
 					ExpiresAt: hourLater,
 				},
@@ -346,6 +405,17 @@ func TestPgShortCodeInsert(t *testing.T) {
 				credentials, err := shortCodeInsert.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
+
+				var mails []*dao.MailOutboxEntry
+
+				err = db.NewSelect().Model(&mails).Scan(ctx)
+				require.NoError(t, err)
+
+				if testCase.expectMail == nil {
+					require.Empty(t, mails)
+				} else {
+					require.Equal(t, []*dao.MailOutboxEntry{testCase.expectMail}, mails)
+				}
 			})
 		})
 	}
