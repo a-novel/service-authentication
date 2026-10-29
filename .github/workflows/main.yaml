@@ -199,7 +199,7 @@ jobs:
       - uses: a-novel-kit/workflows/go-actions/test-go@v1.81.0
         id: test
         with:
-          include: /internal
+          include: /internal|/cmd
           skip_setup: true
           test_artifact: gotest
           coverage_artifact: gocover
@@ -208,7 +208,7 @@ jobs:
           race: "true"
 
   # pkg/go, the published Go client, reaches no network and no database, so this lane starts no
-  # services. It runs apart from test-go, which covers /internal only.
+  # services. It runs apart from test-go, which covers /internal and /cmd only.
   test-pkg:
     runs-on: ubuntu-latest
     permissions:
