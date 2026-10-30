@@ -9,7 +9,7 @@ jobs:
     # The callee types and labels the issue; the board goes through the Agent App.
     permissions:
       issues: write
-    uses: a-novel-kit/workflows/.github/workflows/sentry-intake-run.yaml@v1.81.0
+    uses: a-novel-kit/workflows/.github/workflows/sentry-intake-run.yaml@v1.81.1
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
