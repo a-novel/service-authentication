@@ -1,0 +1,192 @@
+# Managed by `a-novel repo update` — edit the template in stack, not this copy.
+#
+# Runs the governance gates of a pull request in one job, so each event starts one run:
+#
+#   merge-gate     the required "may this merge?" check; an Epic member holds
+#                  until every sibling is ready, and its auto-merge is armed
+#   epic-freeze    the required check that fails a member of an Epic that
+#                  landed partially; the reconcile-board sweep runs the other half
+#   review-gate    the required check that a maintainer or admin approved a
+#                  person's head and applied every privileged label last
+#   derive-status  the board Status of each issue the pull request closes
+#
+# The [Agent] App posts each check under the integration id the ruleset
+# requires, so the job only runs them, under an id kept clear of the check
+# names. Each step runs whatever the others concluded, so one broken gate
+# leaves the rest posting.
+name: gates
+
+on:
+  # pull_request_target runs this default-branch copy, which a pull request
+  # cannot rewrite. Each step names the actions it answers.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] The gates only call the GitHub API; they never check out the pull request.
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+      - ready_for_review
+      - converted_to_draft
+      - closed
+  # Reviews and merge groups run a pull request's own copy of a workflow, so
+  # they arrive through pr-relay.yaml.
+  workflow_run: # zizmor: ignore[dangerous-triggers] relay-context reads the relayed pull request through the API only.
+    workflows: [pr-relay]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    # The Agent key is a secret of the governance environment, which no feature branch opens.
+    environment:
+      name: governance
+      deployment: false
+    # Nothing posts the checks again later, so runs never overlap: each reads
+    # the pull request when it starts, and the last to run posts the latest
+    # verdict. A newer event replaces the waiting run, which never starts.
+    # Cancelling a running one would leave its cancelled job in the merge box,
+    # which shows each workflow's newest run.
+    concurrency:
+      group: gates-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
+      cancel-in-progress: false
+    # relay-context and derive-status read the pull request and its closing
+    # issues with this job's token. Every gate mints its own [Agent] token, so
+    # the App stays the single writer of checks and the board. Only the sweep
+    # mints the token that rolls a stray forward, so a per-PR run never
+    # re-enqueues.
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    steps:
+      - id: relay
+        if: github.event_name == 'workflow_run'
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.81.2
+
+      # Dependabot's own events read no secret; the trusted CI-completion job
+      # in auto-approve-dependabot.yaml evaluates its pull requests.
+      - name: merge-gate
+        if: >-
+          ${{ !cancelled() && (steps.relay.outputs.event != '' ||
+          github.event_name == 'pull_request_target' && github.event.action != 'closed' &&
+          github.actor != vars.DEPENDABOT_SECURITY_LOGIN) }}
+        uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.81.2
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          # The org-wide halt. Engaged, the gate posts a failing check on
+          # every pull request and arms no auto-merge.
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+          # An empty `with:` value overrides the action's default, so the event fallback lives here.
+          pull_request_number: ${{ steps.relay.outputs.pull_request_number || github.event.pull_request.number }}
+          head_sha: ${{ steps.relay.outputs.head_sha || github.event.pull_request.head.sha }}
+          merge_group_head_ref: ${{ steps.relay.outputs.merge_group_head_ref }}
+
+      # Arms native auto-merge on an Epic member, so the whole set lands once
+      # the gate and the approvals go green.
+      - name: Arm an Epic member's auto-merge
+        if: >-
+          ${{ !cancelled() && github.event_name == 'pull_request_target' && github.event.action != 'closed' &&
+          github.actor != vars.DEPENDABOT_SECURITY_LOGIN && !github.event.pull_request.draft &&
+          contains(toJSON(github.event.pull_request.labels.*.name), '"epic:') }}
+        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.81.2
+        with:
+          pull_request_number: ${{ github.event.pull_request.number }}
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          dry_run: "false"
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+
+      # The check also posts on each merge-queue group's head, or a queued
+      # pull request times out. An `epic:<N>` label moves a pull request
+      # between the standalone path and the Epic check.
+      - name: epic-freeze
+        if: >-
+          ${{ !cancelled() && (steps.relay.outputs.event != '' ||
+          github.event_name == 'pull_request_target' && github.event.action != 'closed' &&
+          github.actor != vars.DEPENDABOT_SECURITY_LOGIN) }}
+        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.81.2
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          pull_request_number: ${{ steps.relay.outputs.pull_request_number || github.event.pull_request.number }}
+          head_sha: ${{ steps.relay.outputs.head_sha || github.event.pull_request.head.sha }}
+          merge_group_head_ref: ${{ steps.relay.outputs.merge_group_head_ref }}
+          # Posts the epic-freeze check-run on this head: a success, or a failure
+          # on a partial landing.
+          dry_run: "false"
+          # The org-wide halt. Engaged, the run posts a failing check on this
+          # head, since a required check must always report.
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+
+      # Anyone with write access can approve and label, so this check is what
+      # ties merging to the maintainer tier.
+      - name: review-gate
+        if: >-
+          ${{ !cancelled() && (steps.relay.outputs.event != '' ||
+          contains(fromJSON('["opened", "reopened", "synchronize", "labeled", "unlabeled"]'), github.event.action) &&
+          github.actor != vars.DEPENDABOT_SECURITY_LOGIN) }}
+        uses: a-novel-kit/workflows/generic-actions/review-gate@v1.81.2
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          event: ${{ steps.relay.outputs.event || github.event_name }}
+          pull_request_number: ${{ steps.relay.outputs.pull_request_number || github.event.pull_request.number }}
+          head_sha: ${{ steps.relay.outputs.head_sha || github.event.pull_request.head.sha }}
+          # Every label that waives a check or spends resources, across the fleet. The
+          # Dependabot job in auto-approve-dependabot.yaml carries the same list.
+          privileged_labels: |
+            allow-dependency-change
+            allow-downtime
+            allow-incomplete-translations
+            allow-resource-deletion
+            allow-screenshot-change
+            allow-translation-drift
+            append-only-override
+            with-feature-env
+
+      # Every pull request and review event derives the Status, and the per-org
+      # reconcile sweep repairs any drift. A label changes no Status, and a
+      # merge group has no issue of its own.
+      #
+      #   draft           → In progress
+      #   open            → In review
+      #   approved        → Done
+      #   merged          → Awaiting release
+      #   closed unmerged → Ready
+      - name: derive-status
+        if: >-
+          ${{ !cancelled() && (steps.relay.outputs.event == 'pull_request_review' ||
+          github.event_name == 'pull_request_target' && github.event.action != 'labeled' &&
+          github.event.action != 'unlabeled') }}
+        uses: a-novel-kit/workflows/generic-actions/derive-status@v1.81.2
+        with:
+          client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+          app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+          pull_request_number: ${{ steps.relay.outputs.pull_request_number || github.event.pull_request.number }}
+          # The org's Tasks board.
+          project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
+          # The org-wide halt. Engaged, the action writes no Status.
+          kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
+
+  # Posts reviews to Discord. notify-pr-run reads the pull request and its
+  # latest review back through the API instead of trusting the relay's run.
+  notify-review:
+    if: github.event.workflow_run.event == 'pull_request_review'
+    # The engine lists a bot pull request's CI runs; the pull request itself it reads through the App.
+    permissions:
+      actions: read
+    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.81.2
+    with:
+      client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
+      roles: ${{ vars.DISCORD_REPO_ROLES }}
+      bws_server_url: ${{ vars.BWS_SERVER_URL }}
+    secrets:
+      private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
+      reviews_webhook: ${{ secrets.REVIEWS_WEBHOOK }}
+      reviews_webhooks: ${{ secrets.REVIEWS_WEBHOOKS }}
+      dependencies_webhook: ${{ secrets.DEPENDENCIES_WEBHOOK }}
+      bws_access_token: ${{ secrets.BWS_READ_TOKEN }}

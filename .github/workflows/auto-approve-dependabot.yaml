@@ -34,9 +34,11 @@ on:
     types: [opened, synchronize, reopened, auto_merge_enabled]
   status:
   # Only fixed API calls and pinned actions consume validated metadata; no PR checkout, artifacts, caches or environment files.
+  # Only the Dependabot job reads it, so every other branch's CI starts no run.
   workflow_run: # zizmor: ignore[dangerous-triggers] Privileged bot approval requires base-branch Actions secrets.
     workflows: [main]
     types: [completed]
+    branches: ["dependabot/**"]
 
 jobs:
   auto-approve:
@@ -132,7 +134,7 @@ jobs:
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
-          # The same list as review-gate.yaml.
+          # The same list as gates.yaml.
           privileged_labels: |
             allow-dependency-change
             allow-downtime

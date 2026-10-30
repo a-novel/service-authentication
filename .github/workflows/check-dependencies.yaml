@@ -4,6 +4,9 @@
 # allow-dependency-change label, so every dependency a person adds, removes or bumps is acknowledged.
 # The master and release-line rulesets require this job's check. A ruleset cannot exempt the merge
 # queue's merges, which have no actor, so the check itself passes bots and merge-queue groups.
+#
+# A push also removes the with-feature-env label, which tags a pull request's images for the head it
+# was added on. The workflow already runs on every push, so the second job starts no run of its own.
 name: check dependencies
 
 on:
@@ -24,3 +27,22 @@ jobs:
       - uses: a-novel-kit/workflows/generic-actions/check-dependencies@v1.81.2
         with:
           github_token: ${{ github.token }}
+
+  revoke-feature-env:
+    if: >-
+      github.event.action == 'synchronize' &&
+      contains(github.event.pull_request.labels.*.name, 'with-feature-env')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Remove the label a push made stale
+        run: |
+          set -euo pipefail
+          if ! err=$(gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/$NUMBER/labels/with-feature-env" --silent 2>&1); then
+            # The run for an earlier push may have removed it first.
+            [[ $err == *"HTTP 404"* ]] || { printf '::error::%s\n' "$err"; exit 1; }
+          fi
