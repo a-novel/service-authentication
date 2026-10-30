@@ -22,7 +22,7 @@ services:
   # ====================================================================================================================
 
   postgres-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/database:v2.14.0@sha256:a7fd1aa7ba4476c6775e391fd632e0e292ca0667a25bec07a0cc3fab57afad3a
+    image: ghcr.io/a-novel/service-json-keys/database:v2.14.1@sha256:a7fd1aa7ba4476c6775e391fd632e0e292ca0667a25bec07a0cc3fab57afad3a
     networks:
       - authentication-integration-rest-test
     environment:
@@ -50,7 +50,7 @@ services:
   # ====================================================================================================================
 
   service-json-keys:
-    image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.14.0@sha256:6c05e308ab778cddae8e10172dc21443cac12764b7e1bdb76acc2b5668001a2f
+    image: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.14.1@sha256:502a4fcb4016b3a039852f3b7d21968d5c3eb4c35770ab20b5184ec18b3e9f5c
     depends_on:
       - postgres-json-keys
     environment:
