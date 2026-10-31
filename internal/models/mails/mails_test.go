@@ -65,7 +65,7 @@ func TestMailTemplates(t *testing.T) {
 			name:     "EmailUpdate/French",
 			template: mails.Mails.EmailUpdate,
 			language: "fr",
-			subject:  "Confirmez votre nouvelle adresse e-mail Agora",
+			subject:  "Confirmez votre nouvelle adresse courriel Agora",
 			source:   "bmV3QGV4YW1wbGUuY29t",
 		},
 	}
