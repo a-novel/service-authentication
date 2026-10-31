@@ -140,6 +140,7 @@ func main() {
 	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
 	serviceWaitlistJoin := core.NewWaitlistJoin(daoCredentialsExist, daoWaitlist)
 	serviceCredentialsGet := core.NewCredentialsGet(daoCredentialsSelect)
+	serviceCredentialsGetSelf := core.NewCredentialsGetSelf(daoCredentialsSelect, daoShortCodeSelect)
 	serviceCredentialsList := core.NewCredentialsList(daoCredentialsList)
 	serviceCredentialsUpdateEmail := core.NewCredentialsUpdateEmail(
 		daoCredentialsUpdateEmail, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
@@ -182,6 +183,7 @@ func main() {
 	handlerCredentialsExist := handlers.NewRestCredentialsExist(serviceCredentialsExist, cfg.Logger)
 	handlerWaitlistJoin := handlers.NewRestWaitlistJoin(serviceWaitlistJoin, cfg.Logger)
 	handlerCredentialsGet := handlers.NewRestCredentialsGet(serviceCredentialsGet, cfg.Logger)
+	handlerCredentialsGetSelf := handlers.NewRestCredentialsGetSelf(serviceCredentialsGetSelf, cfg.Logger)
 	handlerCredentialsList := handlers.NewRestCredentialsList(serviceCredentialsList, cfg.Logger)
 	handlerCredentialsResetPassword := handlers.NewRestCredentialsResetPassword(
 		serviceCredentialsUpdatePassword, cfg.Logger,
@@ -230,6 +232,7 @@ func main() {
 			withAuth(r, "credentials:get").Get("/", handlerCredentialsGet.ServeHTTP)
 			withAuth(r, "credentials:exist").Head("/", handlerCredentialsExist.ServeHTTP)
 			withAuth(r, "credentials:list").Get("/all", handlerCredentialsList.ServeHTTP)
+			withAuth(r, "credentials:self:get").Get("/self", handlerCredentialsGetSelf.ServeHTTP)
 
 			withAuth(r, "credentials:create").With(limit.SignUp).Put("/", handlerCredentialsCreate.ServeHTTP)
 			withAuth(r, "credentials:email:patch").With(limit.ShortCode).
