@@ -5,6 +5,9 @@ package mails
 
 import (
 	_ "embed"
+	"encoding/base64"
+	"slices"
+	"strings"
 	"text/template"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
@@ -28,6 +31,28 @@ var (
 	registerEn string
 )
 
+// The banners are the 80h Agora exports of @a-novel-kit/ui-images, shown 40 pixels tall: the dark
+// one by default, the light one when the mail client reports a light color scheme.
+var (
+	//go:embed assets/agora-banner.png
+	banner []byte
+	//go:embed assets/agora-banner-light.png
+	bannerLight []byte
+)
+
+const (
+	// boundary separates the parts of the multipart/related message each template opens.
+	boundary = "agora-related"
+	// base64LineLength is the longest encoded line RFC 2045 allows.
+	base64LineLength = 76
+)
+
+// imageParts closes every message with the banners. Mail clients block data URIs, so the images
+// travel as parts of the message and the HTML shows them by Content-ID.
+var imageParts = imagePart("agora-banner@agorastoryverse.com", banner) +
+	imagePart("agora-banner-light@agorastoryverse.com", bannerLight) +
+	"\n--" + boundary + "--\n"
+
 // The templates read their values from a data map keyed by these names.
 const (
 	// TemplateVarShortCode is the plaintext short code the link carries.
@@ -40,8 +65,6 @@ const (
 	TemplateVarURL = "URL"
 	// TemplateVarDuration is the short code's lifetime, in hours.
 	TemplateVarDuration = "Duration"
-	// TemplateVarBanner is the banner image, as a data URI.
-	TemplateVarBanner = "Banner"
 )
 
 // MailTemplates groups the parsed email templates by type. Each field carries every
@@ -55,16 +78,31 @@ type MailTemplates struct {
 // Mails holds the ready-to-render email templates, parsed once at package
 // initialization. A malformed template panics at startup.
 var Mails = MailTemplates{
-	EmailUpdate:   template.Must(template.New(authconfig.LangEN).Parse(emailUpdateEn)),
-	PasswordReset: template.Must(template.New(authconfig.LangEN).Parse(passwordResetEn)),
-	Register:      template.Must(template.New(authconfig.LangEN).Parse(registerEn)),
+	EmailUpdate:   template.Must(template.New(authconfig.LangEN).Parse(emailUpdateEn + imageParts)),
+	PasswordReset: template.Must(template.New(authconfig.LangEN).Parse(passwordResetEn + imageParts)),
+	Register:      template.Must(template.New(authconfig.LangEN).Parse(registerEn + imageParts)),
 }
 
 // Attach the French variant to each template as an associated sub-template, so one
 // MailTemplates field can render either language. Only registering the variant matters,
 // so the results are discarded.
 var (
-	_ = template.Must(Mails.EmailUpdate.New(authconfig.LangFR).Parse(emailUpdateFr))
-	_ = template.Must(Mails.PasswordReset.New(authconfig.LangFR).Parse(passwordResetFr))
-	_ = template.Must(Mails.Register.New(authconfig.LangFR).Parse(registerFr))
+	_ = template.Must(Mails.EmailUpdate.New(authconfig.LangFR).Parse(emailUpdateFr + imageParts))
+	_ = template.Must(Mails.PasswordReset.New(authconfig.LangFR).Parse(passwordResetFr + imageParts))
+	_ = template.Must(Mails.Register.New(authconfig.LangFR).Parse(registerFr + imageParts))
 )
+
+// imagePart encodes a PNG as an inline MIME part named contentID.
+func imagePart(contentID string, png []byte) string {
+	var part strings.Builder
+
+	part.WriteString("\n--" + boundary + "\nContent-Type: image/png\nContent-Transfer-Encoding: base64\n")
+	part.WriteString("Content-Disposition: inline\nContent-ID: <" + contentID + ">\n")
+
+	for line := range slices.Chunk([]byte(base64.StdEncoding.EncodeToString(png)), base64LineLength) {
+		part.WriteByte('\n')
+		part.Write(line)
+	}
+
+	return part.String()
+}

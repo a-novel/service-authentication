@@ -17,7 +17,6 @@ import (
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 func TestShortCodeCreatePasswordReset(t *testing.T) {
@@ -200,7 +199,6 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 					"Target":    testCase.daoMock.resp.ID.String(),
 					"URL":       smtpConfig.UpdatePassword,
 					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL.Hours(),
-					"Banner":    assets.BannerBase64,
 				}
 
 				sendMail := smtpService.EXPECT().
