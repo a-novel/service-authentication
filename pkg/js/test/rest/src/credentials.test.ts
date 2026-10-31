@@ -9,6 +9,7 @@ import {
   claimsGet,
   credentialsExists,
   credentialsGet,
+  credentialsGetSelf,
   credentialsList,
   credentialsResetPassword,
   credentialsUpdateEmail,
@@ -479,6 +480,51 @@ describe("credentialsGet", () => {
       }),
       404
     );
+  });
+});
+
+describe("credentialsGetSelf", () => {
+  it("gets the caller's credentials", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const preRegister = await preRegisterUser(api, mailUrl);
+    const user = await registerUser(api, preRegister);
+
+    const credentials = await credentialsGetSelf(api, user.token.accessToken);
+
+    expect(credentials.id).toBe(user.claims.userID);
+    expect(credentials.email).toBe(user.email);
+    expect(credentials.role).toBe(Role.User);
+    expect(credentials.pendingEmail).toBeUndefined();
+  });
+
+  it("returns the pending email until it is confirmed", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const anonToken = await tokenCreateAnon(api);
+
+    const preRegister = await preRegisterUser(api, mailUrl);
+    const user = await registerUser(api, preRegister);
+
+    const { shortCode, target, newEmail } = await requestEmailUpdate(api, user.token);
+
+    const pending = await credentialsGetSelf(api, user.token.accessToken);
+    expect(pending.email).toBe(user.email);
+    expect(pending.pendingEmail?.email).toBe(newEmail);
+    expect(pending.pendingEmail?.expiresAt.getTime()).toBeGreaterThan(Date.now());
+
+    await credentialsUpdateEmail(api, anonToken.accessToken, { userID: target, shortCode });
+
+    const confirmed = await credentialsGetSelf(api, user.token.accessToken);
+    expect(confirmed.email).toBe(newEmail);
+    expect(confirmed.pendingEmail).toBeUndefined();
+  });
+
+  it("refuses anonymous callers", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+    const anonToken = await tokenCreateAnon(api);
+
+    await expectStatus(credentialsGetSelf(api, anonToken.accessToken), 403);
   });
 });
 

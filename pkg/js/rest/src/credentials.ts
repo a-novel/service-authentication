@@ -21,6 +21,26 @@ export const CredentialsSchema = z.object({
 /** The value {@link CredentialsSchema} validates. */
 export type Credentials = z.infer<typeof CredentialsSchema>;
 
+/**
+ * An email change awaiting confirmation: the requested address and when its confirmation code expires. It lasts
+ * until the user confirms it, requests another change, or lets the code expire.
+ */
+export const PendingEmailSchema = z.object({
+  email: z.string(),
+  expiresAt: z.iso.datetime().transform((value) => new Date(value)),
+});
+
+/** The value {@link PendingEmailSchema} validates. */
+export type PendingEmail = z.infer<typeof PendingEmailSchema>;
+
+/** The authenticated user's own account, with the email change awaiting confirmation, if any. */
+export const CredentialsSelfSchema = CredentialsSchema.extend({
+  pendingEmail: PendingEmailSchema.optional(),
+});
+
+/** The value {@link CredentialsSelfSchema} validates. */
+export type CredentialsSelf = z.infer<typeof CredentialsSelfSchema>;
+
 /** New-account details: login email, password, and the short code emailed to confirm the address. */
 export const CredentialsCreateRequestSchema = z.object({
   email: EmailSchema,
@@ -104,6 +124,17 @@ export async function credentialsGet(
   params.set("id", form.id);
 
   return await api.fetch(`/v2/credentials?${params.toString()}`, CredentialsSchema, {
+    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    method: "GET",
+  });
+}
+
+/**
+ * Fetches the account of the user bearing the access token. Throws a 403 for an anonymous token, and a 404 when the
+ * account no longer exists.
+ */
+export async function credentialsGetSelf(api: AuthenticationApi, accessToken: string): Promise<CredentialsSelf> {
+  return await api.fetch("/v2/credentials/self", CredentialsSelfSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "GET",
   });
