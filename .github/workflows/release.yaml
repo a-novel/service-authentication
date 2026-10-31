@@ -51,7 +51,7 @@ jobs:
       - uses: a-novel-kit/workflows/publish-actions/release-core@v1.81.2
         with:
           # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
-          cli_version: "1.41.1"
+          cli_version: "1.42.0"
           release_type: ${{ inputs.release_type }}
           dry_run: "true"
 
@@ -67,7 +67,7 @@ jobs:
         uses: a-novel-kit/workflows/publish-actions/release-core@v1.81.2
         with:
           # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
-          cli_version: "1.41.1"
+          cli_version: "1.42.0"
           release_type: ${{ inputs.release_type }}
           client_id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
