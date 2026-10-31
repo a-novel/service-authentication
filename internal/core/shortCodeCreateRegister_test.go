@@ -19,7 +19,6 @@ import (
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 func TestShortCodeCreateRegister(t *testing.T) {
@@ -207,7 +206,6 @@ func TestShortCodeCreateRegister(t *testing.T) {
 					"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
 					"URL":       smtpConfig.Register,
 					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL.Hours(),
-					"Banner":    assets.BannerBase64,
 				}
 
 				sendMail := smtpService.EXPECT().

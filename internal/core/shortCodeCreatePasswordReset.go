@@ -13,7 +13,6 @@ import (
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 // ShortCodeCreatePasswordResetService issues the underlying short code; satisfied
@@ -119,7 +118,6 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 			mails.TemplateVarTarget:    credentials.ID.String(),
 			mails.TemplateVarURL:       service.smtpConfig.UpdatePassword,
 			mails.TemplateVarDuration:  ttl.Hours(),
-			mails.TemplateVarBanner:    assets.BannerBase64,
 		},
 		Kind: mailDeliveryKindPasswordReset,
 	}

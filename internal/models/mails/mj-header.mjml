@@ -2,7 +2,27 @@
   <mj-body>
     <mj-section padding="48px 24px 32px">
       <mj-column>
-        <mj-image width="320px" alt="Agora" padding="0" src="{{.Banner}}" />
+        <!-- Outlook for Windows renders no color scheme and would show both banners, so it never sees the light one. -->
+        <mj-text>
+          <img
+            class="banner-dark"
+            src="cid:agora-banner@agorastoryverse.com"
+            alt="Agora"
+            width="160"
+            height="40"
+            style="display: block; border: 0; width: 160px; height: 40px"
+          />
+          <!--[if !mso]><!-->
+          <img
+            class="banner-light"
+            src="cid:agora-banner-light@agorastoryverse.com"
+            alt="Agora"
+            width="160"
+            height="40"
+            style="display: none; border: 0; width: 160px; height: 40px"
+          />
+          <!--<![endif]-->
+        </mj-text>
       </mj-column>
     </mj-section>
   </mj-body>

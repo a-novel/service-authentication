@@ -14,7 +14,6 @@ import (
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/mails/assets"
 )
 
 // ShortCodeCreateRegisterService issues the underlying short code; satisfied by
@@ -127,7 +126,6 @@ func (service *ShortCodeCreateRegister) Exec(
 			mails.TemplateVarTarget:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
 			mails.TemplateVarURL:       service.smtpConfig.Register,
 			mails.TemplateVarDuration:  ttl.Hours(),
-			mails.TemplateVarBanner:    assets.BannerBase64,
 		},
 		Kind: mailDeliveryKindRegister,
 	}

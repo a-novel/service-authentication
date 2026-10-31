@@ -1,5 +1,8 @@
 Subject: Créez votre compte Agora
 MIME-Version: 1.0
+Content-Type: multipart/related; type="text/html"; boundary="agora-related"
+
+--agora-related
 Content-Type: text/html; charset=UTF-8
 
 <!-- Mail starts here -->
@@ -76,36 +79,70 @@ Content-Type: text/html; charset=UTF-8
     }
   </style>
   <style type="text/css">
-    @media only screen and (max-width:479px) {
-      table.mj-full-width-mobile {
-        width: 100% !important;
-      }
-
-      td.mj-full-width-mobile {
-        width: auto !important;
-      }
-    }
-  </style>
-  <style type="text/css">
     a:focus-visible {
-      outline: 3px solid #00b1ff;
+      outline: 3px solid #00b4ff;
       outline-offset: 4px;
     }
 
     @media only screen and (max-width: 480px) {
-      .message-content>table>tbody>tr>td {
-        padding: 24px !important;
+      .gutter>table>tbody>tr>td {
+        padding-right: 16px !important;
+        padding-left: 16px !important;
       }
     }
   </style>
-  <!-- Literal colors, type sizes, and spacing follow A-Novel uikit's presentation guidelines. -->
+  <!-- Literal colors, type sizes, and spacing mirror A-Novel uikit's tokens and the platform's link screens. -->
+  <!-- The dark design and its solid canvas are the default, for clients that ignore color schemes. A client
+    reporting one shows the mail on its own canvas, the Canvas system color, and a light one gets the light palette
+    and banner. Gmail discards a whole style block it cannot parse, so these rules stay apart from the layout's. -->
+  <!-- prettier-ignore -->
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <style type="text/css">
+    @media (prefers-color-scheme: light),
+    (prefers-color-scheme: dark) {
+
+      .mail,
+      .mail>div {
+        color-scheme: light dark;
+        background-color: transparent !important;
+        background-color: Canvas !important;
+      }
+    }
+
+    @media (prefers-color-scheme: light) {
+      .mail div {
+        color: #4a5256 !important;
+      }
+
+      .mail h1 {
+        color: #020507 !important;
+      }
+
+      .mail .fallback-link {
+        color: #006089 !important;
+      }
+
+      .mail a:focus-visible {
+        outline-color: #006089 !important;
+      }
+
+      .mail .banner-dark {
+        display: none !important;
+      }
+
+      .mail .banner-light {
+        display: block !important;
+      }
+    }
+  </style>
 </head>
 
-<body style="word-spacing:normal;background-color:#010203;">
+<body class="mail" style="word-spacing:normal;background-color:#060b0e;">
   <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">Terminez votre inscription.</div>
-  <div aria-label="Créez votre compte Agora" aria-roledescription="email" role="article" lang="fr" dir="ltr" style="word-spacing:normal;background-color:#010203;">
-    <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
-    <div style="margin:0px auto;max-width:600px;">
+  <div aria-label="Créez votre compte Agora" aria-roledescription="email" role="article" lang="fr" dir="ltr" style="word-spacing:normal;background-color:#060b0e;">
+    <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="gutter-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+    <div class="gutter" style="margin:0px auto;max-width:600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
         <tbody>
           <tr>
@@ -118,17 +155,12 @@ Content-Type: text/html; charset=UTF-8
                       <td style="vertical-align:top;padding:0;">
                         <table border="0" cellpadding="0" cellspacing="0" role="presentation" style width="100%">
                           <tbody>
+                            <!-- Outlook for Windows renders no color scheme and would show both banners, so it never sees the light one. -->
                             <tr>
-                              <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
-                                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;border-spacing:0px;">
-                                  <tbody>
-                                    <tr>
-                                      <td style="width:320px;">
-                                        <img alt="Agora" src="{{.Banner}}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="320" height="auto">
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
+                              <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                                <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:16px;line-height:1.5;text-align:left;color:#9fa8ad;"><img class="banner-dark" src="cid:agora-banner@agorastoryverse.com" alt="Agora" width="160" height="40" style="display: block; border: 0; width: 160px; height: 40px">
+                                  <!--[if !mso]><!--><img class="banner-light" src="cid:agora-banner-light@agorastoryverse.com" alt="Agora" width="160" height="40" style="display: none; border: 0; width: 160px; height: 40px"><!--<![endif]-->
+                                </div>
                               </td>
                             </tr>
                           </tbody>
@@ -144,86 +176,12 @@ Content-Type: text/html; charset=UTF-8
         </tbody>
       </table>
     </div>
-    <!--[if mso | IE]></td></tr></table><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
-    <div style="margin:0px auto;max-width:600px;">
+    <!--[if mso | IE]></td></tr></table><table align="center" border="0" cellpadding="0" cellspacing="0" class="gutter-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+    <div class="gutter" style="margin:0px auto;max-width:600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
         <tbody>
           <tr>
-            <td style="direction:ltr;font-size:0px;padding:0 16px;text-align:center;">
-              <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="message-content-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="message-content-outlook" role="presentation" style="width:568px;" width="568" bgcolor="#161a1d" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
-              <div class="message-content" style="background:#161a1d;background-color:#161a1d;margin:0px auto;max-width:568px;border-radius:12px;overflow:hidden;">
-                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#161a1d;background-color:#161a1d;width:100%;border-collapse:separate;">
-                  <tbody>
-                    <tr>
-                      <td style="border-radius:12px;direction:ltr;font-size:0px;padding:32px;text-align:center;">
-                        <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:504px;" ><![endif]-->
-                        <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
-                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-                            <tbody>
-                              <tr>
-                                <td style="vertical-align:top;padding:0;">
-                                  <table border="0" cellpadding="0" cellspacing="0" role="presentation" style width="100%">
-                                    <tbody>
-                                      <tr>
-                                        <td align="left" style="font-size:0px;padding:0 0 24px;word-break:break-word;">
-                                          <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:16px;line-height:1.5;text-align:left;color:#c5cbcf;">
-                                            <h1 style="margin: 0; color: #edf3f6; font-family: 'TeX Gyre Heros Cn', 'Arial Narrow', Arial, sans-serif; font-size: 29px; font-weight: 700; line-height: 1.25; letter-spacing: -0.58px;">Créez votre compte</h1>
-                                          </div>
-                                        </td>
-                                      </tr>
-                                      <tr>
-                                        <td align="left" style="font-size:0px;padding:0 0 24px;word-break:break-word;">
-                                          <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:16px;line-height:1.5;text-align:left;color:#c5cbcf;">Terminez votre inscription pour rejoindre Agora.</div>
-                                        </td>
-                                      </tr>
-                                      <tr>
-                                        <td align="left" style="font-size:0px;padding:0 0 16px;word-break:break-word;">
-                                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
-                                            <tbody>
-                                              <tr>
-                                                <td align="center" bgcolor="#0098db" role="presentation" style="border:none;border-radius:8px;cursor:auto;mso-padding-alt:12px 24px;background:#0098db;" valign="middle">
-                                                  <a href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}" style="display: inline-block; background: #0098db; color: #030506; font-family: 'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; line-height: 24px; margin: 0; text-decoration: none; text-transform: none; padding: 12px 24px; mso-padding-alt: 0px; border-radius: 8px;" target="_blank"> Créer mon compte </a>
-                                                </td>
-                                              </tr>
-                                            </tbody>
-                                          </table>
-                                        </td>
-                                      </tr>
-                                      <tr>
-                                        <td align="left" style="font-size:0px;padding:0 0 32px;word-break:break-word;">
-                                          <div style="font-family:'JetBrains Mono', Consolas, 'Courier New', monospace;font-size:12px;line-height:1.5;text-align:left;color:#a2a8ab;">Lien valable {{.Duration}} h.</div>
-                                        </td>
-                                      </tr>
-                                      <tr>
-                                        <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
-                                          <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:14px;line-height:1.5;text-align:left;color:#a2a8ab;">Si vous n’avez pas demandé de compte, vous pouvez ignorer ce message.</div>
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                        <!--[if mso | IE]></td></tr></table><![endif]-->
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <!--[if mso | IE]></td></tr></table></td></tr></table><![endif]-->
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <!--[if mso | IE]></td></tr></table><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
-    <div style="margin:0px auto;max-width:600px;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
-        <tbody>
-          <tr>
-            <td style="direction:ltr;font-size:0px;padding:24px 24px 0;text-align:center;">
+            <td style="direction:ltr;font-size:0px;padding:0 24px 48px;text-align:center;">
               <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="" style="vertical-align:top;width:552px;" ><![endif]-->
               <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
                 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
@@ -234,12 +192,47 @@ Content-Type: text/html; charset=UTF-8
                           <tbody>
                             <tr>
                               <td align="left" style="font-size:0px;padding:0 0 8px;word-break:break-word;">
-                                <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:14px;line-height:1.5;text-align:left;color:#a2a8ab;">Vous pouvez aussi copier ce lien dans votre navigateur :</div>
+                                <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:16px;line-height:1.5;text-align:left;color:#9fa8ad;">
+                                  <h1 style="margin: 0; color: #eaf3f9; font-family: 'TeX Gyre Heros Cn', 'Arial Narrow', 'Noto Sans', sans-serif; font-size: 22.78px; font-weight: 700; line-height: 1;">Créez votre compte</h1>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="left" style="font-size:0px;padding:0 0 24px;word-break:break-word;">
+                                <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:16px;line-height:1.5;text-align:left;color:#9fa8ad;">Terminez votre inscription pour rejoindre Agora.</div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="left" style="font-size:0px;padding:0 0 16px;word-break:break-word;">
+                                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
+                                  <tbody>
+                                    <tr>
+                                      <td align="center" bgcolor="#0098db" role="presentation" style="border:none;border-radius:8px;cursor:auto;mso-padding-alt:12px 16px;background:#0098db;" valign="middle">
+                                        <a href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}" style="text-decoration-thickness: 1px; text-underline-offset: 4px; display: inline-block; background: #0098db; color: #020507; font-family: 'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; line-height: 16px; margin: 0; text-decoration: none; text-transform: none; padding: 12px 16px; mso-padding-alt: 0px; border-radius: 8px;" target="_blank"> Créer mon compte </a>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
                               </td>
                             </tr>
                             <tr>
                               <td align="left" style="font-size:0px;padding:0 0 32px;word-break:break-word;">
-                                <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:14px;line-height:1.5;text-align:left;color:#a2a8ab;"><a class="fallback-link" href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}" style="color: #00b1ff; text-decoration: underline; word-break: break-all; overflow-wrap: anywhere;">{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}</a></div>
+                                <div style="font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12.64px;line-height:1.5;text-align:left;color:#9fa8ad;">Lien valable {{.Duration}} h.</div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="left" style="font-size:0px;padding:0 0 16px;word-break:break-word;">
+                                <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:14.22px;line-height:1.5;text-align:left;color:#9fa8ad;">Si vous n’avez pas demandé de compte, vous pouvez ignorer ce message.</div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="left" style="font-size:0px;padding:0 0 8px;word-break:break-word;">
+                                <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:14.22px;line-height:1.5;text-align:left;color:#9fa8ad;">Vous pouvez aussi copier ce lien dans votre navigateur :</div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
+                                <div style="font-family:'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif;font-size:14.22px;line-height:1.5;text-align:left;color:#9fa8ad;"><a class="fallback-link" href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}" style="color: #00b1ff; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; word-break: break-all; overflow-wrap: anywhere;">{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}</a></div>
                               </td>
                             </tr>
                           </tbody>

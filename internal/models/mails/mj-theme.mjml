@@ -1,44 +1,43 @@
 <mjml>
   <mj-head>
-    <!-- Literal colors, type sizes, and spacing follow A-Novel uikit's presentation guidelines. -->
+    <!-- Literal colors, type sizes, and spacing mirror A-Novel uikit's tokens and the platform's link screens. -->
     <mj-attributes>
       <mj-all font-family="'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif" />
-      <mj-text font-size="16px" line-height="1.5" color="#c5cbcf" padding="0 0 24px" />
-      <mj-section padding="0 24px" />
+      <mj-text font-size="16px" line-height="1.5" color="#9fa8ad" padding="0" />
+      <mj-section css-class="gutter" padding="0 24px" />
       <mj-column padding="0" />
       <mj-button
         align="left"
         background-color="#0098db"
-        color="#030506"
+        color="#020507"
         font-size="16px"
         font-weight="700"
-        line-height="24px"
+        line-height="16px"
         border-radius="8px"
-        inner-padding="12px 24px"
+        inner-padding="12px 16px"
         padding="0 0 16px"
       />
       <mj-class
         name="meta"
-        font-family="'JetBrains Mono', Consolas, 'Courier New', monospace"
-        font-size="12px"
-        line-height="1.5"
-        color="#a2a8ab"
+        font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace"
+        font-size="12.64px"
       />
-      <mj-class name="support" font-size="14px" line-height="1.5" color="#a2a8ab" />
+      <mj-class name="support" font-size="14.22px" />
     </mj-attributes>
     <mj-style inline="inline">
       h1 {
         margin: 0;
-        color: #edf3f6;
-        font-family: "TeX Gyre Heros Cn", "Arial Narrow", Arial, sans-serif;
-        font-size: 29px;
+        color: #eaf3f9;
+        font-family: "TeX Gyre Heros Cn", "Arial Narrow", "Noto Sans", sans-serif;
+        font-size: 22.78px;
         font-weight: 700;
-        line-height: 1.25;
-        letter-spacing: -0.58px;
+        line-height: 1;
       }
       a {
         color: #00b1ff;
         text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 4px;
       }
       .fallback-link {
         word-break: break-all;
@@ -47,14 +46,53 @@
     </mj-style>
     <mj-style>
       a:focus-visible {
-        outline: 3px solid #00b1ff;
+        outline: 3px solid #00b4ff;
         outline-offset: 4px;
       }
       @media only screen and (max-width: 480px) {
-        .message-content > table > tbody > tr > td {
-          padding: 24px !important;
+        .gutter > table > tbody > tr > td {
+          padding-right: 16px !important;
+          padding-left: 16px !important;
         }
       }
     </mj-style>
+    <!-- The dark design and its solid canvas are the default, for clients that ignore color schemes. A client
+    reporting one shows the mail on its own canvas, the Canvas system color, and a light one gets the light palette
+    and banner. Gmail discards a whole style block it cannot parse, so these rules stay apart from the layout's. -->
+    <!-- prettier-ignore -->
+    <mj-raw>
+      <meta name="color-scheme" content="light dark" />
+      <meta name="supported-color-schemes" content="light dark" />
+      <style type="text/css">
+        @media (prefers-color-scheme: light), (prefers-color-scheme: dark) {
+          .mail,
+          .mail > div {
+            color-scheme: light dark;
+            background-color: transparent !important;
+            background-color: Canvas !important;
+          }
+        }
+        @media (prefers-color-scheme: light) {
+          .mail div {
+            color: #4a5256 !important;
+          }
+          .mail h1 {
+            color: #020507 !important;
+          }
+          .mail .fallback-link {
+            color: #006089 !important;
+          }
+          .mail a:focus-visible {
+            outline-color: #006089 !important;
+          }
+          .mail .banner-dark {
+            display: none !important;
+          }
+          .mail .banner-light {
+            display: block !important;
+          }
+        }
+      </style>
+    </mj-raw>
   </mj-head>
 </mjml>
