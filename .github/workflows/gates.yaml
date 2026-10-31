@@ -64,7 +64,7 @@ jobs:
     steps:
       - id: relay
         if: github.event_name == 'workflow_run'
-        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.81.2
+        uses: a-novel-kit/workflows/generic-actions/relay-context@v1.81.3
 
       # Dependabot's own events read no secret; the trusted CI-completion job
       # in auto-approve-dependabot.yaml evaluates its pull requests.
@@ -73,7 +73,7 @@ jobs:
           ${{ !cancelled() && (steps.relay.outputs.event != '' ||
           github.event_name == 'pull_request_target' && github.event.action != 'closed' &&
           github.actor != vars.DEPENDABOT_SECURITY_LOGIN) }}
-        uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.81.2
+        uses: a-novel-kit/workflows/generic-actions/merge-gate@v1.81.3
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
@@ -92,7 +92,7 @@ jobs:
           ${{ !cancelled() && github.event_name == 'pull_request_target' && github.event.action != 'closed' &&
           github.actor != vars.DEPENDABOT_SECURITY_LOGIN && !github.event.pull_request.draft &&
           contains(toJSON(github.event.pull_request.labels.*.name), '"epic:') }}
-        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.81.2
+        uses: a-novel-kit/workflows/generic-actions/enable-auto-merge@v1.81.3
         with:
           pull_request_number: ${{ github.event.pull_request.number }}
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
@@ -108,7 +108,7 @@ jobs:
           ${{ !cancelled() && (steps.relay.outputs.event != '' ||
           github.event_name == 'pull_request_target' && github.event.action != 'closed' &&
           github.actor != vars.DEPENDABOT_SECURITY_LOGIN) }}
-        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.81.2
+        uses: a-novel-kit/workflows/generic-actions/detect-partial-landing@v1.81.3
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
@@ -129,7 +129,7 @@ jobs:
           ${{ !cancelled() && (steps.relay.outputs.event != '' ||
           contains(fromJSON('["opened", "reopened", "synchronize", "labeled", "unlabeled"]'), github.event.action) &&
           github.actor != vars.DEPENDABOT_SECURITY_LOGIN) }}
-        uses: a-novel-kit/workflows/generic-actions/review-gate@v1.81.2
+        uses: a-novel-kit/workflows/generic-actions/review-gate@v1.81.3
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
@@ -162,7 +162,7 @@ jobs:
           ${{ !cancelled() && (steps.relay.outputs.event == 'pull_request_review' ||
           github.event_name == 'pull_request_target' && github.event.action != 'labeled' &&
           github.event.action != 'unlabeled') }}
-        uses: a-novel-kit/workflows/generic-actions/derive-status@v1.81.2
+        uses: a-novel-kit/workflows/generic-actions/derive-status@v1.81.3
         with:
           client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
@@ -179,7 +179,7 @@ jobs:
     # The engine lists a bot pull request's CI runs; the pull request itself it reads through the App.
     permissions:
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.81.2
+    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.81.3
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       roles: ${{ vars.DISCORD_REPO_ROLES }}
