@@ -520,6 +520,22 @@ describe("credentialsGetSelf", () => {
     expect(confirmed.pendingEmail).toBeUndefined();
   });
 
+  it("does not reveal that the pending email is registered", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const preRegister = await preRegisterUser(api, mailUrl);
+    const user = await registerUser(api, preRegister);
+
+    const preRegisterOwner = await preRegisterUser(api, mailUrl);
+    const owner = await registerUser(api, preRegisterOwner);
+
+    await shortCodeCreateEmailUpdate(api, user.token.accessToken, { email: owner.email, lang: Lang.En });
+
+    const pending = await credentialsGetSelf(api, user.token.accessToken);
+    expect(pending.pendingEmail?.email).toBe(owner.email);
+    expect(pending.pendingEmail?.expiresAt.getTime()).toBeGreaterThan(Date.now());
+  });
+
   it("refuses anonymous callers", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
     const anonToken = await tokenCreateAnon(api);

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/samber/lo"
@@ -71,8 +70,7 @@ func (handler *RestShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, 
 	}
 
 	_, err = handler.service.Exec(ctx, serviceRequest)
-	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
-	if err != nil && !errors.Is(err, core.ErrCredentialsUpdateEmailAlreadyExists) {
+	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreateEmailUpdateErrors, err)
 
 		return

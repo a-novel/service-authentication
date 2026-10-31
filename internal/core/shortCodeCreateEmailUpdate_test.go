@@ -105,6 +105,32 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			sendMailPanic: true,
 		},
 		{
+			// Stores the same code as Success, so the pending change reads the same, but mails nothing.
+			name: "Success/EmailTaken",
+
+			request: &core.ShortCodeCreateEmailUpdateRequest{
+				Lang:  authconfig.LangFR,
+				Email: "user@provider.com",
+				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			},
+
+			serviceCreateMock: &serviceCreateMock{
+				resp: &core.ShortCode{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Usage:     "test-usage",
+					Target:    "test-target",
+					Data:      []byte("test-data"),
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+					PlainCode: "abcdef123456",
+				},
+			},
+
+			daoSelectMock: &daoSelectMock{
+				err: nil,
+			},
+		},
+		{
 			name: "Error/MailDeliveryUnavailable",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
@@ -115,6 +141,23 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			daoSelectMock: &daoSelectMock{
 				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+
+			closeMailDelivery: true,
+			expectErr:         core.ErrMailDeliveryUnavailable,
+		},
+		{
+			// A saturated mailer must fail a taken address as it fails a free one.
+			name: "Error/MailDeliveryUnavailable/EmailTaken",
+
+			request: &core.ShortCodeCreateEmailUpdateRequest{
+				Lang:  authconfig.LangFR,
+				Email: "user@provider.com",
+				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			},
+
+			daoSelectMock: &daoSelectMock{
+				err: nil,
 			},
 
 			closeMailDelivery: true,
@@ -138,21 +181,6 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			},
 
 			expectErr: errFoo,
-		},
-		{
-			name: "Error/EmailAlreadyTaken",
-
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
-
-			daoSelectMock: &daoSelectMock{
-				err: nil,
-			},
-
-			expectErr: dao.ErrCredentialsUpdateEmailAlreadyExists,
 		},
 		{
 			name: "Error/Dao",
