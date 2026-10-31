@@ -17,19 +17,25 @@ Content-Type: text/html; charset=UTF-8
   </mj-head>
   <mj-body width="600px" background-color="#060b0e" css-class="mail">
     <mj-include path="../mj-header.mjml" />
-    <mj-section padding="0 24px 48px">
+    <mj-wrapper>
+      <mj-section mj-class="card">
+        <mj-column>
+          <mj-text padding="0 0 8px"><h1>Confirm your new email</h1></mj-text>
+          <mj-text padding="0 0 16px"
+            >You requested an email change for your Agora account. Confirm this address to complete the update.</mj-text
+          >
+          <mj-button href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}&amp;source={{.Source}}"
+            >Confirm my email</mj-button
+          >
+          <mj-text mj-class="meta" padding="0 0 16px">Link valid for {{.Duration}} h.</mj-text>
+          <mj-text mj-class="support"
+            >If you didn’t request this, ignore this email. Your current email address will stay the same.</mj-text
+          >
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+    <mj-section padding="24px 24px 48px">
       <mj-column>
-        <mj-text padding="0 0 8px"><h1>Confirm your new email</h1></mj-text>
-        <mj-text padding="0 0 24px"
-          >You requested an email change for your Agora account. Confirm this address to complete the update.</mj-text
-        >
-        <mj-button href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}&amp;source={{.Source}}"
-          >Confirm my email</mj-button
-        >
-        <mj-text mj-class="meta" padding="0 0 32px">Link valid for {{.Duration}} h.</mj-text>
-        <mj-text mj-class="support" padding="0 0 16px"
-          >If you didn’t request this, ignore this email. Your current email address will stay the same.</mj-text
-        >
         <mj-text mj-class="support" padding="0 0 8px">You can also copy this link into your browser:</mj-text>
         <mj-text mj-class="support">
           <a

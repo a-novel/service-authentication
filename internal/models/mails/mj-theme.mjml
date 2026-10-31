@@ -4,6 +4,7 @@
     <mj-attributes>
       <mj-all font-family="'TeX Gyre Heros', Arimo, 'Noto Sans', Arial, sans-serif" />
       <mj-text font-size="16px" line-height="1.5" color="#9fa8ad" padding="0" />
+      <mj-wrapper css-class="gutter" padding="0 24px" />
       <mj-section css-class="gutter" padding="0 24px" />
       <mj-column padding="0" />
       <mj-button
@@ -11,7 +12,7 @@
         background-color="#0098db"
         color="#020507"
         font-size="16px"
-        font-weight="700"
+        font-weight="400"
         line-height="16px"
         border-radius="8px"
         inner-padding="12px 16px"
@@ -23,6 +24,7 @@
         font-size="12.64px"
       />
       <mj-class name="support" font-size="14.22px" />
+      <mj-class name="card" css-class="card" background-color="#161d20" border-radius="12px" padding="16px" />
     </mj-attributes>
     <mj-style inline="inline">
       h1 {
@@ -73,6 +75,10 @@
           }
         }
         @media (prefers-color-scheme: light) {
+          .mail .card,
+          .mail .card > table {
+            background: #eaf3f9 !important;
+          }
           .mail div {
             color: #4a5256 !important;
           }

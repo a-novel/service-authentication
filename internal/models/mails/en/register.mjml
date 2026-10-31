@@ -17,15 +17,19 @@ Content-Type: text/html; charset=UTF-8
   </mj-head>
   <mj-body width="600px" background-color="#060b0e" css-class="mail">
     <mj-include path="../mj-header.mjml" />
-    <mj-section padding="0 24px 48px">
+    <mj-wrapper>
+      <mj-section mj-class="card">
+        <mj-column>
+          <mj-text padding="0 0 8px"><h1>Create your account</h1></mj-text>
+          <mj-text padding="0 0 16px">Complete your registration to join Agora.</mj-text>
+          <mj-button href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}">Create my account</mj-button>
+          <mj-text mj-class="meta" padding="0 0 16px">Link valid for {{.Duration}} h.</mj-text>
+          <mj-text mj-class="support">If you didn’t request an account, you can ignore this email.</mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+    <mj-section padding="24px 24px 48px">
       <mj-column>
-        <mj-text padding="0 0 8px"><h1>Create your account</h1></mj-text>
-        <mj-text padding="0 0 24px">Complete your registration to join Agora.</mj-text>
-        <mj-button href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}">Create my account</mj-button>
-        <mj-text mj-class="meta" padding="0 0 32px">Link valid for {{.Duration}} h.</mj-text>
-        <mj-text mj-class="support" padding="0 0 16px"
-          >If you didn’t request an account, you can ignore this email.</mj-text
-        >
         <mj-text mj-class="support" padding="0 0 8px">You can also copy this link into your browser:</mj-text>
         <mj-text mj-class="support">
           <a class="fallback-link" href="{{.URL}}?shortCode={{.ShortCode}}&amp;target={{.Target}}"
