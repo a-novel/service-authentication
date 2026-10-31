@@ -24,7 +24,7 @@ type ShortCodeCreateEmailUpdateService interface {
 }
 
 // ShortCodeCreateEmailUpdateDao reports whether an email address is already
-// registered, so a change to an address already in use can be rejected.
+// registered, so no code is mailed to an address already in use.
 type ShortCodeCreateEmailUpdateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
@@ -43,8 +43,8 @@ type ShortCodeCreateEmailUpdateRequest struct {
 }
 
 // ShortCodeCreateEmailUpdate issues a [ShortCodeUsageValidateEmail] code for an
-// email-change confirmation and emails it to the prospective new address, after
-// rejecting the change if that address is already registered.
+// email-change confirmation and emails it to the prospective new address, unless
+// that address is already registered.
 type ShortCodeCreateEmailUpdate struct {
 	service          ShortCodeCreateEmailUpdateService
 	selectDao        ShortCodeCreateEmailUpdateDao
@@ -72,7 +72,12 @@ func NewShortCodeCreateEmailUpdate(
 }
 
 // Exec issues the confirmation code and schedules its delivery email, returning
-// the code immediately. It fails if the requested email is already registered.
+// the code immediately.
+//
+// A registered address gets the same code and result but no mail, so neither
+// this call nor the pending change it leaves reveals that the address is taken.
+// Without the mailed code the change cannot be confirmed, and
+// [CredentialsUpdateEmail] would reject the taken address anyway.
 func (service *ShortCodeCreateEmailUpdate) Exec(
 	ctx context.Context, request *ShortCodeCreateEmailUpdateRequest,
 ) (*ShortCode, error) {
@@ -90,14 +95,14 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 	}
 
 	_, err = service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
-	if err == nil {
-		return nil, otel.ReportError(span, dao.ErrCredentialsUpdateEmailAlreadyExists)
-	}
+	emailTaken := err == nil
 
-	if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+	if !emailTaken && !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
 		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
+	// A taken address reserves too, so a saturated mailer fails both cases alike. The deferred
+	// Release returns the slot when no mail goes out.
 	reservation, err := service.mailDelivery.Reserve(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
@@ -116,6 +121,10 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 	shortCode, err := service.service.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
+	}
+
+	if emailTaken {
+		return shortCode, nil
 	}
 
 	mail := &MailDeliveryRequest{
