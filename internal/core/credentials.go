@@ -21,6 +21,24 @@ type Credentials struct {
 	UpdatedAt time.Time
 }
 
+// CredentialsSelf is the caller's own account, as [CredentialsGetSelf] returns it.
+type CredentialsSelf struct {
+	Credentials
+
+	// PendingEmail is the email change awaiting confirmation, nil when none does.
+	PendingEmail *PendingEmail
+}
+
+// PendingEmail is an email change requested through [ShortCodeCreateEmailUpdate]. It lasts until
+// the user confirms it, requests another change, or lets the confirmation code expire.
+type PendingEmail struct {
+	// Email is the new address, which takes effect once confirmed.
+	Email string
+
+	// ExpiresAt is when the confirmation code expires.
+	ExpiresAt time.Time
+}
+
 // ValidateCredentialsRole is a go-playground/validator field-level validator that
 // accepts a string only when it names a role defined in the default permissions
 // configuration. It is registered under the "role" tag at package init.
