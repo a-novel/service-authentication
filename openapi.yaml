@@ -604,7 +604,8 @@ paths:
             The request was accepted. If the email is not already registered, an email update link will be sent.
 
             The response is always 202 whether or not the email is registered, to avoid revealing which emails
-            have accounts. No email is sent when the address is already registered.
+            have accounts. For the same reason, `[GET] /v2/credentials/self` shows the change as pending either way.
+            No email is sent when the address is already registered, so that change can never be confirmed.
         "400":
           $ref: "#/components/responses/badRequest"
         "401":
