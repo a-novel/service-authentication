@@ -335,6 +335,32 @@ paths:
         default:
           $ref: "#/components/responses/internalError"
 
+  /v2/credentials/self:
+    get:
+      operationId: credentialsGetSelf
+      summary: Retrieve the credentials of the authenticated user.
+      description: |
+        Retrieve the account of the user bearing the access token, with the email change awaiting confirmation, if
+        any. Anonymous tokens lack the required permission.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:self:get"]
+      responses:
+        "200":
+          $ref: "#/components/responses/credentialsGetSelf"
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
   /v2/credentials/email:
     patch:
       operationId: emailUpdate
@@ -718,6 +744,35 @@ components:
           schema:
             $ref: "#/components/schemas/publicCredentials"
 
+    credentialsGetSelf:
+      description: The credentials of the authenticated user.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/selfCredentials"
+          examples:
+            noPendingEmail:
+              summary: No email change awaits confirmation.
+              value:
+                {
+                  "id": "9dce0fa2-f93b-46a9-aa6b-a71bf0b1ee80",
+                  "email": "john.doe@gmail.com",
+                  "role": "auth:user",
+                  "createdAt": "2009-11-10T23:00:00Z",
+                  "updatedAt": "2009-11-10T23:00:00Z",
+                }
+            pendingEmail:
+              summary: An email change awaits confirmation.
+              value:
+                {
+                  "id": "9dce0fa2-f93b-46a9-aa6b-a71bf0b1ee80",
+                  "email": "john.doe@gmail.com",
+                  "role": "auth:user",
+                  "createdAt": "2009-11-10T23:00:00Z",
+                  "updatedAt": "2009-11-10T23:00:00Z",
+                  "pendingEmail": { "email": "john.doe@proton.me", "expiresAt": "2009-11-12T23:00:00Z" },
+                }
+
     credentialsList:
       description: The list of public credentials.
       content:
@@ -922,6 +977,46 @@ components:
           type: string
           format: date-time
           examples: [2009-11-10T23:00:00Z]
+
+    selfCredentials:
+      type: object
+      description: The credentials of the authenticated user, without any sensitive data such as the password.
+      required: [id, email, role, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: "#/components/schemas/userID"
+        email:
+          $ref: "#/components/schemas/email"
+        role:
+          $ref: "#/components/schemas/userRole"
+        createdAt:
+          type: string
+          format: date-time
+          examples: [2009-11-10T23:00:00Z]
+        updatedAt:
+          type: string
+          format: date-time
+          examples: [2009-11-10T23:00:00Z]
+        pendingEmail:
+          $ref: "#/components/schemas/pendingEmail"
+
+    pendingEmail:
+      type: object
+      description: |
+        An email change requested through `[PUT] /v2/short-code/update-email` and awaiting confirmation. It lasts until
+        the user confirms it, requests another change, or lets the confirmation code expire. Absent when no change
+        awaits confirmation.
+      required: [email, expiresAt]
+      additionalProperties: false
+      properties:
+        email:
+          $ref: "#/components/schemas/email"
+        expiresAt:
+          type: string
+          description: When the confirmation code expires.
+          format: date-time
+          examples: [2009-11-12T23:00:00Z]
 
     token:
       type: object
