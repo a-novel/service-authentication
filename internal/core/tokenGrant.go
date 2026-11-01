@@ -71,14 +71,15 @@ var (
 )
 
 // The refusals of a token request that concern its grant, RFC 6749's invalid_grant. A refusal
-// leaves the code as it was, except a reuse, which ends the session.
+// leaves the code as it was, except a reuse by the code's own client, which ends the session.
 var (
 	// ErrTokenGrantUnknownCode is returned by [TokenGrant.Exec] for a code never issued, purged, or
 	// whose account no longer exists.
 	ErrTokenGrantUnknownCode = &OAuthError{Code: OAuthErrorInvalidGrant, Description: "unknown authorization code"}
-	// ErrTokenGrantCodeReused is returned by [TokenGrant.Exec] for a code already exchanged. The
-	// exchange also ends the session the code belongs to, so the token pair the first exchange
-	// returned stops working too (RFC 6749 §4.1.2, RFC 9700 §4.2.4).
+	// ErrTokenGrantCodeReused is returned by [TokenGrant.Exec] for a code already exchanged, presented
+	// again by its client with its redirect URI and verifier. The exchange also ends the session the
+	// code belongs to, so the token pair the first exchange returned stops working too
+	// (RFC 6749 §4.1.2, RFC 9700 §4.2.4).
 	ErrTokenGrantCodeReused = &OAuthError{Code: OAuthErrorInvalidGrant, Description: "authorization code reused"}
 	// ErrTokenGrantCodeExpired is returned by [TokenGrant.Exec] for a code older than
 	// [AuthorizationCodeTTL].
@@ -108,6 +109,9 @@ var (
 	ErrTokenGrantSessionEnded = &OAuthError{Code: OAuthErrorInvalidGrant, Description: "session ended"}
 )
 
+// reuseRevocationTimeout bounds the revocation that ends the session of a reused code.
+const reuseRevocationTimeout = 5 * time.Second
+
 // codeVerifier matches a PKCE code verifier: 43 to 128 unreserved characters (RFC 7636 §4.1).
 var codeVerifier = regexp.MustCompile(`^[A-Za-z0-9._~-]{43,128}$`)
 
@@ -124,7 +128,7 @@ type TokenGrantDaoSelect interface {
 
 // TokenGrantDaoConsume marks the code exchanged, once.
 type TokenGrantDaoConsume interface {
-	Exec(ctx context.Context, request *dao.AuthorizationCodeConsumeRequest) (*dao.AuthorizationCode, error)
+	Exec(ctx context.Context, request *dao.AuthorizationCodeConsumeRequest) error
 }
 
 // TokenGrantDaoCredentials loads the account a grant signs in.
@@ -327,11 +331,18 @@ func (service *TokenGrant) grantAuthorizationCode(
 		attribute.String("session.id", code.SessionID),
 	)
 
+	// The binding comes first, so only the code's own client, with its redirect URI and verifier, ends
+	// the session by replaying it. Anyone else who holds a used code is refused, and ends nothing.
+	err = checkCodeBinding(code, clientID, params)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
 	if code.ConsumedAt != nil {
 		return nil, otel.ReportError(span, service.refuseReuse(ctx, code, now))
 	}
 
-	err = checkCodeGrant(code, clientID, params, now)
+	err = checkCodeLifetime(code, now)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
@@ -367,10 +378,11 @@ func (service *TokenGrant) grantAuthorizationCode(
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}
 
-	_, err = service.daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: id[:], Now: now})
+	err = service.daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: id[:], Now: now})
 	if errors.Is(err, dao.ErrAuthorizationCodeConsumeNotFound) {
-		// Another exchange consumed the code since it was read, and the pair signed here is dropped.
-		return nil, otel.ReportError(span, service.refuseReuse(ctx, code, now))
+		// The pair signed here is dropped: another exchange consumed the code since it was read, or the
+		// code was deleted.
+		return nil, otel.ReportError(span, service.refuseLostCode(ctx, code, now))
 	}
 
 	if err != nil {
@@ -446,9 +458,32 @@ func (service *TokenGrant) grantRefreshToken(
 	return &TokenGrantResult{AccessToken: accessToken, ExpiresIn: service.accessTokenTTL}, nil
 }
 
+// refuseLostCode returns the refusal of a code the exchange read but could not consume. A code
+// another exchange consumed is a reuse. A code deleted meanwhile, by the purge or with its account,
+// is unknown.
+func (service *TokenGrant) refuseLostCode(ctx context.Context, code *dao.AuthorizationCode, now time.Time) error {
+	ctx, span := otel.Tracer().Start(ctx, "core.TokenGrant(refuseLostCode)")
+	defer span.End()
+
+	_, err := service.daoSelect.Exec(ctx, &dao.AuthorizationCodeSelectRequest{ID: code.ID})
+	if errors.Is(err, dao.ErrAuthorizationCodeSelectNotFound) {
+		return otel.ReportError(span, errors.Join(err, ErrTokenGrantUnknownCode))
+	}
+
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("select authorization code: %w", err))
+	}
+
+	return otel.ReportError(span, service.refuseReuse(ctx, code, now))
+}
+
 // refuseReuse ends the session of a reused code, which its first exchange extended to the client,
-// and returns the refusal. The revocation lasts as long as a refresh token of the session may.
+// and returns the refusal. The revocation lasts as long as a refresh token of the session may. It
+// runs on a context of its own, so a caller that leaves does not keep the session alive.
 func (service *TokenGrant) refuseReuse(ctx context.Context, code *dao.AuthorizationCode, now time.Time) error {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), reuseRevocationTimeout)
+	defer cancel()
+
 	ctx, span := otel.Tracer().Start(ctx, "core.TokenGrant(refuseReuse)")
 	defer span.End()
 
@@ -466,14 +501,12 @@ func (service *TokenGrant) refuseReuse(ctx context.Context, code *dao.Authorizat
 	return ErrTokenGrantCodeReused
 }
 
-// checkCodeGrant returns the refusal of a code that expired, belongs to another client, does not
-// match the redirect URI or the code verifier params carry, or whose session ended.
-func checkCodeGrant(code *dao.AuthorizationCode, clientID string, params url.Values, now time.Time) error {
+// checkCodeBinding returns the refusal of a code issued to another client, or that the redirect URI
+// or the code verifier params carry does not match.
+func checkCodeBinding(code *dao.AuthorizationCode, clientID string, params url.Values) error {
 	redirectURI := params.Get("redirect_uri")
 
 	switch {
-	case !now.Before(code.ExpiresAt):
-		return ErrTokenGrantCodeExpired
 	case code.ClientID != clientID:
 		return ErrTokenGrantForeignCode
 	case code.RedirectURIInRequest && redirectURI == "":
@@ -482,6 +515,16 @@ func checkCodeGrant(code *dao.AuthorizationCode, clientID string, params url.Val
 		return ErrTokenGrantRedirectURIMismatch
 	case !verifiesChallenge(code, params.Get("code_verifier")):
 		return ErrTokenGrantCodeVerifierMismatch
+	}
+
+	return nil
+}
+
+// checkCodeLifetime returns the refusal of a code that expired, or whose session ended.
+func checkCodeLifetime(code *dao.AuthorizationCode, now time.Time) error {
+	switch {
+	case !now.Before(code.ExpiresAt):
+		return ErrTokenGrantCodeExpired
 	case !now.Before(code.SessionExpiresAt):
 		return ErrTokenGrantSessionEnded
 	}

@@ -111,9 +111,8 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 				_, err = db.NewInsert().Model(testCase.fixture).Exec(ctx)
 				require.NoError(t, err)
 
-				res, err := daoConsume.Exec(ctx, testCase.request)
+				err = daoConsume.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
-				require.Equal(t, testCase.expect, res)
 
 				stored := &dao.AuthorizationCode{}
 
@@ -148,8 +147,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 
 			for range attempts {
 				wg.Go(func() {
-					_, err := daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: codeID[:], Now: now})
-					errs <- err
+					errs <- daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: codeID[:], Now: now})
 				})
 			}
 

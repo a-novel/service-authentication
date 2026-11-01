@@ -5,6 +5,4 @@ SET
   consumed_at = ?1
 WHERE
   id = ?0
-  AND consumed_at IS NULL
-RETURNING
-  *;
+  AND consumed_at IS NULL;

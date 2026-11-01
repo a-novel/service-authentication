@@ -94,6 +94,7 @@ func TestTokenGrant(t *testing.T) {
 		params url.Values
 
 		daoSelectMock           *respMock[*dao.AuthorizationCode]
+		daoReselectMock         *respMock[*dao.AuthorizationCode]
 		verifyRefreshMock       *respMock[*session.RefreshClaims]
 		daoRevocationExistMock  *respMock[bool]
 		daoCredentialsMock      *respMock[*dao.Credentials]
@@ -285,14 +286,47 @@ func TestTokenGrant(t *testing.T) {
 			expectErr: core.ErrTokenGrantCodeReused,
 		},
 		{
-			// Reuse is checked first: a replay from another client, or with a wrong verifier, also ends
-			// the session.
+			// Anyone who holds a used code, through any client, without its verifier, cannot end the
+			// session: the binding is checked before the reuse.
+			name: "Error/ReusedWithoutVerifier",
+
+			caller: studioCaller,
+			params: codeGrantParams(func(params url.Values) { params.Set("code_verifier", strings.Repeat("v", 43)) }),
+
+			daoSelectMock: &respMock[*dao.AuthorizationCode]{resp: consumedCode},
+
+			expectErr: core.ErrTokenGrantCodeVerifierMismatch,
+		},
+		{
 			name: "Error/ReusedByOtherClient",
 
 			caller: "system:serviceaccount:forum:web",
-			params: codeGrantParams(func(params url.Values) { params.Set("code_verifier", strings.Repeat("v", 43)) }),
+			params: codeGrantParams(nil),
 
-			daoSelectMock:           &respMock[*dao.AuthorizationCode]{resp: consumedCode},
+			daoSelectMock: &respMock[*dao.AuthorizationCode]{resp: consumedCode},
+
+			expectErr: core.ErrTokenGrantForeignCode,
+		},
+		{
+			name: "Error/ReusedWithOtherRedirectURI",
+
+			caller: studioCaller,
+			params: codeGrantParams(func(params url.Values) { params.Set("redirect_uri", studioRedirectURI+"/") }),
+
+			daoSelectMock: &respMock[*dao.AuthorizationCode]{resp: consumedCode},
+
+			expectErr: core.ErrTokenGrantRedirectURIMismatch,
+		},
+		{
+			// A used code past its lifetime still ends the session when its client replays it.
+			name: "Error/ReusedExpired",
+
+			caller: studioCaller,
+			params: codeGrantParams(nil),
+
+			daoSelectMock: &respMock[*dao.AuthorizationCode]{resp: changed(*consumedCode, func(code *dao.AuthorizationCode) {
+				code.ExpiresAt = now.Add(-time.Minute)
+			})},
 			daoRevocationInsertMock: &errMock{},
 
 			expectErr: core.ErrTokenGrantCodeReused,
@@ -322,10 +356,30 @@ func TestTokenGrant(t *testing.T) {
 			signRefreshMock:         &errMock{},
 			signAccessMock:          &errMock{},
 			daoConsumeMock:          &errMock{err: dao.ErrAuthorizationCodeConsumeNotFound},
+			daoReselectMock:         &respMock[*dao.AuthorizationCode]{resp: consumedCode},
 			daoRevocationInsertMock: &errMock{},
 
 			expectRevocationJTIs: []string{"session-id"},
 			expectErr:            core.ErrTokenGrantCodeReused,
+		},
+		{
+			// The purge, or the deletion of the account, removed the code between its read and its
+			// consumption: nothing was exchanged twice, and the session stays.
+			name: "Error/DeletedConcurrently",
+
+			caller: studioCaller,
+			params: codeGrantParams(nil),
+
+			daoSelectMock:          &respMock[*dao.AuthorizationCode]{resp: &validCode},
+			daoRevocationExistMock: &respMock[bool]{},
+			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: credentials},
+			signRefreshMock:        &errMock{},
+			signAccessMock:         &errMock{},
+			daoConsumeMock:         &errMock{err: dao.ErrAuthorizationCodeConsumeNotFound},
+			daoReselectMock:        &respMock[*dao.AuthorizationCode]{err: dao.ErrAuthorizationCodeSelectNotFound},
+
+			expectRevocationJTIs: []string{"session-id"},
+			expectErr:            core.ErrTokenGrantUnknownCode,
 		},
 		{
 			name: "Error/Expired",
@@ -653,7 +707,15 @@ func TestTokenGrant(t *testing.T) {
 			if testCase.daoSelectMock != nil {
 				daoSelect.EXPECT().
 					Exec(mock.Anything, &dao.AuthorizationCodeSelectRequest{ID: codeID[:]}).
-					Return(testCase.daoSelectMock.resp, testCase.daoSelectMock.err)
+					Return(testCase.daoSelectMock.resp, testCase.daoSelectMock.err).
+					Once()
+			}
+
+			if testCase.daoReselectMock != nil {
+				daoSelect.EXPECT().
+					Exec(mock.Anything, &dao.AuthorizationCodeSelectRequest{ID: codeID[:]}).
+					Return(testCase.daoReselectMock.resp, testCase.daoReselectMock.err).
+					Once()
 			}
 
 			if testCase.verifyRefreshMock != nil {
@@ -702,7 +764,7 @@ func TestTokenGrant(t *testing.T) {
 					Exec(mock.Anything, mock.MatchedBy(func(request *dao.AuthorizationCodeConsumeRequest) bool {
 						return string(request.ID) == string(codeID[:]) && time.Since(request.Now) < time.Minute
 					})).
-					Return(&validCode, testCase.daoConsumeMock.err)
+					Return(testCase.daoConsumeMock.err)
 			}
 
 			if testCase.daoRevocationInsertMock != nil {

@@ -4877,31 +4877,20 @@ func (_m *MockTokenGrantDaoConsume) EXPECT() *MockTokenGrantDaoConsume_Expecter 
 }
 
 // Exec provides a mock function for the type MockTokenGrantDaoConsume
-func (_mock *MockTokenGrantDaoConsume) Exec(ctx context.Context, request *dao.AuthorizationCodeConsumeRequest) (*dao.AuthorizationCode, error) {
+func (_mock *MockTokenGrantDaoConsume) Exec(ctx context.Context, request *dao.AuthorizationCodeConsumeRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *dao.AuthorizationCode
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.AuthorizationCodeConsumeRequest) (*dao.AuthorizationCode, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.AuthorizationCodeConsumeRequest) *dao.AuthorizationCode); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.AuthorizationCodeConsumeRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dao.AuthorizationCode)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dao.AuthorizationCodeConsumeRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockTokenGrantDaoConsume_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -4934,12 +4923,12 @@ func (_c *MockTokenGrantDaoConsume_Exec_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *MockTokenGrantDaoConsume_Exec_Call) Return(authorizationCode *dao.AuthorizationCode, err error) *MockTokenGrantDaoConsume_Exec_Call {
-	_c.Call.Return(authorizationCode, err)
+func (_c *MockTokenGrantDaoConsume_Exec_Call) Return(err error) *MockTokenGrantDaoConsume_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockTokenGrantDaoConsume_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.AuthorizationCodeConsumeRequest) (*dao.AuthorizationCode, error)) *MockTokenGrantDaoConsume_Exec_Call {
+func (_c *MockTokenGrantDaoConsume_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.AuthorizationCodeConsumeRequest) error) *MockTokenGrantDaoConsume_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"database/sql"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -28,34 +27,35 @@ type AuthorizationCodeConsumeRequest struct {
 }
 
 // PgAuthorizationCodeConsume marks an unconsumed authorization code consumed, in one conditional
-// statement, and returns it. Of several concurrent calls for one code, one alone succeeds.
+// statement. Of several concurrent calls for one code, one alone succeeds.
 type PgAuthorizationCodeConsume struct{}
 
 func NewPgAuthorizationCodeConsume() *PgAuthorizationCodeConsume {
 	return &PgAuthorizationCodeConsume{}
 }
 
-func (dao *PgAuthorizationCodeConsume) Exec(
-	ctx context.Context, request *AuthorizationCodeConsumeRequest,
-) (*AuthorizationCode, error) {
+func (dao *PgAuthorizationCodeConsume) Exec(ctx context.Context, request *AuthorizationCodeConsumeRequest) error {
 	ctx, span := otel.Tracer().Start(ctx, "dao.PgAuthorizationCodeConsume")
 	defer span.End()
 
 	db, err := postgres.GetContext(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
+		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
-	entity := &AuthorizationCode{}
-
-	err = db.NewRaw(authorizationCodeConsumeQuery, request.ID, request.Now).Scan(ctx, entity)
-	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrAuthorizationCodeConsumeNotFound)
-	}
-
+	res, err := db.NewRaw(authorizationCodeConsumeQuery, request.ID, request.Now).Exec(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
+		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
 
-	return entity, nil
+	consumed, err := res.RowsAffected()
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("get rows affected: %w", err))
+	}
+
+	if consumed == 0 {
+		return otel.ReportError(span, ErrAuthorizationCodeConsumeNotFound)
+	}
+
+	return nil
 }
