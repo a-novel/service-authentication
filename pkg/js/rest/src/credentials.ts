@@ -130,8 +130,8 @@ export async function credentialsGet(
 }
 
 /**
- * Fetches the account of the user bearing the access token. Throws a 403 for an anonymous token, and a 404 when the
- * account no longer exists.
+ * Fetches the account of the user bearing the access token, an OAuth client's included, so a client can name the
+ * person it signed in. Throws a 403 for an anonymous token, and a 404 when the account no longer exists.
  */
 export async function credentialsGetSelf(api: AuthenticationApi, accessToken: string): Promise<CredentialsSelf> {
   return await api.fetch("/v2/credentials/self", CredentialsSelfSchema, {
