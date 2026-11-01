@@ -142,8 +142,10 @@ The JSON Keys configuration sets both lifetimes. A client signs in once and send
 
 A person signs in on the account platform alone. Every other platform is a client of it, and signs the person in with the OAuth 2.0 authorization code grant and PKCE. The browser never reaches this service.
 
-1. The account platform checks the authorization request with `GET /v2/authorization-request`, then asks `PUT /v2/authorization-code` for a code in the person's session.
-2. The client trades the code and its PKCE verifier with `PUT /v2/session/authorization-code` for a token pair in that session. Its refresh token stops renewing when the session ends, and signing out anywhere ends the session everywhere.
+1. The account platform checks the authorization request with `GET /v2/oauth/authorization-request`, then asks `POST /v2/oauth/authorization-code` for a code in the person's session.
+2. The client trades the code and its PKCE verifier at the token endpoint, `POST /v2/oauth/token`, for a token pair in that session, and refreshes its access token there. Its refresh token renews for that client alone, and stops when the session ends. Signing out anywhere ends the session everywhere.
+
+The OAuth routes follow RFC 6749, RFC 7636 and RFC 9700 to the letter. [`internal/core/oauth.go`](./internal/core/oauth.go) holds the parameter rules and the error codes, and each refusal is an `OAuthError` the handlers answer as an RFC error response. Keep it that way: a shortcut there, such as a JSON body or a prefix match on the redirect URI, is a security defect.
 
 The `authorization_codes` table keeps the SHA-256 of each code alone. A code is valid one minute, and exchanges once. An exchanged row stays until it expires, so a second exchange finds it and ends the session. The scheduled `authorization-code-purge` maintenance operation then deletes it. A code signs an existing account in, and never creates one: accounts come from invitations alone.
 
