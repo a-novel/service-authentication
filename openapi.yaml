@@ -27,6 +27,21 @@ info:
     For some secure operations, users can receive a short code on a secure channel: this acts as a temporary, single-use
     password. The code is never returned by the API; the user retrieves it from that channel, then completes the
     operation with it. Usually, the message will contain a link for this very purpose.
+
+    ## Single sign-on
+
+    A person signs in on the account platform alone. Every other platform is a client of it, and signs the person in
+    with the OAuth 2.0 authorization code grant ([RFC 6749 §4.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1))
+    and PKCE ([RFC 7636](https://www.rfc-editor.org/rfc/rfc7636)), under their standard parameter names. The browser
+    never reaches this service: the platforms' servers call it with their Kubernetes service token.
+
+    1. The account platform checks the authorization request with `[GET] /v2/authorization-request`.
+    2. It asks `[PUT] /v2/authorization-code` for a code in the session of the person signed in there, and sends the
+       code to the client's redirect URI.
+    3. The client trades the code and its PKCE verifier for a token pair with `[PUT] /v2/session/authorization-code`.
+       The pair joins the account platform's session, so signing out anywhere signs the person out everywhere.
+
+    A code signs an existing account in, and never creates one.
   version: v2.22.0
   license:
     name: AGPL-3.0
@@ -206,6 +221,122 @@ paths:
           $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/session/authorization-code:
+    put:
+      operationId: authorizationCodeExchange
+      summary: Trade an authorization code for a token pair, as a client.
+      description: |
+        The client's server sends the code it received on its redirect URI, the PKCE verifier it drew, and that
+        redirect URI ([RFC 6749 §4.1.3](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3)). The service identifies
+        the client by its Kubernetes caller, and answers a token pair in the session the code was issued in. The
+        refresh token stops renewing when that session ends.
+
+        A code exchanges once, within a minute of its issue, for the client and the redirect URI it was issued to,
+        with the verifier whose S256 hash is its challenge. Every refusal answers 403 and leaves the code as it was,
+        except a second exchange of the same code: it also ends the session, on every platform, as
+        [RFC 9700 §4.2.4](https://www.rfc-editor.org/rfc/rfc9700#section-4.2.4) advises.
+
+        Only a registered client's service token may call this route. A server that verifies no service token, such as
+        a local stack, answers 403.
+
+        By default, each client may exchange 600 codes per minute.
+      tags: [session]
+      security: []
+      requestBody:
+        $ref: "#/components/requestBodies/authorizationCodeExchange"
+      responses:
+        "200":
+          $ref: "#/components/responses/tokenCreate"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/codeRefused"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/authorization-request:
+    get:
+      operationId: authorizationRequestValidate
+      summary: Check that an authorization request names a client and its redirect URI.
+      description: |
+        The account platform calls this route when a browser opens its `/authorize` page, before it signs anyone in or
+        redirects anywhere. A 204 means the `client_id` and the `redirect_uri` of the authorization request
+        ([RFC 6749 §4.1.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1)) name a registered client and that
+        client's redirect URI, compared as exact strings. On any other answer, the account platform shows an error page
+        and redirects nowhere.
+
+        Only the account platform's service token may call this route. A server that verifies no service token, such as
+        a local stack, answers 403.
+      tags: [authorization]
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/redirectURI"
+      responses:
+        "204":
+          description: The client ID and the redirect URI name a registered client.
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "403":
+          $ref: "#/components/responses/callerForbidden"
+        "404":
+          $ref: "#/components/responses/unknownClient"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/authorization-code:
+    put:
+      operationId: authorizationCodeCreate
+      summary: Issue an authorization code for the person signed in on the account platform.
+      description: |
+        The account platform calls this route once `[GET] /v2/authorization-request` accepted the request and the person
+        is signed in. The bearer token is theirs, and the body carries the parameters of the authorization request.
+        The code signs that person in on the client, in the bearer token's session. The account platform then redirects
+        to the client's redirect URI with the code, the request's `state` and its own `iss`
+        ([RFC 9207](https://www.rfc-editor.org/rfc/rfc9207)).
+
+        The code is valid one minute, for that client, that redirect URI and that PKCE challenge. Only `S256` challenges
+        are accepted. A session that ended answers 401, as an invalid token does: the person signs in again.
+
+        Only the account platform's service token may call this route. A server that verifies no service token, such as
+        a local stack, answers 403.
+      tags: [authorization]
+      security:
+        - BearerAuth: ["authorizationCode:create"]
+      requestBody:
+        $ref: "#/components/requestBodies/authorizationCodeCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/authorizationCode"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/callerForbidden"
+        "404":
+          $ref: "#/components/responses/unknownClient"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
         "429":
@@ -789,6 +920,34 @@ components:
             items:
               $ref: "#/components/schemas/publicCredentials"
 
+    authorizationCode:
+      description: The code the account platform adds to the client's redirect URI.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code]
+            additionalProperties: false
+            properties:
+              code:
+                $ref: "#/components/schemas/authorizationCode"
+
+    callerForbidden:
+      description: |
+        The caller may not call this route: its service token names another service than the account platform, or
+        the server verifies no service token. A bearer token without the route's permission answers 403 too.
+
+    unknownClient:
+      description: |
+        No registered client has this client ID and this redirect URI: the client is unknown, or its redirect URI is
+        another one.
+
+    codeRefused:
+      description: |
+        The code was refused: it is unknown or expired, it was already exchanged, it was issued to another client or
+        another redirect URI, the verifier does not match it, or its session ended. The caller may also be no
+        registered client. A second exchange of a code also ends its session.
+
     unauthorized:
       description: |
         The provided credentials are invalid. For security reasons, this response does not indicate
@@ -1040,6 +1199,53 @@ components:
         refreshToken:
           $ref: "#/components/schemas/refreshToken"
 
+    clientID:
+      type: string
+      description: The ID of a client in the client registry, the `client_id` parameter of OAuth 2.0.
+      maxLength: 256
+      examples: [studio]
+
+    redirectURI:
+      type: string
+      description: |
+        The URI the account platform sends a client's code to, the `redirect_uri` parameter of OAuth 2.0. It must be
+        exactly the one the client registry holds for the client.
+      format: uri
+      maxLength: 2048
+      examples: ["https://studio.storyverse.fr/auth/callback"]
+
+    authorizationCode:
+      type: string
+      description: A one-time authorization code, 256 random bits encoded as base64url without padding.
+      minLength: 43
+      maxLength: 43
+      pattern: "^[A-Za-z0-9_-]{43}$"
+      examples: [SplxlOBeZQQYbYS6WxSbIA-cRM_mJ6eoJkHvd3Zm3zQ]
+
+    codeChallenge:
+      type: string
+      description: |
+        The PKCE challenge, the base64url SHA-256 of the client's code verifier, without padding
+        ([RFC 7636 §4.2](https://www.rfc-editor.org/rfc/rfc7636#section-4.2)).
+      minLength: 43
+      maxLength: 43
+      pattern: "^[A-Za-z0-9_-]{43}$"
+      examples: [E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM]
+
+    codeChallengeMethod:
+      type: string
+      description: The method that derives the PKCE challenge from the verifier. Only `S256` is accepted.
+      const: S256
+
+    codeVerifier:
+      type: string
+      description: |
+        The PKCE verifier the client drew for the authorization request
+        ([RFC 7636 §4.1](https://www.rfc-editor.org/rfc/rfc7636#section-4.1)).
+      minLength: 43
+      maxLength: 128
+      examples: [dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk]
+
     userID:
       type: string
       description: The unique identifier of a user in the database.
@@ -1170,6 +1376,22 @@ components:
       schema:
         $ref: "#/components/schemas/offset"
 
+    clientID:
+      name: client_id
+      in: query
+      description: The client the authorization request names.
+      required: true
+      schema:
+        $ref: "#/components/schemas/clientID"
+
+    redirectURI:
+      name: redirect_uri
+      in: query
+      description: The redirect URI the authorization request names.
+      required: true
+      schema:
+        $ref: "#/components/schemas/redirectURI"
+
     userRoles:
       name: roles
       in: query
@@ -1215,6 +1437,42 @@ components:
             properties:
               refreshToken:
                 $ref: "#/components/schemas/refreshToken"
+
+    authorizationCodeCreate:
+      description: The parameters of the authorization request the code answers, under their OAuth 2.0 names.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [client_id, redirect_uri, code_challenge, code_challenge_method]
+            additionalProperties: false
+            properties:
+              client_id:
+                $ref: "#/components/schemas/clientID"
+              redirect_uri:
+                $ref: "#/components/schemas/redirectURI"
+              code_challenge:
+                $ref: "#/components/schemas/codeChallenge"
+              code_challenge_method:
+                $ref: "#/components/schemas/codeChallengeMethod"
+
+    authorizationCodeExchange:
+      description: The code to exchange, its verifier and its redirect URI, under their OAuth 2.0 names.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, code_verifier, redirect_uri]
+            additionalProperties: false
+            properties:
+              code:
+                $ref: "#/components/schemas/authorizationCode"
+              code_verifier:
+                $ref: "#/components/schemas/codeVerifier"
+              redirect_uri:
+                $ref: "#/components/schemas/redirectURI"
 
     credentials:
       description: |
