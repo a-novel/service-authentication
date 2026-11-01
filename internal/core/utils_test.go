@@ -2,14 +2,19 @@ package core_test
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"net/url"
 	"runtime"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 const (
@@ -18,6 +23,67 @@ const (
 		"wedontcareaboutthesignaturebutweneedonesohereweare"
 	mockUnsignedJTI = "41298a7d-cabd-44fd-82ae-caeb7359b9c8"
 )
+
+const (
+	// accountPlatformCaller is the account platform's caller in the authorization code tests.
+	accountPlatformCaller = "system:serviceaccount:account:web"
+	// studioCaller is the caller of the studio client.
+	studioCaller = "system:serviceaccount:studio:web"
+	// studioRedirectURI is the redirect URI of the studio client.
+	studioRedirectURI = "https://studio.example.com/auth/callback"
+	// forumRedirectURI is the redirect URI of the forum client.
+	forumRedirectURI = "https://forum.example.com/auth/callback"
+	// rfc7636Verifier is the code verifier of RFC 7636's appendix B.
+	rfc7636Verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+	// rfc7636Challenge is the S256 challenge of rfc7636Verifier, from the same appendix.
+	rfc7636Challenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+)
+
+// oauthPreset is the client registry of the authorization code tests: studio, and forum beside it.
+var oauthPreset = authconfig.OAuth{
+	AccountPlatformCaller: accountPlatformCaller,
+	Clients: map[string]authconfig.Client{
+		"studio": {RedirectURI: studioRedirectURI, Caller: studioCaller},
+		"forum":  {RedirectURI: forumRedirectURI, Caller: "system:serviceaccount:forum:web"},
+	},
+}
+
+// authorizationParams returns the parameters of a valid authorization request from studio, changed
+// by update when it is set.
+func authorizationParams(update func(params url.Values)) url.Values {
+	params := url.Values{
+		"response_type":         {"code"},
+		"client_id":             {"studio"},
+		"redirect_uri":          {studioRedirectURI},
+		"state":                 {"state"},
+		"code_challenge":        {rfc7636Challenge},
+		"code_challenge_method": {"S256"},
+	}
+
+	if update != nil {
+		update(params)
+	}
+
+	return params
+}
+
+// changed returns a copy of value, changed by update.
+func changed[T any](value T, update func(value *T)) *T {
+	update(&value)
+
+	return &value
+}
+
+// mockRefreshToken returns an unsigned refresh token carrying claims, as the signer would sign it.
+// The tests decode it without verifying it.
+func mockRefreshToken(claims session.RefreshClaims) string {
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		panic(err)
+	}
+
+	return "eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0." + base64.RawURLEncoding.EncodeToString(payload) + ".signature"
+}
 
 func waitForMailDelivery(t *testing.T, delivery *core.MailDelivery) {
 	t.Helper()

@@ -1,4 +1,5 @@
 export * from "./api";
+export * from "./authorization";
 export * from "./claims";
 export * from "./credentials";
 export * from "./form";

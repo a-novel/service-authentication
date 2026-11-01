@@ -37,6 +37,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
+//nolint:maintidx // main wires the whole dependency graph as one flat list, one line per dependency.
 func main() {
 	cfg := config.AppPresetDefault
 
@@ -64,6 +65,8 @@ func main() {
 		defer closeDatabase(database)
 	}
 
+	lo.Must0(cfg.OAuth.Check(cfg.ServiceToken))
+
 	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
 
 	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(
@@ -75,6 +78,7 @@ func main() {
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.Claims](jsonKeysClient))
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient))
 	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
+	accessTokenTTL := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuth].Token.TTL
 
 	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
@@ -107,6 +111,10 @@ func main() {
 
 	daoRefreshTokenRevocationExist := dao.NewPgRefreshTokenRevocationExist()
 	daoRefreshTokenRevocationInsert := dao.NewPgRefreshTokenRevocationInsert()
+
+	daoAuthorizationCodeConsume := dao.NewPgAuthorizationCodeConsume()
+	daoAuthorizationCodeInsert := dao.NewPgAuthorizationCodeInsert()
+	daoAuthorizationCodeSelect := dao.NewPgAuthorizationCodeSelect()
 
 	// =================================================================================================================
 	// SERVICES
@@ -153,11 +161,26 @@ func main() {
 		daoRefreshTokenRevocationInsert, serviceVerifyRefreshToken, refreshTokenLeeway,
 	)
 
+	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
+	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(
+		daoAuthorizationCodeInsert, daoRefreshTokenRevocationExist, cfg.OAuth,
+	)
+	serviceTokenGrant := core.NewTokenGrant(
+		daoAuthorizationCodeSelect, daoAuthorizationCodeConsume, daoCredentialsSelect, daoRefreshTokenRevocationExist,
+		daoRefreshTokenRevocationInsert, jsonKeysClient, serviceVerifyRefreshToken, cfg.OAuth, accessTokenTTL,
+		refreshTokenLeeway,
+	)
+
 	// =================================================================================================================
 	// MIDDLEWARES
 	// =================================================================================================================
 
-	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
+	withSessionAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
+	refuseClientTokens := middlewares.RestRefuseClientTokens(cfg.Logger)
+	// An OAuth client's token reaches the session routes alone, which withSessionAuth guards.
+	withAuth := func(r chi.Router, permissions ...string) chi.Router {
+		return withSessionAuth(r, permissions...).With(refuseClientTokens)
+	}
 	limit := middlewares.NewRestLimits(cfg.Rest, cfg.Limits)
 	withServiceToken := middlewares.RestServiceToken(
 		cfg.ServiceToken, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger, cfg.Rest.Liveness,
@@ -200,6 +223,12 @@ func main() {
 	handlerTokenRefresh := handlers.NewRestTokenRefresh(serviceTokenRefresh, cfg.Logger)
 	handlerTokenRevoke := handlers.NewRestTokenRevoke(serviceTokenRevoke, cfg.Logger)
 
+	handlerAuthorizationRequestValidate := handlers.NewRestAuthorizationRequestValidate(
+		serviceAuthorizationRequestValidate, cfg.Logger,
+	)
+	handlerAuthorizationCodeCreate := handlers.NewRestAuthorizationCodeCreate(serviceAuthorizationCodeCreate, cfg.Logger)
+	handlerTokenGrant := handlers.NewRestTokenGrant(serviceTokenGrant, cfg.Logger)
+
 	// =================================================================================================================
 	// ROUTER
 	// =================================================================================================================
@@ -216,9 +245,18 @@ func main() {
 			r.With(limit.Login).Put("/", handlerTokenCreate.ServeHTTP)
 			r.With(limit.Anonymous).Put("/anon", handlerTokenCreateAnon.ServeHTTP)
 
-			withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
+			withSessionAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
 			r.Patch("/", handlerTokenRefresh.ServeHTTP)
-			withAuth(r, "session:revoke").Put("/revoke", handlerTokenRevoke.ServeHTTP)
+			withSessionAuth(r, "session:revoke").Put("/revoke", handlerTokenRevoke.ServeHTTP)
+		})
+
+		// The account platform checks an authorization request, then asks for a code for the person
+		// signed in there. The client trades the code at the token endpoint.
+		api.Route("/oauth", func(r chi.Router) {
+			r.Get("/authorization-request", handlerAuthorizationRequestValidate.ServeHTTP)
+			withAuth(r, "authorizationCode:create").With(limit.AuthorizationCode).
+				Post("/authorization-code", handlerAuthorizationCodeCreate.ServeHTTP)
+			r.With(limit.OAuthToken).Post("/token", handlerTokenGrant.ServeHTTP)
 		})
 
 		api.Route("/credentials", func(r chi.Router) {

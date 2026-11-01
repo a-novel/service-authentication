@@ -19,6 +19,7 @@ import (
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // ErrCredentialsCreateInvalidRegistrationData is returned when a consumed
@@ -175,7 +176,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 
 	cancel()
 
-	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials)
+	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}

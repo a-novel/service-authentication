@@ -50,6 +50,19 @@ describe("tokenCreate", () => {
     });
   });
 
+  it("signs the session's end into the access token", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const res = await tokenCreate(api, {
+      email: process.env.SUPER_ADMIN_EMAIL!,
+      password: process.env.SUPER_ADMIN_PASSWORD!,
+    });
+
+    // A sign-in opens its own session, which ends with its refresh token. JSON Keys must keep the claim
+    // the session checks read.
+    expect(jwtPayload(res.accessToken).sessionExp).toBe(jwtPayload(res.refreshToken).exp);
+  });
+
   it("returns unauthorized when email does not exist", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
@@ -282,3 +295,8 @@ describe("tokenRevoke", () => {
     await expectStatus(tokenRevoke(api, token.accessToken, { refreshToken: "" }), 422);
   });
 });
+
+/** Decodes the payload of a compact JWT, without verifying it. */
+function jwtPayload(token: string): Record<string, unknown> {
+  return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
+}

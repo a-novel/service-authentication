@@ -35,7 +35,8 @@ func mainExitCode() int {
 	defer stop()
 
 	command := newMaintenanceCommand(
-		accountRoleOperationDefinition(), refreshTokenPurgeOperationDefinition(), waitlistCleanupOperationDefinition(),
+		accountRoleOperationDefinition(), authorizationCodePurgeOperationDefinition(),
+		refreshTokenPurgeOperationDefinition(), waitlistCleanupOperationDefinition(),
 	)
 
 	err := command.run(ctx, os.Args[1:], os.Stdout)

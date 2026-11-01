@@ -23,6 +23,12 @@ type Claims struct {
 	RefreshTokenID string `json:"refreshTokenID,omitempty"`
 	// SessionID is the session the token belongs to, read through [Claims.Session].
 	SessionID string `json:"sessionID,omitempty"`
+	// SessionExp is when the session ends, as a Unix timestamp in seconds: the expiry of the refresh
+	// token that opened it. Zero on anonymous tokens.
+	SessionExp int64 `json:"sessionExp,omitempty"`
+	// ClientID is the OAuth client the token was issued to, empty for the account platform's tokens.
+	// This service admits a client's token on its session routes alone (RFC 9700 §2.3).
+	ClientID string `json:"clientID,omitempty"`
 }
 
 // Session returns the ID of the session the token belongs to, and an empty string for an anonymous
@@ -40,6 +46,11 @@ type RefreshClaims struct {
 	UserID uuid.UUID `json:"userID,omitempty"`
 	// SessionID is the session the token belongs to, read through [RefreshClaims.Session].
 	SessionID string `json:"sessionID,omitempty"`
+	// SessionExp is when the session ends, read through [RefreshClaims.SessionExpiry].
+	SessionExp int64 `json:"sessionExp,omitempty"`
+	// ClientID is the OAuth client the token was issued to, empty for a token the account platform
+	// holds. Only that client refreshes it, at the token endpoint (RFC 6749 §10.4).
+	ClientID string `json:"clientID,omitempty"`
 }
 
 // Session returns the ID of the session the token belongs to. A token without a SessionID, such as
@@ -48,10 +59,21 @@ func (claims *RefreshClaims) Session() string {
 	return cmp.Or(claims.SessionID, claims.Jti)
 }
 
+// SessionExpiry returns when the session the token belongs to ends, as a Unix timestamp in seconds.
+// A token that opened its own session ends it when it expires.
+func (claims *RefreshClaims) SessionExpiry() int64 {
+	return cmp.Or(claims.SessionExp, claims.Exp)
+}
+
 // RefreshClaimsForm is the payload submitted to the signer to mint a refresh token. The signer
 // assigns the JTI, so only the user ID and the session are supplied here.
 type RefreshClaimsForm struct {
 	UserID uuid.UUID `json:"userID,omitempty"`
 	// SessionID joins the token to an existing session. Empty, the token opens a session of its own.
 	SessionID string `json:"sessionID,omitempty"`
+	// SessionExp is when the joined session ends, as a Unix timestamp in seconds. The token stops
+	// renewing then, whatever its own expiry.
+	SessionExp int64 `json:"sessionExp,omitempty"`
+	// ClientID binds the token to the OAuth client it is issued to.
+	ClientID string `json:"clientID,omitempty"`
 }

@@ -14,6 +14,7 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // TokenCreateDao provides access to credentials lookup by email.
@@ -88,7 +89,7 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}
 
-	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials)
+	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}

@@ -1,0 +1,89 @@
+migration-history	sha256:b3c5b17a394220c54568af59edf3246edd9c942f37ea9f0b92425a64ce485344
+column	authorization_codes.client_id	text NOT NULL
+column	authorization_codes.code_challenge	text NOT NULL
+column	authorization_codes.code_challenge_method	text NOT NULL
+column	authorization_codes.consumed_at	timestamp(0) with time zone
+column	authorization_codes.expires_at	timestamp(0) with time zone NOT NULL
+column	authorization_codes.id	bytea NOT NULL
+column	authorization_codes.redirect_uri	text NOT NULL
+column	authorization_codes.redirect_uri_in_request	boolean NOT NULL
+column	authorization_codes.session_expires_at	timestamp(0) with time zone NOT NULL
+column	authorization_codes.session_id	text NOT NULL
+column	authorization_codes.user_id	uuid NOT NULL
+column	credentials.created_at	timestamp(0) with time zone NOT NULL
+column	credentials.email	text NOT NULL
+column	credentials.id	uuid NOT NULL
+column	credentials.password	text
+column	credentials.role	text NOT NULL DEFAULT 'auth:user'::text
+column	credentials.updated_at	timestamp(0) with time zone NOT NULL
+column	refresh_token_revocations.created_at	timestamp(0) with time zone NOT NULL
+column	refresh_token_revocations.expires_at	timestamp(0) with time zone NOT NULL
+column	refresh_token_revocations.jti	text NOT NULL
+column	short_codes.code	text NOT NULL
+column	short_codes.created_at	timestamp(0) with time zone NOT NULL
+column	short_codes.data	bytea
+column	short_codes.deleted_at	timestamp(0) with time zone
+column	short_codes.deleted_comment	text
+column	short_codes.expires_at	timestamp(0) with time zone NOT NULL
+column	short_codes.id	uuid NOT NULL
+column	short_codes.target	text NOT NULL
+column	short_codes.usage	text NOT NULL
+comment	schema public	standard public schema
+constraint	authorization_codes.authorization_codes_client_id_check	CHECK ((client_id <> ''::text))
+constraint	authorization_codes.authorization_codes_client_id_not_null	NOT NULL client_id
+constraint	authorization_codes.authorization_codes_code_challenge_check	CHECK ((code_challenge <> ''::text))
+constraint	authorization_codes.authorization_codes_code_challenge_method_check	CHECK ((code_challenge_method = 'S256'::text))
+constraint	authorization_codes.authorization_codes_code_challenge_method_not_null	NOT NULL code_challenge_method
+constraint	authorization_codes.authorization_codes_code_challenge_not_null	NOT NULL code_challenge
+constraint	authorization_codes.authorization_codes_expires_at_not_null	NOT NULL expires_at
+constraint	authorization_codes.authorization_codes_id_check	CHECK ((length(id) = 32))
+constraint	authorization_codes.authorization_codes_id_not_null	NOT NULL id
+constraint	authorization_codes.authorization_codes_pkey	PRIMARY KEY (id)
+constraint	authorization_codes.authorization_codes_redirect_uri_check	CHECK ((redirect_uri <> ''::text))
+constraint	authorization_codes.authorization_codes_redirect_uri_in_request_not_null	NOT NULL redirect_uri_in_request
+constraint	authorization_codes.authorization_codes_redirect_uri_not_null	NOT NULL redirect_uri
+constraint	authorization_codes.authorization_codes_session_expires_at_not_null	NOT NULL session_expires_at
+constraint	authorization_codes.authorization_codes_session_id_check	CHECK ((session_id <> ''::text))
+constraint	authorization_codes.authorization_codes_session_id_not_null	NOT NULL session_id
+constraint	authorization_codes.authorization_codes_user_id_fkey	FOREIGN KEY (user_id) REFERENCES credentials(id) ON DELETE CASCADE
+constraint	authorization_codes.authorization_codes_user_id_not_null	NOT NULL user_id
+constraint	credentials.credentials_created_at_not_null	NOT NULL created_at
+constraint	credentials.credentials_email_check	CHECK ((email <> ''::text))
+constraint	credentials.credentials_email_key	UNIQUE (email)
+constraint	credentials.credentials_email_not_null	NOT NULL email
+constraint	credentials.credentials_id_not_null	NOT NULL id
+constraint	credentials.credentials_pkey	PRIMARY KEY (id)
+constraint	credentials.credentials_role_check	CHECK ((role = ANY (ARRAY['auth:anon'::text, 'auth:user'::text, 'auth:admin'::text, 'auth:superadmin'::text])))
+constraint	credentials.credentials_role_not_null	NOT NULL role
+constraint	credentials.credentials_updated_at_not_null	NOT NULL updated_at
+constraint	refresh_token_revocations.refresh_token_revocations_created_at_not_null	NOT NULL created_at
+constraint	refresh_token_revocations.refresh_token_revocations_expires_at_not_null	NOT NULL expires_at
+constraint	refresh_token_revocations.refresh_token_revocations_jti_check	CHECK ((jti <> ''::text))
+constraint	refresh_token_revocations.refresh_token_revocations_jti_not_null	NOT NULL jti
+constraint	refresh_token_revocations.refresh_token_revocations_pkey	PRIMARY KEY (jti)
+constraint	short_codes.short_codes_code_not_null	NOT NULL code
+constraint	short_codes.short_codes_created_at_not_null	NOT NULL created_at
+constraint	short_codes.short_codes_expires_at_not_null	NOT NULL expires_at
+constraint	short_codes.short_codes_id_not_null	NOT NULL id
+constraint	short_codes.short_codes_pkey	PRIMARY KEY (id)
+constraint	short_codes.short_codes_target_not_null	NOT NULL target
+constraint	short_codes.short_codes_usage_not_null	NOT NULL usage
+extension	plpgsql	1.0
+index	authorization_codes_expires_at_idx	CREATE INDEX authorization_codes_expires_at_idx ON public.authorization_codes USING btree (expires_at)
+index	authorization_codes_pkey	CREATE UNIQUE INDEX authorization_codes_pkey ON public.authorization_codes USING btree (id)
+index	authorization_codes_user_id_idx	CREATE INDEX authorization_codes_user_id_idx ON public.authorization_codes USING btree (user_id)
+index	credentials_email_key	CREATE UNIQUE INDEX credentials_email_key ON public.credentials USING btree (email)
+index	credentials_pkey	CREATE UNIQUE INDEX credentials_pkey ON public.credentials USING btree (id)
+index	credentials_role_idx	CREATE INDEX credentials_role_idx ON public.credentials USING btree (role)
+index	refresh_token_revocations_expires_at_idx	CREATE INDEX refresh_token_revocations_expires_at_idx ON public.refresh_token_revocations USING btree (expires_at)
+index	refresh_token_revocations_pkey	CREATE UNIQUE INDEX refresh_token_revocations_pkey ON public.refresh_token_revocations USING btree (jti)
+index	short_codes_active_target_usage_uniq	CREATE UNIQUE INDEX short_codes_active_target_usage_uniq ON public.short_codes USING btree (target, usage) WHERE (deleted_at IS NULL)
+index	short_codes_created_at_idx	CREATE INDEX short_codes_created_at_idx ON public.short_codes USING btree (created_at)
+index	short_codes_deleted_idx	CREATE INDEX short_codes_deleted_idx ON public.short_codes USING btree (deleted_at, expires_at)
+index	short_codes_pkey	CREATE UNIQUE INDEX short_codes_pkey ON public.short_codes USING btree (id)
+index	short_codes_target_usage_idx	CREATE INDEX short_codes_target_usage_idx ON public.short_codes USING btree (target, usage)
+relation	authorization_codes	r
+relation	credentials	r
+relation	refresh_token_revocations	r
+relation	short_codes	r
+schema	public	pg_database_owner=UC/pg_database_owner,=U/pg_database_owner

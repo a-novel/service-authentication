@@ -138,6 +138,21 @@ The JSON Keys configuration sets both lifetimes. A client signs in once and send
 
 `PUT /v2/session/revoke` signs a session out. The caller's access token must belong to the same user as the refresh token. The route records the refresh token's ID in the `refresh_token_revocations` table, and a refresh then refuses that token. Access tokens the session already holds stay valid until they expire, since every service verifies them locally. A revocation row is useful until its refresh token expires, plus the verifier's clock-skew leeway. The scheduled `refresh-token-purge` maintenance operation then deletes it.
 
+### Single sign-on
+
+A person signs in on the account platform alone. Every other platform is a client of it, and signs the person in with the OAuth 2.0 authorization code grant and PKCE. The browser never reaches this service.
+
+1. The account platform checks the authorization request with `GET /v2/oauth/authorization-request`, then asks `POST /v2/oauth/authorization-code` for a code in the person's session.
+2. The client trades the code and its PKCE verifier at the token endpoint, `POST /v2/oauth/token`, for a token pair in that session, and refreshes its access token there. Its refresh token renews for that client alone, and stops when the session ends. Signing out anywhere ends the session everywhere.
+
+The OAuth routes follow RFC 6749, RFC 7636 and RFC 9700 to the letter. [`internal/core/oauth.go`](./internal/core/oauth.go) holds the parameter rules and the error codes, and each refusal is an `OAuthError` the handlers answer as an RFC error response. Keep it that way: a shortcut there, such as a JSON body or a prefix match on the redirect URI, is a security defect.
+
+The `authorization_codes` table keeps the SHA-256 of each code alone. A code is valid one minute, and exchanges once. An exchanged row stays until it expires, so a second exchange finds it and ends the session. The scheduled `authorization-code-purge` maintenance operation then deletes it. A code signs an existing account in, and never creates one: accounts come from invitations alone.
+
+The service tells the account platform and each client apart by the caller of its service token. A stack without `SERVICE_TOKEN_ISSUER` verifies no caller: the two authorization routes answer 403 there, and the token endpoint `invalid_client`. The [`service-token-issuer` image](./README.md#service-tokens) lets a local stack verify service tokens, but this repository's test stack runs none yet. The Go handler and core tests cover the grant, and the JavaScript integration tests its refusals.
+
+A client's access token carries its `clientID`, and reaches the session routes alone. In [`cmd/rest/main.go`](./cmd/rest/main.go), `withAuth` refuses it with 403, and only `withSessionAuth` admits it, on `GET /v2/session` and `PUT /v2/session/revoke`. Mount a new route with `withAuth`, so a client manages no account.
+
 ### Short codes
 
 A short code is a single-use, time-limited secret, emailed to the user. Registration, an email change and a password reset each need one, so a session token alone never completes them. [`internal/config/auth/shortCodes.config.yaml`](./internal/config/auth/shortCodes.config.yaml) sets the code length and each usage's lifetime:
@@ -157,7 +172,7 @@ The database stores only a hash of each code. A consumed code is soft-deleted, w
 | Role              | Priority | Adds on top of inherited                                                         |
 | ----------------- | -------- | -------------------------------------------------------------------------------- |
 | `auth:anon`       | 0        | Complete a registration or an email change, reset a password, join the waitlist. |
-| `auth:user`       | 1        | Change own password, request an email change.                                    |
+| `auth:user`       | 1        | Change own password, request an email change, sign in on a client.               |
 | `auth:admin`      | 2        | Read, list and look up accounts.                                                 |
 | `auth:superadmin` | 3        | Change roles, invite accounts.                                                   |
 

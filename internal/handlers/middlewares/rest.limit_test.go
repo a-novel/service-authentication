@@ -20,7 +20,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/servicetoken"
+	"github.com/a-novel-kit/golib/servicetoken/servicetokentest"
 
+	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
@@ -50,6 +53,9 @@ func TestRestLimits(t *testing.T) {
 	mail := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mail }
 	mailbox := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mailbox }
 	password := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Password }
+	authorizationCode := func(limits middlewares.RestLimits) func(http.Handler) http.Handler {
+		return limits.AuthorizationCode
+	}
 	shortCode := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.ShortCode }
 	signUp := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.SignUp }
 	waitlist := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Waitlist }
@@ -251,6 +257,17 @@ func TestRestLimits(t *testing.T) {
 			name: "Error/Password/User",
 
 			limit: password,
+
+			allowed: visitors(10, request{user: &userA}),
+			refused: &request{visitor: "192.0.2.99", user: &userA},
+
+			expectRetryAfter: "60",
+		},
+		{
+			// A user asking for codes counts against the user, wherever the requests come from.
+			name: "Error/AuthorizationCode/User",
+
+			limit: authorizationCode,
 
 			allowed: visitors(10, request{user: &userA}),
 			refused: &request{visitor: "192.0.2.99", user: &userA},
@@ -481,5 +498,73 @@ func (proxy *storeProxy) stop() {
 
 	for _, conn := range proxy.conns {
 		_ = conn.Close()
+	}
+}
+
+func TestClientVisitorKey(t *testing.T) {
+	t.Parallel()
+
+	issuer := servicetokentest.NewIssuer(t)
+	tokenConfig := servicetoken.Config{
+		Issuer:   issuer.URL,
+		Audience: serviceTokenAudience,
+		Callers:  []string{serviceTokenCaller},
+	}
+
+	testCases := []struct {
+		name string
+
+		tokenConfig servicetoken.Config
+		token       string
+
+		expect string
+	}{
+		{
+			// Each visitor of a client spends a budget of its own.
+			name: "Success/Caller",
+
+			tokenConfig: tokenConfig,
+			token:       issuer.Sign(t, issuer.Claims(serviceTokenCaller, serviceTokenAudience)),
+
+			expect: "service:" + serviceTokenCaller + ":visitor:192.0.2.1",
+		},
+		{
+			// A server that verifies no service token counts by visitor.
+			name: "Success/NoCaller",
+
+			expect: "service::visitor:192.0.2.1",
+		},
+	}
+
+	// The router answers with the key the request counts under.
+	router := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key, err := middlewares.ClientVisitorKey(r)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		_, _ = io.WriteString(w, key)
+	})
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/session/authorization-code", nil)
+			request.Header.Set("X-Client-Ip", "192.0.2.1")
+
+			if testCase.token != "" {
+				request.Header.Set(servicetoken.Header, testCase.token)
+			}
+
+			w := httptest.NewRecorder()
+			withServiceToken := middlewares.RestServiceToken(testCase.tokenConfig, &http.Client{}, config.LoggerDev)
+			withServiceToken(middleware.ClientIPFromHeader("X-Client-Ip")(router)).ServeHTTP(w, request)
+
+			require.Equal(t, http.StatusOK, w.Code)
+			require.Equal(t, testCase.expect, w.Body.String())
+		})
 	}
 }

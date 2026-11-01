@@ -27,6 +27,27 @@ info:
     For some secure operations, users can receive a short code on a secure channel: this acts as a temporary, single-use
     password. The code is never returned by the API; the user retrieves it from that channel, then completes the
     operation with it. Usually, the message will contain a link for this very purpose.
+
+    ## Single sign-on
+
+    A person signs in on the account platform alone. Every other platform is a client of it, and signs the person in
+    with the OAuth 2.0 authorization code grant ([RFC 6749 §4.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1))
+    and PKCE ([RFC 7636](https://www.rfc-editor.org/rfc/rfc7636)), under their standard parameter names. The browser
+    never reaches this service: the platforms' servers call it with their Kubernetes service token.
+
+    1. The account platform checks the authorization request with `[GET] /v2/oauth/authorization-request`.
+    2. It asks `[POST] /v2/oauth/authorization-code` for a code in the session of the person signed in there, and
+       sends the code to the client's redirect URI.
+    3. The client trades the code and its PKCE verifier for a token pair at the token endpoint,
+       `[POST] /v2/oauth/token`, and refreshes its access token there. The pair joins the account platform's session,
+       so signing out anywhere signs the person out everywhere.
+
+    A client's access token reaches `[GET] /v2/session` and `[PUT] /v2/session/revoke` alone: every other route
+    answers 403 to it, so a client manages no account.
+
+    The OAuth routes follow RFC 6749 to the letter: form-encoded requests, the standard parameter and error names,
+    error responses as JSON, and no caching of any response that carries a code or a token. PKCE accepts `S256` alone,
+    and the server grants no scope. A code signs an existing account in, and never creates one.
   version: v2.22.0
   license:
     name: AGPL-3.0
@@ -80,8 +101,9 @@ paths:
       description: |
         Validate a user token, and extract the claims it contains. This route also works for anonymous tokens.
 
-        A token whose session was signed out answers 401, like an invalid one. Other services verify access tokens
-        offline and accept them until they expire, so a client calls this route to see a sign-out at once.
+        A token whose session was signed out or has ended answers 401, like an invalid one. Other services verify
+        access tokens offline and accept them until they expire, so a client calls this route to see a sign-out at
+        once.
       tags: [session]
       security:
         - BearerAuth: []
@@ -208,6 +230,140 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/oauth/authorization-request:
+    get:
+      operationId: authorizationRequestValidate
+      summary: Check an authorization request for the account platform.
+      description: |
+        The account platform calls this route with the query string of a request to its authorization endpoint, before
+        it signs anyone in. The service checks the request as [RFC 6749 §4.1.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.1)
+        and [RFC 7636 §4.3](https://www.rfc-editor.org/rfc/rfc7636#section-4.3) define it, against the client registry.
+
+        - A parameter given without a value reads as omitted, a repeated one is refused, and an unknown one is ignored
+          ([RFC 6749 §3.1](https://www.rfc-editor.org/rfc/rfc6749#section-3.1)).
+        - The redirect URI must equal the client's as a string, or be omitted for the client's own
+          ([RFC 9700 §4.1.3](https://www.rfc-editor.org/rfc/rfc9700#section-4.1.3)).
+        - The code challenge uses `S256`; a request without a method asks for `plain`, which is refused.
+        - The server grants no scope, so a request naming one is refused.
+
+        A `200` gives the redirect URI the response goes to once the person signed in. A `400` with a `redirect_uri`
+        is an error the account platform sends there, with the request's `state` and its own `iss`
+        ([RFC 6749 §4.1.2.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1), [RFC 9207](https://www.rfc-editor.org/rfc/rfc9207)).
+        A `400` without one is an unknown client or a redirect URI that is not the client's: the account platform shows
+        the error and redirects nowhere.
+
+        Only the account platform's service token may call this route. A missing or rejected service token answers 401,
+        and another caller 403. A server that verifies no service token, such as a local stack, answers 403 too.
+      tags: [oauth]
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/responseType"
+        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/redirectURI"
+        - $ref: "#/components/parameters/scope"
+        - $ref: "#/components/parameters/state"
+        - $ref: "#/components/parameters/codeChallenge"
+        - $ref: "#/components/parameters/codeChallengeMethod"
+      responses:
+        "200":
+          $ref: "#/components/responses/authorizationRequest"
+        "400":
+          $ref: "#/components/responses/oauthError"
+        "401":
+          $ref: "#/components/responses/serviceTokenRejected"
+        "403":
+          $ref: "#/components/responses/callerForbidden"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/oauth/authorization-code:
+    post:
+      operationId: authorizationCodeCreate
+      summary: Issue an authorization code for the person signed in on the account platform.
+      description: |
+        The account platform calls this route once the person is signed in, with the parameters of the authorization
+        request as a form-encoded body. The bearer token is the person's. The service checks the request again, as
+        `[GET] /v2/oauth/authorization-request` does, and answers the code and the redirect URI to send it to, with
+        the request's `state` and the account platform's `iss`
+        ([RFC 6749 §4.1.2](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2)).
+
+        The code is valid one minute and exchanges once, for that client, that redirect URI and that PKCE challenge, in
+        the bearer token's session. A session that was signed out or has ended, or a token that carries none, answers
+        401, as an invalid token does: the person signs in again.
+
+        Only the account platform's service token may call this route. A missing or rejected service token answers 401
+        too, and another caller 403. A server that verifies no service token, such as a local stack, answers 403.
+
+        By default, each person may ask for 10 codes per minute and 30 per 10 minutes.
+      tags: [oauth]
+      security:
+        - BearerAuth: ["authorizationCode:create"]
+      requestBody:
+        $ref: "#/components/requestBodies/authorizationRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/authorizationCode"
+        "400":
+          $ref: "#/components/responses/oauthError"
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/callerForbidden"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/oauth/token:
+    post:
+      operationId: tokenGrant
+      summary: The OAuth 2.0 token endpoint of the clients.
+      description: |
+        The token endpoint of [RFC 6749 §3.2](https://www.rfc-editor.org/rfc/rfc6749#section-3.2). A client
+        authenticates with its Kubernetes service token, and may name itself with `client_id`. The form-encoded body
+        carries one of two grants:
+
+        - **`authorization_code`** ([RFC 6749 §4.1.3](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.3)) trades a
+          code, its PKCE verifier and, when the authorization request named it, the same redirect URI for a token pair
+          in the account platform's session. A code exchanges once, within a minute, for the client it was issued to.
+          A second exchange also ends the session on every platform, as
+          [RFC 9700 §4.2.4](https://www.rfc-editor.org/rfc/rfc9700#section-4.2.4) advises.
+        - **`refresh_token`** ([RFC 6749 §6](https://www.rfc-editor.org/rfc/rfc6749#section-6)) trades the client's
+          refresh token for a new access token, while its session lasts. A refresh token renews only for the client it
+          was issued to. The response carries no new refresh token: the client keeps its own.
+
+        A refused grant answers `400` with an error response of
+        [RFC 6749 §5.2](https://www.rfc-editor.org/rfc/rfc6749#section-5.2), and leaves a code as it was, but for a
+        second exchange. Neither that response nor a token response is cached. A missing or rejected service token
+        answers `401` before the endpoint reads the request, without an error response. A server that verifies no
+        service token, such as a local stack, sees no client and answers `invalid_client`.
+
+        By default, each client may send 60 token requests per minute for each visitor, as the visitor IP it
+        forwards names them.
+      tags: [oauth]
+      security: []
+      requestBody:
+        $ref: "#/components/requestBodies/tokenRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/tokenResponse"
+        "400":
+          $ref: "#/components/responses/oauthError"
+        "401":
+          $ref: "#/components/responses/serviceTokenRejected"
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
@@ -789,6 +945,91 @@ components:
             items:
               $ref: "#/components/schemas/publicCredentials"
 
+    authorizationRequest:
+      description: The authorization request holds.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [redirect_uri]
+            additionalProperties: false
+            properties:
+              redirect_uri:
+                $ref: "#/components/schemas/redirectURI"
+
+    authorizationCode:
+      description: The code, and the redirect URI the account platform sends it to.
+      headers:
+        Cache-Control:
+          description: Always `no-store`.
+          schema:
+            type: string
+            const: no-store
+        Pragma:
+          description: Always `no-cache`.
+          schema:
+            type: string
+            const: no-cache
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, redirect_uri]
+            additionalProperties: false
+            properties:
+              code:
+                $ref: "#/components/schemas/authorizationCode"
+              redirect_uri:
+                $ref: "#/components/schemas/redirectURI"
+
+    tokenResponse:
+      description: A successful token response of [RFC 6749 §5.1](https://www.rfc-editor.org/rfc/rfc6749#section-5.1).
+      headers:
+        Cache-Control:
+          description: Always `no-store`.
+          schema:
+            type: string
+            const: no-store
+        Pragma:
+          description: Always `no-cache`.
+          schema:
+            type: string
+            const: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/tokenResponse"
+
+    oauthError:
+      description: |
+        An OAuth 2.0 error response. From the authorization routes, it carries the `redirect_uri` the account platform
+        sends it to, unless it must not redirect.
+      headers:
+        Cache-Control:
+          description: Always `no-store`.
+          schema:
+            type: string
+            const: no-store
+        Pragma:
+          description: Always `no-cache`.
+          schema:
+            type: string
+            const: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/oauthError"
+
+    serviceTokenRejected:
+      description: |
+        The service token of the call is missing or rejected, so the route reads nothing of the request. The body is no
+        OAuth 2.0 error response. A server that verifies no service token never answers it.
+
+    callerForbidden:
+      description: |
+        The caller may not call this route: its service token names another service than the account platform, or
+        the server verifies no service token. A bearer token without the route's permission answers 403 too.
+
     unauthorized:
       description: |
         The provided credentials are invalid. For security reasons, this response does not indicate
@@ -802,7 +1043,8 @@ components:
     forbidden:
       description: |
         The user was authenticated successfully, but its current access rights don't grant permission for
-        this operation.
+        this operation. An OAuth client's access token answers 403 too, on every route but `[GET] /v2/session` and
+        `[PUT] /v2/session/revoke`.
 
     unprocessableEntity:
       description: |
@@ -953,6 +1195,7 @@ components:
             "roles": ["auth:user"],
             "refreshTokenID": "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664",
             "sessionID": "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664",
+            "sessionExp": 1900000000,
           }
         - { "roles": ["auth:anon"] }
       properties:
@@ -966,6 +1209,14 @@ components:
           $ref: "#/components/schemas/refreshTokenID"
         sessionID:
           $ref: "#/components/schemas/sessionID"
+        sessionExp:
+          type: integer
+          format: int64
+          description: When the session ends, as a Unix timestamp in seconds. Anonymous tokens carry none.
+          examples: [1900000000]
+        clientID:
+          $ref: "#/components/schemas/clientID"
+          description: The OAuth client that holds the token, absent from the account platform's own tokens.
 
     publicCredentials:
       type: object
@@ -1039,6 +1290,98 @@ components:
           $ref: "#/components/schemas/accessToken"
         refreshToken:
           $ref: "#/components/schemas/refreshToken"
+
+    clientID:
+      type: string
+      description: The ID of a client in the client registry, the `client_id` parameter of OAuth 2.0.
+      examples: [studio]
+
+    redirectURI:
+      type: string
+      description: |
+        The URI the account platform sends a client's code to, the `redirect_uri` parameter of OAuth 2.0. It must be
+        exactly the one the client registry holds for the client.
+      format: uri
+      examples: ["https://studio.storyverse.fr/auth/callback"]
+
+    authorizationCode:
+      type: string
+      description: A one-time authorization code, 256 random bits encoded as base64url without padding.
+      minLength: 43
+      maxLength: 43
+      pattern: "^[A-Za-z0-9_-]{43}$"
+      examples: [SplxlOBeZQQYbYS6WxSbIA-cRM_mJ6eoJkHvd3Zm3zQ]
+
+    codeChallenge:
+      type: string
+      description: |
+        The PKCE challenge, the base64url SHA-256 of the client's code verifier, without padding
+        ([RFC 7636 §4.2](https://www.rfc-editor.org/rfc/rfc7636#section-4.2)).
+      minLength: 43
+      maxLength: 43
+      pattern: "^[A-Za-z0-9_-]{43}$"
+      examples: [E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM]
+
+    codeChallengeMethod:
+      type: string
+      description: The method that derives the PKCE challenge from the verifier. Only `S256` is accepted.
+      const: S256
+
+    codeVerifier:
+      type: string
+      description: |
+        The PKCE verifier the client drew for the authorization request: 43 to 128 unreserved characters
+        ([RFC 7636 §4.1](https://www.rfc-editor.org/rfc/rfc7636#section-4.1)).
+      minLength: 43
+      maxLength: 128
+      pattern: "^[A-Za-z0-9._~-]{43,128}$"
+      examples: [dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk]
+
+    tokenResponse:
+      type: object
+      description: |
+        A successful token response. A client ignores the members it does not know
+        ([RFC 6749 §5.1](https://www.rfc-editor.org/rfc/rfc6749#section-5.1)).
+      required: [access_token, token_type, expires_in]
+      additionalProperties: false
+      properties:
+        access_token:
+          $ref: "#/components/schemas/accessToken"
+        token_type:
+          type: string
+          description: The type of the access token, sent as a bearer token ([RFC 6750](https://www.rfc-editor.org/rfc/rfc6750)).
+          const: Bearer
+        expires_in:
+          type: integer
+          description: The lifetime of the access token, in seconds.
+          examples: [3600]
+        refresh_token:
+          $ref: "#/components/schemas/refreshToken"
+
+    oauthError:
+      type: object
+      description: |
+        An error response of [RFC 6749 §4.1.2.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1) or
+        [§5.2](https://www.rfc-editor.org/rfc/rfc6749#section-5.2).
+      required: [error]
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+          description: The error code.
+          enum:
+            - invalid_request
+            - invalid_client
+            - invalid_grant
+            - unsupported_grant_type
+            - unsupported_response_type
+            - invalid_scope
+        error_description:
+          type: string
+          description: A description for the client's developer, in ASCII.
+          examples: [authorization code reused, code challenge required]
+        redirect_uri:
+          $ref: "#/components/schemas/redirectURI"
 
     userID:
       type: string
@@ -1170,6 +1513,63 @@ components:
       schema:
         $ref: "#/components/schemas/offset"
 
+    responseType:
+      name: response_type
+      in: query
+      description: The response the authorization request asks for, `code`.
+      required: true
+      schema:
+        type: string
+        const: code
+
+    clientID:
+      name: client_id
+      in: query
+      description: The client the authorization request comes from.
+      required: true
+      schema:
+        $ref: "#/components/schemas/clientID"
+
+    redirectURI:
+      name: redirect_uri
+      in: query
+      description: The client's redirect URI. Omitted, the response goes to the one the client registry holds.
+      required: false
+      schema:
+        $ref: "#/components/schemas/redirectURI"
+
+    scope:
+      name: scope
+      in: query
+      description: The scope the request asks for. The server grants none, and refuses a request that names one.
+      required: false
+      schema:
+        type: string
+
+    state:
+      name: state
+      in: query
+      description: The client's value for the response, which the account platform sends back. The service ignores it.
+      required: false
+      schema:
+        type: string
+
+    codeChallenge:
+      name: code_challenge
+      in: query
+      description: The PKCE challenge of the request.
+      required: true
+      schema:
+        $ref: "#/components/schemas/codeChallenge"
+
+    codeChallengeMethod:
+      name: code_challenge_method
+      in: query
+      description: The PKCE method, `S256`.
+      required: true
+      schema:
+        $ref: "#/components/schemas/codeChallengeMethod"
+
     userRoles:
       name: roles
       in: query
@@ -1215,6 +1615,63 @@ components:
             properties:
               refreshToken:
                 $ref: "#/components/schemas/refreshToken"
+
+    authorizationRequest:
+      description: The parameters of the authorization request, as the account platform received them.
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [response_type, client_id, code_challenge, code_challenge_method]
+            properties:
+              response_type:
+                type: string
+                description: The response the request asks for.
+                const: code
+              client_id:
+                $ref: "#/components/schemas/clientID"
+              redirect_uri:
+                $ref: "#/components/schemas/redirectURI"
+              scope:
+                type: string
+                description: The scope the request asks for. The server grants none, and refuses a request that names one.
+              state:
+                type: string
+                description: The client's value for the response. The service ignores it.
+              code_challenge:
+                $ref: "#/components/schemas/codeChallenge"
+              code_challenge_method:
+                $ref: "#/components/schemas/codeChallengeMethod"
+
+    tokenRequest:
+      description: |
+        A token request. A code grant carries `code`, `code_verifier` and, when the authorization request named it,
+        `redirect_uri`. A refresh carries `refresh_token`.
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [grant_type]
+            properties:
+              grant_type:
+                type: string
+                description: The grant the request trades.
+                enum: [authorization_code, refresh_token]
+              client_id:
+                $ref: "#/components/schemas/clientID"
+              code:
+                $ref: "#/components/schemas/authorizationCode"
+              code_verifier:
+                $ref: "#/components/schemas/codeVerifier"
+              redirect_uri:
+                $ref: "#/components/schemas/redirectURI"
+              refresh_token:
+                $ref: "#/components/schemas/refreshToken"
+              scope:
+                type: string
+                description: The scope a refresh asks for. The server grants none, and refuses a request that names one.
 
     credentials:
       description: |
