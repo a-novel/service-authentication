@@ -61,7 +61,7 @@ func TestRestRefuseClientTokens(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-			handler.ServeHTTP(w, httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/credentials/self", nil))
+			handler.ServeHTTP(w, httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/credentials", nil))
 
 			require.Equal(t, testCase.expectStatus, w.Code)
 		})

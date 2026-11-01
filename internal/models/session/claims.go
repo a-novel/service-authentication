@@ -27,7 +27,8 @@ type Claims struct {
 	// token that opened it. Zero on anonymous tokens.
 	SessionExp int64 `json:"sessionExp,omitempty"`
 	// ClientID is the OAuth client the token was issued to, empty for the account platform's tokens.
-	// This service admits a client's token on its session routes alone (RFC 9700 §2.3).
+	// This service admits a client's token on its session routes and on its own account, read-only
+	// (RFC 9700 §2.3).
 	ClientID string `json:"clientID,omitempty"`
 }
 

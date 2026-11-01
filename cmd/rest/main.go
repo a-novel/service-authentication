@@ -177,7 +177,8 @@ func main() {
 
 	withSessionAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
 	refuseClientTokens := middlewares.RestRefuseClientTokens(cfg.Logger)
-	// An OAuth client's token reaches the session routes alone, which withSessionAuth guards.
+	// An OAuth client's token reaches the session routes and its own account alone, which
+	// withSessionAuth guards.
 	withAuth := func(r chi.Router, permissions ...string) chi.Router {
 		return withSessionAuth(r, permissions...).With(refuseClientTokens)
 	}
@@ -263,7 +264,7 @@ func main() {
 			withAuth(r, "credentials:get").Get("/", handlerCredentialsGet.ServeHTTP)
 			withAuth(r, "credentials:exist").Head("/", handlerCredentialsExist.ServeHTTP)
 			withAuth(r, "credentials:list").Get("/all", handlerCredentialsList.ServeHTTP)
-			withAuth(r, "credentials:self:get").Get("/self", handlerCredentialsGetSelf.ServeHTTP)
+			withSessionAuth(r, "credentials:self:get").Get("/self", handlerCredentialsGetSelf.ServeHTTP)
 
 			withAuth(r, "credentials:create").With(limit.SignUp).Put("/", handlerCredentialsCreate.ServeHTTP)
 			withAuth(r, "credentials:email:patch").With(limit.ShortCode).

@@ -19,8 +19,9 @@ var ErrClientToken = errors.New("access token held by a client")
 
 // RestRefuseClientTokens returns the middleware that answers 403 to a request whose access token an
 // OAuth client holds. A client signs a person in on its own platform, and an account is managed on
-// the account platform alone, so a client's token reaches no account route (RFC 9700 §2.3). Mount
-// it after [Auth], which puts the claims on the context. A request without claims passes.
+// the account platform alone, so a client's token reaches no route that manages accounts (RFC 9700
+// §2.3). Mount it after [Auth], which puts the claims on the context. A request without claims
+// passes.
 func RestRefuseClientTokens(logger logging.Log) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

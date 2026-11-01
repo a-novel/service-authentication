@@ -42,8 +42,9 @@ info:
        `[POST] /v2/oauth/token`, and refreshes its access token there. The pair joins the account platform's session,
        so signing out anywhere signs the person out everywhere.
 
-    A client's access token reaches `[GET] /v2/session` and `[PUT] /v2/session/revoke` alone: every other route
-    answers 403 to it, so a client manages no account.
+    A client's access token reaches `[GET] /v2/session`, `[PUT] /v2/session/revoke` and `[GET] /v2/credentials/self`
+    alone. Reading its own credentials lets a client name the person it signed in. Every other route answers 403 to
+    it, so a client manages no account.
 
     The OAuth routes follow RFC 6749 to the letter: form-encoded requests, the standard parameter and error names,
     error responses as JSON, and no caching of any response that carries a code or a token. PKCE accepts `S256` alone,
@@ -503,7 +504,8 @@ paths:
       summary: Retrieve the credentials of the authenticated user.
       description: |
         Retrieve the account of the user bearing the access token, with the email change awaiting confirmation, if
-        any. Anonymous tokens lack the required permission.
+        any. Anonymous tokens lack the required permission. An OAuth client's access token reads its own account
+        too, so the client can name the person it signed in.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:self:get"]
@@ -1043,8 +1045,8 @@ components:
     forbidden:
       description: |
         The user was authenticated successfully, but its current access rights don't grant permission for
-        this operation. An OAuth client's access token answers 403 too, on every route but `[GET] /v2/session` and
-        `[PUT] /v2/session/revoke`.
+        this operation. An OAuth client's access token answers 403 too, on every route but `[GET] /v2/session`,
+        `[PUT] /v2/session/revoke` and `[GET] /v2/credentials/self`.
 
     unprocessableEntity:
       description: |
