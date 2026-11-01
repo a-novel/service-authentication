@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 
@@ -14,7 +15,7 @@ import (
 )
 
 // ErrClaimsGetRevoked is returned by [ClaimsGet.Exec] when the access token's refresh token or
-// session was revoked.
+// session was revoked, or its session ended.
 var ErrClaimsGetRevoked = errors.New("session revoked")
 
 // ClaimsGetDao reports whether the access token's refresh token or session was revoked.
@@ -27,8 +28,9 @@ type ClaimsGetRequest struct {
 	Claims *session.Claims `validate:"required"`
 }
 
-// ClaimsGet returns the claims of an access token while its session lasts. An anonymous token
-// belongs to no session, so its claims always return.
+// ClaimsGet returns the claims of an access token while its session lasts: until its end, and
+// unless it was signed out. Its end bounds a token after the purge drops the session's revocation.
+// An anonymous token belongs to no session, so its claims always return.
 type ClaimsGet struct {
 	dao ClaimsGetDao
 }
@@ -55,6 +57,10 @@ func (service *ClaimsGet) Exec(ctx context.Context, request *ClaimsGetRequest) (
 		attribute.String("access_token.refresh_token_id", claims.RefreshTokenID),
 		attribute.String("session.id", claims.Session()),
 	)
+
+	if claims.SessionExp != 0 && time.Now().Unix() >= claims.SessionExp {
+		return nil, otel.ReportError(span, fmt.Errorf("session ended: %w", ErrClaimsGetRevoked))
+	}
 
 	revocationRequest := &dao.RefreshTokenRevocationExistRequest{
 		JTIs: []string{claims.RefreshTokenID, claims.Session()},

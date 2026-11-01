@@ -3,6 +3,7 @@ package core_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -31,6 +32,12 @@ func TestClaimsGet(t *testing.T) {
 		SessionID:      "session-id",
 	}
 	anonymousClaims := &session.Claims{Roles: []string{"anon"}}
+	liveSessionClaims := changed(*sessionClaims, func(claims *session.Claims) {
+		claims.SessionExp = time.Now().Add(time.Hour).Unix()
+	})
+	endedSessionClaims := changed(*sessionClaims, func(claims *session.Claims) {
+		claims.SessionExp = time.Now().Add(-time.Second).Unix()
+	})
 
 	type daoMock struct {
 		jtis []string
@@ -68,6 +75,24 @@ func TestClaimsGet(t *testing.T) {
 			daoMock: &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
 
 			expect: sessionClaims,
+		},
+		{
+			name: "Success/SessionExp",
+
+			request: &core.ClaimsGetRequest{Claims: liveSessionClaims},
+
+			daoMock: &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
+
+			expect: liveSessionClaims,
+		},
+		{
+			// The access token outlives its session by up to its lifetime, and the purge may already
+			// have dropped the session's revocation: its end refuses it on its own.
+			name: "Error/SessionEnded",
+
+			request: &core.ClaimsGetRequest{Claims: endedSessionClaims},
+
+			expectErr: core.ErrClaimsGetRevoked,
 		},
 		{
 			// An anonymous token belongs to no session, so nothing revokes it.
