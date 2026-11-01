@@ -106,7 +106,8 @@ var (
 	ErrTokenGrantSessionEnded = &OAuthError{Code: OAuthErrorInvalidGrant, Description: "session ended"}
 )
 
-// reuseRevocationTimeout bounds the revocation that ends the session of a reused code.
+// reuseRevocationTimeout bounds the revocation that ends the session of a reused code, its retry
+// included.
 const reuseRevocationTimeout = 5 * time.Second
 
 // codeVerifier matches a PKCE code verifier: 43 to 128 unreserved characters (RFC 7636 §4.1).
@@ -379,9 +380,9 @@ func (service *TokenGrant) grantAuthorizationCode(
 
 	err = service.daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: id[:], Now: now})
 	if errors.Is(err, dao.ErrAuthorizationCodeConsumeNotFound) {
-		// The pair signed here is dropped: another exchange consumed the code since it was read, or the
-		// code was deleted.
-		return nil, otel.ReportError(span, service.refuseLostCode(ctx, code, now))
+		// Another exchange consumed the code since it was read, so this one is a reuse, and the pair
+		// signed here is dropped.
+		return nil, otel.ReportError(span, service.refuseReuse(ctx, code, now))
 	}
 
 	if err != nil {
@@ -457,28 +458,10 @@ func (service *TokenGrant) grantRefreshToken(
 	return &TokenGrantResult{AccessToken: accessToken, ExpiresIn: service.accessTokenTTL}, nil
 }
 
-// refuseLostCode returns the refusal of a code the exchange read but could not consume. A code
-// another exchange consumed is a reuse. A code deleted meanwhile, by the purge or with its account,
-// is unknown.
-func (service *TokenGrant) refuseLostCode(ctx context.Context, code *dao.AuthorizationCode, now time.Time) error {
-	ctx, span := otel.Tracer().Start(ctx, "core.TokenGrant(refuseLostCode)")
-	defer span.End()
-
-	_, err := service.daoSelect.Exec(ctx, &dao.AuthorizationCodeSelectRequest{ID: code.ID})
-	if errors.Is(err, dao.ErrAuthorizationCodeSelectNotFound) {
-		return otel.ReportError(span, errors.Join(err, ErrTokenGrantUnknownCode))
-	}
-
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("select authorization code: %w", err))
-	}
-
-	return otel.ReportError(span, service.refuseReuse(ctx, code, now))
-}
-
 // refuseReuse ends the session of a reused code, which its first exchange extended to the client,
 // and returns the refusal. The revocation lasts as long as a refresh token of the session may. It
-// runs on a context of its own, so a caller that leaves does not keep the session alive.
+// runs on a context of its own, so a caller that leaves does not keep the session alive, and it
+// retries once, so a transient fault does not either.
 func (service *TokenGrant) refuseReuse(ctx context.Context, code *dao.AuthorizationCode, now time.Time) error {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), reuseRevocationTimeout)
 	defer cancel()
@@ -492,12 +475,17 @@ func (service *TokenGrant) refuseReuse(ctx context.Context, code *dao.Authorizat
 		Now:       now,
 	}
 
+	// The insert keeps an existing row, so the retry of a write that went through changes nothing.
 	err := service.daoRevocationInsert.Exec(ctx, revocation)
+	if err != nil {
+		err = service.daoRevocationInsert.Exec(ctx, revocation)
+	}
+
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("revoke session: %w", err))
 	}
 
-	return ErrTokenGrantCodeReused
+	return otel.ReportError(span, ErrTokenGrantCodeReused)
 }
 
 // checkCodeBinding returns the refusal of a code issued to another client, or that the redirect URI
