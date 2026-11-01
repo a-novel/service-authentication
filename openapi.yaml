@@ -42,6 +42,9 @@ info:
        `[POST] /v2/oauth/token`, and refreshes its access token there. The pair joins the account platform's session,
        so signing out anywhere signs the person out everywhere.
 
+    A client's access token reaches `[GET] /v2/session` and `[PUT] /v2/session/revoke` alone: every other route
+    answers 403 to it, so a client manages no account.
+
     The OAuth routes follow RFC 6749 to the letter: form-encoded requests, the standard parameter and error names,
     error responses as JSON, and no caching of any response that carries a code or a token. PKCE accepts `S256` alone,
     and the server grants no scope. A code signs an existing account in, and never creates one.
@@ -256,8 +259,8 @@ paths:
         A `400` without one is an unknown client or a redirect URI that is not the client's: the account platform shows
         the error and redirects nowhere.
 
-        Only the account platform's service token may call this route. A server that verifies no service token, such as
-        a local stack, answers 403.
+        Only the account platform's service token may call this route. A missing or rejected service token answers 401,
+        and another caller 403. A server that verifies no service token, such as a local stack, answers 403 too.
       tags: [oauth]
       security: []
       parameters:
@@ -273,6 +276,8 @@ paths:
           $ref: "#/components/responses/authorizationRequest"
         "400":
           $ref: "#/components/responses/oauthError"
+        "401":
+          $ref: "#/components/responses/serviceTokenRejected"
         "403":
           $ref: "#/components/responses/callerForbidden"
         "429":
@@ -294,11 +299,11 @@ paths:
         ([RFC 6749 §4.1.2](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2)).
 
         The code is valid one minute and exchanges once, for that client, that redirect URI and that PKCE challenge, in
-        the bearer token's session. A session that ended, or a token that carries none, answers 401, as an invalid
-        token does: the person signs in again.
+        the bearer token's session. A session that was signed out or has ended, or a token that carries none, answers
+        401, as an invalid token does: the person signs in again.
 
-        Only the account platform's service token may call this route. A server that verifies no service token, such as
-        a local stack, answers 403.
+        Only the account platform's service token may call this route. A missing or rejected service token answers 401
+        too, and another caller 403. A server that verifies no service token, such as a local stack, answers 403.
 
         By default, each person may ask for 10 codes per minute and 30 per 10 minutes.
       tags: [oauth]
@@ -340,10 +345,11 @@ paths:
           refresh token for a new access token, while its session lasts. A refresh token renews only for the client it
           was issued to. The response carries no new refresh token: the client keeps its own.
 
-        Every refusal answers `400` with an error response of
+        A refused grant answers `400` with an error response of
         [RFC 6749 §5.2](https://www.rfc-editor.org/rfc/rfc6749#section-5.2), and leaves a code as it was, but for a
-        second exchange. No response is cached. A server that verifies no service token, such as a local stack, sees
-        no client and answers `invalid_client`.
+        second exchange. Neither that response nor a token response is cached. A missing or rejected service token
+        answers `401` before the endpoint reads the request, without an error response. A server that verifies no
+        service token, such as a local stack, sees no client and answers `invalid_client`.
 
         By default, each client may send 60 token requests per minute for each visitor, as the visitor IP it
         forwards names them.
@@ -356,6 +362,8 @@ paths:
           $ref: "#/components/responses/tokenResponse"
         "400":
           $ref: "#/components/responses/oauthError"
+        "401":
+          $ref: "#/components/responses/serviceTokenRejected"
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
@@ -1012,6 +1020,11 @@ components:
           schema:
             $ref: "#/components/schemas/oauthError"
 
+    serviceTokenRejected:
+      description: |
+        The service token of the call is missing or rejected, so the route reads nothing of the request. The body is no
+        OAuth 2.0 error response. A server that verifies no service token never answers it.
+
     callerForbidden:
       description: |
         The caller may not call this route: its service token names another service than the account platform, or
@@ -1030,7 +1043,8 @@ components:
     forbidden:
       description: |
         The user was authenticated successfully, but its current access rights don't grant permission for
-        this operation.
+        this operation. An OAuth client's access token answers 403 too, on every route but `[GET] /v2/session` and
+        `[PUT] /v2/session/revoke`.
 
     unprocessableEntity:
       description: |
@@ -1181,6 +1195,7 @@ components:
             "roles": ["auth:user"],
             "refreshTokenID": "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664",
             "sessionID": "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664",
+            "sessionExp": 1900000000,
           }
         - { "roles": ["auth:anon"] }
       properties:
@@ -1194,6 +1209,14 @@ components:
           $ref: "#/components/schemas/refreshTokenID"
         sessionID:
           $ref: "#/components/schemas/sessionID"
+        sessionExp:
+          type: integer
+          format: int64
+          description: When the session ends, as a Unix timestamp in seconds. Anonymous tokens carry none.
+          examples: [1900000000]
+        clientID:
+          $ref: "#/components/schemas/clientID"
+          description: The OAuth client that holds the token, absent from the account platform's own tokens.
 
     publicCredentials:
       type: object

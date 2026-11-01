@@ -85,7 +85,8 @@ export type AuthorizationCodeGrant = z.infer<typeof AuthorizationCodeGrantSchema
 /**
  * Checks, for the account platform, the authorization request its authorization endpoint received, given as that
  * request's query parameters. Throws an {@link OAuthError} for a refused request, whose `redirect_uri` says whether to
- * redirect it, and an HttpError 403 when the caller is not the account platform.
+ * redirect it. Throws an HttpError 401 when the service token is missing or rejected, and 403 when the caller is not
+ * the account platform.
  */
 export async function authorizationRequestValidate(
   api: AuthenticationApi,
@@ -100,7 +101,7 @@ export async function authorizationRequestValidate(
  * Issues, for the account platform, a code that signs the bearer of `accessToken` in on a client, within their
  * session, for the authorization request `params` hold. Redirect to the answered `redirect_uri` with the code, the
  * request's `state` and the account platform's `iss`. Throws as {@link authorizationRequestValidate} does, and an
- * HttpError 401 when the session ended.
+ * HttpError 401 when the session was signed out or ended: sign the person in again.
  */
 export async function authorizationCodeCreate(
   api: AuthenticationApi,
@@ -116,8 +117,9 @@ export async function authorizationCodeCreate(
 
 /**
  * Trades, for a client, an authorization code for a token pair in the session it was issued in. The code exchanges
- * once: a second exchange signs the person out everywhere. Throws an {@link OAuthError} for every refusal, such as
- * `invalid_grant`; bring the person back to the signed-out page with a retry.
+ * once: a second exchange signs the person out everywhere. Throws an {@link OAuthError} for a refused grant, such as
+ * `invalid_grant`: bring the person back to the signed-out page with a retry. Throws an HttpError 401 when the service
+ * token is missing or rejected.
  */
 export async function authorizationCodeExchange(
   api: AuthenticationApi,
@@ -128,7 +130,8 @@ export async function authorizationCodeExchange(
 
 /**
  * Trades, for a client, its refresh token for a new access token, while the session lasts. Throws an
- * {@link OAuthError} with `invalid_grant` once the session ended or was signed out: the person signs in again.
+ * {@link OAuthError} with `invalid_grant` once the session ended or was signed out: the person signs in again. Throws
+ * an HttpError 401 when the service token is missing or rejected.
  */
 export async function refreshTokenGrant(api: AuthenticationApi, refreshToken: string): Promise<TokenResponse> {
   return await tokenRequest(api, { grant_type: "refresh_token", refresh_token: refreshToken });

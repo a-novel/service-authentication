@@ -149,7 +149,9 @@ The OAuth routes follow RFC 6749, RFC 7636 and RFC 9700 to the letter. [`interna
 
 The `authorization_codes` table keeps the SHA-256 of each code alone. A code is valid one minute, and exchanges once. An exchanged row stays until it expires, so a second exchange finds it and ends the session. The scheduled `authorization-code-purge` maintenance operation then deletes it. A code signs an existing account in, and never creates one: accounts come from invitations alone.
 
-The service tells the account platform and each client apart by the caller of its service token. A local stack verifies no service token, so these three routes answer 403 there. The Go handler and core tests cover the grant, and the JavaScript integration tests its refusals.
+The service tells the account platform and each client apart by the caller of its service token. A stack without `SERVICE_TOKEN_ISSUER` verifies no caller: the two authorization routes answer 403 there, and the token endpoint `invalid_client`. The [`service-token-issuer` image](./README.md#service-tokens) lets a local stack verify service tokens, but this repository's test stack runs none yet. The Go handler and core tests cover the grant, and the JavaScript integration tests its refusals.
+
+A client's access token carries its `clientID`, and reaches the session routes alone. In [`cmd/rest/main.go`](./cmd/rest/main.go), `withAuth` refuses it with 403, and only `withSessionAuth` admits it, on `GET /v2/session` and `PUT /v2/session/revoke`. Mount a new route with `withAuth`, so a client manages no account.
 
 ### Short codes
 
