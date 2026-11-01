@@ -48,7 +48,7 @@ info:
     The OAuth routes follow RFC 6749 to the letter: form-encoded requests, the standard parameter and error names,
     error responses as JSON, and no caching of any response that carries a code or a token. PKCE accepts `S256` alone,
     and the server grants no scope. A code signs an existing account in, and never creates one.
-  version: v2.22.0
+  version: v2.23.0
   license:
     name: AGPL-3.0
     url: "https://raw.githubusercontent.com/a-novel/service-authentication/refs/heads/master/LICENSE"
