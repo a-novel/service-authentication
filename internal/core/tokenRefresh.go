@@ -12,7 +12,6 @@ import (
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
-	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/jwt/v2"
 
@@ -29,7 +28,7 @@ var (
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when the
 	// verifier rejects the refresh token with [jwt.ErrTokenRejected], expiry included,
 	// joined onto that verifier error. A revoked refresh token or session returns it too, and
-	// so does a session that ended.
+	// so do a session that ended and a refresh token issued to an OAuth client.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the access
 	// and refresh tokens are individually valid but encode different user IDs, which
@@ -164,6 +163,11 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, ErrTokenRefreshMismatchSource)
 	}
 
+	// A client's refresh token renews at the token endpoint alone, where the client authenticates.
+	if refreshTokenClaims.ClientID != "" {
+		return nil, otel.ReportError(span, fmt.Errorf("client token: %w", ErrTokenRefreshInvalidRefreshToken))
+	}
+
 	revocationRequest := &dao.RefreshTokenRevocationExistRequest{
 		JTIs: []string{refreshTokenClaims.Jti, refreshTokenClaims.Session()},
 	}
@@ -177,7 +181,7 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("session revoked: %w", ErrTokenRefreshInvalidRefreshToken))
 	}
 
-	// A token that joined another session, such as a client's, lasts no longer than that session.
+	// A token that joined another session lasts no longer than that session.
 	if refreshTokenClaims.SessionExp != 0 && time.Now().Unix() >= refreshTokenClaims.SessionExp {
 		return nil, otel.ReportError(span, fmt.Errorf("session ended: %w", ErrTokenRefreshInvalidRefreshToken))
 	}
@@ -188,31 +192,13 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	newAccessTokenClaims := session.Claims{
-		UserID:         accessTokenClaims.UserID,
-		Roles:          []string{credentials.Role},
-		RefreshTokenID: refreshTokenClaims.Jti,
-		SessionID:      refreshTokenClaims.Session(),
-		SessionExp:     refreshTokenClaims.SessionExpiry(),
-	}
-
-	newAccessTokenPayload, err := grpcf.MarshalJSONAsAny(newAccessTokenClaims)
-	if err != nil {
-		return nil, otel.ReportError(span, err)
-	}
-
-	signRequest := &servicejsonkeys.ClaimsSignRequest{
-		Usage:   servicejsonkeys.KeyUsageAuth,
-		Payload: newAccessTokenPayload,
-	}
-
-	newAccessToken, err := service.serviceSignClaims.ClaimsSign(ctx, signRequest)
+	newAccessToken, err := signAccessToken(ctx, service.serviceSignClaims, credentials, refreshTokenClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
 
 	return &Token{
-		AccessToken:  newAccessToken.GetToken(),
+		AccessToken:  newAccessToken,
 		RefreshToken: request.RefreshToken, // Refresh token does not change.
 	}, nil
 }

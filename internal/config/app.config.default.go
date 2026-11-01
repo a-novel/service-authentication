@@ -65,7 +65,7 @@ var AppPresetDefault = App{
 		LoginBurst:             env.RestRateLimitLoginBurst,
 		Login:                  env.RestRateLimitLogin,
 		Mailbox:                env.RestRateLimitMailbox,
-		CodeExchange:           env.RestRateLimitCodeExchange,
+		OAuthToken:             env.RestRateLimitOAuthToken,
 		WaitlistMaxConcurrent:  env.WaitlistMaxConcurrent,
 		WaitlistMaxRequestSize: env.WaitlistMaxRequestSize,
 		Argon2MaxConcurrent:    env.Argon2MaxConcurrent,

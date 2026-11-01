@@ -64,17 +64,36 @@ func signTokenPair(
 		return nil, otel.ReportError(span, fmt.Errorf("parse refresh token: %w", err))
 	}
 
+	accessToken, err := signAccessToken(ctx, signer, credentials, &refreshTokenClaims)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
+	return &Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken.GetToken(),
+	}, nil
+}
+
+// signAccessToken issues an access token for credentials, minted by the refresh token whose claims
+// are refreshClaims: it carries the user's current role, the refresh token's JTI and its session.
+func signAccessToken(
+	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials, refreshClaims *session.RefreshClaims,
+) (string, error) {
+	ctx, span := otel.Tracer().Start(ctx, "core.signAccessToken")
+	defer span.End()
+
 	accessTokenClaims := session.Claims{
 		UserID:         &credentials.ID,
 		Roles:          []string{credentials.Role},
-		RefreshTokenID: refreshTokenClaims.Jti,
-		SessionID:      refreshTokenClaims.Session(),
-		SessionExp:     refreshTokenClaims.SessionExpiry(),
+		RefreshTokenID: refreshClaims.Jti,
+		SessionID:      refreshClaims.Session(),
+		SessionExp:     refreshClaims.SessionExpiry(),
 	}
 
 	accessTokenPayload, err := grpcf.MarshalJSONAsAny(accessTokenClaims)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("marshal access claims: %w", err))
+		return "", otel.ReportError(span, fmt.Errorf("marshal access claims: %w", err))
 	}
 
 	accessTokenRequest := &servicejsonkeys.ClaimsSignRequest{
@@ -84,11 +103,8 @@ func signTokenPair(
 
 	accessToken, err := signer.ClaimsSign(ctx, accessTokenRequest)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("issue access token: %w", err))
+		return "", otel.ReportError(span, fmt.Errorf("issue access token: %w", err))
 	}
 
-	return &Token{
-		AccessToken:  accessToken.GetToken(),
-		RefreshToken: refreshToken.GetToken(),
-	}, nil
+	return accessToken.GetToken(), nil
 }

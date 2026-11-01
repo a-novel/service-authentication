@@ -1,7 +1,8 @@
 package core_test
 
 import (
-	"strings"
+	"errors"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,140 +16,267 @@ func TestAuthorizationRequestValidate(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *core.AuthorizationRequestValidateRequest
+		caller string
+		params url.Values
 
+		expect    *core.AuthorizationRequest
 		expectErr error
+		// expectRedirectURI is where the refusal redirects, empty for one the person sees.
+		expectRedirectURI string
 	}{
 		{
 			name: "Success",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, ClientID: "studio", RedirectURI: studioRedirectURI,
+			caller: accountPlatformCaller,
+			params: authorizationParams(nil),
+
+			expect: &core.AuthorizationRequest{
+				ClientID:             "studio",
+				RedirectURI:          studioRedirectURI,
+				RedirectURIInRequest: true,
+				CodeChallenge:        rfc7636Challenge,
+				CodeChallengeMethod:  core.CodeChallengeMethodS256,
+			},
+		},
+		{
+			// A client with one registered redirect URI may omit it (RFC 6749 §3.1.2.3).
+			name: "Success/NoRedirectURI",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Del("redirect_uri") }),
+
+			expect: &core.AuthorizationRequest{
+				ClientID:            "studio",
+				RedirectURI:         studioRedirectURI,
+				CodeChallenge:       rfc7636Challenge,
+				CodeChallengeMethod: core.CodeChallengeMethodS256,
+			},
+		},
+		{
+			// A parameter without a value reads as omitted, and an unknown one is ignored, repeated or
+			// not (RFC 6749 §3.1).
+			name: "Success/EmptyAndUnknownParameters",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) {
+				params.Set("scope", "")
+				params["prompt"] = []string{"login", "consent"}
+			}),
+
+			expect: &core.AuthorizationRequest{
+				ClientID:             "studio",
+				RedirectURI:          studioRedirectURI,
+				RedirectURIInRequest: true,
+				CodeChallenge:        rfc7636Challenge,
+				CodeChallengeMethod:  core.CodeChallengeMethodS256,
 			},
 		},
 		{
 			// A server that verifies no service token sees no caller.
 			name: "Error/NoCaller",
 
-			request: &core.AuthorizationRequestValidateRequest{ClientID: "studio", RedirectURI: studioRedirectURI},
+			params: authorizationParams(nil),
 
 			expectErr: core.ErrAuthorizationRequestForbiddenCaller,
 		},
 		{
 			name: "Error/ClientCaller",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: studioCaller, ClientID: "studio", RedirectURI: studioRedirectURI,
-			},
+			caller: studioCaller,
+			params: authorizationParams(nil),
 
 			expectErr: core.ErrAuthorizationRequestForbiddenCaller,
 		},
 		{
+			name: "Error/NoClientID",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Del("client_id") }),
+
+			expectErr: core.ErrAuthorizationRequestUnknownClient,
+		},
+		{
 			name: "Error/UnknownClient",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, ClientID: "blog", RedirectURI: studioRedirectURI,
-			},
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Set("client_id", "blog") }),
+
+			expectErr: core.ErrAuthorizationRequestUnknownClient,
+		},
+		{
+			name: "Error/RepeatedClientID",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Add("client_id", "forum") }),
 
 			expectErr: core.ErrAuthorizationRequestUnknownClient,
 		},
 		{
 			name: "Error/RedirectURIPrefix",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, ClientID: "studio", RedirectURI: "https://studio.example.com/auth",
-			},
+			caller: accountPlatformCaller,
+			params: withRedirectURI("https://studio.example.com/auth"),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
 			name: "Error/RedirectURIExtraPath",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, ClientID: "studio", RedirectURI: studioRedirectURI + "/next",
-			},
+			caller: accountPlatformCaller,
+			params: withRedirectURI(studioRedirectURI + "/next"),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
 			name: "Error/RedirectURITrailingSlash",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, ClientID: "studio", RedirectURI: studioRedirectURI + "/",
-			},
+			caller: accountPlatformCaller,
+			params: withRedirectURI(studioRedirectURI + "/"),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
 			name: "Error/RedirectURIQuery",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller:      accountPlatformCaller,
-				ClientID:    "studio",
-				RedirectURI: studioRedirectURI + "?next=https://evil.example.com",
-			},
+			caller: accountPlatformCaller,
+			params: withRedirectURI(studioRedirectURI + "?next=https://evil.example.com"),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
 			name: "Error/RedirectURIOtherHost",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, ClientID: "studio", RedirectURI: "https://evil.example.com/auth/callback",
-			},
+			caller: accountPlatformCaller,
+			params: withRedirectURI("https://evil.example.com/auth/callback"),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
 			// The registered host as user information sends the browser to another host.
 			name: "Error/RedirectURIUserInfo",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller:      accountPlatformCaller,
-				ClientID:    "studio",
-				RedirectURI: "https://studio.example.com@evil.example.com/auth/callback",
-			},
+			caller: accountPlatformCaller,
+			params: withRedirectURI("https://studio.example.com@evil.example.com/auth/callback"),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
 			name: "Error/RedirectURIScheme",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, ClientID: "studio", RedirectURI: "http://studio.example.com/auth/callback",
-			},
+			caller: accountPlatformCaller,
+			params: withRedirectURI("http://studio.example.com/auth/callback"),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
+		},
+		{
+			name: "Error/RedirectURICase",
+
+			caller: accountPlatformCaller,
+			params: withRedirectURI("https://Studio.example.com/auth/callback"),
+
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
 			// A registered redirect URI belongs to its own client only.
 			name: "Error/RedirectURIOtherClient",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, ClientID: "studio", RedirectURI: forumRedirectURI,
-			},
+			caller: accountPlatformCaller,
+			params: withRedirectURI(forumRedirectURI),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
-			name: "Error/NoClientID",
+			name: "Error/RepeatedRedirectURI",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller: accountPlatformCaller, RedirectURI: studioRedirectURI,
-			},
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Add("redirect_uri", studioRedirectURI) }),
 
-			expectErr: core.ErrInvalidRequest,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
 		},
 		{
-			name: "Error/RedirectURITooLong",
+			name: "Error/RepeatedState",
 
-			request: &core.AuthorizationRequestValidateRequest{
-				Caller:      accountPlatformCaller,
-				ClientID:    "studio",
-				RedirectURI: studioRedirectURI + strings.Repeat("a", 2048),
-			},
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Add("state", "other") }),
 
-			expectErr: core.ErrInvalidRequest,
+			expectErr:         core.ErrOAuthRepeatedParameter,
+			expectRedirectURI: studioRedirectURI,
+		},
+		{
+			name: "Error/NoResponseType",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Del("response_type") }),
+
+			expectErr:         core.ErrAuthorizationRequestNoResponseType,
+			expectRedirectURI: studioRedirectURI,
+		},
+		{
+			name: "Error/TokenResponseType",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Set("response_type", "token") }),
+
+			expectErr:         core.ErrAuthorizationRequestUnsupportedResponseType,
+			expectRedirectURI: studioRedirectURI,
+		},
+		{
+			name: "Error/Scope",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Set("scope", "openid") }),
+
+			expectErr:         core.ErrAuthorizationRequestScope,
+			expectRedirectURI: studioRedirectURI,
+		},
+		{
+			name: "Error/NoCodeChallenge",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Del("code_challenge") }),
+
+			expectErr:         core.ErrAuthorizationRequestNoCodeChallenge,
+			expectRedirectURI: studioRedirectURI,
+		},
+		{
+			// Without a method, a request asks for plain (RFC 7636 §4.3).
+			name: "Error/NoCodeChallengeMethod",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Del("code_challenge_method") }),
+
+			expectErr:         core.ErrAuthorizationRequestUnsupportedTransform,
+			expectRedirectURI: studioRedirectURI,
+		},
+		{
+			name: "Error/PlainMethod",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Set("code_challenge_method", "plain") }),
+
+			expectErr:         core.ErrAuthorizationRequestUnsupportedTransform,
+			expectRedirectURI: studioRedirectURI,
+		},
+		{
+			name: "Error/ChallengeTooShort",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) { params.Set("code_challenge", rfc7636Challenge[:42]) }),
+
+			expectErr:         core.ErrAuthorizationRequestInvalidCodeChallenge,
+			expectRedirectURI: studioRedirectURI,
+		},
+		{
+			// Standard base64, padded or not, is no S256 challenge.
+			name: "Error/ChallengeAlphabet",
+
+			caller: accountPlatformCaller,
+			params: authorizationParams(func(params url.Values) {
+				params.Set("code_challenge", "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw+cM")
+			}),
+
+			expectErr:         core.ErrAuthorizationRequestInvalidCodeChallenge,
+			expectRedirectURI: studioRedirectURI,
 		},
 	}
 
@@ -158,8 +286,21 @@ func TestAuthorizationRequestValidate(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.Exec(t.Context(), testCase.request)
+			request := &core.AuthorizationRequestValidateRequest{Caller: testCase.caller, Params: testCase.params}
+
+			res, err := service.Exec(t.Context(), request)
 			require.ErrorIs(t, err, testCase.expectErr)
+			require.Equal(t, testCase.expect, res)
+
+			var refusal *core.OAuthError
+			if errors.As(err, &refusal) {
+				require.Equal(t, testCase.expectRedirectURI, refusal.RedirectURI)
+			}
 		})
 	}
+}
+
+// withRedirectURI returns the parameters of a valid authorization request, naming redirectURI.
+func withRedirectURI(redirectURI string) url.Values {
+	return authorizationParams(func(params url.Values) { params.Set("redirect_uri", redirectURI) })
 }

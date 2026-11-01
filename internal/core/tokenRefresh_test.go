@@ -255,6 +255,38 @@ func TestTokenRefresh(t *testing.T) {
 			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
 		},
 		{
+			// A client's refresh token renews at the token endpoint alone, where the client
+			// authenticates (RFC 6749 §10.4).
+			name: "Error/ClientToken",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &session.Claims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+					SessionID:      "session_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{
+					Jti:        "refresh_token_id",
+					Exp:        hourLater,
+					UserID:     uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					SessionID:  "session_id",
+					SessionExp: hourLater,
+					ClientID:   "studio",
+				},
+			},
+
+			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
+		},
+		{
 			// Signing out from any token of the session stops this one too.
 			name: "RevokedSession",
 

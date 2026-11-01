@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -56,7 +57,38 @@ func TestParseClients(t *testing.T) {
 			expectErr: authconfig.ErrClientsConfig,
 		},
 		{
-			// A code exchange finds its client by the caller, so two clients cannot share one.
+			// A local stack's client listens on a loopback host, without TLS (RFC 9700 §2.6).
+			name:  "Success/Loopback",
+			value: registryJSON("studio", "http://localhost:7010/auth/callback"),
+			expect: map[string]authconfig.Client{
+				"studio": {RedirectURI: "http://localhost:7010/auth/callback", Caller: "system:serviceaccount:studio:web"},
+			},
+		},
+		{
+			name:      "Error/HTTP",
+			value:     registryJSON("studio", "http://studio.example.com/auth/callback"),
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			// A redirection endpoint is an absolute URI (RFC 6749 §3.1.2).
+			name:      "Error/RelativeRedirectURI",
+			value:     registryJSON("studio", "/auth/callback"),
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			// A redirection endpoint has no fragment (RFC 6749 §3.1.2).
+			name:      "Error/Fragment",
+			value:     registryJSON("studio", "https://studio.example.com/auth/callback#"),
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			// A client ID is printable ASCII (RFC 6749 Appendix A.1).
+			name:      "Error/ClientID",
+			value:     registryJSON("stüdio", "https://studio.example.com/auth/callback"),
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			// A token request finds its client by the caller, so two clients cannot share one.
 			name: "Error/SharedCaller",
 			value: `{
 				"studio": {"redirectURI": "https://studio.example.com/auth/callback", "caller": "system:serviceaccount:web:web"},
@@ -75,4 +107,9 @@ func TestParseClients(t *testing.T) {
 			require.Equal(t, testCase.expect, clients)
 		})
 	}
+}
+
+// registryJSON returns a client registry holding clientID alone, with redirectURI.
+func registryJSON(clientID, redirectURI string) string {
+	return fmt.Sprintf(`{%q: {"redirectURI": %q, "caller": "system:serviceaccount:studio:web"}}`, clientID, redirectURI)
 }

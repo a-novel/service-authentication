@@ -18,8 +18,8 @@ import (
 type RestLimits struct {
 	// Anonymous caps each caller's anonymous sessions.
 	Anonymous func(http.Handler) http.Handler
-	// CodeExchange caps each client's authorization code exchanges, counted by its service caller.
-	CodeExchange func(http.Handler) http.Handler
+	// OAuthToken caps each client's requests to the OAuth token endpoint, counted by its service caller.
+	OAuthToken func(http.Handler) http.Handler
 	// Login caps each visitor's logins over a short and a longer window, and the logins naming
 	// one email over the longer one.
 	Login func(http.Handler) http.Handler
@@ -51,18 +51,18 @@ func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimi
 	loginAccount := limits.By(policies.Login, accountKey)
 	waitlistConcurrency := httpf.LimitConcurrency(policies.WaitlistMaxConcurrent)
 	waitlistSize := middleware.RequestSize(policies.WaitlistMaxRequestSize)
-	codeExchange := limits.By(policies.CodeExchange, ServiceCallerKey)
+	oauthToken := limits.By(policies.OAuthToken, ServiceCallerKey)
 
 	return RestLimits{
-		Anonymous:    strict,
-		CodeExchange: codeExchange,
-		Login:        chi.Chain(loginBurst, login, loginEmail).Handler,
-		Mail:         chi.Chain(strict, mailbox).Handler,
-		Mailbox:      mailbox,
-		Password:     chi.Chain(loginBurst, login).Handler,
-		ShortCode:    chi.Chain(loginBurst, login, loginAccount).Handler,
-		SignUp:       chi.Chain(loginBurst, login, loginEmail).Handler,
-		Waitlist:     chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
+		Anonymous:  strict,
+		OAuthToken: oauthToken,
+		Login:      chi.Chain(loginBurst, login, loginEmail).Handler,
+		Mail:       chi.Chain(strict, mailbox).Handler,
+		Mailbox:    mailbox,
+		Password:   chi.Chain(loginBurst, login).Handler,
+		ShortCode:  chi.Chain(loginBurst, login, loginAccount).Handler,
+		SignUp:     chi.Chain(loginBurst, login, loginEmail).Handler,
+		Waitlist:   chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
 	}
 }
 

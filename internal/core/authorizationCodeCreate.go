@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,7 +23,8 @@ const (
 	// AuthorizationCodeTTL is how long a code exchanges after it is issued. RFC 6749 §4.1.2 asks for a
 	// short lifetime, and the client exchanges the code within the redirect that delivers it.
 	AuthorizationCodeTTL = time.Minute
-	// AuthorizationCodeSize is the number of random bytes in a code, 256 bits.
+	// AuthorizationCodeSize is the number of random bytes in a code. Its 256 bits keep a guess far
+	// below the 2^-160 chance RFC 6749 §10.10 asks for.
 	AuthorizationCodeSize = 32
 	// CodeChallengeMethodS256 is the only PKCE method a code accepts. RFC 9700 §2.1.1 names it the only
 	// method that keeps the code verifier out of the authorization request.
@@ -30,7 +32,8 @@ const (
 )
 
 // ErrAuthorizationCodeCreateSessionEnded is returned by [AuthorizationCodeCreate.Exec] when the
-// session of the access token has ended, though the access token has not expired yet.
+// session of the access token has ended, though the access token has not expired yet. The account
+// platform then signs the person in again.
 var ErrAuthorizationCodeCreateSessionEnded = errors.New("session ended")
 
 // AuthorizationCodeCreateDao stores the new code.
@@ -38,8 +41,8 @@ type AuthorizationCodeCreateDao interface {
 	Exec(ctx context.Context, request *dao.AuthorizationCodeInsertRequest) error
 }
 
-// AuthorizationCodeCreateRequest asks for a code that signs a person in on a client, within their
-// session on the account platform.
+// AuthorizationCodeCreateRequest asks for a code that answers an authorization request, for a person
+// signed in on the account platform.
 type AuthorizationCodeCreateRequest struct {
 	// Caller is the verified Kubernetes caller of the request, empty when the server verifies none.
 	Caller string
@@ -48,33 +51,30 @@ type AuthorizationCodeCreateRequest struct {
 	UserID uuid.UUID `validate:"required"`
 	// SessionID is the session of that access token, which the client's token pair joins.
 	SessionID string `validate:"required,max=1024"`
-	// SessionExp is when that session ends, as a Unix timestamp in seconds. Access tokens signed
-	// before sessions carried their end lack it, and get no code.
-	SessionExp int64 `validate:"required"`
+	// SessionExp is when that session ends, as a Unix timestamp in seconds. An access token signed
+	// before sessions carried their end lacks it, and reads as a session that ended.
+	SessionExp int64
 
-	// ClientID is the client_id parameter of the authorization request (RFC 6749 §4.1.1).
-	ClientID string `validate:"required,max=256"`
-	// RedirectURI is its redirect_uri parameter.
-	RedirectURI string `validate:"required,max=2048"`
-	// CodeChallenge is its code_challenge parameter (RFC 7636 §4.3): the base64url SHA-256 of the
-	// client's code verifier, 43 characters long.
-	CodeChallenge string `validate:"required,len=43,base64rawurl"`
-	// CodeChallengeMethod is its code_challenge_method parameter, which must be
-	// [CodeChallengeMethodS256].
-	CodeChallengeMethod string `validate:"required,eq=S256"`
+	// Params are the parameters of the authorization request, as [AuthorizationRequestValidate] reads
+	// them.
+	Params url.Values
 }
 
-// AuthorizationCode is a code issued to a client, which the account platform sends to the client's
-// redirect URI.
+// AuthorizationCode is a code issued to a client, for the account platform to send to its redirect
+// URI.
 type AuthorizationCode struct {
 	// Code is 256 random bits, base64url-encoded. Only its SHA-256 is stored.
 	Code string
+	// RedirectURI is where the account platform sends the code, with the request's state and the
+	// account platform's iss (RFC 9207).
+	RedirectURI string
 }
 
 // AuthorizationCodeCreate issues an authorization code for a person signed in on the account
-// platform. Only the account platform may ask, for a request [AuthorizationRequestValidate]
-// accepts. The code is bound to the person, their session, the client, its redirect URI and the
-// PKCE challenge, and [AuthorizationCodeExchange] trades it once, within [AuthorizationCodeTTL].
+// platform (RFC 6749 §4.1.2). Only the account platform may ask, for a request that
+// [AuthorizationRequestValidate] accepts, and the request is checked again. The code is bound to
+// the person, their session, the client, its redirect URI and the PKCE challenge and method
+// (RFC 7636 §4.4), and [TokenGrant] trades it once, within [AuthorizationCodeTTL].
 type AuthorizationCodeCreate struct {
 	dao   AuthorizationCodeCreateDao
 	oauth authconfig.OAuth
@@ -91,17 +91,22 @@ func (service *AuthorizationCodeCreate) Exec(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("client.id", request.ClientID),
+		attribute.String("client.id", request.Params.Get("client_id")),
 		attribute.String("user.id", request.UserID.String()),
 		attribute.String("session.id", request.SessionID),
 	)
 
-	err := validate.Struct(request)
+	err := checkAccountPlatform(service.oauth, request.Caller)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
+	err = validate.Struct(request)
 	if err != nil {
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	err = checkAuthorizationRequest(service.oauth, request.Caller, request.ClientID, request.RedirectURI)
+	authorization, err := parseAuthorizationRequest(service.oauth.Clients, request.Params)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
@@ -109,7 +114,7 @@ func (service *AuthorizationCodeCreate) Exec(
 	now := time.Now()
 	sessionExpiresAt := time.Unix(request.SessionExp, 0)
 
-	if !now.Before(sessionExpiresAt) {
+	if request.SessionExp == 0 || !now.Before(sessionExpiresAt) {
 		return nil, otel.ReportError(span, ErrAuthorizationCodeCreateSessionEnded)
 	}
 
@@ -121,14 +126,16 @@ func (service *AuthorizationCodeCreate) Exec(
 	id := sha256.Sum256([]byte(code))
 
 	insertRequest := &dao.AuthorizationCodeInsertRequest{
-		ID:               id[:],
-		UserID:           request.UserID,
-		ClientID:         request.ClientID,
-		RedirectURI:      request.RedirectURI,
-		CodeChallenge:    request.CodeChallenge,
-		SessionID:        request.SessionID,
-		SessionExpiresAt: sessionExpiresAt,
-		ExpiresAt:        now.Add(AuthorizationCodeTTL),
+		ID:                   id[:],
+		UserID:               request.UserID,
+		ClientID:             authorization.ClientID,
+		RedirectURI:          authorization.RedirectURI,
+		RedirectURIInRequest: authorization.RedirectURIInRequest,
+		CodeChallenge:        authorization.CodeChallenge,
+		CodeChallengeMethod:  authorization.CodeChallengeMethod,
+		SessionID:            request.SessionID,
+		SessionExpiresAt:     sessionExpiresAt,
+		ExpiresAt:            now.Add(AuthorizationCodeTTL),
 	}
 
 	err = service.dao.Exec(ctx, insertRequest)
@@ -136,5 +143,5 @@ func (service *AuthorizationCodeCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("insert authorization code: %w", err))
 	}
 
-	return &AuthorizationCode{Code: code}, nil
+	return &AuthorizationCode{Code: code, RedirectURI: authorization.RedirectURI}, nil
 }

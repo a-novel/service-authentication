@@ -1,10 +1,10 @@
 package handlers_test
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -27,12 +27,8 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 
 	const (
 		accountCaller = "system:serviceaccount:account:web"
-		body          = `{
-			"client_id": "studio",
-			"redirect_uri": "https://studio.example.com/cb",
-			"code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-			"code_challenge_method": "S256"
-		}`
+		redirectURI   = "https://studio.example.com/cb"
+		body          = "response_type=code&client_id=studio"
 	)
 
 	claims := &session.Claims{
@@ -50,66 +46,79 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		caller string
-		claims *session.Claims
-		body   string
+		caller      string
+		claims      *session.Claims
+		contentType string
 
 		serviceMock *serviceMock
 
-		expect       *handlers.RestAuthorizationCode
+		expect       any
 		expectStatus int
 	}{
 		{
 			name: "Success",
 
-			caller: accountCaller,
-			claims: claims,
-			body:   body,
+			caller:      accountCaller,
+			claims:      claims,
+			contentType: "application/x-www-form-urlencoded",
 
-			serviceMock: &serviceMock{caller: accountCaller, resp: &core.AuthorizationCode{Code: "code"}},
+			serviceMock: &serviceMock{
+				caller: accountCaller, resp: &core.AuthorizationCode{Code: "code", RedirectURI: redirectURI},
+			},
 
-			expect:       &handlers.RestAuthorizationCode{Code: "code"},
+			expect:       &handlers.RestAuthorizationCode{Code: "code", RedirectURI: redirectURI},
 			expectStatus: http.StatusOK,
+		},
+		{
+			name: "Success/Charset",
+
+			caller:      accountCaller,
+			claims:      claims,
+			contentType: "application/x-www-form-urlencoded; charset=utf-8",
+
+			serviceMock: &serviceMock{
+				caller: accountCaller, resp: &core.AuthorizationCode{Code: "code", RedirectURI: redirectURI},
+			},
+
+			expect:       &handlers.RestAuthorizationCode{Code: "code", RedirectURI: redirectURI},
+			expectStatus: http.StatusOK,
+		},
+		{
+			name: "Error/OAuth",
+
+			caller:      accountCaller,
+			claims:      claims,
+			contentType: "application/x-www-form-urlencoded",
+
+			serviceMock: &serviceMock{
+				caller: accountCaller,
+				err: &core.OAuthError{
+					Code: "invalid_request", Description: "transform algorithm not supported", RedirectURI: redirectURI,
+				},
+			},
+
+			expect: &handlers.RestOAuthError{
+				Error: "invalid_request", ErrorDescription: "transform algorithm not supported", RedirectURI: redirectURI,
+			},
+			expectStatus: http.StatusBadRequest,
 		},
 		{
 			// The core refuses a request with no caller, as on a server that verifies none.
 			name: "Error/NoCaller",
 
-			claims: claims,
-			body:   body,
+			claims:      claims,
+			contentType: "application/x-www-form-urlencoded",
 
 			serviceMock: &serviceMock{err: core.ErrAuthorizationRequestForbiddenCaller},
 
 			expectStatus: http.StatusForbidden,
 		},
 		{
-			name: "Error/UnknownClient",
-
-			caller: accountCaller,
-			claims: claims,
-			body:   body,
-
-			serviceMock: &serviceMock{caller: accountCaller, err: core.ErrAuthorizationRequestUnknownClient},
-
-			expectStatus: http.StatusNotFound,
-		},
-		{
-			name: "Error/RedirectURIMismatch",
-
-			caller: accountCaller,
-			claims: claims,
-			body:   body,
-
-			serviceMock: &serviceMock{caller: accountCaller, err: core.ErrAuthorizationRequestRedirectURIMismatch},
-
-			expectStatus: http.StatusNotFound,
-		},
-		{
 			name: "Error/SessionEnded",
 
-			caller: accountCaller,
-			claims: claims,
-			body:   body,
+			caller:      accountCaller,
+			claims:      claims,
+			contentType: "application/x-www-form-urlencoded",
 
 			serviceMock: &serviceMock{caller: accountCaller, err: core.ErrAuthorizationCodeCreateSessionEnded},
 
@@ -118,9 +127,9 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 		{
 			name: "Error/InvalidRequest",
 
-			caller: accountCaller,
-			claims: claims,
-			body:   body,
+			caller:      accountCaller,
+			claims:      claims,
+			contentType: "application/x-www-form-urlencoded",
 
 			serviceMock: &serviceMock{caller: accountCaller, err: core.ErrInvalidRequest},
 
@@ -129,28 +138,32 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			caller: accountCaller,
-			claims: claims,
-			body:   body,
+			caller:      accountCaller,
+			claims:      claims,
+			contentType: "application/x-www-form-urlencoded",
 
 			serviceMock: &serviceMock{caller: accountCaller, err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
-			name: "Error/MalformedBody",
+			// The parameters travel form-encoded, as on the token endpoint.
+			name: "Error/JSONBody",
 
-			caller: accountCaller,
-			claims: claims,
-			body:   `{"client_id": `,
+			caller:      accountCaller,
+			claims:      claims,
+			contentType: "application/json",
 
+			expect: &handlers.RestOAuthError{
+				Error: "invalid_request", ErrorDescription: core.ErrOAuthMalformedRequest.Description,
+			},
 			expectStatus: http.StatusBadRequest,
 		},
 		{
 			name: "Error/MissingClaims",
 
-			caller: accountCaller,
-			body:   body,
+			caller:      accountCaller,
+			contentType: "application/x-www-form-urlencoded",
 
 			expectStatus: http.StatusUnauthorized,
 		},
@@ -165,14 +178,11 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 			if testCase.serviceMock != nil {
 				service.EXPECT().
 					Exec(mock.Anything, &core.AuthorizationCodeCreateRequest{
-						Caller:              testCase.serviceMock.caller,
-						UserID:              *claims.UserID,
-						SessionID:           "session-id",
-						SessionExp:          claims.SessionExp,
-						ClientID:            "studio",
-						RedirectURI:         "https://studio.example.com/cb",
-						CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-						CodeChallengeMethod: "S256",
+						Caller:     testCase.serviceMock.caller,
+						UserID:     *claims.UserID,
+						SessionID:  "session-id",
+						SessionExp: claims.SessionExp,
+						Params:     url.Values{"response_type": {"code"}, "client_id": {"studio"}},
 					}).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
@@ -180,17 +190,16 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 			handler := handlers.NewRestAuthorizationCodeCreate(service, config.LoggerDev)
 			request := httptest.NewRequestWithContext(
 				session.SetClaimsContext(t.Context(), testCase.claims),
-				http.MethodPut, "/v2/authorization-code", strings.NewReader(testCase.body),
+				http.MethodPost, "/v2/oauth/authorization-code", strings.NewReader(body),
 			)
+			request.Header.Set("Content-Type", testCase.contentType)
 
 			res := serveAsCaller(t, handler, request, testCase.caller)
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expect != nil {
-				var body handlers.RestAuthorizationCode
-
-				require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
-				require.Equal(t, testCase.expect, &body)
+				requireNoStore(t, res)
+				requireJSONBody(t, res, testCase.expect)
 			}
 
 			require.NoError(t, res.Body.Close())

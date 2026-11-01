@@ -3,7 +3,7 @@ package core_test
 import (
 	"crypto/sha256"
 	"errors"
-	"strings"
+	"net/url"
 	"testing"
 	"time"
 
@@ -23,18 +23,13 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	sessionExp := time.Now().Add(time.Hour).Unix()
-	// The S256 challenge of the verifier in RFC 7636's appendix B.
-	challenge := "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
 
 	validRequest := core.AuthorizationCodeCreateRequest{
-		Caller:              accountPlatformCaller,
-		UserID:              userID,
-		SessionID:           "session-id",
-		SessionExp:          sessionExp,
-		ClientID:            "studio",
-		RedirectURI:         studioRedirectURI,
-		CodeChallenge:       challenge,
-		CodeChallengeMethod: core.CodeChallengeMethodS256,
+		Caller:     accountPlatformCaller,
+		UserID:     userID,
+		SessionID:  "session-id",
+		SessionExp: sessionExp,
+		Params:     authorizationParams(nil),
 	}
 
 	type daoMock struct {
@@ -49,11 +44,25 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 		daoMock *daoMock
 
 		expectErr error
+		// expectRedirectURIInRequest is the stored record of whether the request named its redirect URI.
+		expectRedirectURIInRequest bool
 	}{
 		{
 			name: "Success",
 
 			request: &validRequest,
+
+			daoMock: &daoMock{},
+
+			expectRedirectURIInRequest: true,
+		},
+		{
+			// The code goes to the client's one redirect URI, and the token request may then omit it.
+			name: "Success/NoRedirectURI",
+
+			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
+				request.Params = authorizationParams(func(params url.Values) { params.Del("redirect_uri") })
+			}),
 
 			daoMock: &daoMock{},
 		},
@@ -77,25 +86,30 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 		{
 			name: "Error/ClientCaller",
 
-			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) { request.Caller = studioCaller }),
+			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
+				request.Caller = studioCaller
+			}),
 
 			expectErr: core.ErrAuthorizationRequestForbiddenCaller,
 		},
 		{
-			name: "Error/UnknownClient",
-
-			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) { request.ClientID = "blog" }),
-
-			expectErr: core.ErrAuthorizationRequestUnknownClient,
-		},
-		{
+			// The request is checked again, as [core.AuthorizationRequestValidate] checks it.
 			name: "Error/RedirectURIMismatch",
 
 			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
-				request.RedirectURI = studioRedirectURI + "?next=/"
+				request.Params = withRedirectURI(studioRedirectURI + "?next=/")
 			}),
 
-			expectErr: core.ErrAuthorizationRequestRedirectURIMismatch,
+			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
+		},
+		{
+			name: "Error/PlainMethod",
+
+			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
+				request.Params = authorizationParams(func(params url.Values) { params.Set("code_challenge_method", "plain") })
+			}),
+
+			expectErr: core.ErrAuthorizationRequestUnsupportedTransform,
 		},
 		{
 			// The access token is still valid, but its session's refresh token has expired.
@@ -113,49 +127,12 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 
 			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) { request.SessionExp = 0 }),
 
-			expectErr: core.ErrInvalidRequest,
+			expectErr: core.ErrAuthorizationCodeCreateSessionEnded,
 		},
 		{
 			name: "Error/NoSession",
 
 			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) { request.SessionID = "" }),
-
-			expectErr: core.ErrInvalidRequest,
-		},
-		{
-			name: "Error/PlainMethod",
-
-			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
-				request.CodeChallengeMethod = "plain"
-			}),
-
-			expectErr: core.ErrInvalidRequest,
-		},
-		{
-			name: "Error/NoMethod",
-
-			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
-				request.CodeChallengeMethod = ""
-			}),
-
-			expectErr: core.ErrInvalidRequest,
-		},
-		{
-			name: "Error/ChallengeTooShort",
-
-			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
-				request.CodeChallenge = challenge[:42]
-			}),
-
-			expectErr: core.ErrInvalidRequest,
-		},
-		{
-			// A padded or standard base64 value is no S256 challenge.
-			name: "Error/ChallengeAlphabet",
-
-			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
-				request.CodeChallenge = strings.Repeat("+", 43)
-			}),
 
 			expectErr: core.ErrInvalidRequest,
 		},
@@ -193,8 +170,9 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 			}
 
 			// The code is 256 random bits, and only its SHA-256 reaches the database, bound to the
-			// person, the session, the client, its redirect URI and the challenge.
+			// person, the session, the client, its redirect URI and the PKCE challenge and method.
 			require.Len(t, res.Code, 43)
+			require.Equal(t, studioRedirectURI, res.RedirectURI)
 
 			id := sha256.Sum256([]byte(res.Code))
 
@@ -204,7 +182,9 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 			require.True(t, time.Unix(sessionExp, 0).Equal(inserted.SessionExpiresAt))
 			require.Equal(t, "studio", inserted.ClientID)
 			require.Equal(t, studioRedirectURI, inserted.RedirectURI)
-			require.Equal(t, challenge, inserted.CodeChallenge)
+			require.Equal(t, testCase.expectRedirectURIInRequest, inserted.RedirectURIInRequest)
+			require.Equal(t, rfc7636Challenge, inserted.CodeChallenge)
+			require.Equal(t, core.CodeChallengeMethodS256, inserted.CodeChallengeMethod)
 			require.WithinDuration(t, time.Now().Add(core.AuthorizationCodeTTL), inserted.ExpiresAt, 5*time.Second)
 		})
 	}

@@ -76,6 +76,7 @@ func main() {
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.Claims](jsonKeysClient))
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient))
 	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
+	accessTokenTTL := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuth].Token.TTL
 
 	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
@@ -160,9 +161,10 @@ func main() {
 
 	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
 	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(daoAuthorizationCodeInsert, cfg.OAuth)
-	serviceAuthorizationCodeExchange := core.NewAuthorizationCodeExchange(
+	serviceTokenGrant := core.NewTokenGrant(
 		daoAuthorizationCodeSelect, daoAuthorizationCodeConsume, daoCredentialsSelect, daoRefreshTokenRevocationExist,
-		daoRefreshTokenRevocationInsert, jsonKeysClient, cfg.OAuth, refreshTokenLeeway,
+		daoRefreshTokenRevocationInsert, jsonKeysClient, serviceVerifyRefreshToken, cfg.OAuth, accessTokenTTL,
+		refreshTokenLeeway,
 	)
 
 	// =================================================================================================================
@@ -216,9 +218,7 @@ func main() {
 		serviceAuthorizationRequestValidate, cfg.Logger,
 	)
 	handlerAuthorizationCodeCreate := handlers.NewRestAuthorizationCodeCreate(serviceAuthorizationCodeCreate, cfg.Logger)
-	handlerAuthorizationCodeExchange := handlers.NewRestAuthorizationCodeExchange(
-		serviceAuthorizationCodeExchange, cfg.Logger,
-	)
+	handlerTokenGrant := handlers.NewRestTokenGrant(serviceTokenGrant, cfg.Logger)
 
 	// =================================================================================================================
 	// ROUTER
@@ -239,13 +239,15 @@ func main() {
 			withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
 			r.Patch("/", handlerTokenRefresh.ServeHTTP)
 			withAuth(r, "session:revoke").Put("/revoke", handlerTokenRevoke.ServeHTTP)
-			r.With(limit.CodeExchange).Put("/authorization-code", handlerAuthorizationCodeExchange.ServeHTTP)
 		})
 
-		// The account platform validates an authorization request, then asks for a code for the
-		// person signed in there. The client then exchanges the code under /session.
-		api.Get("/authorization-request", handlerAuthorizationRequestValidate.ServeHTTP)
-		withAuth(api, "authorizationCode:create").Put("/authorization-code", handlerAuthorizationCodeCreate.ServeHTTP)
+		// The account platform checks an authorization request, then asks for a code for the person
+		// signed in there. The client trades the code at the token endpoint.
+		api.Route("/oauth", func(r chi.Router) {
+			r.Get("/authorization-request", handlerAuthorizationRequestValidate.ServeHTTP)
+			withAuth(r, "authorizationCode:create").Post("/authorization-code", handlerAuthorizationCodeCreate.ServeHTTP)
+			r.With(limit.OAuthToken).Post("/token", handlerTokenGrant.ServeHTTP)
+		})
 
 		api.Route("/credentials", func(r chi.Router) {
 			withAuth(r, "credentials:get").Get("/", handlerCredentialsGet.ServeHTTP)
