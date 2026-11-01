@@ -26,12 +26,28 @@ services:
     image: "${VALKEY_IMAGE:?VALKEY_IMAGE is required}"
     ports:
       - "6379:6379"
-    command: >-
-      valkey-server
-      --user default off resetpass
-      --user limiter on >limiter ~httprate:* -@all +mget +incrby +expire +multi +exec +ping
+    # A list: docker compose splits a string command by shell rules and drops it from ">" on.
+    command:
+      - valkey-server
+      - --user
+      - default
+      - "off"
+      - resetpass
+      - --user
+      - limiter
+      - "on"
+      - ">limiter"
+      - "~httprate:*"
+      - -@all
+      - +mget
+      - +incrby
+      - +expire
+      - +multi
+      - +exec
+      - +ping
     healthcheck:
-      test: ["CMD", "valkey-cli", "--user", "limiter", "--pass", "limiter", "--no-auth-warning", "ping"]
+      # valkey-cli exits 0 on a refused login, so the check reads the answer.
+      test: ["CMD-SHELL", "valkey-cli --user limiter --pass limiter --no-auth-warning ping | grep -q PONG"]
       interval: 1s
       timeout: 5s
       retries: 10
