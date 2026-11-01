@@ -39,6 +39,7 @@ func TestTokenRevoke(t *testing.T) {
 	}
 
 	type daoMock struct {
+		jtis      []string
 		expiresAt time.Time
 		err       error
 	}
@@ -68,7 +69,31 @@ func TestTokenRevoke(t *testing.T) {
 				},
 			},
 
-			daoMock: &daoMock{expiresAt: time.Unix(dayLater, 0).Add(leeway)},
+			daoMock: &daoMock{
+				jtis:      []string{"refresh-token-id", "refresh-token-id"},
+				expiresAt: time.Unix(dayLater, 0).Add(leeway),
+			},
+		},
+		{
+			// A token of a session another token opened revokes that session too, which stops every
+			// token of it.
+			name: "Success/Session",
+
+			request: &core.TokenRevokeRequest{UserID: userID, RefreshToken: "refresh-token"},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{
+					Jti:       "refresh-token-id",
+					Exp:       dayLater,
+					UserID:    userID,
+					SessionID: "session-id",
+				},
+			},
+
+			daoMock: &daoMock{
+				jtis:      []string{"refresh-token-id", "session-id"},
+				expiresAt: time.Unix(dayLater, 0).Add(leeway),
+			},
 		},
 		{
 			// An expired refresh token no longer renews the session, and still revokes so a retry
@@ -85,7 +110,10 @@ func TestTokenRevoke(t *testing.T) {
 				},
 			},
 
-			daoMock: &daoMock{expiresAt: time.Unix(dayAgo, 0).Add(leeway)},
+			daoMock: &daoMock{
+				jtis:      []string{"refresh-token-id", "refresh-token-id"},
+				expiresAt: time.Unix(dayAgo, 0).Add(leeway),
+			},
 		},
 		{
 			// A refresh token another user holds stays alive, whoever sends it.
@@ -137,7 +165,11 @@ func TestTokenRevoke(t *testing.T) {
 				},
 			},
 
-			daoMock: &daoMock{expiresAt: time.Unix(dayLater, 0).Add(leeway), err: errFoo},
+			daoMock: &daoMock{
+				jtis:      []string{"refresh-token-id", "refresh-token-id"},
+				expiresAt: time.Unix(dayLater, 0).Add(leeway),
+				err:       errFoo,
+			},
 
 			expectErr: errFoo,
 		},
@@ -179,7 +211,7 @@ func TestTokenRevoke(t *testing.T) {
 			if testCase.daoMock != nil {
 				mockDao.EXPECT().
 					Exec(mock.Anything, mock.MatchedBy(func(request *dao.RefreshTokenRevocationInsertRequest) bool {
-						return assert.Equal(t, "refresh-token-id", request.JTI) &&
+						return assert.Equal(t, testCase.daoMock.jtis, request.JTIs) &&
 							assert.True(t, testCase.daoMock.expiresAt.Equal(request.ExpiresAt)) &&
 							assert.WithinDuration(t, time.Now(), request.Now, time.Minute)
 					})).

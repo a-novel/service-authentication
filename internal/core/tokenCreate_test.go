@@ -268,6 +268,7 @@ func TestTokenCreate(t *testing.T) {
 					UserID:         &testCase.daoMock.resp.ID,
 					Roles:          []string{testCase.daoMock.resp.Role},
 					RefreshTokenID: mockUnsignedJTI,
+					SessionID:      mockUnsignedJTI,
 				}
 				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
 					Usage:   servicejsonkeys.KeyUsageAuth,

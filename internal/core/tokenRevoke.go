@@ -27,7 +27,7 @@ var (
 	ErrTokenRevokeMismatchClaims = errors.New("refresh token claims don't match access token")
 )
 
-// TokenRevokeDao records the revoked refresh token.
+// TokenRevokeDao records the revoked refresh token and its session.
 type TokenRevokeDao interface {
 	Exec(ctx context.Context, request *dao.RefreshTokenRevocationInsertRequest) error
 }
@@ -48,9 +48,10 @@ type TokenRevokeRequest struct {
 	RefreshToken string `validate:"required,max=1024"`
 }
 
-// TokenRevoke ends a session: the refresh token it revokes no longer renews the session. The
-// refresh token must belong to the caller. Revoking a token already revoked or expired succeeds.
-// Access tokens the session already issued stay valid until they expire.
+// TokenRevoke ends the session a refresh token belongs to: no refresh token of the session renews
+// it, and [ClaimsGet] refuses its access tokens. The refresh token must belong to the caller.
+// Revoking a token already revoked or expired succeeds. Services that verify access tokens offline
+// accept them until they expire.
 type TokenRevoke struct {
 	dao                        TokenRevokeDao
 	serviceVerifyRefreshClaims TokenRevokeServiceVerifyRefreshClaims
@@ -94,6 +95,7 @@ func (service *TokenRevoke) Exec(ctx context.Context, request *TokenRevokeReques
 		attribute.String("access_token.user_id", request.UserID.String()),
 		attribute.String("refresh_token.id", claims.Jti),
 		attribute.String("refresh_token.user_id", claims.UserID.String()),
+		attribute.String("session.id", claims.Session()),
 	)
 
 	if claims.UserID != request.UserID {
@@ -101,8 +103,10 @@ func (service *TokenRevoke) Exec(ctx context.Context, request *TokenRevokeReques
 	}
 
 	// The verifier accepts the token until its expiry plus the leeway, so the revocation lasts as long.
+	// The session's row lasts as long too, and outlives the token that opened the session: the signer
+	// gives every refresh token one TTL, and the session's other tokens are signed after it.
 	revocation := &dao.RefreshTokenRevocationInsertRequest{
-		JTI:       claims.Jti,
+		JTIs:      []string{claims.Jti, claims.Session()},
 		ExpiresAt: time.Unix(claims.Exp, 0).Add(service.refreshTokenLeeway),
 		Now:       time.Now(),
 	}
