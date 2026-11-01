@@ -121,6 +121,10 @@ var (
 	ServiceJsonKeysHost = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_HOST"), ServiceJsonKeysHostDefault, config.StringParser)
 	// ServiceJsonKeysPort is the gRPC port of the JSON Keys service.
 	ServiceJsonKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJsonKeysPortDefault, config.IntParser)
+	// ServiceJsonKeysTLS dials the JSON Keys service over TLS, from inside the cluster, once
+	// ServiceTokenPath names a token. The server's certificate is verified for ServiceJsonKeysHost
+	// against the system roots, which SSL_CERT_DIR extends.
+	ServiceJsonKeysTLS = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_TLS"), false, config.BoolParser)
 
 	// SmtpAddr is the SMTP server address, as domain:port.
 	SmtpAddr = getEnv("SMTP_ADDR")

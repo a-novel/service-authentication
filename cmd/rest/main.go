@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -251,19 +252,18 @@ func main() {
 	// RUN
 	// =================================================================================================================
 
-	httpServer := httpf.NewServer(ctx, cfg.Rest, withServiceToken(router))
-
-	lo.Must0(serve(ctx, stop, httpServer, cfg.Rest.Timeouts.Shutdown, mailDelivery))
+	lo.Must0(serve(ctx, stop, cfg.Rest, withServiceToken(router), mailDelivery))
 }
 
 // serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.
 func serve(
 	ctx context.Context,
 	stop context.CancelFunc,
-	httpServer *http.Server,
-	shutdownTimeout time.Duration,
+	rest httpf.ServerConfig,
+	handler http.Handler,
 	mailDelivery *core.MailDelivery,
 ) error {
+	shutdownTimeout := rest.Timeouts.Shutdown
 	shutdownStarted := make(chan time.Time, 1)
 
 	go func() {
@@ -273,9 +273,9 @@ func serve(
 		shutdownStarted <- time.Now()
 	}()
 
-	log.Println("Starting REST server on " + httpServer.Addr)
+	log.Println("Starting REST server on port " + strconv.Itoa(rest.Port))
 
-	serveErr := httpf.Serve(ctx, httpServer, shutdownTimeout)
+	serveErr := httpf.ListenAndServe(ctx, rest, handler)
 
 	// Stop also cancels the process context when serving ends because of a bind or runtime error.
 	// The recorded deadline lets the HTTP drain and accepted mail share one operator budget.
