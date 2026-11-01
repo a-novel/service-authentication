@@ -65,9 +65,7 @@ func main() {
 		defer closeDatabase(database)
 	}
 
-	// Without an issuer, the server verifies no service token and admits every caller.
-	serviceTokenCallers := lo.Ternary(cfg.ServiceToken.Issuer != "", cfg.ServiceToken.Callers, nil)
-	lo.Must0(cfg.OAuth.Check(serviceTokenCallers))
+	lo.Must0(cfg.OAuth.Check(cfg.ServiceToken))
 
 	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
 

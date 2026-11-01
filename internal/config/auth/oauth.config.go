@@ -1,13 +1,15 @@
 package auth
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"net"
 	"net/url"
 	"slices"
 	"strings"
+
+	"github.com/a-novel-kit/golib/servicetoken"
 )
 
 // ErrClientsConfig is returned by [ParseClients] for a client registry that breaks a rule of
@@ -36,22 +38,23 @@ type OAuth struct {
 }
 
 // Check refuses a registry whose client shares the account platform's caller, which would let one
-// workload both issue and exchange codes. When serviceTokenCallers is not nil, the server verifies
-// service tokens and admits those callers alone, so Check also refuses a registry whose callers, or
-// the account platform's, it lacks: the server would refuse them before the grant sees them.
-func (oauth OAuth) Check(serviceTokenCallers []string) error {
+// workload both issue and exchange codes. A server whose serviceToken names an issuer admits the
+// callers it lists alone, so Check also refuses a registry whose callers, or the account
+// platform's, the list lacks. Without an issuer, the server verifies no caller.
+func (oauth OAuth) Check(serviceToken servicetoken.Config) error {
+	verified := serviceToken.Issuer != ""
+
 	for clientID, client := range oauth.Clients {
 		if client.Caller == oauth.AccountPlatformCaller {
 			return fmt.Errorf("%w: client %q has the account platform's caller", ErrClientsConfig, clientID)
 		}
 
-		if serviceTokenCallers != nil && !slices.Contains(serviceTokenCallers, client.Caller) {
+		if verified && !slices.Contains(serviceToken.Callers, client.Caller) {
 			return fmt.Errorf("%w: the service tokens do not admit client %q's caller", ErrClientsConfig, clientID)
 		}
 	}
 
-	if len(oauth.Clients) > 0 && serviceTokenCallers != nil &&
-		!slices.Contains(serviceTokenCallers, oauth.AccountPlatformCaller) {
+	if len(oauth.Clients) > 0 && verified && !slices.Contains(serviceToken.Callers, oauth.AccountPlatformCaller) {
 		return fmt.Errorf("%w: the service tokens do not admit the account platform's caller", ErrClientsConfig)
 	}
 
@@ -67,7 +70,9 @@ func (oauth OAuth) Check(serviceTokenCallers []string) error {
 //	  }
 //	}
 //
-// It refuses a registry that breaks a rule a client must follow:
+// It reads the JSON strictly: a client ID or a member given twice, or a member it does not know,
+// refuses the registry, and member names match in their exact case. It also refuses a registry that
+// breaks a rule a client must follow:
 //   - The client ID is printable ASCII (RFC 6749 §2.2, Appendix A.1).
 //   - The redirect URI is absolute and has no fragment (RFC 6749 §3.1.2).
 //   - The redirect URI uses https, or http on a loopback host for a local stack (RFC 9700 §2.6).
@@ -75,7 +80,7 @@ func (oauth OAuth) Check(serviceTokenCallers []string) error {
 func ParseClients(value string) (map[string]Client, error) {
 	var clients map[string]Client
 
-	err := json.Unmarshal([]byte(value), &clients)
+	err := json.Unmarshal([]byte(value), &clients, json.RejectUnknownMembers(true))
 	if err != nil {
 		return nil, errors.Join(err, ErrClientsConfig)
 	}

@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel-kit/golib/servicetoken"
+
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
@@ -96,6 +98,43 @@ func TestParseClients(t *testing.T) {
 			}`,
 			expectErr: authconfig.ErrClientsConfig,
 		},
+		{
+			// Each later client would replace the earlier one, which reads as a registry of one.
+			name: "Error/RepeatedClient",
+			value: `{
+				"studio": {"redirectURI": "https://studio.example.com/auth/callback", "caller": "system:serviceaccount:studio:web"},
+				"studio": {"redirectURI": "https://evil.example.com/auth/callback", "caller": "system:serviceaccount:studio:web"}
+			}`,
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			name: "Error/RepeatedMember",
+			value: `{"studio": {
+				"redirectURI": "https://studio.example.com/auth/callback",
+				"redirectURI": "https://evil.example.com/auth/callback",
+				"caller": "system:serviceaccount:studio:web"
+			}}`,
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			// Member names match in their exact case, so CALLER is no caller.
+			name: "Error/MemberCase",
+			value: `{"studio": {
+				"redirectURI": "https://studio.example.com/auth/callback",
+				"caller": "system:serviceaccount:studio:web",
+				"CALLER": "system:serviceaccount:evil:web"
+			}}`,
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			name: "Error/UnknownMember",
+			value: `{"studio": {
+				"redirectURI": "https://studio.example.com/auth/callback",
+				"caller": "system:serviceaccount:studio:web",
+				"redirectURIs": ["https://evil.example.com/auth/callback"]
+			}}`,
+			expectErr: authconfig.ErrClientsConfig,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -120,6 +159,7 @@ func TestOAuth(t *testing.T) {
 	const (
 		accountCaller = "system:serviceaccount:account:web"
 		studioCaller  = "system:serviceaccount:studio:web"
+		issuer        = "https://container.googleapis.com/v1/projects/agora/locations/europe-west9/clusters/agora"
 	)
 
 	studio := map[string]authconfig.Client{
@@ -129,29 +169,32 @@ func TestOAuth(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		oauth               authconfig.OAuth
-		serviceTokenCallers []string
+		oauth        authconfig.OAuth
+		serviceToken servicetoken.Config
 
 		expectErr error
 	}{
 		{
 			name: "Success",
 
-			oauth:               authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
-			serviceTokenCallers: []string{accountCaller, studioCaller, "system:serviceaccount:authentication:smoke"},
+			oauth: authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			serviceToken: servicetoken.Config{
+				Issuer: issuer, Callers: []string{accountCaller, studioCaller, "system:serviceaccount:authentication:smoke"},
+			},
 		},
 		{
-			// A server that verifies no service token admits every caller.
-			name: "Success/NoServiceTokens",
+			// A server without an issuer verifies no service token, and admits every caller.
+			name: "Success/NoIssuer",
 
-			oauth: authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			oauth:        authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			serviceToken: servicetoken.Config{Callers: []string{accountCaller}},
 		},
 		{
 			// Without clients, the grant is off and needs no caller.
 			name: "Success/NoClients",
 
-			oauth:               authconfig.OAuth{AccountPlatformCaller: accountCaller},
-			serviceTokenCallers: []string{studioCaller},
+			oauth:        authconfig.OAuth{AccountPlatformCaller: accountCaller},
+			serviceToken: servicetoken.Config{Issuer: issuer, Callers: []string{studioCaller}},
 		},
 		{
 			name: "Error/AccountPlatformClient",
@@ -165,16 +208,25 @@ func TestOAuth(t *testing.T) {
 		{
 			name: "Error/ClientCallerNotAdmitted",
 
-			oauth:               authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
-			serviceTokenCallers: []string{accountCaller},
+			oauth:        authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			serviceToken: servicetoken.Config{Issuer: issuer, Callers: []string{accountCaller}},
 
 			expectErr: authconfig.ErrClientsConfig,
 		},
 		{
 			name: "Error/AccountPlatformCallerNotAdmitted",
 
-			oauth:               authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
-			serviceTokenCallers: []string{studioCaller},
+			oauth:        authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			serviceToken: servicetoken.Config{Issuer: issuer, Callers: []string{studioCaller}},
+
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			// An issuer without callers admits nobody, the clients included.
+			name: "Error/NoCallers",
+
+			oauth:        authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			serviceToken: servicetoken.Config{Issuer: issuer},
 
 			expectErr: authconfig.ErrClientsConfig,
 		},
@@ -184,7 +236,7 @@ func TestOAuth(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			require.ErrorIs(t, testCase.oauth.Check(testCase.serviceTokenCallers), testCase.expectErr)
+			require.ErrorIs(t, testCase.oauth.Check(testCase.serviceToken), testCase.expectErr)
 		})
 	}
 }
