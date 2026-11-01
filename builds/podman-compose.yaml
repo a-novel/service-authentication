@@ -116,6 +116,9 @@ services:
     build:
       context: ..
       dockerfile: ./builds/standalone.rest.Dockerfile
+    # Clears REST_TIMEOUT_SHUTDOWN (25s) and the 2s telemetry flush after it. The runtime's 10s
+    # default would send SIGKILL mid-drain, dropping the emails still going out.
+    stop_grace_period: 30s
     ports:
       - "${REST_PORT}:8080"
     depends_on:
