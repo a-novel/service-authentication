@@ -3,6 +3,6 @@ SELECT
 FROM
   refresh_token_revocations
 WHERE
-  jti = ?0
+  jti IN (?0)
 LIMIT
   1;

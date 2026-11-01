@@ -37,7 +37,22 @@ func TestPgRefreshTokenRevocationInsert(t *testing.T) {
 			name: "Success",
 
 			request: &dao.RefreshTokenRevocationInsertRequest{
-				JTI:       "refresh-token-1",
+				JTIs:      []string{"refresh-token-1", "session-1"},
+				ExpiresAt: hourLater,
+				Now:       now,
+			},
+
+			expect: []*dao.RefreshTokenRevocation{
+				{JTI: "refresh-token-1", ExpiresAt: hourLater, CreatedAt: now},
+				{JTI: "session-1", ExpiresAt: hourLater, CreatedAt: now},
+			},
+		},
+		{
+			// A token that opened its session is the session, so its JTI comes twice.
+			name: "Success/SameJTI",
+
+			request: &dao.RefreshTokenRevocationInsertRequest{
+				JTIs:      []string{"refresh-token-1", "refresh-token-1"},
 				ExpiresAt: hourLater,
 				Now:       now,
 			},
@@ -47,27 +62,29 @@ func TestPgRefreshTokenRevocationInsert(t *testing.T) {
 			},
 		},
 		{
+			// Signing out of a second token of a session keeps the session's first row.
 			name: "Success/AlreadyRevoked",
 
 			fixtures: []*dao.RefreshTokenRevocation{
-				{JTI: "refresh-token-1", ExpiresAt: hourLater, CreatedAt: hourAgo},
+				{JTI: "session-1", ExpiresAt: hourLater, CreatedAt: hourAgo},
 			},
 
 			request: &dao.RefreshTokenRevocationInsertRequest{
-				JTI:       "refresh-token-1",
+				JTIs:      []string{"refresh-token-1", "session-1"},
 				ExpiresAt: hourLater.Add(time.Hour),
 				Now:       now,
 			},
 
 			expect: []*dao.RefreshTokenRevocation{
-				{JTI: "refresh-token-1", ExpiresAt: hourLater, CreatedAt: hourAgo},
+				{JTI: "refresh-token-1", ExpiresAt: hourLater.Add(time.Hour), CreatedAt: now},
+				{JTI: "session-1", ExpiresAt: hourLater, CreatedAt: hourAgo},
 			},
 		},
 		{
 			name: "Success/ExpiredToken",
 
 			request: &dao.RefreshTokenRevocationInsertRequest{
-				JTI:       "refresh-token-1",
+				JTIs:      []string{"refresh-token-1", "refresh-token-1"},
 				ExpiresAt: hourAgo,
 				Now:       now,
 			},

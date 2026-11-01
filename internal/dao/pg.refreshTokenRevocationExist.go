@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"fmt"
 
+	"github.com/uptrace/bun"
+
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
 )
@@ -14,12 +16,12 @@ var refreshTokenRevocationExistQuery string
 
 // RefreshTokenRevocationExistRequest is the input to [PgRefreshTokenRevocationExist.Exec].
 type RefreshTokenRevocationExistRequest struct {
-	// See [RefreshTokenRevocation.JTI].
-	JTI string
+	// JTIs are the [RefreshTokenRevocation.JTI] values to look up.
+	JTIs []string
 }
 
-// PgRefreshTokenRevocationExist reports whether a refresh token was revoked. A token never revoked
-// yields false with a nil error.
+// PgRefreshTokenRevocationExist reports whether any of the given JTIs was revoked. JTIs never revoked
+// yield false with a nil error.
 type PgRefreshTokenRevocationExist struct{}
 
 func NewPgRefreshTokenRevocationExist() *PgRefreshTokenRevocationExist {
@@ -37,7 +39,7 @@ func (dao *PgRefreshTokenRevocationExist) Exec(
 		return false, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
-	res, err := db.NewRaw(refreshTokenRevocationExistQuery, request.JTI).Exec(ctx)
+	res, err := db.NewRaw(refreshTokenRevocationExistQuery, bun.List(request.JTIs)).Exec(ctx)
 	if err != nil {
 		return false, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
 )
@@ -15,16 +17,16 @@ var refreshTokenRevocationInsertQuery string
 
 // RefreshTokenRevocationInsertRequest is the input to [PgRefreshTokenRevocationInsert.Exec].
 type RefreshTokenRevocationInsertRequest struct {
-	// See [RefreshTokenRevocation.JTI].
-	JTI string
+	// JTIs are the [RefreshTokenRevocation.JTI] values to revoke, all with the same expiry.
+	JTIs []string
 	// See [RefreshTokenRevocation.ExpiresAt].
 	ExpiresAt time.Time
 	// Now is the timestamp recorded as the revocation time.
 	Now time.Time
 }
 
-// PgRefreshTokenRevocationInsert revokes a refresh token. Revoking a token already revoked
-// succeeds and keeps the first row.
+// PgRefreshTokenRevocationInsert revokes JTIs in one statement. Revoking a JTI already revoked
+// succeeds and keeps its first row.
 type PgRefreshTokenRevocationInsert struct{}
 
 func NewPgRefreshTokenRevocationInsert() *PgRefreshTokenRevocationInsert {
@@ -42,7 +44,9 @@ func (dao *PgRefreshTokenRevocationInsert) Exec(
 		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
-	_, err = db.NewRaw(refreshTokenRevocationInsertQuery, request.JTI, request.ExpiresAt, request.Now).Exec(ctx)
+	_, err = db.NewRaw(
+		refreshTokenRevocationInsertQuery, bun.List(request.JTIs), request.ExpiresAt, request.Now,
+	).Exec(ctx)
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}
