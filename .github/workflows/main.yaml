@@ -183,11 +183,16 @@ jobs:
       POSTGRES_DATABASE: postgres
       POSTGRES_TLS_ENABLED: "false"
       PLATFORM_AUTH_URL: http://localhost:7010
+      VALKEY_PORT: 6379
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - *start-local-database
+      - uses: $/.github/actions/start-ci-services
+        with:
+          services: postgres valkey
+          database_image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
+          registry_login: "true"
       - uses: $/.github/actions/run-migrations
       # Exercises the real command wiring. The second run finds the matching active registration
       # and changes nothing.

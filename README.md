@@ -176,30 +176,35 @@ The service reads every variable from the process environment, prefixed with
 
 **REST tuning** (images `rest`, `standalone-rest`):
 
-| Name                          | Description                                                                                                                                  | Default                          |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `REST_PORT`                   | Port the server listens on.                                                                                                                  | `8080`                           |
-| `REST_MAX_REQUEST_SIZE`       | Maximum request body size, in bytes.                                                                                                         | `16384` (16KiB)                  |
-| `REST_CLIENT_IP_HEADER`       | Header a trusted proxy sets to the visitor IP. Set it only when every request comes through that proxy.                                      | TCP peer                         |
-| `REST_LIVENESS_PATH`          | Ping path, which still answers during a planned downtime and skips the standard rate limit.                                                  | `/v2/ping`                       |
-| `REST_RATE_LIMITS_ENABLED`    | Rate-limit each caller and email, as documented per route in the OpenAPI specification. Turn off only in test stacks.                        | `true`                           |
-| `REST_RATE_LIMIT`             | Requests each visitor sends to each route, as `<requests>/<window>`.                                                                         | `5/1s`                           |
-| `REST_RATE_LIMIT_STRICT`      | Anonymous tokens, invitation requests, and reset or email-change mails per caller.                                                           | `3/5m`                           |
-| `REST_RATE_LIMIT_LOGIN_BURST` | Logins, sign-ups, password resets and changes, and email updates per caller over a short window.                                             | `10/1m`                          |
-| `REST_RATE_LIMIT_LOGIN`       | The same per caller, and per email or account, over a longer window.                                                                         | `30/10m`                         |
-| `REST_RATE_LIMIT_MAILBOX`     | Emails each address receives from one route.                                                                                                 | `3/1h`                           |
-| `ARGON2_MAX_CONCURRENT`       | Password hashes running at once per instance; each takes 64 MiB. Hashing is CPU-bound, so more than one per CPU adds memory, not throughput. | CPU count (`GOMAXPROCS`)         |
-| `REST_TIMEOUT_READ`           | Read timeout.                                                                                                                                | `15s`                            |
-| `REST_TIMEOUT_READ_HEADER`    | Header read timeout.                                                                                                                         | `3s`                             |
-| `REST_TIMEOUT_WRITE`          | Write timeout.                                                                                                                               | `30s`                            |
-| `REST_TIMEOUT_IDLE`           | Idle keep-alive timeout.                                                                                                                     | `60s`                            |
-| `REST_TIMEOUT_REQUEST`        | Per-request timeout.                                                                                                                         | `60s`                            |
-| `REST_TIMEOUT_SHUTDOWN`       | Graceful shutdown budget. It outlasts `SMTP_TIMEOUT` and, with the 2-second telemetry flush, fits Kubernetes' 30 seconds.                    | `25s`                            |
-| `REST_CORS_ALLOWED_ORIGINS`   | CORS allowed origins.                                                                                                                        | `*`                              |
-| `REST_CORS_ALLOWED_HEADERS`   | CORS allowed headers.                                                                                                                        | `*`                              |
-| `REST_CORS_ALLOWED_METHODS`   | CORS allowed methods, comma-separated.                                                                                                       | `HEAD,GET,POST,PUT,PATCH,DELETE` |
-| `REST_CORS_ALLOW_CREDENTIALS` | CORS allow-credentials flag.                                                                                                                 | `false`                          |
-| `REST_CORS_MAX_AGE`           | CORS max-age, in seconds.                                                                                                                    | `3600`                           |
+| Name                             | Description                                                                                                                                  | Default                          |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `REST_PORT`                      | Port the server listens on.                                                                                                                  | `8080`                           |
+| `REST_MAX_REQUEST_SIZE`          | Maximum request body size, in bytes.                                                                                                         | `16384` (16KiB)                  |
+| `REST_CLIENT_IP_HEADER`          | Header a trusted proxy sets to the visitor IP. Set it only when every request comes through that proxy.                                      | TCP peer                         |
+| `REST_LIVENESS_PATH`             | Ping path, which still answers during a planned downtime and skips the standard rate limit.                                                  | `/v2/ping`                       |
+| `REST_RATE_LIMITS_ENABLED`       | Rate-limit each caller and email, as documented per route in the OpenAPI specification. Turn off only in test stacks.                        | `true`                           |
+| `REST_RATE_LIMIT`                | Requests each visitor sends to each route, as `<requests>/<window>`.                                                                         | `5/1s`                           |
+| `REST_RATE_LIMIT_STRICT`         | Anonymous tokens, invitation requests, and reset or email-change mails per caller.                                                           | `3/5m`                           |
+| `REST_RATE_LIMIT_LOGIN_BURST`    | Logins, sign-ups, password resets and changes, and email updates per caller over a short window.                                             | `10/1m`                          |
+| `REST_RATE_LIMIT_LOGIN`          | The same per caller, and per email or account, over a longer window.                                                                         | `30/10m`                         |
+| `REST_RATE_LIMIT_MAILBOX`        | Emails each address receives from one route.                                                                                                 | `3/1h`                           |
+| `REST_RATE_LIMIT_STORE_ADDR`     | Valkey or Redis server (`host:port`) where every instance counts the strict, login and mailbox limits. Empty counts in each instance.        |                                  |
+| `REST_RATE_LIMIT_STORE_USERNAME` | The store's ACL user. It needs `MGET`, `INCRBY`, `EXPIRE`, `MULTI`, `EXEC` and `PING` on the `httprate:*` keys.                              | `default`                        |
+| `REST_RATE_LIMIT_STORE_PASSWORD` | The user's password. **Inject it as a secret.**                                                                                              |                                  |
+| `ARGON2_MAX_CONCURRENT`          | Password hashes running at once per instance; each takes 64 MiB. Hashing is CPU-bound, so more than one per CPU adds memory, not throughput. | CPU count (`GOMAXPROCS`)         |
+| `REST_TIMEOUT_READ`              | Read timeout.                                                                                                                                | `15s`                            |
+| `REST_TIMEOUT_READ_HEADER`       | Header read timeout.                                                                                                                         | `3s`                             |
+| `REST_TIMEOUT_WRITE`             | Write timeout.                                                                                                                               | `30s`                            |
+| `REST_TIMEOUT_IDLE`              | Idle keep-alive timeout.                                                                                                                     | `60s`                            |
+| `REST_TIMEOUT_REQUEST`           | Per-request timeout.                                                                                                                         | `60s`                            |
+| `REST_TIMEOUT_SHUTDOWN`          | Graceful shutdown budget. It outlasts `SMTP_TIMEOUT` and, with the 2-second telemetry flush, fits Kubernetes' 30 seconds.                    | `25s`                            |
+| `REST_CORS_ALLOWED_ORIGINS`      | CORS allowed origins.                                                                                                                        | `*`                              |
+| `REST_CORS_ALLOWED_HEADERS`      | CORS allowed headers.                                                                                                                        | `*`                              |
+| `REST_CORS_ALLOWED_METHODS`      | CORS allowed methods, comma-separated.                                                                                                       | `HEAD,GET,POST,PUT,PATCH,DELETE` |
+| `REST_CORS_ALLOW_CREDENTIALS`    | CORS allow-credentials flag.                                                                                                                 | `false`                          |
+| `REST_CORS_MAX_AGE`              | CORS max-age, in seconds.                                                                                                                    | `3600`                           |
+
+With a counter store, every instance spends one budget per limit, while `REST_RATE_LIMIT` keeps counting per instance. A store that fails or takes over 100 ms to answer sends an instance back to its own counters until the store answers again. That loosens the limits but refuses no request. Each request counted that way carries the `rate_limit.local` attribute on its span.
 
 **Service tokens** (images `rest`, `standalone-rest`). Without `SERVICE_TOKEN_ISSUER`, the server takes every request. With it, the server refuses a request unless its `X-Service-Authorization` header carries a token from an allowed caller. The check runs before the server reads `REST_CLIENT_IP_HEADER` or counts a rate limit, so only an allowed caller names the visitor IP. The ping stays open for probes:
 
