@@ -233,6 +233,22 @@ jobs:
             -e SERVICE_JSON_KEYS_HOST="${SERVICE_JSON_KEYS_HOST}"
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
 
+  build-service-token-issuer:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.81.3
+        with:
+          file: builds/service-token-issuer.Dockerfile
+          image_name: ${{ github.repository }}/service-token-issuer
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: -e SERVICE_TOKEN_ISSUER=http://localhost:8080
+
   # Publish the JS client from the checked-out release tag.
   build-js:
     if: github.event_name == 'push'
@@ -255,6 +271,7 @@ jobs:
       - build-job-maintenance
       - build-rest
       - build-standalone-rest
+      - build-service-token-issuer
       - build-js
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -278,6 +295,7 @@ jobs:
       - build-job-maintenance
       - build-rest
       - build-standalone-rest
+      - build-service-token-issuer
       - build-js
     if: github.event_name == 'push'
     runs-on: ubuntu-latest

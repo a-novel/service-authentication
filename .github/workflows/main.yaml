@@ -427,6 +427,21 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           skip_healthcheck: true
 
+  build-service-token-issuer:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.81.3
+        with:
+          file: builds/service-token-issuer.Dockerfile
+          image_name: ${{ github.repository }}/service-token-issuer
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_args: -e SERVICE_TOKEN_ISSUER=http://localhost:8080
+
   build-js:
     runs-on: ubuntu-latest
     permissions:
