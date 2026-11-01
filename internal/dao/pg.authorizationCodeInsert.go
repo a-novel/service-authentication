@@ -26,8 +26,12 @@ type AuthorizationCodeInsertRequest struct {
 	ClientID string
 	// See [AuthorizationCode.RedirectURI].
 	RedirectURI string
+	// See [AuthorizationCode.RedirectURIInRequest].
+	RedirectURIInRequest bool
 	// See [AuthorizationCode.CodeChallenge].
 	CodeChallenge string
+	// See [AuthorizationCode.CodeChallengeMethod].
+	CodeChallengeMethod string
 
 	// See [AuthorizationCode.SessionID].
 	SessionID string
@@ -60,7 +64,9 @@ func (dao *PgAuthorizationCodeInsert) Exec(ctx context.Context, request *Authori
 		request.UserID,
 		request.ClientID,
 		request.RedirectURI,
+		request.RedirectURIInRequest,
 		request.CodeChallenge,
+		request.CodeChallengeMethod,
 		request.SessionID,
 		request.SessionExpiresAt,
 		request.ExpiresAt,

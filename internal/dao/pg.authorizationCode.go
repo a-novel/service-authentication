@@ -23,10 +23,17 @@ type AuthorizationCode struct {
 
 	// ClientID is the client the code was issued to, as the client registry names it.
 	ClientID string `bun:"client_id"`
-	// RedirectURI is the URI the code was sent to.
+	// RedirectURI is the URI the code was sent to: the one the authorization request named, or the
+	// client's.
 	RedirectURI string `bun:"redirect_uri"`
-	// CodeChallenge is the PKCE S256 challenge: the base64url SHA-256 of the client's code verifier.
+	// RedirectURIInRequest reports whether the authorization request named the redirect URI. The token
+	// request must then name it too.
+	RedirectURIInRequest bool `bun:"redirect_uri_in_request"`
+	// CodeChallenge is the PKCE challenge of the authorization request.
 	CodeChallenge string `bun:"code_challenge"`
+	// CodeChallengeMethod is the PKCE method that derives the challenge from the client's code
+	// verifier, S256 alone.
+	CodeChallengeMethod string `bun:"code_challenge_method"`
 
 	// SessionID is the session the exchanged token pair joins.
 	SessionID string `bun:"session_id"`

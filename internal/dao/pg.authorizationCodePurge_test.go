@@ -122,13 +122,15 @@ func newPurgeFixture(name string, userID uuid.UUID, expiresAt time.Time) *dao.Au
 	id := sha256.Sum256([]byte(name))
 
 	return &dao.AuthorizationCode{
-		ID:               id[:],
-		UserID:           userID,
-		ClientID:         name,
-		RedirectURI:      "https://studio.example.com/auth/callback",
-		CodeChallenge:    "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-		SessionID:        "session-1",
-		SessionExpiresAt: expiresAt.Add(time.Hour),
-		ExpiresAt:        expiresAt,
+		ID:                   id[:],
+		UserID:               userID,
+		ClientID:             name,
+		RedirectURI:          "https://studio.example.com/auth/callback",
+		RedirectURIInRequest: true,
+		CodeChallenge:        "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+		CodeChallengeMethod:  "S256",
+		SessionID:            "session-1",
+		SessionExpiresAt:     expiresAt.Add(time.Hour),
+		ExpiresAt:            expiresAt,
 	}
 }

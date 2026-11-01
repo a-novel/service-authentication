@@ -7,10 +7,14 @@ CREATE TABLE authorization_codes (
   id bytea PRIMARY KEY NOT NULL CHECK (length(id) = 32),
   /* Client the code was issued to, as the client registry names it. */
   client_id text NOT NULL CHECK (client_id <> ''),
-  /* Redirect URI the code was sent to. The exchange names it again. */
+  /* Redirect URI the code was sent to: the one the authorization request named, or the client's. */
   redirect_uri text NOT NULL CHECK (redirect_uri <> ''),
-  /* PKCE S256 challenge: the base64url SHA-256 of the client's code verifier. */
+  /* Whether the authorization request named the redirect URI, so the token request must name it too. */
+  redirect_uri_in_request boolean NOT NULL,
+  /* PKCE challenge of the authorization request: the base64url SHA-256 of the client's code verifier. */
   code_challenge text NOT NULL CHECK (code_challenge <> ''),
+  /* PKCE method that derives the challenge from the verifier, S256 alone. */
+  code_challenge_method text NOT NULL CHECK (code_challenge_method = 'S256'),
   /* Account the code signs in. */
   user_id uuid NOT NULL REFERENCES credentials (id) ON DELETE CASCADE,
   /* Session the exchanged token pair joins, the account platform's. */

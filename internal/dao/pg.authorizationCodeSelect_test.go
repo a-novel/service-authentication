@@ -34,14 +34,16 @@ func TestPgAuthorizationCodeSelect(t *testing.T) {
 	}
 
 	code := &dao.AuthorizationCode{
-		ID:               codeID[:],
-		UserID:           account.ID,
-		ClientID:         "studio",
-		RedirectURI:      "https://studio.example.com/auth/callback",
-		CodeChallenge:    "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-		SessionID:        "session-1",
-		SessionExpiresAt: now.Add(time.Hour),
-		ExpiresAt:        now.Add(time.Minute),
+		ID:                   codeID[:],
+		UserID:               account.ID,
+		ClientID:             "studio",
+		RedirectURI:          "https://studio.example.com/auth/callback",
+		RedirectURIInRequest: true,
+		CodeChallenge:        "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+		CodeChallengeMethod:  "S256",
+		SessionID:            "session-1",
+		SessionExpiresAt:     now.Add(time.Hour),
+		ExpiresAt:            now.Add(time.Minute),
 	}
 
 	// An exchanged and expired code stays readable, so a second exchange finds it.

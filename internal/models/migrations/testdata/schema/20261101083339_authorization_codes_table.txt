@@ -1,10 +1,12 @@
-migration-history	sha256:4ab359a912762b1fbbc255ba06c2f30273d40b0e29fc9f9e4c324166abef9baf
+migration-history	sha256:b3c5b17a394220c54568af59edf3246edd9c942f37ea9f0b92425a64ce485344
 column	authorization_codes.client_id	text NOT NULL
 column	authorization_codes.code_challenge	text NOT NULL
+column	authorization_codes.code_challenge_method	text NOT NULL
 column	authorization_codes.consumed_at	timestamp(0) with time zone
 column	authorization_codes.expires_at	timestamp(0) with time zone NOT NULL
 column	authorization_codes.id	bytea NOT NULL
 column	authorization_codes.redirect_uri	text NOT NULL
+column	authorization_codes.redirect_uri_in_request	boolean NOT NULL
 column	authorization_codes.session_expires_at	timestamp(0) with time zone NOT NULL
 column	authorization_codes.session_id	text NOT NULL
 column	authorization_codes.user_id	uuid NOT NULL
@@ -30,12 +32,15 @@ comment	schema public	standard public schema
 constraint	authorization_codes.authorization_codes_client_id_check	CHECK ((client_id <> ''::text))
 constraint	authorization_codes.authorization_codes_client_id_not_null	NOT NULL client_id
 constraint	authorization_codes.authorization_codes_code_challenge_check	CHECK ((code_challenge <> ''::text))
+constraint	authorization_codes.authorization_codes_code_challenge_method_check	CHECK ((code_challenge_method = 'S256'::text))
+constraint	authorization_codes.authorization_codes_code_challenge_method_not_null	NOT NULL code_challenge_method
 constraint	authorization_codes.authorization_codes_code_challenge_not_null	NOT NULL code_challenge
 constraint	authorization_codes.authorization_codes_expires_at_not_null	NOT NULL expires_at
 constraint	authorization_codes.authorization_codes_id_check	CHECK ((length(id) = 32))
 constraint	authorization_codes.authorization_codes_id_not_null	NOT NULL id
 constraint	authorization_codes.authorization_codes_pkey	PRIMARY KEY (id)
 constraint	authorization_codes.authorization_codes_redirect_uri_check	CHECK ((redirect_uri <> ''::text))
+constraint	authorization_codes.authorization_codes_redirect_uri_in_request_not_null	NOT NULL redirect_uri_in_request
 constraint	authorization_codes.authorization_codes_redirect_uri_not_null	NOT NULL redirect_uri
 constraint	authorization_codes.authorization_codes_session_expires_at_not_null	NOT NULL session_expires_at
 constraint	authorization_codes.authorization_codes_session_id_check	CHECK ((session_id <> ''::text))
