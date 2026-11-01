@@ -79,6 +79,9 @@ paths:
       summary: Returns the claims of an authenticated user.
       description: |
         Validate a user token, and extract the claims it contains. This route also works for anonymous tokens.
+
+        A token whose session was signed out answers 401, like an invalid one. Other services verify access tokens
+        offline and accept them until they expire, so a client calls this route to see a sign-out at once.
       tags: [session]
       security:
         - BearerAuth: []
@@ -100,7 +103,8 @@ paths:
       summary: Retrieve a new access token for the user.
       description: |
         Use the refresh token of a user to retrieve a new access token. This allows the user to extend its session 
-        without logging in again. A refresh token cannot be refreshed once it expires.
+        without logging in again. A refresh token cannot be refreshed once it expires, or once its session is signed
+        out.
       tags: [session]
       security: []
       requestBody:
@@ -176,16 +180,18 @@ paths:
   /v2/session/revoke:
     put:
       operationId: tokenRevoke
-      summary: Sign out by revoking a refresh token.
+      summary: Sign out by revoking the session of a refresh token.
       description: |
-        Revoke the refresh token of a session, so it can no longer renew the session. The caller authenticates with a
-        valid access token, and the refresh token must belong to the same user. A client whose access token expired
-        refreshes the session first.
+        Revoke the session a refresh token belongs to, on every platform. No refresh token of the session renews it
+        any more, and `GET /v2/session` refuses its access tokens. The caller authenticates with a valid access
+        token, and the refresh token must belong to the same user. A client whose access token expired refreshes the
+        session first.
 
         Revoking is idempotent: a refresh token already revoked or already expired also answers 204, so a retry never
         fails. A refresh token of another user, or one this service did not issue, such as an access token, answers 403.
 
-        Access tokens the session already issued stay valid until they expire. A client discards them when it signs out.
+        Other services verify access tokens offline, and accept the session's until they expire. A client discards its
+        own when it signs out.
       tags: [session]
       security:
         - BearerAuth: ["session:revoke"]
@@ -193,7 +199,7 @@ paths:
         $ref: "#/components/requestBodies/tokenRevoke"
       responses:
         "204":
-          description: The refresh token is revoked, or was already revoked or expired.
+          description: The session is revoked, or was already revoked or expired.
         "400":
           $ref: "#/components/responses/badRequest"
         "401":
@@ -946,6 +952,7 @@ components:
             "userID": "9dce0fa2-f93b-46a9-aa6b-a71bf0b1ee80",
             "roles": ["auth:user"],
             "refreshTokenID": "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664",
+            "sessionID": "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664",
           }
         - { "roles": ["auth:anon"] }
       properties:
@@ -957,6 +964,8 @@ components:
             $ref: "#/components/schemas/userRole"
         refreshTokenID:
           $ref: "#/components/schemas/refreshTokenID"
+        sessionID:
+          $ref: "#/components/schemas/sessionID"
 
     publicCredentials:
       type: object
@@ -1047,6 +1056,16 @@ components:
     refreshTokenID:
       type: string
       description: Identifies a refresh token the user can use to renew its main access token.
+      format: uuid
+      examples:
+        - "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664"
+
+    sessionID:
+      type: string
+      description: |
+        Identifies the session a token belongs to: everything one sign-in opened, from its own token pair to every
+        token pair a platform obtained from it. Signing out revokes the whole session. A sign-in's session ID is the
+        ID of the refresh token it issued, so an anonymous token has none.
       format: uuid
       examples:
         - "3d53bd5c-16f6-47a1-a4a6-7c2ee1793664"

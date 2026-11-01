@@ -45,6 +45,8 @@ describe("tokenCreate", () => {
       userID: claims.userID,
       roles: [Role.SuperAdmin],
       refreshTokenID: claims.refreshTokenID,
+      // A sign-in opens a session of its own, named after its refresh token.
+      sessionID: claims.refreshTokenID,
     });
   });
 
@@ -191,6 +193,18 @@ describe("tokenRevoke", () => {
     await expectStatus(tokenRefresh(api, token), 403);
   });
 
+  it("refuses every access token of the session", async () => {
+    const api = new AuthenticationApi(process.env.REST_URL!);
+
+    const token = await superAdminSession(api);
+    const renewed = await tokenRefresh(api, token);
+
+    await tokenRevoke(api, renewed.accessToken, { refreshToken: renewed.refreshToken });
+
+    await expectStatus(claimsGet(api, token.accessToken), 401);
+    await expectStatus(claimsGet(api, renewed.accessToken), 401);
+  });
+
   it("succeeds again on a revoked refresh token", async () => {
     const api = new AuthenticationApi(process.env.REST_URL!);
 
@@ -211,6 +225,9 @@ describe("tokenRevoke", () => {
 
     const renewed = await tokenRefresh(api, otherToken);
     expect(renewed.accessToken).toBeTruthy();
+
+    const claims = await claimsGet(api, otherToken.accessToken);
+    expect(claims.sessionID).toBe(claims.refreshTokenID);
   });
 
   it("refuses another user's refresh token", async () => {
