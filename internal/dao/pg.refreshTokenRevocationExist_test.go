@@ -38,7 +38,23 @@ func TestPgRefreshTokenRevocationExist(t *testing.T) {
 				},
 			},
 
-			request: &dao.RefreshTokenRevocationExistRequest{JTI: "refresh-token-1"},
+			request: &dao.RefreshTokenRevocationExistRequest{JTIs: []string{"refresh-token-1", "refresh-token-1"}},
+
+			expect: true,
+		},
+		{
+			// A token of a session another token opened stops once that session is revoked.
+			name: "Success/SessionRevoked",
+
+			fixtures: []*dao.RefreshTokenRevocation{
+				{
+					JTI:       "session-1",
+					ExpiresAt: time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC),
+					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+
+			request: &dao.RefreshTokenRevocationExistRequest{JTIs: []string{"refresh-token-1", "session-1"}},
 
 			expect: true,
 		},
@@ -54,7 +70,7 @@ func TestPgRefreshTokenRevocationExist(t *testing.T) {
 				},
 			},
 
-			request: &dao.RefreshTokenRevocationExistRequest{JTI: "refresh-token-1"},
+			request: &dao.RefreshTokenRevocationExistRequest{JTIs: []string{"refresh-token-1", "session-1"}},
 
 			expect: false,
 		},

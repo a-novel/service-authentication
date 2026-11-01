@@ -1,6 +1,10 @@
 package session
 
-import "github.com/google/uuid"
+import (
+	"cmp"
+
+	"github.com/google/uuid"
+)
 
 // Claims is the JWT payload of an access token issued by this service. JSON Keys signs it, and the
 // auth middleware decodes it on every authenticated request.
@@ -17,6 +21,14 @@ type Claims struct {
 	// RefreshTokenID is the JTI of the refresh token that minted this access token. Only
 	// that refresh token renews it.
 	RefreshTokenID string `json:"refreshTokenID,omitempty"`
+	// SessionID is the session the token belongs to, read through [Claims.Session].
+	SessionID string `json:"sessionID,omitempty"`
+}
+
+// Session returns the ID of the session the token belongs to, and an empty string for an anonymous
+// token. A token without a SessionID belongs to the session its refresh token opened.
+func (claims *Claims) Session() string {
+	return cmp.Or(claims.SessionID, claims.RefreshTokenID)
 }
 
 // RefreshClaims is the JWT payload of a refresh token: the token's own JTI, its expiry and the user
@@ -26,10 +38,20 @@ type RefreshClaims struct {
 	// Exp is the token's expiry, as a Unix timestamp in seconds. The signer sets it.
 	Exp    int64     `json:"exp,omitempty"`
 	UserID uuid.UUID `json:"userID,omitempty"`
+	// SessionID is the session the token belongs to, read through [RefreshClaims.Session].
+	SessionID string `json:"sessionID,omitempty"`
+}
+
+// Session returns the ID of the session the token belongs to. A token without a SessionID, such as
+// a password sign-in's, opened its own session, so its Jti is the session's ID.
+func (claims *RefreshClaims) Session() string {
+	return cmp.Or(claims.SessionID, claims.Jti)
 }
 
 // RefreshClaimsForm is the payload submitted to the signer to mint a refresh token. The signer
-// assigns the JTI, so only the user ID is supplied here.
+// assigns the JTI, so only the user ID and the session are supplied here.
 type RefreshClaimsForm struct {
 	UserID uuid.UUID `json:"userID,omitempty"`
+	// SessionID joins the token to an existing session. Empty, the token opens a session of its own.
+	SessionID string `json:"sessionID,omitempty"`
 }

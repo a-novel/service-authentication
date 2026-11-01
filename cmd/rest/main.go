@@ -150,6 +150,8 @@ func main() {
 	)
 	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(daoCredentialsUpdateRole, daoCredentialsSelect)
 
+	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist)
+
 	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, jsonKeysClient)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
 	serviceTokenRefresh := core.NewTokenRefresh(
@@ -177,7 +179,7 @@ func main() {
 	handlerPing := handlers.NewRestPing()
 	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.SmtpPing, cfg.Logger)
 
-	handlerClaimsGet := handlers.NewRestClaimsGet(cfg.Logger)
+	handlerClaimsGet := handlers.NewRestClaimsGet(serviceClaimsGet, cfg.Logger)
 
 	handlerCredentialsCreate := handlers.NewRestCredentialsCreate(serviceCredentialsCreate, cfg.Logger)
 	handlerCredentialsExist := handlers.NewRestCredentialsExist(serviceCredentialsExist, cfg.Logger)

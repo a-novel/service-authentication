@@ -10,21 +10,39 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestRestClaimsGet(t *testing.T) {
 	t.Parallel()
 
+	errFoo := errors.New("foo")
+
+	claims := &session.Claims{
+		UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+		Roles:          []string{"user"},
+		RefreshTokenID: "refreshToken",
+		SessionID:      "session",
+	}
+
+	type serviceMock struct {
+		resp *session.Claims
+		err  error
+	}
+
 	testCases := []struct {
 		name string
 
-		request *http.Request
-		claims  *session.Claims
+		claims *session.Claims
+
+		serviceMock *serviceMock
 
 		expectStatus   int
 		expectResponse any
@@ -32,26 +50,55 @@ func TestRestClaimsGet(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
-			claims: &session.Claims{
-				UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-				Roles:          []string{"user"},
-				RefreshTokenID: "refreshToken",
-			},
+			claims: claims,
+
+			serviceMock: &serviceMock{resp: claims},
 
 			expectResponse: map[string]any{
 				"userID":         "00000000-0000-0000-0000-000000000001",
 				"roles":          []any{"user"},
 				"refreshTokenID": "refreshToken",
+				"sessionID":      "session",
 			},
 			expectStatus: http.StatusOK,
 		},
 		{
-			name: "NoClaims",
+			// A token without a session claim answers the session its refresh token opened.
+			name: "Success/OwnSession",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
+			claims: &session.Claims{Roles: []string{"user"}, RefreshTokenID: "refreshToken"},
+
+			serviceMock: &serviceMock{resp: &session.Claims{Roles: []string{"user"}, RefreshTokenID: "refreshToken"}},
+
+			expectResponse: map[string]any{
+				"roles":          []any{"user"},
+				"refreshTokenID": "refreshToken",
+				"sessionID":      "refreshToken",
+			},
+			expectStatus: http.StatusOK,
+		},
+		{
+			name: "Error/NoClaims",
 
 			expectStatus: http.StatusForbidden,
+		},
+		{
+			name: "Error/Revoked",
+
+			claims: claims,
+
+			serviceMock: &serviceMock{err: core.ErrClaimsGetRevoked},
+
+			expectStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Error/Internal",
+
+			claims: claims,
+
+			serviceMock: &serviceMock{err: errFoo},
+
+			expectStatus: http.StatusInternalServerError,
 		},
 	}
 
@@ -59,13 +106,21 @@ func TestRestClaimsGet(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			handler := handlers.NewRestClaimsGet(config.LoggerDev)
+			service := handlersmocks.NewMockRestClaimsGetService(t)
+
+			if testCase.serviceMock != nil {
+				service.EXPECT().
+					Exec(mock.Anything, &core.ClaimsGetRequest{Claims: testCase.claims}).
+					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
+			}
+
+			handler := handlers.NewRestClaimsGet(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				session.SetClaimsContext(t.Context(), testCase.claims), http.MethodGet, "/v2/session", nil,
+			)
 
-			rCtx := testCase.request.Context()
-			rCtx = session.SetClaimsContext(rCtx, testCase.claims)
-
-			handler.ServeHTTP(w, testCase.request.WithContext(rCtx))
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
 
@@ -79,6 +134,8 @@ func TestRestClaimsGet(t *testing.T) {
 				require.NoError(t, json.Unmarshal(data, &jsonRes))
 				require.Equal(t, testCase.expectResponse, jsonRes)
 			}
+
+			service.AssertExpectations(t)
 		})
 	}
 }

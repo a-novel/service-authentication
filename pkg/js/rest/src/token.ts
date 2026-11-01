@@ -70,10 +70,11 @@ export async function tokenRefresh(api: AuthenticationApi, form: TokenRefreshReq
 }
 
 /**
- * Signs a session out: its refresh token can no longer renew it. The access token must be valid and
- * belong to the refresh token's user, so refresh an expired session first. Revoking a token already
- * revoked or expired succeeds, so a retry is safe. Access tokens the session already issued stay valid
- * until they expire, so discard them too.
+ * Signs a session out everywhere: no refresh token of the session renews it, and `claimsGet`
+ * refuses its access tokens. The access token must be valid and belong to the refresh token's user,
+ * so refresh an expired session first. Revoking a token already revoked or expired succeeds, so a
+ * retry is safe. Other services accept the session's access tokens until they expire, so discard
+ * them too.
  */
 export async function tokenRevoke(
   api: AuthenticationApi,

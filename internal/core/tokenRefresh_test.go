@@ -35,11 +35,15 @@ func TestTokenRefresh(t *testing.T) {
 	}
 
 	type revocationExistMock struct {
+		jtis []string
+
 		resp bool
 		err  error
 	}
 
 	type signClaimsMock struct {
+		sessionID string
+
 		resp *servicejsonkeys.ClaimsSignResponse
 		err  error
 	}
@@ -71,6 +75,7 @@ func TestTokenRefresh(t *testing.T) {
 		expectNotErr error
 	}{
 		{
+			// A token without a session claim opened its own session, so its JTI stands in for it.
 			name: "Success",
 
 			request: &core.TokenRefreshRequest{
@@ -93,7 +98,7 @@ func TestTokenRefresh(t *testing.T) {
 				},
 			},
 
-			revocationExistMock: &revocationExistMock{},
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "refresh_token_id"}},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -103,6 +108,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			signClaimsMock: &signClaimsMock{
+				sessionID: "refresh_token_id",
 				resp: &servicejsonkeys.ClaimsSignResponse{
 					Token: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				},
@@ -114,6 +120,83 @@ func TestTokenRefresh(t *testing.T) {
 			},
 		},
 
+		{
+			// A token of a session another token opened keeps that session.
+			name: "Success/Session",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &session.Claims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+					SessionID:      "session_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{
+					Jti:       "refresh_token_id",
+					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					SessionID: "session_id",
+				},
+			},
+
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "session_id"}},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Role: "admin",
+				},
+			},
+
+			signClaimsMock: &signClaimsMock{
+				sessionID: "session_id",
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				},
+			},
+
+			expect: &core.Token{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+		},
+		{
+			// Signing out from any token of the session stops this one too.
+			name: "RevokedSession",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &session.Claims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+					SessionID:      "session_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{
+					Jti:       "refresh_token_id",
+					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					SessionID: "session_id",
+				},
+			},
+
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "session_id"}, resp: true},
+
+			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
+		},
 		{
 			name: "SignError",
 
@@ -137,7 +220,7 @@ func TestTokenRefresh(t *testing.T) {
 				},
 			},
 
-			revocationExistMock: &revocationExistMock{},
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "refresh_token_id"}},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -147,7 +230,8 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			signClaimsMock: &signClaimsMock{
-				err: errFoo,
+				sessionID: "refresh_token_id",
+				err:       errFoo,
 			},
 
 			expectErr: errFoo,
@@ -175,7 +259,7 @@ func TestTokenRefresh(t *testing.T) {
 				},
 			},
 
-			revocationExistMock: &revocationExistMock{},
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "refresh_token_id"}},
 
 			daoMock: &daoMock{
 				err: errFoo,
@@ -206,7 +290,7 @@ func TestTokenRefresh(t *testing.T) {
 				},
 			},
 
-			revocationExistMock: &revocationExistMock{resp: true},
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "refresh_token_id"}, resp: true},
 
 			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
 		},
@@ -233,7 +317,7 @@ func TestTokenRefresh(t *testing.T) {
 				},
 			},
 
-			revocationExistMock: &revocationExistMock{err: errFoo},
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "refresh_token_id"}, err: errFoo},
 
 			expectErr:    errFoo,
 			expectNotErr: core.ErrTokenRefreshInvalidRefreshToken,
@@ -571,7 +655,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			if testCase.revocationExistMock != nil {
 				mockDaoRevocationExist.EXPECT().
-					Exec(mock.Anything, &dao.RefreshTokenRevocationExistRequest{JTI: "refresh_token_id"}).
+					Exec(mock.Anything, &dao.RefreshTokenRevocationExistRequest{JTIs: testCase.revocationExistMock.jtis}).
 					Return(testCase.revocationExistMock.resp, testCase.revocationExistMock.err)
 			}
 
@@ -588,6 +672,7 @@ func TestTokenRefresh(t *testing.T) {
 					UserID:         testCase.serviceVerifyClaimsMock.resp.UserID,
 					Roles:          []string{testCase.daoMock.resp.Role},
 					RefreshTokenID: testCase.serviceVerifyRefreshClaimsMock.resp.Jti,
+					SessionID:      testCase.signClaimsMock.sessionID,
 				}
 				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
 					Usage:   servicejsonkeys.KeyUsageAuth,

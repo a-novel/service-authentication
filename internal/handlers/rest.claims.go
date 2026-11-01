@@ -8,4 +8,6 @@ type Claims struct {
 	UserID         *uuid.UUID `json:"userID,omitempty"`
 	Roles          []string   `json:"roles,omitempty"`
 	RefreshTokenID string     `json:"refreshTokenID,omitempty"`
+	// SessionID is the session the token belongs to. Empty for an anonymous token.
+	SessionID string `json:"sessionID,omitempty"`
 }

@@ -24,9 +24,10 @@ type tokenPairSigner interface {
 	) (*servicejsonkeys.ClaimsSignResponse, error)
 }
 
-// signTokenPair issues a fresh refresh and access token pair for the given credentials.
-// The access token's RefreshTokenID claim holds the refresh token's JTI, which binds the
-// pair. Every failure is an infrastructure fault, so the function returns no sentinel.
+// signTokenPair issues a fresh refresh and access token pair for the given credentials, opening
+// a session of their own. The access token's RefreshTokenID claim holds the refresh token's JTI,
+// which binds the pair, and its SessionID the session. Every failure is an infrastructure fault,
+// so the function returns no sentinel.
 func signTokenPair(ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.signTokenPair")
 	defer span.End()
@@ -48,7 +49,7 @@ func signTokenPair(ctx context.Context, signer tokenPairSigner, credentials *dao
 
 	// The refresh token comes straight from the trusted internal signer above, so its
 	// issuer is trusted by construction and DecodeUnverified is safe on this input. Only
-	// the JTI is needed, to embed in the access token below.
+	// the JTI and the session are needed, to embed in the access token below.
 	refreshTokenRecipient := jwt.NewRecipient(jwt.RecipientConfig{})
 
 	var refreshTokenClaims session.RefreshClaims
@@ -62,6 +63,7 @@ func signTokenPair(ctx context.Context, signer tokenPairSigner, credentials *dao
 		UserID:         &credentials.ID,
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,
+		SessionID:      refreshTokenClaims.Session(),
 	}
 
 	accessTokenPayload, err := grpcf.MarshalJSONAsAny(accessTokenClaims)
