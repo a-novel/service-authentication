@@ -71,11 +71,12 @@ func (handler *RestAuthorizationCodeCreate) ServeHTTP(w http.ResponseWriter, r *
 	caller, _ := httpf.ServiceTokenCaller(ctx)
 
 	serviceRequest := &core.AuthorizationCodeCreateRequest{
-		Caller:     caller,
-		UserID:     lo.FromPtr(claims.UserID),
-		SessionID:  claims.Session(),
-		SessionExp: claims.SessionExp,
-		Params:     params,
+		Caller:         caller,
+		UserID:         lo.FromPtr(claims.UserID),
+		RefreshTokenID: claims.RefreshTokenID,
+		SessionID:      claims.Session(),
+		SessionExp:     claims.SessionExp,
+		Params:         params,
 	}
 
 	res, err := handler.service.Exec(ctx, serviceRequest)

@@ -164,7 +164,9 @@ func main() {
 	)
 
 	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
-	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(daoAuthorizationCodeInsert, cfg.OAuth)
+	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(
+		daoAuthorizationCodeInsert, daoRefreshTokenRevocationExist, cfg.OAuth,
+	)
 	serviceTokenGrant := core.NewTokenGrant(
 		daoAuthorizationCodeSelect, daoAuthorizationCodeConsume, daoCredentialsSelect, daoRefreshTokenRevocationExist,
 		daoRefreshTokenRevocationInsert, jsonKeysClient, serviceVerifyRefreshToken, cfg.OAuth, accessTokenTTL,

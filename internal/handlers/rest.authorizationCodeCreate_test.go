@@ -33,7 +33,8 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 
 	claims := &session.Claims{
 		UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-		RefreshTokenID: "session-id",
+		RefreshTokenID: "refresh-token-id",
+		SessionID:      "session-id",
 		SessionExp:     1_900_000_000,
 	}
 
@@ -167,11 +168,12 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 			if testCase.serviceMock != nil {
 				service.EXPECT().
 					Exec(mock.Anything, &core.AuthorizationCodeCreateRequest{
-						Caller:     testCase.serviceMock.caller,
-						UserID:     *claims.UserID,
-						SessionID:  "session-id",
-						SessionExp: claims.SessionExp,
-						Params:     url.Values{"response_type": {"code"}, "client_id": {"studio"}},
+						Caller:         testCase.serviceMock.caller,
+						UserID:         *claims.UserID,
+						RefreshTokenID: "refresh-token-id",
+						SessionID:      "session-id",
+						SessionExp:     claims.SessionExp,
+						Params:         url.Values{"response_type": {"code"}, "client_id": {"studio"}},
 					}).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}

@@ -25,11 +25,17 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 	sessionExp := time.Now().Add(time.Hour).Unix()
 
 	validRequest := core.AuthorizationCodeCreateRequest{
-		Caller:     accountPlatformCaller,
-		UserID:     userID,
-		SessionID:  "session-id",
-		SessionExp: sessionExp,
-		Params:     authorizationParams(nil),
+		Caller:         accountPlatformCaller,
+		UserID:         userID,
+		RefreshTokenID: "refresh-token-id",
+		SessionID:      "session-id",
+		SessionExp:     sessionExp,
+		Params:         authorizationParams(nil),
+	}
+
+	type revocationMock struct {
+		revoked bool
+		err     error
 	}
 
 	type daoMock struct {
@@ -41,7 +47,8 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 
 		request *core.AuthorizationCodeCreateRequest
 
-		daoMock *daoMock
+		revocationMock *revocationMock
+		daoMock        *daoMock
 
 		expectErr error
 		// expectRedirectURIInRequest is the stored record of whether the request named its redirect URI.
@@ -52,7 +59,8 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 
 			request: &validRequest,
 
-			daoMock: &daoMock{},
+			revocationMock: &revocationMock{},
+			daoMock:        &daoMock{},
 
 			expectRedirectURIInRequest: true,
 		},
@@ -64,14 +72,35 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 				request.Params = authorizationParams(func(params url.Values) { params.Del("redirect_uri") })
 			}),
 
-			daoMock: &daoMock{},
+			revocationMock: &revocationMock{},
+			daoMock:        &daoMock{},
 		},
 		{
 			name: "Error/Dao",
 
 			request: &validRequest,
 
-			daoMock: &daoMock{err: errFoo},
+			revocationMock: &revocationMock{},
+			daoMock:        &daoMock{err: errFoo},
+
+			expectErr: errFoo,
+		},
+		{
+			// The access token still verifies after a sign-out, but its session is revoked.
+			name: "Error/SignedOut",
+
+			request: &validRequest,
+
+			revocationMock: &revocationMock{revoked: true},
+
+			expectErr: core.ErrAuthorizationCodeCreateSessionEnded,
+		},
+		{
+			name: "Error/RevocationExist",
+
+			request: &validRequest,
+
+			revocationMock: &revocationMock{err: errFoo},
 
 			expectErr: errFoo,
 		},
@@ -149,7 +178,16 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockDao := coremocks.NewMockAuthorizationCodeCreateDao(t)
+			mockDaoRevocationExist := coremocks.NewMockAuthorizationCodeCreateDaoRevocationExist(t)
+			mockDao := coremocks.NewMockAuthorizationCodeCreateDaoInsert(t)
+
+			if testCase.revocationMock != nil {
+				revocationRequest := &dao.RefreshTokenRevocationExistRequest{JTIs: []string{"refresh-token-id", "session-id"}}
+
+				mockDaoRevocationExist.EXPECT().
+					Exec(mock.Anything, revocationRequest).
+					Return(testCase.revocationMock.revoked, testCase.revocationMock.err)
+			}
 
 			var inserted *dao.AuthorizationCodeInsertRequest
 
@@ -163,11 +201,12 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 					Return(testCase.daoMock.err)
 			}
 
-			service := core.NewAuthorizationCodeCreate(mockDao, oauthPreset)
+			service := core.NewAuthorizationCodeCreate(mockDao, mockDaoRevocationExist, oauthPreset)
 
 			res, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 
+			mockDaoRevocationExist.AssertExpectations(t)
 			mockDao.AssertExpectations(t)
 
 			if testCase.expectErr != nil {

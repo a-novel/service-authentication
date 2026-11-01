@@ -29,13 +29,19 @@ const (
 )
 
 // ErrAuthorizationCodeCreateSessionEnded is returned by [AuthorizationCodeCreate.Exec] when the
-// session of the access token has ended, though the access token has not expired yet, or when the
-// token carries no session. The account platform then signs the person in again.
+// session of the access token was signed out or has ended, though the access token has not expired
+// yet, or when the token carries no session. The account platform then signs the person in again.
 var ErrAuthorizationCodeCreateSessionEnded = errors.New("session ended")
 
-// AuthorizationCodeCreateDao stores the new code.
-type AuthorizationCodeCreateDao interface {
+// AuthorizationCodeCreateDaoInsert stores the new code.
+type AuthorizationCodeCreateDaoInsert interface {
 	Exec(ctx context.Context, request *dao.AuthorizationCodeInsertRequest) error
+}
+
+// AuthorizationCodeCreateDaoRevocationExist reports whether the session of the access token was
+// signed out.
+type AuthorizationCodeCreateDaoRevocationExist interface {
+	Exec(ctx context.Context, request *dao.RefreshTokenRevocationExistRequest) (bool, error)
 }
 
 // AuthorizationCodeCreateRequest asks for a code that answers an authorization request, for a person
@@ -46,6 +52,9 @@ type AuthorizationCodeCreateRequest struct {
 
 	// UserID is the person signing in, taken from their verified access token.
 	UserID uuid.UUID
+	// RefreshTokenID is the refresh token that minted that access token. Signing out revokes it, or
+	// its session.
+	RefreshTokenID string
 	// SessionID is the session of that access token, which the client's token pair joins.
 	SessionID string
 	// SessionExp is when that session ends, as a Unix timestamp in seconds. An access token signed
@@ -73,12 +82,17 @@ type AuthorizationCode struct {
 // the person, their session, the client, its redirect URI and the PKCE challenge and method
 // (RFC 7636 §4.4), and [TokenGrant] trades it once, within [AuthorizationCodeTTL].
 type AuthorizationCodeCreate struct {
-	dao   AuthorizationCodeCreateDao
-	oauth authconfig.OAuth
+	daoInsert          AuthorizationCodeCreateDaoInsert
+	daoRevocationExist AuthorizationCodeCreateDaoRevocationExist
+	oauth              authconfig.OAuth
 }
 
-func NewAuthorizationCodeCreate(dao AuthorizationCodeCreateDao, oauth authconfig.OAuth) *AuthorizationCodeCreate {
-	return &AuthorizationCodeCreate{dao: dao, oauth: oauth}
+func NewAuthorizationCodeCreate(
+	daoInsert AuthorizationCodeCreateDaoInsert,
+	daoRevocationExist AuthorizationCodeCreateDaoRevocationExist,
+	oauth authconfig.OAuth,
+) *AuthorizationCodeCreate {
+	return &AuthorizationCodeCreate{daoInsert: daoInsert, daoRevocationExist: daoRevocationExist, oauth: oauth}
 }
 
 func (service *AuthorizationCodeCreate) Exec(
@@ -113,6 +127,21 @@ func (service *AuthorizationCodeCreate) Exec(
 		return nil, otel.ReportError(span, ErrAuthorizationCodeCreateSessionEnded)
 	}
 
+	// The auth middleware verifies the access token offline, so only this lookup sees a sign-out. The
+	// person then signs in again on the account platform.
+	revocationRequest := &dao.RefreshTokenRevocationExistRequest{
+		JTIs: []string{request.RefreshTokenID, request.SessionID},
+	}
+
+	revoked, err := service.daoRevocationExist.Exec(ctx, revocationRequest)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("check session revocation: %w", err))
+	}
+
+	if revoked {
+		return nil, otel.ReportError(span, fmt.Errorf("signed out: %w", ErrAuthorizationCodeCreateSessionEnded))
+	}
+
 	secret := make([]byte, AuthorizationCodeSize)
 	// Read never fails: the program crashes first.
 	_, _ = rand.Read(secret)
@@ -133,7 +162,7 @@ func (service *AuthorizationCodeCreate) Exec(
 		ExpiresAt:            now.Add(AuthorizationCodeTTL),
 	}
 
-	err = service.dao.Exec(ctx, insertRequest)
+	err = service.daoInsert.Exec(ctx, insertRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("insert authorization code: %w", err))
 	}
