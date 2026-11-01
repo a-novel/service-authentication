@@ -394,6 +394,44 @@ networks:
 
 To work on the service itself, run it with the `a-novel` CLI as [CONTRIBUTING](./CONTRIBUTING.md) shows.
 
+### Service tokens
+
+The **`service-token-issuer`** image stands in for the cluster's service-account issuer, so a local stack can turn on the [service-token check](#configuration). It signs a token for anyone who asks, so only a local stack may trust it. The issuer and every server that verifies its tokens take the same `SERVICE_TOKEN_ISSUER`. Added to the stack above:
+
+```yaml
+x-service-token-issuer: &service-token-issuer http://service-token-issuer:8080
+
+services:
+  service-token-issuer:
+    image: ghcr.io/a-novel/service-authentication/service-token-issuer:v2.21.1
+    ports: ["${SERVICE_TOKEN_ISSUER_PORT}:8080"]
+    environment:
+      SERVICE_TOKEN_ISSUER: *service-token-issuer
+    # Podman ignores the image's own check, so the dependents' wait needs this one.
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:8080/.well-known/openid-configuration"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    networks: [api]
+
+  service-authentication:
+    depends_on:
+      service-token-issuer: { condition: service_healthy }
+    environment:
+      SERVICE_TOKEN_ISSUER: *service-token-issuer
+      SERVICE_TOKEN_AUDIENCE: authentication
+      SERVICE_TOKEN_CALLERS: system:serviceaccount:account:web
+```
+
+A caller asks the issuer for a token, then sends it in `X-Service-Authorization`. The answer is what a projected token file holds, so a caller that reads `SERVICE_TOKEN_PATH` takes it as that file:
+
+```bash
+curl -fsS "http://localhost:${SERVICE_TOKEN_ISSUER_PORT}/token?subject=system:serviceaccount:account:web&audience=authentication" > service-token
+```
+
+A token lasts an hour. A restart of the issuer draws a new key, which retires the tokens signed before it.
+
 ## Contributing
 
 Platform setup and the day-to-day commands live in the [developer guide](https://a-novel-kit.github.io/stack/). Service-specific concepts and local interactions are in [CONTRIBUTING.md](./CONTRIBUTING.md).
