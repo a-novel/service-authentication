@@ -11,5 +11,7 @@ import (
 func main() {
 	cfg := config.AppPresetDefault
 
-	fmt.Printf("%v %v %T\n", cfg.Rest.Timeouts.Read, cfg.Limits.Strict, cfg.DependenciesConfig.ServiceJsonKeysCredentials)
+	credentials := cfg.DependenciesConfig.ServiceJsonKeysCredentials
+
+	fmt.Printf("%v %v %T %+v\n", cfg.Rest.Timeouts.Read, cfg.Limits.Strict, credentials, credentials)
 }
