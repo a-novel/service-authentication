@@ -18,6 +18,8 @@ import (
 type RestLimits struct {
 	// Anonymous caps each caller's anonymous sessions.
 	Anonymous func(http.Handler) http.Handler
+	// CodeExchange caps each client's authorization code exchanges, counted by its service caller.
+	CodeExchange func(http.Handler) http.Handler
 	// Login caps each visitor's logins over a short and a longer window, and the logins naming
 	// one email over the longer one.
 	Login func(http.Handler) http.Handler
@@ -49,16 +51,18 @@ func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimi
 	loginAccount := limits.By(policies.Login, accountKey)
 	waitlistConcurrency := httpf.LimitConcurrency(policies.WaitlistMaxConcurrent)
 	waitlistSize := middleware.RequestSize(policies.WaitlistMaxRequestSize)
+	codeExchange := limits.By(policies.CodeExchange, ServiceCallerKey)
 
 	return RestLimits{
-		Anonymous: strict,
-		Login:     chi.Chain(loginBurst, login, loginEmail).Handler,
-		Mail:      chi.Chain(strict, mailbox).Handler,
-		Mailbox:   mailbox,
-		Password:  chi.Chain(loginBurst, login).Handler,
-		ShortCode: chi.Chain(loginBurst, login, loginAccount).Handler,
-		SignUp:    chi.Chain(loginBurst, login, loginEmail).Handler,
-		Waitlist:  chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
+		Anonymous:    strict,
+		CodeExchange: codeExchange,
+		Login:        chi.Chain(loginBurst, login, loginEmail).Handler,
+		Mail:         chi.Chain(strict, mailbox).Handler,
+		Mailbox:      mailbox,
+		Password:     chi.Chain(loginBurst, login).Handler,
+		ShortCode:    chi.Chain(loginBurst, login, loginAccount).Handler,
+		SignUp:       chi.Chain(loginBurst, login, loginEmail).Handler,
+		Waitlist:     chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
 	}
 }
 
@@ -68,6 +72,17 @@ var (
 	// accountKey counts the account a request names in its body by ID.
 	accountKey = httpf.BodyKeyRate("userID")
 )
+
+// ServiceCallerKey keys a rate limit by the service that calls, as its verified service token
+// names it, else by the visitor IP on a server that verifies no service token.
+func ServiceCallerKey(r *http.Request) (string, error) {
+	caller, ok := httpf.ServiceTokenCaller(r.Context())
+	if ok {
+		return "service:" + caller, nil
+	}
+
+	return httpf.VisitorKey(r)
+}
 
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP. Mount the limit after
 // the auth middleware, which signs the user in.

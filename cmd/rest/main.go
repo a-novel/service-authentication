@@ -37,6 +37,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
+//nolint:maintidx // main wires the whole dependency graph as one flat list, one line per dependency.
 func main() {
 	cfg := config.AppPresetDefault
 
@@ -108,6 +109,10 @@ func main() {
 	daoRefreshTokenRevocationExist := dao.NewPgRefreshTokenRevocationExist()
 	daoRefreshTokenRevocationInsert := dao.NewPgRefreshTokenRevocationInsert()
 
+	daoAuthorizationCodeConsume := dao.NewPgAuthorizationCodeConsume()
+	daoAuthorizationCodeInsert := dao.NewPgAuthorizationCodeInsert()
+	daoAuthorizationCodeSelect := dao.NewPgAuthorizationCodeSelect()
+
 	// =================================================================================================================
 	// SERVICES
 	// =================================================================================================================
@@ -151,6 +156,13 @@ func main() {
 	)
 	serviceTokenRevoke := core.NewTokenRevoke(
 		daoRefreshTokenRevocationInsert, serviceVerifyRefreshToken, refreshTokenLeeway,
+	)
+
+	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
+	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(daoAuthorizationCodeInsert, cfg.OAuth)
+	serviceAuthorizationCodeExchange := core.NewAuthorizationCodeExchange(
+		daoAuthorizationCodeSelect, daoAuthorizationCodeConsume, daoCredentialsSelect, daoRefreshTokenRevocationExist,
+		daoRefreshTokenRevocationInsert, jsonKeysClient, cfg.OAuth, refreshTokenLeeway,
 	)
 
 	// =================================================================================================================
@@ -200,6 +212,14 @@ func main() {
 	handlerTokenRefresh := handlers.NewRestTokenRefresh(serviceTokenRefresh, cfg.Logger)
 	handlerTokenRevoke := handlers.NewRestTokenRevoke(serviceTokenRevoke, cfg.Logger)
 
+	handlerAuthorizationRequestValidate := handlers.NewRestAuthorizationRequestValidate(
+		serviceAuthorizationRequestValidate, cfg.Logger,
+	)
+	handlerAuthorizationCodeCreate := handlers.NewRestAuthorizationCodeCreate(serviceAuthorizationCodeCreate, cfg.Logger)
+	handlerAuthorizationCodeExchange := handlers.NewRestAuthorizationCodeExchange(
+		serviceAuthorizationCodeExchange, cfg.Logger,
+	)
+
 	// =================================================================================================================
 	// ROUTER
 	// =================================================================================================================
@@ -219,7 +239,13 @@ func main() {
 			withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
 			r.Patch("/", handlerTokenRefresh.ServeHTTP)
 			withAuth(r, "session:revoke").Put("/revoke", handlerTokenRevoke.ServeHTTP)
+			r.With(limit.CodeExchange).Put("/authorization-code", handlerAuthorizationCodeExchange.ServeHTTP)
 		})
+
+		// The account platform validates an authorization request, then asks for a code for the
+		// person signed in there. The client then exchanges the code under /session.
+		api.Get("/authorization-request", handlerAuthorizationRequestValidate.ServeHTTP)
+		withAuth(api, "authorizationCode:create").Put("/authorization-code", handlerAuthorizationCodeCreate.ServeHTTP)
 
 		api.Route("/credentials", func(r chi.Router) {
 			withAuth(r, "credentials:get").Get("/", handlerCredentialsGet.ServeHTTP)

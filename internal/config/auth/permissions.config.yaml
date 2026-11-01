@@ -12,6 +12,7 @@ roles:
     inherits:
       - "auth:anon"
     permissions:
+      - "authorizationCode:create"
       - "credentials:password:patch"
       - "credentials:self:get"
       - "session:revoke"

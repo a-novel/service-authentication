@@ -20,7 +20,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/httpf"
+	"github.com/a-novel-kit/golib/servicetoken"
+	"github.com/a-novel-kit/golib/servicetoken/servicetokentest"
 
+	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
@@ -481,5 +484,73 @@ func (proxy *storeProxy) stop() {
 
 	for _, conn := range proxy.conns {
 		_ = conn.Close()
+	}
+}
+
+func TestServiceCallerKey(t *testing.T) {
+	t.Parallel()
+
+	issuer := servicetokentest.NewIssuer(t)
+	tokenConfig := servicetoken.Config{
+		Issuer:   issuer.URL,
+		Audience: serviceTokenAudience,
+		Callers:  []string{serviceTokenCaller},
+	}
+
+	testCases := []struct {
+		name string
+
+		tokenConfig servicetoken.Config
+		token       string
+
+		expect string
+	}{
+		{
+			// Every pod of a client shares its caller, and so its budget.
+			name: "Success/Caller",
+
+			tokenConfig: tokenConfig,
+			token:       issuer.Sign(t, issuer.Claims(serviceTokenCaller, serviceTokenAudience)),
+
+			expect: "service:" + serviceTokenCaller,
+		},
+		{
+			// A server that verifies no service token counts by visitor.
+			name: "Success/NoCaller",
+
+			expect: "visitor:192.0.2.1",
+		},
+	}
+
+	// The router answers with the key the request counts under.
+	router := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key, err := middlewares.ServiceCallerKey(r)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		_, _ = io.WriteString(w, key)
+	})
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/session/authorization-code", nil)
+			request.Header.Set("X-Client-Ip", "192.0.2.1")
+
+			if testCase.token != "" {
+				request.Header.Set(servicetoken.Header, testCase.token)
+			}
+
+			w := httptest.NewRecorder()
+			withServiceToken := middlewares.RestServiceToken(testCase.tokenConfig, &http.Client{}, config.LoggerDev)
+			withServiceToken(middleware.ClientIPFromHeader("X-Client-Ip")(router)).ServeHTTP(w, request)
+
+			require.Equal(t, http.StatusOK, w.Code)
+			require.Equal(t, testCase.expect, w.Body.String())
+		})
 	}
 }
