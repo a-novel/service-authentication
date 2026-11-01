@@ -3,12 +3,19 @@ package core_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/textproto"
 	"testing"
 	"text/template"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/a-novel-kit/golib/smtp"
 
@@ -208,6 +215,76 @@ func TestMailDelivery(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 			testCase.exec(t)
+		})
+	}
+}
+
+//nolint:paralleltest // Replaces the process-wide tracer provider while mail goes out.
+func TestMailDeliveryTelemetry(t *testing.T) {
+	testCases := []struct {
+		name    string
+		smtpErr error
+
+		expectStatus    codes.Code
+		expectErrorType string
+	}{
+		{name: "Success", expectStatus: codes.Unset},
+		{
+			name:            "Error/Smtp",
+			smtpErr:         fmt.Errorf("send mail: %w", &textproto.Error{Code: 451, Msg: "try again later"}),
+			expectStatus:    codes.Error,
+			expectErrorType: "*textproto.Error",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			recorder := tracetest.NewSpanRecorder()
+			provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+			previous := otel.GetTracerProvider()
+
+			otel.SetTracerProvider(provider)
+			t.Cleanup(func() {
+				otel.SetTracerProvider(previous)
+				require.NoError(t, provider.Shutdown(context.WithoutCancel(t.Context())))
+			})
+
+			smtpService := coremocks.NewMockMailDeliverySMTP(t)
+			smtpService.EXPECT().
+				SendMail(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(testCase.smtpErr).
+				Once()
+
+			ctx, request := provider.Tracer("test").Start(t.Context(), "request")
+			delivery := core.NewMailDelivery(smtpService, 1)
+			reservation := reserveMailDelivery(t, delivery, ctx)
+			reservation.Deliver(ctx, newMailDeliveryRequest())
+			request.End()
+
+			require.ErrorIs(t, delivery.Wait(t.Context()), testCase.smtpErr)
+			smtpService.AssertExpectations(t)
+
+			spans := make(map[string]sdktrace.ReadOnlySpan)
+			for _, span := range recorder.Ended() {
+				spans[span.Name()] = span
+			}
+
+			deliver, send := spans["core.MailDelivery(deliver)"], spans["core.MailDelivery(send)"]
+			require.NotNil(t, deliver)
+			require.NotNil(t, send)
+
+			// The send roots its own trace, linked to the request's.
+			require.Equal(t, request.SpanContext(), deliver.Parent())
+			require.False(t, send.Parent().IsValid())
+			require.NotEqual(t, request.SpanContext().TraceID(), send.SpanContext().TraceID())
+			require.Len(t, send.Links(), 1)
+			require.Equal(t, deliver.SpanContext(), send.Links()[0].SpanContext)
+
+			attributes := attribute.NewSet(send.Attributes()...)
+			errorType, _ := attributes.Value("error.type")
+
+			require.Equal(t, testCase.expectStatus, send.Status().Code)
+			require.Equal(t, testCase.expectErrorType, errorType.AsString())
 		})
 	}
 }

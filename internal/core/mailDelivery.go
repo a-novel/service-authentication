@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/smtp"
@@ -170,10 +171,16 @@ func (delivery *MailDelivery) complete() {
 }
 
 // send delivers one accepted message, then frees the slot its reservation took.
+//
+// The send outlives the request that accepted it, so it roots a trace of its own, linked to that
+// request. A failed send is then a fault of its own, named by its error type, rather than a detail
+// of a request that already succeeded.
 func (delivery *MailDelivery) send(ctx context.Context, request *MailDeliveryRequest) {
 	defer delivery.complete()
 
-	ctx, span := otel.Tracer().Start(ctx, "core.MailDelivery(send)")
+	ctx, span := otel.Tracer().Start(
+		ctx, "core.MailDelivery(send)", trace.WithNewRoot(), trace.WithLinks(trace.LinkFromContext(ctx)),
+	)
 	defer span.End()
 	defer otel.RecoverPanic(ctx, span)
 
@@ -187,6 +194,7 @@ func (delivery *MailDelivery) send(ctx context.Context, request *MailDeliveryReq
 		}
 		delivery.mu.Unlock()
 
+		span.SetAttributes(otel.ErrorType(err))
 		_ = otel.ReportError(span, err)
 	}
 }

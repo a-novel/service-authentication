@@ -46,9 +46,10 @@ const (
 	// ServiceJsonKeysPortDefault is the JSON Keys service's default gRPC port.
 	ServiceJsonKeysPortDefault = 8080
 
-	// TimeoutShutdownDefault ends a server's drain 6 seconds after SIGTERM, so its OpenTelemetry
-	// flush, up to 2 seconds, finishes long before Kubernetes kills the pod at 30 seconds.
-	TimeoutShutdownDefault = 6 * time.Second
+	// TimeoutShutdownDefault ends a server's drain 25 seconds after SIGTERM. That outlasts
+	// SmtpTimeoutDefault, so a send that starts just before the signal finishes, and leaves the
+	// OpenTelemetry flush, up to 2 seconds, inside the 30 seconds before Kubernetes kills the pod.
+	TimeoutShutdownDefault = 25 * time.Second
 
 	// PostgresMaxOpenConnsDefault caps the connections one instance opens. Multiplied by the replica
 	// count, the cap stays well under PostgreSQL's default max_connections of 100. That leaves room
@@ -217,8 +218,8 @@ var (
 	DowntimeStart = config.LoadEnv(getEnv("DOWNTIME_START"), nil, downtime.ParseStart)
 )
 
-// restDefaults keeps golib's REST defaults but for the versioned ping path and the drain, which fits
-// the pod's grace period. A send still running when the drain ends is cut.
+// restDefaults keeps golib's REST defaults but for the versioned ping path and the drain, which
+// outlasts a send and fits the pod's grace period. A send still running when the drain ends is cut.
 func restDefaults() httpf.ServerConfig {
 	defaults := httpf.ServerConfigDefault
 	defaults.Liveness = "/v2/ping"

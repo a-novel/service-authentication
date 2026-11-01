@@ -194,7 +194,7 @@ The service reads every variable from the process environment, prefixed with
 | `REST_TIMEOUT_WRITE`          | Write timeout.                                                                                                                               | `30s`                            |
 | `REST_TIMEOUT_IDLE`           | Idle keep-alive timeout.                                                                                                                     | `60s`                            |
 | `REST_TIMEOUT_REQUEST`        | Per-request timeout.                                                                                                                         | `60s`                            |
-| `REST_TIMEOUT_SHUTDOWN`       | Graceful shutdown budget. With the 2-second telemetry flush after it, it fits Kubernetes' 30 seconds before `SIGKILL`.                       | `6s`                             |
+| `REST_TIMEOUT_SHUTDOWN`       | Graceful shutdown budget. It outlasts `SMTP_TIMEOUT` and, with the 2-second telemetry flush, fits Kubernetes' 30 seconds.                    | `25s`                            |
 | `REST_CORS_ALLOWED_ORIGINS`   | CORS allowed origins.                                                                                                                        | `*`                              |
 | `REST_CORS_ALLOWED_HEADERS`   | CORS allowed headers.                                                                                                                        | `*`                              |
 | `REST_CORS_ALLOWED_METHODS`   | CORS allowed methods, comma-separated.                                                                                                       | `HEAD,GET,POST,PUT,PATCH,DELETE` |
@@ -264,10 +264,14 @@ On `SIGTERM`, the server stops accepting requests, drains the open ones, then wa
 already going out. Each email goes out on its own goroutine, so a send outlives the request that
 started it.
 
-The drain ends `REST_TIMEOUT_SHUTDOWN` after the signal, 6 seconds by default. The server then
-flushes OpenTelemetry for up to 2 seconds, inside the 10 seconds that Docker and Podman grant before
-`SIGKILL`, and Kubernetes' 30. A send still going out when the drain ends is cut and logged, and its user
-asks for another email.
+The drain ends `REST_TIMEOUT_SHUTDOWN` after the signal, 25 seconds by default. That outlasts
+`SMTP_TIMEOUT`, 20 seconds, so a send that starts just before the signal still finishes. The server
+then flushes OpenTelemetry for up to 2 seconds, inside the 30 seconds Kubernetes grants before
+`SIGKILL`.
+
+Docker and Podman grant 10 seconds, which would cut the drain short, so `builds/podman-compose.yaml`
+gives the server 30. A deployment that raises `SMTP_TIMEOUT` past the drain cuts a slower send when
+the drain ends: the server logs it, and its user asks for another email.
 
 ## Using the client packages
 
