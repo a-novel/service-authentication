@@ -41,6 +41,7 @@ type App struct {
 	DependenciesConfig Dependencies           `json:"dependencies" yaml:"dependencies"`
 	Permissions        authconfig.Permissions `json:"permissions"  yaml:"permissions"`
 	ShortCodesConfig   authconfig.ShortCodes  `json:"shortCodes"   yaml:"shortCodes"`
+	OAuth              authconfig.OAuth       `json:"oauth"        yaml:"oauth"`
 	SmtpUrlsConfig     authconfig.SmtpUrls    `json:"smtpUrls"     yaml:"smtpUrls"`
 	Waitlist           authconfig.Waitlist    `json:"waitlist"     yaml:"waitlist"`
 

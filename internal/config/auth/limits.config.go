@@ -14,6 +14,8 @@ type Limits struct {
 	Login httpf.Rate `json:"login" yaml:"login"`
 	// Mailbox caps the emails each address receives from one route.
 	Mailbox httpf.Rate `json:"mailbox" yaml:"mailbox"`
+	// CodeExchange caps each client's authorization code exchanges.
+	CodeExchange httpf.Rate `json:"codeExchange" yaml:"codeExchange"`
 	// WaitlistMaxConcurrent caps the waitlist requests waiting on Google at once, per instance.
 	WaitlistMaxConcurrent int `json:"waitlistMaxConcurrent" yaml:"waitlistMaxConcurrent"`
 	// WaitlistMaxRequestSize caps a waitlist request body, in bytes.

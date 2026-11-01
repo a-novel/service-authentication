@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -27,6 +28,9 @@ import (
 func TestTokenRefresh(t *testing.T) {
 	t.Parallel()
 
+	hourAgo := time.Now().Add(-time.Hour).Unix()
+	hourLater := time.Now().Add(time.Hour).Unix()
+
 	errFoo := errors.New("foo")
 
 	type daoMock struct {
@@ -42,7 +46,8 @@ func TestTokenRefresh(t *testing.T) {
 	}
 
 	type signClaimsMock struct {
-		sessionID string
+		sessionID  string
+		sessionExp int64
 
 		resp *servicejsonkeys.ClaimsSignResponse
 		err  error
@@ -166,6 +171,88 @@ func TestTokenRefresh(t *testing.T) {
 				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
 				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
 			},
+		},
+		{
+			// A client's token joined the account platform's session, and carries its end on.
+			name: "Success/SessionExp",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &session.Claims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+					SessionID:      "session_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{
+					Jti:        "refresh_token_id",
+					Exp:        hourLater + 24*3600,
+					UserID:     uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					SessionID:  "session_id",
+					SessionExp: hourLater,
+				},
+			},
+
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "session_id"}},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Role: "admin",
+				},
+			},
+
+			signClaimsMock: &signClaimsMock{
+				sessionID:  "session_id",
+				sessionExp: hourLater,
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				},
+			},
+
+			expect: &core.Token{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+		},
+		{
+			// A client's token stops renewing with the session it joined, though it has not expired.
+			name: "Error/SessionEnded",
+
+			request: &core.TokenRefreshRequest{
+				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+			},
+
+			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
+				resp: &session.Claims{
+					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					Roles:          []string{"admin"},
+					RefreshTokenID: "refresh_token_id",
+					SessionID:      "session_id",
+				},
+			},
+
+			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
+				resp: &session.RefreshClaims{
+					Jti:        "refresh_token_id",
+					Exp:        hourLater,
+					UserID:     uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					SessionID:  "session_id",
+					SessionExp: hourAgo,
+				},
+			},
+
+			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "session_id"}},
+
+			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
 		},
 		{
 			// Signing out from any token of the session stops this one too.
@@ -673,6 +760,7 @@ func TestTokenRefresh(t *testing.T) {
 					Roles:          []string{testCase.daoMock.resp.Role},
 					RefreshTokenID: testCase.serviceVerifyRefreshClaimsMock.resp.Jti,
 					SessionID:      testCase.signClaimsMock.sessionID,
+					SessionExp:     testCase.signClaimsMock.sessionExp,
 				}
 				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
 					Usage:   servicejsonkeys.KeyUsageAuth,

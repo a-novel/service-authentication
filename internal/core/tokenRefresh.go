@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
@@ -27,7 +28,8 @@ var (
 	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when the
 	// verifier rejects the refresh token with [jwt.ErrTokenRejected], expiry included,
-	// joined onto that verifier error. A revoked refresh token or session returns it too.
+	// joined onto that verifier error. A revoked refresh token or session returns it too, and
+	// so does a session that ended.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the access
 	// and refresh tokens are individually valid but encode different user IDs, which
@@ -175,6 +177,11 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("session revoked: %w", ErrTokenRefreshInvalidRefreshToken))
 	}
 
+	// A token that joined another session, such as a client's, lasts no longer than that session.
+	if refreshTokenClaims.SessionExp != 0 && time.Now().Unix() >= refreshTokenClaims.SessionExp {
+		return nil, otel.ReportError(span, fmt.Errorf("session ended: %w", ErrTokenRefreshInvalidRefreshToken))
+	}
+
 	// Reload credentials so any role change since the original sign lands in the new token.
 	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectRequest{ID: lo.FromPtr(accessTokenClaims.UserID)})
 	if err != nil {
@@ -186,6 +193,7 @@ func (service *TokenRefresh) Exec(
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,
 		SessionID:      refreshTokenClaims.Session(),
+		SessionExp:     refreshTokenClaims.SessionExpiry(),
 	}
 
 	newAccessTokenPayload, err := grpcf.MarshalJSONAsAny(newAccessTokenClaims)

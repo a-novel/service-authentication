@@ -65,6 +65,7 @@ var AppPresetDefault = App{
 		LoginBurst:             env.RestRateLimitLoginBurst,
 		Login:                  env.RestRateLimitLogin,
 		Mailbox:                env.RestRateLimitMailbox,
+		CodeExchange:           env.RestRateLimitCodeExchange,
 		WaitlistMaxConcurrent:  env.WaitlistMaxConcurrent,
 		WaitlistMaxRequestSize: env.WaitlistMaxRequestSize,
 		Argon2MaxConcurrent:    env.Argon2MaxConcurrent,
@@ -83,6 +84,7 @@ var AppPresetDefault = App{
 	Permissions:      authconfig.PermissionsConfigDefault,
 	Waitlist:         authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
 	ShortCodesConfig: authconfig.ShortCodesPresetDefault,
+	OAuth:            authconfig.OAuth{AccountPlatformCaller: env.AccountPlatformCaller, Clients: env.OAuthClients},
 	SmtpUrlsConfig: authconfig.SmtpUrls{
 		UpdateEmail:    env.PlatformAuthUpdateEmailURL,
 		UpdatePassword: env.PlatformAuthUpdatePasswordURL,

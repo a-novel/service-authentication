@@ -8,6 +8,8 @@ import (
 	"github.com/a-novel-kit/golib/config"
 	"github.com/a-novel-kit/golib/downtime"
 	"github.com/a-novel-kit/golib/httpf"
+
+	"github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
 // prefix is prepended to every configuration variable name that this package reads.
@@ -46,6 +48,9 @@ const (
 	// ServiceJsonKeysPortDefault is the JSON Keys service's default gRPC port.
 	ServiceJsonKeysPortDefault = 8080
 
+	// AccountPlatformCallerDefault is the caller of the account platform in the cluster.
+	AccountPlatformCallerDefault = "system:serviceaccount:account:web"
+
 	// TimeoutShutdownDefault ends a server's drain 25 seconds after SIGTERM. That outlasts
 	// SmtpTimeoutDefault, so a send that starts just before the signal finishes, and leaves the
 	// OpenTelemetry flush, up to 2 seconds, inside the 30 seconds before Kubernetes kills the pod.
@@ -77,6 +82,8 @@ var (
 	RestRateLimitLoginDefault = config.Must(httpf.ParseRate("30/10m"))
 	// RestRateLimitMailboxDefault caps the emails one address receives from a route.
 	RestRateLimitMailboxDefault = config.Must(httpf.ParseRate("3/1h"))
+	// RestRateLimitCodeExchangeDefault lets a client sign 10 people in per second, sustained.
+	RestRateLimitCodeExchangeDefault = config.Must(httpf.ParseRate("600/1m"))
 )
 
 var (
@@ -185,6 +192,10 @@ var (
 	RestRateLimitLogin = config.LoadEnv(getEnv("REST_RATE_LIMIT_LOGIN"), RestRateLimitLoginDefault, httpf.ParseRate)
 	// RestRateLimitMailbox caps the emails each address receives from one route.
 	RestRateLimitMailbox = config.LoadEnv(getEnv("REST_RATE_LIMIT_MAILBOX"), RestRateLimitMailboxDefault, httpf.ParseRate)
+	// RestRateLimitCodeExchange caps each client's authorization code exchanges.
+	RestRateLimitCodeExchange = config.LoadEnv(
+		getEnv("REST_RATE_LIMIT_CODE_EXCHANGE"), RestRateLimitCodeExchangeDefault, httpf.ParseRate,
+	)
 
 	// AppName names the application in logs and traces.
 	AppName = config.LoadEnv(getEnv("APP_NAME"), AppNameDefault, config.StringParser)
@@ -206,6 +217,15 @@ var (
 	// ServiceTokenPath is the file the kubelet projects this service's own token into, for the JSON
 	// Keys audience. When set, the JSON Keys connection sends that token with every call.
 	ServiceTokenPath = getEnv("SERVICE_TOKEN_PATH")
+
+	// OAuthClients is the client registry, the platforms that sign people in through the account
+	// platform, in the JSON form [auth.ParseClients] reads. Empty, no platform is a client.
+	OAuthClients = config.LoadEnv(getEnv("OAUTH_CLIENTS"), nil, auth.ParseClients)
+	// AccountPlatformCaller is the caller of the account platform, the only one that validates
+	// authorization requests and issues codes.
+	AccountPlatformCaller = config.LoadEnv(
+		getEnv("ACCOUNT_PLATFORM_CALLER"), AccountPlatformCallerDefault, config.StringParser,
+	)
 
 	// OTLPEndpoint is the standard OTEL_EXPORTER_OTLP_ENDPOINT. When set, traces and logs export
 	// over OTLP/HTTP, which the OTEL_EXPORTER_OTLP_* variables configure. When empty, they go to

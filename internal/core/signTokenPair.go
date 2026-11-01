@@ -24,15 +24,20 @@ type tokenPairSigner interface {
 	) (*servicejsonkeys.ClaimsSignResponse, error)
 }
 
-// signTokenPair issues a fresh refresh and access token pair for the given credentials, opening
-// a session of their own. The access token's RefreshTokenID claim holds the refresh token's JTI,
-// which binds the pair, and its SessionID the session. Every failure is an infrastructure fault,
-// so the function returns no sentinel.
-func signTokenPair(ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials) (*Token, error) {
+// signTokenPair issues a fresh refresh and access token pair for the given credentials. The pair
+// joins the session refreshClaims names, and opens a session of its own when refreshClaims is
+// empty; the user comes from credentials. The access token's RefreshTokenID claim holds the refresh
+// token's JTI, which binds the pair, and its SessionID the session. Every failure is an
+// infrastructure fault, so the function returns no sentinel.
+func signTokenPair(
+	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials, refreshClaims session.RefreshClaimsForm,
+) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.signTokenPair")
 	defer span.End()
 
-	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(session.RefreshClaimsForm{UserID: credentials.ID})
+	refreshClaims.UserID = credentials.ID
+
+	refreshTokenPayload, err := grpcf.MarshalJSONAsAny(refreshClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("marshal refresh claims: %w", err))
 	}
@@ -64,6 +69,7 @@ func signTokenPair(ctx context.Context, signer tokenPairSigner, credentials *dao
 		Roles:          []string{credentials.Role},
 		RefreshTokenID: refreshTokenClaims.Jti,
 		SessionID:      refreshTokenClaims.Session(),
+		SessionExp:     refreshTokenClaims.SessionExpiry(),
 	}
 
 	accessTokenPayload, err := grpcf.MarshalJSONAsAny(accessTokenClaims)
