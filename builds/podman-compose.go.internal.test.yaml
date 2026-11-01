@@ -14,5 +14,23 @@ services:
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth=scram-sha-256
 
+  # The rate-limit counter store, with the ACL production gives the limiter: its commands on
+  # httprate's keys, and no default user.
+  valkey:
+    image: docker.io/valkey/valkey:9.1.3-alpine
+    ports:
+      - "${VALKEY_PORT}:6379"
+    networks:
+      - authentication-api-test
+    command: >-
+      valkey-server
+      --user default off resetpass
+      --user limiter on >limiter ~httprate:* -@all +mget +incrby +expire +multi +exec +ping
+    healthcheck:
+      test: ["CMD", "valkey-cli", "--user", "limiter", "--pass", "limiter", "--no-auth-warning", "ping"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
 networks:
   authentication-api-test:

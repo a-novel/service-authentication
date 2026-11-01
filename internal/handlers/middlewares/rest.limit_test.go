@@ -1,11 +1,16 @@
 package middlewares_test
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
+	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -57,6 +62,23 @@ func TestRestLimits(t *testing.T) {
 	}
 
 	body := func(req request) string { return fmt.Sprintf(`{"email":%q,"userID":%q}`, req.email, req.account) }
+
+	// send serves req on router, from the visitor and the user it names.
+	send := func(t *testing.T, router http.Handler, req request) *httptest.ResponseRecorder {
+		t.Helper()
+
+		httpRequest := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/", strings.NewReader(body(req)))
+		httpRequest.Header.Set("X-Client-Ip", req.visitor)
+
+		if req.user != nil {
+			httpRequest.Header.Set("X-User", req.user.String())
+		}
+
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, httpRequest)
+
+		return response
+	}
 
 	// times repeats one request, so a case reads as the budget it spends.
 	times := func(count int, req request) []request {
@@ -270,59 +292,178 @@ func TestRestLimits(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			// signIn stands in for the auth middleware, signing in the user named by X-User.
-			signIn := func(next http.Handler) http.Handler {
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					userID, err := uuid.Parse(r.Header.Get("X-User"))
-					if err == nil {
-						claims := &session.Claims{UserID: &userID}
-						r = r.WithContext(session.SetClaimsContext(r.Context(), claims))
-					}
+			server := httpf.ServerConfigDefault
+			server.RateLimitsEnabled = !testCase.disabled
 
-					next.ServeHTTP(w, r)
-				})
-			}
-
-			router := chi.NewRouter()
-			router.Use(middleware.ClientIPFromHeader("X-Client-Ip"))
-			router.Group(func(api chi.Router) {
-				server := httpf.ServerConfigDefault
-				server.RateLimitsEnabled = !testCase.disabled
-
-				api.Use(signIn, testCase.limit(middlewares.NewRestLimits(server, policies)))
-				// The handler echoes the body, which must reach it whole after the email limit read it.
-				api.Put("/", func(w http.ResponseWriter, r *http.Request) {
-					_, _ = io.Copy(w, r.Body)
-				})
-			})
-
-			send := func(req request) *httptest.ResponseRecorder {
-				httpRequest := httptest.NewRequestWithContext(
-					t.Context(), http.MethodPut, "/", strings.NewReader(body(req)),
-				)
-				httpRequest.Header.Set("X-Client-Ip", req.visitor)
-
-				if req.user != nil {
-					httpRequest.Header.Set("X-User", req.user.String())
-				}
-
-				response := httptest.NewRecorder()
-				router.ServeHTTP(response, httpRequest)
-
-				return response
-			}
+			router := limitRouter(testCase.limit(middlewares.NewRestLimits(server, policies)))
 
 			for _, req := range testCase.allowed {
-				response := send(req)
+				response := send(t, router, req)
 				require.Equal(t, http.StatusOK, response.Code)
 				require.JSONEq(t, body(req), response.Body.String())
 			}
 
 			if testCase.refused != nil {
-				response := send(*testCase.refused)
+				response := send(t, router, *testCase.refused)
 				require.Equal(t, http.StatusTooManyRequests, response.Code)
 				require.Equal(t, testCase.expectRetryAfter, response.Header().Get("Retry-After"))
 			}
 		})
+	}
+
+	// The test env runs the counter store on VALKEY_PORT, with the limiter's production ACL.
+	t.Run("Success/Store", func(t *testing.T) {
+		t.Parallel()
+
+		port := os.Getenv("VALKEY_PORT")
+		require.NotEmpty(t, port, "VALKEY_PORT names the test env's Valkey")
+
+		proxy := newStoreProxy(t, "localhost:"+port)
+
+		server := httpf.ServerConfigDefault
+		server.RateLimitStore = httpf.RateLimitStore{Addr: proxy.addr(), Username: "limiter", Password: "limiter"}
+
+		// Two instances, each with the limits cmd/rest builds as it starts.
+		instances := []http.Handler{
+			limitRouter(middlewares.NewRestLimits(server, policies).Login),
+			limitRouter(middlewares.NewRestLimits(server, policies).Login),
+		}
+
+		// A visitor and an email of their own, so a run never meets the counters an earlier one left.
+		req := request{visitor: netip.AddrFrom16(uuid.New()).String(), email: uuid.NewString() + "@example.com"}
+
+		// The instances spend one budget of 10 logins per minute.
+		for i := range 10 {
+			require.Equal(t, http.StatusOK, send(t, instances[i%2], req).Code)
+		}
+
+		for _, instance := range instances {
+			require.Equal(t, http.StatusTooManyRequests, send(t, instance, req).Code)
+		}
+
+		// Once the store stops, each instance counts the budget again, on its own.
+		proxy.stop()
+
+		for _, instance := range instances {
+			for range 10 {
+				require.Equal(t, http.StatusOK, send(t, instance, req).Code)
+			}
+
+			require.Equal(t, http.StatusTooManyRequests, send(t, instance, req).Code)
+		}
+	})
+}
+
+// limitRouter serves PUT / under limit, to the visitor the X-Client-Ip header names. The handler
+// echoes the body, which must reach it whole after the email limit read it.
+func limitRouter(limit func(http.Handler) http.Handler) http.Handler {
+	router := chi.NewRouter()
+	router.Use(middleware.ClientIPFromHeader("X-Client-Ip"))
+	router.Group(func(api chi.Router) {
+		api.Use(signIn, limit)
+		api.Put("/", func(w http.ResponseWriter, r *http.Request) {
+			_, _ = io.Copy(w, r.Body)
+		})
+	})
+
+	return router
+}
+
+// signIn stands in for the auth middleware, signing in the user named by X-User.
+func signIn(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID, err := uuid.Parse(r.Header.Get("X-User"))
+		if err == nil {
+			claims := &session.Claims{UserID: &userID}
+			r = r.WithContext(session.SetClaimsContext(r.Context(), claims))
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// storeProxy forwards connections to a counter store until it stops. Stopping closes the proxy and
+// every connection open through it, which the instances see as the store stopping.
+type storeProxy struct {
+	listener net.Listener
+	store    string
+
+	mu      sync.Mutex
+	stopped bool
+	conns   []net.Conn
+}
+
+// newStoreProxy forwards connections to the store at addr until the test ends.
+func newStoreProxy(t *testing.T, addr string) *storeProxy {
+	t.Helper()
+
+	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	proxy := &storeProxy{listener: listener, store: addr}
+	t.Cleanup(proxy.stop)
+
+	go proxy.serve(t.Context())
+
+	return proxy
+}
+
+// addr is the address the instances reach the store through.
+func (proxy *storeProxy) addr() string {
+	return proxy.listener.Addr().String()
+}
+
+// serve pipes each connection the proxy accepts to the store, until the proxy stops.
+func (proxy *storeProxy) serve(ctx context.Context) {
+	for {
+		client, err := proxy.listener.Accept()
+		if err != nil {
+			return
+		}
+
+		store, err := (&net.Dialer{}).DialContext(ctx, "tcp", proxy.store)
+		if err != nil {
+			_ = client.Close()
+
+			continue
+		}
+
+		if proxy.track(client, store) {
+			go func() { _, _ = io.Copy(store, client) }()
+			go func() { _, _ = io.Copy(client, store) }()
+		}
+	}
+}
+
+// track keeps conns for stop to close, and reports whether the proxy still runs. Once it stopped,
+// track closes them instead.
+func (proxy *storeProxy) track(conns ...net.Conn) bool {
+	proxy.mu.Lock()
+	defer proxy.mu.Unlock()
+
+	if proxy.stopped {
+		for _, conn := range conns {
+			_ = conn.Close()
+		}
+
+		return false
+	}
+
+	proxy.conns = append(proxy.conns, conns...)
+
+	return true
+}
+
+// stop closes the proxy and every connection open through it.
+func (proxy *storeProxy) stop() {
+	_ = proxy.listener.Close()
+
+	proxy.mu.Lock()
+	defer proxy.mu.Unlock()
+
+	proxy.stopped = true
+
+	for _, conn := range proxy.conns {
+		_ = conn.Close()
 	}
 }
