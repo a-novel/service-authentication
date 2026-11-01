@@ -32,8 +32,8 @@ const (
 )
 
 // ErrAuthorizationCodeCreateSessionEnded is returned by [AuthorizationCodeCreate.Exec] when the
-// session of the access token has ended, though the access token has not expired yet. The account
-// platform then signs the person in again.
+// session of the access token has ended, though the access token has not expired yet, or when the
+// token carries no session. The account platform then signs the person in again.
 var ErrAuthorizationCodeCreateSessionEnded = errors.New("session ended")
 
 // AuthorizationCodeCreateDao stores the new code.
@@ -48,9 +48,9 @@ type AuthorizationCodeCreateRequest struct {
 	Caller string
 
 	// UserID is the person signing in, taken from their verified access token.
-	UserID uuid.UUID `validate:"required"`
+	UserID uuid.UUID
 	// SessionID is the session of that access token, which the client's token pair joins.
-	SessionID string `validate:"required,max=1024"`
+	SessionID string
 	// SessionExp is when that session ends, as a Unix timestamp in seconds. An access token signed
 	// before sessions carried their end lacks it, and reads as a session that ended.
 	SessionExp int64
@@ -101,11 +101,6 @@ func (service *AuthorizationCodeCreate) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	err = validate.Struct(request)
-	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
-	}
-
 	authorization, err := parseAuthorizationRequest(service.oauth.Clients, request.Params)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
@@ -114,7 +109,9 @@ func (service *AuthorizationCodeCreate) Exec(
 	now := time.Now()
 	sessionExpiresAt := time.Unix(request.SessionExp, 0)
 
-	if request.SessionExp == 0 || !now.Before(sessionExpiresAt) {
+	// A token without a user, a session or the session's end has no session to sign in from.
+	if request.UserID == uuid.Nil || request.SessionID == "" || request.SessionExp == 0 ||
+		!now.Before(sessionExpiresAt) {
 		return nil, otel.ReportError(span, ErrAuthorizationCodeCreateSessionEnded)
 	}
 

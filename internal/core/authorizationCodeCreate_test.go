@@ -134,7 +134,14 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 
 			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) { request.SessionID = "" }),
 
-			expectErr: core.ErrInvalidRequest,
+			expectErr: core.ErrAuthorizationCodeCreateSessionEnded,
+		},
+		{
+			name: "Error/NoUser",
+
+			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) { request.UserID = uuid.Nil }),
+
+			expectErr: core.ErrAuthorizationCodeCreateSessionEnded,
 		},
 	}
 

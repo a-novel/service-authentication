@@ -125,17 +125,6 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 			expectStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "Error/InvalidRequest",
-
-			caller:      accountCaller,
-			claims:      claims,
-			contentType: "application/x-www-form-urlencoded",
-
-			serviceMock: &serviceMock{caller: accountCaller, err: core.ErrInvalidRequest},
-
-			expectStatus: http.StatusUnprocessableEntity,
-		},
-		{
 			name: "Error/Internal",
 
 			caller:      accountCaller,

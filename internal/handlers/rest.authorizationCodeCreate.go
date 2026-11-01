@@ -25,7 +25,6 @@ type RestAuthorizationCodeCreateService interface {
 var authorizationCodeCreateErrors = httpf.ErrMap{
 	core.ErrAuthorizationRequestForbiddenCaller: http.StatusForbidden,
 	core.ErrAuthorizationCodeCreateSessionEnded: http.StatusUnauthorized,
-	core.ErrInvalidRequest:                      http.StatusUnprocessableEntity,
 }
 
 // RestAuthorizationCode is the JSON body POST /v2/oauth/authorization-code answers with: the
