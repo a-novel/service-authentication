@@ -76,7 +76,8 @@ func signTokenPair(
 }
 
 // signAccessToken issues an access token for credentials, minted by the refresh token whose claims
-// are refreshClaims: it carries the user's current role, the refresh token's JTI and its session.
+// are refreshClaims: it carries the user's current role, the refresh token's JTI, its session and
+// its client.
 func signAccessToken(
 	ctx context.Context, signer tokenPairSigner, credentials *dao.Credentials, refreshClaims *session.RefreshClaims,
 ) (string, error) {
@@ -89,6 +90,7 @@ func signAccessToken(
 		RefreshTokenID: refreshClaims.Jti,
 		SessionID:      refreshClaims.Session(),
 		SessionExp:     refreshClaims.SessionExpiry(),
+		ClientID:       refreshClaims.ClientID,
 	}
 
 	accessTokenPayload, err := grpcf.MarshalJSONAsAny(accessTokenClaims)

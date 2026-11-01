@@ -76,6 +76,7 @@ func TestTokenGrant(t *testing.T) {
 		RefreshTokenID: refreshTokenClaims.Jti,
 		SessionID:      refreshTokenClaims.SessionID,
 		SessionExp:     refreshTokenClaims.SessionExp,
+		ClientID:       "studio",
 	}
 
 	type respMock[T any] struct {

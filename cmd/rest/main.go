@@ -177,7 +177,12 @@ func main() {
 	// MIDDLEWARES
 	// =================================================================================================================
 
-	withAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
+	withSessionAuth := serviceauthentication.NewAuthHandler(serviceVerifyAccessToken, cfg.Permissions, cfg.Logger)
+	refuseClientTokens := middlewares.RestRefuseClientTokens(cfg.Logger)
+	// An OAuth client's token reaches the session routes alone, which withSessionAuth guards.
+	withAuth := func(r chi.Router, permissions ...string) chi.Router {
+		return withSessionAuth(r, permissions...).With(refuseClientTokens)
+	}
 	limit := middlewares.NewRestLimits(cfg.Rest, cfg.Limits)
 	withServiceToken := middlewares.RestServiceToken(
 		cfg.ServiceToken, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger, cfg.Rest.Liveness,
@@ -242,9 +247,9 @@ func main() {
 			r.With(limit.Login).Put("/", handlerTokenCreate.ServeHTTP)
 			r.With(limit.Anonymous).Put("/anon", handlerTokenCreateAnon.ServeHTTP)
 
-			withAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
+			withSessionAuth(r).Get("/", handlerClaimsGet.ServeHTTP)
 			r.Patch("/", handlerTokenRefresh.ServeHTTP)
-			withAuth(r, "session:revoke").Put("/revoke", handlerTokenRevoke.ServeHTTP)
+			withSessionAuth(r, "session:revoke").Put("/revoke", handlerTokenRevoke.ServeHTTP)
 		})
 
 		// The account platform checks an authorization request, then asks for a code for the person
