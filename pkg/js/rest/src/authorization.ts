@@ -125,7 +125,8 @@ export async function authorizationCodeExchange(
   api: AuthenticationApi,
   grant: AuthorizationCodeGrant
 ): Promise<TokenResponse> {
-  return await tokenRequest(api, { grant_type: "authorization_code", ...grant });
+  const { code, code_verifier, redirect_uri } = grant;
+  return await tokenRequest(api, { grant_type: "authorization_code", code, code_verifier, redirect_uri });
 }
 
 /**
