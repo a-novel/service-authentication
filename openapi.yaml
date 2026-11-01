@@ -98,8 +98,9 @@ paths:
       description: |
         Validate a user token, and extract the claims it contains. This route also works for anonymous tokens.
 
-        A token whose session was signed out answers 401, like an invalid one. Other services verify access tokens
-        offline and accept them until they expire, so a client calls this route to see a sign-out at once.
+        A token whose session was signed out or has ended answers 401, like an invalid one. Other services verify
+        access tokens offline and accept them until they expire, so a client calls this route to see a sign-out at
+        once.
       tags: [session]
       security:
         - BearerAuth: []
@@ -293,11 +294,13 @@ paths:
         ([RFC 6749 §4.1.2](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2)).
 
         The code is valid one minute and exchanges once, for that client, that redirect URI and that PKCE challenge, in
-        the bearer token's session. A session that ended answers 401, as an invalid token does: the person signs in
-        again.
+        the bearer token's session. A session that ended, or a token that carries none, answers 401, as an invalid
+        token does: the person signs in again.
 
         Only the account platform's service token may call this route. A server that verifies no service token, such as
         a local stack, answers 403.
+
+        By default, each person may ask for 10 codes per minute and 30 per 10 minutes.
       tags: [oauth]
       security:
         - BearerAuth: ["authorizationCode:create"]
@@ -312,8 +315,6 @@ paths:
           $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/callerForbidden"
-        "422":
-          $ref: "#/components/responses/unprocessableEntity"
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
@@ -344,7 +345,8 @@ paths:
         second exchange. No response is cached. A server that verifies no service token, such as a local stack, sees
         no client and answers `invalid_client`.
 
-        By default, each client may send 600 token requests per minute.
+        By default, each client may send 60 token requests per minute for each visitor, as the visitor IP it
+        forwards names them.
       tags: [oauth]
       security: []
       requestBody:
