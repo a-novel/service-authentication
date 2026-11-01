@@ -116,6 +116,12 @@ Without SMTP settings, emails go to a debug sender that prints them to stdout. T
 maintenance refresh-token-purge
 ```
 
+`authorization-code-purge` deletes the authorization codes that have expired. An exchanged code stays until then, so a second exchange of it finds it and ends its session. Run it on a schedule too. It takes no parameters:
+
+```text
+maintenance authorization-code-purge
+```
+
 ### Database image
 
 The database image packages PostgreSQL and pgBackRest on Wolfi. The container build assembles its
@@ -192,6 +198,7 @@ The service reads every variable from the process environment, prefixed with
 | `REST_RATE_LIMIT_LOGIN_BURST`    | Logins, sign-ups, password resets and changes, and email updates per caller over a short window.                                                                               | `10/1m`                          |
 | `REST_RATE_LIMIT_LOGIN`          | The same per caller, and per email or account, over a longer window.                                                                                                           | `30/10m`                         |
 | `REST_RATE_LIMIT_MAILBOX`        | Emails each address receives from one route.                                                                                                                                   | `3/1h`                           |
+| `REST_RATE_LIMIT_CODE_EXCHANGE`  | Authorization code exchanges per client, counted by its service-token caller.                                                                                                  | `600/1m`                         |
 | `REST_RATE_LIMIT_STORE_ADDR`     | Valkey or Redis server (`host:port`) where every instance counts the strict, login and mailbox limits. Empty counts in each instance.                                          |                                  |
 | `REST_RATE_LIMIT_STORE_USERNAME` | The store's ACL user. It needs `MGET`, `INCRBY`, `EXPIRE`, `MULTI`, `EXEC` and `PING` on the `httprate:*` keys.                                                                | `default`                        |
 | `REST_RATE_LIMIT_STORE_PASSWORD` | The user's password. **Inject it as a secret.**                                                                                                                                |                                  |
@@ -218,6 +225,13 @@ With a counter store, every instance spends one budget per limit, while `REST_RA
 | `SERVICE_TOKEN_AUDIENCE` | Audience the server answers to. Each caller's projected token names it.                                                                                                                                                                                                     |         |
 | `SERVICE_TOKEN_CALLERS`  | Service accounts allowed to call, comma-separated, each as `system:serviceaccount:<namespace>:<name>`. In production, Studio and the health check.                                                                                                                          |         |
 | `SERVICE_TOKEN_PATH`     | File the kubelet projects the service's own token into, for the JSON Keys audience. When set, the JSON Keys connection sends that token with every call, over TLS once `SERVICE_JSON_KEYS_TLS` is set.                                                                      |         |
+
+**Single sign-on** (images `rest`, `standalone-rest`). Every platform but the account platform is a client of it, and signs people in with the OAuth 2.0 authorization code grant and PKCE. A client has a client ID, one redirect URI and one Kubernetes caller. The server tells the account platform and the clients apart by their service token, so without `SERVICE_TOKEN_ISSUER` it sees no caller and refuses every call of the grant:
+
+| Name                      | Description                                                                                                                                                                                                                                                      | Default                             |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `OAUTH_CLIENTS`           | Client registry, as JSON keyed by client ID: `{"studio": {"redirectURI": "https://studio.storyverse.fr/auth/callback", "caller": "system:serviceaccount:studio:web"}}`. Each client needs both members, and a caller of its own. Empty, no platform is a client. |                                     |
+| `ACCOUNT_PLATFORM_CALLER` | Caller of the account platform, the only one that validates authorization requests and issues codes.                                                                                                                                                             | `system:serviceaccount:account:web` |
 
 **Database connection pool** (server images). The limits apply **per process**. The database's `max_connections` has to cover every replica plus the migration job, and the stock `postgres` default is 100.
 

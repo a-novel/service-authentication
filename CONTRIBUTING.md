@@ -138,6 +138,17 @@ The JSON Keys configuration sets both lifetimes. A client signs in once and send
 
 `PUT /v2/session/revoke` signs a session out. The caller's access token must belong to the same user as the refresh token. The route records the refresh token's ID in the `refresh_token_revocations` table, and a refresh then refuses that token. Access tokens the session already holds stay valid until they expire, since every service verifies them locally. A revocation row is useful until its refresh token expires, plus the verifier's clock-skew leeway. The scheduled `refresh-token-purge` maintenance operation then deletes it.
 
+### Single sign-on
+
+A person signs in on the account platform alone. Every other platform is a client of it, and signs the person in with the OAuth 2.0 authorization code grant and PKCE. The browser never reaches this service.
+
+1. The account platform checks the authorization request with `GET /v2/authorization-request`, then asks `PUT /v2/authorization-code` for a code in the person's session.
+2. The client trades the code and its PKCE verifier with `PUT /v2/session/authorization-code` for a token pair in that session. Its refresh token stops renewing when the session ends, and signing out anywhere ends the session everywhere.
+
+The `authorization_codes` table keeps the SHA-256 of each code alone. A code is valid one minute, and exchanges once. An exchanged row stays until it expires, so a second exchange finds it and ends the session. The scheduled `authorization-code-purge` maintenance operation then deletes it. A code signs an existing account in, and never creates one: accounts come from invitations alone.
+
+The service tells the account platform and each client apart by the caller of its service token. A local stack verifies no service token, so these three routes answer 403 there. The Go handler and core tests cover the grant, and the JavaScript integration tests its refusals.
+
 ### Short codes
 
 A short code is a single-use, time-limited secret, emailed to the user. Registration, an email change and a password reset each need one, so a session token alone never completes them. [`internal/config/auth/shortCodes.config.yaml`](./internal/config/auth/shortCodes.config.yaml) sets the code length and each usage's lifetime:
@@ -157,7 +168,7 @@ The database stores only a hash of each code. A consumed code is soft-deleted, w
 | Role              | Priority | Adds on top of inherited                                                         |
 | ----------------- | -------- | -------------------------------------------------------------------------------- |
 | `auth:anon`       | 0        | Complete a registration or an email change, reset a password, join the waitlist. |
-| `auth:user`       | 1        | Change own password, request an email change.                                    |
+| `auth:user`       | 1        | Change own password, request an email change, sign in on a client.               |
 | `auth:admin`      | 2        | Read, list and look up accounts.                                                 |
 | `auth:superadmin` | 3        | Change roles, invite accounts.                                                   |
 
