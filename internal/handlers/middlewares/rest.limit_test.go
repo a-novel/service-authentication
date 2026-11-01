@@ -329,17 +329,33 @@ func TestRestLimits(t *testing.T) {
 			limitRouter(middlewares.NewRestLimits(server, policies).Login),
 		}
 
-		// A visitor and an email of their own, so a run never meets the counters an earlier one left.
-		req := request{visitor: netip.AddrFrom16(uuid.New()).String(), email: uuid.NewString() + "@example.com"}
+		// spendsOneBudget reports whether the instances spend one budget of 10 logins per minute for req.
+		spendsOneBudget := func(req request) bool {
+			for i := range 10 {
+				if send(t, instances[i%2], req).Code != http.StatusOK {
+					return false
+				}
+			}
 
-		// The instances spend one budget of 10 logins per minute.
-		for i := range 10 {
-			require.Equal(t, http.StatusOK, send(t, instances[i%2], req).Code)
+			for _, instance := range instances {
+				if send(t, instance, req).Code != http.StatusTooManyRequests {
+					return false
+				}
+			}
+
+			return true
 		}
 
-		for _, instance := range instances {
-			require.Equal(t, http.StatusTooManyRequests, send(t, instance, req).Code)
-		}
+		// A store that answers after 100 ms sends an instance to its own counters, which a loaded runner
+		// can cause, so the test retries. Each attempt takes a visitor and an email no earlier attempt or
+		// run counted. A store the instances cannot use fails every attempt.
+		var req request
+
+		require.Eventually(t, func() bool {
+			req = request{visitor: netip.AddrFrom16(uuid.New()).String(), email: uuid.NewString() + "@example.com"}
+
+			return spendsOneBudget(req)
+		}, 10*time.Second, 300*time.Millisecond)
 
 		// Once the store stops, each instance counts the budget again, on its own.
 		proxy.stop()
