@@ -8,7 +8,6 @@ import (
 	"github.com/a-novel-kit/golib/logging"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
-	"github.com/a-novel-kit/golib/sentryf"
 	"github.com/a-novel-kit/golib/servicetoken"
 	"github.com/a-novel-kit/golib/smtp"
 
@@ -49,7 +48,6 @@ type App struct {
 	// SmtpPing reaches the same relay within the health check's short budget.
 	SmtpPing   smtp.Sender        `json:"smtpPing"   yaml:"smtpPing"`
 	Otel       otel.Config        `json:"otel"       yaml:"otel"`
-	Sentry     sentryf.Config     `json:"sentry"     yaml:"sentry"`
 	Logger     logging.Log        `json:"logger"     yaml:"logger"`
 	HttpLogger logging.HTTPConfig `json:"httplogger" yaml:"httplogger"`
 	Postgres   postgres.Config    `json:"postgres"   yaml:"postgres"`

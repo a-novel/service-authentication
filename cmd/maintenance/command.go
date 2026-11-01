@@ -8,8 +8,6 @@ import (
 	"io"
 	"os"
 	"strings"
-
-	"github.com/a-novel-kit/golib/sentryf"
 )
 
 var (
@@ -104,13 +102,7 @@ func (command *maintenanceCommand) run(ctx context.Context, args []string, outpu
 		return nil
 	}
 
-	err = operation.run(ctx)
-	if err != nil {
-		// args[0] names the operation parse found.
-		sentryf.Capture(ctx, args[0], err)
-	}
-
-	return err
+	return operation.run(ctx)
 }
 
 func (command *maintenanceCommand) parse(args []string) (maintenanceOperation, error) {

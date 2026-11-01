@@ -8,7 +8,6 @@ import (
 	"github.com/a-novel-kit/golib/config"
 	"github.com/a-novel-kit/golib/downtime"
 	"github.com/a-novel-kit/golib/httpf"
-	"github.com/a-novel-kit/golib/sentryf"
 )
 
 // prefix is prepended to every configuration variable name that this package reads.
@@ -47,8 +46,8 @@ const (
 	// ServiceJsonKeysPortDefault is the JSON Keys service's default gRPC port.
 	ServiceJsonKeysPortDefault = 8080
 
-	// TimeoutShutdownDefault ends a server's drain 6 seconds after SIGTERM, so its Sentry and
-	// OpenTelemetry flushes, up to 2 seconds each, finish before Cloud Run kills it at 10 seconds.
+	// TimeoutShutdownDefault ends a server's drain 6 seconds after SIGTERM, so its OpenTelemetry
+	// flush, up to 2 seconds, finishes long before Kubernetes kills the pod at 30 seconds.
 	TimeoutShutdownDefault = 6 * time.Second
 
 	// PostgresMaxOpenConnsDefault caps the connections one instance opens. Multiplied by the replica
@@ -186,9 +185,6 @@ var (
 	AppName = config.LoadEnv(getEnv("APP_NAME"), AppNameDefault, config.StringParser)
 	// Otel enables OpenTelemetry instrumentation.
 	Otel = config.LoadEnv(getEnv("OTEL"), false, config.BoolParser)
-	// Sentry configures the fault reporter from the SENTRY_* variables. The reporter sends nothing
-	// without SENTRY_DSN.
-	Sentry = sentryf.LoadConfig(getEnv)
 
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
@@ -222,7 +218,7 @@ var (
 )
 
 // restDefaults keeps golib's REST defaults but for the versioned ping path and the drain, which fits
-// Cloud Run's kill window. A send still running when the drain ends is cut.
+// the pod's grace period. A send still running when the drain ends is cut.
 func restDefaults() httpf.ServerConfig {
 	defaults := httpf.ServerConfigDefault
 	defaults.Liveness = "/v2/ping"
