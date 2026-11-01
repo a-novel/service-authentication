@@ -21,7 +21,10 @@ export const OAuthErrorResponseSchema = z.object({
 /** The value {@link OAuthErrorResponseSchema} validates. */
 export type OAuthErrorResponse = z.infer<typeof OAuthErrorResponseSchema>;
 
-/** An HTTP 400 that carries an OAuth 2.0 error response, such as `invalid_grant`. */
+/**
+ * An HTTP 400 that carries an OAuth 2.0 error response, such as `invalid_grant`. It keeps the name HttpError, so the
+ * shared HttpError status checks match it too; `instanceof OAuthError` tells it apart.
+ */
 export class OAuthError extends HttpError {
   /** The error response the server answered. */
   readonly response: OAuthErrorResponse;
@@ -66,12 +69,18 @@ export const TokenResponseSchema = z.object({
 /** The value {@link TokenResponseSchema} validates. */
 export type TokenResponse = z.infer<typeof TokenResponseSchema>;
 
-/** A code grant (RFC 6749 §4.1.3, RFC 7636 §4.5). `redirect_uri` is required when the authorization request named it. */
-export type AuthorizationCodeGrant = {
-  code: string;
-  code_verifier: string;
-  redirect_uri?: string;
-};
+/**
+ * A code grant (RFC 6749 §4.1.3, RFC 7636 §4.5): the code, its PKCE verifier of 43 to 128 unreserved characters, and
+ * the redirect URI, required when the authorization request named it.
+ */
+export const AuthorizationCodeGrantSchema = z.object({
+  code: z.string(),
+  code_verifier: z.string().regex(/^[A-Za-z0-9._~-]{43,128}$/),
+  redirect_uri: z.string().optional(),
+});
+
+/** The value {@link AuthorizationCodeGrantSchema} validates. */
+export type AuthorizationCodeGrant = z.infer<typeof AuthorizationCodeGrantSchema>;
 
 /**
  * Checks, for the account platform, the authorization request its authorization endpoint received, given as that
