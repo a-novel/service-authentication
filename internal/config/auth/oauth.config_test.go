@@ -113,3 +113,78 @@ func TestParseClients(t *testing.T) {
 func registryJSON(clientID, redirectURI string) string {
 	return fmt.Sprintf(`{%q: {"redirectURI": %q, "caller": "system:serviceaccount:studio:web"}}`, clientID, redirectURI)
 }
+
+func TestOAuth(t *testing.T) {
+	t.Parallel()
+
+	const (
+		accountCaller = "system:serviceaccount:account:web"
+		studioCaller  = "system:serviceaccount:studio:web"
+	)
+
+	studio := map[string]authconfig.Client{
+		"studio": {RedirectURI: "https://studio.example.com/auth/callback", Caller: studioCaller},
+	}
+
+	testCases := []struct {
+		name string
+
+		oauth               authconfig.OAuth
+		serviceTokenCallers []string
+
+		expectErr error
+	}{
+		{
+			name: "Success",
+
+			oauth:               authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			serviceTokenCallers: []string{accountCaller, studioCaller, "system:serviceaccount:authentication:smoke"},
+		},
+		{
+			// A server that verifies no service token admits every caller.
+			name: "Success/NoServiceTokens",
+
+			oauth: authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+		},
+		{
+			// Without clients, the grant is off and needs no caller.
+			name: "Success/NoClients",
+
+			oauth:               authconfig.OAuth{AccountPlatformCaller: accountCaller},
+			serviceTokenCallers: []string{studioCaller},
+		},
+		{
+			name: "Error/AccountPlatformClient",
+
+			oauth: authconfig.OAuth{
+				AccountPlatformCaller: studioCaller, Clients: studio,
+			},
+
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			name: "Error/ClientCallerNotAdmitted",
+
+			oauth:               authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			serviceTokenCallers: []string{accountCaller},
+
+			expectErr: authconfig.ErrClientsConfig,
+		},
+		{
+			name: "Error/AccountPlatformCallerNotAdmitted",
+
+			oauth:               authconfig.OAuth{AccountPlatformCaller: accountCaller, Clients: studio},
+			serviceTokenCallers: []string{studioCaller},
+
+			expectErr: authconfig.ErrClientsConfig,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			require.ErrorIs(t, testCase.oauth.Check(testCase.serviceTokenCallers), testCase.expectErr)
+		})
+	}
+}

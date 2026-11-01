@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -32,6 +33,29 @@ type OAuth struct {
 	AccountPlatformCaller string `json:"accountPlatformCaller" yaml:"accountPlatformCaller"`
 	// Clients is the client registry, keyed by client ID, such as studio.
 	Clients map[string]Client `json:"clients" yaml:"clients"`
+}
+
+// Check refuses a registry whose client shares the account platform's caller, which would let one
+// workload both issue and exchange codes. When serviceTokenCallers is not nil, the server verifies
+// service tokens and admits those callers alone, so Check also refuses a registry whose callers, or
+// the account platform's, it lacks: the server would refuse them before the grant sees them.
+func (oauth OAuth) Check(serviceTokenCallers []string) error {
+	for clientID, client := range oauth.Clients {
+		if client.Caller == oauth.AccountPlatformCaller {
+			return fmt.Errorf("%w: client %q has the account platform's caller", ErrClientsConfig, clientID)
+		}
+
+		if serviceTokenCallers != nil && !slices.Contains(serviceTokenCallers, client.Caller) {
+			return fmt.Errorf("%w: the service tokens do not admit client %q's caller", ErrClientsConfig, clientID)
+		}
+	}
+
+	if len(oauth.Clients) > 0 && serviceTokenCallers != nil &&
+		!slices.Contains(serviceTokenCallers, oauth.AccountPlatformCaller) {
+		return fmt.Errorf("%w: the service tokens do not admit the account platform's caller", ErrClientsConfig)
+	}
+
+	return nil
 }
 
 // ParseClients reads a client registry from its JSON form, an object keyed by client ID:
