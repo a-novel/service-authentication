@@ -585,7 +585,7 @@ func TestTokenGrant(t *testing.T) {
 			caller: studioCaller,
 			params: refreshGrantParams(func(params url.Values) { params.Set("scope", "openid") }),
 
-			expectErr: core.ErrTokenGrantScope,
+			expectErr: core.ErrOAuthScope,
 		},
 		{
 			name: "Error/InvalidRefreshToken",

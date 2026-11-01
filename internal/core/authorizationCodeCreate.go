@@ -26,9 +26,6 @@ const (
 	// AuthorizationCodeSize is the number of random bytes in a code. Its 256 bits keep a guess far
 	// below the 2^-160 chance RFC 6749 §10.10 asks for.
 	AuthorizationCodeSize = 32
-	// CodeChallengeMethodS256 is the only PKCE method a code accepts. RFC 9700 §2.1.1 names it the only
-	// method that keeps the code verifier out of the authorization request.
-	CodeChallengeMethodS256 = "S256"
 )
 
 // ErrAuthorizationCodeCreateSessionEnded is returned by [AuthorizationCodeCreate.Exec] when the

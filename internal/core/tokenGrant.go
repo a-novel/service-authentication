@@ -65,9 +65,6 @@ var (
 	// ErrTokenGrantNoRefreshToken is returned by [TokenGrant.Exec] for a refresh without
 	// refresh_token.
 	ErrTokenGrantNoRefreshToken = &OAuthError{Code: OAuthErrorInvalidRequest, Description: "refresh_token is required"}
-	// ErrTokenGrantScope is returned by [TokenGrant.Exec] for a refresh that names a scope: the
-	// server granted none (RFC 6749 §6).
-	ErrTokenGrantScope = &OAuthError{Code: OAuthErrorInvalidScope, Description: "no scope is granted"}
 )
 
 // The refusals of a token request that concern its grant, RFC 6749's invalid_grant. A refusal
@@ -408,7 +405,7 @@ func (service *TokenGrant) grantRefreshToken(
 	case params.Get("refresh_token") == "":
 		return nil, otel.ReportError(span, ErrTokenGrantNoRefreshToken)
 	case params.Get("scope") != "":
-		return nil, otel.ReportError(span, ErrTokenGrantScope)
+		return nil, otel.ReportError(span, ErrOAuthScope)
 	}
 
 	verifyRequest := &servicejsonkeys.VerifyClaimsRequest{

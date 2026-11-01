@@ -226,7 +226,7 @@ func TestAuthorizationRequestValidate(t *testing.T) {
 			caller: accountPlatformCaller,
 			params: authorizationParams(func(params url.Values) { params.Set("scope", "openid") }),
 
-			expectErr:         core.ErrAuthorizationRequestScope,
+			expectErr:         core.ErrOAuthScope,
 			expectRedirectURI: studioRedirectURI,
 		},
 		{
