@@ -234,10 +234,6 @@ func (service *TokenGrant) Exec(ctx context.Context, request *TokenGrantRequest)
 	ctx, span := otel.Tracer().Start(ctx, "core.TokenGrant")
 	defer span.End()
 
-	grantType := request.Params.Get("grant_type")
-
-	span.SetAttributes(attribute.String("oauth.grant_type", grantType))
-
 	clientID, ok := service.clientOf(request.Caller)
 	if !ok {
 		return nil, reportTokenGrant(span, ErrTokenGrantInvalidClient)
@@ -260,12 +256,18 @@ func (service *TokenGrant) Exec(ctx context.Context, request *TokenGrantRequest)
 		err    error
 	)
 
-	switch grantType {
+	// Only a grant type the server serves reaches the span, so no caller writes the values the
+	// Services tab groups by.
+	switch grantType := request.Params.Get("grant_type"); grantType {
 	case "":
 		err = ErrTokenGrantNoGrantType
 	case GrantTypeAuthorizationCode:
+		span.SetAttributes(attribute.String("oauth.grant_type", grantType))
+
 		result, err = service.grantAuthorizationCode(ctx, clientID, request.Params)
 	case GrantTypeRefreshToken:
+		span.SetAttributes(attribute.String("oauth.grant_type", grantType))
+
 		result, err = service.grantRefreshToken(ctx, clientID, request.Params)
 	default:
 		err = ErrTokenGrantUnsupportedGrantType
@@ -543,7 +545,8 @@ func verifiesChallenge(code *dao.AuthorizationCode, verifier string) bool {
 }
 
 // reportTokenGrant reports err on span. A refusal also sets the span's oauth.error and
-// oauth.error_description attributes, which the Services tab counts per client and grant type.
+// oauth.error_description attributes, the keys the Services tab groups the core.TokenGrant spans by,
+// per client and grant type. The span of a grant reports the same refusal, as its own error.
 func reportTokenGrant(span trace.Span, err error) error {
 	var refusal *OAuthError
 	if errors.As(err, &refusal) {

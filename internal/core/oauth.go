@@ -6,6 +6,9 @@ import (
 	"net/url"
 	"regexp"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
@@ -162,6 +165,16 @@ func checkAccountPlatform(oauth authconfig.OAuth, caller string) error {
 	}
 
 	return nil
+}
+
+// setClientAttribute names on span the client of the authorization request params carry, once the
+// registry holds it. An unregistered client_id is the caller's own value, and stays out of the
+// attributes the Services tab groups by.
+func setClientAttribute(span trace.Span, clients map[string]authconfig.Client, params url.Values) {
+	clientID, ok := oauthParam(params, "client_id")
+	if _, registered := clients[clientID]; ok && registered {
+		span.SetAttributes(attribute.String("client.id", clientID))
+	}
 }
 
 // parseAuthorizationRequest reads the authorization request params carry, against the client

@@ -88,7 +88,6 @@ func (service *AuthorizationCodeCreate) Exec(
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("client.id", request.Params.Get("client_id")),
 		attribute.String("user.id", request.UserID.String()),
 		attribute.String("session.id", request.SessionID),
 	)
@@ -97,6 +96,8 @@ func (service *AuthorizationCodeCreate) Exec(
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
+
+	setClientAttribute(span, service.oauth.Clients, request.Params)
 
 	authorization, err := parseAuthorizationRequest(service.oauth.Clients, request.Params)
 	if err != nil {

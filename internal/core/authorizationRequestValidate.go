@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/url"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/a-novel-kit/golib/otel"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
@@ -38,12 +36,12 @@ func (service *AuthorizationRequestValidate) Exec(
 	_, span := otel.Tracer().Start(ctx, "core.AuthorizationRequestValidate")
 	defer span.End()
 
-	span.SetAttributes(attribute.String("client.id", request.Params.Get("client_id")))
-
 	err := checkAccountPlatform(service.oauth, request.Caller)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
+
+	setClientAttribute(span, service.oauth.Clients, request.Params)
 
 	authorization, err := parseAuthorizationRequest(service.oauth.Clients, request.Params)
 	if err != nil {
