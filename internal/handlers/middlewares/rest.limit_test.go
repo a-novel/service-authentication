@@ -53,6 +53,9 @@ func TestRestLimits(t *testing.T) {
 	mail := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mail }
 	mailbox := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mailbox }
 	password := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Password }
+	authorizationCode := func(limits middlewares.RestLimits) func(http.Handler) http.Handler {
+		return limits.AuthorizationCode
+	}
 	shortCode := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.ShortCode }
 	signUp := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.SignUp }
 	waitlist := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Waitlist }
@@ -254,6 +257,17 @@ func TestRestLimits(t *testing.T) {
 			name: "Error/Password/User",
 
 			limit: password,
+
+			allowed: visitors(10, request{user: &userA}),
+			refused: &request{visitor: "192.0.2.99", user: &userA},
+
+			expectRetryAfter: "60",
+		},
+		{
+			// A user asking for codes counts against the user, wherever the requests come from.
+			name: "Error/AuthorizationCode/User",
+
+			limit: authorizationCode,
 
 			allowed: visitors(10, request{user: &userA}),
 			refused: &request{visitor: "192.0.2.99", user: &userA},
@@ -487,7 +501,7 @@ func (proxy *storeProxy) stop() {
 	}
 }
 
-func TestServiceCallerKey(t *testing.T) {
+func TestClientVisitorKey(t *testing.T) {
 	t.Parallel()
 
 	issuer := servicetokentest.NewIssuer(t)
@@ -506,25 +520,25 @@ func TestServiceCallerKey(t *testing.T) {
 		expect string
 	}{
 		{
-			// Every pod of a client shares its caller, and so its budget.
+			// Each visitor of a client spends a budget of its own.
 			name: "Success/Caller",
 
 			tokenConfig: tokenConfig,
 			token:       issuer.Sign(t, issuer.Claims(serviceTokenCaller, serviceTokenAudience)),
 
-			expect: "service:" + serviceTokenCaller,
+			expect: "service:" + serviceTokenCaller + ":visitor:192.0.2.1",
 		},
 		{
 			// A server that verifies no service token counts by visitor.
 			name: "Success/NoCaller",
 
-			expect: "visitor:192.0.2.1",
+			expect: "service::visitor:192.0.2.1",
 		},
 	}
 
 	// The router answers with the key the request counts under.
 	router := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key, err := middlewares.ServiceCallerKey(r)
+		key, err := middlewares.ClientVisitorKey(r)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 

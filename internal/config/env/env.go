@@ -82,8 +82,9 @@ var (
 	RestRateLimitLoginDefault = config.Must(httpf.ParseRate("30/10m"))
 	// RestRateLimitMailboxDefault caps the emails one address receives from a route.
 	RestRateLimitMailboxDefault = config.Must(httpf.ParseRate("3/1h"))
-	// RestRateLimitOAuthTokenDefault lets a client sign in or refresh 10 sessions per second, sustained.
-	RestRateLimitOAuthTokenDefault = config.Must(httpf.ParseRate("600/1m"))
+	// RestRateLimitOAuthTokenDefault lets a client sign a visitor in or refresh their session once a
+	// second, sustained.
+	RestRateLimitOAuthTokenDefault = config.Must(httpf.ParseRate("60/1m"))
 )
 
 var (
@@ -192,7 +193,7 @@ var (
 	RestRateLimitLogin = config.LoadEnv(getEnv("REST_RATE_LIMIT_LOGIN"), RestRateLimitLoginDefault, httpf.ParseRate)
 	// RestRateLimitMailbox caps the emails each address receives from one route.
 	RestRateLimitMailbox = config.LoadEnv(getEnv("REST_RATE_LIMIT_MAILBOX"), RestRateLimitMailboxDefault, httpf.ParseRate)
-	// RestRateLimitOAuthToken caps each client's requests to the OAuth token endpoint.
+	// RestRateLimitOAuthToken caps the token requests each client sends for each visitor.
 	RestRateLimitOAuthToken = config.LoadEnv(
 		getEnv("REST_RATE_LIMIT_OAUTH_TOKEN"), RestRateLimitOAuthTokenDefault, httpf.ParseRate,
 	)

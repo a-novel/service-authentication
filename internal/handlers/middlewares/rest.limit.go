@@ -18,7 +18,10 @@ import (
 type RestLimits struct {
 	// Anonymous caps each caller's anonymous sessions.
 	Anonymous func(http.Handler) http.Handler
-	// OAuthToken caps each client's requests to the OAuth token endpoint, counted by its service caller.
+	// AuthorizationCode caps each signed-in user's authorization codes as Password caps password
+	// changes.
+	AuthorizationCode func(http.Handler) http.Handler
+	// OAuthToken caps the token requests each client sends for each visitor.
 	OAuthToken func(http.Handler) http.Handler
 	// Login caps each visitor's logins over a short and a longer window, and the logins naming
 	// one email over the longer one.
@@ -51,18 +54,19 @@ func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimi
 	loginAccount := limits.By(policies.Login, accountKey)
 	waitlistConcurrency := httpf.LimitConcurrency(policies.WaitlistMaxConcurrent)
 	waitlistSize := middleware.RequestSize(policies.WaitlistMaxRequestSize)
-	oauthToken := limits.By(policies.OAuthToken, ServiceCallerKey)
+	oauthToken := limits.By(policies.OAuthToken, ClientVisitorKey)
 
 	return RestLimits{
-		Anonymous:  strict,
-		OAuthToken: oauthToken,
-		Login:      chi.Chain(loginBurst, login, loginEmail).Handler,
-		Mail:       chi.Chain(strict, mailbox).Handler,
-		Mailbox:    mailbox,
-		Password:   chi.Chain(loginBurst, login).Handler,
-		ShortCode:  chi.Chain(loginBurst, login, loginAccount).Handler,
-		SignUp:     chi.Chain(loginBurst, login, loginEmail).Handler,
-		Waitlist:   chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
+		Anonymous:         strict,
+		AuthorizationCode: chi.Chain(loginBurst, login).Handler,
+		OAuthToken:        oauthToken,
+		Login:             chi.Chain(loginBurst, login, loginEmail).Handler,
+		Mail:              chi.Chain(strict, mailbox).Handler,
+		Mailbox:           mailbox,
+		Password:          chi.Chain(loginBurst, login).Handler,
+		ShortCode:         chi.Chain(loginBurst, login, loginAccount).Handler,
+		SignUp:            chi.Chain(loginBurst, login, loginEmail).Handler,
+		Waitlist:          chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
 	}
 }
 
@@ -73,15 +77,18 @@ var (
 	accountKey = httpf.BodyKeyRate("userID")
 )
 
-// ServiceCallerKey keys a rate limit by the service that calls, as its verified service token
-// names it, else by the visitor IP on a server that verifies no service token.
-func ServiceCallerKey(r *http.Request) (string, error) {
-	caller, ok := httpf.ServiceTokenCaller(r.Context())
-	if ok {
-		return "service:" + caller, nil
+// ClientVisitorKey keys a rate limit by the calling service, as its verified service token names it,
+// and the visitor it calls for. Each visitor of a client then spends a budget of its own, and one
+// visitor cannot exhaust the client's.
+func ClientVisitorKey(r *http.Request) (string, error) {
+	visitor, err := httpf.VisitorKey(r)
+	if err != nil {
+		return "", err
 	}
 
-	return httpf.VisitorKey(r)
+	caller, _ := httpf.ServiceTokenCaller(r.Context())
+
+	return "service:" + caller + ":" + visitor, nil
 }
 
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP. Mount the limit after

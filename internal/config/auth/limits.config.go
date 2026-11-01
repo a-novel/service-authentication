@@ -14,7 +14,7 @@ type Limits struct {
 	Login httpf.Rate `json:"login" yaml:"login"`
 	// Mailbox caps the emails each address receives from one route.
 	Mailbox httpf.Rate `json:"mailbox" yaml:"mailbox"`
-	// OAuthToken caps each client's requests to the OAuth token endpoint.
+	// OAuthToken caps the token requests each client sends for each visitor.
 	OAuthToken httpf.Rate `json:"oauthToken" yaml:"oauthToken"`
 	// WaitlistMaxConcurrent caps the waitlist requests waiting on Google at once, per instance.
 	WaitlistMaxConcurrent int `json:"waitlistMaxConcurrent" yaml:"waitlistMaxConcurrent"`

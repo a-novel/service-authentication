@@ -65,6 +65,10 @@ func main() {
 		defer closeDatabase(database)
 	}
 
+	// Without an issuer, the server verifies no service token and admits every caller.
+	serviceTokenCallers := lo.Ternary(cfg.ServiceToken.Issuer != "", cfg.ServiceToken.Callers, nil)
+	lo.Must0(cfg.OAuth.Check(serviceTokenCallers))
+
 	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
 
 	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(
@@ -245,7 +249,8 @@ func main() {
 		// signed in there. The client trades the code at the token endpoint.
 		api.Route("/oauth", func(r chi.Router) {
 			r.Get("/authorization-request", handlerAuthorizationRequestValidate.ServeHTTP)
-			withAuth(r, "authorizationCode:create").Post("/authorization-code", handlerAuthorizationCodeCreate.ServeHTTP)
+			withAuth(r, "authorizationCode:create").With(limit.AuthorizationCode).
+				Post("/authorization-code", handlerAuthorizationCodeCreate.ServeHTTP)
 			r.With(limit.OAuthToken).Post("/token", handlerTokenGrant.ServeHTTP)
 		})
 
