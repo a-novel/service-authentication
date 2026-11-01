@@ -20,6 +20,22 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
     healthcheck: *postgres-healthcheck
 
+  # The rate-limit counter store, with the ACL production gives the limiter: its commands on
+  # httprate's keys, and no default user.
+  valkey:
+    image: "${VALKEY_IMAGE:?VALKEY_IMAGE is required}"
+    ports:
+      - "6379:6379"
+    command: >-
+      valkey-server
+      --user default off resetpass
+      --user limiter on >limiter ~httprate:* -@all +mget +incrby +expire +multi +exec +ping
+    healthcheck:
+      test: ["CMD", "valkey-cli", "--user", "limiter", "--pass", "limiter", "--no-auth-warning", "ping"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
   mailserver:
     image: "${MAILSERVER_IMAGE:?MAILSERVER_IMAGE is required}"
     ports:
