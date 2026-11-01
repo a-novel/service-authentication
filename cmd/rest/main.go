@@ -47,7 +47,7 @@ func main() {
 	lo.Must0(otel.Init(cfg.Otel))
 	defer cfg.Otel.Flush()
 
-	if env.GcloudProjectID == "" {
+	if env.OTLPEndpoint == "" {
 		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
 	}
 

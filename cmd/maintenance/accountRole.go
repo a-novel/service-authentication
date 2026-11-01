@@ -76,7 +76,7 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 	}
 	defer config.OtelJobPresetDefault.Flush()
 
-	if env.GcloudProjectID == "" {
+	if env.OTLPEndpoint == "" {
 		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
 	}
 

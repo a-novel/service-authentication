@@ -113,17 +113,13 @@ func newOtelPreset(flushTimeout time.Duration) otel.Config {
 }
 
 // newJsonKeysCredentials authenticates the JSON Keys connection with the service token at
-// SERVICE_TOKEN_PATH. Without one, it sends a Google ID token when the service runs on Google Cloud,
-// and nothing otherwise.
+// SERVICE_TOKEN_PATH, and sends nothing without one.
 func newJsonKeysCredentials() grpcf.CredentialsProvider {
-	switch {
-	case env.ServiceTokenPath != "":
-		return &grpcf.ServiceTokenCredentialsProvider{ServiceTokenPath: env.ServiceTokenPath}
-	case env.GcloudProjectID != "":
-		return &grpcf.GcloudCredentialsProvider{Host: env.ServiceJsonKeysHost}
-	default:
+	if env.ServiceTokenPath == "" {
 		return &grpcf.LocalCredentialsProvider{}
 	}
+
+	return &grpcf.ServiceTokenCredentialsProvider{ServiceTokenPath: env.ServiceTokenPath}
 }
 
 // newSmtpSender sends through the relay SMTP_ADDR names, within timeout, or prints every mail when
