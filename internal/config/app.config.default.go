@@ -11,7 +11,6 @@ import (
 	loggingpresets "github.com/a-novel-kit/golib/logging/presets"
 	"github.com/a-novel-kit/golib/otel"
 	otelpresets "github.com/a-novel-kit/golib/otel/presets"
-	"github.com/a-novel-kit/golib/sentryf"
 	"github.com/a-novel-kit/golib/servicetoken"
 	"github.com/a-novel-kit/golib/smtp"
 
@@ -23,17 +22,9 @@ import (
 // shutdown.
 const OtelFlushTimeout = 2 * time.Second
 
-// SentryFlushTimeout bounds how long a server waits on exit to send its pending Sentry events, inside
-// the platform's shutdown grace period.
-const SentryFlushTimeout = 2 * time.Second
-
 // SmtpPingTimeout bounds the health check's SMTP ping. A mail can take minutes on a slow relay, and
 // the health check still answers within seconds.
 const SmtpPingTimeout = 10 * time.Second
-
-// SentryJobFlushTimeout bounds a job's wait on exit for its pending Sentry events. It outlasts
-// sentryf.SendTimeout, so an event sent before the network came up still leaves.
-const SentryJobFlushTimeout = sentryf.SendTimeout + time.Minute
 
 // OtelJobFlushTimeout bounds a job's wait on exit for its pending spans and logs. A job often ends
 // before the network lets its first connection out. The exporter then sends the spans, then the
@@ -101,7 +92,6 @@ var AppPresetDefault = App{
 	Smtp:     newSmtpSender(env.SmtpTimeout),
 	SmtpPing: newSmtpSender(SmtpPingTimeout),
 	Otel:     OtelPresetDefault,
-	Sentry:   env.Sentry,
 	Logger:   lo.Ternary[logging.Log](!exportsOTLP, LoggerDev, LoggerProd),
 	// The server span records each request once telemetry exports over OTLP.
 	HttpLogger: lo.Ternary[logging.HTTPConfig](

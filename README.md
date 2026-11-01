@@ -149,7 +149,7 @@ The service reads every variable from the process environment, prefixed with
 | `SERVICE_JSON_KEYS_PORT` | gRPC port of the JSON Keys service. Defaults to `8080`.                                                                             | `rest`<br/>`standalone-rest`                                              |
 
 <details>
-<summary>Optional configuration (client platform, SMTP, REST tuning, service tokens, OpenTelemetry, Sentry)</summary>
+<summary>Optional configuration (client platform, SMTP, REST tuning, service tokens, OpenTelemetry)</summary>
 
 **Client platform** (images `rest`, `jobs/maintenance`, `standalone-rest`). The links in outgoing emails point at the web platform that serves the account pages, such as [platform-studio](https://github.com/a-novel/platform-studio):
 
@@ -194,7 +194,7 @@ The service reads every variable from the process environment, prefixed with
 | `REST_TIMEOUT_WRITE`          | Write timeout.                                                                                                                               | `30s`                            |
 | `REST_TIMEOUT_IDLE`           | Idle keep-alive timeout.                                                                                                                     | `60s`                            |
 | `REST_TIMEOUT_REQUEST`        | Per-request timeout.                                                                                                                         | `60s`                            |
-| `REST_TIMEOUT_SHUTDOWN`       | Graceful shutdown budget. With the 4 seconds of telemetry flushes after it, it fits Cloud Run's 10 seconds before `SIGKILL`.                 | `6s`                             |
+| `REST_TIMEOUT_SHUTDOWN`       | Graceful shutdown budget. With the 2-second telemetry flush after it, it fits Kubernetes' 30 seconds before `SIGKILL`.                       | `6s`                             |
 | `REST_CORS_ALLOWED_ORIGINS`   | CORS allowed origins.                                                                                                                        | `*`                              |
 | `REST_CORS_ALLOWED_HEADERS`   | CORS allowed headers.                                                                                                                        | `*`                              |
 | `REST_CORS_ALLOWED_METHODS`   | CORS allowed methods, comma-separated.                                                                                                       | `HEAD,GET,POST,PUT,PATCH,DELETE` |
@@ -235,14 +235,6 @@ The service reads every variable from the process environment, prefixed with
 | `OTEL_SERVICE_NAME`              | Service name every span and log record carries.                                                                               |                          |
 | `APP_NAME`                       | Application name attached to traces and logs.                                                                                 | `service-authentication` |
 
-**Fault reporting** (images `rest`, `jobs/maintenance`, `standalone-rest`). With a DSN, the server reports each 5xx answer and each panic to Sentry, and maintenance reports a failed operation under its name. Without one, nothing is sent:
-
-| Name                 | Description                                                                                                | Default |
-| -------------------- | ---------------------------------------------------------------------------------------------------------- | ------- |
-| `SENTRY_DSN`         | Client key of the service's Sentry project. Store it as a secret.                                          |         |
-| `SENTRY_RELEASE`     | Deployed release, as `service-authentication@<version>`, the name release CI records. Required with a DSN. |         |
-| `SENTRY_ENVIRONMENT` | Deployment name, such as `production`. Required with a DSN.                                                |         |
-
 </details>
 
 ### Invitation list
@@ -273,9 +265,9 @@ already going out. Each email goes out on its own goroutine, so a send outlives 
 started it.
 
 The drain ends `REST_TIMEOUT_SHUTDOWN` after the signal, 6 seconds by default. The server then
-flushes Sentry and OpenTelemetry for up to 2 seconds each, inside the 10 seconds that Cloud Run,
-Docker and Podman grant before `SIGKILL`. A send still going out when the drain ends is cut and
-reported to Sentry, and its user asks for another email.
+flushes OpenTelemetry for up to 2 seconds, inside the 10 seconds that Docker and Podman grant before
+`SIGKILL`, and Kubernetes' 30. A send still going out when the drain ends is cut and logged, and its user
+asks for another email.
 
 ## Using the client packages
 

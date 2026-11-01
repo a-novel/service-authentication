@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -24,7 +23,6 @@ import (
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
-	"github.com/a-novel-kit/golib/sentryf"
 	"github.com/a-novel-kit/golib/smtp"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
@@ -48,10 +46,6 @@ func main() {
 
 	lo.Must0(otel.Init(cfg.Otel))
 	defer cfg.Otel.Flush()
-
-	lo.Must0(sentryf.Init(cfg.Sentry))
-
-	defer sentryf.Flush(config.SentryFlushTimeout)
 
 	if env.GcloudProjectID == "" {
 		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
@@ -81,11 +75,7 @@ func main() {
 	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient))
 	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
 
-	// No request waits for its mail, so a failed send reaches Sentry here.
-	reportMailDelivery := func(ctx context.Context, kind string, err error) {
-		sentryf.Capture(ctx, "deliver "+kind+" mail", err)
-	}
-	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent, reportMailDelivery)
+	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
 	lib.PrepareDummyArgon2()
 
@@ -304,11 +294,6 @@ func serve(
 		// Logged while the process is already stopping. Failed deliveries or mail that missed
 		// the budget are worth reporting and the shutdown still completes.
 		log.Println("Some emails failed or were still in flight at shutdown: " + drainErr.Error())
-	}
-
-	// A failed send reported itself. A send the shutdown cut short did not.
-	if errors.Is(drainErr, context.DeadlineExceeded) {
-		sentryf.Capture(ctx, "drain mail", drainErr)
 	}
 
 	return serveErr

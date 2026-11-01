@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/a-novel-kit/golib/downtime"
-	"github.com/a-novel-kit/golib/sentryf"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 )
@@ -32,14 +31,6 @@ func mainExitCode() int {
 		return 0
 	}
 
-	err := sentryf.Init(config.AppPresetDefault.Sentry)
-	if err != nil {
-		log.Print("initialize sentry: ", err)
-
-		return 1
-	}
-	defer sentryf.Flush(config.SentryJobFlushTimeout)
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -47,7 +38,7 @@ func mainExitCode() int {
 		accountRoleOperationDefinition(), refreshTokenPurgeOperationDefinition(), waitlistCleanupOperationDefinition(),
 	)
 
-	err = command.run(ctx, os.Args[1:], os.Stdout)
+	err := command.run(ctx, os.Args[1:], os.Stdout)
 	if err != nil {
 		log.Print(err)
 

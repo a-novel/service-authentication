@@ -99,7 +99,4 @@ jobs:
       app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
       # Exists only in the `release` environment, which the callee's cut job names.
       release_private_key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
-      # Records the patch in Sentry. Also a `release` environment secret, absent
-      # from a repository without a Sentry project, which then records nothing.
-      sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
       push_webhook: ${{ secrets.ESCALATE_PUSH_WEBHOOK }}
