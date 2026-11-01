@@ -203,10 +203,6 @@ var (
 	// Keys audience. When set, the JSON Keys connection sends that token with every call.
 	ServiceTokenPath = getEnv("SERVICE_TOKEN_PATH")
 
-	// GcloudProjectID is the Google Cloud project the service runs in. When set without
-	// ServiceTokenPath, the JSON Keys connection authenticates with Google ID tokens.
-	GcloudProjectID = getEnv("GCLOUD_PROJECT_ID")
-
 	// OTLPEndpoint is the standard OTEL_EXPORTER_OTLP_ENDPOINT. When set, traces and logs export
 	// over OTLP/HTTP, which the OTEL_EXPORTER_OTLP_* variables configure. When empty, they go to
 	// standard output. The OpenTelemetry SDK reads these variables without the prefix, so this one
