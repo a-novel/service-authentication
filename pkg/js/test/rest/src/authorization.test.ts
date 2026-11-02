@@ -118,6 +118,9 @@ describe("authorizationCodeExchange", () => {
     const sessionClaims = await claimsGet(callerApi(accountPlatform), session.accessToken);
     expect(claims.userID).toBe(sessionClaims.userID);
     expect(claims.sessionID).toBe(sessionClaims.sessionID);
+    expect(claims.sessionExp).toBe(sessionClaims.sessionExp);
+    expect(claims.clientID).toBe("studio");
+    expect(sessionClaims.clientID).toBeUndefined();
   });
 
   it("gives the client a token that names the person and manages no account", async () => {

@@ -30,6 +30,8 @@ func TestRestClaimsGet(t *testing.T) {
 		Roles:          []string{"user"},
 		RefreshTokenID: "refreshToken",
 		SessionID:      "session",
+		SessionExp:     1900000000,
+		ClientID:       "studio",
 	}
 
 	type serviceMock struct {
@@ -59,6 +61,8 @@ func TestRestClaimsGet(t *testing.T) {
 				"roles":          []any{"user"},
 				"refreshTokenID": "refreshToken",
 				"sessionID":      "session",
+				"sessionExp":     float64(1900000000),
+				"clientID":       "studio",
 			},
 			expectStatus: http.StatusOK,
 		},

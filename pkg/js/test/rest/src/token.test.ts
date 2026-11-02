@@ -47,8 +47,9 @@ describe("tokenCreate", () => {
       userID: claims.userID,
       roles: [Role.SuperAdmin],
       refreshTokenID: claims.refreshTokenID,
-      // A sign-in opens a session of its own, named after its refresh token.
+      // A sign-in opens a session of its own, named after its refresh token, and ending with it.
       sessionID: claims.refreshTokenID,
+      sessionExp: jwtPayload(res.refreshToken).exp,
     });
   });
 
