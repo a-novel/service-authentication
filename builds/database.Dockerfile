@@ -6,8 +6,8 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache jq
 # One pinned checksum list verifies the apko release archive of every architecture.
 ARG TARGETARCH
-ARG APKO_VERSION=1.4.14
-ARG APKO_CHECKSUMS_SHA256=d21598b5eaded635716c649d4c91488eaa70e8208f165a97cfe2fd5d92f5f4b3
+ARG APKO_VERSION=1.4.15
+ARG APKO_CHECKSUMS_SHA256=c677e95cfb715a90d87f55fea5e3f50e5d6e0a25c399bf5840211c5c9bf00d83
 WORKDIR /tmp
 RUN archive="apko_${APKO_VERSION}_linux_${TARGETARCH}" \
     && wget -q "https://github.com/chainguard-dev/apko/releases/download/v${APKO_VERSION}/checksums.txt" \
