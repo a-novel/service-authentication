@@ -23,7 +23,7 @@ inputs:
     description: JSON keys gRPC image reference.
   service_token_issuer_image:
     required: false
-    default: ghcr.io/a-novel/service-authentication/service-token-issuer:v2.23.1@sha256:b9fdb3f6e087186d90c6cb337f4f89ffbadedeae41e428b0651becec8f219adc
+    default: ghcr.io/a-novel/service-authentication/service-token-issuer:v2.23.2@sha256:59a1b678852df992187c2e87aa9a38b2a8403fd8ee9ff80b7ae382530ad4842e
     description: Service-token issuer image reference.
   mailserver_image:
     required: false
