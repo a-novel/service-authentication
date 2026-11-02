@@ -1,3 +1,5 @@
+import { accountPlatform, callerApi } from "./caller";
+
 import { describe, expect, it, vi } from "vitest";
 
 import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
@@ -41,7 +43,7 @@ describe("waitlistJoin", () => {
   });
 
   it("reports an existing account with a typed conflict without contacting Google", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
     const token = await tokenCreateAnon(api);
     const request = waitlistJoin(api, token.accessToken, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -52,26 +54,26 @@ describe("waitlistJoin", () => {
   });
 
   it("reports an unavailable writer without pretending to store a new request", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
     const token = await tokenCreateAnon(api);
     await expectStatus(waitlistJoin(api, token.accessToken, { email: generateRandomMail(), lang: Lang.Fr }), 503);
   });
 
   it("requires an anonymous or authenticated session", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
     await expectStatus(waitlistJoin(api, "", { email: generateRandomMail(), lang: Lang.En }), 401);
   });
 
   it.each(["invalid", "a".repeat(MAX_EMAIL_LENGTH + 1) + "@example.com"])("rejects invalid email %s", async (email) => {
     const form = { email, lang: Lang.En };
     expect(WaitlistJoinRequestSchema.safeParse(form).success).toBe(false);
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
     const token = await tokenCreateAnon(api);
     await expectStatus(waitlistJoin(api, token.accessToken, form), 422);
   });
 
   it("names the invalid fields of a rejected form", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
     const token = await tokenCreateAnon(api);
     const response = await api.fetchResponse("/v2/waitlist", {
       headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${token.accessToken}` },

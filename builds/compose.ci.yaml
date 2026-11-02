@@ -64,6 +64,18 @@ services:
       MP_SENDMAIL_FROM: noreply@agorastoryverse.com
       MP_DISABLE_WAL: "true"
 
+  service-token-issuer:
+    image: "${SERVICE_TOKEN_ISSUER_IMAGE:?SERVICE_TOKEN_ISSUER_IMAGE is required}"
+    ports:
+      - "4002:8080"
+    environment:
+      SERVICE_TOKEN_ISSUER: http://service-token-issuer:8080
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:8080/.well-known/openid-configuration"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
   postgres-json-keys:
     image: "${JSON_KEYS_DATABASE_IMAGE:?JSON_KEYS_DATABASE_IMAGE is required}"
     environment: *external-postgres-environment
@@ -96,6 +108,8 @@ services:
         condition: service_healthy
       service-json-keys:
         condition: service_healthy
+      service-token-issuer:
+        condition: service_healthy
     command:
       - sh
       - -c
@@ -122,3 +136,8 @@ services:
       SMTP_FORCE_UNENCRYPTED: "true"
       # The suites create many sessions from one address within seconds.
       REST_RATE_LIMITS_ENABLED: "false"
+      # The tests call as the account platform or as the OAuth client studio.
+      SERVICE_TOKEN_ISSUER: http://service-token-issuer:8080
+      SERVICE_TOKEN_AUDIENCE: authentication
+      SERVICE_TOKEN_CALLERS: system:serviceaccount:account:web,system:serviceaccount:studio:web
+      OAUTH_CLIENTS: '{"studio": {"redirectURI": "https://studio.example.com/auth/callback", "caller": "system:serviceaccount:studio:web"}}'

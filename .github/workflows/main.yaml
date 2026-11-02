@@ -244,6 +244,7 @@ jobs:
       SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
       SUPER_ADMIN_PASSWORD: admin
       MAIL_HOST: http://0.0.0.0:8025
+      SERVICE_TOKEN_ISSUER_URL: http://0.0.0.0:4002
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

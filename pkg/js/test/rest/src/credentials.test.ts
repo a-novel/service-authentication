@@ -1,8 +1,10 @@
+import { accountPlatform, callerApi } from "./caller";
+
 import { describe, expect, it } from "vitest";
 
 import { expectStatus } from "@a-novel-kit/nodelib-test/http";
 import {
-  AuthenticationApi,
+  type AuthenticationApi,
   Lang,
   Role,
   type Token,
@@ -39,7 +41,7 @@ const mailUrl = (() => {
 
 describe("shortCodeCreateRegister", () => {
   it("refuses anonymous callers", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
     const anonymousToken = await tokenCreateAnon(api);
 
     await expectStatus(
@@ -54,28 +56,28 @@ describe("shortCodeCreateRegister", () => {
 
 describe("credentialsCreate", () => {
   it("registers the user", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl);
     await registerUser(api, preRegister);
   });
 
   it("registers an address with a plus sign", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl, `tag+${generateRandomMail()}`);
     await registerUser(api, preRegister);
   });
 
   it("does not register with wrong link", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl);
     await expectStatus(registerUser(api, { ...preRegister, shortCode: "invalid" }), 403);
   });
 
   it("only registers once", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl);
     await registerUser(api, preRegister);
@@ -83,7 +85,7 @@ describe("credentialsCreate", () => {
   });
 
   it("only takes into account the latest attempt", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const email = generateRandomMail();
 
@@ -125,7 +127,7 @@ async function requestEmailUpdate(api: AuthenticationApi, token: Token, newEmail
 
 describe("credentialsUpdateEmail", () => {
   it("changes email address", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const anonToken = await tokenCreateAnon(api);
 
@@ -161,7 +163,7 @@ describe("credentialsUpdateEmail", () => {
   });
 
   it("only takes into account the latest attempt", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const anonToken = await tokenCreateAnon(api);
 
@@ -206,7 +208,7 @@ describe("credentialsUpdateEmail", () => {
   });
 
   it("accepts update if email has been taken", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const anonToken = await tokenCreateAnon(api);
 
@@ -236,7 +238,7 @@ describe("credentialsUpdateEmail", () => {
 
 describe("credentialsUpdatePassword", () => {
   it("changes the user password", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
@@ -268,7 +270,7 @@ describe("credentialsUpdatePassword", () => {
   });
 
   it("refuses to update if current password is incorrect", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
@@ -333,7 +335,7 @@ async function requestPasswordReset(api: AuthenticationApi, token: Token, email:
 
 describe("credentialsResetPassword", () => {
   it("changes password after reset", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const anonToken = await tokenCreateAnon(api);
 
@@ -365,7 +367,7 @@ describe("credentialsResetPassword", () => {
   });
 
   it("only takes into account the latest attempt", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const anonToken = await tokenCreateAnon(api);
 
@@ -396,7 +398,7 @@ describe("credentialsResetPassword", () => {
 
 describe("credentialsUpdateRole", () => {
   it("changes the role of a user", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const superAdminToken = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -425,7 +427,7 @@ describe("credentialsUpdateRole", () => {
   });
 
   it("refuses user to change roles themselves", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
@@ -447,7 +449,7 @@ describe("credentialsUpdateRole", () => {
 
 describe("credentialsGet", () => {
   it("gets existing credentials", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const superAdminToken = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -467,7 +469,7 @@ describe("credentialsGet", () => {
   });
 
   it("does not get non-existing credentials", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const superAdminToken = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -485,7 +487,7 @@ describe("credentialsGet", () => {
 
 describe("credentialsGetSelf", () => {
   it("gets the caller's credentials", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
@@ -499,7 +501,7 @@ describe("credentialsGetSelf", () => {
   });
 
   it("returns the pending email until it is confirmed", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const anonToken = await tokenCreateAnon(api);
 
@@ -521,7 +523,7 @@ describe("credentialsGetSelf", () => {
   });
 
   it("does not reveal that the pending email is registered", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
@@ -537,7 +539,7 @@ describe("credentialsGetSelf", () => {
   });
 
   it("refuses anonymous callers", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
     const anonToken = await tokenCreateAnon(api);
 
     await expectStatus(credentialsGetSelf(api, anonToken.accessToken), 403);
@@ -546,7 +548,7 @@ describe("credentialsGetSelf", () => {
 
 describe("credentialsExists", () => {
   it("gets existing credentials", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const superAdminToken = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -564,7 +566,7 @@ describe("credentialsExists", () => {
   });
 
   it("does not get non-existing credentials", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const superAdminToken = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -581,7 +583,7 @@ describe("credentialsExists", () => {
 
 describe("credentialsList", () => {
   it("returns users", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const superAdminToken = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
