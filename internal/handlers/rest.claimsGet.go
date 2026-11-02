@@ -58,6 +58,8 @@ func (handler *RestClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Roles:          claims.Roles,
 		RefreshTokenID: claims.RefreshTokenID,
 		SessionID:      claims.Session(),
+		SessionExp:     claims.SessionExp,
+		ClientID:       claims.ClientID,
 	}
 
 	httpf.SendJSONStatus(w, span, http.StatusOK, response)
