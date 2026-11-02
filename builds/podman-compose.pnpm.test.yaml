@@ -17,6 +17,21 @@ services:
       MP_SENDMAIL_FROM: noreply@agorastoryverse.com
       MP_DISABLE_WAL: true
 
+  service-token-issuer:
+    image: ghcr.io/a-novel/service-authentication/service-token-issuer:v2.23.1@sha256:b9fdb3f6e087186d90c6cb337f4f89ffbadedeae41e428b0651becec8f219adc
+    ports:
+      - "${SERVICE_TOKEN_ISSUER_PORT}:8080"
+    networks:
+      - authentication-integration-rest-test
+    environment:
+      SERVICE_TOKEN_ISSUER: http://service-token-issuer:8080
+    # Podman ignores the image's own check, so the dependents' wait needs this one.
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:8080/.well-known/openid-configuration"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
   # ====================================================================================================================
   # DATABASES
   # ====================================================================================================================
@@ -71,8 +86,12 @@ services:
     ports:
       - "${REST_PORT}:8080"
     depends_on:
-      - postgres-authentication
-      - mailserver
+      postgres-authentication:
+        condition: service_started
+      mailserver:
+        condition: service_started
+      service-token-issuer:
+        condition: service_healthy
     command:
       - sh
       - -c
@@ -99,6 +118,11 @@ services:
       SMTP_FORCE_UNENCRYPTED: true
       # The suites create many sessions from one address within seconds.
       REST_RATE_LIMITS_ENABLED: false
+      # The tests call as the account platform or as the OAuth client studio.
+      SERVICE_TOKEN_ISSUER: http://service-token-issuer:8080
+      SERVICE_TOKEN_AUDIENCE: authentication
+      SERVICE_TOKEN_CALLERS: system:serviceaccount:account:web,system:serviceaccount:studio:web
+      OAUTH_CLIENTS: '{"studio": {"redirectURI": "https://studio.example.com/auth/callback", "caller": "system:serviceaccount:studio:web"}}'
     networks:
       - authentication-integration-rest-test
 

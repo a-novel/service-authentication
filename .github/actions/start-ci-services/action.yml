@@ -21,6 +21,10 @@ inputs:
     required: false
     default: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.15.0@sha256:724cdd6d379076d646a021ea6d4963842ebebcccdb58ddf7ed9675cbda6c54b3
     description: JSON keys gRPC image reference.
+  service_token_issuer_image:
+    required: false
+    default: ghcr.io/a-novel/service-authentication/service-token-issuer:v2.23.1@sha256:b9fdb3f6e087186d90c6cb337f4f89ffbadedeae41e428b0651becec8f219adc
+    description: Service-token issuer image reference.
   mailserver_image:
     required: false
     default: ghcr.io/axllent/mailpit:v1.33.0
@@ -56,6 +60,7 @@ runs:
         STANDALONE_REST_IMAGE: ${{ inputs.standalone_rest_image }}
         JSON_KEYS_DATABASE_IMAGE: ${{ inputs.json_keys_database_image }}
         JSON_KEYS_GRPC_IMAGE: ${{ inputs.json_keys_grpc_image }}
+        SERVICE_TOKEN_ISSUER_IMAGE: ${{ inputs.service_token_issuer_image }}
         MAILSERVER_IMAGE: ${{ inputs.mailserver_image }}
         VALKEY_IMAGE: ${{ inputs.valkey_image }}
         POSTGRES_PASSWORD: postgres

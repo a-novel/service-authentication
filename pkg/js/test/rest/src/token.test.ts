@@ -1,8 +1,10 @@
+import { accountPlatform, callerApi } from "./caller";
+
 import { describe, expect, it } from "vitest";
 
 import { expectStatus } from "@a-novel-kit/nodelib-test/http";
 import {
-  AuthenticationApi,
+  type AuthenticationApi,
   Role,
   TokenRefreshRequestSchema,
   claimsGet,
@@ -30,7 +32,7 @@ async function superAdminSession(api: AuthenticationApi) {
 
 describe("tokenCreate", () => {
   it("logs in with correct credentials", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const res = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -51,7 +53,7 @@ describe("tokenCreate", () => {
   });
 
   it("signs the session's end into the access token", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const res = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -64,7 +66,7 @@ describe("tokenCreate", () => {
   });
 
   it("returns unauthorized when email does not exist", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     await expectStatus(
       tokenCreate(api, {
@@ -76,7 +78,7 @@ describe("tokenCreate", () => {
   });
 
   it("returns unauthorized when password is incorrect", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     await expectStatus(
       tokenCreate(api, {
@@ -90,7 +92,7 @@ describe("tokenCreate", () => {
 
 describe("tokenCreateAnon", () => {
   it("logs in with generic credentials", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const res = await tokenCreateAnon(api);
 
@@ -106,7 +108,7 @@ describe("tokenCreateAnon", () => {
 
 describe("tokenRefresh", () => {
   it("refreshes token once", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -133,7 +135,7 @@ describe("tokenRefresh", () => {
   });
 
   it("refreshes token twice", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -161,7 +163,7 @@ describe("tokenRefresh", () => {
   });
 
   it("validates an issued token pair with its request schema", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -173,7 +175,7 @@ describe("tokenRefresh", () => {
   });
 
   it("can only use refresh token issued with original access token", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await tokenCreate(api, {
       email: process.env.SUPER_ADMIN_EMAIL!,
@@ -197,7 +199,7 @@ describe("tokenRefresh", () => {
 
 describe("tokenRevoke", () => {
   it("stops the refresh token from renewing the session", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
 
@@ -207,7 +209,7 @@ describe("tokenRevoke", () => {
   });
 
   it("refuses every access token of the session", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
     const renewed = await tokenRefresh(api, token);
@@ -219,7 +221,7 @@ describe("tokenRevoke", () => {
   });
 
   it("succeeds again on a revoked refresh token", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
 
@@ -229,7 +231,7 @@ describe("tokenRevoke", () => {
   });
 
   it("leaves the user's other sessions untouched", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
     const otherToken = await superAdminSession(api);
@@ -244,7 +246,7 @@ describe("tokenRevoke", () => {
   });
 
   it("refuses another user's refresh token", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
     const otherUser = await registerUser(api, await preRegisterUser(api, mailUrl));
@@ -257,7 +259,7 @@ describe("tokenRevoke", () => {
   });
 
   it("returns unauthorized without an access token", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
 
@@ -268,7 +270,7 @@ describe("tokenRevoke", () => {
   });
 
   it("returns forbidden for an anonymous session", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
     const anonToken = await tokenCreateAnon(api);
@@ -277,7 +279,7 @@ describe("tokenRevoke", () => {
   });
 
   it("returns forbidden for a token that is not a refresh token", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
 
@@ -288,7 +290,7 @@ describe("tokenRevoke", () => {
   });
 
   it("returns unprocessable entity for a blank token", async () => {
-    const api = new AuthenticationApi(process.env.REST_URL!);
+    const api = callerApi(accountPlatform);
 
     const token = await superAdminSession(api);
 

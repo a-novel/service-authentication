@@ -1,13 +1,8 @@
+import { accountPlatform, callerApi } from "./caller";
+
 import { setTimeout as delay } from "node:timers/promises";
 
-import {
-  AuthenticationApi,
-  Role,
-  claimsGet,
-  credentialsCreate,
-  tokenCreate,
-  tokenCreateAnon,
-} from "@a-novel/service-authentication-rest";
+import { Role, claimsGet, credentialsCreate, tokenCreate, tokenCreateAnon } from "@a-novel/service-authentication-rest";
 
 import { JSDOM } from "jsdom";
 import { simpleParser } from "mailparser";
@@ -18,11 +13,11 @@ interface MailpitSearchResponse {
 
 /** Completes the role-bearing invitation created by the standalone maintenance command. */
 export default async function setup() {
-  const restURL = requiredEnvironment("REST_URL");
+  requiredEnvironment("REST_URL");
   const mailHost = process.env.MAIL_HOST ?? requiredEnvironment("MAIL_UI_URL");
   const email = process.env.SUPER_ADMIN_EMAIL ?? "noreply@agorastoryverse.com";
   const password = process.env.SUPER_ADMIN_PASSWORD ?? "admin";
-  const api = new AuthenticationApi(restURL);
+  const api = callerApi(accountPlatform);
 
   try {
     await tokenCreate(api, { email, password });
