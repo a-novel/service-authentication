@@ -22,6 +22,17 @@ export const CredentialsSchema = z.object({
 export type Credentials = z.infer<typeof CredentialsSchema>;
 
 /**
+ * An account after a password or email change. When a session of the account made the request, `token` is a fresh
+ * pair that keeps that session: the change ends every other session opened before it.
+ */
+export const CredentialsUpdateSchema = CredentialsSchema.extend({
+  token: TokenSchema.optional(),
+});
+
+/** The value {@link CredentialsUpdateSchema} validates. */
+export type CredentialsUpdate = z.infer<typeof CredentialsUpdateSchema>;
+
+/**
  * An email change awaiting confirmation: the requested address and when its confirmation code expires. It lasts
  * until the user confirms it, requests another change, or lets the code expire.
  */
@@ -200,14 +211,15 @@ export async function credentialsCreate(
 
 /**
  * Applies a short-code-confirmed email change and returns the updated account. The former address receives a notice,
- * and every session opened before the change ends: its refresh tokens no longer renew.
+ * and every session opened before the change ends. When `accessToken` belongs to a session of the account, that
+ * session continues: replace its tokens with the returned `token`. An anonymous token gets none.
  */
 export async function credentialsUpdateEmail(
   api: AuthenticationApi,
   accessToken: string,
   form: CredentialsUpdateEmailRequest
-): Promise<Credentials> {
-  return await api.fetch("/v2/credentials/email", CredentialsSchema, {
+): Promise<CredentialsUpdate> {
+  return await api.fetch("/v2/credentials/email", CredentialsUpdateSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PATCH",
     body: JSON.stringify(form),
@@ -216,14 +228,15 @@ export async function credentialsUpdateEmail(
 
 /**
  * Changes the password of the authenticated account, verified by its current password, and returns the updated
- * account. Every session opened before the change ends, the caller's included: sign in again with the new password.
+ * account. Every session opened before the change ends, but the caller's: replace its tokens with the returned
+ * `token`, a fresh pair that joins the session and ends with it.
  */
 export async function credentialsUpdatePassword(
   api: AuthenticationApi,
   accessToken: string,
   form: CredentialsUpdatePasswordRequest
-): Promise<Credentials> {
-  return await api.fetch("/v2/credentials/password", CredentialsSchema, {
+): Promise<CredentialsUpdate> {
+  return await api.fetch("/v2/credentials/password", CredentialsUpdateSchema, {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PATCH",
     body: JSON.stringify(form),

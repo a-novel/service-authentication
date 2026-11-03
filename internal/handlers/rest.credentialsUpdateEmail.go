@@ -11,11 +11,12 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // RestCredentialsUpdateEmailService is the core operation PATCH /v2/credentials/email delegates to.
 type RestCredentialsUpdateEmailService interface {
-	Exec(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.Credentials, error)
+	Exec(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.CredentialsUpdate, error)
 }
 
 // credentialsUpdateEmailErrors maps a refused email change to its status.
@@ -62,10 +63,20 @@ func (handler *RestCredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
+	// The confirmation may come from a session of the account, which then continues, or from an
+	// anonymous one, which keeps none.
+	claims, err := session.GetClaimsContext(ctx)
+	if err != nil {
+		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
+
+		return
+	}
+
 	serviceRequest := &core.CredentialsUpdateEmailRequest{
 		UserID:    request.UserID,
 		ShortCode: request.ShortCode,
 		Lang:      request.Lang,
+		Session:   claims,
 	}
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
@@ -75,5 +86,5 @@ func (handler *RestCredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	httpf.SendJSONStatus(w, span, http.StatusOK, loadCredentials(res))
+	httpf.SendJSONStatus(w, span, http.StatusOK, loadCredentialsUpdate(res))
 }

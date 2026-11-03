@@ -142,11 +142,12 @@ func main() {
 	serviceCredentialsGetSelf := core.NewCredentialsGetSelf(daoCredentialsSelect, daoShortCodeSelect)
 	serviceCredentialsList := core.NewCredentialsList(daoCredentialsList)
 	serviceCredentialsUpdateEmail := core.NewCredentialsUpdateEmail(
-		daoCredentialsUpdateEmail, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, mailDelivery,
-		daoTransactor,
+		daoCredentialsUpdateEmail, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient,
+		mailDelivery, daoTransactor,
 	)
 	serviceCredentialsUpdatePassword := core.NewCredentialsUpdatePassword(
-		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
+		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient,
+		daoTransactor,
 	)
 	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(daoCredentialsUpdateRole, daoCredentialsSelect)
 

@@ -538,8 +538,10 @@ paths:
         phase. If not, use `[PUT] /v2/short-code/update-email` first.
 
         Once the change applies, the former address receives a notice in the language `lang` names, and every session
-        opened before the change ends: its refresh tokens no longer renew, and its access tokens last until they
-        expire. A server that cannot take the notice answers 503 and changes nothing.
+        opened before the change ends: its refresh tokens no longer renew, and `[GET] /v2/session` refuses its access
+        tokens. When the bearer token belongs to a session of the account, that session continues: the response
+        carries a fresh token pair in `token`. A confirmation sent with an anonymous token gets none. A server that
+        cannot take the notice answers 503 and changes nothing.
 
         By default, each caller may try 10 email updates per minute and 30 per 10 minutes, and each account 30 per 10
         minutes.
@@ -550,7 +552,7 @@ paths:
         $ref: "#/components/requestBodies/emailUpdate"
       responses:
         "200":
-          $ref: "#/components/responses/credentialsGet"
+          $ref: "#/components/responses/credentialsUpdate"
         "400":
           $ref: "#/components/responses/badRequest"
         "401":
@@ -577,6 +579,9 @@ paths:
       description: |
         Update the password of a user. The current password must be provided as an extra safeguard.
 
+        The change ends every session opened before it, but the caller's: the response carries a fresh token pair in
+        `token`, which joins the caller's session and ends with it. Replace the caller's tokens with it.
+
         By default, each user may try 10 password updates per minute and 30 per 10 minutes.
       tags: [credentials]
       security:
@@ -585,7 +590,7 @@ paths:
         $ref: "#/components/requestBodies/passwordUpdate"
       responses:
         "200":
-          $ref: "#/components/responses/credentialsGet"
+          $ref: "#/components/responses/credentialsUpdate"
         "400":
           $ref: "#/components/responses/badRequest"
         "401":
@@ -608,6 +613,9 @@ paths:
       description: |
         Completes the password reset process. The user must have a short-code available, generated during the initial 
         phase. If not, use `[PUT] /v2/short-code/update-password` first.
+
+        The reset ends every session opened before it. No session makes the request, so none continues: the person
+        signs in with the new password.
 
         By default, each caller may try 10 password resets per minute and 30 per 10 minutes, and each account 30 per
         10 minutes.
@@ -913,6 +921,15 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/publicCredentials"
+
+    credentialsUpdate:
+      description: |
+        The credentials after the change. When a session of the account made the request, `token` carries a fresh
+        pair that keeps that session: the change ends every other session opened before it.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/credentialsUpdate"
 
     credentialsGetSelf:
       description: The credentials of the authenticated user.
@@ -1245,6 +1262,31 @@ components:
           type: string
           format: date-time
           examples: [2009-11-10T23:00:00Z]
+
+    credentialsUpdate:
+      type: object
+      description: |
+        The credentials of the account after a password or email change, without any sensitive data such as the
+        password, and the token pair that keeps the caller's session.
+      required: [id, email, role, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: "#/components/schemas/userID"
+        email:
+          $ref: "#/components/schemas/email"
+        role:
+          $ref: "#/components/schemas/userRole"
+        createdAt:
+          type: string
+          format: date-time
+          examples: [2009-11-10T23:00:00Z]
+        updatedAt:
+          type: string
+          format: date-time
+          examples: [2009-11-10T23:00:00Z]
+        token:
+          $ref: "#/components/schemas/token"
 
     selfCredentials:
       type: object
