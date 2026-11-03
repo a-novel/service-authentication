@@ -12,6 +12,7 @@ import (
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 )
 
@@ -69,6 +70,10 @@ func NewShortCodeCreatePasswordReset(
 
 // Exec issues the reset code and schedules its delivery email, returning the code
 // immediately. It fails if no account matches the requested email.
+//
+// An unknown email costs what a known one does: it takes a mail slot, so a saturated mailer fails
+// both alike, and runs one Argon2id hash, the bulk of a short code's cost. The response time then
+// tells nothing about which addresses are registered.
 func (service *ShortCodeCreatePasswordReset) Exec(
 	ctx context.Context, request *ShortCodeCreatePasswordResetRequest,
 ) (*ShortCode, error) {
@@ -85,16 +90,20 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	credentials, err := service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
-	}
-
 	reservation, err := service.mailDelivery.Reserve(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
 	}
 	defer reservation.Release()
+
+	credentials, err := service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
+	if errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+		lib.DummyCompareArgon2(request.Email)
+	}
+
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
+	}
 
 	ttl := service.shortCodesConfig.Usages[ShortCodeUsageResetPassword].TTL
 	createRequest := &ShortCodeCreateRequest{
