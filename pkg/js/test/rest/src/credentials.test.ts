@@ -164,8 +164,6 @@ describe("credentialsUpdateEmail", () => {
     });
 
     expect(newCredentials.email).toBe(newEmail);
-    // An anonymous confirmation holds no session of the account to keep.
-    expect(newCredentials.token).toBeUndefined();
 
     // The former address learns of the change, and the sessions opened before it end.
     await checkEmail(mailUrl, `to:"${user.email}" subject:"Your Agora email address changed"`);
@@ -184,33 +182,6 @@ describe("credentialsUpdateEmail", () => {
       password: user.password,
     });
     await tokenRefresh(api, renewed);
-  });
-
-  it("keeps the session that confirms the change, and ends the others", async () => {
-    const api = callerApi(accountPlatform);
-
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
-
-    const userToken = await tokenCreate(api, { email: user.email, password: user.password });
-    const otherSession = await tokenCreate(api, { email: user.email, password: user.password });
-
-    const { shortCode, target } = await requestEmailUpdate(api, userToken, user.password);
-
-    await nextSecond();
-    const updated = await credentialsUpdateEmail(api, userToken.accessToken, {
-      userID: target,
-      shortCode,
-      lang: Lang.En,
-    });
-
-    expect(updated.token).toBeDefined();
-    const claims = await claimsGet(api, updated.token!.accessToken);
-    expect(claims.userID).toBe(target);
-    await tokenRefresh(api, updated.token!);
-
-    await expectStatus(tokenRefresh(api, otherSession), 403);
-    await expectStatus(claimsGet(api, otherSession.accessToken), 401);
   });
 
   it("refuses to start a change without the current password", async () => {
@@ -320,24 +291,17 @@ describe("credentialsUpdatePassword", () => {
       email: user.email,
       password: user.password,
     });
-    const otherSession = await tokenCreate(api, { email: user.email, password: user.password });
 
     const newPassword = generateRandomPassword();
 
     await nextSecond();
-    const updated = await credentialsUpdatePassword(api, userToken.accessToken, {
+    await credentialsUpdatePassword(api, userToken.accessToken, {
       password: newPassword,
       currentPassword: user.password,
     });
 
-    // The caller's session continues through the fresh pair; every session opened before the change ends.
-    expect(updated.token).toBeDefined();
-    await claimsGet(api, updated.token!.accessToken);
-    await tokenRefresh(api, updated.token!);
-
+    // The sessions opened before the change end.
     await expectStatus(tokenRefresh(api, userToken), 403);
-    await expectStatus(tokenRefresh(api, otherSession), 403);
-    await expectStatus(claimsGet(api, otherSession.accessToken), 401);
 
     await expectStatus(
       tokenCreate(api, {

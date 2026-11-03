@@ -17,7 +17,7 @@ import (
 
 // RestCredentialsUpdatePasswordService is the core operation PATCH /v2/credentials/password delegates to.
 type RestCredentialsUpdatePasswordService interface {
-	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.CredentialsUpdate, error)
+	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
 }
 
 // credentialsUpdatePasswordErrors maps a refused password change to its status.
@@ -69,7 +69,6 @@ func (handler *RestCredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r
 		Password:        request.Password,
 		CurrentPassword: request.CurrentPassword,
 		UserID:          lo.FromPtr(claims.UserID),
-		Session:         claims,
 	}
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
@@ -79,5 +78,5 @@ func (handler *RestCredentialsUpdatePassword) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 
-	httpf.SendJSONStatus(w, span, http.StatusOK, loadCredentialsUpdate(res))
+	httpf.SendJSONStatus(w, span, http.StatusOK, loadCredentials(res))
 }

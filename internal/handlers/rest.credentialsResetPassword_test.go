@@ -28,7 +28,7 @@ func TestRestCredentialsResetPassword(t *testing.T) {
 
 	type serviceMock struct {
 		req  *core.CredentialsUpdatePasswordRequest
-		resp *core.CredentialsUpdate
+		resp *core.Credentials
 		err  error
 	}
 
@@ -57,13 +57,13 @@ func TestRestCredentialsResetPassword(t *testing.T) {
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				resp: &core.CredentialsUpdate{Credentials: core.Credentials{
+				resp: &core.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Email:     "user@provider.com",
 					Role:      authconfig.RoleUser,
 					CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
 					UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
-				}},
+				},
 			},
 
 			expectResponse: map[string]any{

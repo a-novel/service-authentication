@@ -7,14 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-json-keys/v2/pkg/go"
-
-	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/postgres/postgrestest"
 	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
@@ -23,7 +19,6 @@ import (
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
-	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestCredentialsUpdatePassword(t *testing.T) {
@@ -36,16 +31,6 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 	require.NoError(t, err)
 
 	shortCodeID := uuid.MustParse("00000000-0000-0000-0000-000000000010")
-
-	// callerSession is the caller's own session, which continues past the change through a new pair.
-	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
-	sessionExp := time.Now().Add(time.Hour).Unix()
-	callerSession := &session.Claims{
-		UserID: &userID, RefreshTokenID: "refresh-token-id", SessionID: "session-id", SessionExp: sessionExp,
-	}
-	keptRefreshToken := mockRefreshToken(session.RefreshClaims{
-		Jti: "kept-refresh-token-id", UserID: userID, SessionID: "session-id", SessionExp: sessionExp,
-	})
 
 	type serviceShortCodeVerifyMock struct {
 		resp *core.ShortCode
@@ -75,12 +60,8 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
 		daoCredentialsSelectMock    *daoCredentialsSelectMock
 		daoMock                     *daoMock
-		// signErr fails the signature of the pair that keeps the caller's session; nil signs it.
-		signErr  error
-		signPair bool
 
-		expectToken *core.Token
-		expectErr   error
+		expectErr error
 	}{
 		{
 			name: "Success/ShorCode",
@@ -118,47 +99,6 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 			daoMock: &daoMock{
 				resp: &dao.Credentials{},
 			},
-		},
-		{
-			// The caller's session continues past the change, in a pair that joins it and ends with it.
-			name: "Success/CurrentPassword/KeepsSession",
-
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:          userID,
-				Password:        "new-password",
-				CurrentPassword: passwordRaw,
-				Session:         callerSession,
-			},
-
-			daoCredentialsSelectMock: &daoCredentialsSelectMock{
-				resp: &dao.Credentials{Password: passwordArgon2ed},
-			},
-			daoMock: &daoMock{
-				resp: &dao.Credentials{ID: userID, Role: "auth:user"},
-			},
-			signPair: true,
-
-			expectToken: &core.Token{AccessToken: "access-token", RefreshToken: keptRefreshToken},
-		},
-		{
-			// A failed signature leaves the change in place: the caller signs in again.
-			name: "Success/CurrentPassword/SignFailure",
-
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:          userID,
-				Password:        "new-password",
-				CurrentPassword: passwordRaw,
-				Session:         callerSession,
-			},
-
-			daoCredentialsSelectMock: &daoCredentialsSelectMock{
-				resp: &dao.Credentials{Password: passwordArgon2ed},
-			},
-			daoMock: &daoMock{
-				resp: &dao.Credentials{ID: userID, Role: "auth:user"},
-			},
-			signPair: true,
-			signErr:  errFoo,
 		},
 		{
 			name: "Error/UploadCredentials",
@@ -297,37 +237,6 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				daoCredentialsSelect := coremocks.NewMockCredentialsUpdatePasswordDaoCredentialsSelect(t)
 				serviceShortCodeVerify := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeVerify(t)
 				serviceShortCodeConsume := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeConsume(t)
-				serviceSignClaims := coremocks.NewMockCredentialsUpdatePasswordServiceSignClaims(t)
-
-				if testCase.signPair {
-					refreshRequest := &servicejsonkeys.ClaimsSignRequest{
-						Usage: servicejsonkeys.KeyUsageAuthRefresh,
-						Payload: lo.Must(grpcf.MarshalJSONAsAny(session.RefreshClaimsForm{
-							UserID: userID, SessionID: "session-id", SessionExp: sessionExp,
-						})),
-					}
-
-					serviceSignClaims.EXPECT().
-						ClaimsSign(mock.Anything, refreshRequest).
-						Return(&servicejsonkeys.ClaimsSignResponse{Token: keptRefreshToken}, testCase.signErr)
-				}
-
-				if testCase.signPair && testCase.signErr == nil {
-					accessRequest := &servicejsonkeys.ClaimsSignRequest{
-						Usage: servicejsonkeys.KeyUsageAuth,
-						Payload: lo.Must(grpcf.MarshalJSONAsAny(session.Claims{
-							UserID:         &userID,
-							Roles:          []string{"auth:user"},
-							RefreshTokenID: "kept-refresh-token-id",
-							SessionID:      "session-id",
-							SessionExp:     sessionExp,
-						})),
-					}
-
-					serviceSignClaims.EXPECT().
-						ClaimsSign(mock.Anything, accessRequest).
-						Return(&servicejsonkeys.ClaimsSignResponse{Token: "access-token"}, nil)
-				}
 
 				if testCase.serviceShortCodeVerifyMock != nil {
 					shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
@@ -376,18 +285,11 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 					daoCredentialsSelect,
 					serviceShortCodeVerify,
 					serviceShortCodeConsume,
-					serviceSignClaims,
 					transactiontest.NewTransactor(),
 				)
 
-				res, err := service.Exec(ctx, testCase.request)
+				_, err := service.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
-
-				if err == nil {
-					require.Equal(t, testCase.expectToken, res.Token)
-				}
-
-				serviceSignClaims.AssertExpectations(t)
 
 				mockDao.AssertExpectations(t)
 				daoCredentialsSelect.AssertExpectations(t)
@@ -501,10 +403,7 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 				}
 			}
 
-			service := core.NewCredentialsUpdatePassword(
-				mockDao, daoCredentialsSelect, verify, consume, coremocks.NewMockCredentialsUpdatePasswordServiceSignClaims(t),
-				transactor,
-			)
+			service := core.NewCredentialsUpdatePassword(mockDao, daoCredentialsSelect, verify, consume, transactor)
 			exec := func() error {
 				_, err := service.Exec(t.Context(), testCase.request)
 
