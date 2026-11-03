@@ -87,8 +87,10 @@ func (service *WaitlistCleanup) Exec(
 
 		// PostgreSQL decides which rows are stale; pending invitations remain in the sheet.
 		if request.Apply && len(accounts) > 0 {
+			emails := lo.Map(accounts, func(credentials *dao.Credentials, _ int) string { return credentials.Email })
+
 			removed, removeErr := service.writer.Exec(ctx, &dao.WaitlistRequest{
-				Action: dao.WaitlistActionRemove, Emails: lo.Map(accounts, credentialsEmail),
+				Action: dao.WaitlistActionRemove, Emails: emails,
 			})
 			if removeErr != nil {
 				return result, otel.ReportError(span, fmt.Errorf("remove registered accounts: %w", removeErr))
@@ -119,8 +121,4 @@ func checkWaitlistPage(emails []string, scanned int, after string) error {
 	}
 
 	return nil
-}
-
-func credentialsEmail(credentials *dao.Credentials, _ int) string {
-	return credentials.Email
 }

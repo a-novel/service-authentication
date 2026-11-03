@@ -46,7 +46,7 @@ export type TokenRevokeRequest = z.infer<typeof TokenRevokeRequestSchema>;
 /** Opens an authenticated session from an email and password, returning a fresh token pair. */
 export async function tokenCreate(api: AuthenticationApi, form: TokenCreateRequest): Promise<Token> {
   return await api.fetch("/v2/session", TokenSchema, {
-    headers: { ...HTTP_HEADERS.JSON },
+    headers: HTTP_HEADERS.JSON,
     method: "PUT",
     body: JSON.stringify(form),
   });
@@ -55,7 +55,7 @@ export async function tokenCreate(api: AuthenticationApi, form: TokenCreateReque
 /** Opens an anonymous session, returning a token pair whose claims carry no user. */
 export async function tokenCreateAnon(api: AuthenticationApi): Promise<Token> {
   return await api.fetch("/v2/session/anon", TokenSchema, {
-    headers: { ...HTTP_HEADERS.JSON },
+    headers: HTTP_HEADERS.JSON,
     method: "PUT",
   });
 }
@@ -63,7 +63,7 @@ export async function tokenCreateAnon(api: AuthenticationApi): Promise<Token> {
 /** Exchanges an expiring token pair for a new one, preserving the session's claims. */
 export async function tokenRefresh(api: AuthenticationApi, form: TokenRefreshRequest): Promise<Token> {
   return await api.fetch("/v2/session", TokenSchema, {
-    headers: { ...HTTP_HEADERS.JSON },
+    headers: HTTP_HEADERS.JSON,
     method: "PATCH",
     body: JSON.stringify(form),
   });

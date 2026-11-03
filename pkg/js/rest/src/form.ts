@@ -24,7 +24,7 @@ export enum Role {
 }
 
 /** Validates a {@link Role}. */
-export const RoleSchema = z.enum([Role.Anon, Role.User, Role.Admin, Role.SuperAdmin]);
+export const RoleSchema = z.enum(Role);
 
 /** Language used to localize the emails the service sends, such as short-code messages. */
 export enum Lang {
@@ -35,4 +35,4 @@ export enum Lang {
 }
 
 /** Validates a {@link Lang}. */
-export const LangSchema = z.enum([Lang.Fr, Lang.En]);
+export const LangSchema = z.enum(Lang);
