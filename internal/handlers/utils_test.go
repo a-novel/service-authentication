@@ -37,7 +37,11 @@ func serveAsCaller(t *testing.T, handler http.Handler, request *http.Request, ca
 	tokenConfig := servicetoken.Config{Issuer: issuer.URL, Audience: serviceTokenAudience, Callers: []string{caller}}
 
 	request.Header.Set(servicetoken.Header, issuer.Sign(t, issuer.Claims(caller, serviceTokenAudience)))
-	middlewares.RestServiceToken(tokenConfig, &http.Client{}, config.LoggerDev)(handler).ServeHTTP(w, request)
+
+	withServiceToken, err := middlewares.RestServiceToken(tokenConfig, false, &http.Client{}, config.LoggerDev)
+	require.NoError(t, err)
+
+	withServiceToken(handler).ServeHTTP(w, request)
 
 	return w.Result()
 }

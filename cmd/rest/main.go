@@ -184,9 +184,10 @@ func main() {
 		return withSessionAuth(r, permissions...).With(refuseClientTokens)
 	}
 	limit := middlewares.NewRestLimits(cfg.Rest, cfg.Limits)
-	withServiceToken := middlewares.RestServiceToken(
-		cfg.ServiceToken, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger, cfg.Rest.Liveness,
-	)
+	withServiceToken := lo.Must(middlewares.RestServiceToken(
+		cfg.ServiceToken, cfg.ServiceTokenIssuerOptional, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger,
+		cfg.Rest.Liveness,
+	))
 
 	// =================================================================================================================
 	// HANDLERS
