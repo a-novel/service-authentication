@@ -26,7 +26,8 @@ export type Claims = z.infer<typeof ClaimsSchema>;
 
 /**
  * Returns the claims carried by the given access token, as resolved by the service. A token whose
- * session was signed out fails with 401, like an invalid one.
+ * session was signed out or ended fails with 401, like an invalid one, and so does a token issued
+ * before the account's last password or email change.
  */
 export async function claimsGet(api: AuthenticationApi, accessToken: string): Promise<Claims> {
   return await api.fetch("/v2/session", ClaimsSchema, {

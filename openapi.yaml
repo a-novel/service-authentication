@@ -103,7 +103,8 @@ paths:
         Validate a user token, and extract the claims it contains. This route also works for anonymous tokens.
 
         A token whose session was signed out or has ended answers 401, like an invalid one, and so does a request
-        without a token. Other services verify access tokens offline and accept them until they expire, so a client
+        without a token. A password or email change ends every session opened before it, so a token issued before the
+        account's last change answers 401 too. Other services verify access tokens offline and accept them until they expire, so a client
         calls this route to see a sign-out at once.
       tags: [session]
       security:
