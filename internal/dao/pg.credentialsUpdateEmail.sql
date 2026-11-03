@@ -1,8 +1,7 @@
 UPDATE credentials
 SET
   email = ?0,
-  updated_at = ?1,
-  credentials_updated_at = ?1
+  updated_at = ?1
 WHERE
   id = ?2
 RETURNING

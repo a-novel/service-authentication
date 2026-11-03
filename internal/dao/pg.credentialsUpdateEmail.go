@@ -33,7 +33,7 @@ type CredentialsUpdateEmailRequest struct {
 	// Email is the new address to assign. The caller verifies its ownership first, with a short
 	// code emailed to it.
 	Email string
-	// Now is the timestamp recorded as the row's update time and as its credentials change time.
+	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 

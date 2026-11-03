@@ -60,10 +60,7 @@ export async function tokenCreateAnon(api: AuthenticationApi): Promise<Token> {
   });
 }
 
-/**
- * Exchanges an expiring token pair for a new one, preserving the session's claims. Throws a 403 once the session
- * ended, including after a password or email change, which ends every session opened before it.
- */
+/** Exchanges an expiring token pair for a new one, preserving the session's claims. */
 export async function tokenRefresh(api: AuthenticationApi, form: TokenRefreshRequest): Promise<Token> {
   return await api.fetch("/v2/session", TokenSchema, {
     headers: HTTP_HEADERS.JSON,

@@ -55,8 +55,7 @@ type CredentialsUpdateEmailRequest struct {
 // caller does not supply the new address directly: it is carried in the short-code
 // payload, so only the address the code was issued for can take effect.
 //
-// The change ends every session opened before it, whose refresh tokens no longer renew, and mails
-// the former address a notice.
+// The change mails the former address a notice.
 type CredentialsUpdateEmail struct {
 	dao                     CredentialsUpdateEmailDao
 	daoSelect               CredentialsUpdateEmailDaoSelect
@@ -138,11 +137,10 @@ func (service *CredentialsUpdateEmail) Exec(
 			return fmt.Errorf("consume short code: %w", err)
 		}
 
-		// Whole seconds, as a token's iat: the change ends every session opened before it.
 		daoRequest := &dao.CredentialsUpdateEmailRequest{
 			ID:    request.UserID,
 			Email: newEmail,
-			Now:   time.Now().Truncate(time.Second),
+			Now:   time.Now(),
 		}
 
 		credentials, err = service.dao.Exec(ctx, daoRequest)

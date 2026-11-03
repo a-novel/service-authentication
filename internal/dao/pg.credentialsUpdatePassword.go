@@ -28,7 +28,7 @@ type CredentialsUpdatePasswordRequest struct {
 	// Password is the Argon2id hash to persist. The caller hashes the plaintext, so a database leak
 	// yields no usable credentials.
 	Password string
-	// Now is the timestamp recorded as the row's update time and as its credentials change time.
+	// Now is the timestamp recorded as the row's update time.
 	Now time.Time
 }
 

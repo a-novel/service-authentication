@@ -209,11 +209,9 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 
 								err := json.Unmarshal(testCase.serviceShortCodeVerifyMock.resp.Data, &newEmail)
 
-								// The change time counts whole seconds, as a token's iat does.
 								return assert.NoError(t, err) &&
 									assert.Equal(t, newEmail, data.Email) &&
-									assert.WithinDuration(t, time.Now(), data.Now, 2*time.Second) &&
-									assert.Equal(t, data.Now.Truncate(time.Second), data.Now) &&
+									assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
 									assert.Equal(t, testCase.request.UserID, data.ID)
 							}),
 						).

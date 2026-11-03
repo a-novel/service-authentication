@@ -198,10 +198,7 @@ export async function credentialsCreate(
   });
 }
 
-/**
- * Applies a short-code-confirmed email change and returns the updated account. The former address receives a notice,
- * and every session opened before the change ends: its refresh tokens no longer renew.
- */
+/** Applies a short-code-confirmed email change and returns the updated account. The former address receives a notice. */
 export async function credentialsUpdateEmail(
   api: AuthenticationApi,
   accessToken: string,
@@ -214,10 +211,7 @@ export async function credentialsUpdateEmail(
   });
 }
 
-/**
- * Changes the password of the authenticated account, verified by its current password, and returns the updated
- * account. Every session opened before the change ends, the caller's included: sign in again with the new password.
- */
+/** Changes the password of the authenticated account, verified by its current password, and returns the updated account. */
 export async function credentialsUpdatePassword(
   api: AuthenticationApi,
   accessToken: string,
@@ -230,10 +224,7 @@ export async function credentialsUpdatePassword(
   });
 }
 
-/**
- * Sets a new password through the forgotten-password flow, authorized by an emailed short code, and returns the
- * updated account. Every session opened before the reset ends.
- */
+/** Sets a new password through the forgotten-password flow, authorized by an emailed short code, and returns the updated account. */
 export async function credentialsResetPassword(
   api: AuthenticationApi,
   accessToken: string,

@@ -57,11 +57,3 @@ func newCredentials(entity *dao.Credentials) *Credentials {
 		UpdatedAt: entity.UpdatedAt,
 	}
 }
-
-// credentialsChangedSince reports whether the password or email of credentials changed after a
-// token issued at issuedAt, a Unix timestamp in seconds. Such a token opens no session any more: a
-// change ends every session opened before it. Both instants count whole seconds, so a token issued
-// within the second of the change keeps working, and the person signs in again right after it.
-func credentialsChangedSince(credentials *dao.Credentials, issuedAt int64) bool {
-	return issuedAt < credentials.CredentialsUpdatedAt.Unix()
-}

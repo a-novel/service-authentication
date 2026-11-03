@@ -150,7 +150,7 @@ func main() {
 	)
 	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(daoCredentialsUpdateRole, daoCredentialsSelect)
 
-	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist, daoCredentialsSelect)
+	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist)
 
 	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, jsonKeysClient)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
@@ -164,7 +164,7 @@ func main() {
 
 	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
 	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(
-		daoAuthorizationCodeInsert, daoRefreshTokenRevocationExist, daoCredentialsSelect, cfg.OAuth,
+		daoAuthorizationCodeInsert, daoRefreshTokenRevocationExist, cfg.OAuth,
 	)
 	serviceTokenGrant := core.NewTokenGrant(
 		daoAuthorizationCodeSelect, daoAuthorizationCodeConsume, daoCredentialsSelect, daoRefreshTokenRevocationExist,

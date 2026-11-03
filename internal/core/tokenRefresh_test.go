@@ -303,43 +303,6 @@ func TestTokenRefresh(t *testing.T) {
 			expectErr: errFoo,
 		},
 		{
-			// A password or email change after the refresh token was issued ended its session.
-			name: "CredentialsChanged",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: "refresh_token_id",
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:    "refresh_token_id",
-					Iat:    time.Now().Add(-time.Hour).Unix(),
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{"refresh_token_id", "refresh_token_id"}},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:                   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Role:                 "admin",
-					CredentialsUpdatedAt: time.Now(),
-				},
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-		{
 			name: "RevokedRefreshToken",
 
 			request: &core.TokenRefreshRequest{
