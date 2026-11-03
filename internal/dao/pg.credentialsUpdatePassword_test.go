@@ -50,12 +50,13 @@ func TestPgCredentialsUpdatePassword(t *testing.T) {
 			},
 
 			expect: &dao.Credentials{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Email:     "user@provider.com",
-				Password:  "new-password-hashed",
-				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "auth:user",
+				ID:                   uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Email:                "user@provider.com",
+				Password:             "new-password-hashed",
+				CreatedAt:            time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+				UpdatedAt:            time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				CredentialsUpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				Role:                 "auth:user",
 			},
 		},
 		{
@@ -78,11 +79,12 @@ func TestPgCredentialsUpdatePassword(t *testing.T) {
 			},
 
 			expect: &dao.Credentials{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Email:     "user@provider.com",
-				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "auth:user",
+				ID:                   uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Email:                "user@provider.com",
+				CreatedAt:            time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+				UpdatedAt:            time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				CredentialsUpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				Role:                 "auth:user",
 			},
 		},
 		{
@@ -105,12 +107,13 @@ func TestPgCredentialsUpdatePassword(t *testing.T) {
 			},
 
 			expect: &dao.Credentials{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Email:     "user@provider.com",
-				Password:  "new-password-hashed",
-				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "auth:user",
+				ID:                   uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Email:                "user@provider.com",
+				Password:             "new-password-hashed",
+				CreatedAt:            time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+				UpdatedAt:            time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				CredentialsUpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				Role:                 "auth:user",
 			},
 		},
 		{

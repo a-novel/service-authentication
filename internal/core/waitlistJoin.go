@@ -10,9 +10,6 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
-// ErrWaitlistAccountExists is returned when a registered account already owns the requested email.
-var ErrWaitlistAccountExists = errors.New("waitlist account exists")
-
 // WaitlistJoinCredentials checks the authoritative account store before and after a sheet write.
 type WaitlistJoinCredentials interface {
 	Exec(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error)
@@ -29,7 +26,9 @@ type WaitlistJoinRequest struct {
 	Lang  string `validate:"required,langs"`
 }
 
-// WaitlistJoin rejects existing accounts and duplicate requests without sending mail.
+// WaitlistJoin adds an address to the invitation list. A registered or already listed address
+// succeeds alike and changes nothing, so the answer tells no caller which addresses are known. No
+// path sends mail.
 type WaitlistJoin struct {
 	credentials WaitlistJoinCredentials
 	writer      WaitlistJoinWriter
@@ -57,15 +56,24 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 		return otel.ReportError(span, fmt.Errorf("check account: %w", err))
 	}
 
+	// A registered address joins nothing, and costs what a join does: one writer round trip, a removal
+	// that keeps the sheet free of registered accounts, as a concurrent registration below does. A
+	// deployment without a writer refuses a join and accepts this removal, but serves no list at all.
 	if exists {
-		return otel.ReportError(span, ErrWaitlistAccountExists)
+		_, err = service.writer.Exec(ctx, &dao.WaitlistRequest{Action: dao.WaitlistActionRemove, Email: request.Email})
+		if err != nil {
+			return otel.ReportError(span, fmt.Errorf("keep registered account off waitlist: %w", err))
+		}
+
+		return nil
 	}
 
-	_, joinErr := service.writer.Exec(ctx, &dao.WaitlistRequest{
+	_, err = service.writer.Exec(ctx, &dao.WaitlistRequest{
 		Action: dao.WaitlistActionJoin, Email: request.Email, Lang: request.Lang,
 	})
-	if joinErr != nil && !errors.Is(joinErr, dao.ErrWaitlistAlreadyJoined) {
-		return otel.ReportError(span, fmt.Errorf("join waitlist: %w", joinErr))
+	// An address already listed stays as it is, and answers like a new one.
+	if err != nil && !errors.Is(err, dao.ErrWaitlistAlreadyJoined) {
+		return otel.ReportError(span, fmt.Errorf("join waitlist: %w", err))
 	}
 
 	// A concurrently committed account may have removed its row before this join acquired the sheet lock.
@@ -80,12 +88,6 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 		if err != nil {
 			return otel.ReportError(span, fmt.Errorf("remove registered account from waitlist: %w", err))
 		}
-
-		return otel.ReportError(span, ErrWaitlistAccountExists)
-	}
-
-	if joinErr != nil {
-		return otel.ReportError(span, joinErr)
 	}
 
 	return nil

@@ -1,0 +1,33 @@
+<mjml lang="en" dir="ltr">
+  <!-- prettier-ignore -->
+  <mj-raw position="file-start">
+Subject: Your Agora email address changed
+MIME-Version: 1.0
+Content-Type: multipart/related; type="text/html"; boundary="agora-related"
+
+--agora-related
+Content-Type: text/html; charset=UTF-8
+
+<!-- Mail starts here -->
+  </mj-raw>
+  <mj-head>
+    <mj-title>Your Agora email address changed</mj-title>
+    <mj-preview>Your Agora account now uses another email address.</mj-preview>
+    <mj-include path="../mj-theme.mjml" />
+  </mj-head>
+  <mj-body width="600px" background-color="#060b0e" css-class="mail">
+    <mj-include path="../mj-header.mjml" />
+    <mj-wrapper>
+      <mj-section mj-class="card">
+        <mj-column>
+          <mj-text padding="0 0 8px"><h1>Your email address changed</h1></mj-text>
+          <mj-text padding="0 0 16px"
+            >Your Agora account now uses another email address. Its messages no longer come to this one, and every
+            session opened before the change has ended.</mj-text
+          >
+          <mj-text mj-class="support">If you didn’t make this change, contact the Agora team right away.</mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>

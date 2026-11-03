@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	mailDeliveryKindEmailChanged  = "email-changed"
 	mailDeliveryKindEmailUpdate   = "email-update"
 	mailDeliveryKindPasswordReset = "password-reset"
 	mailDeliveryKindRegister      = "register"

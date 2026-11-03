@@ -48,6 +48,7 @@ type CredentialsUpdatePasswordRequest struct {
 // CredentialsUpdatePassword changes an account's password through one of two
 // authenticated paths: a reset short code proving the caller owns the account's
 // email, or the current password proving an active session belongs to the owner.
+// The change ends every session opened before it: their refresh tokens no longer renew.
 type CredentialsUpdatePassword struct {
 	dao                     CredentialsUpdatePasswordDao
 	daoCredentialsSelect    CredentialsUpdatePasswordDaoCredentialsSelect
@@ -136,10 +137,11 @@ func (service *CredentialsUpdatePassword) Exec(
 			}
 		}
 
+		// Whole seconds, as a token's iat: the change ends every session opened before it.
 		daoRequest := &dao.CredentialsUpdatePasswordRequest{
 			ID:       request.UserID,
 			Password: encryptedPassword,
-			Now:      time.Now(),
+			Now:      time.Now().Truncate(time.Second),
 		}
 
 		credentials, err = service.dao.Exec(ctx, daoRequest)

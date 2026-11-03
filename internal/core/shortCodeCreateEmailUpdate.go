@@ -14,6 +14,7 @@ import (
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 )
 
@@ -29,25 +30,34 @@ type ShortCodeCreateEmailUpdateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
+// ShortCodeCreateEmailUpdateDaoCredentials loads the account changing its address, whose current
+// password the request must give.
+type ShortCodeCreateEmailUpdateDaoCredentials interface {
+	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
+}
+
 // ShortCodeCreateEmailUpdateMailDelivery reserves bounded capacity for the confirmation mail.
 type ShortCodeCreateEmailUpdateMailDelivery interface {
 	Reserve(ctx context.Context) (MailDeliveryReservation, error)
 }
 
-// ShortCodeCreateEmailUpdateRequest carries the user changing their address, the
-// new email to confirm, and the language of the confirmation mail.
+// ShortCodeCreateEmailUpdateRequest carries the user changing their address, their current
+// password, the new email to confirm, and the language of the confirmation mail.
 type ShortCodeCreateEmailUpdateRequest struct {
-	ID    uuid.UUID
-	Email string `validate:"required,email,max=1024"`
-	Lang  string `validate:"required,langs"`
+	ID              uuid.UUID
+	CurrentPassword string `validate:"required,max=1024"`
+	Email           string `validate:"required,email,max=1024"`
+	Lang            string `validate:"required,langs"`
 }
 
 // ShortCodeCreateEmailUpdate issues a [ShortCodeUsageValidateEmail] code for an
 // email-change confirmation and emails it to the prospective new address, unless
-// that address is already registered.
+// that address is already registered. The request gives the account's current password, as a
+// password change does: a session alone does not move the account to another address.
 type ShortCodeCreateEmailUpdate struct {
 	service          ShortCodeCreateEmailUpdateService
 	selectDao        ShortCodeCreateEmailUpdateDao
+	credentialsDao   ShortCodeCreateEmailUpdateDaoCredentials
 	mailDelivery     ShortCodeCreateEmailUpdateMailDelivery
 	shortCodesConfig authconfig.ShortCodes
 	smtpConfig       authconfig.SmtpUrls
@@ -58,6 +68,7 @@ type ShortCodeCreateEmailUpdate struct {
 func NewShortCodeCreateEmailUpdate(
 	service ShortCodeCreateEmailUpdateService,
 	selectDao ShortCodeCreateEmailUpdateDao,
+	credentialsDao ShortCodeCreateEmailUpdateDaoCredentials,
 	mailDelivery ShortCodeCreateEmailUpdateMailDelivery,
 	shortCodesConfig authconfig.ShortCodes,
 	smtpConfig authconfig.SmtpUrls,
@@ -65,6 +76,7 @@ func NewShortCodeCreateEmailUpdate(
 	return &ShortCodeCreateEmailUpdate{
 		service:          service,
 		selectDao:        selectDao,
+		credentialsDao:   credentialsDao,
 		mailDelivery:     mailDelivery,
 		shortCodesConfig: shortCodesConfig,
 		smtpConfig:       smtpConfig,
@@ -92,6 +104,16 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 	err := validate.Struct(request)
 	if err != nil {
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+	}
+
+	credentials, err := service.credentialsDao.Exec(ctx, &dao.CredentialsSelectRequest{ID: request.ID})
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
+	}
+
+	err = lib.CompareArgon2(request.CurrentPassword, credentials.Password)
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("compare current password: %w", err))
 	}
 
 	_, err = service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})

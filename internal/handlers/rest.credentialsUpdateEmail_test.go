@@ -46,12 +46,14 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 			name: "Success/UserID",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000001"
+				"userID": "00000000-0000-0000-0000-000000000001",
+				"lang": "fr"
 			}`)),
 
 			serviceMock: &serviceMock{
 				req: &core.CredentialsUpdateEmailRequest{
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Lang:   "fr",
 				},
 				resp: &core.Credentials{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),

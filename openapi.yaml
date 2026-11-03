@@ -124,8 +124,9 @@ paths:
       summary: Retrieve a new access token for the user.
       description: |
         Use the refresh token of a user to retrieve a new access token. This allows the user to extend its session 
-        without logging in again. A refresh token cannot be refreshed once it expires, or once its session is signed
-        out.
+        without logging in again. A refresh token cannot be refreshed once it expires, once its session is signed
+        out, or once the account's password or email changed after it was issued: such a change ends every session
+        opened before it, and answers 403 here.
       tags: [session]
       security: []
       requestBody:
@@ -298,8 +299,9 @@ paths:
         ([RFC 6749 §4.1.2](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2)).
 
         The code is valid one minute and exchanges once, for that client, that redirect URI and that PKCE challenge, in
-        the bearer token's session. A session that was signed out or has ended, or a token that carries none, answers
-        401, as an invalid token does: the person signs in again.
+        the bearer token's session. A session that was signed out or has ended, a token that carries none, or a token
+        issued before the account's last password or email change answers 401, as an invalid token does: the person
+        signs in again.
 
         Only the account platform's service token may call this route. A missing or rejected service token answers 401
         too, and another caller 403. A server that verifies no service token, such as a local stack, answers 403.
@@ -343,6 +345,9 @@ paths:
         - **`refresh_token`** ([RFC 6749 §6](https://www.rfc-editor.org/rfc/rfc6749#section-6)) trades the client's
           refresh token for a new access token, while its session lasts. A refresh token renews only for the client it
           was issued to. The response carries no new refresh token: the client keeps its own.
+
+        A password or email change ends every session opened before it: a code or a refresh token issued before the
+        change answers `invalid_grant`.
 
         A refused grant answers `400` with an error response of
         [RFC 6749 §5.2](https://www.rfc-editor.org/rfc/rfc6749#section-5.2), and leaves a code as it was, but for a
@@ -531,6 +536,10 @@ paths:
         Completes the email update process. The user must have a short-code available, generated during the initial 
         phase. If not, use `[PUT] /v2/short-code/update-email` first.
 
+        Once the change applies, the former address receives a notice in the language `lang` names, and every session
+        opened before the change ends: its refresh tokens no longer renew, and its access tokens last until they
+        expire. A server that cannot take the notice answers 503 and changes nothing.
+
         By default, each caller may try 10 email updates per minute and 30 per 10 minutes, and each account 30 per 10
         minutes.
       tags: [credentials]
@@ -556,7 +565,7 @@ paths:
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
-          $ref: "#/components/responses/plannedDowntime"
+          $ref: "#/components/responses/mailDeliveryUnavailable"
         default:
           $ref: "#/components/responses/internalError"
 
@@ -665,8 +674,8 @@ paths:
         Anonymous sessions have this permission. This sends no email, creates no account,
         and does not grant permission to register. Super-admin invitations remain separate.
 
-        New entries receive an empty 202. A 409 distinguishes existing accounts from duplicate requests.
-        These warnings intentionally reveal membership to the caller. Existing accounts do not create rows.
+        Every accepted request receives an empty 202, whether the address is new, already listed or registered, so
+        the answer reveals no membership. A listed or registered address changes nothing and receives no email.
         Email comparison matches the account store exactly;
         case and provider-specific aliases are not normalized.
 
@@ -678,15 +687,13 @@ paths:
         $ref: "#/components/requestBodies/waitlistJoin"
       responses:
         "202":
-          description: The invitation request was recorded.
+          description: The invitation request was recorded, or the address was already listed or registered.
         "400":
           $ref: "#/components/responses/badRequest"
         "401":
           $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
-        "409":
-          $ref: "#/components/responses/waitlistConflict"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
         "429":
@@ -754,6 +761,9 @@ paths:
         manages to open the link, it means the email is valid and no further validation is required. The email can be
         changed safely.
 
+        The request gives the account's current password, as `[PATCH] /v2/credentials/password` does: a session alone
+        does not move the account to another address. A wrong password answers 403.
+
         By default, each caller may send 3 requests per 5 minutes, and each email receive 3 per hour.
       tags: [shortCode]
       security:
@@ -774,6 +784,8 @@ paths:
           $ref: "#/components/responses/invalidToken"
         "403":
           $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
         "429":
@@ -820,12 +832,6 @@ paths:
 
 components:
   responses:
-    waitlistConflict:
-      description: The address is registered or already has an invitation request.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/waitlistConflict"
     pong:
       description: The server is up and running.
       content:
@@ -1141,17 +1147,6 @@ components:
               examples:
                 - { "email": "email", "lang": "langs" }
                 - { "roles[0]": "role" }
-    waitlistConflict:
-      type: object
-      description: A stable warning for the invitation form; no input or internal details are returned.
-      required: [code]
-      additionalProperties: false
-      properties:
-        code:
-          type: string
-          description: Whether an account or a pending invitation request already exists.
-          enum: [account_exists, already_waitlisted]
-          examples: [account_exists, already_waitlisted]
     plannedDowntimeProblem:
       type: object
       description: |
@@ -1723,12 +1718,14 @@ components:
         application/json:
           schema:
             type: object
-            required: [userID, shortCode]
+            required: [userID, shortCode, lang]
             properties:
               userID:
                 $ref: "#/components/schemas/userID"
               shortCode:
                 $ref: "#/components/schemas/shortCode"
+              lang:
+                $ref: "#/components/schemas/lang"
 
     passwordUpdate:
       description: Update the password of a user.
@@ -1795,8 +1792,10 @@ components:
         application/json:
           schema:
             type: object
-            required: [lang, email]
+            required: [currentPassword, lang, email]
             properties:
+              currentPassword:
+                $ref: "#/components/schemas/password"
               lang:
                 $ref: "#/components/schemas/lang"
               email:

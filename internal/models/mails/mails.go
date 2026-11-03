@@ -14,6 +14,8 @@ import (
 )
 
 var (
+	//go:embed fr/email-changed.html
+	emailChangedFr string
 	//go:embed fr/email-update.html
 	emailUpdateFr string
 	//go:embed fr/password-reset.html
@@ -23,6 +25,8 @@ var (
 )
 
 var (
+	//go:embed en/email-changed.html
+	emailChangedEn string
 	//go:embed en/email-update.html
 	emailUpdateEn string
 	//go:embed en/password-reset.html
@@ -70,6 +74,8 @@ const (
 // MailTemplates groups the parsed email templates by type. Each field carries every
 // language variant as named sub-templates, chosen by language when the mail is rendered.
 type MailTemplates struct {
+	// EmailChanged tells the former address of an account that its email changed. It reads no value.
+	EmailChanged  *template.Template
 	EmailUpdate   *template.Template
 	PasswordReset *template.Template
 	Register      *template.Template
@@ -78,6 +84,7 @@ type MailTemplates struct {
 // Mails holds the ready-to-render email templates, parsed once at package
 // initialization. A malformed template panics at startup.
 var Mails = MailTemplates{
+	EmailChanged:  template.Must(template.New(authconfig.LangEN).Parse(emailChangedEn + imageParts)),
 	EmailUpdate:   template.Must(template.New(authconfig.LangEN).Parse(emailUpdateEn + imageParts)),
 	PasswordReset: template.Must(template.New(authconfig.LangEN).Parse(passwordResetEn + imageParts)),
 	Register:      template.Must(template.New(authconfig.LangEN).Parse(registerEn + imageParts)),
@@ -87,6 +94,7 @@ var Mails = MailTemplates{
 // MailTemplates field can render either language. Only registering the variant matters,
 // so the results are discarded.
 var (
+	_ = template.Must(Mails.EmailChanged.New(authconfig.LangFR).Parse(emailChangedFr + imageParts))
 	_ = template.Must(Mails.EmailUpdate.New(authconfig.LangFR).Parse(emailUpdateFr + imageParts))
 	_ = template.Must(Mails.PasswordReset.New(authconfig.LangFR).Parse(passwordResetFr + imageParts))
 	_ = template.Must(Mails.Register.New(authconfig.LangFR).Parse(registerFr + imageParts))

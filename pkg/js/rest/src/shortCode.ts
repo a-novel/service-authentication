@@ -1,15 +1,16 @@
 import type { AuthenticationApi } from "./api";
-import { EmailSchema, LangSchema } from "./form";
+import { EmailSchema, LangSchema, PasswordSchema } from "./form";
 
 import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
 
 import { z } from "zod";
 
 /**
- * The new address to confirm and the language of the confirmation email. The user submits the
- * emailed short code to `credentialsUpdateEmail`.
+ * The account's current password, the new address to confirm and the language of the confirmation email. The user
+ * submits the emailed short code to `credentialsUpdateEmail`.
  */
 export const ShortCodeCreateEmailUpdateRequestSchema = z.object({
+  currentPassword: PasswordSchema,
   email: EmailSchema,
   lang: LangSchema,
 });
@@ -41,7 +42,10 @@ export const ShortCodeCreateRegisterRequestSchema = z.object({
 /** The value {@link ShortCodeCreateRegisterRequestSchema} validates. */
 export type ShortCodeCreateRegisterRequest = z.infer<typeof ShortCodeCreateRegisterRequestSchema>;
 
-/** Emails a short code that authorizes changing the account's email address. */
+/**
+ * Emails a short code that authorizes changing the account's email address. Throws a 403 when the current password is
+ * wrong.
+ */
 export async function shortCodeCreateEmailUpdate(
   api: AuthenticationApi,
   accessToken: string,

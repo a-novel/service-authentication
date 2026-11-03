@@ -123,7 +123,8 @@ func main() {
 	serviceShortCodeConsume := core.NewShortCodeConsume(daoShortCodeDelete)
 	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, cfg.ShortCodesConfig)
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, daoCredentialsSelect, mailDelivery, cfg.ShortCodesConfig,
+		cfg.SmtpUrlsConfig,
 	)
 	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
 		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
@@ -141,7 +142,8 @@ func main() {
 	serviceCredentialsGetSelf := core.NewCredentialsGetSelf(daoCredentialsSelect, daoShortCodeSelect)
 	serviceCredentialsList := core.NewCredentialsList(daoCredentialsList)
 	serviceCredentialsUpdateEmail := core.NewCredentialsUpdateEmail(
-		daoCredentialsUpdateEmail, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
+		daoCredentialsUpdateEmail, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, mailDelivery,
+		daoTransactor,
 	)
 	serviceCredentialsUpdatePassword := core.NewCredentialsUpdatePassword(
 		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
@@ -162,7 +164,7 @@ func main() {
 
 	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
 	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(
-		daoAuthorizationCodeInsert, daoRefreshTokenRevocationExist, cfg.OAuth,
+		daoAuthorizationCodeInsert, daoRefreshTokenRevocationExist, daoCredentialsSelect, cfg.OAuth,
 	)
 	serviceTokenGrant := core.NewTokenGrant(
 		daoAuthorizationCodeSelect, daoAuthorizationCodeConsume, daoCredentialsSelect, daoRefreshTokenRevocationExist,

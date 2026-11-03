@@ -154,8 +154,9 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 			ID:       uuid.New(),
 			Email:    request.Email,
 			Password: encryptedPassword,
-			Now:      time.Now(),
-			Role:     role,
+			// Whole seconds, as a token's iat: the session this sign-up opens counts as opened after it.
+			Now:  time.Now().Truncate(time.Second),
+			Role: role,
 		}
 
 		credentials, err = service.dao.Exec(ctx, daoRequest)
