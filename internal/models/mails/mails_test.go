@@ -29,6 +29,8 @@ func TestMailTemplates(t *testing.T) {
 		language string
 		subject  string
 		source   string
+		// notice marks a mail that carries no link and no code.
+		notice bool
 	}{
 		{
 			name:     "Register/English",
@@ -68,6 +70,20 @@ func TestMailTemplates(t *testing.T) {
 			subject:  "Confirmez votre nouvelle adresse courriel Agora",
 			source:   "bmV3QGV4YW1wbGUuY29t",
 		},
+		{
+			name:     "EmailChanged/English",
+			template: mails.Mails.EmailChanged,
+			language: "en",
+			subject:  "Your Agora email address changed",
+			notice:   true,
+		},
+		{
+			name:     "EmailChanged/French",
+			template: mails.Mails.EmailChanged,
+			language: "fr",
+			subject:  "L’adresse courriel de votre compte Agora a changé",
+			notice:   true,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -95,7 +111,12 @@ func TestMailTemplates(t *testing.T) {
 
 			message, err := mail.ReadMessage(&rendered)
 			require.NoError(t, err)
-			require.Equal(t, testCase.subject, message.Header.Get("Subject"))
+			// A header field body is ASCII, so a non-ASCII subject travels as encoded-words.
+			rawSubject := message.Header.Get("Subject")
+			require.Regexp(t, `^[\x20-\x7e]+$`, rawSubject)
+			subject, err := new(mime.WordDecoder).DecodeHeader(rawSubject)
+			require.NoError(t, err)
+			require.Equal(t, testCase.subject, subject)
 			require.Equal(t, "1.0", message.Header.Get("MIME-Version"))
 			mediaType, params, err := mime.ParseMediaType(message.Header.Get("Content-Type"))
 			require.NoError(t, err)
@@ -116,7 +137,6 @@ func TestMailTemplates(t *testing.T) {
 
 			content := string(body)
 			require.Contains(t, content, `lang="`+testCase.language+`"`)
-			require.Contains(t, content, "0.5 h.")
 			require.Contains(t, content, "Agora")
 			require.Contains(t, content, `alt="Agora"`)
 			require.Equal(t, 1, strings.Count(content, "<h1 "))
@@ -135,6 +155,13 @@ func TestMailTemplates(t *testing.T) {
 			require.NotContains(t, content, "{{")
 
 			links := regexp.MustCompile(`href="([^"]+)"`).FindAllStringSubmatch(content, -1)
+			if testCase.notice {
+				require.Empty(t, links)
+
+				return
+			}
+
+			require.Contains(t, content, "0.5 h.")
 			require.Len(t, links, 2, "the primary action and copyable fallback must both be present")
 			require.Equal(t, links[0][1], links[1][1])
 			link, err := url.Parse(html.UnescapeString(links[0][1]))

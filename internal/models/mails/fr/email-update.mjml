@@ -1,7 +1,7 @@
 <mjml lang="fr" dir="ltr">
   <!-- prettier-ignore -->
   <mj-raw position="file-start">
-Subject: Confirmez votre nouvelle adresse courriel Agora
+Subject: {{ headerText "Confirmez votre nouvelle adresse courriel Agora" }}
 MIME-Version: 1.0
 Content-Type: multipart/related; type="text/html"; boundary="agora-related"
 

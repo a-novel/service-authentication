@@ -22,6 +22,7 @@ import {
   shortCodeCreateRegister,
   tokenCreate,
   tokenCreateAnon,
+  tokenRefresh,
 } from "@a-novel/service-authentication-rest";
 import {
   checkEmail,
@@ -96,8 +97,22 @@ describe("credentialsCreate", () => {
   });
 });
 
-async function requestEmailUpdate(api: AuthenticationApi, token: Token, newEmail: string = generateRandomMail()) {
+/**
+ * Waits for the next second. Tokens carry their issue time in whole seconds, so a change made after it ends every
+ * session opened before the wait.
+ */
+async function nextSecond(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 1050 - (Date.now() % 1000)));
+}
+
+async function requestEmailUpdate(
+  api: AuthenticationApi,
+  token: Token,
+  currentPassword: string,
+  newEmail: string = generateRandomMail()
+) {
   await shortCodeCreateEmailUpdate(api, token.accessToken, {
+    currentPassword,
     email: newEmail,
     lang: Lang.En,
   });
@@ -139,14 +154,20 @@ describe("credentialsUpdateEmail", () => {
       password: user.password,
     });
 
-    const { shortCode, target, newEmail } = await requestEmailUpdate(api, userToken);
+    const { shortCode, target, newEmail } = await requestEmailUpdate(api, userToken, user.password);
 
+    await nextSecond();
     const newCredentials = await credentialsUpdateEmail(api, anonToken.accessToken, {
       userID: target,
       shortCode,
+      lang: Lang.En,
     });
 
     expect(newCredentials.email).toBe(newEmail);
+
+    // The former address learns of the change, and the sessions opened before it end.
+    await checkEmail(mailUrl, `to:"${user.email}" subject:"Your Agora email address changed"`);
+    await expectStatus(tokenRefresh(api, userToken), 403);
 
     await expectStatus(
       tokenCreate(api, {
@@ -156,10 +177,30 @@ describe("credentialsUpdateEmail", () => {
       401
     );
 
-    await tokenCreate(api, {
+    const renewed = await tokenCreate(api, {
       email: newEmail,
       password: user.password,
     });
+    await tokenRefresh(api, renewed);
+  });
+
+  it("refuses to start a change without the current password", async () => {
+    const api = callerApi(accountPlatform);
+
+    const preRegister = await preRegisterUser(api, mailUrl);
+    const user = await registerUser(api, preRegister);
+
+    await expectStatus(
+      shortCodeCreateEmailUpdate(api, user.token.accessToken, {
+        currentPassword: "incorrect",
+        email: generateRandomMail(),
+        lang: Lang.En,
+      }),
+      403
+    );
+
+    const self = await credentialsGetSelf(api, user.token.accessToken);
+    expect(self.pendingEmail).toBeUndefined();
   });
 
   it("only takes into account the latest attempt", async () => {
@@ -175,13 +216,14 @@ describe("credentialsUpdateEmail", () => {
       password: user.password,
     });
 
-    const updateRequest1 = await requestEmailUpdate(api, userToken);
-    const updateRequest2 = await requestEmailUpdate(api, userToken);
+    const updateRequest1 = await requestEmailUpdate(api, userToken, user.password);
+    const updateRequest2 = await requestEmailUpdate(api, userToken, user.password);
 
     await expectStatus(
       credentialsUpdateEmail(api, anonToken.accessToken, {
         userID: updateRequest1.target,
         shortCode: updateRequest1.shortCode,
+        lang: Lang.En,
       }),
       403
     );
@@ -189,6 +231,7 @@ describe("credentialsUpdateEmail", () => {
     const newCredentials = await credentialsUpdateEmail(api, anonToken.accessToken, {
       userID: updateRequest2.target,
       shortCode: updateRequest2.shortCode,
+      lang: Lang.En,
     });
 
     expect(newCredentials.email).toBe(updateRequest2.newEmail);
@@ -220,7 +263,7 @@ describe("credentialsUpdateEmail", () => {
       password: user.password,
     });
 
-    const { shortCode, target, newEmail } = await requestEmailUpdate(api, userToken);
+    const { shortCode, target, newEmail } = await requestEmailUpdate(api, userToken, user.password);
 
     // Register a new email before updating it.
     const preRegister2 = await preRegisterUser(api, mailUrl, newEmail);
@@ -230,6 +273,7 @@ describe("credentialsUpdateEmail", () => {
       credentialsUpdateEmail(api, anonToken.accessToken, {
         userID: target,
         shortCode,
+        lang: Lang.En,
       }),
       409
     );
@@ -250,10 +294,14 @@ describe("credentialsUpdatePassword", () => {
 
     const newPassword = generateRandomPassword();
 
+    await nextSecond();
     await credentialsUpdatePassword(api, userToken.accessToken, {
       password: newPassword,
       currentPassword: user.password,
     });
+
+    // The sessions opened before the change end.
+    await expectStatus(tokenRefresh(api, userToken), 403);
 
     await expectStatus(
       tokenCreate(api, {
@@ -263,10 +311,11 @@ describe("credentialsUpdatePassword", () => {
       401
     );
 
-    await tokenCreate(api, {
+    const renewed = await tokenCreate(api, {
       email: user.email,
       password: newPassword,
     });
+    await tokenRefresh(api, renewed);
   });
 
   it("refuses to update if current password is incorrect", async () => {
@@ -508,14 +557,14 @@ describe("credentialsGetSelf", () => {
     const preRegister = await preRegisterUser(api, mailUrl);
     const user = await registerUser(api, preRegister);
 
-    const { shortCode, target, newEmail } = await requestEmailUpdate(api, user.token);
+    const { shortCode, target, newEmail } = await requestEmailUpdate(api, user.token, user.password);
 
     const pending = await credentialsGetSelf(api, user.token.accessToken);
     expect(pending.email).toBe(user.email);
     expect(pending.pendingEmail?.email).toBe(newEmail);
     expect(pending.pendingEmail?.expiresAt.getTime()).toBeGreaterThan(Date.now());
 
-    await credentialsUpdateEmail(api, anonToken.accessToken, { userID: target, shortCode });
+    await credentialsUpdateEmail(api, anonToken.accessToken, { userID: target, shortCode, lang: Lang.En });
 
     const confirmed = await credentialsGetSelf(api, user.token.accessToken);
     expect(confirmed.email).toBe(newEmail);
@@ -531,7 +580,11 @@ describe("credentialsGetSelf", () => {
     const preRegisterOwner = await preRegisterUser(api, mailUrl);
     const owner = await registerUser(api, preRegisterOwner);
 
-    await shortCodeCreateEmailUpdate(api, user.token.accessToken, { email: owner.email, lang: Lang.En });
+    await shortCodeCreateEmailUpdate(api, user.token.accessToken, {
+      currentPassword: user.password,
+      email: owner.email,
+      lang: Lang.En,
+    });
 
     const pending = await credentialsGetSelf(api, user.token.accessToken);
     expect(pending.pendingEmail?.email).toBe(owner.email);

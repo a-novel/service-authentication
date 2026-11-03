@@ -46,12 +46,21 @@ func TestClaimsGet(t *testing.T) {
 		err  error
 	}
 
+	type credentialsMock struct {
+		resp *dao.Credentials
+		err  error
+	}
+
+	// The account's password and email last changed before every token of the test was issued.
+	credentials := &credentialsMock{resp: &dao.Credentials{ID: *userID}}
+
 	testCases := []struct {
 		name string
 
 		request *core.ClaimsGetRequest
 
-		daoMock *daoMock
+		daoMock         *daoMock
+		credentialsMock *credentialsMock
 
 		expect    *session.Claims
 		expectErr error
@@ -63,7 +72,8 @@ func TestClaimsGet(t *testing.T) {
 
 			request: &core.ClaimsGetRequest{Claims: ownSessionClaims},
 
-			daoMock: &daoMock{jtis: []string{"refresh-token-id", "refresh-token-id"}},
+			daoMock:         &daoMock{jtis: []string{"refresh-token-id", "refresh-token-id"}},
+			credentialsMock: credentials,
 
 			expect: ownSessionClaims,
 		},
@@ -72,7 +82,8 @@ func TestClaimsGet(t *testing.T) {
 
 			request: &core.ClaimsGetRequest{Claims: sessionClaims},
 
-			daoMock: &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
+			daoMock:         &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
+			credentialsMock: credentials,
 
 			expect: sessionClaims,
 		},
@@ -81,7 +92,8 @@ func TestClaimsGet(t *testing.T) {
 
 			request: &core.ClaimsGetRequest{Claims: liveSessionClaims},
 
-			daoMock: &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
+			daoMock:         &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
+			credentialsMock: credentials,
 
 			expect: liveSessionClaims,
 		},
@@ -123,6 +135,40 @@ func TestClaimsGet(t *testing.T) {
 			expectNotErr: core.ErrClaimsGetRevoked,
 		},
 		{
+			// A password or email change after the token was issued ended its session.
+			name: "Error/CredentialsChanged",
+
+			request: &core.ClaimsGetRequest{Claims: sessionClaims},
+
+			daoMock: &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
+			credentialsMock: &credentialsMock{
+				resp: &dao.Credentials{ID: *userID, CredentialsUpdatedAt: time.Now()},
+			},
+
+			expectErr: core.ErrClaimsGetRevoked,
+		},
+		{
+			name: "Error/AccountDeleted",
+
+			request: &core.ClaimsGetRequest{Claims: sessionClaims},
+
+			daoMock:         &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
+			credentialsMock: &credentialsMock{err: dao.ErrCredentialsSelectNotFound},
+
+			expectErr: core.ErrClaimsGetRevoked,
+		},
+		{
+			name: "Error/CredentialsSelect",
+
+			request: &core.ClaimsGetRequest{Claims: sessionClaims},
+
+			daoMock:         &daoMock{jtis: []string{"refresh-token-id", "session-id"}},
+			credentialsMock: &credentialsMock{err: errFoo},
+
+			expectErr:    errFoo,
+			expectNotErr: core.ErrClaimsGetRevoked,
+		},
+		{
 			name: "Error/NoClaims",
 
 			request: &core.ClaimsGetRequest{},
@@ -143,7 +189,15 @@ func TestClaimsGet(t *testing.T) {
 					Return(testCase.daoMock.resp, testCase.daoMock.err)
 			}
 
-			service := core.NewClaimsGet(mockDao)
+			mockDaoCredentials := coremocks.NewMockClaimsGetDaoCredentials(t)
+
+			if testCase.credentialsMock != nil {
+				mockDaoCredentials.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsSelectRequest{ID: *userID}).
+					Return(testCase.credentialsMock.resp, testCase.credentialsMock.err)
+			}
+
+			service := core.NewClaimsGet(mockDao, mockDaoCredentials)
 
 			claims, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
@@ -154,6 +208,7 @@ func TestClaimsGet(t *testing.T) {
 			}
 
 			mockDao.AssertExpectations(t)
+			mockDaoCredentials.AssertExpectations(t)
 		})
 	}
 }

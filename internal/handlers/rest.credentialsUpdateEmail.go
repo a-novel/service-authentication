@@ -26,12 +26,15 @@ var credentialsUpdateEmailErrors = httpf.ErrMap{
 	core.ErrShortCodeConsumeInvalid:             http.StatusForbidden,
 	core.ErrShortCodeConsumeExpired:             http.StatusForbidden,
 	core.ErrInvalidRequest:                      http.StatusUnprocessableEntity,
+	core.ErrMailDeliveryUnavailable:             http.StatusServiceUnavailable,
 }
 
 // RestCredentialsUpdateEmailRequest is the JSON body of PATCH /v2/credentials/email.
 type RestCredentialsUpdateEmailRequest struct {
 	UserID    uuid.UUID `json:"userID"`
 	ShortCode string    `json:"shortCode"`
+	// Lang is the language of the notice the former address receives.
+	Lang string `json:"lang"`
 }
 
 // RestCredentialsUpdateEmail serves PATCH /v2/credentials/email, which applies a confirmed email change.
@@ -62,6 +65,7 @@ func (handler *RestCredentialsUpdateEmail) ServeHTTP(w http.ResponseWriter, r *h
 	serviceRequest := &core.CredentialsUpdateEmailRequest{
 		UserID:    request.UserID,
 		ShortCode: request.ShortCode,
+		Lang:      request.Lang,
 	}
 
 	res, err := handler.service.Exec(ctx, serviceRequest)

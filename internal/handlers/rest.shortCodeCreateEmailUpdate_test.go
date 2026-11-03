@@ -18,6 +18,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
@@ -47,6 +48,7 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Success",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
+				"currentPassword": "current password",
 				"email": "new_user@provider.com",
 				"lang": "fr"
 			}`)),
@@ -56,9 +58,10 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.ShortCodeCreateEmailUpdateRequest{
-					Email: "new_user@provider.com",
-					Lang:  "fr",
-					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					CurrentPassword: "current password",
+					Email:           "new_user@provider.com",
+					Lang:            "fr",
+					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 				resp: &core.ShortCode{
 					ID:        uuid.MustParse("00000000-0000-0000-0000-111111111111"),
@@ -74,6 +77,7 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/MailDeliveryUnavailable",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
+				"currentPassword": "current password",
 				"email": "new_user@provider.com",
 				"lang": "fr"
 			}`)),
@@ -83,9 +87,10 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.ShortCodeCreateEmailUpdateRequest{
-					Email: "new_user@provider.com",
-					Lang:  "fr",
-					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					CurrentPassword: "current password",
+					Email:           "new_user@provider.com",
+					Lang:            "fr",
+					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 				err: errors.Join(errFoo, core.ErrMailDeliveryUnavailable),
 			},
@@ -93,9 +98,11 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 			expectStatus: http.StatusServiceUnavailable,
 		},
 		{
-			name: "Error/Internal",
+			// A session alone does not move the account to another address.
+			name: "Error/WrongCurrentPassword",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
+				"currentPassword": "wrong password",
 				"email": "new_user@provider.com",
 				"lang": "fr"
 			}`)),
@@ -105,9 +112,34 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			serviceMock: &serviceMock{
 				req: &core.ShortCodeCreateEmailUpdateRequest{
-					Email: "new_user@provider.com",
-					Lang:  "fr",
-					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					CurrentPassword: "wrong password",
+					Email:           "new_user@provider.com",
+					Lang:            "fr",
+					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				},
+				err: errors.Join(errFoo, lib.ErrInvalidPassword),
+			},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
+			name: "Error/Internal",
+
+			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
+				"currentPassword": "current password",
+				"email": "new_user@provider.com",
+				"lang": "fr"
+			}`)),
+			claims: &session.Claims{
+				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			},
+
+			serviceMock: &serviceMock{
+				req: &core.ShortCodeCreateEmailUpdateRequest{
+					CurrentPassword: "current password",
+					Email:           "new_user@provider.com",
+					Lang:            "fr",
+					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 				err: errFoo,
 			},

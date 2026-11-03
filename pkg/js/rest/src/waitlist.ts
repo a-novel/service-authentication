@@ -11,13 +11,25 @@ export const WaitlistJoinRequestSchema = z.object({ email: EmailSchema, lang: La
 /** An invitation request; this neither creates an account nor sends a verification link. */
 export type WaitlistJoinRequest = z.infer<typeof WaitlistJoinRequestSchema>;
 
-/** Stable membership reasons returned by HTTP 409; no submitted address is echoed. */
+/**
+ * Stable membership reasons an older service returned with HTTP 409.
+ *
+ * @deprecated The service answers every accepted request with 202 since v2.24.0; removed in the next major.
+ */
 export const WaitlistJoinConflictSchema = z.object({ code: z.enum(["account_exists", "already_waitlisted"]) });
 
-/** A membership warning the UI can translate independently of transport error wording. */
+/**
+ * A membership warning an older service returned.
+ *
+ * @deprecated See {@link WaitlistJoinConflictSchema}.
+ */
 export type WaitlistJoinConflict = z.infer<typeof WaitlistJoinConflictSchema>;
 
-/** A 409 response with a validated code, also compatible with the shared HttpError status checks. */
+/**
+ * A 409 response with a validated code, also compatible with the shared HttpError status checks.
+ *
+ * @deprecated Only a service older than v2.24.0 answers it. See {@link WaitlistJoinConflictSchema}.
+ */
 export class WaitlistJoinConflictError extends HttpError {
   /** Identifies the warning to display without parsing the error message. */
   readonly code: WaitlistJoinConflict["code"];
@@ -29,9 +41,10 @@ export class WaitlistJoinConflictError extends HttpError {
 }
 
 /**
- * Joins the temporary invitation list using any session, including an anonymous token.
- * Throws WaitlistJoinConflictError for existing accounts or duplicate requests.
- * Throws on validation, capacity or storage errors; an acknowledgement is not an invitation.
+ * Joins the temporary invitation list using any session, including an anonymous token. Resolves alike for a new, an
+ * already listed and a registered address, so the answer reveals no membership. Throws on validation, capacity or
+ * storage errors; an acknowledgement is not an invitation. A service older than v2.24.0 throws a
+ * WaitlistJoinConflictError for a listed or registered address instead.
  */
 export async function waitlistJoin(
   api: AuthenticationApi,

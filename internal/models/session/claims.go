@@ -30,6 +30,9 @@ type Claims struct {
 	// This service admits a client's token on its session routes and on its own account, read-only
 	// (RFC 9700 §2.3).
 	ClientID string `json:"clientID,omitempty"`
+	// Iat is when the token was issued, as a Unix timestamp in seconds. The signer sets it, so a token
+	// built here leaves it zero.
+	Iat int64 `json:"iat,omitempty"`
 }
 
 // Session returns the ID of the session the token belongs to, and an empty string for an anonymous
@@ -43,7 +46,10 @@ func (claims *Claims) Session() string {
 type RefreshClaims struct {
 	Jti string `json:"jti,omitempty"`
 	// Exp is the token's expiry, as a Unix timestamp in seconds. The signer sets it.
-	Exp    int64     `json:"exp,omitempty"`
+	Exp int64 `json:"exp,omitempty"`
+	// Iat is when the token was issued, as a Unix timestamp in seconds. The signer sets it. A refresh
+	// token issued before its account's last password or email change no longer renews.
+	Iat    int64     `json:"iat,omitempty"`
 	UserID uuid.UUID `json:"userID,omitempty"`
 	// SessionID is the session the token belongs to, read through [RefreshClaims.Session].
 	SessionID string `json:"sessionID,omitempty"`

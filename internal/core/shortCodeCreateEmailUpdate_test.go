@@ -17,6 +17,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 )
 
@@ -26,6 +27,11 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	smtpConfig := authconfig.SmtpUrls{UpdateEmail: "update-email-url"}
+
+	const currentPassword = "current password"
+
+	currentPasswordHash, err := lib.GenerateArgon2(currentPassword, lib.Argon2ParamsDefault)
+	require.NoError(t, err)
 
 	type serviceCreateMock struct {
 		resp *core.ShortCode
@@ -41,6 +47,10 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 		request *core.ShortCodeCreateEmailUpdateRequest
 
+		// invalid skips every dependency: the request fails validation.
+		invalid bool
+		// credentialsErr fails the account lookup.
+		credentialsErr    error
 		serviceCreateMock *serviceCreateMock
 		daoSelectMock     *daoSelectMock
 		sendMail          bool
@@ -53,9 +63,10 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Success",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentPassword: currentPassword,
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
 
 			serviceCreateMock: &serviceCreateMock{
@@ -80,9 +91,10 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Success/SendMailPanic",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentPassword: currentPassword,
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
 
 			serviceCreateMock: &serviceCreateMock{
@@ -109,9 +121,10 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Success/EmailTaken",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentPassword: currentPassword,
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
 
 			serviceCreateMock: &serviceCreateMock{
@@ -134,9 +147,10 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/MailDeliveryUnavailable",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentPassword: currentPassword,
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -151,9 +165,10 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/MailDeliveryUnavailable/EmailTaken",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentPassword: currentPassword,
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -167,9 +182,10 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/CreateShortCode",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentPassword: currentPassword,
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
 
 			serviceCreateMock: &serviceCreateMock{
@@ -186,9 +202,10 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			name: "Error/Dao",
 
 			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+				CurrentPassword: currentPassword,
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			},
 
 			daoSelectMock: &daoSelectMock{
@@ -196,6 +213,44 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			},
 
 			expectErr: errFoo,
+		},
+		{
+			name: "Error/NoCurrentPassword",
+
+			request: &core.ShortCodeCreateEmailUpdateRequest{
+				Lang:  authconfig.LangFR,
+				Email: "user@provider.com",
+				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			},
+
+			invalid:   true,
+			expectErr: core.ErrInvalidRequest,
+		},
+		{
+			// A session alone does not move the account to another address.
+			name: "Error/WrongCurrentPassword",
+
+			request: &core.ShortCodeCreateEmailUpdateRequest{
+				CurrentPassword: "wrong password",
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			},
+
+			expectErr: lib.ErrInvalidPassword,
+		},
+		{
+			name: "Error/SelectCredentials",
+
+			request: &core.ShortCodeCreateEmailUpdateRequest{
+				CurrentPassword: currentPassword,
+				Lang:            authconfig.LangFR,
+				Email:           "user@provider.com",
+				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			},
+
+			credentialsErr: errFoo,
+			expectErr:      errFoo,
 		},
 	}
 
@@ -205,6 +260,19 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			serviceCreate := coremocks.NewMockShortCodeCreateEmailUpdateService(t)
 			daoSelect := coremocks.NewMockShortCodeCreateEmailUpdateDao(t)
+			daoCredentials := coremocks.NewMockShortCodeCreateEmailUpdateDaoCredentials(t)
+
+			if !testCase.invalid {
+				credentials := &dao.Credentials{ID: testCase.request.ID, Password: currentPasswordHash}
+				if testCase.credentialsErr != nil {
+					credentials = nil
+				}
+
+				daoCredentials.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsSelectRequest{ID: testCase.request.ID}).
+					Return(credentials, testCase.credentialsErr)
+			}
+
 			smtpService := coremocks.NewMockMailDeliverySMTP(t)
 
 			mailDelivery := core.NewMailDelivery(smtpService, 1)
@@ -261,7 +329,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			}
 
 			service := core.NewShortCodeCreateEmailUpdate(
-				serviceCreate, daoSelect, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, daoSelect, daoCredentials, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
@@ -275,6 +343,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			serviceCreate.AssertExpectations(t)
 			daoSelect.AssertExpectations(t)
+			daoCredentials.AssertExpectations(t)
 			smtpService.AssertExpectations(t)
 		})
 	}

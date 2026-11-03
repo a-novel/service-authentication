@@ -30,7 +30,8 @@ const (
 
 // ErrAuthorizationCodeCreateSessionEnded is returned by [AuthorizationCodeCreate.Exec] when the
 // session of the access token was signed out or has ended, though the access token has not expired
-// yet, or when the token carries no session. The account platform then signs the person in again.
+// yet, when the token carries no session, or when the account's password or email changed since the
+// token was issued. The account platform then signs the person in again.
 var ErrAuthorizationCodeCreateSessionEnded = errors.New("session ended")
 
 // AuthorizationCodeCreateDaoInsert stores the new code.
@@ -42,6 +43,12 @@ type AuthorizationCodeCreateDaoInsert interface {
 // signed out.
 type AuthorizationCodeCreateDaoRevocationExist interface {
 	Exec(ctx context.Context, request *dao.RefreshTokenRevocationExistRequest) (bool, error)
+}
+
+// AuthorizationCodeCreateDaoCredentials loads the account, to see whether its password or email
+// changed since the access token was issued.
+type AuthorizationCodeCreateDaoCredentials interface {
+	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
 }
 
 // AuthorizationCodeCreateRequest asks for a code that answers an authorization request, for a person
@@ -60,6 +67,10 @@ type AuthorizationCodeCreateRequest struct {
 	// SessionExp is when that session ends, as a Unix timestamp in seconds. An access token signed
 	// before sessions carried their end lacks it, and reads as a session that ended.
 	SessionExp int64
+	// IssuedAt is when that access token was issued, as a Unix timestamp in seconds. A code would
+	// extend the session to a client with a new refresh token, so a token issued before the account's
+	// last password or email change gets none.
+	IssuedAt int64
 
 	// Params are the parameters of the authorization request, as [AuthorizationRequestValidate] reads
 	// them.
@@ -84,15 +95,22 @@ type AuthorizationCode struct {
 type AuthorizationCodeCreate struct {
 	daoInsert          AuthorizationCodeCreateDaoInsert
 	daoRevocationExist AuthorizationCodeCreateDaoRevocationExist
+	daoCredentials     AuthorizationCodeCreateDaoCredentials
 	oauth              authconfig.OAuth
 }
 
 func NewAuthorizationCodeCreate(
 	daoInsert AuthorizationCodeCreateDaoInsert,
 	daoRevocationExist AuthorizationCodeCreateDaoRevocationExist,
+	daoCredentials AuthorizationCodeCreateDaoCredentials,
 	oauth authconfig.OAuth,
 ) *AuthorizationCodeCreate {
-	return &AuthorizationCodeCreate{daoInsert: daoInsert, daoRevocationExist: daoRevocationExist, oauth: oauth}
+	return &AuthorizationCodeCreate{
+		daoInsert:          daoInsert,
+		daoRevocationExist: daoRevocationExist,
+		daoCredentials:     daoCredentials,
+		oauth:              oauth,
+	}
 }
 
 func (service *AuthorizationCodeCreate) Exec(
@@ -140,6 +158,19 @@ func (service *AuthorizationCodeCreate) Exec(
 
 	if revoked {
 		return nil, otel.ReportError(span, fmt.Errorf("signed out: %w", ErrAuthorizationCodeCreateSessionEnded))
+	}
+
+	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: request.UserID})
+	if errors.Is(err, dao.ErrCredentialsSelectNotFound) {
+		return nil, otel.ReportError(span, errors.Join(err, ErrAuthorizationCodeCreateSessionEnded))
+	}
+
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
+	}
+
+	if credentialsChangedSince(credentials, request.IssuedAt) {
+		return nil, otel.ReportError(span, fmt.Errorf("credentials changed: %w", ErrAuthorizationCodeCreateSessionEnded))
 	}
 
 	secret := make([]byte, AuthorizationCodeSize)

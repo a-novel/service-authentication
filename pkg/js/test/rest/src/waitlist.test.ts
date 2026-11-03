@@ -16,7 +16,7 @@ import {
 import { generateRandomMail } from "@a-novel/service-authentication-rest-test";
 
 describe("waitlistJoin", () => {
-  it("exposes the duplicate warning returned by a configured writer", async () => {
+  it("still exposes the duplicate warning of a service older than v2.24.0", async () => {
     const api = new AuthenticationApi("https://auth.example.test");
     vi.spyOn(api, "fetchResponse").mockResolvedValue(Response.json({ code: "already_waitlisted" }, { status: 409 }));
     const request = waitlistJoin(api, "test-session", { email: "member@example.com", lang: Lang.En });
@@ -42,15 +42,12 @@ describe("waitlistJoin", () => {
     });
   });
 
-  it("reports an existing account with a typed conflict without contacting Google", async () => {
+  it("accepts a registered address like a new one, and adds nothing", async () => {
     const api = callerApi(accountPlatform);
     const token = await tokenCreateAnon(api);
-    const request = waitlistJoin(api, token.accessToken, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      lang: Lang.En,
-    });
-    await expect(request).rejects.toBeInstanceOf(WaitlistJoinConflictError);
-    await expect(request).rejects.toMatchObject({ status: 409, code: "account_exists" });
+    await expect(
+      waitlistJoin(api, token.accessToken, { email: process.env.SUPER_ADMIN_EMAIL!, lang: Lang.En })
+    ).resolves.toBeUndefined();
   });
 
   it("reports an unavailable writer without pretending to store a new request", async () => {

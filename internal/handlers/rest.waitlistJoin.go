@@ -12,7 +12,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
 
-// RestWaitlistJoinService records invitation requests and distinguishes membership conflicts.
+// RestWaitlistJoinService records invitation requests.
 type RestWaitlistJoinService interface {
 	Exec(ctx context.Context, request *core.WaitlistJoinRequest) error
 }
@@ -30,12 +30,6 @@ type RestWaitlistJoinRequest struct {
 	Lang  string `json:"lang"`
 }
 
-// RestWaitlistJoinConflict exposes only the stable reason the UI needs for its warning.
-type RestWaitlistJoinConflict struct {
-	// Code is account_exists or already_waitlisted; neither includes the submitted address.
-	Code string `json:"code"`
-}
-
 // waitlistRetryAfterSeconds gives the shared Google writer time to recover before another attempt.
 const waitlistRetryAfterSeconds = "60"
 
@@ -49,7 +43,8 @@ func NewRestWaitlistJoin(service RestWaitlistJoinService, logger logging.Log) *R
 	return &RestWaitlistJoin{service: service, logger: logger}
 }
 
-// ServeHTTP returns an empty 202 for new requests and a coded 409 for membership conflicts.
+// ServeHTTP returns an empty 202 for every accepted request, whether the address was new, listed or
+// registered.
 func (handler *RestWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.WaitlistJoin")
 	defer span.End()
@@ -64,14 +59,6 @@ func (handler *RestWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	err = handler.service.Exec(ctx, &core.WaitlistJoinRequest{Email: request.Email, Lang: request.Lang})
-
-	conflictCode := waitlistJoinConflictCode(err)
-	if conflictCode != "" {
-		httpf.SendJSONStatus(w, span, http.StatusConflict, RestWaitlistJoinConflict{Code: conflictCode})
-
-		return
-	}
-
 	if err != nil {
 		if errors.Is(err, core.ErrWaitlistBusy) || errors.Is(err, core.ErrWaitlistUnavailable) {
 			w.Header().Set("Retry-After", waitlistRetryAfterSeconds)
@@ -83,17 +70,4 @@ func (handler *RestWaitlistJoin) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-}
-
-// waitlistJoinConflictCode returns the [RestWaitlistJoinConflict] code of a membership conflict, and
-// an empty string for any other outcome.
-func waitlistJoinConflictCode(err error) string {
-	switch {
-	case errors.Is(err, core.ErrWaitlistAccountExists):
-		return "account_exists"
-	case errors.Is(err, core.ErrWaitlistAlreadyJoined):
-		return "already_waitlisted"
-	default:
-		return ""
-	}
 }

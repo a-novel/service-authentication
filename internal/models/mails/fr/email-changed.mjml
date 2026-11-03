@@ -1,0 +1,35 @@
+<mjml lang="fr" dir="ltr">
+  <!-- prettier-ignore -->
+  <mj-raw position="file-start">
+Subject: {{ headerText "L’adresse courriel de votre compte Agora a changé" }}
+MIME-Version: 1.0
+Content-Type: multipart/related; type="text/html"; boundary="agora-related"
+
+--agora-related
+Content-Type: text/html; charset=UTF-8
+
+<!-- Mail starts here -->
+  </mj-raw>
+  <mj-head>
+    <mj-title>L’adresse courriel de votre compte Agora a changé</mj-title>
+    <mj-preview>Votre compte Agora utilise désormais une autre adresse courriel.</mj-preview>
+    <mj-include path="../mj-theme.mjml" />
+  </mj-head>
+  <mj-body width="600px" background-color="#060b0e" css-class="mail">
+    <mj-include path="../mj-header.mjml" />
+    <mj-wrapper>
+      <mj-section mj-class="card">
+        <mj-column>
+          <mj-text padding="0 0 8px"><h1>Votre adresse courriel a changé</h1></mj-text>
+          <mj-text padding="0 0 16px"
+            >Votre compte Agora utilise désormais une autre adresse courriel. Ses messages n’arrivent plus à celle-ci,
+            et toutes les sessions ouvertes avant ce changement ont pris fin.</mj-text
+          >
+          <mj-text mj-class="support"
+            >Si vous n’êtes pas à l’origine de ce changement, contactez l’équipe Agora sans attendre.</mj-text
+          >
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>

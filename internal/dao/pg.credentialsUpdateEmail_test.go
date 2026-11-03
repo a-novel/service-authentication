@@ -50,12 +50,13 @@ func TestPgCredentialsUpdateEmail(t *testing.T) {
 			},
 
 			expect: &dao.Credentials{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Email:     "new-user@provider.com",
-				Password:  "password-2-hashed",
-				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "auth:user",
+				ID:                   uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+				Email:                "new-user@provider.com",
+				Password:             "password-2-hashed",
+				CreatedAt:            time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+				UpdatedAt:            time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				CredentialsUpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+				Role:                 "auth:user",
 			},
 		},
 		{

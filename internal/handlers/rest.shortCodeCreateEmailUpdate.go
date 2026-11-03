@@ -11,6 +11,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
@@ -21,14 +22,17 @@ type RestShortCodeCreateEmailUpdateService interface {
 
 // shortCodeCreateEmailUpdateErrors maps a failed email-change code request to its status.
 var shortCodeCreateEmailUpdateErrors = httpf.ErrMap{
+	core.ErrCredentialsGetNotFound:  http.StatusNotFound,
+	lib.ErrInvalidPassword:          http.StatusForbidden,
 	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
 	core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,
 }
 
 // RestShortCodeCreateEmailUpdateRequest is the JSON body of PUT /v2/short-code/update-email.
 type RestShortCodeCreateEmailUpdateRequest struct {
-	Email string `json:"email"`
-	Lang  string `json:"lang"`
+	CurrentPassword string `json:"currentPassword"`
+	Email           string `json:"email"`
+	Lang            string `json:"lang"`
 }
 
 // RestShortCodeCreateEmailUpdate serves PUT /v2/short-code/update-email, which emails a code confirming a new address.
@@ -64,9 +68,10 @@ func (handler *RestShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, 
 	}
 
 	serviceRequest := &core.ShortCodeCreateEmailUpdateRequest{
-		Email: request.Email,
-		Lang:  request.Lang,
-		ID:    lo.FromPtr(claims.UserID),
+		CurrentPassword: request.CurrentPassword,
+		Email:           request.Email,
+		Lang:            request.Lang,
+		ID:              lo.FromPtr(claims.UserID),
 	}
 
 	_, err = handler.service.Exec(ctx, serviceRequest)
