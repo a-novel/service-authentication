@@ -127,16 +127,35 @@ The [MailPit API reference](https://mailpit.axllent.org/docs/api-v1/view.html) l
 
 ### Two-token system
 
-A session is a pair of JWTs. The [JSON Keys service](https://github.com/a-novel/service-json-keys) signs and verifies both, and this service holds no signing key.
+A signed-in client holds a pair of JWTs. The [JSON Keys service](https://github.com/a-novel/service-json-keys) signs and verifies both, and this service holds no signing key.
 
-| Token         | Purpose                             | Lifetime |
-| ------------- | ----------------------------------- | -------- |
-| Access token  | Authorizes API calls.               | 1 hour   |
-| Refresh token | Renews the pair without signing in. | 7 days   |
+| Token         | Purpose                             | Lifetime   |
+| ------------- | ----------------------------------- | ---------- |
+| Access token  | Authorizes API calls.               | 15 minutes |
+| Refresh token | Renews the pair without signing in. | 7 days     |
 
 The JSON Keys configuration sets both lifetimes. A client signs in once and sends the access token until it expires. `PATCH /v2/session` then trades both tokens for a fresh pair. The access token names the refresh token that minted it, and only that refresh token renews it.
 
 `PUT /v2/session/revoke` signs a session out. The caller's access token must belong to the same user as the refresh token. The route records the refresh token's ID in the `refresh_token_revocations` table, and a refresh then refuses that token. Access tokens the session already holds stay valid until they expire, since every service verifies them locally. A revocation row is useful until its refresh token expires, plus the verifier's clock-skew leeway. The scheduled `refresh-token-purge` maintenance operation then deletes it.
+
+### Device sessions
+
+A session is one sign-in on the account platform, by password or by account creation. The OAuth clients that sign the person in through it join it, so every token of the session carries one session ID: the JTI of the refresh token that opened it. The account platform shows each session as a device.
+
+The `sessions` table gives each session a row, with the device the account platform describes in the `X-Client-User-Agent`, `X-Client-Region` and `X-Client-City` headers, beside the visitor IP that `REST_CLIENT_IP_HEADER` names. The row's last activity is when the session's latest access token was issued: at sign-in, at each `PATCH /v2/session`, and at each code or refresh grant of a client. A sign-out still lives in `refresh_token_revocations` alone. A session is active until it ends or a revocation holds its ID, and logged out afterwards.
+
+| Route                                 | Effect                                                   |
+| ------------------------------------- | -------------------------------------------------------- |
+| `GET /v2/sessions`                    | Lists the caller's sessions, the active ones first.      |
+| `PUT /v2/sessions/{sessionID}/revoke` | Signs one session out, the caller's own included.        |
+| `PUT /v2/sessions/revoke-others`      | Signs out every other active session of the caller.      |
+| `DELETE /v2/sessions/{sessionID}`     | Removes a logged-out session. An active one answers 409. |
+
+Only the account platform manages devices, so an OAuth client's token gets 403 on these routes.
+
+The location consent is an account setting, off by default. While it is on, every session of the account records its IP address, region and city. `PATCH /v2/credentials/location-consent` sets it, and turning it off erases every stored location of the account at once.
+
+A logged-out session stays listed until the account removes it. The scheduled `refresh-token-purge` maintenance operation deletes the rows inactive for 30 days, the `SessionRetention` of `internal/core`. A session lasts at most the refresh token's 7 days, so such a row belongs to a session that has ended.
 
 ### Single sign-on
 

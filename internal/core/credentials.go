@@ -25,6 +25,9 @@ type Credentials struct {
 type CredentialsSelf struct {
 	Credentials
 
+	// LocationConsent is whether the account records the location of its sessions.
+	LocationConsent bool
+
 	// PendingEmail is the email change awaiting confirmation, nil when none does.
 	PendingEmail *PendingEmail
 }

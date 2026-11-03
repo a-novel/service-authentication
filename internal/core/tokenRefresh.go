@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
@@ -26,8 +27,8 @@ var (
 	ErrTokenRefreshInvalidAccessToken = errors.New("invalid access token")
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when the
 	// verifier rejects the refresh token with [jwt.ErrTokenRejected], expiry included,
-	// joined onto that verifier error. A revoked refresh token or session returns it too, and
-	// so does a refresh token issued to an OAuth client.
+	// joined onto that verifier error. A revoked refresh token, or a session revoked or ended,
+	// returns it too, and so does a refresh token issued to an OAuth client.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the access
 	// and refresh tokens are individually valid but encode different user IDs, which
@@ -48,6 +49,11 @@ type TokenRefreshDao interface {
 // revoked.
 type TokenRefreshDaoRefreshTokenRevocationExist interface {
 	Exec(ctx context.Context, request *dao.RefreshTokenRevocationExistRequest) (bool, error)
+}
+
+// TokenRefreshDaoSessionUpsert records the renewal on the session's row.
+type TokenRefreshDaoSessionUpsert interface {
+	Exec(ctx context.Context, request *dao.SessionUpsertRequest) error
 }
 
 // TokenRefreshServiceSignClaims signs the new access token.
@@ -78,14 +84,19 @@ type TokenRefreshServiceVerifyRefreshClaims interface {
 type TokenRefreshRequest struct {
 	AccessToken  string `validate:"required,max=1024"`
 	RefreshToken string `validate:"required,max=1024"`
+
+	// Visitor is the device the session renews on.
+	Visitor Visitor
 }
 
-// TokenRefresh renews an access token from a valid refresh token whose session was not revoked,
-// minting a new access token that reflects the user's current roles while reusing the same
-// refresh token.
+// TokenRefresh renews an access token from a valid refresh token whose session is active, minting a
+// new access token that reflects the user's current roles while reusing the same refresh token. The
+// session's row records the renewal and the visitor, with its location under the account's consent
+// and none otherwise. A session of an older release gets its row then.
 type TokenRefresh struct {
 	dao                            TokenRefreshDao
 	daoRefreshTokenRevocationExist TokenRefreshDaoRefreshTokenRevocationExist
+	daoSessionUpsert               TokenRefreshDaoSessionUpsert
 	serviceSignClaims              TokenRefreshServiceSignClaims
 	serviceVerifyClaims            TokenRefreshServiceVerifyClaims
 	serviceVerifyRefreshClaims     TokenRefreshServiceVerifyRefreshClaims
@@ -94,6 +105,7 @@ type TokenRefresh struct {
 func NewTokenRefresh(
 	dao TokenRefreshDao,
 	daoRefreshTokenRevocationExist TokenRefreshDaoRefreshTokenRevocationExist,
+	daoSessionUpsert TokenRefreshDaoSessionUpsert,
 	serviceSignClaims TokenRefreshServiceSignClaims,
 	serviceVerifyClaims TokenRefreshServiceVerifyClaims,
 	serviceVerifyRefreshClaims TokenRefreshServiceVerifyRefreshClaims,
@@ -101,6 +113,7 @@ func NewTokenRefresh(
 	return &TokenRefresh{
 		dao:                            dao,
 		daoRefreshTokenRevocationExist: daoRefreshTokenRevocationExist,
+		daoSessionUpsert:               daoSessionUpsert,
 		serviceSignClaims:              serviceSignClaims,
 		serviceVerifyClaims:            serviceVerifyClaims,
 		serviceVerifyRefreshClaims:     serviceVerifyRefreshClaims,
@@ -176,8 +189,10 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("check refresh token revocation: %w", err))
 	}
 
-	if revoked {
-		return nil, otel.ReportError(span, fmt.Errorf("session revoked: %w", ErrTokenRefreshInvalidRefreshToken))
+	// The verifier grants the refresh token a leeway past its expiry, and the session's end gets none.
+	// A logged-out session therefore never renews, nor brings back a row the account removed.
+	if revoked || time.Now().Unix() >= refreshTokenClaims.SessionExpiry() {
+		return nil, otel.ReportError(span, fmt.Errorf("session ended: %w", ErrTokenRefreshInvalidRefreshToken))
 	}
 
 	// Reload credentials so any role change since the original sign lands in the new token.
@@ -187,6 +202,11 @@ func (service *TokenRefresh) Exec(
 	}
 
 	newAccessToken, err := signAccessToken(ctx, service.serviceSignClaims, credentials, refreshTokenClaims)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
+	err = recordSession(ctx, service.daoSessionUpsert, refreshTokenClaims, credentials, request.Visitor)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}

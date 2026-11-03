@@ -56,7 +56,7 @@ func (service *CredentialsGetSelf) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
-	credentials := &CredentialsSelf{Credentials: *newCredentials(entity)}
+	credentials := &CredentialsSelf{Credentials: *newCredentials(entity), LocationConsent: entity.LocationConsent}
 
 	shortCodeRequest := &dao.ShortCodeSelectRequest{
 		Usage:  ShortCodeUsageValidateEmail,

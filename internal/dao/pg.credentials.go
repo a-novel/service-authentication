@@ -22,6 +22,8 @@ type Credentials struct {
 
 	// Role determines which actions the user is allowed to take.
 	Role string `bun:"role"`
+	// LocationConsent is whether the account records the location of its sessions.
+	LocationConsent bool `bun:"location_consent"`
 
 	// CreatedAt is when the account was registered.
 	CreatedAt time.Time `bun:"created_at"`

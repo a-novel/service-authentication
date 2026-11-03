@@ -33,8 +33,12 @@ export const PendingEmailSchema = z.object({
 /** The value {@link PendingEmailSchema} validates. */
 export type PendingEmail = z.infer<typeof PendingEmailSchema>;
 
-/** The authenticated user's own account, with the email change awaiting confirmation, if any. */
+/**
+ * The authenticated user's own account: whether its sessions record their location, and the email change awaiting
+ * confirmation, if any.
+ */
 export const CredentialsSelfSchema = CredentialsSchema.extend({
+  locationConsent: z.boolean(),
   pendingEmail: PendingEmailSchema.optional(),
 });
 
@@ -117,6 +121,14 @@ export const CredentialsUpdateRoleRequestSchema = z.object({
 
 /** The value {@link CredentialsUpdateRoleRequestSchema} validates. */
 export type CredentialsUpdateRoleRequest = z.infer<typeof CredentialsUpdateRoleRequestSchema>;
+
+/** Whether the account's sessions record their location: the IP address, the region and the city of each device. */
+export const CredentialsUpdateLocationConsentRequestSchema = z.object({
+  enabled: z.boolean(),
+});
+
+/** The value {@link CredentialsUpdateLocationConsentRequestSchema} validates. */
+export type CredentialsUpdateLocationConsentRequest = z.infer<typeof CredentialsUpdateLocationConsentRequestSchema>;
 
 /** Fetches a single account by its identifier. */
 export async function credentialsGet(
@@ -244,6 +256,22 @@ export async function credentialsUpdateRole(
   form: CredentialsUpdateRoleRequest
 ): Promise<Credentials> {
   return await api.fetch("/v2/credentials/role", CredentialsSchema, {
+    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    method: "PATCH",
+    body: JSON.stringify(form),
+  });
+}
+
+/**
+ * Sets whether the sessions of the authenticated account record their location. Turning it off erases the location
+ * every session of the account recorded. Throws a 403 for an anonymous token or an OAuth client's.
+ */
+export async function credentialsUpdateLocationConsent(
+  api: AuthenticationApi,
+  accessToken: string,
+  form: CredentialsUpdateLocationConsentRequest
+): Promise<void> {
+  return await api.fetchVoid("/v2/credentials/location-consent", {
     headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
     method: "PATCH",
     body: JSON.stringify(form),

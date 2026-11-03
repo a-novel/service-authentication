@@ -18,14 +18,15 @@ import (
 // refreshTokenPurgeTimeout bounds one run. A run cut short leaves the remaining rows to the next.
 const refreshTokenPurgeTimeout = 5 * time.Minute
 
-// refreshTokenPurgeOperation deletes expired refresh token revocations. A schedule runs it; it takes
-// no parameters, so the scheduler can run it without argument overrides.
+// refreshTokenPurgeOperation deletes expired refresh token revocations and the sessions inactive for
+// core.SessionRetention. A schedule runs it; it takes no parameters, so the scheduler can run it
+// without argument overrides.
 type refreshTokenPurgeOperation struct{}
 
 func refreshTokenPurgeOperationDefinition() maintenanceOperationDefinition {
 	return newMaintenanceOperationDefinition(
 		"refresh-token-purge", "",
-		"Delete refresh token revocations whose token has expired.",
+		"Delete refresh token revocations whose token has expired, and sessions inactive for 30 days.",
 		func(*flag.FlagSet) *refreshTokenPurgeOperation { return &refreshTokenPurgeOperation{} },
 		func(*refreshTokenPurgeOperation) error { return nil },
 	)
@@ -57,10 +58,10 @@ func (operation *refreshTokenPurgeOperation) run(ctx context.Context) error {
 
 	defer closeDatabase(database)
 
-	purge := core.NewRefreshTokenRevocationPurge(dao.NewPgRefreshTokenRevocationPurge())
+	purge := core.NewRefreshTokenRevocationPurge(dao.NewPgRefreshTokenRevocationPurge(), dao.NewPgSessionPurge())
 
 	result, err := purge.Exec(ctx)
-	log.Printf("refresh-token-purge purged=%d", result.Purged)
+	log.Printf("refresh-token-purge purged=%d sessions_purged=%d", result.Purged, result.SessionsPurged)
 
 	return err
 }

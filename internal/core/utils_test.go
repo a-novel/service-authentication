@@ -5,14 +5,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/url"
+	"reflect"
 	"runtime"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
@@ -125,4 +128,42 @@ func noHashInTx(t *testing.T) func(ctx context.Context, fn func(ctx context.Cont
 	return func(ctx context.Context, fn func(ctx context.Context) error) error {
 		return requireNoHash(t, func() error { return fn(ctx) })
 	}
+}
+
+// matchSessionUpsert matches a session write equal to expect, at any time but the zero one. It
+// reports a mismatch on t.
+func matchSessionUpsert(t *testing.T, expect *dao.SessionUpsertRequest) any {
+	t.Helper()
+
+	return mock.MatchedBy(func(request *dao.SessionUpsertRequest) bool {
+		actual := *request
+		actual.Now, actual.ExpiresAt = time.Time{}, expect.ExpiresAt
+
+		if request.Now.IsZero() || !request.ExpiresAt.Equal(expect.ExpiresAt) || !reflect.DeepEqual(*expect, actual) {
+			t.Errorf("unexpected session write %+v, want %+v", *request, *expect)
+
+			return false
+		}
+
+		return true
+	})
+}
+
+// matchSessionTouch matches a session touch equal to expect, at any time but the zero one. It
+// reports a mismatch on t.
+func matchSessionTouch(t *testing.T, expect *dao.SessionTouchRequest) any {
+	t.Helper()
+
+	return mock.MatchedBy(func(request *dao.SessionTouchRequest) bool {
+		actual := *request
+		actual.Now, actual.ExpiresAt = time.Time{}, expect.ExpiresAt
+
+		if request.Now.IsZero() || !request.ExpiresAt.Equal(expect.ExpiresAt) || !reflect.DeepEqual(*expect, actual) {
+			t.Errorf("unexpected session touch %+v, want %+v", *request, *expect)
+
+			return false
+		}
+
+		return true
+	})
 }

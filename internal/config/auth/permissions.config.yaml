@@ -13,8 +13,11 @@ roles:
       - "auth:anon"
     permissions:
       - "authorizationCode:create"
+      - "credentials:locationConsent:patch"
       - "credentials:password:patch"
       - "credentials:self:get"
+      - "session:delete"
+      - "session:list"
       - "session:revoke"
       - "shortCode:email:update"
   "auth:admin":

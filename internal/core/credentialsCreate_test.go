@@ -75,6 +75,8 @@ func TestCredentialsCreate(t *testing.T) {
 		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
 		transactionMock             *transactionMock
 		waitlistMock                *waitlistMock
+		// sessionUpsertErr fails the session's record, which every signed pair runs.
+		sessionUpsertErr error
 
 		expect     *core.Token
 		expectErr  error
@@ -83,10 +85,12 @@ func TestCredentialsCreate(t *testing.T) {
 		{
 			name: "Success/WaitlistUnavailable",
 
+			// A new account consents to no location, so its session records the user agent alone.
 			request: &core.CredentialsCreateRequest{
 				Email:     "user@provider.com",
 				Password:  "password-2",
 				ShortCode: "short-code",
+				Visitor:   core.Visitor{UserAgent: "Firefox", IPAddress: "192.0.2.1", Region: "FR", City: "Paris"},
 			},
 
 			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
@@ -273,6 +277,39 @@ func TestCredentialsCreate(t *testing.T) {
 			expectErr: errFoo,
 		},
 		{
+			// A failed record fails the call. The account stays, and its user signs in.
+			name: "Error/SessionUpsert",
+
+			request: &core.CredentialsCreateRequest{
+				Email:     "user@provider.com",
+				Password:  "password-2",
+				ShortCode: "short-code",
+			},
+
+			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
+			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
+			transactionMock:             &transactionMock{},
+			waitlistMock:                &waitlistMock{},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+					Email: "user@provider.com",
+					Role:  authconfig.RoleUser,
+				},
+			},
+
+			serviceSignClaimsMock: &serviceSignClaimsMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{Token: "access-token"},
+			},
+
+			sessionUpsertErr: errFoo,
+
+			expectErr: errFoo,
+		},
+		{
 			name: "Error/IssueRefreshToken",
 
 			request: &core.CredentialsCreateRequest{
@@ -432,6 +469,7 @@ func TestCredentialsCreate(t *testing.T) {
 			serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
 			transactor := coremocks.NewMockTransactor(t)
 			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
+			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
 			committed := false
 
 			if testCase.transactionMock != nil {
@@ -556,8 +594,22 @@ func TestCredentialsCreate(t *testing.T) {
 					Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
 			}
 
+			if testCase.issueTokenMock != nil && testCase.issueTokenMock.err == nil {
+				sessionRequest := &dao.SessionUpsertRequest{
+					ID:        uuid.MustParse(mockUnsignedJTI),
+					UserID:    testCase.daoMock.resp.ID,
+					UserAgent: testCase.request.Visitor.UserAgent,
+					ExpiresAt: time.Unix(0, 0),
+				}
+
+				daoSessionUpsert.EXPECT().
+					Exec(mock.Anything, matchSessionUpsert(t, sessionRequest)).
+					Return(testCase.sessionUpsertErr)
+			}
+
 			service := core.NewCredentialsCreate(
 				mockDao,
+				daoSessionUpsert,
 				serviceShortCodeVerify,
 				serviceShortCodeConsume,
 				serviceSignClaims,
@@ -575,6 +627,7 @@ func TestCredentialsCreate(t *testing.T) {
 			serviceSignClaims.AssertExpectations(t)
 			transactor.AssertExpectations(t)
 			waitlist.AssertExpectations(t)
+			daoSessionUpsert.AssertExpectations(t)
 		})
 	}
 }
@@ -613,6 +666,7 @@ func TestCredentialsCreateHashing(t *testing.T) {
 			consume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
 			sign := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
 			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
+			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
 			transactor := coremocks.NewMockTransactor(t)
 
 			verify.EXPECT().Exec(mock.Anything, mock.Anything).
@@ -635,9 +689,10 @@ func TestCredentialsCreateHashing(t *testing.T) {
 				waitlist.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.WaitlistResult{}, nil).Once()
 				sign.EXPECT().ClaimsSign(mock.Anything, mock.Anything).
 					Return(&servicejsonkeys.ClaimsSignResponse{Token: mockUnsignedRefreshToken}, nil).Twice()
+				daoSessionUpsert.EXPECT().Exec(mock.Anything, mock.Anything).Return(nil).Once()
 			}
 
-			service := core.NewCredentialsCreate(mockDao, verify, consume, sign, transactor, waitlist)
+			service := core.NewCredentialsCreate(mockDao, daoSessionUpsert, verify, consume, sign, transactor, waitlist)
 			exec := func() error {
 				_, err := service.Exec(t.Context(), request)
 
@@ -659,6 +714,7 @@ func TestCredentialsCreateHashing(t *testing.T) {
 			sign.AssertExpectations(t)
 			waitlist.AssertExpectations(t)
 			transactor.AssertExpectations(t)
+			daoSessionUpsert.AssertExpectations(t)
 		})
 	}
 }

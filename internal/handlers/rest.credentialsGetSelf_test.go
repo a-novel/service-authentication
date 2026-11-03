@@ -38,11 +38,12 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 	}
 
 	credentialsResponse := map[string]any{
-		"id":        "00000000-0000-0000-0000-000000000001",
-		"email":     "user@provider.com",
-		"role":      authconfig.RoleUser,
-		"createdAt": "2018-02-02T12:00:00Z",
-		"updatedAt": "2020-02-02T12:00:00Z",
+		"id":              "00000000-0000-0000-0000-000000000001",
+		"email":           "user@provider.com",
+		"role":            authconfig.RoleUser,
+		"createdAt":       "2018-02-02T12:00:00Z",
+		"updatedAt":       "2020-02-02T12:00:00Z",
+		"locationConsent": false,
 	}
 
 	type serviceMock struct {
@@ -94,6 +95,18 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 				},
 			}),
 			expectStatus: http.StatusOK,
+		},
+		{
+			name: "Success/LocationConsent",
+
+			claims: &session.Claims{UserID: lo.ToPtr(userID)},
+
+			serviceMock: &serviceMock{
+				resp: &core.CredentialsSelf{Credentials: credentials, LocationConsent: true},
+			},
+
+			expectResponse: lo.Assign(credentialsResponse, map[string]any{"locationConsent": true}),
+			expectStatus:   http.StatusOK,
 		},
 		{
 			name: "Error/NotFound",

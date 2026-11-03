@@ -3,6 +3,7 @@ export * from "./authorization";
 export * from "./claims";
 export * from "./credentials";
 export * from "./form";
+export * from "./session";
 export * from "./shortCode";
 export * from "./token";
 export * from "./const";

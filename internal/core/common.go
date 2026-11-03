@@ -21,6 +21,11 @@ var (
 	ErrCredentialsUpdatePasswordNotFound = dao.ErrCredentialsUpdatePasswordNotFound
 	// ErrCredentialsUpdateRoleNotFound is returned when the credentials to update do not exist.
 	ErrCredentialsUpdateRoleNotFound = dao.ErrCredentialsUpdateRoleNotFound
+	// ErrCredentialsUpdateLocationConsentNotFound is returned when the credentials to update do not exist.
+	ErrCredentialsUpdateLocationConsentNotFound = dao.ErrCredentialsUpdateLocationConsentNotFound
+	// ErrSessionNotFound is returned when the caller holds no session of the requested ID. Another
+	// account's session answers it too.
+	ErrSessionNotFound = dao.ErrSessionSelectNotFound
 	// ErrShortCodeNotFound is returned when a matching short code does not exist.
 	ErrShortCodeNotFound = dao.ErrShortCodeSelectNotFound
 	// ErrShortCodeConsumeInvalid is returned when a submitted short code does not match the

@@ -22,6 +22,11 @@ type TokenCreateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
+// TokenCreateDaoSessionUpsert records the session the login opens.
+type TokenCreateDaoSessionUpsert interface {
+	Exec(ctx context.Context, request *dao.SessionUpsertRequest) error
+}
+
 // TokenCreateServiceSignClaims provides JWT signing capabilities.
 type TokenCreateServiceSignClaims interface {
 	ClaimsSign(
@@ -35,21 +40,29 @@ type TokenCreateRequest struct {
 	Email string `validate:"required,email,max=1024"`
 	// Password is the plaintext password to verify against the stored hash.
 	Password string `validate:"required,max=1024"`
+
+	// Visitor is the device the user signs in on.
+	Visitor Visitor
 }
 
 // TokenCreate authenticates a user by email and password and issues a fresh
-// access/refresh token pair.
+// access/refresh token pair, in a session of its own that it records.
 type TokenCreate struct {
 	dao               TokenCreateDao
+	daoSessionUpsert  TokenCreateDaoSessionUpsert
 	serviceSignClaims TokenCreateServiceSignClaims
 }
 
-func NewTokenCreate(dao TokenCreateDao, serviceSignClaims TokenCreateServiceSignClaims) *TokenCreate {
-	return &TokenCreate{dao: dao, serviceSignClaims: serviceSignClaims}
+func NewTokenCreate(
+	dao TokenCreateDao, daoSessionUpsert TokenCreateDaoSessionUpsert, serviceSignClaims TokenCreateServiceSignClaims,
+) *TokenCreate {
+	return &TokenCreate{dao: dao, daoSessionUpsert: daoSessionUpsert, serviceSignClaims: serviceSignClaims}
 }
 
 // Exec verifies the request's email and password and returns a freshly signed
-// access/refresh token pair. See signTokenPair for how the two tokens are bound.
+// access/refresh token pair. See signTokenPair for how the two tokens are bound. The session's
+// row records the visitor, and its location under the account's consent. A failed record fails the
+// login.
 //
 // It returns lib.ErrInvalidPassword when the password does not match and
 // [ErrCredentialsByEmailNotFound] when the email is not registered.
@@ -89,9 +102,14 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}
 
-	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
+	tokens, refreshClaims, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
+	}
+
+	err = recordSession(ctx, service.daoSessionUpsert, refreshClaims, credentials, request.Visitor)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
 	}
 
 	return tokens, nil

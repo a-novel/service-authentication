@@ -3,6 +3,7 @@ package core_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,8 +26,9 @@ func TestRefreshTokenRevocationPurge(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		// daoMocks answer the batches in order.
-		daoMocks []daoMock
+		// daoMocks answer the batches of revocations in order, and sessionsMocks those of sessions.
+		daoMocks      []daoMock
+		sessionsMocks []daoMock
 
 		expect    *core.RefreshTokenRevocationPurgeResult
 		expectErr error
@@ -34,7 +36,8 @@ func TestRefreshTokenRevocationPurge(t *testing.T) {
 		{
 			name: "Success/Empty",
 
-			daoMocks: []daoMock{{purged: 0}},
+			daoMocks:      []daoMock{{purged: 0}},
+			sessionsMocks: []daoMock{{purged: 0}},
 
 			expect: &core.RefreshTokenRevocationPurgeResult{Purged: 0},
 		},
@@ -47,8 +50,15 @@ func TestRefreshTokenRevocationPurge(t *testing.T) {
 				{purged: core.RefreshTokenRevocationPurgeBatch},
 				{purged: 3},
 			},
+			sessionsMocks: []daoMock{
+				{purged: core.RefreshTokenRevocationPurgeBatch},
+				{purged: 5},
+			},
 
-			expect: &core.RefreshTokenRevocationPurgeResult{Purged: 2*core.RefreshTokenRevocationPurgeBatch + 3},
+			expect: &core.RefreshTokenRevocationPurgeResult{
+				Purged:         2*core.RefreshTokenRevocationPurgeBatch + 3,
+				SessionsPurged: core.RefreshTokenRevocationPurgeBatch + 5,
+			},
 		},
 		{
 			// The rows already deleted are reported with the failure.
@@ -60,6 +70,22 @@ func TestRefreshTokenRevocationPurge(t *testing.T) {
 			},
 
 			expect:    &core.RefreshTokenRevocationPurgeResult{Purged: core.RefreshTokenRevocationPurgeBatch},
+			expectErr: errFoo,
+		},
+		{
+			// The revocations already purged are reported with the failure on sessions.
+			name: "Error/SessionsDao",
+
+			daoMocks: []daoMock{{purged: 2}},
+			sessionsMocks: []daoMock{
+				{purged: core.RefreshTokenRevocationPurgeBatch},
+				{err: errFoo},
+			},
+
+			expect: &core.RefreshTokenRevocationPurgeResult{
+				Purged:         2,
+				SessionsPurged: core.RefreshTokenRevocationPurgeBatch,
+			},
 			expectErr: errFoo,
 		},
 	}
@@ -80,13 +106,32 @@ func TestRefreshTokenRevocationPurge(t *testing.T) {
 				mockDao.EXPECT().Exec(mock.Anything, request).Return(resp, daoMock.err).Once()
 			}
 
-			service := core.NewRefreshTokenRevocationPurge(mockDao)
+			mockDaoSessions := coremocks.NewMockRefreshTokenRevocationPurgeDaoSessions(t)
+			// The sessions inactive for the retention go.
+			sessionsRequest := mock.MatchedBy(func(request *dao.SessionPurgeRequest) bool {
+				cutoff := time.Now().Add(-core.SessionRetention)
+
+				return request.Limit == core.RefreshTokenRevocationPurgeBatch &&
+					cutoff.Sub(request.ActiveBefore).Abs() < time.Minute
+			})
+
+			for _, daoMock := range testCase.sessionsMocks {
+				var resp *dao.SessionPurgeResult
+				if daoMock.err == nil {
+					resp = &dao.SessionPurgeResult{Purged: daoMock.purged}
+				}
+
+				mockDaoSessions.EXPECT().Exec(mock.Anything, sessionsRequest).Return(resp, daoMock.err).Once()
+			}
+
+			service := core.NewRefreshTokenRevocationPurge(mockDao, mockDaoSessions)
 
 			res, err := service.Exec(t.Context())
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 
 			mockDao.AssertExpectations(t)
+			mockDaoSessions.AssertExpectations(t)
 		})
 	}
 }

@@ -31,7 +31,8 @@ type RestTokenCreateRequest struct {
 	Password string `json:"password"`
 }
 
-// RestTokenCreate serves PUT /v2/session, which signs a user in.
+// RestTokenCreate serves PUT /v2/session, which signs a user in. The session records the visitor the
+// account platform describes.
 type RestTokenCreate struct {
 	service RestTokenCreateService
 	logger  logging.Log
@@ -57,6 +58,7 @@ func (handler *RestTokenCreate) ServeHTTP(w http.ResponseWriter, r *http.Request
 	serviceRequest := &core.TokenCreateRequest{
 		Email:    request.Email,
 		Password: request.Password,
+		Visitor:  loadVisitor(r),
 	}
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
