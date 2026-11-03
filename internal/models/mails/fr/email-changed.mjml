@@ -1,7 +1,7 @@
 <mjml lang="fr" dir="ltr">
   <!-- prettier-ignore -->
   <mj-raw position="file-start">
-Subject: L’adresse courriel de votre compte Agora a changé
+Subject: {{ headerText "L’adresse courriel de votre compte Agora a changé" }}
 MIME-Version: 1.0
 Content-Type: multipart/related; type="text/html"; boundary="agora-related"
 

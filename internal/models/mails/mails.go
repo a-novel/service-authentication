@@ -6,6 +6,7 @@ package mails
 import (
 	_ "embed"
 	"encoding/base64"
+	"mime"
 	"slices"
 	"strings"
 	"text/template"
@@ -71,6 +72,13 @@ const (
 	TemplateVarDuration = "Duration"
 )
 
+// funcs are the functions the templates call. headerText writes a header value as RFC 2047
+// encoded-words when it holds non-ASCII text: a header field body is ASCII (RFC 5322 §2.2) unless the
+// relay announces SMTPUTF8 (RFC 6532). ASCII text passes unchanged.
+var funcs = template.FuncMap{
+	"headerText": func(text string) string { return mime.QEncoding.Encode("utf-8", text) },
+}
+
 // MailTemplates groups the parsed email templates by type. Each field carries every
 // language variant as named sub-templates, chosen by language when the mail is rendered.
 type MailTemplates struct {
@@ -84,10 +92,10 @@ type MailTemplates struct {
 // Mails holds the ready-to-render email templates, parsed once at package
 // initialization. A malformed template panics at startup.
 var Mails = MailTemplates{
-	EmailChanged:  template.Must(template.New(authconfig.LangEN).Parse(emailChangedEn + imageParts)),
-	EmailUpdate:   template.Must(template.New(authconfig.LangEN).Parse(emailUpdateEn + imageParts)),
-	PasswordReset: template.Must(template.New(authconfig.LangEN).Parse(passwordResetEn + imageParts)),
-	Register:      template.Must(template.New(authconfig.LangEN).Parse(registerEn + imageParts)),
+	EmailChanged:  template.Must(template.New(authconfig.LangEN).Funcs(funcs).Parse(emailChangedEn + imageParts)),
+	EmailUpdate:   template.Must(template.New(authconfig.LangEN).Funcs(funcs).Parse(emailUpdateEn + imageParts)),
+	PasswordReset: template.Must(template.New(authconfig.LangEN).Funcs(funcs).Parse(passwordResetEn + imageParts)),
+	Register:      template.Must(template.New(authconfig.LangEN).Funcs(funcs).Parse(registerEn + imageParts)),
 }
 
 // Attach the French variant to each template as an associated sub-template, so one

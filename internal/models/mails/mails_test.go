@@ -111,7 +111,12 @@ func TestMailTemplates(t *testing.T) {
 
 			message, err := mail.ReadMessage(&rendered)
 			require.NoError(t, err)
-			require.Equal(t, testCase.subject, message.Header.Get("Subject"))
+			// A header field body is ASCII, so a non-ASCII subject travels as encoded-words.
+			rawSubject := message.Header.Get("Subject")
+			require.Regexp(t, `^[\x20-\x7e]+$`, rawSubject)
+			subject, err := new(mime.WordDecoder).DecodeHeader(rawSubject)
+			require.NoError(t, err)
+			require.Equal(t, testCase.subject, subject)
 			require.Equal(t, "1.0", message.Header.Get("MIME-Version"))
 			mediaType, params, err := mime.ParseMediaType(message.Header.Get("Content-Type"))
 			require.NoError(t, err)
