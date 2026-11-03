@@ -15,7 +15,7 @@ Content-Type: text/html; charset=UTF-8
     <mj-preview>Complete your registration.</mj-preview>
     <mj-include path="../mj-theme.mjml" />
   </mj-head>
-  <mj-body width="600px" background-color="#060b0e" css-class="mail">
+  <mj-body width="600px" background-color="#03070a" css-class="mail">
     <mj-include path="../mj-header.mjml" />
     <mj-wrapper>
       <mj-section mj-class="card">
