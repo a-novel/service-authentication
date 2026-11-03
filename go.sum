@@ -1,7 +1,7 @@
 charm.land/lipgloss/v2 v2.0.6 h1:EaGKeuA8FvF+v2BT5VmZd2LoYLaMZJXA5n34th8nCIQ=
 charm.land/lipgloss/v2 v2.0.6/go.mod h1:ipDDJNSGa1hlwDtSfW1s2/xR8Vdhbut4PXh2zEKZd0Q=
-github.com/a-novel-kit/golib v0.62.2 h1:Lkh0J5NJerOvLRqfouLb/eSHeXY/8mzQZj6szP30KhQ=
-github.com/a-novel-kit/golib v0.62.2/go.mod h1:zSCPYP6jSey29W5JfuhuFtiwxflm5z/cmFnZO8pAmGM=
+github.com/a-novel-kit/golib v0.62.3 h1:Pwntm6AiGgfBk8V+P7uM4In6OUMlylYynxmLRheXra0=
+github.com/a-novel-kit/golib v0.62.3/go.mod h1:/Qra2KJv99yV2jvThnp0nnJXFJlf0wMpenpYVZJ/qpI=
 github.com/a-novel-kit/jwt/v2 v2.6.1 h1:8iQ8ZcvU4L2CKReYeCX8ctK9ABgYEvAOycrggKgl4cM=
 github.com/a-novel-kit/jwt/v2 v2.6.1/go.mod h1:pkDVhDrwshhk8U2FJiZciPHVh8zq5WYDJCMBKOmd1PQ=
 github.com/a-novel/service-json-keys/v2 v2.15.2 h1:K3XScjvvXFfSbAhc9f/Ubi8RJxd4tQQcTrypCjo+QA0=
