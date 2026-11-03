@@ -1,6 +1,6 @@
 <mjml>
   <mj-body>
-    <mj-section padding="48px 24px 32px">
+    <mj-section padding="48px 24px 32px" css-class="gutter lamp">
       <mj-column>
         <!-- Outlook for Windows renders no color scheme and would show both banners, so it never sees the light one. -->
         <mj-text>
