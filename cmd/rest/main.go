@@ -150,7 +150,7 @@ func main() {
 	)
 	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(daoCredentialsUpdateRole, daoCredentialsSelect)
 
-	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist)
+	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist, daoCredentialsSelect)
 
 	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, jsonKeysClient)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
