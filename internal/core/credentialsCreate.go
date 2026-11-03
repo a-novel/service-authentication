@@ -38,6 +38,29 @@ type CredentialsCreateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsInsertRequest) (*dao.Credentials, error)
 }
 
+// CredentialsCreateDaoLocationConsent reads a consenting account's location consent again, in the transaction
+// that records the session.
+type CredentialsCreateDaoLocationConsent interface {
+	Exec(ctx context.Context, request *dao.CredentialsLocationConsentRequest) (bool, error)
+}
+
+// CredentialsCreateDaoSessionUpsert records the session the registration opens.
+type CredentialsCreateDaoSessionUpsert interface {
+	Exec(ctx context.Context, request *dao.SessionUpsertRequest) error
+}
+
+// CredentialsCreateDaoSessionRevokeOldest signs out the account's active sessions past
+// [SessionListLimit].
+type CredentialsCreateDaoSessionRevokeOldest interface {
+	Exec(ctx context.Context, request *dao.SessionRevokeOldestRequest) error
+}
+
+// CredentialsCreateDaoSessionTrim deletes the account's logged-out sessions past
+// [SessionLoggedOutKept].
+type CredentialsCreateDaoSessionTrim interface {
+	Exec(ctx context.Context, request *dao.SessionTrimRequest) error
+}
+
 // CredentialsCreateWaitlist removes registered addresses after the account transaction commits.
 type CredentialsCreateWaitlist interface {
 	Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)
@@ -72,6 +95,9 @@ type CredentialsCreateRequest struct {
 	Password string `validate:"required,min=4,max=1024"`
 	// ShortCode is the verification code sent to the user's email during registration.
 	ShortCode string `validate:"required,max=1024"`
+
+	// Visitor is the device the user registers on.
+	Visitor Visitor
 }
 
 // CredentialsCreate implements user registration with email verification.
@@ -79,6 +105,8 @@ type CredentialsCreateRequest struct {
 // to the user's email address to verify ownership.
 type CredentialsCreate struct {
 	dao                     CredentialsCreateDao
+	sessions                sessionRecorder
+	bounds                  sessionBounds
 	serviceShortCodeVerify  CredentialsCreateServiceShortCodeVerify
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume
 	serviceSignClaims       CredentialsCreateServiceSignClaims
@@ -88,14 +116,25 @@ type CredentialsCreate struct {
 
 func NewCredentialsCreate(
 	dao CredentialsCreateDao,
+	daoLocationConsent CredentialsCreateDaoLocationConsent,
+	daoSessionUpsert CredentialsCreateDaoSessionUpsert,
+	daoSessionRevokeOldest CredentialsCreateDaoSessionRevokeOldest,
+	daoSessionTrim CredentialsCreateDaoSessionTrim,
 	serviceShortCodeVerify CredentialsCreateServiceShortCodeVerify,
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume,
 	serviceSignClaims CredentialsCreateServiceSignClaims,
 	transactor transaction.Transactor,
 	waitlist CredentialsCreateWaitlist,
+	refreshTokenLeeway time.Duration,
 ) *CredentialsCreate {
 	return &CredentialsCreate{
-		dao:                     dao,
+		dao: dao,
+		sessions: sessionRecorder{
+			transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
+		},
+		bounds: sessionBounds{
+			daoRevokeOldest: daoSessionRevokeOldest, daoTrim: daoSessionTrim, refreshTokenLeeway: refreshTokenLeeway,
+		},
 		serviceShortCodeVerify:  serviceShortCodeVerify,
 		serviceShortCodeConsume: serviceShortCodeConsume,
 		serviceSignClaims:       serviceSignClaims,
@@ -111,7 +150,10 @@ func NewCredentialsCreate(
 // creates no user.
 //
 // The committed account then leaves the invitation list within a bounded time, whatever the client
-// does. A failed removal leaves the account usable, and maintenance removes the stale row.
+// does. A failed removal leaves the account usable, and maintenance removes the stale row. The
+// session's row records the visitor last. A new account consents to no location, so the row holds
+// none. A failed record fails the call, and the account stays: the user signs in. The account's
+// sessions are then bounded as a login bounds them.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsCreate")
 	defer span.End()
@@ -180,10 +222,17 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 
 	cancel()
 
-	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
+	tokens, refreshClaims, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}
+
+	err = service.sessions.record(ctx, credentials.ID, credentials.LocationConsent, refreshClaims, request.Visitor)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
+	service.bounds.bound(ctx, credentials.ID)
 
 	return tokens, nil
 }

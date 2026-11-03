@@ -23,6 +23,8 @@ type Credentials struct {
 type CredentialsSelf struct {
 	Credentials
 
+	LocationConsent bool `json:"locationConsent"`
+
 	PendingEmail *PendingEmail `json:"pendingEmail,omitempty"`
 }
 
@@ -44,7 +46,7 @@ func loadCredentials(s *core.Credentials) Credentials {
 }
 
 func loadCredentialsSelf(s *core.CredentialsSelf) CredentialsSelf {
-	res := CredentialsSelf{Credentials: loadCredentials(&s.Credentials)}
+	res := CredentialsSelf{Credentials: loadCredentials(&s.Credentials), LocationConsent: s.LocationConsent}
 
 	if s.PendingEmail != nil {
 		res.PendingEmail = &PendingEmail{Email: s.PendingEmail.Email, ExpiresAt: s.PendingEmail.ExpiresAt}

@@ -12,6 +12,8 @@ import {
   credentialsGetSelf,
   credentialsList,
   refreshTokenGrant,
+  sessionList,
+  sessionRevokeOthers,
   tokenCreate,
   tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
@@ -130,8 +132,10 @@ describe("authorizationCodeExchange", () => {
     const credentials = await credentialsGetSelf(api, tokens.access_token);
     expect(credentials.email).toBe(process.env.SUPER_ADMIN_EMAIL);
 
-    // The super-admin lists accounts on the account platform, never through a client.
+    // The super-admin lists accounts and manages devices on the account platform, never through a client.
     await expectStatus(credentialsList(api, tokens.access_token, {}), 403);
+    await expectStatus(sessionList(api, tokens.access_token), 403);
+    await expectStatus(sessionRevokeOthers(api, tokens.access_token), 403);
   });
 
   it("ends the session when the code is exchanged twice", async () => {

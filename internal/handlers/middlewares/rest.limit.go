@@ -32,6 +32,10 @@ type RestLimits struct {
 	Mailbox func(http.Handler) http.Handler
 	// Password caps each signed-in user's password changes as Login caps logins.
 	Password func(http.Handler) http.Handler
+	// Sessions caps each session's requests to each device route and to the location consent route,
+	// over the windows of Login. It counts per session, so one session of an account cannot spend the
+	// budget of another, and an intruder cannot lock the owner out of signing them out.
+	Sessions func(http.Handler) http.Handler
 	// ShortCode caps each caller's password resets and email updates as Login caps logins, and
 	// those naming one account over the longer window.
 	ShortCode func(http.Handler) http.Handler
@@ -50,6 +54,8 @@ func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimi
 	mailbox := limits.By(policies.Mailbox, emailKey)
 	loginBurst := limits.By(policies.LoginBurst, CallerKey)
 	login := limits.By(policies.Login, CallerKey)
+	sessionBurst := limits.By(policies.LoginBurst, sessionKey)
+	sessionLong := limits.By(policies.Login, sessionKey)
 	loginEmail := limits.By(policies.Login, emailKey)
 	loginAccount := limits.By(policies.Login, accountKey)
 	waitlistConcurrency := httpf.LimitConcurrency(policies.WaitlistMaxConcurrent)
@@ -64,6 +70,7 @@ func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimi
 		Mail:              chi.Chain(strict, mailbox).Handler,
 		Mailbox:           mailbox,
 		Password:          chi.Chain(loginBurst, login).Handler,
+		Sessions:          chi.Chain(sessionBurst, sessionLong).Handler,
 		ShortCode:         chi.Chain(loginBurst, login, loginAccount).Handler,
 		SignUp:            chi.Chain(loginBurst, login, loginEmail).Handler,
 		Waitlist:          chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,
@@ -89,6 +96,17 @@ func ClientVisitorKey(r *http.Request) (string, error) {
 	caller, _ := httpf.ServiceTokenCaller(r.Context())
 
 	return "service:" + caller + ":" + visitor, nil
+}
+
+// sessionKey keys a rate limit by the caller's session, else as [CallerKey] does. Mount the limit after
+// the auth middleware, which puts the session on the context.
+func sessionKey(r *http.Request) (string, error) {
+	claims, _ := r.Context().Value(session.ClaimsContextKey{}).(*session.Claims)
+	if claims != nil && claims.Session() != "" {
+		return "session:" + claims.Session(), nil
+	}
+
+	return CallerKey(r)
 }
 
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP. Mount the limit after

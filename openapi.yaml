@@ -126,8 +126,15 @@ paths:
         Use the refresh token of a user to retrieve a new access token. This allows the user to extend its session 
         without logging in again. A refresh token cannot be refreshed once it expires, or once its session is signed
         out.
+
+        The session records the renewal as its latest activity, with the visitor the headers describe. It records the
+        visitor's location only while the account consents to it, and erases it otherwise.
       tags: [session]
       security: []
+      parameters:
+        - $ref: "#/components/parameters/clientUserAgent"
+        - $ref: "#/components/parameters/clientRegion"
+        - $ref: "#/components/parameters/clientCity"
       requestBody:
         $ref: "#/components/requestBodies/tokenRefresh"
       responses:
@@ -154,9 +161,16 @@ paths:
         Both an invalid email and an invalid password return the same 401 status, to avoid revealing whether an
         email is registered.
 
+        The login opens a session, which records the visitor the headers describe, and its location when the account
+        consents to it.
+
         By default, each visitor may try 10 logins per minute and 30 per 10 minutes, and each email 30 per 10 minutes.
       tags: [session]
       security: []
+      parameters:
+        - $ref: "#/components/parameters/clientUserAgent"
+        - $ref: "#/components/parameters/clientRegion"
+        - $ref: "#/components/parameters/clientCity"
       requestBody:
         $ref: "#/components/requestBodies/credentials"
       responses:
@@ -229,6 +243,162 @@ paths:
           $ref: "#/components/responses/forbidden"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/sessions:
+    get:
+      operationId: sessionList
+      summary: List the devices the user signed in on.
+      description: |
+        Returns the sessions of the account bearing the access token, 100 at most. A session is one login on the account
+        platform, joined by the clients that sign in through it, and the interface shows it as a device. `current` marks
+        the caller's own.
+
+        A session is active until it ends or is signed out, then `loggedOut` until the user removes it with
+        `[DELETE] /v2/sessions/{sessionID}`, or 30 days after it ends, when the service removes it. Each sign-in keeps
+        the account's 100 active sessions active last and signs out the others, then removes its logged-out sessions
+        past the 100 active last, so the list shows every active session. The active sessions come first, then the
+        logged-out ones, each latest activity first.
+
+        The location fields are present only for a session that recorded them, while the account consents to
+        locations. Anonymous tokens lack the required permission, and an OAuth client's access token answers 403: only
+        the account platform manages devices.
+
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
+      tags: [session]
+      security:
+        - BearerAuth: ["session:list"]
+      responses:
+        "200":
+          $ref: "#/components/responses/sessionList"
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/sessions/revoke-others:
+    put:
+      operationId: sessionRevokeOthers
+      summary: Sign out every other device.
+      description: |
+        Signs out every active session of the caller but their own, on every platform, at once. No refresh token of
+        those sessions renews them any more, and `GET /v2/session` refuses their access tokens. Other services verify
+        access tokens offline, and accept them until they expire. The sessions stay listed as logged out.
+
+        An OAuth client's access token answers 403: only the account platform manages devices.
+
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
+      tags: [session]
+      security:
+        - BearerAuth: ["session:revoke"]
+      responses:
+        "204":
+          description: Every other session of the caller is signed out.
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/sessions/{sessionID}/revoke:
+    put:
+      operationId: sessionRevoke
+      summary: Sign out one device.
+      description: |
+        Signs one of the caller's sessions out, on every platform, the caller's own included. No refresh token of the
+        session renews it any more, and `GET /v2/session` refuses its access tokens. Other services verify access
+        tokens offline, and accept them until they expire. The session stays listed as logged out.
+
+        Signing out a session already signed out answers 204, so a retry never fails. A session that ended, belongs to
+        another account or never existed answers 404. An OAuth client's access token answers 403: only the account
+        platform manages devices.
+
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
+      tags: [session]
+      security:
+        - BearerAuth: ["session:revoke"]
+      parameters:
+        - $ref: "#/components/parameters/sessionID"
+      responses:
+        "204":
+          description: The session is signed out, or was already.
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/sessions/{sessionID}:
+    delete:
+      operationId: sessionDelete
+      summary: Remove a logged-out device.
+      description: |
+        Removes one of the caller's logged-out sessions from their devices. An active session answers 409: the caller
+        signs it out first with `[PUT] /v2/sessions/{sessionID}/revoke`. A removed session stays signed out.
+
+        A session that belongs to another account or never existed answers 404. An OAuth client's access token answers
+        403: only the account platform manages devices.
+
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
+      tags: [session]
+      security:
+        - BearerAuth: ["session:delete"]
+      parameters:
+        - $ref: "#/components/parameters/sessionID"
+      responses:
+        "204":
+          description: The session is removed.
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "409":
+          $ref: "#/components/responses/sessionActive"
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
@@ -439,10 +609,17 @@ paths:
         Create a new user account with a short code received in a registration invitation. A super-admin must first
         send the invitation through `[PUT] /v2/short-code/register`.
 
+        The account's first session records the visitor the headers describe. A new account consents to no location,
+        so the session records none.
+
         By default, each caller may try 10 sign-ups per minute and 30 per 10 minutes, and each email 30 per 10 minutes.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:create"]
+      parameters:
+        - $ref: "#/components/parameters/clientUserAgent"
+        - $ref: "#/components/parameters/clientRegion"
+        - $ref: "#/components/parameters/clientCity"
       requestBody:
         $ref: "#/components/requestBodies/credentialsCreate"
       responses:
@@ -642,6 +819,47 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/credentialsGet"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/credentials/location-consent:
+    patch:
+      operationId: credentialsUpdateLocationConsent
+      summary: Set whether the user's devices record their location.
+      description: |
+        Sets whether every session of the account records its location: the IP address, the region and the city of the
+        device. The consent is off until the user turns it on. Turning it off erases the location of every session of
+        the account at once. `GET /v2/credentials/self` returns the current choice.
+
+        An OAuth client's access token answers 403: only the account platform manages the account.
+
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
+      tags: [credentials]
+      security:
+        - BearerAuth: ["credentials:locationConsent:patch"]
+      requestBody:
+        $ref: "#/components/requestBodies/locationConsentUpdate"
+      responses:
+        "204":
+          description: The consent is recorded, and the locations erased when it is off.
         "400":
           $ref: "#/components/responses/badRequest"
         "401":
@@ -923,6 +1141,7 @@ components:
                   "role": "auth:user",
                   "createdAt": "2009-11-10T23:00:00Z",
                   "updatedAt": "2009-11-10T23:00:00Z",
+                  "locationConsent": false,
                 }
             pendingEmail:
               summary: An email change awaits confirmation.
@@ -933,8 +1152,19 @@ components:
                   "role": "auth:user",
                   "createdAt": "2009-11-10T23:00:00Z",
                   "updatedAt": "2009-11-10T23:00:00Z",
+                  "locationConsent": true,
                   "pendingEmail": { "email": "john.doe@proton.me", "expiresAt": "2009-11-12T23:00:00Z" },
                 }
+
+    sessionList:
+      description: The sessions of the caller, the active ones first, each group latest activity first.
+      content:
+        application/json:
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              $ref: "#/components/schemas/session"
 
     credentialsList:
       description: The list of public credentials.
@@ -1037,8 +1267,9 @@ components:
 
     invalidToken:
       description: |
-        The bearer token is invalid, for instance expired, or missing where the route requires a permission.
-        Refresh the session or authenticate again.
+        The bearer token is invalid, for instance expired, or missing where the route requires a permission. On the
+        routes that say so, a token whose session was signed out or has ended answers it too. Refresh the session or
+        authenticate again.
       headers:
         WWW-Authenticate:
           description: |
@@ -1077,6 +1308,10 @@ components:
     conflict:
       description: |
         The record already exists.
+
+    sessionActive:
+      description: |
+        The session is still active. Sign it out first.
 
     mailDeliveryUnavailable:
       description: |
@@ -1242,7 +1477,7 @@ components:
     selfCredentials:
       type: object
       description: The credentials of the authenticated user, without any sensitive data such as the password.
-      required: [id, email, role, createdAt, updatedAt]
+      required: [id, email, role, createdAt, updatedAt, locationConsent]
       additionalProperties: false
       properties:
         id:
@@ -1259,8 +1494,68 @@ components:
           type: string
           format: date-time
           examples: [2009-11-10T23:00:00Z]
+        locationConsent:
+          $ref: "#/components/schemas/locationConsent"
         pendingEmail:
           $ref: "#/components/schemas/pendingEmail"
+
+    locationConsent:
+      type: boolean
+      description: |
+        Whether the sessions of the account record their location: the IP address, the region and the city of each
+        device. Off until the user turns it on.
+      examples: [false]
+
+    session:
+      type: object
+      description: |
+        One login on the account platform, joined by the clients that sign in through it: a device the account signed
+        in on. The location fields are absent when the session recorded none.
+      required: [id, current, loggedOut, userAgent, createdAt, lastActiveAt, expiresAt]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: "#/components/schemas/sessionID"
+        current:
+          type: boolean
+          description: Whether the session is the caller's own, which is always active.
+        loggedOut:
+          type: boolean
+          description: Whether the session ended or was signed out.
+        userAgent:
+          type: string
+          description: The User-Agent of the device's browser, its first 512 characters. Empty when unknown.
+          maxLength: 512
+          examples: ["Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"]
+        ipAddress:
+          type: string
+          description: The IP address of the device, IPv4 or IPv6.
+          examples: ["192.0.2.1", "2001:db8::1"]
+        region:
+          type: string
+          description: The CLDR region code of the device's location.
+          examples: [FR]
+        city:
+          type: string
+          description: The city of the device's location.
+          examples: [Paris]
+        createdAt:
+          type: string
+          description: When the session opened.
+          format: date-time
+          examples: [2009-11-10T23:00:00Z]
+        lastActiveAt:
+          type: string
+          description: |
+            When the session's latest access token was issued.
+          format: date-time
+          examples: [2009-11-10T23:00:00Z]
+        expiresAt:
+          type: string
+          description: |
+            When the session ends, unless it is signed out first. The service removes the session 30 days after it.
+          format: date-time
+          examples: [2009-11-17T23:00:00Z]
 
     pendingEmail:
       type: object
@@ -1570,6 +1865,46 @@ components:
       schema:
         $ref: "#/components/schemas/codeChallengeMethod"
 
+    sessionID:
+      name: sessionID
+      in: path
+      description: The session, one of the caller's.
+      required: true
+      schema:
+        $ref: "#/components/schemas/sessionID"
+
+    clientUserAgent:
+      name: X-Client-User-Agent
+      in: header
+      description: |
+        The User-Agent of the visitor's browser, which the account platform forwards. The session keeps its first 512
+        characters.
+      required: false
+      schema:
+        type: string
+
+    clientRegion:
+      name: X-Client-Region
+      in: header
+      description: |
+        The CLDR region code of the visitor, which the account platform forwards. The session records it only under
+        the account's location consent.
+      required: false
+      schema:
+        type: string
+        examples: [FR]
+
+    clientCity:
+      name: X-Client-City
+      in: header
+      description: |
+        The city of the visitor, which the account platform forwards. The session records it only under the account's
+        location consent.
+      required: false
+      schema:
+        type: string
+        examples: [Paris]
+
     userRoles:
       name: roles
       in: query
@@ -1750,6 +2085,19 @@ components:
                 $ref: "#/components/schemas/password"
               shortCode:
                 $ref: "#/components/schemas/shortCode"
+
+    locationConsentUpdate:
+      description: Whether the sessions of the account record their location.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [enabled]
+            additionalProperties: false
+            properties:
+              enabled:
+                $ref: "#/components/schemas/locationConsent"
 
     roleUpdate:
       description: Update the role of a user.

@@ -107,9 +107,21 @@ func main() {
 	daoCredentialsUpdateEmail := dao.NewPgCredentialsUpdateEmail()
 	daoCredentialsUpdatePassword := dao.NewPgCredentialsUpdatePassword()
 	daoCredentialsUpdateRole := dao.NewPgCredentialsUpdateRole()
+	daoCredentialsUpdateLocationConsent := dao.NewPgCredentialsUpdateLocationConsent()
+	daoCredentialsLocationConsent := dao.NewPgCredentialsLocationConsent()
 
 	daoRefreshTokenRevocationExist := dao.NewPgRefreshTokenRevocationExist()
 	daoRefreshTokenRevocationInsert := dao.NewPgRefreshTokenRevocationInsert()
+
+	daoSessionClearLocations := dao.NewPgSessionClearLocations()
+	daoSessionDelete := dao.NewPgSessionDelete()
+	daoSessionList := dao.NewPgSessionList()
+	daoSessionRevokeOthers := dao.NewPgSessionRevokeOthers()
+	daoSessionSelect := dao.NewPgSessionSelect()
+	daoSessionTouch := dao.NewPgSessionTouch()
+	daoSessionTrim := dao.NewPgSessionTrim()
+	daoSessionRevokeOldest := dao.NewPgSessionRevokeOldest()
+	daoSessionUpsert := dao.NewPgSessionUpsert()
 
 	daoAuthorizationCodeConsume := dao.NewPgAuthorizationCodeConsume()
 	daoAuthorizationCodeInsert := dao.NewPgAuthorizationCodeInsert()
@@ -134,7 +146,8 @@ func main() {
 	)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
-		daoCredentialsInsert, serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist,
+		daoCredentialsInsert, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionRevokeOldest, daoSessionTrim,
+		serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist, refreshTokenLeeway,
 	)
 	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
 	serviceWaitlistJoin := core.NewWaitlistJoin(daoCredentialsExist, daoWaitlist)
@@ -149,18 +162,29 @@ func main() {
 		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
 	)
 	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(daoCredentialsUpdateRole, daoCredentialsSelect)
+	serviceCredentialsUpdateLocationConsent := core.NewCredentialsUpdateLocationConsent(
+		daoCredentialsUpdateLocationConsent, daoSessionClearLocations, daoTransactor,
+	)
 
 	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist)
 
-	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, jsonKeysClient)
+	serviceTokenCreate := core.NewTokenCreate(
+		daoCredentialsSelectByEmail, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionRevokeOldest,
+		daoSessionTrim, jsonKeysClient, daoTransactor, refreshTokenLeeway,
+	)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
 	serviceTokenRefresh := core.NewTokenRefresh(
-		daoCredentialsSelect, daoRefreshTokenRevocationExist, jsonKeysClient, serviceVerifyAccessToken,
-		serviceVerifyRefreshToken,
+		daoCredentialsSelect, daoRefreshTokenRevocationExist, daoCredentialsLocationConsent, daoSessionUpsert,
+		jsonKeysClient, serviceVerifyAccessToken, serviceVerifyRefreshToken, daoTransactor,
 	)
 	serviceTokenRevoke := core.NewTokenRevoke(
 		daoRefreshTokenRevocationInsert, serviceVerifyRefreshToken, refreshTokenLeeway,
 	)
+
+	serviceSessionList := core.NewSessionList(daoSessionList)
+	serviceSessionRevoke := core.NewSessionRevoke(daoSessionSelect, daoRefreshTokenRevocationInsert, refreshTokenLeeway)
+	serviceSessionRevokeOthers := core.NewSessionRevokeOthers(daoSessionRevokeOthers, refreshTokenLeeway)
+	serviceSessionDelete := core.NewSessionDelete(daoSessionDelete, daoSessionSelect)
 
 	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
 	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(
@@ -168,8 +192,8 @@ func main() {
 	)
 	serviceTokenGrant := core.NewTokenGrant(
 		daoAuthorizationCodeSelect, daoAuthorizationCodeConsume, daoCredentialsSelect, daoRefreshTokenRevocationExist,
-		daoRefreshTokenRevocationInsert, jsonKeysClient, serviceVerifyRefreshToken, cfg.OAuth, accessTokenTTL,
-		refreshTokenLeeway,
+		daoRefreshTokenRevocationInsert, daoSessionTouch, jsonKeysClient, serviceVerifyRefreshToken, cfg.OAuth,
+		accessTokenTTL, refreshTokenLeeway,
 	)
 
 	// =================================================================================================================
@@ -184,6 +208,9 @@ func main() {
 		return withSessionAuth(r, permissions...).With(refuseClientTokens)
 	}
 	limit := middlewares.NewRestLimits(cfg.Rest, cfg.Limits)
+	// A signed-out session keeps its access token until it expires. The routes that manage devices
+	// refuse it at once, so it cannot sign the account's other sessions out in turn.
+	refuseEndedSessions := handlers.NewRestRefuseEndedSessions(serviceClaimsGet, cfg.Logger).Middleware
 	withServiceToken := lo.Must(middlewares.RestServiceToken(
 		cfg.ServiceToken, cfg.ServiceIssuerOptional, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger,
 		cfg.Rest.Liveness,
@@ -212,6 +239,9 @@ func main() {
 	)
 	handlerCredentialsUpdateEmail := handlers.NewRestCredentialsUpdateEmail(serviceCredentialsUpdateEmail, cfg.Logger)
 	handlerCredentialsUpdateRole := handlers.NewRestCredentialsUpdateRole(serviceCredentialsUpdateRole, cfg.Logger)
+	handlerCredentialsUpdateLocationConsent := handlers.NewRestCredentialsUpdateLocationConsent(
+		serviceCredentialsUpdateLocationConsent, cfg.Logger,
+	)
 
 	handlerShortCodeCreateEmailUpdate := handlers.NewRestShortCodeCreateEmailUpdate(
 		serviceShortCodeCreateEmailUpdate, cfg.Logger,
@@ -225,6 +255,11 @@ func main() {
 	handlerTokenCreateAnon := handlers.NewRestTokenCreateAnon(serviceTokenCreateAnon, cfg.Logger)
 	handlerTokenRefresh := handlers.NewRestTokenRefresh(serviceTokenRefresh, cfg.Logger)
 	handlerTokenRevoke := handlers.NewRestTokenRevoke(serviceTokenRevoke, cfg.Logger)
+
+	handlerSessionList := handlers.NewRestSessionList(serviceSessionList, cfg.Logger)
+	handlerSessionRevoke := handlers.NewRestSessionRevoke(serviceSessionRevoke, cfg.Logger)
+	handlerSessionRevokeOthers := handlers.NewRestSessionRevokeOthers(serviceSessionRevokeOthers, cfg.Logger)
+	handlerSessionDelete := handlers.NewRestSessionDelete(serviceSessionDelete, cfg.Logger)
 
 	handlerAuthorizationRequestValidate := handlers.NewRestAuthorizationRequestValidate(
 		serviceAuthorizationRequestValidate, cfg.Logger,
@@ -253,6 +288,19 @@ func main() {
 			withSessionAuth(r, "session:revoke").Put("/revoke", handlerTokenRevoke.ServeHTTP)
 		})
 
+		// The account platform alone manages the devices of an account, so a client's token reaches none
+		// of these routes.
+		api.Route("/sessions", func(r chi.Router) {
+			withSessions := func(permission string) chi.Router {
+				return withAuth(r, permission).With(limit.Sessions, refuseEndedSessions)
+			}
+
+			withSessions("session:list").Get("/", handlerSessionList.ServeHTTP)
+			withSessions("session:revoke").Put("/revoke-others", handlerSessionRevokeOthers.ServeHTTP)
+			withSessions("session:revoke").Put("/{sessionID}/revoke", handlerSessionRevoke.ServeHTTP)
+			withSessions("session:delete").Delete("/{sessionID}", handlerSessionDelete.ServeHTTP)
+		})
+
 		// The account platform checks an authorization request, then asks for a code for the person
 		// signed in there. The client trades the code at the token endpoint.
 		api.Route("/oauth", func(r chi.Router) {
@@ -277,6 +325,8 @@ func main() {
 				Put("/password", handlerCredentialsResetPassword.ServeHTTP)
 			withAuth(r, "credentials:role:patch").
 				Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
+			withAuth(r, "credentials:locationConsent:patch").With(limit.Sessions, refuseEndedSessions).
+				Patch("/location-consent", handlerCredentialsUpdateLocationConsent.ServeHTTP)
 		})
 
 		api.Route("/short-code", func(r chi.Router) {

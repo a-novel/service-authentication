@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -23,6 +24,17 @@ func TestRestTokenCreate(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
+
+	// The account platform describes its visitor in headers. The router reads the IP from the header
+	// REST_CLIENT_IP_HEADER names.
+	visitorRequest := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
+		"email": "user@provider.com",
+		"password": "Louvre"
+	}`))
+	visitorRequest.Header.Set("X-Client-Ip", "192.0.2.1")
+	visitorRequest.Header.Set(handlers.HeaderClientUserAgent, "Firefox")
+	visitorRequest.Header.Set(handlers.HeaderClientRegion, "FR")
+	visitorRequest.Header.Set(handlers.HeaderClientCity, "Paris")
 
 	type serviceMock struct {
 		req  *core.TokenCreateRequest
@@ -57,6 +69,26 @@ func TestRestTokenCreate(t *testing.T) {
 					AccessToken:  "token",
 					RefreshToken: "refresh",
 				},
+			},
+
+			expectResponse: map[string]any{
+				"accessToken":  "token",
+				"refreshToken": "refresh",
+			},
+			expectStatus: http.StatusOK,
+		},
+		{
+			name: "Success/Visitor",
+
+			request: visitorRequest,
+
+			serviceMock: &serviceMock{
+				req: &core.TokenCreateRequest{
+					Email:    "user@provider.com",
+					Password: "Louvre",
+					Visitor:  core.Visitor{UserAgent: "Firefox", IPAddress: "192.0.2.1", Region: "FR", City: "Paris"},
+				},
+				resp: &core.Token{AccessToken: "token", RefreshToken: "refresh"},
 			},
 
 			expectResponse: map[string]any{
@@ -135,7 +167,7 @@ func TestRestTokenCreate(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewRestTokenCreate(service, config.LoggerDev)
+			handler := middleware.ClientIPFromHeader("X-Client-IP")(handlers.NewRestTokenCreate(service, config.LoggerDev))
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, testCase.request)

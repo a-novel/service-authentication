@@ -33,6 +33,7 @@ type RestCredentialsCreateRequest struct {
 }
 
 // RestCredentialsCreate serves PUT /v2/credentials, which creates an account from a registration short code.
+// The account's first session records the visitor the account platform describes.
 type RestCredentialsCreate struct {
 	service RestCredentialsCreateService
 	logger  logging.Log
@@ -59,6 +60,7 @@ func (handler *RestCredentialsCreate) ServeHTTP(w http.ResponseWriter, r *http.R
 		Email:     request.Email,
 		Password:  request.Password,
 		ShortCode: request.ShortCode,
+		Visitor:   loadVisitor(r),
 	}
 
 	res, err := handler.service.Exec(ctx, serviceRequest)

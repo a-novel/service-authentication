@@ -33,6 +33,9 @@ func TestTokenGrant(t *testing.T) {
 	accessTokenTTL := time.Hour
 	now := time.Now().Round(time.Second)
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	// Session IDs are the JTIs of the refresh tokens that open them, UUIDs.
+	sessionID := "00000000-0000-0000-0000-0000000000a2"
+	refreshTokenID := "00000000-0000-0000-0000-0000000000a1"
 
 	codeID := sha256.Sum256([]byte(authorizationCodeSecret))
 
@@ -44,7 +47,7 @@ func TestTokenGrant(t *testing.T) {
 		RedirectURIInRequest: true,
 		CodeChallenge:        rfc7636Challenge,
 		CodeChallengeMethod:  core.CodeChallengeMethodS256,
-		SessionID:            "session-id",
+		SessionID:            sessionID,
 		SessionExpiresAt:     now.Add(time.Hour),
 		ExpiresAt:            now.Add(time.Minute),
 	}
@@ -62,7 +65,7 @@ func TestTokenGrant(t *testing.T) {
 		ClientID:   "studio",
 	}
 	refreshTokenClaims := session.RefreshClaims{
-		Jti:        "refresh-token-id",
+		Jti:        refreshTokenID,
 		Exp:        now.Add(7 * 24 * time.Hour).Unix(),
 		UserID:     userID,
 		SessionID:  refreshTokenForm.SessionID,
@@ -103,6 +106,8 @@ func TestTokenGrant(t *testing.T) {
 		daoConsumeMock         *errMock
 		// daoRevocationInsertErrs are the errors of each revocation the reuse of a code attempts.
 		daoRevocationInsertErrs []error
+		// daoSessionTouchErr fails the record of the access token, which every signed one runs.
+		daoSessionTouchErr error
 
 		// expectRevocationJTIs are the JTIs the revocation check looks up.
 		expectRevocationJTIs []string
@@ -124,7 +129,7 @@ func TestTokenGrant(t *testing.T) {
 			signAccessMock:         &errMock{},
 			daoConsumeMock:         &errMock{},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expect: &core.TokenGrantResult{
 				AccessToken: "access-token", ExpiresIn: accessTokenTTL, RefreshToken: refreshToken,
 			},
@@ -147,7 +152,7 @@ func TestTokenGrant(t *testing.T) {
 			signAccessMock:         &errMock{},
 			daoConsumeMock:         &errMock{},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expect: &core.TokenGrantResult{
 				AccessToken: "access-token", ExpiresIn: accessTokenTTL, RefreshToken: refreshToken,
 			},
@@ -168,7 +173,7 @@ func TestTokenGrant(t *testing.T) {
 			signAccessMock:         &errMock{},
 			daoConsumeMock:         &errMock{},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expect: &core.TokenGrantResult{
 				AccessToken: "access-token", ExpiresIn: accessTokenTTL, RefreshToken: refreshToken,
 			},
@@ -371,7 +376,7 @@ func TestTokenGrant(t *testing.T) {
 			daoConsumeMock:          &errMock{err: dao.ErrAuthorizationCodeConsumeNotFound},
 			daoRevocationInsertErrs: []error{nil},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expectErr:            core.ErrTokenGrantCodeReused,
 		},
 		{
@@ -488,7 +493,7 @@ func TestTokenGrant(t *testing.T) {
 			daoSelectMock:          &respMock[*dao.AuthorizationCode]{resp: &validCode},
 			daoRevocationExistMock: &respMock[bool]{resp: true},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expectErr:            core.ErrTokenGrantSessionEnded,
 		},
 		{
@@ -500,7 +505,7 @@ func TestTokenGrant(t *testing.T) {
 			daoSelectMock:          &respMock[*dao.AuthorizationCode]{resp: &validCode},
 			daoRevocationExistMock: &respMock[bool]{err: errFoo},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expectErr:            errFoo,
 		},
 		{
@@ -514,7 +519,7 @@ func TestTokenGrant(t *testing.T) {
 			daoRevocationExistMock: &respMock[bool]{},
 			daoCredentialsMock:     &respMock[*dao.Credentials]{err: dao.ErrCredentialsSelectNotFound},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expectErr:            core.ErrTokenGrantUnknownCode,
 		},
 		{
@@ -529,8 +534,26 @@ func TestTokenGrant(t *testing.T) {
 			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: credentials},
 			signRefreshMock:        &errMock{err: errFoo},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expectErr:            errFoo,
+		},
+		{
+			// A failed record leaves the code unconsumed, so the client may retry.
+			name: "Error/SessionTouch",
+
+			caller: studioCaller,
+			params: codeGrantParams(nil),
+
+			daoSelectMock:          &respMock[*dao.AuthorizationCode]{resp: &validCode},
+			daoRevocationExistMock: &respMock[bool]{},
+			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: credentials},
+			signRefreshMock:        &errMock{},
+			signAccessMock:         &errMock{},
+			daoSessionTouchErr:     errFoo,
+
+			expectRevocationJTIs: []string{sessionID},
+			expectErr:            errFoo,
+			expectNotErr:         core.ErrTokenGrantCodeReused,
 		},
 		{
 			name: "Error/Consume",
@@ -545,7 +568,7 @@ func TestTokenGrant(t *testing.T) {
 			signAccessMock:         &errMock{},
 			daoConsumeMock:         &errMock{err: errFoo},
 
-			expectRevocationJTIs: []string{"session-id"},
+			expectRevocationJTIs: []string{sessionID},
 			expectErr:            errFoo,
 			expectNotErr:         core.ErrTokenGrantCodeReused,
 		},
@@ -561,8 +584,23 @@ func TestTokenGrant(t *testing.T) {
 			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: credentials},
 			signAccessMock:         &errMock{},
 
-			expectRevocationJTIs: []string{"refresh-token-id", "session-id"},
+			expectRevocationJTIs: []string{refreshTokenID, sessionID},
 			expect:               &core.TokenGrantResult{AccessToken: "access-token", ExpiresIn: accessTokenTTL},
+		},
+		{
+			name: "Error/RefreshSessionTouch",
+
+			caller: studioCaller,
+			params: refreshGrantParams(nil),
+
+			verifyRefreshMock:      &respMock[*session.RefreshClaims]{resp: &refreshTokenClaims},
+			daoRevocationExistMock: &respMock[bool]{},
+			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: credentials},
+			signAccessMock:         &errMock{},
+			daoSessionTouchErr:     errFoo,
+
+			expectRevocationJTIs: []string{refreshTokenID, sessionID},
+			expectErr:            errFoo,
 		},
 		{
 			name: "Error/NoRefreshToken",
@@ -636,7 +674,7 @@ func TestTokenGrant(t *testing.T) {
 			verifyRefreshMock:      &respMock[*session.RefreshClaims]{resp: &refreshTokenClaims},
 			daoRevocationExistMock: &respMock[bool]{resp: true},
 
-			expectRevocationJTIs: []string{"refresh-token-id", "session-id"},
+			expectRevocationJTIs: []string{refreshTokenID, sessionID},
 			expectErr:            core.ErrTokenGrantSessionEnded,
 		},
 		{
@@ -653,7 +691,7 @@ func TestTokenGrant(t *testing.T) {
 			},
 			daoRevocationExistMock: &respMock[bool]{},
 
-			expectRevocationJTIs: []string{"refresh-token-id", "session-id"},
+			expectRevocationJTIs: []string{refreshTokenID, sessionID},
 			expectErr:            core.ErrTokenGrantSessionEnded,
 		},
 		{
@@ -666,7 +704,7 @@ func TestTokenGrant(t *testing.T) {
 			daoRevocationExistMock: &respMock[bool]{},
 			daoCredentialsMock:     &respMock[*dao.Credentials]{err: dao.ErrCredentialsSelectNotFound},
 
-			expectRevocationJTIs: []string{"refresh-token-id", "session-id"},
+			expectRevocationJTIs: []string{refreshTokenID, sessionID},
 			expectErr:            core.ErrTokenGrantInvalidRefreshToken,
 		},
 		{
@@ -680,7 +718,7 @@ func TestTokenGrant(t *testing.T) {
 			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: credentials},
 			signAccessMock:         &errMock{err: errFoo},
 
-			expectRevocationJTIs: []string{"refresh-token-id", "session-id"},
+			expectRevocationJTIs: []string{refreshTokenID, sessionID},
 			expectErr:            errFoo,
 		},
 	}
@@ -696,6 +734,21 @@ func TestTokenGrant(t *testing.T) {
 			daoRevocationInsert := coremocks.NewMockTokenGrantDaoRevocationInsert(t)
 			serviceSignClaims := coremocks.NewMockTokenGrantServiceSignClaims(t)
 			serviceVerifyRefreshClaims := coremocks.NewMockTokenGrantServiceVerifyRefreshClaims(t)
+			daoSessionTouch := coremocks.NewMockTokenGrantDaoSessionTouch(t)
+
+			// Each access token a grant signs is recorded on its session's row, which a code grant opens
+			// when the session has none, ending with the session.
+			if testCase.signAccessMock != nil && testCase.signAccessMock.err == nil {
+				touchRequest := &dao.SessionTouchRequest{
+					ID:        uuid.MustParse(sessionID),
+					UserID:    userID,
+					ExpiresAt: validCode.SessionExpiresAt,
+				}
+
+				daoSessionTouch.EXPECT().
+					Exec(mock.Anything, matchSessionTouch(t, touchRequest)).
+					Return(testCase.daoSessionTouchErr)
+			}
 
 			if testCase.daoSelectMock != nil {
 				daoSelect.EXPECT().
@@ -756,7 +809,7 @@ func TestTokenGrant(t *testing.T) {
 			for _, insertErr := range testCase.daoRevocationInsertErrs {
 				daoRevocationInsert.EXPECT().
 					Exec(mock.Anything, mock.MatchedBy(func(request *dao.RefreshTokenRevocationInsertRequest) bool {
-						return len(request.JTIs) == 1 && request.JTIs[0] == "session-id" &&
+						return len(request.JTIs) == 1 && request.JTIs[0] == sessionID &&
 							request.ExpiresAt.Equal(validCode.SessionExpiresAt.Add(leeway))
 					})).
 					Return(insertErr).
@@ -764,8 +817,8 @@ func TestTokenGrant(t *testing.T) {
 			}
 
 			service := core.NewTokenGrant(
-				daoSelect, daoConsume, daoCredentials, daoRevocationExist, daoRevocationInsert, serviceSignClaims,
-				serviceVerifyRefreshClaims, oauthPreset, accessTokenTTL, leeway,
+				daoSelect, daoConsume, daoCredentials, daoRevocationExist, daoRevocationInsert, daoSessionTouch,
+				serviceSignClaims, serviceVerifyRefreshClaims, oauthPreset, accessTokenTTL, leeway,
 			)
 
 			res, err := service.Exec(t.Context(), &core.TokenGrantRequest{Caller: testCase.caller, Params: testCase.params})
@@ -783,6 +836,7 @@ func TestTokenGrant(t *testing.T) {
 			daoRevocationInsert.AssertExpectations(t)
 			serviceSignClaims.AssertExpectations(t)
 			serviceVerifyRefreshClaims.AssertExpectations(t)
+			daoSessionTouch.AssertExpectations(t)
 		})
 	}
 }

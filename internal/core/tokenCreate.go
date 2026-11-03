@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
@@ -11,6 +12,7 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/golib/transaction"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
@@ -20,6 +22,27 @@ import (
 // TokenCreateDao provides access to credentials lookup by email.
 type TokenCreateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
+}
+
+// TokenCreateDaoLocationConsent reads a consenting account's location consent again, in the transaction
+// that records the session.
+type TokenCreateDaoLocationConsent interface {
+	Exec(ctx context.Context, request *dao.CredentialsLocationConsentRequest) (bool, error)
+}
+
+// TokenCreateDaoSessionUpsert records the session the login opens.
+type TokenCreateDaoSessionUpsert interface {
+	Exec(ctx context.Context, request *dao.SessionUpsertRequest) error
+}
+
+// TokenCreateDaoSessionRevokeOldest signs out the account's active sessions past [SessionListLimit].
+type TokenCreateDaoSessionRevokeOldest interface {
+	Exec(ctx context.Context, request *dao.SessionRevokeOldestRequest) error
+}
+
+// TokenCreateDaoSessionTrim deletes the account's logged-out sessions past [SessionLoggedOutKept].
+type TokenCreateDaoSessionTrim interface {
+	Exec(ctx context.Context, request *dao.SessionTrimRequest) error
 }
 
 // TokenCreateServiceSignClaims provides JWT signing capabilities.
@@ -35,21 +58,47 @@ type TokenCreateRequest struct {
 	Email string `validate:"required,email,max=1024"`
 	// Password is the plaintext password to verify against the stored hash.
 	Password string `validate:"required,max=1024"`
+
+	// Visitor is the device the user signs in on.
+	Visitor Visitor
 }
 
 // TokenCreate authenticates a user by email and password and issues a fresh
-// access/refresh token pair.
+// access/refresh token pair, in a session of its own that it records.
 type TokenCreate struct {
 	dao               TokenCreateDao
 	serviceSignClaims TokenCreateServiceSignClaims
+	sessions          sessionRecorder
+	bounds            sessionBounds
 }
 
-func NewTokenCreate(dao TokenCreateDao, serviceSignClaims TokenCreateServiceSignClaims) *TokenCreate {
-	return &TokenCreate{dao: dao, serviceSignClaims: serviceSignClaims}
+func NewTokenCreate(
+	dao TokenCreateDao,
+	daoLocationConsent TokenCreateDaoLocationConsent,
+	daoSessionUpsert TokenCreateDaoSessionUpsert,
+	daoSessionRevokeOldest TokenCreateDaoSessionRevokeOldest,
+	daoSessionTrim TokenCreateDaoSessionTrim,
+	serviceSignClaims TokenCreateServiceSignClaims,
+	transactor transaction.Transactor,
+	refreshTokenLeeway time.Duration,
+) *TokenCreate {
+	return &TokenCreate{
+		dao:               dao,
+		serviceSignClaims: serviceSignClaims,
+		sessions: sessionRecorder{
+			transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
+		},
+		bounds: sessionBounds{
+			daoRevokeOldest: daoSessionRevokeOldest, daoTrim: daoSessionTrim, refreshTokenLeeway: refreshTokenLeeway,
+		},
+	}
 }
 
 // Exec verifies the request's email and password and returns a freshly signed
-// access/refresh token pair. See signTokenPair for how the two tokens are bound.
+// access/refresh token pair. See signTokenPair for how the two tokens are bound. The session's
+// row records the visitor, and its location under the account's consent. A failed record fails the
+// login. The account then keeps its [SessionListLimit] active sessions and [SessionLoggedOutKept]
+// logged-out sessions active last.
 //
 // It returns lib.ErrInvalidPassword when the password does not match and
 // [ErrCredentialsByEmailNotFound] when the email is not registered.
@@ -89,10 +138,17 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}
 
-	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
+	tokens, refreshClaims, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}
+
+	err = service.sessions.record(ctx, credentials.ID, credentials.LocationConsent, refreshClaims, request.Visitor)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
+	service.bounds.bound(ctx, credentials.ID)
 
 	return tokens, nil
 }

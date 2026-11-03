@@ -53,6 +53,7 @@ func TestRestLimits(t *testing.T) {
 	mail := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mail }
 	mailbox := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mailbox }
 	password := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Password }
+	sessions := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Sessions }
 	authorizationCode := func(limits middlewares.RestLimits) func(http.Handler) http.Handler {
 		return limits.AuthorizationCode
 	}
@@ -63,6 +64,7 @@ func TestRestLimits(t *testing.T) {
 	type request struct {
 		visitor string
 		user    *uuid.UUID
+		session string
 		email   string
 		account string
 	}
@@ -78,6 +80,7 @@ func TestRestLimits(t *testing.T) {
 
 		if req.user != nil {
 			httpRequest.Header.Set("X-User", req.user.String())
+			httpRequest.Header.Set("X-Session", req.session)
 		}
 
 		response := httptest.NewRecorder()
@@ -264,6 +267,28 @@ func TestRestLimits(t *testing.T) {
 			expectRetryAfter: "60",
 		},
 		{
+			// A session managing devices counts against the session, wherever the requests come from.
+			name: "Error/Sessions/Session",
+
+			limit: sessions,
+
+			allowed: visitors(10, request{user: &userA, session: "session-a"}),
+			refused: &request{visitor: "192.0.2.99", user: &userA, session: "session-a"},
+
+			expectRetryAfter: "60",
+		},
+		{
+			// Another session of the account keeps its own budget, so no session locks another out.
+			name: "Success/Sessions/OtherSession",
+
+			limit: sessions,
+
+			allowed: append(
+				visitors(10, request{user: &userA, session: "session-a"}),
+				request{visitor: "192.0.2.99", user: &userA, session: "session-b"},
+			),
+		},
+		{
 			// A user asking for codes counts against the user, wherever the requests come from.
 			name: "Error/AuthorizationCode/User",
 
@@ -402,12 +427,13 @@ func limitRouter(limit func(http.Handler) http.Handler) http.Handler {
 	return router
 }
 
-// signIn stands in for the auth middleware, signing in the user named by X-User.
+// signIn stands in for the auth middleware, signing in the user named by X-User, in the session named
+// by X-Session.
 func signIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(r.Header.Get("X-User"))
 		if err == nil {
-			claims := &session.Claims{UserID: &userID}
+			claims := &session.Claims{UserID: &userID, SessionID: r.Header.Get("X-Session")}
 			r = r.WithContext(session.SetClaimsContext(r.Context(), claims))
 		}
 

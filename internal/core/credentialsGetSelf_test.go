@@ -70,6 +70,18 @@ func TestCredentialsGetSelf(t *testing.T) {
 			expect: &core.CredentialsSelf{Credentials: credentials},
 		},
 		{
+			name: "Success/LocationConsent",
+
+			daoMock: &daoMock{
+				resp: changed(*credentialsEntity, func(entity *dao.Credentials) { entity.LocationConsent = true }),
+			},
+			daoShortCodeSelectMock: &daoShortCodeSelectMock{
+				err: dao.ErrShortCodeSelectNotFound,
+			},
+
+			expect: &core.CredentialsSelf{Credentials: credentials, LocationConsent: true},
+		},
+		{
 			name: "Success/PendingEmail",
 
 			daoMock: &daoMock{

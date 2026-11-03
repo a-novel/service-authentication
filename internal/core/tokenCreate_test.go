@@ -2,7 +2,9 @@ package core_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -44,6 +46,29 @@ func TestTokenCreate(t *testing.T) {
 		err error
 	}
 
+	// sessionUpsertMock records the session. Under the consent the login read, it does so in a
+	// transaction, after a locked consent read that answers consent. The bounds follow a recorded
+	// session, and fail with boundsErr.
+	type sessionUpsertMock struct {
+		consent   bool
+		request   *dao.SessionUpsertRequest
+		err       error
+		boundsErr error
+	}
+
+	leeway := 5 * time.Minute
+
+	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	visitor := core.Visitor{UserAgent: "Firefox", IPAddress: "192.0.2.1", Region: "FR", City: "Paris"}
+
+	// The mock refresh token opens its own session, with no expiry.
+	sessionWithoutLocation := &dao.SessionUpsertRequest{
+		ID:        uuid.MustParse(mockUnsignedJTI),
+		UserID:    userID,
+		UserAgent: "Firefox",
+		ExpiresAt: time.Unix(0, 0),
+	}
+
 	testCases := []struct {
 		name string
 
@@ -52,6 +77,7 @@ func TestTokenCreate(t *testing.T) {
 		daoMock               *daoMock
 		issueRefreshTokenMock *issueRefreshTokenMock
 		issueTokenMock        *issueTokenMock
+		sessionUpsertMock     *sessionUpsertMock
 
 		expect    *core.Token
 		expectErr error
@@ -59,7 +85,7 @@ func TestTokenCreate(t *testing.T) {
 		{
 			name: "Success",
 
-			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw},
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -76,6 +102,9 @@ func TestTokenCreate(t *testing.T) {
 					Token: "access-token",
 				},
 			},
+
+			// The account does not consent to locations, so the session records the user agent alone.
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation},
 
 			expect: &core.Token{
 				AccessToken:  "access-token",
@@ -85,7 +114,7 @@ func TestTokenCreate(t *testing.T) {
 		{
 			name: "Success/RoleUser",
 
-			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw},
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -103,6 +132,9 @@ func TestTokenCreate(t *testing.T) {
 				},
 			},
 
+			// The account does not consent to locations, so the session records the user agent alone.
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation},
+
 			expect: &core.Token{
 				AccessToken:  "access-token",
 				RefreshToken: mockUnsignedRefreshToken,
@@ -111,7 +143,7 @@ func TestTokenCreate(t *testing.T) {
 		{
 			name: "Success/RoleAdmin",
 
-			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw},
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -129,6 +161,9 @@ func TestTokenCreate(t *testing.T) {
 				},
 			},
 
+			// The account does not consent to locations, so the session records the user agent alone.
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation},
+
 			expect: &core.Token{
 				AccessToken:  "access-token",
 				RefreshToken: mockUnsignedRefreshToken,
@@ -137,7 +172,7 @@ func TestTokenCreate(t *testing.T) {
 		{
 			name: "Success/RoleSuperAdmin",
 
-			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw},
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -155,10 +190,184 @@ func TestTokenCreate(t *testing.T) {
 				},
 			},
 
+			// The account does not consent to locations, so the session records the user agent alone.
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation},
+
 			expect: &core.Token{
 				AccessToken:  "access-token",
 				RefreshToken: mockUnsignedRefreshToken,
 			},
+		},
+		{
+			// An account that consents records its location, after a locked read of the consent.
+			name: "Success/LocationConsent",
+
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password:        passwordArgon2ed,
+					Role:            authconfig.RoleUser,
+					LocationConsent: true,
+				},
+			},
+
+			issueRefreshTokenMock: &issueRefreshTokenMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: "access-token",
+				},
+			},
+
+			sessionUpsertMock: &sessionUpsertMock{
+				consent: true,
+				request: changed(*sessionWithoutLocation, func(request *dao.SessionUpsertRequest) {
+					request.IPAddress = "192.0.2.1"
+					request.Region = "FR"
+					request.City = "Paris"
+				}),
+			},
+
+			expect: &core.Token{
+				AccessToken:  "access-token",
+				RefreshToken: mockUnsignedRefreshToken,
+			},
+		},
+		{
+			// A consent withdrawn since the login read the account records no location: the locked read
+			// decides.
+			name: "Success/ConsentWithdrawn",
+
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password:        passwordArgon2ed,
+					Role:            authconfig.RoleUser,
+					LocationConsent: true,
+				},
+			},
+
+			issueRefreshTokenMock: &issueRefreshTokenMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: "access-token",
+				},
+			},
+
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation},
+
+			expect: &core.Token{
+				AccessToken:  "access-token",
+				RefreshToken: mockUnsignedRefreshToken,
+			},
+		},
+		{
+			// Failed bounds leave the login standing.
+			name: "Success/BoundsFail",
+
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password: passwordArgon2ed,
+					Role:     authconfig.RoleUser,
+				},
+			},
+
+			issueRefreshTokenMock: &issueRefreshTokenMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: "access-token",
+				},
+			},
+
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation, boundsErr: errFoo},
+
+			expect: &core.Token{
+				AccessToken:  "access-token",
+				RefreshToken: mockUnsignedRefreshToken,
+			},
+		},
+		{
+			// A user agent past the limit keeps its start.
+			name: "Success/LongUserAgent",
+
+			request: &core.TokenCreateRequest{
+				Email:    "user@provider.com",
+				Password: passwordRaw,
+				Visitor:  core.Visitor{UserAgent: strings.Repeat("é", core.VisitorFieldMaxLength+1)},
+			},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password: passwordArgon2ed,
+					Role:     authconfig.RoleUser,
+				},
+			},
+
+			issueRefreshTokenMock: &issueRefreshTokenMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: "access-token",
+				},
+			},
+
+			sessionUpsertMock: &sessionUpsertMock{
+				request: changed(*sessionWithoutLocation, func(request *dao.SessionUpsertRequest) {
+					request.UserAgent = strings.Repeat("é", core.VisitorFieldMaxLength)
+				}),
+			},
+
+			expect: &core.Token{
+				AccessToken:  "access-token",
+				RefreshToken: mockUnsignedRefreshToken,
+			},
+		},
+		{
+			// A failed record fails the login.
+			name: "Error/SessionUpsert",
+
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password: passwordArgon2ed,
+					Role:     authconfig.RoleUser,
+				},
+			},
+
+			issueRefreshTokenMock: &issueRefreshTokenMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: "access-token",
+				},
+			},
+
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation, err: errFoo},
+
+			expectErr: errFoo,
+		},
+		{
+			name: "Error/InvalidVisitorIP",
+
+			request: &core.TokenCreateRequest{
+				Email:    "user@provider.com",
+				Password: passwordRaw,
+				Visitor:  core.Visitor{IPAddress: "not-an-ip"},
+			},
+
+			expectErr: core.ErrInvalidRequest,
 		},
 		{
 			name: "Error/WrongPassword",
@@ -178,7 +387,7 @@ func TestTokenCreate(t *testing.T) {
 		{
 			name: "Error/IssueToken",
 
-			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw},
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -199,7 +408,7 @@ func TestTokenCreate(t *testing.T) {
 		{
 			name: "Error/IssueRefreshToken",
 
-			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw},
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
@@ -235,7 +444,12 @@ func TestTokenCreate(t *testing.T) {
 			ctx := t.Context()
 
 			mockDao := coremocks.NewMockTokenCreateDao(t)
+			daoLocationConsent := coremocks.NewMockTokenCreateDaoLocationConsent(t)
+			daoSessionUpsert := coremocks.NewMockTokenCreateDaoSessionUpsert(t)
+			daoSessionRevokeOldest := coremocks.NewMockTokenCreateDaoSessionRevokeOldest(t)
+			daoSessionTrim := coremocks.NewMockTokenCreateDaoSessionTrim(t)
 			serviceSignClaims := coremocks.NewMockTokenCreateServiceSignClaims(t)
+			transactor := coremocks.NewMockTransactor(t)
 
 			if testCase.daoMock != nil {
 				mockDao.EXPECT().
@@ -280,14 +494,52 @@ func TestTokenCreate(t *testing.T) {
 					Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
 			}
 
-			service := core.NewTokenCreate(mockDao, serviceSignClaims)
+			// Without consent, the session is written alone, with no transaction nor consent read.
+			if testCase.sessionUpsertMock != nil && testCase.daoMock.resp.LocationConsent {
+				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(passThroughTx).Once()
+				daoLocationConsent.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsLocationConsentRequest{ID: userID}).
+					Return(testCase.sessionUpsertMock.consent, nil)
+			}
+
+			if testCase.sessionUpsertMock != nil {
+				daoSessionUpsert.EXPECT().
+					Exec(mock.Anything, matchSessionUpsert(t, testCase.sessionUpsertMock.request)).
+					Return(testCase.sessionUpsertMock.err)
+			}
+
+			// The login keeps the account's 100 active sessions active last, and as many logged-out ones.
+			if testCase.sessionUpsertMock != nil && testCase.sessionUpsertMock.err == nil {
+				daoSessionRevokeOldest.EXPECT().
+					Exec(mock.Anything, mock.MatchedBy(func(request *dao.SessionRevokeOldestRequest) bool {
+						return request.UserID == userID && request.Keep == core.SessionListLimit &&
+							request.Limit == core.SessionTrimBatch && request.Leeway == leeway &&
+							time.Since(request.Now) < time.Minute
+					})).
+					Return(testCase.sessionUpsertMock.boundsErr)
+				daoSessionTrim.EXPECT().
+					Exec(mock.Anything, &dao.SessionTrimRequest{
+						UserID: userID, Keep: core.SessionLoggedOutKept, Limit: core.SessionTrimBatch,
+					}).
+					Return(testCase.sessionUpsertMock.boundsErr)
+			}
+
+			service := core.NewTokenCreate(
+				mockDao, daoLocationConsent, daoSessionUpsert, daoSessionRevokeOldest, daoSessionTrim, serviceSignClaims,
+				transactor, leeway,
+			)
 
 			resp, err := service.Exec(ctx, testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
 
 			mockDao.AssertExpectations(t)
+			daoLocationConsent.AssertExpectations(t)
+			daoSessionUpsert.AssertExpectations(t)
+			daoSessionRevokeOldest.AssertExpectations(t)
+			daoSessionTrim.AssertExpectations(t)
 			serviceSignClaims.AssertExpectations(t)
+			transactor.AssertExpectations(t)
 		})
 	}
 }

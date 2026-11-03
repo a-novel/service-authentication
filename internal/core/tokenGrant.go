@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -144,6 +145,11 @@ type TokenGrantDaoRevocationInsert interface {
 	Exec(ctx context.Context, request *dao.RefreshTokenRevocationInsertRequest) error
 }
 
+// TokenGrantDaoSessionTouch records an access token the grant issues on the session's row.
+type TokenGrantDaoSessionTouch interface {
+	Exec(ctx context.Context, request *dao.SessionTouchRequest) error
+}
+
 // TokenGrantServiceSignClaims signs the tokens.
 type TokenGrantServiceSignClaims interface {
 	ClaimsSign(
@@ -187,15 +193,18 @@ type TokenGrantResult struct {
 //   - refresh_token trades the client's refresh token for a new access token, while its session
 //     lasts. A refresh token renews only for the client it was issued to (RFC 6749 §10.4).
 //
-// A refusal is an [OAuthError]. The code grant signs the pair before it consumes the code, so a
-// failed signature leaves the code to a retry. The consumption is one conditional write: of two
-// concurrent exchanges, the second finds the code consumed and ends the session as any reuse does.
+// A refusal is an [OAuthError]. Each grant records its access token on the session's row, as its
+// latest activity, and leaves the device to the account platform. The code grant signs the pair and
+// records it before it consumes the code, so a failure leaves the code to a retry. The consumption
+// is one conditional write: of two concurrent exchanges, the second finds the code consumed and ends
+// the session as any reuse does.
 type TokenGrant struct {
 	daoSelect                  TokenGrantDaoSelect
 	daoConsume                 TokenGrantDaoConsume
 	daoCredentials             TokenGrantDaoCredentials
 	daoRevocationExist         TokenGrantDaoRevocationExist
 	daoRevocationInsert        TokenGrantDaoRevocationInsert
+	daoSessionTouch            TokenGrantDaoSessionTouch
 	serviceSignClaims          TokenGrantServiceSignClaims
 	serviceVerifyRefreshClaims TokenGrantServiceVerifyRefreshClaims
 	oauth                      authconfig.OAuth
@@ -211,6 +220,7 @@ func NewTokenGrant(
 	daoCredentials TokenGrantDaoCredentials,
 	daoRevocationExist TokenGrantDaoRevocationExist,
 	daoRevocationInsert TokenGrantDaoRevocationInsert,
+	daoSessionTouch TokenGrantDaoSessionTouch,
 	serviceSignClaims TokenGrantServiceSignClaims,
 	serviceVerifyRefreshClaims TokenGrantServiceVerifyRefreshClaims,
 	oauth authconfig.OAuth,
@@ -223,6 +233,7 @@ func NewTokenGrant(
 		daoCredentials:             daoCredentials,
 		daoRevocationExist:         daoRevocationExist,
 		daoRevocationInsert:        daoRevocationInsert,
+		daoSessionTouch:            daoSessionTouch,
 		serviceSignClaims:          serviceSignClaims,
 		serviceVerifyRefreshClaims: serviceVerifyRefreshClaims,
 		oauth:                      oauth,
@@ -373,9 +384,14 @@ func (service *TokenGrant) grantAuthorizationCode(
 		ClientID:   clientID,
 	}
 
-	tokens, err := signTokenPair(ctx, service.serviceSignClaims, credentials, refreshClaims)
+	tokens, _, err := signTokenPair(ctx, service.serviceSignClaims, credentials, refreshClaims)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
+	}
+
+	err = service.touchSession(ctx, code.SessionID, code.UserID, code.SessionExpiresAt, now)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
 	}
 
 	err = service.daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: id[:], Now: now})
@@ -455,7 +471,37 @@ func (service *TokenGrant) grantRefreshToken(
 		return nil, otel.ReportError(span, err)
 	}
 
+	err = service.touchSession(ctx, claims.Session(), claims.UserID, time.Unix(claims.SessionExpiry(), 0), time.Now())
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
 	return &TokenGrantResult{AccessToken: accessToken, ExpiresIn: service.accessTokenTTL}, nil
+}
+
+// touchSession records an access token issued at now on the row of the session sessionID names.
+// The row of a session an older release opened starts then, for userID, ending at expiresAt. Each
+// grant refuses a logged-out session first, so a logged-out session never renews, and a grant racing
+// a removal can bring the row back, logged out.
+func (service *TokenGrant) touchSession(
+	ctx context.Context, sessionID string, userID uuid.UUID, expiresAt, now time.Time,
+) error {
+	ctx, span := otel.Tracer().Start(ctx, "core.TokenGrant(touchSession)")
+	defer span.End()
+
+	id, err := uuid.Parse(sessionID)
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("parse session ID: %w", err))
+	}
+
+	request := &dao.SessionTouchRequest{ID: id, UserID: userID, Now: now, ExpiresAt: expiresAt}
+
+	err = service.daoSessionTouch.Exec(ctx, request)
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("record session: %w", err))
+	}
+
+	return nil
 }
 
 // refuseReuse ends the session of a reused code, which its first exchange extended to the client,

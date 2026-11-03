@@ -33,7 +33,8 @@ type RestTokenRefreshRequest struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-// RestTokenRefresh serves PATCH /v2/session, which renews a token pair.
+// RestTokenRefresh serves PATCH /v2/session, which renews a token pair. The session records the
+// visitor the account platform describes.
 type RestTokenRefresh struct {
 	service RestTokenRefreshService
 	logger  logging.Log
@@ -59,6 +60,7 @@ func (handler *RestTokenRefresh) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	serviceRequest := &core.TokenRefreshRequest{
 		AccessToken:  request.AccessToken,
 		RefreshToken: request.RefreshToken,
+		Visitor:      loadVisitor(r),
 	}
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
