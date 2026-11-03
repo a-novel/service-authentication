@@ -35,11 +35,11 @@ type App struct {
 	Rest   httpf.ServerConfig `json:"rest"   yaml:"rest"`
 	Limits authconfig.Limits  `json:"limits" yaml:"limits"`
 	// ServiceToken names the service tokens the REST server accepts. Without an issuer, the server
-	// refuses to start unless ServiceTokenIssuerOptional is set.
+	// refuses to start unless ServiceTokensOptional is set.
 	ServiceToken servicetoken.Config `json:"serviceToken" yaml:"serviceToken"`
-	// ServiceTokenIssuerOptional lets the REST server start without a service-token issuer, and then
+	// ServiceTokensOptional lets the REST server start without a service-token issuer, and then
 	// take every request. Only a local or test stack sets it.
-	ServiceTokenIssuerOptional bool `json:"serviceTokenIssuerOptional" yaml:"serviceTokenIssuerOptional"`
+	ServiceTokensOptional bool `json:"serviceTokensOptional" yaml:"serviceTokensOptional"`
 
 	DependenciesConfig Dependencies           `json:"dependencies" yaml:"dependencies"`
 	Permissions        authconfig.Permissions `json:"permissions"  yaml:"permissions"`

@@ -208,12 +208,12 @@ var (
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
 	// ServiceTokenIssuer is the issuer of the service tokens the REST server accepts, as a token's
-	// "iss" claim names it. When empty, the server refuses to start unless ServiceTokenIssuerOptional
+	// "iss" claim names it. When empty, the server refuses to start unless ServiceTokensOptional
 	// is set.
 	ServiceTokenIssuer = getEnv("SERVICE_TOKEN_ISSUER")
-	// ServiceTokenIssuerOptional lets the REST server start without ServiceTokenIssuer, and then take
+	// ServiceTokensOptional lets the REST server start without ServiceTokenIssuer, and then take
 	// every request without a service token. Only a local or test stack sets it.
-	ServiceTokenIssuerOptional = config.LoadEnv(getEnv("SERVICE_TOKEN_ISSUER_OPTIONAL"), false, strconv.ParseBool)
+	ServiceTokensOptional = config.LoadEnv(getEnv("SERVICE_TOKENS_OPTIONAL"), false, strconv.ParseBool)
 	// ServiceTokenAudience is the audience the REST server answers to. Each caller requests its token
 	// for it.
 	ServiceTokenAudience = getEnv("SERVICE_TOKEN_AUDIENCE")

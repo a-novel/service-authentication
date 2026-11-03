@@ -75,7 +75,7 @@ var AppPresetDefault = App{
 		Audience: env.ServiceTokenAudience,
 		Callers:  env.ServiceTokenCallers,
 	},
-	ServiceTokenIssuerOptional: env.ServiceTokenIssuerOptional,
+	ServiceTokensOptional: env.ServiceTokensOptional,
 
 	DependenciesConfig: Dependencies{
 		ServiceJsonKeysPort:        env.ServiceJsonKeysPort,
