@@ -22,16 +22,16 @@ func TestPgSessionPurge(t *testing.T) {
 	day := 24 * time.Hour
 	cutoff := now.Add(-30 * day)
 
-	// newSession returns a session of the owner last active at lastActive, which ended a week later.
-	newSession := func(id string, lastActive time.Time) *dao.Session {
+	// newSession returns a session of the owner that ends at end, last active the day before.
+	newSession := func(id string, end time.Time) *dao.Session {
 		return &dao.Session{
 			ID: uuid.MustParse(id), UserID: sessionOwnerID,
-			CreatedAt: lastActive, LastActiveAt: lastActive, ExpiresAt: lastActive.Add(7 * day),
+			CreatedAt: end.Add(-7 * day), LastActiveAt: end.Add(-day), ExpiresAt: end,
 		}
 	}
 
-	active := newSession("00000000-0000-0000-0000-0000000000a1", now)
-	// Logged out, inactive for less than the cutoff.
+	active := newSession("00000000-0000-0000-0000-0000000000a1", now.Add(day))
+	// Ended for less than the cutoff, though inactive for longer.
 	recent := newSession("00000000-0000-0000-0000-0000000000a2", now.Add(-29*day))
 	old := newSession("00000000-0000-0000-0000-0000000000a3", now.Add(-31*day))
 	oldest := newSession("00000000-0000-0000-0000-0000000000a4", now.Add(-40*day))
@@ -47,19 +47,19 @@ func TestPgSessionPurge(t *testing.T) {
 		expectLeft []*dao.Session
 	}{
 		{
-			// The rows inactive since before the cutoff go, and the newer ones stay.
+			// The rows that ended before the cutoff go, and the newer ones stay.
 			name: "Success",
 
-			request: &dao.SessionPurgeRequest{ActiveBefore: cutoff, Limit: 10},
+			request: &dao.SessionPurgeRequest{EndedBefore: cutoff, Limit: 10},
 
 			expect:     &dao.SessionPurgeResult{Purged: 2},
 			expectLeft: []*dao.Session{active, recent},
 		},
 		{
-			// The least recent row goes first.
+			// The row that ended first goes first.
 			name: "Success/Limit",
 
-			request: &dao.SessionPurgeRequest{ActiveBefore: cutoff, Limit: 1},
+			request: &dao.SessionPurgeRequest{EndedBefore: cutoff, Limit: 1},
 
 			expect:     &dao.SessionPurgeResult{Purged: 1},
 			expectLeft: []*dao.Session{active, recent, old},

@@ -469,7 +469,9 @@ func TestCredentialsCreate(t *testing.T) {
 			serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
 			transactor := coremocks.NewMockTransactor(t)
 			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
+			daoLocationConsent := coremocks.NewMockCredentialsCreateDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
+			daoSessionTrim := coremocks.NewMockCredentialsCreateDaoSessionTrim(t)
 			committed := false
 
 			if testCase.transactionMock != nil {
@@ -602,14 +604,29 @@ func TestCredentialsCreate(t *testing.T) {
 					ExpiresAt: time.Unix(0, 0),
 				}
 
+				// A new account consents to no location. The session's transaction comes after the account's.
+				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(passThroughTx).Once()
+				daoLocationConsent.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsLocationConsentRequest{ID: testCase.daoMock.resp.ID}).
+					Return(false, nil)
 				daoSessionUpsert.EXPECT().
 					Exec(mock.Anything, matchSessionUpsert(t, sessionRequest)).
 					Return(testCase.sessionUpsertErr)
 			}
 
+			if testCase.issueTokenMock != nil && testCase.issueTokenMock.err == nil && testCase.sessionUpsertErr == nil {
+				daoSessionTrim.EXPECT().
+					Exec(mock.Anything, &dao.SessionTrimRequest{
+						UserID: testCase.daoMock.resp.ID, Keep: core.SessionLoggedOutKept, Limit: core.SessionTrimBatch,
+					}).
+					Return(nil)
+			}
+
 			service := core.NewCredentialsCreate(
 				mockDao,
+				daoLocationConsent,
 				daoSessionUpsert,
+				daoSessionTrim,
 				serviceShortCodeVerify,
 				serviceShortCodeConsume,
 				serviceSignClaims,
@@ -627,7 +644,9 @@ func TestCredentialsCreate(t *testing.T) {
 			serviceSignClaims.AssertExpectations(t)
 			transactor.AssertExpectations(t)
 			waitlist.AssertExpectations(t)
+			daoLocationConsent.AssertExpectations(t)
 			daoSessionUpsert.AssertExpectations(t)
+			daoSessionTrim.AssertExpectations(t)
 		})
 	}
 }
@@ -666,7 +685,9 @@ func TestCredentialsCreateHashing(t *testing.T) {
 			consume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
 			sign := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
 			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
+			daoLocationConsent := coremocks.NewMockCredentialsCreateDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
+			daoSessionTrim := coremocks.NewMockCredentialsCreateDaoSessionTrim(t)
 			transactor := coremocks.NewMockTransactor(t)
 
 			verify.EXPECT().Exec(mock.Anything, mock.Anything).
@@ -689,10 +710,16 @@ func TestCredentialsCreateHashing(t *testing.T) {
 				waitlist.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.WaitlistResult{}, nil).Once()
 				sign.EXPECT().ClaimsSign(mock.Anything, mock.Anything).
 					Return(&servicejsonkeys.ClaimsSignResponse{Token: mockUnsignedRefreshToken}, nil).Twice()
+				// The session's transaction hashes nothing either.
+				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(noHashInTx(t)).Once()
+				daoLocationConsent.EXPECT().Exec(mock.Anything, mock.Anything).Return(false, nil).Once()
 				daoSessionUpsert.EXPECT().Exec(mock.Anything, mock.Anything).Return(nil).Once()
+				daoSessionTrim.EXPECT().Exec(mock.Anything, mock.Anything).Return(nil).Once()
 			}
 
-			service := core.NewCredentialsCreate(mockDao, daoSessionUpsert, verify, consume, sign, transactor, waitlist)
+			service := core.NewCredentialsCreate(
+				mockDao, daoLocationConsent, daoSessionUpsert, daoSessionTrim, verify, consume, sign, transactor, waitlist,
+			)
 			exec := func() error {
 				_, err := service.Exec(t.Context(), request)
 

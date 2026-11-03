@@ -174,6 +174,29 @@ describe("sessionDelete", () => {
   });
 });
 
+describe("signed-out caller", () => {
+  it("manages no device once its own session is signed out, before its token expires", async () => {
+    const { api, first, second } = await userWithTwoSessions();
+    const firstClaims = await claimsGet(api, first.accessToken);
+    const secondClaims = await claimsGet(api, second.accessToken);
+
+    await sessionRevoke(api, first.accessToken, { id: secondClaims.sessionID! });
+
+    await expectStatus(sessionList(api, second.accessToken), 401);
+    await expectStatus(sessionRevoke(api, second.accessToken, { id: firstClaims.sessionID! }), 401);
+    await expectStatus(sessionRevokeOthers(api, second.accessToken), 401);
+    await expectStatus(sessionDelete(api, second.accessToken, { id: secondClaims.sessionID! }), 401);
+    await expectStatus(credentialsUpdateLocationConsent(api, second.accessToken, { enabled: true }), 401);
+
+    // The live session still manages the account's devices.
+    const sessions = await sessionList(api, first.accessToken);
+    expect(sessions.map(({ current, loggedOut }) => ({ current, loggedOut }))).toStrictEqual([
+      { current: true, loggedOut: false },
+      { current: false, loggedOut: true },
+    ]);
+  });
+});
+
 describe("credentialsUpdateLocationConsent", () => {
   it("records the location under consent, and erases it when the consent ends", async () => {
     const { api, user, second } = await userWithTwoSessions();

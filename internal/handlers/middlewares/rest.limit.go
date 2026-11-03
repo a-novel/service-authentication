@@ -32,6 +32,9 @@ type RestLimits struct {
 	Mailbox func(http.Handler) http.Handler
 	// Password caps each signed-in user's password changes as Login caps logins.
 	Password func(http.Handler) http.Handler
+	// Sessions caps each signed-in user's requests to the device routes as Login caps logins. Each
+	// such request reads or writes every session row of the account.
+	Sessions func(http.Handler) http.Handler
 	// ShortCode caps each caller's password resets and email updates as Login caps logins, and
 	// those naming one account over the longer window.
 	ShortCode func(http.Handler) http.Handler
@@ -64,6 +67,7 @@ func NewRestLimits(rest httpf.ServerConfig, policies authconfig.Limits) RestLimi
 		Mail:              chi.Chain(strict, mailbox).Handler,
 		Mailbox:           mailbox,
 		Password:          chi.Chain(loginBurst, login).Handler,
+		Sessions:          chi.Chain(loginBurst, login).Handler,
 		ShortCode:         chi.Chain(loginBurst, login, loginAccount).Handler,
 		SignUp:            chi.Chain(loginBurst, login, loginEmail).Handler,
 		Waitlist:          chi.Chain(waitlistConcurrency, waitlistSize, strict).Handler,

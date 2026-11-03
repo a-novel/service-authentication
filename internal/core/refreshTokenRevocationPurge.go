@@ -14,10 +14,10 @@ import (
 // holds its row locks briefly.
 const RefreshTokenRevocationPurgeBatch = 1000
 
-// SessionRetention is how long a session's row stays after its last activity, the time a logged-out
-// device stays listed. A session lasts at most the refresh token TTL that JSON Keys sets, 7 days, from
-// its start, and its last activity never precedes its start. A row inactive for SessionRetention
-// therefore belongs to a session that ended, as long as SessionRetention exceeds that TTL.
+// SessionRetention is how long a session's row stays after the session ends, the time a device that
+// ended stays listed. A device signed out earlier stays up to the refresh token TTL that JSON Keys
+// sets, 7 days, longer. The purge reads the end, which never changes, so a renewal leaves the index
+// it scans untouched.
 const SessionRetention = 30 * 24 * time.Hour
 
 // RefreshTokenRevocationPurgeDao deletes one batch of expired revocations.
@@ -27,7 +27,7 @@ type RefreshTokenRevocationPurgeDao interface {
 	) (*dao.RefreshTokenRevocationPurgeResult, error)
 }
 
-// RefreshTokenRevocationPurgeDaoSessions deletes one batch of sessions inactive for [SessionRetention].
+// RefreshTokenRevocationPurgeDaoSessions deletes one batch of sessions that ended [SessionRetention] ago.
 type RefreshTokenRevocationPurgeDaoSessions interface {
 	Exec(ctx context.Context, request *dao.SessionPurgeRequest) (*dao.SessionPurgeResult, error)
 }
@@ -41,7 +41,7 @@ type RefreshTokenRevocationPurgeResult struct {
 }
 
 // RefreshTokenRevocationPurge deletes the revocations whose refresh token the verifier already
-// refuses on its own, then the sessions inactive for [SessionRetention]. A periodic job runs it.
+// refuses on its own, then the sessions that ended [SessionRetention] ago. A periodic job runs it.
 type RefreshTokenRevocationPurge struct {
 	dao         RefreshTokenRevocationPurgeDao
 	daoSessions RefreshTokenRevocationPurgeDaoSessions
@@ -76,8 +76,8 @@ func (service *RefreshTokenRevocationPurge) Exec(ctx context.Context) (*RefreshT
 	}
 
 	sessionsRequest := &dao.SessionPurgeRequest{
-		ActiveBefore: time.Now().Add(-SessionRetention),
-		Limit:        RefreshTokenRevocationPurgeBatch,
+		EndedBefore: time.Now().Add(-SessionRetention),
+		Limit:       RefreshTokenRevocationPurgeBatch,
 	}
 
 	for {

@@ -30,7 +30,7 @@ type Session struct {
 	CreatedAt time.Time `bun:"created_at"`
 	// LastActiveAt is when the session's latest access token was issued.
 	LastActiveAt time.Time `bun:"last_active_at"`
-	// ExpiresAt is when the session ends.
+	// ExpiresAt is when the session ends. It never changes.
 	ExpiresAt time.Time `bun:"expires_at"`
 
 	// LoggedOut is whether the session ended or was signed out. The queries that read sessions

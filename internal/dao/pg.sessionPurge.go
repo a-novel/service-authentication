@@ -15,8 +15,8 @@ var sessionPurgeQuery string
 
 // SessionPurgeRequest is the input to [PgSessionPurge.Exec].
 type SessionPurgeRequest struct {
-	// ActiveBefore selects the sessions whose [Session.LastActiveAt] precedes it.
-	ActiveBefore time.Time
+	// EndedBefore selects the sessions whose [Session.ExpiresAt] precedes it.
+	EndedBefore time.Time
 	// Limit bounds the rows one call deletes.
 	Limit int
 }
@@ -27,8 +27,8 @@ type SessionPurgeResult struct {
 	Purged int64
 }
 
-// PgSessionPurge deletes the sessions last active before a time, the least recent first, at most Limit
-// of them.
+// PgSessionPurge deletes the sessions that ended before a time, the earliest first, at most Limit of
+// them.
 type PgSessionPurge struct{}
 
 func NewPgSessionPurge() *PgSessionPurge {
@@ -44,7 +44,7 @@ func (dao *PgSessionPurge) Exec(ctx context.Context, request *SessionPurgeReques
 		return nil, otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
 	}
 
-	res, err := db.NewRaw(sessionPurgeQuery, request.ActiveBefore, request.Limit).Exec(ctx)
+	res, err := db.NewRaw(sessionPurgeQuery, request.EndedBefore, request.Limit).Exec(ctx)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("execute query: %w", err))
 	}

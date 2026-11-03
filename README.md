@@ -110,7 +110,7 @@ An existing account moves to the requested role. A missing account receives a re
 
 Without SMTP settings, emails go to a debug sender that prints them to stdout. The maintenance job waits for the invitation to go out, and fails when the sender reports an error.
 
-`refresh-token-purge` deletes the revocations of refresh tokens that have expired, which no longer serve any check, and the sessions inactive for 30 days. Signing out adds one revocation each time, and signing in one session, so run it on a schedule, daily for instance. It takes no parameters:
+`refresh-token-purge` deletes the revocations of refresh tokens that have expired, which no longer serve any check, and the sessions that ended 30 days ago. Signing out adds one revocation each time, and signing in one session, so run it on a schedule, daily for instance. It takes no parameters:
 
 ```text
 maintenance refresh-token-purge
@@ -195,7 +195,7 @@ The service reads every variable from the process environment, prefixed with
 | `REST_RATE_LIMITS_ENABLED`       | Rate-limit each caller and email, as documented per route in the OpenAPI specification. Turn off only in test stacks.                                                          | `true`                           |
 | `REST_RATE_LIMIT`                | Requests each visitor sends to each route, as `<requests>/<window>`.                                                                                                           | `5/1s`                           |
 | `REST_RATE_LIMIT_STRICT`         | Anonymous tokens, invitation requests, and reset or email-change mails per caller.                                                                                             | `3/5m`                           |
-| `REST_RATE_LIMIT_LOGIN_BURST`    | Logins, sign-ups, password resets and changes, email updates and authorization codes per caller over a short window.                                                           | `10/1m`                          |
+| `REST_RATE_LIMIT_LOGIN_BURST`    | Logins, sign-ups, password resets and changes, email updates, authorization codes and device requests per caller over a short window.                                          | `10/1m`                          |
 | `REST_RATE_LIMIT_LOGIN`          | The same per caller, and per email or account, over a longer window.                                                                                                           | `30/10m`                         |
 | `REST_RATE_LIMIT_MAILBOX`        | Emails each address receives from one route.                                                                                                                                   | `3/1h`                           |
 | `REST_RATE_LIMIT_OAUTH_TOKEN`    | Token requests each OAuth client sends for each visitor, as the visitor IP it forwards names them.                                                                             | `60/1m`                          |

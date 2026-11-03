@@ -69,7 +69,10 @@ func TestTokenRefresh(t *testing.T) {
 		err  error
 	}
 
+	// sessionUpsertMock records the session in a transaction, after a consent read that answers
+	// consent.
 	type sessionUpsertMock struct {
+		consent bool
 		request *dao.SessionUpsertRequest
 		err     error
 	}
@@ -182,9 +185,8 @@ func TestTokenRefresh(t *testing.T) {
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
-					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Role:            "admin",
-					LocationConsent: true,
+					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Role: "admin",
 				},
 			},
 
@@ -196,6 +198,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			sessionUpsertMock: &sessionUpsertMock{
+				consent: true,
 				request: &dao.SessionUpsertRequest{
 					ID:        uuid.MustParse(sessionID),
 					UserID:    userID,
@@ -779,9 +782,15 @@ func TestTokenRefresh(t *testing.T) {
 			serviceSignClaims := coremocks.NewMockTokenRefreshServiceSignClaims(t)
 			serviceVerifyClaims := coremocks.NewMockTokenRefreshServiceVerifyClaims(t)
 			serviceVerifyRefreshClaims := coremocks.NewMockTokenRefreshServiceVerifyRefreshClaims(t)
+			daoLocationConsent := coremocks.NewMockTokenRefreshDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockTokenRefreshDaoSessionUpsert(t)
+			transactor := coremocks.NewMockTransactor(t)
 
 			if testCase.sessionUpsertMock != nil {
+				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(passThroughTx).Once()
+				daoLocationConsent.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsLocationConsentRequest{ID: userID}).
+					Return(testCase.sessionUpsertMock.consent, nil)
 				daoSessionUpsert.EXPECT().
 					Exec(mock.Anything, matchSessionUpsert(t, testCase.sessionUpsertMock.request)).
 					Return(testCase.sessionUpsertMock.err)
@@ -845,10 +854,12 @@ func TestTokenRefresh(t *testing.T) {
 			service := core.NewTokenRefresh(
 				mockDao,
 				mockDaoRevocationExist,
+				daoLocationConsent,
 				daoSessionUpsert,
 				serviceSignClaims,
 				serviceVerifyClaims,
 				serviceVerifyRefreshClaims,
+				transactor,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
@@ -864,7 +875,9 @@ func TestTokenRefresh(t *testing.T) {
 			serviceSignClaims.AssertExpectations(t)
 			serviceVerifyClaims.AssertExpectations(t)
 			serviceVerifyRefreshClaims.AssertExpectations(t)
+			daoLocationConsent.AssertExpectations(t)
 			daoSessionUpsert.AssertExpectations(t)
+			transactor.AssertExpectations(t)
 		})
 	}
 }

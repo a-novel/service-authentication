@@ -3,7 +3,7 @@
 ALTER TABLE credentials
 DROP COLUMN IF EXISTS location_consent;
 
-DROP INDEX IF EXISTS sessions_last_active_at_idx;
+DROP INDEX IF EXISTS sessions_expires_at_idx;
 
 DROP INDEX IF EXISTS sessions_user_id_expires_at_idx;
 

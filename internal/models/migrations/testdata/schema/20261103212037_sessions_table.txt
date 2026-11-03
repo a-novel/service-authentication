@@ -1,4 +1,4 @@
-migration-history	sha256:84cb0daa1533c94adb60187273bd649f070927d9c51ca2ef208829b220fa96fb
+migration-history	sha256:6d795334e663399c19328257a6f4fe7cc1b7270fc6c5030e457a9977a547dfe2
 column	authorization_codes.client_id	text NOT NULL
 column	authorization_codes.code_challenge	text NOT NULL
 column	authorization_codes.code_challenge_method	text NOT NULL
@@ -97,7 +97,7 @@ index	credentials_pkey	CREATE UNIQUE INDEX credentials_pkey ON public.credential
 index	credentials_role_idx	CREATE INDEX credentials_role_idx ON public.credentials USING btree (role)
 index	refresh_token_revocations_expires_at_idx	CREATE INDEX refresh_token_revocations_expires_at_idx ON public.refresh_token_revocations USING btree (expires_at)
 index	refresh_token_revocations_pkey	CREATE UNIQUE INDEX refresh_token_revocations_pkey ON public.refresh_token_revocations USING btree (jti)
-index	sessions_last_active_at_idx	CREATE INDEX sessions_last_active_at_idx ON public.sessions USING btree (last_active_at)
+index	sessions_expires_at_idx	CREATE INDEX sessions_expires_at_idx ON public.sessions USING btree (expires_at)
 index	sessions_pkey	CREATE UNIQUE INDEX sessions_pkey ON public.sessions USING btree (id)
 index	sessions_user_id_expires_at_idx	CREATE INDEX sessions_user_id_expires_at_idx ON public.sessions USING btree (user_id, expires_at)
 index	short_codes_active_target_usage_uniq	CREATE UNIQUE INDEX short_codes_active_target_usage_uniq ON public.short_codes USING btree (target, usage) WHERE (deleted_at IS NULL)

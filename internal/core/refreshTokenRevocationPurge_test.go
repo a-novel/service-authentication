@@ -107,12 +107,12 @@ func TestRefreshTokenRevocationPurge(t *testing.T) {
 			}
 
 			mockDaoSessions := coremocks.NewMockRefreshTokenRevocationPurgeDaoSessions(t)
-			// The sessions inactive for the retention go.
+			// The sessions that ended the retention ago go.
 			sessionsRequest := mock.MatchedBy(func(request *dao.SessionPurgeRequest) bool {
 				cutoff := time.Now().Add(-core.SessionRetention)
 
 				return request.Limit == core.RefreshTokenRevocationPurgeBatch &&
-					cutoff.Sub(request.ActiveBefore).Abs() < time.Minute
+					cutoff.Sub(request.EndedBefore).Abs() < time.Minute
 			})
 
 			for _, daoMock := range testCase.sessionsMocks {

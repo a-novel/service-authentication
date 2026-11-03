@@ -1,7 +1,8 @@
 -- A session row lets an account list the devices it signed in on, sign them out, and remove the ones
 -- it signed out. Tokens and revocations still carry the session: a session is active while
 -- expires_at is ahead and refresh_token_revocations holds no row for its ID. The maintenance job
--- purges the rows inactive for 30 days, through the last_active_at index.
+-- purges the rows 30 days after their session ends, through the expires_at index. Every renewal
+-- rewrites last_active_at, which no index covers, so the update stays eligible for HOT.
 CREATE TABLE sessions (
   /* JTI of the refresh token that opened the session. */
   id uuid PRIMARY KEY NOT NULL,
@@ -24,7 +25,7 @@ CREATE TABLE sessions (
 
 CREATE INDEX sessions_user_id_expires_at_idx ON sessions (user_id, expires_at);
 
-CREATE INDEX sessions_last_active_at_idx ON sessions (last_active_at);
+CREATE INDEX sessions_expires_at_idx ON sessions (expires_at);
 
 -- An account records the location of its sessions only once it consents. The constant default
 -- changes only the catalog.

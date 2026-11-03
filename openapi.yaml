@@ -260,12 +260,16 @@ paths:
         the caller's own.
 
         A session is active until it ends or is signed out, then `loggedOut` until the user removes it with
-        `[DELETE] /v2/sessions/{sessionID}`, or 30 days after its last activity, when the service removes it. The active
-        sessions come first, then the logged-out ones, each latest activity first.
+        `[DELETE] /v2/sessions/{sessionID}`, or 30 days after it ends, when the service removes it. An account keeps
+        its 100 logged-out sessions active last: each sign-in removes the older ones. The active sessions come first,
+        then the logged-out ones, each latest activity first.
 
         The location fields are present only for a session that recorded them, while the account consents to
         locations. Anonymous tokens lack the required permission, and an OAuth client's access token answers 403: only
-        the account platform manages devices.
+        the account platform manages devices. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
+        expires.
+
+        By default, each user may send 10 requests per minute and 30 per 10 minutes to the device routes, together.
       tags: [session]
       security:
         - BearerAuth: ["session:list"]
@@ -292,7 +296,10 @@ paths:
         sessions renews them any more, and `GET /v2/session` refuses their access tokens. Other services verify access
         tokens offline, and accept them until they expire. The sessions stay listed as logged out.
 
-        An OAuth client's access token answers 403: only the account platform manages devices.
+        An OAuth client's access token answers 403: only the account platform manages devices. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
+        expires.
+
+        By default, each user may send 10 requests per minute and 30 per 10 minutes to the device routes, together.
       tags: [session]
       security:
         - BearerAuth: ["session:revoke"]
@@ -321,7 +328,10 @@ paths:
 
         Signing out a session already signed out answers 204, so a retry never fails. A session that ended, belongs to
         another account or never existed answers 404. An OAuth client's access token answers 403: only the account
-        platform manages devices.
+        platform manages devices. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
+        expires.
+
+        By default, each user may send 10 requests per minute and 30 per 10 minutes to the device routes, together.
       tags: [session]
       security:
         - BearerAuth: ["session:revoke"]
@@ -354,7 +364,10 @@ paths:
         signs it out first with `[PUT] /v2/sessions/{sessionID}/revoke`. A removed session stays signed out.
 
         A session that belongs to another account or never existed answers 404. An OAuth client's access token answers
-        403: only the account platform manages devices.
+        403: only the account platform manages devices. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
+        expires.
+
+        By default, each user may send 10 requests per minute and 30 per 10 minutes to the device routes, together.
       tags: [session]
       security:
         - BearerAuth: ["session:delete"]
@@ -819,7 +832,8 @@ paths:
         device. The consent is off until the user turns it on. Turning it off erases the location of every session of
         the account at once. `GET /v2/credentials/self` returns the current choice.
 
-        An OAuth client's access token answers 403: only the account platform manages the account.
+        An OAuth client's access token answers 403: only the account platform manages the account. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
+        expires.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:locationConsent:patch"]
@@ -1235,8 +1249,9 @@ components:
 
     invalidToken:
       description: |
-        The bearer token is invalid, for instance expired, or missing where the route requires a permission.
-        Refresh the session or authenticate again.
+        The bearer token is invalid, for instance expired, or missing where the route requires a permission. On the
+        routes that say so, a token whose session was signed out or has ended answers it too. Refresh the session or
+        authenticate again.
       headers:
         WWW-Authenticate:
           description: |
@@ -1514,13 +1529,13 @@ components:
         lastActiveAt:
           type: string
           description: |
-            When the session's latest access token was issued. The service removes a logged-out session 30 days after
-            it.
+            When the session's latest access token was issued.
           format: date-time
           examples: [2009-11-10T23:00:00Z]
         expiresAt:
           type: string
-          description: When the session ends, unless it is signed out first.
+          description: |
+            When the session ends, unless it is signed out first. The service removes the session 30 days after it.
           format: date-time
           examples: [2009-11-17T23:00:00Z]
 

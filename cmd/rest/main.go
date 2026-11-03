@@ -108,6 +108,7 @@ func main() {
 	daoCredentialsUpdatePassword := dao.NewPgCredentialsUpdatePassword()
 	daoCredentialsUpdateRole := dao.NewPgCredentialsUpdateRole()
 	daoCredentialsUpdateLocationConsent := dao.NewPgCredentialsUpdateLocationConsent()
+	daoCredentialsLocationConsent := dao.NewPgCredentialsLocationConsent()
 
 	daoRefreshTokenRevocationExist := dao.NewPgRefreshTokenRevocationExist()
 	daoRefreshTokenRevocationInsert := dao.NewPgRefreshTokenRevocationInsert()
@@ -118,6 +119,7 @@ func main() {
 	daoSessionRevokeOthers := dao.NewPgSessionRevokeOthers()
 	daoSessionSelect := dao.NewPgSessionSelect()
 	daoSessionTouch := dao.NewPgSessionTouch()
+	daoSessionTrim := dao.NewPgSessionTrim()
 	daoSessionUpsert := dao.NewPgSessionUpsert()
 
 	daoAuthorizationCodeConsume := dao.NewPgAuthorizationCodeConsume()
@@ -143,8 +145,8 @@ func main() {
 	)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
-		daoCredentialsInsert, daoSessionUpsert, serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient,
-		daoTransactor, daoWaitlist,
+		daoCredentialsInsert, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionTrim, serviceShortCodeVerify,
+		serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist,
 	)
 	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
 	serviceWaitlistJoin := core.NewWaitlistJoin(daoCredentialsExist, daoWaitlist)
@@ -165,11 +167,14 @@ func main() {
 
 	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist)
 
-	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, daoSessionUpsert, jsonKeysClient)
+	serviceTokenCreate := core.NewTokenCreate(
+		daoCredentialsSelectByEmail, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionTrim, jsonKeysClient,
+		daoTransactor,
+	)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
 	serviceTokenRefresh := core.NewTokenRefresh(
-		daoCredentialsSelect, daoRefreshTokenRevocationExist, daoSessionUpsert, jsonKeysClient, serviceVerifyAccessToken,
-		serviceVerifyRefreshToken,
+		daoCredentialsSelect, daoRefreshTokenRevocationExist, daoCredentialsLocationConsent, daoSessionUpsert,
+		jsonKeysClient, serviceVerifyAccessToken, serviceVerifyRefreshToken, daoTransactor,
 	)
 	serviceTokenRevoke := core.NewTokenRevoke(
 		daoRefreshTokenRevocationInsert, serviceVerifyRefreshToken, refreshTokenLeeway,
@@ -202,6 +207,9 @@ func main() {
 		return withSessionAuth(r, permissions...).With(refuseClientTokens)
 	}
 	limit := middlewares.NewRestLimits(cfg.Rest, cfg.Limits)
+	// A signed-out session keeps its access token until it expires. The routes that manage devices
+	// refuse it at once, so it cannot sign the account's other sessions out in turn.
+	refuseEndedSessions := handlers.NewRestRefuseEndedSessions(serviceClaimsGet, cfg.Logger).Middleware
 	withServiceToken := lo.Must(middlewares.RestServiceToken(
 		cfg.ServiceToken, cfg.ServiceIssuerOptional, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger,
 		cfg.Rest.Liveness,
@@ -282,10 +290,14 @@ func main() {
 		// The account platform alone manages the devices of an account, so a client's token reaches none
 		// of these routes.
 		api.Route("/sessions", func(r chi.Router) {
-			withAuth(r, "session:list").Get("/", handlerSessionList.ServeHTTP)
-			withAuth(r, "session:revoke").Put("/revoke-others", handlerSessionRevokeOthers.ServeHTTP)
-			withAuth(r, "session:revoke").Put("/{sessionID}/revoke", handlerSessionRevoke.ServeHTTP)
-			withAuth(r, "session:delete").Delete("/{sessionID}", handlerSessionDelete.ServeHTTP)
+			withSessions := func(permission string) chi.Router {
+				return withAuth(r, permission).With(limit.Sessions, refuseEndedSessions)
+			}
+
+			withSessions("session:list").Get("/", handlerSessionList.ServeHTTP)
+			withSessions("session:revoke").Put("/revoke-others", handlerSessionRevokeOthers.ServeHTTP)
+			withSessions("session:revoke").Put("/{sessionID}/revoke", handlerSessionRevoke.ServeHTTP)
+			withSessions("session:delete").Delete("/{sessionID}", handlerSessionDelete.ServeHTTP)
 		})
 
 		// The account platform checks an authorization request, then asks for a code for the person
@@ -312,7 +324,7 @@ func main() {
 				Put("/password", handlerCredentialsResetPassword.ServeHTTP)
 			withAuth(r, "credentials:role:patch").
 				Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
-			withAuth(r, "credentials:locationConsent:patch").
+			withAuth(r, "credentials:locationConsent:patch").With(refuseEndedSessions).
 				Patch("/location-consent", handlerCredentialsUpdateLocationConsent.ServeHTTP)
 		})
 

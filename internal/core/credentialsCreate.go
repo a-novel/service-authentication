@@ -38,9 +38,21 @@ type CredentialsCreateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsInsertRequest) (*dao.Credentials, error)
 }
 
+// CredentialsCreateDaoLocationConsent reads the account's location consent, in the transaction that
+// records the session.
+type CredentialsCreateDaoLocationConsent interface {
+	Exec(ctx context.Context, request *dao.CredentialsLocationConsentRequest) (bool, error)
+}
+
 // CredentialsCreateDaoSessionUpsert records the session the registration opens.
 type CredentialsCreateDaoSessionUpsert interface {
 	Exec(ctx context.Context, request *dao.SessionUpsertRequest) error
+}
+
+// CredentialsCreateDaoSessionTrim deletes the account's logged-out sessions past
+// [SessionLoggedOutKept].
+type CredentialsCreateDaoSessionTrim interface {
+	Exec(ctx context.Context, request *dao.SessionTrimRequest) error
 }
 
 // CredentialsCreateWaitlist removes registered addresses after the account transaction commits.
@@ -87,7 +99,8 @@ type CredentialsCreateRequest struct {
 // to the user's email address to verify ownership.
 type CredentialsCreate struct {
 	dao                     CredentialsCreateDao
-	daoSessionUpsert        CredentialsCreateDaoSessionUpsert
+	daoSessionTrim          CredentialsCreateDaoSessionTrim
+	sessions                sessionRecorder
 	serviceShortCodeVerify  CredentialsCreateServiceShortCodeVerify
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume
 	serviceSignClaims       CredentialsCreateServiceSignClaims
@@ -97,7 +110,9 @@ type CredentialsCreate struct {
 
 func NewCredentialsCreate(
 	dao CredentialsCreateDao,
+	daoLocationConsent CredentialsCreateDaoLocationConsent,
 	daoSessionUpsert CredentialsCreateDaoSessionUpsert,
+	daoSessionTrim CredentialsCreateDaoSessionTrim,
 	serviceShortCodeVerify CredentialsCreateServiceShortCodeVerify,
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume,
 	serviceSignClaims CredentialsCreateServiceSignClaims,
@@ -105,8 +120,11 @@ func NewCredentialsCreate(
 	waitlist CredentialsCreateWaitlist,
 ) *CredentialsCreate {
 	return &CredentialsCreate{
-		dao:                     dao,
-		daoSessionUpsert:        daoSessionUpsert,
+		dao:            dao,
+		daoSessionTrim: daoSessionTrim,
+		sessions: sessionRecorder{
+			transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
+		},
 		serviceShortCodeVerify:  serviceShortCodeVerify,
 		serviceShortCodeConsume: serviceShortCodeConsume,
 		serviceSignClaims:       serviceSignClaims,
@@ -124,7 +142,8 @@ func NewCredentialsCreate(
 // The committed account then leaves the invitation list within a bounded time, whatever the client
 // does. A failed removal leaves the account usable, and maintenance removes the stale row. The
 // session's row records the visitor last. A new account consents to no location, so the row holds
-// none. A failed record fails the call, and the account stays: the user signs in.
+// none. A failed record fails the call, and the account stays: the user signs in. The account then
+// keeps its [SessionLoggedOutKept] logged-out sessions active last, as a login does.
 func (service *CredentialsCreate) Exec(ctx context.Context, request *CredentialsCreateRequest) (*Token, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsCreate")
 	defer span.End()
@@ -198,10 +217,15 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}
 
-	err = recordSession(ctx, service.daoSessionUpsert, refreshClaims, credentials, request.Visitor)
+	err = service.sessions.record(ctx, credentials.ID, refreshClaims, request.Visitor)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
+
+	// A failed trim leaves the rows to the next login and to the purge. Its span records the error.
+	_ = service.daoSessionTrim.Exec(ctx, &dao.SessionTrimRequest{
+		UserID: credentials.ID, Keep: SessionLoggedOutKept, Limit: SessionTrimBatch,
+	})
 
 	return tokens, nil
 }

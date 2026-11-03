@@ -46,9 +46,13 @@ func TestTokenCreate(t *testing.T) {
 		err error
 	}
 
+	// sessionUpsertMock records the session in a transaction, after a consent read that answers
+	// consent. The trim follows a recorded session.
 	type sessionUpsertMock struct {
+		consent bool
 		request *dao.SessionUpsertRequest
 		err     error
+		trimErr error
 	}
 
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
@@ -192,7 +196,44 @@ func TestTokenCreate(t *testing.T) {
 			},
 		},
 		{
+			// The consent read in the session's transaction decides, whatever the login read before.
 			name: "Success/LocationConsent",
+
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password: passwordArgon2ed,
+					Role:     authconfig.RoleUser,
+				},
+			},
+
+			issueRefreshTokenMock: &issueRefreshTokenMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: "access-token",
+				},
+			},
+
+			sessionUpsertMock: &sessionUpsertMock{
+				consent: true,
+				request: changed(*sessionWithoutLocation, func(request *dao.SessionUpsertRequest) {
+					request.IPAddress = "192.0.2.1"
+					request.Region = "FR"
+					request.City = "Paris"
+				}),
+			},
+
+			expect: &core.Token{
+				AccessToken:  "access-token",
+				RefreshToken: mockUnsignedRefreshToken,
+			},
+		},
+		{
+			// A consent withdrawn since the login read the account records no location.
+			name: "Success/ConsentWithdrawn",
 
 			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
 
@@ -213,13 +254,36 @@ func TestTokenCreate(t *testing.T) {
 				},
 			},
 
-			sessionUpsertMock: &sessionUpsertMock{
-				request: changed(*sessionWithoutLocation, func(request *dao.SessionUpsertRequest) {
-					request.IPAddress = "192.0.2.1"
-					request.Region = "FR"
-					request.City = "Paris"
-				}),
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation},
+
+			expect: &core.Token{
+				AccessToken:  "access-token",
+				RefreshToken: mockUnsignedRefreshToken,
 			},
+		},
+		{
+			// A failed trim leaves the login standing.
+			name: "Success/TrimFails",
+
+			request: &core.TokenCreateRequest{Email: "user@provider.com", Password: passwordRaw, Visitor: visitor},
+
+			daoMock: &daoMock{
+				resp: &dao.Credentials{
+					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Password: passwordArgon2ed,
+					Role:     authconfig.RoleUser,
+				},
+			},
+
+			issueRefreshTokenMock: &issueRefreshTokenMock{},
+
+			issueTokenMock: &issueTokenMock{
+				resp: &servicejsonkeys.ClaimsSignResponse{
+					Token: "access-token",
+				},
+			},
+
+			sessionUpsertMock: &sessionUpsertMock{request: sessionWithoutLocation, trimErr: errFoo},
 
 			expect: &core.Token{
 				AccessToken:  "access-token",
@@ -375,8 +439,11 @@ func TestTokenCreate(t *testing.T) {
 			ctx := t.Context()
 
 			mockDao := coremocks.NewMockTokenCreateDao(t)
+			daoLocationConsent := coremocks.NewMockTokenCreateDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockTokenCreateDaoSessionUpsert(t)
+			daoSessionTrim := coremocks.NewMockTokenCreateDaoSessionTrim(t)
 			serviceSignClaims := coremocks.NewMockTokenCreateServiceSignClaims(t)
+			transactor := coremocks.NewMockTransactor(t)
 
 			if testCase.daoMock != nil {
 				mockDao.EXPECT().
@@ -422,20 +489,37 @@ func TestTokenCreate(t *testing.T) {
 			}
 
 			if testCase.sessionUpsertMock != nil {
+				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(passThroughTx).Once()
+				daoLocationConsent.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsLocationConsentRequest{ID: userID}).
+					Return(testCase.sessionUpsertMock.consent, nil)
 				daoSessionUpsert.EXPECT().
 					Exec(mock.Anything, matchSessionUpsert(t, testCase.sessionUpsertMock.request)).
 					Return(testCase.sessionUpsertMock.err)
 			}
 
-			service := core.NewTokenCreate(mockDao, daoSessionUpsert, serviceSignClaims)
+			if testCase.sessionUpsertMock != nil && testCase.sessionUpsertMock.err == nil {
+				daoSessionTrim.EXPECT().
+					Exec(mock.Anything, &dao.SessionTrimRequest{
+						UserID: userID, Keep: core.SessionLoggedOutKept, Limit: core.SessionTrimBatch,
+					}).
+					Return(testCase.sessionUpsertMock.trimErr)
+			}
+
+			service := core.NewTokenCreate(
+				mockDao, daoLocationConsent, daoSessionUpsert, daoSessionTrim, serviceSignClaims, transactor,
+			)
 
 			resp, err := service.Exec(ctx, testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
 
 			mockDao.AssertExpectations(t)
+			daoLocationConsent.AssertExpectations(t)
 			daoSessionUpsert.AssertExpectations(t)
+			daoSessionTrim.AssertExpectations(t)
 			serviceSignClaims.AssertExpectations(t)
+			transactor.AssertExpectations(t)
 		})
 	}
 }

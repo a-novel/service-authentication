@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/golib/transaction"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
@@ -18,6 +19,15 @@ import (
 // VisitorFieldMaxLength bounds each text a session records from its [Visitor], in characters. A
 // longer text keeps its start.
 const VisitorFieldMaxLength = 512
+
+// SessionLoggedOutKept is how many logged-out sessions an account keeps, the ones active last. Each
+// login and account creation deletes the older ones, which [SessionList] never shows: it returns
+// [SessionListLimit] sessions at most. Active sessions stay, whatever their number.
+const SessionLoggedOutKept = 100
+
+// SessionTrimBatch bounds the logged-out sessions one login deletes, so the statement stays short.
+// The next login, or the purge, deletes the rest.
+const SessionTrimBatch = 1000
 
 // Visitor is the device a request comes from, as the account platform forwards it. Every field is
 // empty when unknown.
@@ -77,18 +87,35 @@ func newSession(entity *dao.Session, currentID string) *Session {
 	}
 }
 
+// sessionConsentReader reads an account's location consent, and holds it against a consent update
+// until the transaction ends. The consent DAO of each calling operation matches it.
+type sessionConsentReader interface {
+	Exec(ctx context.Context, request *dao.CredentialsLocationConsentRequest) (bool, error)
+}
+
 // sessionUpserter records an access token on its session's row. The session DAO of each calling
 // operation matches it.
 type sessionUpserter interface {
 	Exec(ctx context.Context, request *dao.SessionUpsertRequest) error
 }
 
-// recordSession records an access token the account platform receives for visitor, on the row of the
-// session claims belongs to. The row records the location only when credentials consent to it, and
-// erases it otherwise.
-func recordSession(
-	ctx context.Context, upserter sessionUpserter, claims *session.RefreshClaims, credentials *dao.Credentials,
-	visitor Visitor,
+// sessionRecorder records the access tokens the account platform receives on their session's row.
+// Each operation that records one builds it from its own dependencies.
+type sessionRecorder struct {
+	transactor transaction.Transactor
+	daoConsent sessionConsentReader
+	daoUpsert  sessionUpserter
+}
+
+// record records an access token the account platform receives for visitor, on the row of the
+// session claims belongs to, for the account userID names. The row records the location only under
+// the account's consent, and erases it otherwise.
+//
+// One transaction reads the consent and writes the row. The read waits for a consent update in
+// flight, and a later consent update waits for the write, so turning the consent off erases every
+// location the account's rows hold.
+func (recorder sessionRecorder) record(
+	ctx context.Context, userID uuid.UUID, claims *session.RefreshClaims, visitor Visitor,
 ) error {
 	ctx, span := otel.Tracer().Start(ctx, "core.recordSession")
 	defer span.End()
@@ -103,19 +130,31 @@ func recordSession(
 
 	request := &dao.SessionUpsertRequest{
 		ID:        id,
-		UserID:    credentials.ID,
+		UserID:    userID,
 		UserAgent: clipVisitorField(visitor.UserAgent),
 		Now:       time.Now(),
 		ExpiresAt: time.Unix(claims.SessionExpiry(), 0),
 	}
 
-	if credentials.LocationConsent {
-		request.IPAddress = visitor.IPAddress
-		request.Region = clipVisitorField(visitor.Region)
-		request.City = clipVisitorField(visitor.City)
-	}
+	err = recorder.transactor.WithinTx(ctx, func(ctx context.Context) error {
+		consent, err := recorder.daoConsent.Exec(ctx, &dao.CredentialsLocationConsentRequest{ID: userID})
+		if err != nil {
+			return fmt.Errorf("read location consent: %w", err)
+		}
 
-	err = upserter.Exec(ctx, request)
+		if consent {
+			request.IPAddress = visitor.IPAddress
+			request.Region = clipVisitorField(visitor.Region)
+			request.City = clipVisitorField(visitor.City)
+		}
+
+		err = recorder.daoUpsert.Exec(ctx, request)
+		if err != nil {
+			return fmt.Errorf("write session: %w", err)
+		}
+
+		return nil
+	})
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("record session: %w", err))
 	}

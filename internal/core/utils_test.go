@@ -167,3 +167,8 @@ func matchSessionTouch(t *testing.T, expect *dao.SessionTouchRequest) any {
 		return true
 	})
 }
+
+// passThroughTx is a transactor mock body that runs the transaction body as is.
+func passThroughTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	return fn(ctx)
+}

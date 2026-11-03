@@ -13,6 +13,7 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/otel"
+	"github.com/a-novel-kit/golib/transaction"
 	"github.com/a-novel-kit/jwt/v2"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -49,6 +50,12 @@ type TokenRefreshDao interface {
 // revoked.
 type TokenRefreshDaoRefreshTokenRevocationExist interface {
 	Exec(ctx context.Context, request *dao.RefreshTokenRevocationExistRequest) (bool, error)
+}
+
+// TokenRefreshDaoLocationConsent reads the account's location consent, in the transaction that
+// records the renewal.
+type TokenRefreshDaoLocationConsent interface {
+	Exec(ctx context.Context, request *dao.CredentialsLocationConsentRequest) (bool, error)
 }
 
 // TokenRefreshDaoSessionUpsert records the renewal on the session's row.
@@ -96,27 +103,31 @@ type TokenRefreshRequest struct {
 type TokenRefresh struct {
 	dao                            TokenRefreshDao
 	daoRefreshTokenRevocationExist TokenRefreshDaoRefreshTokenRevocationExist
-	daoSessionUpsert               TokenRefreshDaoSessionUpsert
 	serviceSignClaims              TokenRefreshServiceSignClaims
 	serviceVerifyClaims            TokenRefreshServiceVerifyClaims
 	serviceVerifyRefreshClaims     TokenRefreshServiceVerifyRefreshClaims
+	sessions                       sessionRecorder
 }
 
 func NewTokenRefresh(
 	dao TokenRefreshDao,
 	daoRefreshTokenRevocationExist TokenRefreshDaoRefreshTokenRevocationExist,
+	daoLocationConsent TokenRefreshDaoLocationConsent,
 	daoSessionUpsert TokenRefreshDaoSessionUpsert,
 	serviceSignClaims TokenRefreshServiceSignClaims,
 	serviceVerifyClaims TokenRefreshServiceVerifyClaims,
 	serviceVerifyRefreshClaims TokenRefreshServiceVerifyRefreshClaims,
+	transactor transaction.Transactor,
 ) *TokenRefresh {
 	return &TokenRefresh{
 		dao:                            dao,
 		daoRefreshTokenRevocationExist: daoRefreshTokenRevocationExist,
-		daoSessionUpsert:               daoSessionUpsert,
 		serviceSignClaims:              serviceSignClaims,
 		serviceVerifyClaims:            serviceVerifyClaims,
 		serviceVerifyRefreshClaims:     serviceVerifyRefreshClaims,
+		sessions: sessionRecorder{
+			transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
+		},
 	}
 }
 
@@ -206,7 +217,7 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	err = recordSession(ctx, service.daoSessionUpsert, refreshTokenClaims, credentials, request.Visitor)
+	err = service.sessions.record(ctx, credentials.ID, refreshTokenClaims, request.Visitor)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}

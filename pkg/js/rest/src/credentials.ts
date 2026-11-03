@@ -264,7 +264,8 @@ export async function credentialsUpdateRole(
 
 /**
  * Sets whether the sessions of the authenticated account record their location. Turning it off erases the location
- * every session of the account recorded. Throws a 403 for an anonymous token or an OAuth client's.
+ * every session of the account recorded. Throws a 403 for an anonymous token or an OAuth client's, and a 401 once the
+ * caller's own session is signed out or has ended.
  */
 export async function credentialsUpdateLocationConsent(
   api: AuthenticationApi,

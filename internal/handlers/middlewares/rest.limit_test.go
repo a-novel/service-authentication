@@ -53,6 +53,7 @@ func TestRestLimits(t *testing.T) {
 	mail := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mail }
 	mailbox := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Mailbox }
 	password := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Password }
+	sessions := func(limits middlewares.RestLimits) func(http.Handler) http.Handler { return limits.Sessions }
 	authorizationCode := func(limits middlewares.RestLimits) func(http.Handler) http.Handler {
 		return limits.AuthorizationCode
 	}
@@ -257,6 +258,17 @@ func TestRestLimits(t *testing.T) {
 			name: "Error/Password/User",
 
 			limit: password,
+
+			allowed: visitors(10, request{user: &userA}),
+			refused: &request{visitor: "192.0.2.99", user: &userA},
+
+			expectRetryAfter: "60",
+		},
+		{
+			// A user managing devices counts against the user, wherever the requests come from.
+			name: "Error/Sessions/User",
+
+			limit: sessions,
 
 			allowed: visitors(10, request{user: &userA}),
 			refused: &request{visitor: "192.0.2.99", user: &userA},
