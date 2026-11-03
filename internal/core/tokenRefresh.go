@@ -27,8 +27,7 @@ var (
 	// ErrTokenRefreshInvalidRefreshToken is returned by [TokenRefresh.Exec] when the
 	// verifier rejects the refresh token with [jwt.ErrTokenRejected], expiry included,
 	// joined onto that verifier error. A revoked refresh token or session returns it too, and
-	// so does a refresh token issued to an OAuth client, or before the account's last password or
-	// email change.
+	// so does a refresh token issued to an OAuth client.
 	ErrTokenRefreshInvalidRefreshToken = errors.New("invalid refresh token")
 	// ErrTokenRefreshMismatchClaims is returned by [TokenRefresh.Exec] when the access
 	// and refresh tokens are individually valid but encode different user IDs, which
@@ -185,10 +184,6 @@ func (service *TokenRefresh) Exec(
 	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectRequest{ID: lo.FromPtr(accessTokenClaims.UserID)})
 	if err != nil {
 		return nil, otel.ReportError(span, err)
-	}
-
-	if credentialsChangedSince(credentials, refreshTokenClaims.Iat) {
-		return nil, otel.ReportError(span, fmt.Errorf("credentials changed: %w", ErrTokenRefreshInvalidRefreshToken))
 	}
 
 	newAccessToken, err := signAccessToken(ctx, service.serviceSignClaims, credentials, refreshTokenClaims)

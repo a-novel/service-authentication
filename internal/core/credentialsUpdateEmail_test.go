@@ -8,14 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-json-keys/v2/pkg/go"
-
-	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/postgres/postgrestest"
 	"github.com/a-novel-kit/golib/smtp"
 	"github.com/a-novel-kit/golib/transaction/transactiontest"
@@ -27,7 +23,6 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 func TestCredentialsUpdateEmail(t *testing.T) {
@@ -58,16 +53,6 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 	}
 	previous := &daoMock{resp: &dao.Credentials{ID: userID, Email: "former@provider.com"}}
 
-	// callerSession is the account's own session, which continues past the change through a new pair.
-	sessionExp := time.Now().Add(time.Hour).Unix()
-	callerSession := &session.Claims{
-		UserID: &userID, RefreshTokenID: "refresh-token-id", SessionID: "session-id", SessionExp: sessionExp,
-	}
-	keptRefreshToken := mockRefreshToken(session.RefreshClaims{
-		Jti: "kept-refresh-token-id", UserID: userID, SessionID: "session-id", SessionExp: sessionExp,
-	})
-	updated := &daoMock{resp: &dao.Credentials{ID: userID, Email: "user@provider.com", Role: "auth:user"}}
-
 	testCases := []struct {
 		name string
 
@@ -80,10 +65,8 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		daoMock                     *daoMock
 		// sendNotice expects the notice to the former address.
 		sendNotice bool
-		// signPair expects the pair that keeps the caller's session.
-		signPair bool
 
-		expect    *core.CredentialsUpdate
+		expect    *core.Credentials
 		expectErr error
 	}{
 		{
@@ -101,44 +84,8 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			},
 			sendNotice: true,
 
-			expect: &core.CredentialsUpdate{Credentials: core.Credentials{Email: "user@provider.com"}},
-		},
-		{
-			// A confirmation from the account's own session keeps it, in a pair that joins it.
-			name: "Success/KeepsSession",
-
-			request: changed(*validRequest, func(request *core.CredentialsUpdateEmailRequest) {
-				request.Session = callerSession
-			}),
-
-			serviceShortCodeVerifyMock:  verified,
-			daoSelectMock:               previous,
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			daoMock:                     updated,
-			sendNotice:                  true,
-			signPair:                    true,
-
-			expect: &core.CredentialsUpdate{
-				Credentials: core.Credentials{ID: userID, Email: "user@provider.com", Role: "auth:user"},
-				Token:       &core.Token{AccessToken: "access-token", RefreshToken: keptRefreshToken},
-			},
-		},
-		{
-			// A confirmation from an anonymous session, as from a mail opened signed out, keeps none.
-			name: "Success/AnonymousSession",
-
-			request: changed(*validRequest, func(request *core.CredentialsUpdateEmailRequest) {
-				request.Session = &session.Claims{Roles: []string{"auth:anon"}}
-			}),
-
-			serviceShortCodeVerifyMock:  verified,
-			daoSelectMock:               previous,
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			daoMock:                     updated,
-			sendNotice:                  true,
-
-			expect: &core.CredentialsUpdate{
-				Credentials: core.Credentials{ID: userID, Email: "user@provider.com", Role: "auth:user"},
+			expect: &core.Credentials{
+				Email: "user@provider.com",
 			},
 		},
 		{
@@ -223,33 +170,6 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				serviceShortCodeVerify := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeVerify(t)
 				serviceShortCodeConsume := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeConsume(t)
 				smtpService := coremocks.NewMockMailDeliverySMTP(t)
-				serviceSignClaims := coremocks.NewMockCredentialsUpdateEmailServiceSignClaims(t)
-
-				if testCase.signPair {
-					refreshRequest := &servicejsonkeys.ClaimsSignRequest{
-						Usage: servicejsonkeys.KeyUsageAuthRefresh,
-						Payload: lo.Must(grpcf.MarshalJSONAsAny(session.RefreshClaimsForm{
-							UserID: userID, SessionID: "session-id", SessionExp: sessionExp,
-						})),
-					}
-					accessRequest := &servicejsonkeys.ClaimsSignRequest{
-						Usage: servicejsonkeys.KeyUsageAuth,
-						Payload: lo.Must(grpcf.MarshalJSONAsAny(session.Claims{
-							UserID:         &userID,
-							Roles:          []string{"auth:user"},
-							RefreshTokenID: "kept-refresh-token-id",
-							SessionID:      "session-id",
-							SessionExp:     sessionExp,
-						})),
-					}
-
-					serviceSignClaims.EXPECT().
-						ClaimsSign(mock.Anything, refreshRequest).
-						Return(&servicejsonkeys.ClaimsSignResponse{Token: keptRefreshToken}, nil)
-					serviceSignClaims.EXPECT().
-						ClaimsSign(mock.Anything, accessRequest).
-						Return(&servicejsonkeys.ClaimsSignResponse{Token: "access-token"}, nil)
-				}
 
 				mailDelivery := core.NewMailDelivery(smtpService, 1)
 				if testCase.closeMailDelivery {
@@ -289,11 +209,9 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 
 								err := json.Unmarshal(testCase.serviceShortCodeVerifyMock.resp.Data, &newEmail)
 
-								// The change time counts whole seconds, as a token's iat does.
 								return assert.NoError(t, err) &&
 									assert.Equal(t, newEmail, data.Email) &&
-									assert.WithinDuration(t, time.Now(), data.Now, 2*time.Second) &&
-									assert.Equal(t, data.Now.Truncate(time.Second), data.Now) &&
+									assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
 									assert.Equal(t, testCase.request.UserID, data.ID)
 							}),
 						).
@@ -312,7 +230,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				}
 
 				service := core.NewCredentialsUpdateEmail(
-					mockDao, mockDaoSelect, serviceShortCodeVerify, serviceShortCodeConsume, serviceSignClaims, mailDelivery,
+					mockDao, mockDaoSelect, serviceShortCodeVerify, serviceShortCodeConsume, mailDelivery,
 					transactiontest.NewTransactor(),
 				)
 
@@ -327,7 +245,6 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				serviceShortCodeVerify.AssertExpectations(t)
 				serviceShortCodeConsume.AssertExpectations(t)
 				smtpService.AssertExpectations(t)
-				serviceSignClaims.AssertExpectations(t)
 			})
 		})
 	}
@@ -370,10 +287,7 @@ func TestCredentialsUpdateEmailHashing(t *testing.T) {
 	mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
 	smtpService.EXPECT().SendMail(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
-	service := core.NewCredentialsUpdateEmail(
-		mockDao, mockDaoSelect, verify, consume, coremocks.NewMockCredentialsUpdateEmailServiceSignClaims(t), mailDelivery,
-		transactor,
-	)
+	service := core.NewCredentialsUpdateEmail(mockDao, mockDaoSelect, verify, consume, mailDelivery, transactor)
 
 	_, err := service.Exec(t.Context(), request)
 	require.NoError(t, err)

@@ -27,7 +27,4 @@ type Credentials struct {
 	CreatedAt time.Time `bun:"created_at"`
 	// UpdatedAt is when the email, password or role last changed.
 	UpdatedAt time.Time `bun:"updated_at"`
-	// CredentialsUpdatedAt is when the email or password last changed, to the second. A refresh token
-	// issued before it no longer renews.
-	CredentialsUpdatedAt time.Time `bun:"credentials_updated_at"`
 }

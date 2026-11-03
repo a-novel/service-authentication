@@ -142,16 +142,15 @@ func main() {
 	serviceCredentialsGetSelf := core.NewCredentialsGetSelf(daoCredentialsSelect, daoShortCodeSelect)
 	serviceCredentialsList := core.NewCredentialsList(daoCredentialsList)
 	serviceCredentialsUpdateEmail := core.NewCredentialsUpdateEmail(
-		daoCredentialsUpdateEmail, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient,
-		mailDelivery, daoTransactor,
+		daoCredentialsUpdateEmail, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, mailDelivery,
+		daoTransactor,
 	)
 	serviceCredentialsUpdatePassword := core.NewCredentialsUpdatePassword(
-		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient,
-		daoTransactor,
+		daoCredentialsUpdatePassword, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, daoTransactor,
 	)
 	serviceCredentialsUpdateRole := core.NewCredentialsUpdateRole(daoCredentialsUpdateRole, daoCredentialsSelect)
 
-	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist, daoCredentialsSelect)
+	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist)
 
 	serviceTokenCreate := core.NewTokenCreate(daoCredentialsSelectByEmail, jsonKeysClient)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
@@ -165,7 +164,7 @@ func main() {
 
 	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
 	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(
-		daoAuthorizationCodeInsert, daoRefreshTokenRevocationExist, daoCredentialsSelect, cfg.OAuth,
+		daoAuthorizationCodeInsert, daoRefreshTokenRevocationExist, cfg.OAuth,
 	)
 	serviceTokenGrant := core.NewTokenGrant(
 		daoAuthorizationCodeSelect, daoAuthorizationCodeConsume, daoCredentialsSelect, daoRefreshTokenRevocationExist,

@@ -53,8 +53,6 @@ func TestTokenGrant(t *testing.T) {
 	})
 
 	credentials := &dao.Credentials{ID: userID, Role: "auth:user"}
-	// changedCredentials had their password or email changed after every code and token of the test.
-	changedCredentials := &dao.Credentials{ID: userID, Role: "auth:user", CredentialsUpdatedAt: time.Now().Add(time.Hour)}
 
 	// The code grant's pair joins the code's session, bound to studio, and stops with that session.
 	refreshTokenForm := session.RefreshClaimsForm{
@@ -520,20 +518,6 @@ func TestTokenGrant(t *testing.T) {
 			expectErr:            core.ErrTokenGrantUnknownCode,
 		},
 		{
-			// The password or email changed after the code was issued, which ended its session.
-			name: "Error/CredentialsChanged",
-
-			caller: studioCaller,
-			params: codeGrantParams(nil),
-
-			daoSelectMock:          &respMock[*dao.AuthorizationCode]{resp: &validCode},
-			daoRevocationExistMock: &respMock[bool]{},
-			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: changedCredentials},
-
-			expectRevocationJTIs: []string{"session-id"},
-			expectErr:            core.ErrTokenGrantSessionEnded,
-		},
-		{
 			// A failed signature leaves the code unconsumed, so the client may retry.
 			name: "Error/Sign",
 
@@ -684,20 +668,6 @@ func TestTokenGrant(t *testing.T) {
 
 			expectRevocationJTIs: []string{"refresh-token-id", "session-id"},
 			expectErr:            core.ErrTokenGrantInvalidRefreshToken,
-		},
-		{
-			// A refresh token issued before a password or email change no longer renews.
-			name: "Error/RefreshCredentialsChanged",
-
-			caller: studioCaller,
-			params: refreshGrantParams(nil),
-
-			verifyRefreshMock:      &respMock[*session.RefreshClaims]{resp: &refreshTokenClaims},
-			daoRevocationExistMock: &respMock[bool]{},
-			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: changedCredentials},
-
-			expectRevocationJTIs: []string{"refresh-token-id", "session-id"},
-			expectErr:            core.ErrTokenGrantSessionEnded,
 		},
 		{
 			name: "Error/RefreshSign",

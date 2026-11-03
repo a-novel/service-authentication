@@ -18,15 +18,6 @@ type Credentials struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-// CredentialsUpdate is the JSON body answering a password or email change: the account, and the
-// token pair that keeps the caller's session past the change, absent when no session of the account
-// made the request.
-type CredentialsUpdate struct {
-	Credentials
-
-	Token *Token `json:"token,omitempty"`
-}
-
 // CredentialsSelf is the JSON representation of the caller's own account, returned by
 // GET /v2/credentials/self.
 type CredentialsSelf struct {
@@ -57,17 +48,6 @@ func loadCredentialsSelf(s *core.CredentialsSelf) CredentialsSelf {
 
 	if s.PendingEmail != nil {
 		res.PendingEmail = &PendingEmail{Email: s.PendingEmail.Email, ExpiresAt: s.PendingEmail.ExpiresAt}
-	}
-
-	return res
-}
-
-func loadCredentialsUpdate(s *core.CredentialsUpdate) CredentialsUpdate {
-	res := CredentialsUpdate{Credentials: loadCredentials(&s.Credentials)}
-
-	if s.Token != nil {
-		token := loadToken(s.Token)
-		res.Token = &token
 	}
 
 	return res

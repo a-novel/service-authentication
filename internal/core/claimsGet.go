@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
@@ -16,8 +15,7 @@ import (
 )
 
 // ErrClaimsGetRevoked is returned by [ClaimsGet.Exec] when the access token's refresh token or
-// session was revoked, or its session ended: at its end, when its account is gone, or when the
-// account's password or email changed after the token was issued.
+// session was revoked, or its session ended.
 var ErrClaimsGetRevoked = errors.New("session revoked")
 
 // ClaimsGetDao reports whether the access token's refresh token or session was revoked.
@@ -25,28 +23,20 @@ type ClaimsGetDao interface {
 	Exec(ctx context.Context, request *dao.RefreshTokenRevocationExistRequest) (bool, error)
 }
 
-// ClaimsGetDaoCredentials loads the account of the access token, to see whether its password or
-// email changed since the token was issued.
-type ClaimsGetDaoCredentials interface {
-	Exec(ctx context.Context, request *dao.CredentialsSelectRequest) (*dao.Credentials, error)
-}
-
 // ClaimsGetRequest carries the caller's verified access token claims.
 type ClaimsGetRequest struct {
 	Claims *session.Claims `validate:"required"`
 }
 
-// ClaimsGet returns the claims of an access token while its session lasts: until its end, unless
-// it was signed out, and unless the account's password or email changed since the token was issued.
-// Its end bounds a token after the purge drops the session's revocation. An anonymous token belongs
-// to no session, so its claims always return.
+// ClaimsGet returns the claims of an access token while its session lasts: until its end, and
+// unless it was signed out. Its end bounds a token after the purge drops the session's revocation.
+// An anonymous token belongs to no session, so its claims always return.
 type ClaimsGet struct {
-	dao            ClaimsGetDao
-	daoCredentials ClaimsGetDaoCredentials
+	dao ClaimsGetDao
 }
 
-func NewClaimsGet(dao ClaimsGetDao, daoCredentials ClaimsGetDaoCredentials) *ClaimsGet {
-	return &ClaimsGet{dao: dao, daoCredentials: daoCredentials}
+func NewClaimsGet(dao ClaimsGetDao) *ClaimsGet {
+	return &ClaimsGet{dao: dao}
 }
 
 func (service *ClaimsGet) Exec(ctx context.Context, request *ClaimsGetRequest) (*session.Claims, error) {
@@ -83,19 +73,6 @@ func (service *ClaimsGet) Exec(ctx context.Context, request *ClaimsGetRequest) (
 
 	if revoked {
 		return nil, otel.ReportError(span, ErrClaimsGetRevoked)
-	}
-
-	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: lo.FromPtr(claims.UserID)})
-	if errors.Is(err, dao.ErrCredentialsSelectNotFound) {
-		return nil, otel.ReportError(span, errors.Join(err, ErrClaimsGetRevoked))
-	}
-
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
-	}
-
-	if credentialsChangedSince(credentials, claims.Iat) {
-		return nil, otel.ReportError(span, fmt.Errorf("credentials changed: %w", ErrClaimsGetRevoked))
 	}
 
 	return claims, nil

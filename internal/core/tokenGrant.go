@@ -102,8 +102,7 @@ var (
 		Code: OAuthErrorInvalidGrant, Description: "refresh token issued to another client",
 	}
 	// ErrTokenGrantSessionEnded is returned by [TokenGrant.Exec] when the session of the code or the
-	// refresh token was signed out or has ended, or when the account's password or email changed
-	// since the code or the refresh token was issued.
+	// refresh token was signed out or has ended.
 	ErrTokenGrantSessionEnded = &OAuthError{Code: OAuthErrorInvalidGrant, Description: "session ended"}
 )
 
@@ -368,11 +367,6 @@ func (service *TokenGrant) grantAuthorizationCode(
 		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
-	// A code issued before the account's last password or email change opens no session.
-	if credentialsChangedSince(credentials, code.ExpiresAt.Add(-AuthorizationCodeTTL).Unix()) {
-		return nil, otel.ReportError(span, fmt.Errorf("credentials changed: %w", ErrTokenGrantSessionEnded))
-	}
-
 	refreshClaims := session.RefreshClaimsForm{
 		SessionID:  code.SessionID,
 		SessionExp: code.SessionExpiresAt.Unix(),
@@ -454,10 +448,6 @@ func (service *TokenGrant) grantRefreshToken(
 
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
-	}
-
-	if credentialsChangedSince(credentials, claims.Iat) {
-		return nil, otel.ReportError(span, fmt.Errorf("credentials changed: %w", ErrTokenGrantSessionEnded))
 	}
 
 	accessToken, err := signAccessToken(ctx, service.serviceSignClaims, credentials, claims)

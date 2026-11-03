@@ -79,7 +79,6 @@ func (handler *RestAuthorizationCodeCreate) ServeHTTP(w http.ResponseWriter, r *
 		RefreshTokenID: claims.RefreshTokenID,
 		SessionID:      claims.Session(),
 		SessionExp:     claims.SessionExp,
-		IssuedAt:       claims.Iat,
 		Params:         params,
 	}
 

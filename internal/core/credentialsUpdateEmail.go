@@ -9,9 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
-	"google.golang.org/grpc"
-
-	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/smtp"
@@ -19,7 +16,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
-	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // CredentialsUpdateEmailDao assigns the new email to the account.
@@ -42,13 +38,6 @@ type CredentialsUpdateEmailServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
 
-// CredentialsUpdateEmailServiceSignClaims signs the token pair that keeps the caller's session.
-type CredentialsUpdateEmailServiceSignClaims interface {
-	ClaimsSign(
-		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
-	) (*servicejsonkeys.ClaimsSignResponse, error)
-}
-
 // CredentialsUpdateEmailMailDelivery reserves bounded capacity for the notice to the former address.
 type CredentialsUpdateEmailMailDelivery interface {
 	Reserve(ctx context.Context) (MailDeliveryReservation, error)
@@ -60,24 +49,18 @@ type CredentialsUpdateEmailRequest struct {
 	UserID    uuid.UUID
 	ShortCode string `validate:"required,max=1024"`
 	Lang      string `validate:"required,langs"`
-	// Session is the caller's verified claims. When they hold a session of the account, it continues
-	// past the change. A confirmation sent with an anonymous token or another account's keeps none.
-	Session *session.Claims
 }
 
 // CredentialsUpdateEmail applies an email change confirmed by a short code. The
 // caller does not supply the new address directly: it is carried in the short-code
 // payload, so only the address the code was issued for can take effect.
 //
-// The change ends every session opened before it, whose refresh tokens no longer renew, and mails
-// the former address a notice. The caller's own session continues through the token pair the result
-// carries.
+// The change mails the former address a notice.
 type CredentialsUpdateEmail struct {
 	dao                     CredentialsUpdateEmailDao
 	daoSelect               CredentialsUpdateEmailDaoSelect
 	serviceShortCodeVerify  CredentialsUpdateEmailServiceShortCodeVerify
 	serviceShortCodeConsume CredentialsUpdateEmailServiceShortCodeConsume
-	serviceSignClaims       CredentialsUpdateEmailServiceSignClaims
 	mailDelivery            CredentialsUpdateEmailMailDelivery
 	transactor              transaction.Transactor
 }
@@ -87,7 +70,6 @@ func NewCredentialsUpdateEmail(
 	daoSelect CredentialsUpdateEmailDaoSelect,
 	serviceShortCodeVerify CredentialsUpdateEmailServiceShortCodeVerify,
 	serviceShortCodeConsume CredentialsUpdateEmailServiceShortCodeConsume,
-	serviceSignClaims CredentialsUpdateEmailServiceSignClaims,
 	mailDelivery CredentialsUpdateEmailMailDelivery,
 	transactor transaction.Transactor,
 ) *CredentialsUpdateEmail {
@@ -96,7 +78,6 @@ func NewCredentialsUpdateEmail(
 		daoSelect:               daoSelect,
 		serviceShortCodeVerify:  serviceShortCodeVerify,
 		serviceShortCodeConsume: serviceShortCodeConsume,
-		serviceSignClaims:       serviceSignClaims,
 		mailDelivery:            mailDelivery,
 		transactor:              transactor,
 	}
@@ -104,7 +85,7 @@ func NewCredentialsUpdateEmail(
 
 func (service *CredentialsUpdateEmail) Exec(
 	ctx context.Context, request *CredentialsUpdateEmailRequest,
-) (*CredentialsUpdate, error) {
+) (*Credentials, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsUpdateEmail")
 	defer span.End()
 
@@ -156,11 +137,10 @@ func (service *CredentialsUpdateEmail) Exec(
 			return fmt.Errorf("consume short code: %w", err)
 		}
 
-		// Whole seconds, as a token's iat: the change ends every session opened before it.
 		daoRequest := &dao.CredentialsUpdateEmailRequest{
 			ID:    request.UserID,
 			Email: newEmail,
-			Now:   time.Now().Truncate(time.Second),
+			Now:   time.Now(),
 		}
 
 		credentials, err = service.dao.Exec(ctx, daoRequest)
@@ -181,5 +161,5 @@ func (service *CredentialsUpdateEmail) Exec(
 		Kind:         mailDeliveryKindEmailChanged,
 	})
 
-	return keepSession(ctx, service.serviceSignClaims, credentials, request.Session), nil
+	return newCredentials(credentials), nil
 }

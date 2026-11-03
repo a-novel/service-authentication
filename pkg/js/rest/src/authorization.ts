@@ -131,8 +131,8 @@ export async function authorizationCodeExchange(
 
 /**
  * Trades, for a client, its refresh token for a new access token, while the session lasts. Throws an
- * {@link OAuthError} with `invalid_grant` once the session ended or was signed out, a password or email change
- * included: the person signs in again. Throws an HttpError 401 when the service token is missing or rejected.
+ * {@link OAuthError} with `invalid_grant` once the session ended or was signed out: the person signs in again. Throws
+ * an HttpError 401 when the service token is missing or rejected.
  */
 export async function refreshTokenGrant(api: AuthenticationApi, refreshToken: string): Promise<TokenResponse> {
   return await tokenRequest(api, { grant_type: "refresh_token", refresh_token: refreshToken });

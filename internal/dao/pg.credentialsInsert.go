@@ -31,7 +31,7 @@ type CredentialsInsertRequest struct {
 	Password string
 	// See [Credentials.Role].
 	Role string
-	// Now is the instant stored as created_at, updated_at and credentials_updated_at.
+	// Now is the instant stored as both created_at and updated_at.
 	Now time.Time
 }
 
@@ -67,6 +67,7 @@ func (dao *PgCredentialsInsert) Exec(
 		request.ID,
 		request.Email,
 		request.Password,
+		request.Now,
 		request.Now,
 		request.Role,
 	).Scan(ctx, entity)

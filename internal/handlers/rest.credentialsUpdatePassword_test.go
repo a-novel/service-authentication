@@ -31,7 +31,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 
 	type serviceMock struct {
 		req  *core.CredentialsUpdatePasswordRequest
-		resp *core.CredentialsUpdate
+		resp *core.Credentials
 		err  error
 	}
 
@@ -62,17 +62,13 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 					Password:        "Louvre",
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Session:         &session.Claims{UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001"))},
 				},
-				resp: &core.CredentialsUpdate{
-					Credentials: core.Credentials{
-						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-						Email:     "user@provider.com",
-						Role:      authconfig.RoleUser,
-						CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
-						UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
-					},
-					Token: &core.Token{AccessToken: "access-token", RefreshToken: "refresh-token"},
+				resp: &core.Credentials{
+					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Email:     "user@provider.com",
+					Role:      authconfig.RoleUser,
+					CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
 				},
 			},
 
@@ -82,10 +78,6 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"role":      authconfig.RoleUser,
 				"createdAt": "2018-02-02T12:00:00Z",
 				"updatedAt": "2020-02-02T12:00:00Z",
-				"token": map[string]any{
-					"accessToken":  "access-token",
-					"refreshToken": "refresh-token",
-				},
 			},
 			expectStatus: http.StatusOK,
 		},
@@ -105,7 +97,6 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 					Password:        "Louvre",
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Session:         &session.Claims{UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001"))},
 				},
 				err: core.ErrCredentialsUpdatePasswordNotFound,
 			},
@@ -128,7 +119,6 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 					Password:        "Louvre",
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Session:         &session.Claims{UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001"))},
 				},
 				err: lib.ErrInvalidPassword,
 			},
@@ -151,7 +141,6 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 					Password:        "Louvre",
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Session:         &session.Claims{UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001"))},
 				},
 				err: errFoo,
 			},
