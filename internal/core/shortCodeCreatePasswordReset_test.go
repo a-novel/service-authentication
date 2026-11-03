@@ -114,14 +114,22 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 				Email: "user@provider.com",
 			},
 
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
 			closeMailDelivery: true,
 			expectErr:         core.ErrMailDeliveryUnavailable,
+		},
+		{
+			name: "Error/UnknownEmail",
+
+			request: &core.ShortCodeCreatePasswordResetRequest{
+				Lang:  authconfig.LangFR,
+				Email: "user@provider.com",
+			},
+
+			daoMock: &daoMock{
+				err: dao.ErrCredentialsSelectByEmailNotFound,
+			},
+
+			expectErr: core.ErrCredentialsByEmailNotFound,
 		},
 		{
 			name: "Error/CreateShortCode",
