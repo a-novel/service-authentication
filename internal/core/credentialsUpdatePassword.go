@@ -38,6 +38,9 @@ type CredentialsUpdatePasswordServiceShortCodeConsume interface {
 
 // CredentialsUpdatePasswordRequest carries the new password and one proof of ownership: the
 // current password or a reset short code.
+//
+// The new password needs 4 characters, a deliberate deviation from NIST SP 800-63B-4 §3.1.1.2, as
+// [CredentialsCreateRequest] records.
 type CredentialsUpdatePasswordRequest struct {
 	Password        string `validate:"required,min=4,max=1024"`
 	CurrentPassword string `validate:"required_without=ShortCode,max=1024"`

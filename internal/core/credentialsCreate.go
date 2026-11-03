@@ -65,6 +65,10 @@ type CredentialsCreateRequest struct {
 	// Email is the user's email address, unique across all users.
 	Email string `validate:"required,email,max=1024"`
 	// Password is the plaintext password, hashed with Argon2id before storage.
+	//
+	// Deliberate deviation: NIST SP 800-63B-4 §3.1.1.2 sets a minimum of 15 characters for a
+	// password that is the only factor, and a blocklist check. The service keeps 4: the password is
+	// the person's choice, and the platform shows that guidance as a recommendation, never enforced.
 	Password string `validate:"required,min=4,max=1024"`
 	// ShortCode is the verification code sent to the user's email during registration.
 	ShortCode string `validate:"required,max=1024"`
