@@ -8,12 +8,16 @@ import (
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc"
+
+	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/transaction"
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
+	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // CredentialsUpdatePasswordDao stores the new password hash.
@@ -36,6 +40,13 @@ type CredentialsUpdatePasswordServiceShortCodeConsume interface {
 	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
 }
 
+// CredentialsUpdatePasswordServiceSignClaims signs the token pair that keeps the caller's session.
+type CredentialsUpdatePasswordServiceSignClaims interface {
+	ClaimsSign(
+		ctx context.Context, req *servicejsonkeys.ClaimsSignRequest, opts ...grpc.CallOption,
+	) (*servicejsonkeys.ClaimsSignResponse, error)
+}
+
 // CredentialsUpdatePasswordRequest carries the new password and one proof of ownership: the
 // current password or a reset short code.
 //
@@ -46,17 +57,22 @@ type CredentialsUpdatePasswordRequest struct {
 	CurrentPassword string `validate:"required_without=ShortCode,max=1024"`
 	ShortCode       string `validate:"required_without=CurrentPassword,max=1024"`
 	UserID          uuid.UUID
+	// Session is the caller's verified claims, whose session continues past the change. A reset
+	// leaves it nil: no session makes it.
+	Session *session.Claims
 }
 
 // CredentialsUpdatePassword changes an account's password through one of two
 // authenticated paths: a reset short code proving the caller owns the account's
 // email, or the current password proving an active session belongs to the owner.
-// The change ends every session opened before it: their refresh tokens no longer renew.
+// The change ends every session opened before it: their refresh tokens no longer renew. The caller's
+// own session continues through the token pair the result carries.
 type CredentialsUpdatePassword struct {
 	dao                     CredentialsUpdatePasswordDao
 	daoCredentialsSelect    CredentialsUpdatePasswordDaoCredentialsSelect
 	serviceShortCodeVerify  CredentialsUpdatePasswordServiceShortCodeVerify
 	serviceShortCodeConsume CredentialsUpdatePasswordServiceShortCodeConsume
+	serviceSignClaims       CredentialsUpdatePasswordServiceSignClaims
 	transactor              transaction.Transactor
 }
 
@@ -65,6 +81,7 @@ func NewCredentialsUpdatePassword(
 	daoCredentialsSelect CredentialsUpdatePasswordDaoCredentialsSelect,
 	serviceShortCodeVerify CredentialsUpdatePasswordServiceShortCodeVerify,
 	serviceShortCodeConsume CredentialsUpdatePasswordServiceShortCodeConsume,
+	serviceSignClaims CredentialsUpdatePasswordServiceSignClaims,
 	transactor transaction.Transactor,
 ) *CredentialsUpdatePassword {
 	return &CredentialsUpdatePassword{
@@ -72,13 +89,14 @@ func NewCredentialsUpdatePassword(
 		daoCredentialsSelect:    daoCredentialsSelect,
 		serviceShortCodeVerify:  serviceShortCodeVerify,
 		serviceShortCodeConsume: serviceShortCodeConsume,
+		serviceSignClaims:       serviceSignClaims,
 		transactor:              transactor,
 	}
 }
 
 func (service *CredentialsUpdatePassword) Exec(
 	ctx context.Context, request *CredentialsUpdatePasswordRequest,
-) (*Credentials, error) {
+) (*CredentialsUpdate, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.CredentialsUpdatePassword")
 	defer span.End()
 
@@ -158,5 +176,5 @@ func (service *CredentialsUpdatePassword) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("run transaction: %w", err))
 	}
 
-	return newCredentials(credentials), nil
+	return keepSession(ctx, service.serviceSignClaims, credentials, request.Session), nil
 }

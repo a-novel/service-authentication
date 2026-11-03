@@ -883,23 +883,23 @@ func (_m *MockRestCredentialsResetPasswordService) EXPECT() *MockRestCredentials
 }
 
 // Exec provides a mock function for the type MockRestCredentialsResetPasswordService
-func (_mock *MockRestCredentialsResetPasswordService) Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error) {
+func (_mock *MockRestCredentialsResetPasswordService) Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.CredentialsUpdate, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.Credentials
+	var r0 *core.CredentialsUpdate
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdatePasswordRequest) (*core.CredentialsUpdate, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdatePasswordRequest) *core.Credentials); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdatePasswordRequest) *core.CredentialsUpdate); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.Credentials)
+			r0 = ret.Get(0).(*core.CredentialsUpdate)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.CredentialsUpdatePasswordRequest) error); ok {
@@ -940,12 +940,12 @@ func (_c *MockRestCredentialsResetPasswordService_Exec_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockRestCredentialsResetPasswordService_Exec_Call) Return(credentials *core.Credentials, err error) *MockRestCredentialsResetPasswordService_Exec_Call {
-	_c.Call.Return(credentials, err)
+func (_c *MockRestCredentialsResetPasswordService_Exec_Call) Return(credentialsUpdate *core.CredentialsUpdate, err error) *MockRestCredentialsResetPasswordService_Exec_Call {
+	_c.Call.Return(credentialsUpdate, err)
 	return _c
 }
 
-func (_c *MockRestCredentialsResetPasswordService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)) *MockRestCredentialsResetPasswordService_Exec_Call {
+func (_c *MockRestCredentialsResetPasswordService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.CredentialsUpdate, error)) *MockRestCredentialsResetPasswordService_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -987,23 +987,23 @@ func (_m *MockRestCredentialsUpdateEmailService) EXPECT() *MockRestCredentialsUp
 }
 
 // Exec provides a mock function for the type MockRestCredentialsUpdateEmailService
-func (_mock *MockRestCredentialsUpdateEmailService) Exec(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.Credentials, error) {
+func (_mock *MockRestCredentialsUpdateEmailService) Exec(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.CredentialsUpdate, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.Credentials
+	var r0 *core.CredentialsUpdate
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdateEmailRequest) (*core.Credentials, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdateEmailRequest) (*core.CredentialsUpdate, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdateEmailRequest) *core.Credentials); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdateEmailRequest) *core.CredentialsUpdate); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.Credentials)
+			r0 = ret.Get(0).(*core.CredentialsUpdate)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.CredentialsUpdateEmailRequest) error); ok {
@@ -1044,12 +1044,12 @@ func (_c *MockRestCredentialsUpdateEmailService_Exec_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockRestCredentialsUpdateEmailService_Exec_Call) Return(credentials *core.Credentials, err error) *MockRestCredentialsUpdateEmailService_Exec_Call {
-	_c.Call.Return(credentials, err)
+func (_c *MockRestCredentialsUpdateEmailService_Exec_Call) Return(credentialsUpdate *core.CredentialsUpdate, err error) *MockRestCredentialsUpdateEmailService_Exec_Call {
+	_c.Call.Return(credentialsUpdate, err)
 	return _c
 }
 
-func (_c *MockRestCredentialsUpdateEmailService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.Credentials, error)) *MockRestCredentialsUpdateEmailService_Exec_Call {
+func (_c *MockRestCredentialsUpdateEmailService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.CredentialsUpdateEmailRequest) (*core.CredentialsUpdate, error)) *MockRestCredentialsUpdateEmailService_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1091,23 +1091,23 @@ func (_m *MockRestCredentialsUpdatePasswordService) EXPECT() *MockRestCredential
 }
 
 // Exec provides a mock function for the type MockRestCredentialsUpdatePasswordService
-func (_mock *MockRestCredentialsUpdatePasswordService) Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error) {
+func (_mock *MockRestCredentialsUpdatePasswordService) Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.CredentialsUpdate, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.Credentials
+	var r0 *core.CredentialsUpdate
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdatePasswordRequest) (*core.CredentialsUpdate, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdatePasswordRequest) *core.Credentials); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.CredentialsUpdatePasswordRequest) *core.CredentialsUpdate); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.Credentials)
+			r0 = ret.Get(0).(*core.CredentialsUpdate)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.CredentialsUpdatePasswordRequest) error); ok {
@@ -1148,12 +1148,12 @@ func (_c *MockRestCredentialsUpdatePasswordService_Exec_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockRestCredentialsUpdatePasswordService_Exec_Call) Return(credentials *core.Credentials, err error) *MockRestCredentialsUpdatePasswordService_Exec_Call {
-	_c.Call.Return(credentials, err)
+func (_c *MockRestCredentialsUpdatePasswordService_Exec_Call) Return(credentialsUpdate *core.CredentialsUpdate, err error) *MockRestCredentialsUpdatePasswordService_Exec_Call {
+	_c.Call.Return(credentialsUpdate, err)
 	return _c
 }
 
-func (_c *MockRestCredentialsUpdatePasswordService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)) *MockRestCredentialsUpdatePasswordService_Exec_Call {
+func (_c *MockRestCredentialsUpdatePasswordService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.CredentialsUpdate, error)) *MockRestCredentialsUpdatePasswordService_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }

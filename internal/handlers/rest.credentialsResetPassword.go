@@ -15,7 +15,7 @@ import (
 
 // RestCredentialsResetPasswordService is the core operation PUT /v2/credentials/password delegates to.
 type RestCredentialsResetPasswordService interface {
-	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.Credentials, error)
+	Exec(ctx context.Context, request *core.CredentialsUpdatePasswordRequest) (*core.CredentialsUpdate, error)
 }
 
 // credentialsResetPasswordErrors maps a refused password reset to its status.
@@ -72,5 +72,5 @@ func (handler *RestCredentialsResetPassword) ServeHTTP(w http.ResponseWriter, r 
 		return
 	}
 
-	httpf.SendJSONStatus(w, span, http.StatusOK, loadCredentials(res))
+	httpf.SendJSONStatus(w, span, http.StatusOK, loadCredentials(&res.Credentials))
 }
