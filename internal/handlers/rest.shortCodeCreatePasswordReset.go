@@ -67,6 +67,5 @@ func (handler *RestShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 }

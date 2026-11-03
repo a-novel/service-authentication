@@ -15,6 +15,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
@@ -38,7 +39,8 @@ func TestRestTokenRevoke(t *testing.T) {
 
 		serviceMock *serviceMock
 
-		expectStatus int
+		expectStatus    int
+		expectChallenge string
 	}{
 		{
 			name: "Success",
@@ -103,7 +105,8 @@ func TestRestTokenRevoke(t *testing.T) {
 
 			body: `{"refreshToken": "refresh-token"}`,
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallenge,
 		},
 	}
 
@@ -131,6 +134,7 @@ func TestRestTokenRevoke(t *testing.T) {
 			res := w.Result()
 			require.NoError(t, res.Body.Close())
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
+			require.Equal(t, testCase.expectChallenge, res.Header.Get("WWW-Authenticate"))
 
 			service.AssertExpectations(t)
 		})

@@ -69,6 +69,5 @@ func (handler *RestShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 }

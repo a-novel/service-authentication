@@ -29,6 +29,11 @@ type RestOAuthError struct {
 
 // sendOAuthError answers err with its OAuth 2.0 error response, 400, when err is an
 // [core.OAuthError], and reports whether it did.
+//
+// invalid_client answers 400 too. RFC 6749 §5.2 requires a 401 only from a client that
+// authenticated through the Authorization header, and a client here sends its service token in
+// another header. A 401 would also need a WWW-Authenticate challenge (RFC 9110 §15.5.2) for a scheme
+// no registry names.
 func sendOAuthError(w http.ResponseWriter, span trace.Span, err error) bool {
 	var refusal *core.OAuthError
 	if !errors.As(err, &refusal) {

@@ -16,6 +16,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
@@ -53,8 +54,9 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 
 		serviceMock *serviceMock
 
-		expect       any
-		expectStatus int
+		expect          any
+		expectStatus    int
+		expectChallenge string
 	}{
 		{
 			name: "Success",
@@ -123,7 +125,8 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 
 			serviceMock: &serviceMock{caller: accountCaller, err: core.ErrAuthorizationCodeCreateSessionEnded},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallengeInvalidToken,
 		},
 		{
 			name: "Error/Internal",
@@ -155,7 +158,8 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 			caller:      accountCaller,
 			contentType: "application/x-www-form-urlencoded",
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallenge,
 		},
 	}
 
@@ -187,6 +191,7 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 
 			res := serveAsCaller(t, handler, request, testCase.caller)
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
+			require.Equal(t, testCase.expectChallenge, res.Header.Get("WWW-Authenticate"))
 
 			if testCase.expect != nil {
 				requireNoStore(t, res)

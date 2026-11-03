@@ -11,6 +11,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
@@ -50,6 +51,7 @@ func (handler *RestTokenRevoke) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	claims, err := session.MustGetClaimsContext(ctx)
 	if err != nil {
+		w.Header().Set("WWW-Authenticate", middlewares.BearerChallenge)
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusUnauthorized}, err)
 
 		return

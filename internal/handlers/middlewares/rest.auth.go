@@ -23,6 +23,17 @@ import (
 // ErrInvalidAuth indicates the authentication token is invalid or the user lacks permissions.
 var ErrInvalidAuth = errors.New("invalid authentication")
 
+// The WWW-Authenticate challenges that refuse a bearer request (RFC 6750 §3). A 401 must carry one
+// (RFC 9110 §15.5.2), and a token that does not open the route gets one too.
+const (
+	// BearerChallenge answers a request without a bearer token. It names no error code (RFC 6750 §3.1).
+	BearerChallenge = "Bearer"
+	// BearerChallengeInvalidToken answers a token that is rejected, expired or signed out.
+	BearerChallengeInvalidToken = `Bearer error="invalid_token"`
+	// BearerChallengeInsufficientScope answers a valid token that lacks the permission the route requires.
+	BearerChallengeInsufficientScope = `Bearer error="insufficient_scope"`
+)
+
 // AuthClaimsVerifier validates JWT access tokens and extracts claims.
 type AuthClaimsVerifier interface {
 	VerifyClaims(ctx context.Context, req *servicejsonkeys.VerifyClaimsRequest) (*session.Claims, error)
@@ -82,30 +93,25 @@ func (middleware *Auth) serve(
 	ctx, span := otel.Tracer().Start(r.Context(), "middlewares.Auth")
 	defer span.End()
 
-	token := r.Header.Get("Authorization")
+	header := r.Header.Get("Authorization")
 	// Optional-auth endpoint: pass through with no claims on the context.
-	if token == "" && len(requiredPermissions) == 0 {
+	if header == "" && len(requiredPermissions) == 0 {
 		next.ServeHTTP(w, r.WithContext(ctx))
 
 		return
 	}
 
-	if token == "" {
+	// The scheme matches in any case, and one or more spaces precede the token, which holds none
+	// (RFC 9110 §11.1, §11.4, RFC 6750 §2.1).
+	scheme, token, _ := strings.Cut(header, " ")
+	token = strings.TrimLeft(token, " ")
+
+	if !strings.EqualFold(scheme, "Bearer") || token == "" || strings.Contains(token, " ") {
+		w.Header().Set("WWW-Authenticate", BearerChallenge)
 		httpf.HandleError(
 			ctx, middleware.logger, w, span,
 			httpf.ErrMap{nil: http.StatusUnauthorized},
-			fmt.Errorf("%w: missing authorization header", ErrInvalidAuth),
-		)
-
-		return
-	}
-
-	authToken := strings.Split(token, " ")
-	if len(authToken) != 2 || authToken[0] != "Bearer" {
-		httpf.HandleError(
-			ctx, middleware.logger, w, span,
-			httpf.ErrMap{nil: http.StatusUnauthorized},
-			fmt.Errorf("%w: invalid authorization header", ErrInvalidAuth),
+			fmt.Errorf("%w: no bearer token", ErrInvalidAuth),
 		)
 
 		return
@@ -113,11 +119,15 @@ func (middleware *Auth) serve(
 
 	verifyRequest := &servicejsonkeys.VerifyClaimsRequest{
 		Usage:       servicejsonkeys.KeyUsageAuth,
-		AccessToken: authToken[1],
+		AccessToken: token,
 	}
 
 	claims, err := middleware.claimsVerifier.VerifyClaims(ctx, verifyRequest)
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenRejected) {
+			w.Header().Set("WWW-Authenticate", BearerChallengeInvalidToken)
+		}
+
 		httpf.HandleError(ctx, middleware.logger, w, span, verifyClaimsErrors, err)
 
 		return
@@ -128,6 +138,10 @@ func (middleware *Auth) serve(
 	if len(requiredPermissions) > 0 {
 		err = middleware.authorize(claims.Roles, requiredPermissions)
 		if err != nil {
+			if errors.Is(err, ErrInvalidAuth) {
+				w.Header().Set("WWW-Authenticate", BearerChallengeInsufficientScope)
+			}
+
 			httpf.HandleError(ctx, middleware.logger, w, span, httpf.ErrMap{ErrInvalidAuth: http.StatusForbidden}, err)
 
 			return
