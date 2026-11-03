@@ -3,6 +3,7 @@ package env
 import (
 	"os"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/a-novel-kit/golib/config"
@@ -91,7 +92,7 @@ var (
 	// PostgresHost is the PostgreSQL server hostname or IP address.
 	PostgresHost = getEnv("POSTGRES_HOST")
 	// PostgresPort is the PostgreSQL server port.
-	PostgresPort = config.LoadEnv(getEnv("POSTGRES_PORT"), PostgresPortDefault, config.IntParser)
+	PostgresPort = config.LoadEnv(getEnv("POSTGRES_PORT"), PostgresPortDefault, strconv.Atoi)
 	// PostgresUser is the PostgreSQL login role.
 	PostgresUser = getEnv("POSTGRES_USER")
 	// PostgresPassword is the PostgreSQL login credential.
@@ -99,12 +100,12 @@ var (
 	// PostgresDatabase is the PostgreSQL database name.
 	PostgresDatabase = getEnv("POSTGRES_DATABASE")
 	// PostgresTLSEnabled controls transport encryption for the PostgreSQL connection.
-	PostgresTLSEnabled = config.LoadEnv(getEnv("POSTGRES_TLS_ENABLED"), PostgresTLSEnabledDefault, config.BoolParser)
+	PostgresTLSEnabled = config.LoadEnv(getEnv("POSTGRES_TLS_ENABLED"), PostgresTLSEnabledDefault, strconv.ParseBool)
 
 	// PostgresMaxOpenConns is the maximum number of open connections to the database.
-	PostgresMaxOpenConns = config.LoadEnv(getEnv("POSTGRES_MAX_OPEN_CONNS"), PostgresMaxOpenConnsDefault, config.IntParser)
+	PostgresMaxOpenConns = config.LoadEnv(getEnv("POSTGRES_MAX_OPEN_CONNS"), PostgresMaxOpenConnsDefault, strconv.Atoi)
 	// PostgresMaxIdleConns is the maximum number of connections kept open while idle.
-	PostgresMaxIdleConns = config.LoadEnv(getEnv("POSTGRES_MAX_IDLE_CONNS"), PostgresMaxIdleConnsDefault, config.IntParser)
+	PostgresMaxIdleConns = config.LoadEnv(getEnv("POSTGRES_MAX_IDLE_CONNS"), PostgresMaxIdleConnsDefault, strconv.Atoi)
 
 	// PlatformAuthURL is the base URL of the authentication web client, prefixed onto the
 	// links inserted in emails.
@@ -128,11 +129,11 @@ var (
 	// ServiceJsonKeysHost is the hostname of the JSON Keys service, without scheme or port.
 	ServiceJsonKeysHost = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_HOST"), ServiceJsonKeysHostDefault, config.StringParser)
 	// ServiceJsonKeysPort is the gRPC port of the JSON Keys service.
-	ServiceJsonKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJsonKeysPortDefault, config.IntParser)
+	ServiceJsonKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJsonKeysPortDefault, strconv.Atoi)
 	// ServiceJsonKeysTLS dials the JSON Keys service over TLS, from inside the cluster, once
 	// ServiceTokenPath names a token. The server's certificate is verified for ServiceJsonKeysHost
 	// against the system roots, which SSL_CERT_DIR extends.
-	ServiceJsonKeysTLS = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_TLS"), false, config.BoolParser)
+	ServiceJsonKeysTLS = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_TLS"), false, strconv.ParseBool)
 
 	// SmtpAddr is the SMTP server address, as domain:port.
 	SmtpAddr = getEnv("SMTP_ADDR")
@@ -151,26 +152,26 @@ var (
 	// SmtpAddr, and it is unused without SmtpSenderPassword.
 	SmtpSenderDomain = getEnv("SMTP_SENDER_DOMAIN")
 	// SmtpTimeout bounds how long a single email send may take.
-	SmtpTimeout = config.LoadEnv(getEnv("SMTP_TIMEOUT"), SmtpTimeoutDefault, config.DurationParser)
+	SmtpTimeout = config.LoadEnv(getEnv("SMTP_TIMEOUT"), SmtpTimeoutDefault, time.ParseDuration)
 	// SmtpMaxConcurrent caps concurrent email deliveries; excess sends wait for a slot.
-	SmtpMaxConcurrent = config.LoadEnv(getEnv("SMTP_MAX_CONCURRENT"), SmtpMaxConcurrentDefault, config.IntParser)
+	SmtpMaxConcurrent = config.LoadEnv(getEnv("SMTP_MAX_CONCURRENT"), SmtpMaxConcurrentDefault, strconv.Atoi)
 	// SmtpForceUnencrypted lets the SMTP client talk over a non-TLS connection. With a password, it
 	// sends the credentials in the clear, which Go otherwise permits only towards localhost. Without
 	// one, it lifts the STARTTLS requirement. Local runs under Docker need it because the mail host
 	// offers no TLS and answers to another name.
 	//
 	// It must never be set in production.
-	SmtpForceUnencrypted = config.LoadEnv(getEnv("SMTP_FORCE_UNENCRYPTED"), false, config.BoolParser)
+	SmtpForceUnencrypted = config.LoadEnv(getEnv("SMTP_FORCE_UNENCRYPTED"), false, strconv.ParseBool)
 
 	// WaitlistURL is the Google Apps Script /exec deployment URL; empty disables the integration.
 	WaitlistURL = getEnv("WAITLIST_URL")
 	// WaitlistSecret is a server-only signing key shared with the Google script properties.
 	WaitlistSecret = getEnv("WAITLIST_SECRET")
 	// WaitlistTimeout bounds the Google request and its content redirect.
-	WaitlistTimeout = config.LoadEnv(getEnv("WAITLIST_TIMEOUT"), WaitlistTimeoutDefault, config.DurationParser)
+	WaitlistTimeout = config.LoadEnv(getEnv("WAITLIST_TIMEOUT"), WaitlistTimeoutDefault, time.ParseDuration)
 	// WaitlistMaxConcurrent caps the waitlist requests waiting on Google at once, per instance.
 	WaitlistMaxConcurrent = config.LoadEnv(
-		getEnv("WAITLIST_MAX_CONCURRENT"), WaitlistMaxConcurrentDefault, config.IntParser,
+		getEnv("WAITLIST_MAX_CONCURRENT"), WaitlistMaxConcurrentDefault, strconv.Atoi,
 	)
 	// WaitlistMaxRequestSize caps a waitlist request body, in bytes.
 	WaitlistMaxRequestSize = config.LoadEnv(
@@ -179,7 +180,7 @@ var (
 
 	// Argon2MaxConcurrent caps the password hashes running at once, per instance. Each allocates
 	// 64 MiB, so size it to the instance's memory.
-	Argon2MaxConcurrent = config.LoadEnv(getEnv("ARGON2_MAX_CONCURRENT"), Argon2MaxConcurrentDefault, config.IntParser)
+	Argon2MaxConcurrent = config.LoadEnv(getEnv("ARGON2_MAX_CONCURRENT"), Argon2MaxConcurrentDefault, strconv.Atoi)
 
 	// RestRateLimitStrict caps each caller of a route issuing anonymous tokens or invitation requests.
 	RestRateLimitStrict = config.LoadEnv(getEnv("REST_RATE_LIMIT_STRICT"), RestRateLimitStrictDefault, httpf.ParseRate)
@@ -201,14 +202,18 @@ var (
 	// AppName names the application in logs and traces.
 	AppName = config.LoadEnv(getEnv("APP_NAME"), AppNameDefault, config.StringParser)
 	// Otel enables OpenTelemetry instrumentation.
-	Otel = config.LoadEnv(getEnv("OTEL"), false, config.BoolParser)
+	Otel = config.LoadEnv(getEnv("OTEL"), false, strconv.ParseBool)
 
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
 	// ServiceTokenIssuer is the issuer of the service tokens the REST server accepts, as a token's
-	// "iss" claim names it. When empty, the server takes every request without a service token.
+	// "iss" claim names it. When empty, the server refuses to start unless ServiceIssuerOptional
+	// is set.
 	ServiceTokenIssuer = getEnv("SERVICE_TOKEN_ISSUER")
+	// ServiceIssuerOptional lets the REST server start without ServiceTokenIssuer, and then take
+	// every request without a service token. Only a local or test stack sets it.
+	ServiceIssuerOptional = config.LoadEnv(getEnv("SERVICE_ISSUER_OPTIONAL"), false, strconv.ParseBool)
 	// ServiceTokenAudience is the audience the REST server answers to. Each caller requests its token
 	// for it.
 	ServiceTokenAudience = getEnv("SERVICE_TOKEN_AUDIENCE")

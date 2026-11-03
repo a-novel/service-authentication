@@ -560,7 +560,9 @@ func TestClientVisitorKey(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-			withServiceToken := middlewares.RestServiceToken(testCase.tokenConfig, &http.Client{}, config.LoggerDev)
+			// The opt-out keeps a case without an issuer unverified, as a local stack runs.
+			withServiceToken, err := middlewares.RestServiceToken(testCase.tokenConfig, true, &http.Client{}, config.LoggerDev)
+			require.NoError(t, err)
 			withServiceToken(middleware.ClientIPFromHeader("X-Client-Ip")(router)).ServeHTTP(w, request)
 
 			require.Equal(t, http.StatusOK, w.Code)
