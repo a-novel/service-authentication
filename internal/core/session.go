@@ -22,11 +22,13 @@ const VisitorFieldMaxLength = 512
 
 // SessionLoggedOutKept is how many logged-out sessions an account keeps, the ones active last. Each
 // login and account creation deletes the older ones, which [SessionList] never shows: it returns
-// [SessionListLimit] sessions at most. Active sessions stay, whatever their number.
+// [SessionListLimit] sessions at most. The same logins sign out the active sessions past
+// [SessionListLimit], so the list shows every active session.
 const SessionLoggedOutKept = 100
 
-// SessionTrimBatch bounds the logged-out sessions one login deletes, so the statement stays short.
-// The next login, or the purge, deletes the rest.
+// SessionTrimBatch bounds the sessions one login signs out past [SessionListLimit], and those it
+// deletes past [SessionLoggedOutKept], so each statement stays short. The next login, or the purge,
+// handles the rest.
 const SessionTrimBatch = 1000
 
 // Visitor is the device a request comes from, as the account platform forwards it. Every field is
@@ -108,14 +110,15 @@ type sessionRecorder struct {
 }
 
 // record records an access token the account platform receives for visitor, on the row of the
-// session claims belongs to, for the account userID names. The row records the location only under
-// the account's consent, and erases it otherwise.
+// session claims belongs to, for the account userID names. consent is the account's location consent
+// as the caller read it. The row records the location only under consent, and erases it otherwise.
 //
-// One transaction reads the consent and writes the row. The read waits for a consent update in
+// Without consent, the row is written alone: a stale "off" only records no location. With consent,
+// one transaction reads the consent again and writes the row. The read waits for a consent update in
 // flight, and a later consent update waits for the write, so turning the consent off erases every
 // location the account's rows hold.
 func (recorder sessionRecorder) record(
-	ctx context.Context, userID uuid.UUID, claims *session.RefreshClaims, visitor Visitor,
+	ctx context.Context, userID uuid.UUID, consent bool, claims *session.RefreshClaims, visitor Visitor,
 ) error {
 	ctx, span := otel.Tracer().Start(ctx, "core.recordSession")
 	defer span.End()
@@ -134,6 +137,15 @@ func (recorder sessionRecorder) record(
 		UserAgent: clipVisitorField(visitor.UserAgent),
 		Now:       time.Now(),
 		ExpiresAt: time.Unix(claims.SessionExpiry(), 0),
+	}
+
+	if !consent {
+		err = recorder.daoUpsert.Exec(ctx, request)
+		if err != nil {
+			return otel.ReportError(span, fmt.Errorf("write session: %w", err))
+		}
+
+		return nil
 	}
 
 	err = recorder.transactor.WithinTx(ctx, func(ctx context.Context) error {
@@ -160,6 +172,50 @@ func (recorder sessionRecorder) record(
 	}
 
 	return nil
+}
+
+// sessionOldestRevoker signs out an account's active sessions past a number. The DAO of each calling
+// operation matches it.
+type sessionOldestRevoker interface {
+	Exec(ctx context.Context, request *dao.SessionRevokeOldestRequest) error
+}
+
+// sessionTrimmer deletes an account's logged-out sessions past a number. The DAO of each calling
+// operation matches it.
+type sessionTrimmer interface {
+	Exec(ctx context.Context, request *dao.SessionTrimRequest) error
+}
+
+// sessionBounds bounds the rows of an account once a login opens a session. Each operation that
+// opens one builds it from its own dependencies.
+type sessionBounds struct {
+	daoRevokeOldest sessionOldestRevoker
+	daoTrim         sessionTrimmer
+	// refreshTokenLeeway is the clock-skew tolerance the verifier grants an expired refresh token.
+	refreshTokenLeeway time.Duration
+}
+
+// bound keeps the account's [SessionListLimit] active sessions active last and signs out the others,
+// then deletes its logged-out sessions past the [SessionLoggedOutKept] active last. Each step handles
+// [SessionTrimBatch] sessions at most. It runs after the login's own writes, and a failure fails no
+// login.
+func (bounds sessionBounds) bound(ctx context.Context, userID uuid.UUID) {
+	ctx, span := otel.Tracer().Start(ctx, "core.boundSessions")
+	defer span.End()
+
+	revokeRequest := &dao.SessionRevokeOldestRequest{
+		UserID: userID,
+		Keep:   SessionListLimit,
+		Limit:  SessionTrimBatch,
+		Leeway: bounds.refreshTokenLeeway,
+		Now:    time.Now(),
+	}
+
+	// A failure leaves its rows to the next login and to the purge. The DAO span records it.
+	_ = bounds.daoRevokeOldest.Exec(ctx, revokeRequest)
+	_ = bounds.daoTrim.Exec(ctx, &dao.SessionTrimRequest{
+		UserID: userID, Keep: SessionLoggedOutKept, Limit: SessionTrimBatch,
+	})
 }
 
 // clipVisitorField returns the first [VisitorFieldMaxLength] characters of value. It drops the bytes

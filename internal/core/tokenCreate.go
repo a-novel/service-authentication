@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
@@ -23,8 +24,8 @@ type TokenCreateDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
-// TokenCreateDaoLocationConsent reads the account's location consent, in the transaction that records
-// the session.
+// TokenCreateDaoLocationConsent reads a consenting account's location consent again, in the transaction
+// that records the session.
 type TokenCreateDaoLocationConsent interface {
 	Exec(ctx context.Context, request *dao.CredentialsLocationConsentRequest) (bool, error)
 }
@@ -32,6 +33,11 @@ type TokenCreateDaoLocationConsent interface {
 // TokenCreateDaoSessionUpsert records the session the login opens.
 type TokenCreateDaoSessionUpsert interface {
 	Exec(ctx context.Context, request *dao.SessionUpsertRequest) error
+}
+
+// TokenCreateDaoSessionRevokeOldest signs out the account's active sessions past [SessionListLimit].
+type TokenCreateDaoSessionRevokeOldest interface {
+	Exec(ctx context.Context, request *dao.SessionRevokeOldestRequest) error
 }
 
 // TokenCreateDaoSessionTrim deletes the account's logged-out sessions past [SessionLoggedOutKept].
@@ -61,25 +67,29 @@ type TokenCreateRequest struct {
 // access/refresh token pair, in a session of its own that it records.
 type TokenCreate struct {
 	dao               TokenCreateDao
-	daoSessionTrim    TokenCreateDaoSessionTrim
 	serviceSignClaims TokenCreateServiceSignClaims
 	sessions          sessionRecorder
+	bounds            sessionBounds
 }
 
 func NewTokenCreate(
 	dao TokenCreateDao,
 	daoLocationConsent TokenCreateDaoLocationConsent,
 	daoSessionUpsert TokenCreateDaoSessionUpsert,
+	daoSessionRevokeOldest TokenCreateDaoSessionRevokeOldest,
 	daoSessionTrim TokenCreateDaoSessionTrim,
 	serviceSignClaims TokenCreateServiceSignClaims,
 	transactor transaction.Transactor,
+	refreshTokenLeeway time.Duration,
 ) *TokenCreate {
 	return &TokenCreate{
 		dao:               dao,
-		daoSessionTrim:    daoSessionTrim,
 		serviceSignClaims: serviceSignClaims,
 		sessions: sessionRecorder{
 			transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
+		},
+		bounds: sessionBounds{
+			daoRevokeOldest: daoSessionRevokeOldest, daoTrim: daoSessionTrim, refreshTokenLeeway: refreshTokenLeeway,
 		},
 	}
 }
@@ -87,7 +97,8 @@ func NewTokenCreate(
 // Exec verifies the request's email and password and returns a freshly signed
 // access/refresh token pair. See signTokenPair for how the two tokens are bound. The session's
 // row records the visitor, and its location under the account's consent. A failed record fails the
-// login. The account then keeps its [SessionLoggedOutKept] logged-out sessions active last.
+// login. The account then keeps its [SessionListLimit] active sessions and [SessionLoggedOutKept]
+// logged-out sessions active last.
 //
 // It returns lib.ErrInvalidPassword when the password does not match and
 // [ErrCredentialsByEmailNotFound] when the email is not registered.
@@ -132,15 +143,12 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
 	}
 
-	err = service.sessions.record(ctx, credentials.ID, refreshClaims, request.Visitor)
+	err = service.sessions.record(ctx, credentials.ID, credentials.LocationConsent, refreshClaims, request.Visitor)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
 
-	// A failed trim leaves the rows to the next login and to the purge. Its span records the error.
-	_ = service.daoSessionTrim.Exec(ctx, &dao.SessionTrimRequest{
-		UserID: credentials.ID, Keep: SessionLoggedOutKept, Limit: SessionTrimBatch,
-	})
+	service.bounds.bound(ctx, credentials.ID)
 
 	return tokens, nil
 }

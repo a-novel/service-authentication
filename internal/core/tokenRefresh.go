@@ -52,8 +52,8 @@ type TokenRefreshDaoRefreshTokenRevocationExist interface {
 	Exec(ctx context.Context, request *dao.RefreshTokenRevocationExistRequest) (bool, error)
 }
 
-// TokenRefreshDaoLocationConsent reads the account's location consent, in the transaction that
-// records the renewal.
+// TokenRefreshDaoLocationConsent reads a consenting account's location consent again, in the transaction
+// that records the renewal.
 type TokenRefreshDaoLocationConsent interface {
 	Exec(ctx context.Context, request *dao.CredentialsLocationConsentRequest) (bool, error)
 }
@@ -201,7 +201,8 @@ func (service *TokenRefresh) Exec(
 	}
 
 	// The verifier grants the refresh token a leeway past its expiry, and the session's end gets none.
-	// A logged-out session therefore never renews, nor brings back a row the account removed.
+	// A logged-out session never renews, and a renewal racing a removal can bring the row back, logged
+	// out.
 	if revoked || time.Now().Unix() >= refreshTokenClaims.SessionExpiry() {
 		return nil, otel.ReportError(span, fmt.Errorf("session ended: %w", ErrTokenRefreshInvalidRefreshToken))
 	}
@@ -217,7 +218,7 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	err = service.sessions.record(ctx, credentials.ID, refreshTokenClaims, request.Visitor)
+	err = service.sessions.record(ctx, credentials.ID, credentials.LocationConsent, refreshTokenClaims, request.Visitor)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}

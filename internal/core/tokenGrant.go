@@ -480,7 +480,9 @@ func (service *TokenGrant) grantRefreshToken(
 }
 
 // touchSession records an access token issued at now on the row of the session sessionID names.
-// The row of a session an older release opened starts then, for userID, ending at expiresAt.
+// The row of a session an older release opened starts then, for userID, ending at expiresAt. Each
+// grant refuses a logged-out session first, so a logged-out session never renews, and a grant racing
+// a removal can bring the row back, logged out.
 func (service *TokenGrant) touchSession(
 	ctx context.Context, sessionID string, userID uuid.UUID, expiresAt, now time.Time,
 ) error {

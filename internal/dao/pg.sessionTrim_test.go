@@ -61,12 +61,12 @@ func TestPgSessionTrim(t *testing.T) {
 			expectLeft: []*dao.Session{active, revokedNewest, foreign},
 		},
 		{
-			// The deletion stops at the limit, right after the sessions kept.
+			// The deletion stops at the limit, the least recent first.
 			name: "Success/Limit",
 
 			request: &dao.SessionTrimRequest{UserID: sessionOwnerID, Keep: 1, Limit: 1},
 
-			expectLeft: []*dao.Session{active, revokedNewest, endedOldest, foreign},
+			expectLeft: []*dao.Session{active, revokedNewest, endedMiddle, foreign},
 		},
 		{
 			name: "Success/UnderKeep",

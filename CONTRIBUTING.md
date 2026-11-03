@@ -151,11 +151,11 @@ The `sessions` table gives each session a row, with the device the account platf
 | `PUT /v2/sessions/revoke-others`      | Signs out every other active session of the caller.      |
 | `DELETE /v2/sessions/{sessionID}`     | Removes a logged-out session. An active one answers 409. |
 
-Only the account platform manages devices, so an OAuth client's token gets 403 on these routes. A signed-out session keeps its access token until it expires, and these routes and `PATCH /v2/credentials/location-consent` refuse it at once with the 401 of `GET /v2/session`, so it cannot sign the account's other sessions out in turn. Each user's requests to these routes share the login rate limits.
+Only the account platform manages devices, so an OAuth client's token gets 403 on these routes. A signed-out session keeps its access token until it expires, and these routes and `PATCH /v2/credentials/location-consent` refuse it at once with the 401 of `GET /v2/session`, so it cannot sign the account's other sessions out in turn. Each session's requests to each of these routes count against the windows of the login rate limits, per session, so no session of an account spends the budget of another.
 
 The location consent is an account setting, off by default. While it is on, every session of the account records its IP address, region and city. `PATCH /v2/credentials/location-consent` sets it, and turning it off erases every stored location of the account at once.
 
-A logged-out session stays listed until the account removes it, and an account keeps its 100 logged-out sessions active last: each sign-in deletes the older ones. The scheduled `refresh-token-purge` maintenance operation deletes the rows 30 days after their session ends, the `SessionRetention` of `internal/core`. A session ends at most the refresh token's 7 days after it starts, so a device signed out early stays listed up to 37 days. The purge reads the session's end, which never changes, so a renewal leaves the index it scans untouched.
+A logged-out session stays listed until the account removes it. Each sign-in bounds the account's rows: it signs out the active sessions past the 100 active last, so the list shows every active session, then deletes the logged-out sessions past the 100 active last. The scheduled `refresh-token-purge` maintenance operation deletes the rows 30 days after their session ends, the `SessionRetention` of `internal/core`. A session ends at most the refresh token's 7 days after it starts, so a device signed out early stays listed up to 37 days. The purge reads the session's end, which never changes, so a renewal leaves the index it scans untouched.
 
 ### Single sign-on
 

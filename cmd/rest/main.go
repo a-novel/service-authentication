@@ -120,6 +120,7 @@ func main() {
 	daoSessionSelect := dao.NewPgSessionSelect()
 	daoSessionTouch := dao.NewPgSessionTouch()
 	daoSessionTrim := dao.NewPgSessionTrim()
+	daoSessionRevokeOldest := dao.NewPgSessionRevokeOldest()
 	daoSessionUpsert := dao.NewPgSessionUpsert()
 
 	daoAuthorizationCodeConsume := dao.NewPgAuthorizationCodeConsume()
@@ -145,8 +146,8 @@ func main() {
 	)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
-		daoCredentialsInsert, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionTrim, serviceShortCodeVerify,
-		serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist,
+		daoCredentialsInsert, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionRevokeOldest, daoSessionTrim,
+		serviceShortCodeVerify, serviceShortCodeConsume, jsonKeysClient, daoTransactor, daoWaitlist, refreshTokenLeeway,
 	)
 	serviceCredentialsExist := core.NewCredentialsExist(daoCredentialsExist)
 	serviceWaitlistJoin := core.NewWaitlistJoin(daoCredentialsExist, daoWaitlist)
@@ -168,8 +169,8 @@ func main() {
 	serviceClaimsGet := core.NewClaimsGet(daoRefreshTokenRevocationExist)
 
 	serviceTokenCreate := core.NewTokenCreate(
-		daoCredentialsSelectByEmail, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionTrim, jsonKeysClient,
-		daoTransactor,
+		daoCredentialsSelectByEmail, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionRevokeOldest,
+		daoSessionTrim, jsonKeysClient, daoTransactor, refreshTokenLeeway,
 	)
 	serviceTokenCreateAnon := core.NewTokenCreateAnon(jsonKeysClient)
 	serviceTokenRefresh := core.NewTokenRefresh(
@@ -324,7 +325,7 @@ func main() {
 				Put("/password", handlerCredentialsResetPassword.ServeHTTP)
 			withAuth(r, "credentials:role:patch").
 				Patch("/role", handlerCredentialsUpdateRole.ServeHTTP)
-			withAuth(r, "credentials:locationConsent:patch").With(refuseEndedSessions).
+			withAuth(r, "credentials:locationConsent:patch").With(limit.Sessions, refuseEndedSessions).
 				Patch("/location-consent", handlerCredentialsUpdateLocationConsent.ServeHTTP)
 		})
 

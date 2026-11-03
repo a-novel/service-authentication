@@ -24,8 +24,8 @@ type SessionTrimRequest struct {
 	Limit int
 }
 
-// PgSessionTrim deletes the logged-out sessions of an account past the Keep active last, at most
-// Limit of them. It never deletes an active session.
+// PgSessionTrim deletes the logged-out sessions of an account past the Keep active last, the least
+// recent first, at most Limit of them. It never deletes an active session.
 type PgSessionTrim struct{}
 
 func NewPgSessionTrim() *PgSessionTrim {

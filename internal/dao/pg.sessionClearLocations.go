@@ -21,7 +21,7 @@ type SessionClearLocationsRequest struct {
 }
 
 // PgSessionClearLocations erases the IP address, the region and the city of every session of an
-// account, in one statement.
+// account, in one statement. It leaves the rows that hold none untouched.
 type PgSessionClearLocations struct{}
 
 func NewPgSessionClearLocations() *PgSessionClearLocations {

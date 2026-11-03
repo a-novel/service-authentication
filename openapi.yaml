@@ -260,16 +260,20 @@ paths:
         the caller's own.
 
         A session is active until it ends or is signed out, then `loggedOut` until the user removes it with
-        `[DELETE] /v2/sessions/{sessionID}`, or 30 days after it ends, when the service removes it. An account keeps
-        its 100 logged-out sessions active last: each sign-in removes the older ones. The active sessions come first,
-        then the logged-out ones, each latest activity first.
+        `[DELETE] /v2/sessions/{sessionID}`, or 30 days after it ends, when the service removes it. Each sign-in keeps
+        the account's 100 active sessions active last and signs out the others, then removes its logged-out sessions
+        past the 100 active last, so the list shows every active session. The active sessions come first, then the
+        logged-out ones, each latest activity first.
 
         The location fields are present only for a session that recorded them, while the account consents to
         locations. Anonymous tokens lack the required permission, and an OAuth client's access token answers 403: only
-        the account platform manages devices. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
-        expires.
+        the account platform manages devices.
 
-        By default, each user may send 10 requests per minute and 30 per 10 minutes to the device routes, together.
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
       tags: [session]
       security:
         - BearerAuth: ["session:list"]
@@ -292,14 +296,17 @@ paths:
       operationId: sessionRevokeOthers
       summary: Sign out every other device.
       description: |
-        Signs out every active session of the caller but their own, on every platform, at once. No refresh token of those
-        sessions renews them any more, and `GET /v2/session` refuses their access tokens. Other services verify access
-        tokens offline, and accept them until they expire. The sessions stay listed as logged out.
+        Signs out every active session of the caller but their own, on every platform, at once. No refresh token of
+        those sessions renews them any more, and `GET /v2/session` refuses their access tokens. Other services verify
+        access tokens offline, and accept them until they expire. The sessions stay listed as logged out.
 
-        An OAuth client's access token answers 403: only the account platform manages devices. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
-        expires.
+        An OAuth client's access token answers 403: only the account platform manages devices.
 
-        By default, each user may send 10 requests per minute and 30 per 10 minutes to the device routes, together.
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
       tags: [session]
       security:
         - BearerAuth: ["session:revoke"]
@@ -328,10 +335,13 @@ paths:
 
         Signing out a session already signed out answers 204, so a retry never fails. A session that ended, belongs to
         another account or never existed answers 404. An OAuth client's access token answers 403: only the account
-        platform manages devices. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
-        expires.
+        platform manages devices.
 
-        By default, each user may send 10 requests per minute and 30 per 10 minutes to the device routes, together.
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
       tags: [session]
       security:
         - BearerAuth: ["session:revoke"]
@@ -364,10 +374,13 @@ paths:
         signs it out first with `[PUT] /v2/sessions/{sessionID}/revoke`. A removed session stays signed out.
 
         A session that belongs to another account or never existed answers 404. An OAuth client's access token answers
-        403: only the account platform manages devices. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
-        expires.
+        403: only the account platform manages devices.
 
-        By default, each user may send 10 requests per minute and 30 per 10 minutes to the device routes, together.
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
       tags: [session]
       security:
         - BearerAuth: ["session:delete"]
@@ -832,8 +845,13 @@ paths:
         device. The consent is off until the user turns it on. Turning it off erases the location of every session of
         the account at once. `GET /v2/credentials/self` returns the current choice.
 
-        An OAuth client's access token answers 403: only the account platform manages the account. A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before it
-        expires.
+        An OAuth client's access token answers 403: only the account platform manages the account.
+
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
       tags: [credentials]
       security:
         - BearerAuth: ["credentials:locationConsent:patch"]

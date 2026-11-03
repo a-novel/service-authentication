@@ -29,6 +29,12 @@ func TestPgSessionClearLocations(t *testing.T) {
 		}
 	}
 
+	// bare is a session of the owner that recorded no location.
+	bare := &dao.Session{
+		ID: uuid.MustParse("00000000-0000-0000-0000-0000000000a3"), UserID: sessionOwnerID, UserAgent: "Firefox",
+		CreatedAt: now, LastActiveAt: now, ExpiresAt: dayLater,
+	}
+
 	testCases := []struct {
 		name string
 
@@ -47,6 +53,7 @@ func TestPgSessionClearLocations(t *testing.T) {
 				sessions: []*dao.Session{
 					newSession("00000000-0000-0000-0000-0000000000a1", sessionOwnerID),
 					newSession("00000000-0000-0000-0000-0000000000a2", sessionOwnerID),
+					bare,
 					newSession("00000000-0000-0000-0000-0000000000b1", sessionOtherID),
 				},
 			},
@@ -62,6 +69,7 @@ func TestPgSessionClearLocations(t *testing.T) {
 					ID: uuid.MustParse("00000000-0000-0000-0000-0000000000a2"), UserID: sessionOwnerID, UserAgent: "Firefox",
 					CreatedAt: now, LastActiveAt: now, ExpiresAt: dayLater,
 				},
+				bare,
 				newSession("00000000-0000-0000-0000-0000000000b1", sessionOtherID),
 			},
 		},
@@ -78,8 +86,12 @@ func TestPgSessionClearLocations(t *testing.T) {
 
 				testCase.fixtures.insert(ctx, t)
 
+				// A row without a location keeps its version, so a repeated withdrawal rewrites nothing.
+				bareVersion := sessionVersion(ctx, t, bare.ID)
+
 				require.NoError(t, daoClear.Exec(ctx, testCase.request))
 				require.Equal(t, testCase.expect, selectSessions(ctx, t))
+				require.Equal(t, bareVersion, sessionVersion(ctx, t, bare.ID))
 			})
 		})
 	}

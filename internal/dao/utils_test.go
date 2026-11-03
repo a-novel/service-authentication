@@ -73,3 +73,19 @@ func changed[T any](value T, update func(value *T)) *T {
 
 	return &value
 }
+
+// sessionVersion returns the xmin of a session's row: the transaction that wrote its current version.
+// Any update of the row changes it.
+func sessionVersion(ctx context.Context, t *testing.T, id uuid.UUID) string {
+	t.Helper()
+
+	db, err := postgres.GetContext(ctx)
+	require.NoError(t, err)
+
+	var version string
+
+	err = db.NewSelect().TableExpr("sessions").ColumnExpr("xmin::text").Where("id = ?", id).Scan(ctx, &version)
+	require.NoError(t, err)
+
+	return version
+}

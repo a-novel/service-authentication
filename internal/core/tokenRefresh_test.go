@@ -69,8 +69,8 @@ func TestTokenRefresh(t *testing.T) {
 		err  error
 	}
 
-	// sessionUpsertMock records the session in a transaction, after a consent read that answers
-	// consent.
+	// sessionUpsertMock records the session. Under the consent the renewal read, it does so in a
+	// transaction, after a locked consent read that answers consent.
 	type sessionUpsertMock struct {
 		consent bool
 		request *dao.SessionUpsertRequest
@@ -185,8 +185,9 @@ func TestTokenRefresh(t *testing.T) {
 
 			daoMock: &daoMock{
 				resp: &dao.Credentials{
-					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Role: "admin",
+					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+					Role:            "admin",
+					LocationConsent: true,
 				},
 			},
 
@@ -324,8 +325,7 @@ func TestTokenRefresh(t *testing.T) {
 			expectErr: errFoo,
 		},
 		{
-			// A session that ended renews no more, though the verifier grants its token a leeway, so no
-			// renewal brings back the row of a session its account removed.
+			// A session that ended renews no more, though the verifier grants its token a leeway.
 			name: "Error/SessionEnded",
 
 			request: &core.TokenRefreshRequest{
@@ -786,11 +786,15 @@ func TestTokenRefresh(t *testing.T) {
 			daoSessionUpsert := coremocks.NewMockTokenRefreshDaoSessionUpsert(t)
 			transactor := coremocks.NewMockTransactor(t)
 
-			if testCase.sessionUpsertMock != nil {
+			// Without consent, the renewal writes the row alone, with no transaction nor consent read.
+			if testCase.sessionUpsertMock != nil && testCase.daoMock.resp.LocationConsent {
 				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(passThroughTx).Once()
 				daoLocationConsent.EXPECT().
 					Exec(mock.Anything, &dao.CredentialsLocationConsentRequest{ID: userID}).
 					Return(testCase.sessionUpsertMock.consent, nil)
+			}
+
+			if testCase.sessionUpsertMock != nil {
 				daoSessionUpsert.EXPECT().
 					Exec(mock.Anything, matchSessionUpsert(t, testCase.sessionUpsertMock.request)).
 					Return(testCase.sessionUpsertMock.err)
