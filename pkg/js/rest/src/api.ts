@@ -2,10 +2,6 @@ import { decodeHttpResponse, handleHttpResponse } from "@a-novel-kit/nodelib-bro
 
 import type { ZodType } from "zod";
 
-async function decodeRawHttpResponse<T>(response: Response): Promise<T> {
-  return await response.json();
-}
-
 /**
  * Status of a single health-check dependency reported by the `/v2/healthcheck` endpoint. The
  * endpoint is unauthenticated, so it carries the dependency's state alone; the failure
@@ -63,7 +59,7 @@ export class AuthenticationApi {
   async fetch<T>(input: string, validator?: ZodType<T>, init?: RequestInit): Promise<T> {
     return await this.fetchResponse(input, init)
       .then(handleHttpResponse)
-      .then(validator ? decodeHttpResponse(validator) : decodeRawHttpResponse<T>);
+      .then(validator ? decodeHttpResponse(validator) : (response): Promise<T> => response.json());
   }
 
   /** Checks that the server is reachable. Throws on any non-2xx response. */

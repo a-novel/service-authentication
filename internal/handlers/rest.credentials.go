@@ -52,7 +52,3 @@ func loadCredentialsSelf(s *core.CredentialsSelf) CredentialsSelf {
 
 	return res
 }
-
-func loadCredentialsMap(item *core.Credentials, _ int) Credentials {
-	return loadCredentials(item)
-}

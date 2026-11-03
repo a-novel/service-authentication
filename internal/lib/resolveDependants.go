@@ -3,6 +3,7 @@ package lib
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/samber/lo"
@@ -87,7 +88,8 @@ func ResolveDependants[Mod comparable, Deps any](mods map[Mod][]Deps, deps map[M
 	resolved := map[Mod][]Deps{}
 
 	for _, mod := range resolvedMods {
-		resolved[mod] = mods[mod]
+		// A clone, so the appends below never write into the caller's slice.
+		resolved[mod] = slices.Clone(mods[mod])
 
 		// Depth order guarantees every dependency of mod is already fully resolved.
 		for _, dep := range deps[mod] {

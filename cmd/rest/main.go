@@ -5,9 +5,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -67,12 +67,11 @@ func main() {
 
 	lo.Must0(cfg.OAuth.Check(cfg.ServiceToken))
 
-	jsonKeysCredentials := lo.Must(cfg.DependenciesConfig.ServiceJsonKeysCredentials.Options(ctx))
+	dependencies := cfg.DependenciesConfig
+	jsonKeysCredentials := lo.Must(dependencies.ServiceJsonKeysCredentials.Options(ctx))
+	jsonKeysAddress := net.JoinHostPort(dependencies.ServiceJsonKeysHost, strconv.Itoa(dependencies.ServiceJsonKeysPort))
 
-	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(
-		fmt.Sprintf("%s:%d", cfg.DependenciesConfig.ServiceJsonKeysHost, cfg.DependenciesConfig.ServiceJsonKeysPort),
-		jsonKeysCredentials...,
-	))
+	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(jsonKeysAddress, jsonKeysCredentials...))
 	defer jsonKeysClient.Close()
 
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.Claims](jsonKeysClient))
