@@ -185,7 +185,7 @@ func main() {
 	}
 	limit := middlewares.NewRestLimits(cfg.Rest, cfg.Limits)
 	withServiceToken := lo.Must(middlewares.RestServiceToken(
-		cfg.ServiceToken, cfg.ServiceTokensOptional, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger,
+		cfg.ServiceToken, cfg.ServiceIssuerOptional, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger,
 		cfg.Rest.Liveness,
 	))
 

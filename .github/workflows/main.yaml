@@ -408,7 +408,7 @@ jobs:
             -e SERVICE_JSON_KEYS_PORT="${SERVICE_JSON_KEYS_PORT}"
             -e SERVICE_JSON_KEYS_HOST="${SERVICE_JSON_KEYS_HOST}"
             -e PLATFORM_AUTH_URL="${PLATFORM_AUTH_URL}"
-            -e SERVICE_TOKENS_OPTIONAL=true
+            -e SERVICE_ISSUER_OPTIONAL=true
 
   build-standalone-rest:
     runs-on: ubuntu-latest

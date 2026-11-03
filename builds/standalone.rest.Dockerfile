@@ -44,7 +44,7 @@ HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
 # Make sure the executable uses the default port.
 ENV REST_PORT=8080
 # A standalone stack is local or a test: it runs without service tokens unless given an issuer.
-ENV SERVICE_TOKENS_OPTIONAL=true
+ENV SERVICE_ISSUER_OPTIONAL=true
 
 EXPOSE 8080
 
