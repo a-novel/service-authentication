@@ -47,8 +47,9 @@ func TestAuth(t *testing.T) {
 		permissionsByRole map[string][]string
 		verifyClaimsMock  *verifyClaimsMock
 
-		expectStatus int
-		expectClaims *session.Claims
+		expectStatus    int
+		expectChallenge string
+		expectClaims    *session.Claims
 	}{
 		{
 			name: "Success",
@@ -122,6 +123,23 @@ func TestAuth(t *testing.T) {
 			},
 		},
 		{
+			// The scheme matches in any case, and several spaces may precede the token (RFC 9110 §11.1,
+			// §11.4).
+			name: "Success/SchemeCaseAndSpaces",
+
+			authHeader: "bEARER   token",
+
+			permissions:       []string{"read"},
+			permissionsByRole: map[string][]string{"role1": {"read"}},
+			verifyClaimsMock: &verifyClaimsMock{
+				reqToken: "token",
+				resp:     &session.Claims{Roles: []string{"role1"}},
+			},
+
+			expectStatus: http.StatusOK,
+			expectClaims: &session.Claims{Roles: []string{"role1"}},
+		},
+		{
 			name: "Success/NoTokenButNoPermissionsRequired",
 
 			permissionsByRole: map[string][]string{
@@ -141,7 +159,8 @@ func TestAuth(t *testing.T) {
 				"role2": {"read"},
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallenge,
 		},
 		{
 			name: "Error/MalformedToken/NoBearer",
@@ -154,7 +173,8 @@ func TestAuth(t *testing.T) {
 				"role2": {"read"},
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallenge,
 		},
 		{
 			name: "Error/MalformedToken/TooMuchParts",
@@ -167,7 +187,8 @@ func TestAuth(t *testing.T) {
 				"role2": {"read"},
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallenge,
 		},
 		{
 			name: "Error/MalformedToken/BearerOnly",
@@ -180,7 +201,8 @@ func TestAuth(t *testing.T) {
 				"role2": {"read"},
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallenge,
 		},
 		{
 			name: "Error/LackAuthorization",
@@ -200,7 +222,8 @@ func TestAuth(t *testing.T) {
 				},
 			},
 
-			expectStatus: http.StatusForbidden,
+			expectStatus:    http.StatusForbidden,
+			expectChallenge: middlewares.BearerChallengeInsufficientScope,
 		},
 		{
 			// A token role the config does not define is an integrity fault, not a
@@ -240,7 +263,8 @@ func TestAuth(t *testing.T) {
 				err:      jws.ErrInvalidSignature,
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallengeInvalidToken,
 		},
 		{
 			// Clients refresh their session on a 401; a 500 here strands an expired one.
@@ -258,7 +282,8 @@ func TestAuth(t *testing.T) {
 				err:      fmt.Errorf("(ClaimsChecker.Unmarshal) %w: token expired", jwp.ErrInvalidClaims),
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallengeInvalidToken,
 		},
 		{
 			name: "Error/MalformedToken/Format",
@@ -275,7 +300,8 @@ func TestAuth(t *testing.T) {
 				err:      fmt.Errorf("(HeaderDecoder.Decode) %w: expected at least 2 segments", jwt.ErrUnsupportedTokenFormat),
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallengeInvalidToken,
 		},
 		{
 			name: "Error/UnsupportedAlgorithm",
@@ -295,7 +321,8 @@ func TestAuth(t *testing.T) {
 				),
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallengeInvalidToken,
 		},
 		{
 			name: "Error/ReplicatedClaimMismatch",
@@ -312,7 +339,8 @@ func TestAuth(t *testing.T) {
 				err:      fmt.Errorf("(Recipient.Consume) %w: %w: iss", jwt.ErrTokenRejected, jwt.ErrReplicatedClaimMismatch),
 			},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallengeInvalidToken,
 		},
 		{
 			name: "Error/VerifyClaimsError",
@@ -379,6 +407,7 @@ func TestAuth(t *testing.T) {
 			res := w.Result()
 
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
+			require.Equal(t, testCase.expectChallenge, res.Header.Get("WWW-Authenticate"))
 			require.Equal(t, testCase.expectClaims, *ctxClaims)
 		})
 	}

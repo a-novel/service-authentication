@@ -102,9 +102,9 @@ paths:
       description: |
         Validate a user token, and extract the claims it contains. This route also works for anonymous tokens.
 
-        A token whose session was signed out or has ended answers 401, like an invalid one. Other services verify
-        access tokens offline and accept them until they expire, so a client calls this route to see a sign-out at
-        once.
+        A token whose session was signed out or has ended answers 401, like an invalid one, and so does a request
+        without a token. Other services verify access tokens offline and accept them until they expire, so a client
+        calls this route to see a sign-out at once.
       tags: [session]
       security:
         - BearerAuth: []
@@ -113,8 +113,6 @@ paths:
           $ref: "#/components/responses/claimsGet"
         "401":
           $ref: "#/components/responses/invalidToken"
-        "403":
-          $ref: "#/components/responses/forbidden"
         "429":
           $ref: "#/components/responses/tooManyRequests"
         "503":
@@ -1041,12 +1039,23 @@ components:
       description: |
         The bearer token is invalid, for instance expired, or missing where the route requires a permission.
         Refresh the session or authenticate again.
+      headers:
+        WWW-Authenticate:
+          description: |
+            The bearer challenge of [RFC 6750 §3](https://www.rfc-editor.org/rfc/rfc6750#section-3): `Bearer` alone
+            for a request without a token, `Bearer error="invalid_token"` for a token that is rejected, expired or
+            signed out.
+          schema:
+            type: string
+            examples: [Bearer, 'Bearer error="invalid_token"']
 
     forbidden:
       description: |
         The user was authenticated successfully, but its current access rights don't grant permission for
         this operation. An OAuth client's access token answers 403 too, on every route but `[GET] /v2/session`,
-        `[PUT] /v2/session/revoke` and `[GET] /v2/credentials/self`.
+        `[PUT] /v2/session/revoke` and `[GET] /v2/credentials/self`. On a route that takes a bearer token, such a
+        refusal carries `WWW-Authenticate: Bearer error="insufficient_scope"`
+        ([RFC 6750 §3.1](https://www.rfc-editor.org/rfc/rfc6750#section-3.1)).
 
     unprocessableEntity:
       description: |

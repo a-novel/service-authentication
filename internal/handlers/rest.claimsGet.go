@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/a-novel-kit/golib/httpf"
@@ -9,6 +10,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
@@ -24,8 +26,8 @@ var claimsGetErrors = httpf.ErrMap{
 
 // RestClaimsGet is the REST handler that returns the caller's own claims, read from
 // the request context where the authentication middleware deposits them. It
-// responds 403 when the request carries no resolved claims, and 401 once their
-// session is revoked.
+// responds 401 when the request carries no token, and once its session is revoked, with the
+// challenge of RFC 6750 §3.
 type RestClaimsGet struct {
 	service RestClaimsGetService
 	logger  logging.Log
@@ -41,13 +43,18 @@ func (handler *RestClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	claims, err := session.MustGetClaimsContext(ctx)
 	if err != nil {
-		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusForbidden}, err)
+		w.Header().Set("WWW-Authenticate", middlewares.BearerChallenge)
+		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusUnauthorized}, err)
 
 		return
 	}
 
 	claims, err = handler.service.Exec(ctx, &core.ClaimsGetRequest{Claims: claims})
 	if err != nil {
+		if errors.Is(err, core.ErrClaimsGetRevoked) {
+			w.Header().Set("WWW-Authenticate", middlewares.BearerChallengeInvalidToken)
+		}
+
 		httpf.HandleError(ctx, handler.logger, w, span, claimsGetErrors, err)
 
 		return

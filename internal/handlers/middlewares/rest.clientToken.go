@@ -29,6 +29,8 @@ func RestRefuseClientTokens(logger logging.Log) func(http.Handler) http.Handler 
 
 			claims, err := session.GetClaimsContext(ctx)
 			if err == nil && claims != nil && claims.ClientID != "" {
+				w.Header().Set("WWW-Authenticate", BearerChallengeInsufficientScope)
+
 				err = fmt.Errorf("%w: %q", ErrClientToken, claims.ClientID)
 			}
 

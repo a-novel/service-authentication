@@ -16,6 +16,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
@@ -46,8 +47,9 @@ func TestRestClaimsGet(t *testing.T) {
 
 		serviceMock *serviceMock
 
-		expectStatus   int
-		expectResponse any
+		expectStatus    int
+		expectChallenge string
+		expectResponse  any
 	}{
 		{
 			name: "Success",
@@ -84,7 +86,8 @@ func TestRestClaimsGet(t *testing.T) {
 		{
 			name: "Error/NoClaims",
 
-			expectStatus: http.StatusForbidden,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallenge,
 		},
 		{
 			name: "Error/Revoked",
@@ -93,7 +96,8 @@ func TestRestClaimsGet(t *testing.T) {
 
 			serviceMock: &serviceMock{err: core.ErrClaimsGetRevoked},
 
-			expectStatus: http.StatusUnauthorized,
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallengeInvalidToken,
 		},
 		{
 			name: "Error/Internal",
@@ -129,6 +133,7 @@ func TestRestClaimsGet(t *testing.T) {
 			res := w.Result()
 
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
+			require.Equal(t, testCase.expectChallenge, res.Header.Get("WWW-Authenticate"))
 
 			if testCase.expectResponse != nil {
 				data, err := io.ReadAll(res.Body)

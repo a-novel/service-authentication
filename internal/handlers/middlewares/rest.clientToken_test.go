@@ -23,7 +23,8 @@ func TestRestRefuseClientTokens(t *testing.T) {
 
 		claims *session.Claims
 
-		expectStatus int
+		expectStatus    int
+		expectChallenge string
 	}{
 		{
 			name: "Success/AccountPlatformToken",
@@ -43,7 +44,8 @@ func TestRestRefuseClientTokens(t *testing.T) {
 
 			claims: &session.Claims{UserID: &userID, Roles: []string{"auth:user"}, ClientID: "studio"},
 
-			expectStatus: http.StatusForbidden,
+			expectStatus:    http.StatusForbidden,
+			expectChallenge: middlewares.BearerChallengeInsufficientScope,
 		},
 	}
 
@@ -64,6 +66,7 @@ func TestRestRefuseClientTokens(t *testing.T) {
 			handler.ServeHTTP(w, httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/credentials", nil))
 
 			require.Equal(t, testCase.expectStatus, w.Code)
+			require.Equal(t, testCase.expectChallenge, w.Header().Get("WWW-Authenticate"))
 		})
 	}
 }

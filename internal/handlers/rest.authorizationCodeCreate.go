@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/samber/lo"
@@ -11,6 +12,7 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
+	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
@@ -56,6 +58,7 @@ func (handler *RestAuthorizationCodeCreate) ServeHTTP(w http.ResponseWriter, r *
 
 	claims, err := session.MustGetClaimsContext(ctx)
 	if err != nil {
+		w.Header().Set("WWW-Authenticate", middlewares.BearerChallenge)
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusUnauthorized}, err)
 
 		return
@@ -81,6 +84,10 @@ func (handler *RestAuthorizationCodeCreate) ServeHTTP(w http.ResponseWriter, r *
 
 	res, err := handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
+		if errors.Is(err, core.ErrAuthorizationCodeCreateSessionEnded) {
+			w.Header().Set("WWW-Authenticate", middlewares.BearerChallengeInvalidToken)
+		}
+
 		if !sendOAuthError(w, span, err) {
 			httpf.HandleError(ctx, handler.logger, w, span, authorizationCodeCreateErrors, err)
 		}
