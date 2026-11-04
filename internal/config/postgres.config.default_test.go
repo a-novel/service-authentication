@@ -111,7 +111,8 @@ func TestNewPostgresPreset(t *testing.T) {
 			require.Equal(t, testCase.expectPassword, driverConfig.Password)
 			require.Equal(t, testCase.expectDatabase, driverConfig.Database)
 			require.Equal(t, testCase.expectTLSEnabled, driverConfig.TLSConfig != nil)
-			require.Equal(t, 3*time.Minute, driverConfig.DialTimeout)
+			// The driver\'s own dial timeout applies: the database is a Service inside the cluster.
+			require.Equal(t, 5*time.Second, driverConfig.DialTimeout)
 			require.Equal(t, 12, preset.MaxOpenConns)
 			require.Equal(t, 8, preset.MaxIdleConns)
 		})

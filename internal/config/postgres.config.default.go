@@ -1,8 +1,6 @@
 package config
 
 import (
-	"time"
-
 	"github.com/samber/lo"
 	"github.com/uptrace/bun/driver/pgdriver"
 
@@ -10,10 +8,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )
-
-// postgresDialTimeout covers the network a Cloud Run instance with Direct VPC egress provisions
-// after it starts. The first connection can wait minutes for it.
-const postgresDialTimeout = 3 * time.Minute
 
 // postgresConnection reaches PostgreSQL through the POSTGRES_* variables.
 var postgresConnection = postgrespresets.Connection{
@@ -36,9 +30,8 @@ var PostgresPresetMigrations = NewPostgresPreset(
 	pgdriver.WithConnParams(map[string]any{"lock_timeout": "3s"}),
 )
 
-// NewPostgresPreset returns a PostgreSQL preset with a three-minute dial timeout and a pool bounded
-// before it opens. Extra options apply last. It panics when the connection names a host without a
-// password.
+// NewPostgresPreset returns a PostgreSQL preset with a pool bounded before it opens. Extra options
+// apply last. It panics when the connection names a host without a password.
 //
 // The pool limits are set before the handle is first used: once the handle is cached, later changes
 // to them are silently ignored.
@@ -48,7 +41,6 @@ func NewPostgresPreset(
 	maxIdleConns int,
 	extra ...pgdriver.Option,
 ) *postgrespresets.Default {
-	connection.DialTimeout = postgresDialTimeout
 	options := lo.Must(connection.Options())
 
 	preset := postgrespresets.NewDefault(append(options, extra...)...)
