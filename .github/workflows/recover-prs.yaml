@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Restarts pull requests that GitHub leaves idle without a failure anyone sees. Two jobs:
 #
 #   requeue — the merge queue drops an entry whose required checks do not report before its
