@@ -15,11 +15,11 @@ inputs:
     description: Authentication standalone REST image reference.
   json_keys_database_image:
     required: false
-    default: ghcr.io/a-novel/service-json-keys/database:v2.15.6@sha256:06457d216da6416e58262893731c6caf4382d74e89baa13aa79eaffd629c771c
+    default: ghcr.io/a-novel/service-json-keys/database:v2.15.7@sha256:06457d216da6416e58262893731c6caf4382d74e89baa13aa79eaffd629c771c
     description: JSON keys database image reference.
   json_keys_grpc_image:
     required: false
-    default: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.15.6@sha256:d2076bda8348a8d3b6eb1b4942f44ef4c2dfad4a5cc2f8a38cc43689f8792218
+    default: ghcr.io/a-novel/service-json-keys/standalone-grpc:v2.15.7@sha256:1078a75cbf3d691f450328f40e57d0a9a5c7a7d13b96c176d7ebe41a61ca0fc3
     description: JSON keys gRPC image reference.
   service_token_issuer_image:
     required: false
