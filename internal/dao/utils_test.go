@@ -42,15 +42,30 @@ func (fixtures sessionFixtures) insert(ctx context.Context, t *testing.T) {
 	_, err = db.NewInsert().Model(&owners).Exec(ctx)
 	require.NoError(t, err)
 
+	// bun scans each inserted row back into its value, and parallel cases share their fixtures, so
+	// each test inserts copies of its own.
 	if len(fixtures.sessions) > 0 {
-		_, err = db.NewInsert().Model(&fixtures.sessions).Exec(ctx)
+		sessions := copies(fixtures.sessions)
+		_, err = db.NewInsert().Model(&sessions).Exec(ctx)
 		require.NoError(t, err)
 	}
 
 	if len(fixtures.revocations) > 0 {
-		_, err = db.NewInsert().Model(&fixtures.revocations).Exec(ctx)
+		revocations := copies(fixtures.revocations)
+		_, err = db.NewInsert().Model(&revocations).Exec(ctx)
 		require.NoError(t, err)
 	}
+}
+
+// copies returns a copy of each value, which a test may write to without touching the originals.
+func copies[T any](values []*T) []*T {
+	copied := make([]*T, len(values))
+	for index, value := range values {
+		duplicate := *value
+		copied[index] = &duplicate
+	}
+
+	return copied
 }
 
 // selectSessions returns every session row, by ID.
