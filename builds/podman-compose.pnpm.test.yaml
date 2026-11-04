@@ -18,7 +18,7 @@ services:
       MP_DISABLE_WAL: true
 
   service-token-issuer:
-    image: ghcr.io/a-novel/service-authentication/service-token-issuer:v2.25.1@sha256:29ee2b6e451c56f6cdcd01066e08f75ff262e4cfcd03629f5499637e20b0f43f
+    image: ghcr.io/a-novel/service-authentication/service-token-issuer:v2.25.2@sha256:182b3e2f9f961bc94e402f0084b6fe1137247db3b244be944dd38cfd170a4277
     ports:
       - "${SERVICE_TOKEN_ISSUER_PORT}:8080"
     networks:
