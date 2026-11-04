@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Holds a pull request that changes a dependency manifest until a reviewer adds the
 # allow-dependency-change label, so every dependency a person adds, removes or bumps is acknowledged.
 # The master and release-line rulesets require this job's check. A ruleset cannot exempt the merge

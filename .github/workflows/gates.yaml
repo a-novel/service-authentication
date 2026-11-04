@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Runs the governance gates of a pull request in one job, so each event starts one run:
 #
 #   merge-gate     the required "may this merge?" check; an Epic member holds

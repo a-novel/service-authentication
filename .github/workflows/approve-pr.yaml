@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Records the approval a pull request's author cannot give themselves. A repo
 # admin, core included, dispatches this with the number of a pull request they
 # opened. The action refuses anyone else, and anyone else's pull request, so an

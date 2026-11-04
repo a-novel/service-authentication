@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Releases every repo a landed Epic touched, from one admin dispatch. The
 # release-train-run workflow does the work: it finds the repos the `epic:<N>`
 # pull requests merged into, derives each repo's semver bump from its commits,

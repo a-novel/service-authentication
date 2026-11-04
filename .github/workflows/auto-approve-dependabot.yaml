@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Approves the pull requests the trusted dependency bots open, so routine version
 # bumps wait on no person, and adds each approved one to the merge queue. Two
 # facts keep it safe. A contributor cannot impersonate the bot that authors the

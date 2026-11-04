@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Reverts a landed Epic's merged members across repos and lands the reverts
 # together, through the epic-rollback-run workflow. A rollback undoes merged code,
 # so four fences guard it:

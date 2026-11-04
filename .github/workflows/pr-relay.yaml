@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Relays review and merge-queue events to the governance gates. Those events run a
 # pull request's own copy of a workflow, so this one holds no permission and no
 # secret. The gates listen for its runs through workflow_run, which runs their

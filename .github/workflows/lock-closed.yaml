@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Once an issue or pull request is closed, this workflow locks its conversation so
 # only collaborators can add to the record; reopening lifts the lock. Open
 # conversations stay unlocked: GitHub refuses a GitHub App's review on a locked

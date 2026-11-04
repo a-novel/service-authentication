@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Ships a patch on a release line, holding reviewed and tested fixes only. A fix
 # lands on the default branch first. The dispatch then opens one backport pull
 # request per fix into the line's release/vX.Y branch, which it cuts from the

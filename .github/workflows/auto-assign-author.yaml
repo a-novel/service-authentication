@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Assigns a pull request to the person who opened it. A bot's pull request stays unassigned: an
 # assignee would be notified of every version bump, and a failing one reaches the Discord
 # dependencies feed instead. Skipping the job, rather than the step, spares a runner per bot PR.

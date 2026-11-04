@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Reports this repository to the org's Discord server. A failed `main` or `release` run on the
 # default branch posts to the CI channel and pings the repository's role, and the run that turns the
 # branch green again posts without a ping. Watching `release` catches a release that fails after

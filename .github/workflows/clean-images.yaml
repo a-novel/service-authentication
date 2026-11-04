@@ -1,5 +1,3 @@
-# Managed by `a-novel repo update` — edit the template in stack, not this copy.
-#
 # Deletes this repository's container images once the branch or pull request that built them is gone.
 # Closing a pull request deletes its `pr-<N>` image at once; a daily sweep takes the rest: untagged
 # builds and tags of closed pull requests, merge-queue builds, old branch tags and master's untagged
