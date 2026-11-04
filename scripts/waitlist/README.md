@@ -180,26 +180,21 @@ matching authentication release, since an older script may not understand confli
 A deployment that sets `SERVICE_AUTHENTICATION_ENV_PREFIX` prefixes these variables like the others.
 Script Property names take no prefix. Authentication does not need the spreadsheet ID.
 
-#### Google Cloud / Cloud Run example
+#### A-Novel production
 
-1. In the authentication runtime's Cloud project, create a Secret Manager secret, for example
-   `authentication-waitlist-signing-key`. Add the exact key from your password manager as its payload.
-   It is a runtime secret, not a GitHub repository secret.
-2. Grant **Secret Manager Secret Accessor** on this secret to the service identity that runs
-   authentication, and to the maintenance identity when it differs. Grant it to those identities
-   alone: neither every project member nor the deployer's own account needs it.
-3. In the Cloud Run service's configuration, use **Variables and Secrets → Reference a secret** to
-   expose a specific secret version as `WAITLIST_SECRET`. Add `WAITLIST_URL` as an environment
-   variable, and set `WAITLIST_TIMEOUT` only to change its default.
-4. Deploy the configuration, and configure every maintenance job the same way. An instance reads its
-   environment secrets when it starts, so changing the stored value alone leaves running instances on
-   the old one. Google's
-   [Cloud Run secret configuration](https://docs.cloud.google.com/run/docs/configuring/services/secrets)
-   covers the details.
+Production keeps the key in Secret Manager as `production-authentication-waitlist-secret`, and the URL
+in infra's `environments/production/authentication/terraform.tfvars`, as `waitlist_url`.
 
-The runtime identity needs access to **the secret**, not to the spreadsheet: Google operations run as
-the Apps Script owner. No service-account JSON key exists to download, and CI needs no production
-Google credential, since builds and automated tests never call the live sheet.
+1. Add the key from your password manager as a new version of that secret, as infra's
+   [Secrets runbook](https://github.com/a-novel/infra/blob/master/docs/runbooks/secrets.md#rotate-a-secret)
+   shows. It is a runtime secret, not a GitHub repository secret.
+2. Pin that version in the same `terraform.tfvars`, under `secret_versions`, in an infra pull request.
+   Its deploy copies the version into the namespace's `secrets` Secret through External Secrets.
+3. A pod reads it when it starts, so the new key takes effect at the workload's next rollout.
+
+Only the namespace's External Secrets identity reads **the secret**, never the spreadsheet: Google
+operations run as the Apps Script owner. No service-account JSON key exists to download, and CI
+needs no production Google credential, since builds and automated tests never call the live sheet.
 
 On another container host, inject the secret through its runtime secret mechanism and redeploy the
 service with the same variables. Keep the existing database, JSON Keys and SMTP configuration.
