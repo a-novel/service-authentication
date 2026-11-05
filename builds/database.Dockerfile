@@ -1,17 +1,19 @@
 # Assemble signed Wolfi packages with a versioned upstream builder.
 FROM docker.io/library/alpine:3.24.3 AS packages
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-# jq only reads the locks in this stage and never reaches the image, so its version can't change it.
+# curl and jq serve this stage alone and never reach the image, so their versions can't change it.
 # hadolint ignore=DL3018
-RUN apk add --no-cache jq
-# One pinned checksum list verifies the apko release archive of every architecture.
+RUN apk add --no-cache curl jq
+# One pinned checksum list verifies the apko release archive of every architecture. GitHub's release
+# downloads answer 5xx now and then, so each download retries; the checksums still decide what is used.
 ARG TARGETARCH
 ARG APKO_VERSION=1.4.16
 ARG APKO_CHECKSUMS_SHA256=88ae509c510ace0d9ed4ee4efcd048f0f188f553e847750ffb5eea08cccbffdd
 WORKDIR /tmp
 RUN archive="apko_${APKO_VERSION}_linux_${TARGETARCH}" \
-    && wget -q "https://github.com/chainguard-dev/apko/releases/download/v${APKO_VERSION}/checksums.txt" \
-        "https://github.com/chainguard-dev/apko/releases/download/v${APKO_VERSION}/$archive.tar.gz" \
+    && curl -fsSL --retry 5 --retry-all-errors \
+        -O "https://github.com/chainguard-dev/apko/releases/download/v${APKO_VERSION}/checksums.txt" \
+        -O "https://github.com/chainguard-dev/apko/releases/download/v${APKO_VERSION}/$archive.tar.gz" \
     && echo "${APKO_CHECKSUMS_SHA256}  checksums.txt" | sha256sum -c - \
     && grep " $archive.tar.gz\$" checksums.txt | sha256sum -c - \
     && tar -xzf "$archive.tar.gz" -C /usr/local/bin --strip-components=1 "$archive/apko"
@@ -31,7 +33,8 @@ RUN for config in database database.builder; do \
     done
 ARG PGBACKREST_VERSION=2.60.0
 ARG PGBACKREST_SHA256=6d3ee1b5defdadc85228969b4be804096f5e65e54707bb95c7c4c4ce41f5d007
-RUN wget -q -O /pgbackrest.tar.gz "https://github.com/pgbackrest/pgbackrest/releases/download/release/${PGBACKREST_VERSION}/pgbackrest-${PGBACKREST_VERSION}.tar.gz" \
+RUN curl -fsSL --retry 5 --retry-all-errors -o /pgbackrest.tar.gz \
+        "https://github.com/pgbackrest/pgbackrest/releases/download/release/${PGBACKREST_VERSION}/pgbackrest-${PGBACKREST_VERSION}.tar.gz" \
     && echo "${PGBACKREST_SHA256}  /pgbackrest.tar.gz" | sha256sum -c -
 
 # Wolfi supplies PostgreSQL; only pgBackRest needs its upstream source build.
