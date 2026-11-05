@@ -6,12 +6,13 @@ import { JSDOM } from "jsdom";
 import { type AddressObject, type ParsedMail, simpleParser } from "mailparser";
 
 /**
- * Waits up to a second for the one MailPit message matching a search query and returns it parsed.
- * The query uses MailPit's search syntax, unencoded, such as `to:"user+tag@example.com"`.
- * The message is deleted afterwards unless `clear` is false.
+ * Waits up to three seconds for the one MailPit message matching a search query and returns it
+ * parsed, which stays inside vitest's five-second test timeout. The query uses MailPit's search
+ * syntax, unencoded, such as `to:"user+tag@example.com"`. The message is deleted afterwards unless
+ * `clear` is false.
  */
 export async function checkEmail(mailHost: string, search: string, clear: boolean = true): Promise<ParsedMail> {
-  const messageID = await vi.waitFor(() => findMessageID(mailHost, search), { timeout: 1000 });
+  const messageID = await vi.waitFor(() => findMessageID(mailHost, search), { timeout: 3000 });
 
   const rawMessage = await fetch(`${mailHost}/api/v1/message/${messageID}/raw`, {
     headers: { accept: "application/json" },
