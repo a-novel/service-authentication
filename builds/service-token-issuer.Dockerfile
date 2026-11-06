@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -ldflags="-s -w" -trimpath -o /service-token-issuer github.com/a-novel-kit/golib/cmd/service-token-issuer
 
-FROM docker.io/library/alpine:3.24.3
+FROM docker.io/library/alpine:3.24.4
 
 COPY --from=builder /service-token-issuer /service-token-issuer
 
