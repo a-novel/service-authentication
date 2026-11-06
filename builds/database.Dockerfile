@@ -1,5 +1,5 @@
 # Assemble signed Wolfi packages with a versioned upstream builder.
-FROM docker.io/library/alpine:3.24.3 AS packages
+FROM docker.io/library/alpine:3.24.4 AS packages
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # curl and jq serve this stage alone and never reach the image, so their versions can't change it.
 # hadolint ignore=DL3018
