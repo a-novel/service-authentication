@@ -6,7 +6,7 @@
     "type": "git",
     "url": "git+https://github.com/a-novel/service-authentication.git"
   },
-  "license": "AGPL-3.0",
+  "license": "RPL-1.5",
   "type": "module",
   "workspaces": [
     ".",

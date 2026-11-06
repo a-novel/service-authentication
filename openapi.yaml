@@ -51,7 +51,7 @@ info:
     and the server grants no scope. A code signs an existing account in, and never creates one.
   version: v2.25.3
   license:
-    name: AGPL-3.0
+    name: RPL-1.5
     url: "https://raw.githubusercontent.com/a-novel/service-authentication/refs/heads/master/LICENSE"
 
 paths:
