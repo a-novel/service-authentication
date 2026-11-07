@@ -205,24 +205,24 @@ Passwords are hashed with **Argon2id** (RFC 9106), in [`internal/lib/argon2.go`]
 
 ## Code license
 
-The repository's copyrightable source code owned by the project licensor is released under [RPL-1.5](LICENSE). See [NOTICE.md](NOTICE.md) for the current licensor, source-file notice, and history of licensing.
+The copyrightable source code that the Licensor owns in this repository is released under [RPL-1.5](LICENSE). [NOTICE.md](NOTICE.md) names the Licensor and holds the License Notice and the licensing history.
 
 ## Contributor agreement
 
-Before submitting a contribution for possible inclusion in an official A-Novel repository, please review [CLA.md](CLA.md). The project maintainer may require a duly signed individual or corporate Contributor License Agreement before accepting the contribution. A pull request, checkbox, or signed-off commit by itself does not replace a legally valid CLA signature.
+Before submitting a contribution for inclusion in an official A-Novel repository, review the [Contributor License Agreement](CLA.md). The Project Owner may require a signed individual or corporate agreement before accepting the contribution. A pull request, a checkbox or a signed-off commit does not replace that signature.
 
-If your contribution was developed for an employer or customer, or includes third-party material, ensure that you have permission to grant the rights in the CLA and disclose any third-party license terms.
+If you developed the contribution for an employer or a client, or it includes third-party material, make sure you may grant the rights in the agreement, and disclose any third-party license terms.
 
-The CLA gives the maintainer additional rights to use accepted contributions, including proprietary relicensing where lawful. It does not change the RPL-1.5 license of public releases or bind independent fork maintainers who have not signed it.
+The agreement gives the Project Owner additional rights over accepted contributions, including proprietary relicensing where lawful. It changes neither the RPL-1.5 license of public releases nor anything for the maintainers of independent forks who have not signed it.
 
 ## Submitting changes
 
 1. Open an issue or pull request describing the proposed change.
-2. Identify any incorporated third-party material and applicable notices.
-3. Where requested, complete a signed CLA and identify the relevant GitHub identity, repository and PR/commit.
-4. Maintain copyright attribution and the RPL-1.5 Exhibit A notices required by the repository license.
+2. Identify any incorporated third-party material and its license notices.
+3. When asked, sign the agreement and identify your GitHub account, the repository and the pull request or commit it covers.
+4. Keep existing copyright and license notices intact.
 
-Project maintainers will separately record signatures and match them to accepted PRs or commits. GitHub does not automatically execute or validate this agreement merely because the file exists in the repository.
+The Project Owner records signatures and matches them to accepted pull requests or commits. GitHub neither executes nor validates the agreement.
 
 ---
 

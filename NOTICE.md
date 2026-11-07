@@ -1,36 +1,32 @@
-# A-Novel — Licensing and copyright notice
+# Licensing and copyright notice
 
-**Copyright holder and initial licensor:** Geoffroy Vincent, an individual acting in his own name.
+**Copyright holder and Licensor:** Geoffroy Vincent, a natural person acting in a personal capacity. "Licensor" has the meaning of Section 1.9 of RPL-1.5.
 
-**Project name / GitHub organization:** A-Novel (`https://github.com/a-novel`). The project name and GitHub organization do not, by themselves, designate an incorporated legal entity.
+**Project:** A-Novel, published in the [`a-novel`](https://github.com/a-novel) GitHub organization. Neither the project name nor the organization designates a legal entity.
 
-**Repository license:** Reciprocal Public License, Version 1.5 (`RPL-1.5`). The complete, unmodified license text is in [`LICENSE`](LICENSE).
+**License:** Reciprocal Public License, version 1.5 (`RPL-1.5`). [`LICENSE`](LICENSE) holds its complete, unmodified text.
 
-**Scope:** Unless a file or component is expressly marked otherwise, the copyrightable code and documentation owned by Geoffroy Vincent in this repository are offered under RPL-1.5 from the point at which the repository adopts that license. No rights to independently owned third-party material are claimed or relicensed by this notice.
+**Scope:** Unless a file or component states otherwise, the copyrightable code and documentation that Geoffroy Vincent owns in this repository are licensed under RPL-1.5 from 6 November 2026. This notice claims and relicenses no independently owned third-party material.
 
-**Prior distributions:** Earlier versions of the repository were made available under GNU Affero General Public License, Version 3 (`AGPL-3.0`). Recipients of those versions retain the permissions granted under AGPL-3.0. This notice does not revoke or replace licenses already granted for prior versions, and it does not change the terms of independently owned third-party material.
+**Earlier versions:** Versions distributed before 6 November 2026 under the GNU Affero General Public License, version 3 (`AGPL-3.0`), keep that license, and their recipients keep the permissions it grants. This notice revokes no license already granted and changes no term of third-party material.
 
-**Source-code reciprocity:** Under RPL-1.5 Sections 1.2, 6.1 and 6.4(c), the conditions for deployed Extensions include public source-code availability and publication notice, generally no later than one month after deployment. The RPL's definitions and exceptions (including Research and Personal Use) apply. The standard RPL does **not** create an automatic obligation to send a private copy directly to Geoffroy Vincent.
+**Source-code reciprocity:** Whoever Deploys an Extension must make its Source Code available within one month and announce where to find it (Sections 6.1 and 6.4(c)). Deploying includes serving the software over a network and any use inside an organization beyond Research and Personal Use (Sections 1.2 and 1.14). This summary does not replace the license text.
 
-**Contributions:** Contributions proposed for merging into the official A-Novel repositories may be subject to the separate [`CLA.md`](CLA.md). That agreement is not part of RPL-1.5 and does not impose any additional term on independent forks that do not sign it.
+**Contributions:** Contributions to the official A-Novel repositories may require the separate [Contributor License Agreement](CLA.md). That agreement is not part of RPL-1.5 and binds no independent fork whose authors have not signed it.
 
-**Future corporate ownership:** A-Novel may later be established as a separate legal entity. The owner/beneficiary of applicable rights will change only after a valid transfer, assignment, or other legal instrument. Editing this notice or `LICENSE` alone does not transfer those rights.
+**Future company:** A-Novel may later be established as a company. Rights pass to it only through a valid assignment or other legal instrument; editing this notice or `LICENSE` transfers nothing.
 
-## Required source-file license notice (RPL-1.5 Exhibit A)
+## License Notice (RPL-1.5 Exhibit A)
 
-Section 6.4(b) of RPL-1.5 requires the applicable notice from Exhibit A in source files, or in an appropriate location when it cannot be placed in a file. Copy and retain the following **exact** notice (adapt only comment delimiters appropriate to the file type), and add a separate copyright line identifying the rightsholder as appropriate:
+The License Notice below applies to every file in this repository, except a file that states another license. Section 6.4(b) of RPL-1.5 requires whoever distributes the Source Code to reproduce it in each source file, or where a reader would look for it when a file cannot hold it. Reproduce it exactly, adapting only the comment delimiters to the file type.
 
 > Unless explicitly acquired and licensed from Licensor under another license, the contents of this file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as allowed by the RPL, and You may not copy or use this file in either source code or executable form, except in compliance with the terms and conditions of the RPL.
 >
 > All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights and limitations under the RPL.
 
-Suggested additional identification (not a replacement for the Exhibit A notice):
+A copyright line and an SPDX identifier may accompany the License Notice, but never replace it:
 
 ```
 Copyright (c) Geoffroy Vincent
 SPDX-License-Identifier: RPL-1.5
 ```
-
-## A note on GitHub recognition
-
-`RPL-1.5` is a valid, standardized SPDX license identifier. GitHub's automatic license badge is a separate detection feature and may not recognize every SPDX license. Keep `LICENSE` as the unmodified RPL-1.5 text; put holder identification and contribution policies in this `NOTICE.md` and the repository's contributing documentation. Do not rename `CLA.md` to `LICENSE`.
