@@ -10,6 +10,7 @@ Identity and session manager for the A-Novel platform.
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/a-novel/service-authentication)
 ![GitHub repo file or directory count](https://img.shields.io/github/directory-file-count/a-novel/service-authentication)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/a-novel/service-authentication)
+[![License: RPL-1.5](https://img.shields.io/badge/license-RPL--1.5-blue)](LICENSE)
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/a-novel/service-authentication/main.yaml)
 [![codecov](https://codecov.io/gh/a-novel/service-authentication/graph/badge.svg)](https://codecov.io/gh/a-novel/service-authentication)
