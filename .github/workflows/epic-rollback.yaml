@@ -48,7 +48,7 @@ jobs:
     # grants exactly the callee's.
     permissions:
       contents: read
-    uses: a-novel-kit/workflows/.github/workflows/epic-rollback-run.yaml@v1.82.1
+    uses: a-novel-kit/workflows/.github/workflows/epic-rollback-run.yaml@v1.83.0
     with:
       epic_number: ${{ inputs.epic_number }}
       confirm: ${{ inputs.confirm }}
