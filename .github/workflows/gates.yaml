@@ -185,6 +185,5 @@ jobs:
     secrets:
       private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
       reviews_webhook: ${{ secrets.REVIEWS_WEBHOOK }}
-      reviews_webhooks: ${{ secrets.REVIEWS_WEBHOOKS }}
       dependencies_webhook: ${{ secrets.DEPENDENCIES_WEBHOOK }}
       bws_access_token: ${{ secrets.BWS_READ_TOKEN }}
