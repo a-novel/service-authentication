@@ -16,6 +16,6 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/assign-bot@v1.83.1
+      - uses: a-novel-kit/workflows/generic-actions/assign-bot@v1.83.2
         with:
           github_token: ${{ github.token }}
