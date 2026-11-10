@@ -1,8 +1,8 @@
 # Releases every repo a landed Epic touched, from one admin dispatch. The
 # release-train-run workflow does the work: it finds the repos the `epic:<N>`
-# pull requests merged into, derives each repo's semver bump from its commits,
-# and runs each repo's release.yaml, a rehearsal first. Each released tag is
-# recorded on the Epic, so a re-dispatch releases only the repos not shipped yet.
+# pull requests merged into and runs each repo's release.yaml, a rehearsal
+# first. Each released tag is recorded on the Epic, so a re-dispatch releases
+# only the repos not shipped yet.
 # A dispatch rehearses by default and cuts nothing until dry_run is false.
 name: release-train
 
