@@ -2,7 +2,7 @@
 # so a stack can turn on the REST server's service-token check. It builds golib's command at the
 # version go.mod requires, the one the server verifies tokens with. It signs a token for anyone who
 # asks, so only a local stack may trust it.
-FROM docker.io/library/golang:1.27.3-alpine AS builder
+FROM docker.io/library/golang:1.27.4-alpine AS builder
 
 ENV CGO_ENABLED=0
 
