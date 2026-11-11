@@ -82,9 +82,10 @@ jobs:
     concurrency:
       group: release-line-${{ github.repository }}-${{ github.event.pull_request.base.ref }}
       cancel-in-progress: false
-    # The callee reads in-flight release runs; its writes use its own App token.
+    # The callee reads in-flight release runs, and its notes job previews the patch's release notes
+    # through an endpoint that wants contents write. Its pushes use its own App token.
     permissions:
-      contents: read
+      contents: write
       actions: read
     uses: a-novel-kit/workflows/.github/workflows/release-line-run.yaml@v1.84.1
     with:
