@@ -36,15 +36,36 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      tag: ${{ steps.core.outputs.tag }}
     steps:
-      - uses: a-novel-kit/workflows/publish-actions/release-core@v1.84.1
+      - id: core
+        uses: a-novel-kit/workflows/publish-actions/release-core@v1.84.1
         with:
           # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
           cli_version: "1.42.4"
           dry_run: "true"
 
-  cut:
+  # GitHub's release-notes endpoint wants contents write although it stores nothing, so this job
+  # holds that token alone and runs no repository code. `cut` waits for it, so whoever approves the
+  # cut has read the notes.
+  notes:
     needs: [plan]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Preview the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" \
+            --jq .body >> "$GITHUB_STEP_SUMMARY"
+
+  cut:
+    needs: [plan, notes]
     if: github.event_name != 'push' && !inputs.dry_run
     runs-on: ubuntu-latest
     environment: release
