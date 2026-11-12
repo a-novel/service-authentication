@@ -44,13 +44,12 @@ on:
 run-name: "🚑 ${{ github.event_name == 'workflow_dispatch' && format('backport v{0}.x{1}', inputs.line, inputs.dry_run && ' (dry-run)' || '') || format('release {0}', github.event.pull_request.base.ref) }}"
 
 jobs:
-  # Backports run one at a time per repo: a second dispatch queues behind the one
-  # in flight.
+  # Backports run one at a time per repo, in dispatch order.
   backport:
     if: github.event_name == 'workflow_dispatch'
     concurrency:
       group: hotfix-${{ github.repository }}
-      cancel-in-progress: false
+      queue: max
     # The callee mints its own App tokens for its writes; the default token only
     # reads the dispatcher's permission. The Dependencies App opens each clean
     # backport, so the agent can approve it.
