@@ -44,12 +44,11 @@ jobs:
       deployment: false
     # Nothing posts the checks again later, so runs never overlap: each reads
     # the pull request when it starts, and the last to run posts the latest
-    # verdict. A newer event replaces the waiting run, which never starts.
-    # Cancelling a running one would leave its cancelled job in the merge box,
-    # which shows each workflow's newest run.
+    # verdict. Waiting runs queue, so a relay run, which reports on master,
+    # never leaves a cancelled run as the newest in the pull request's merge box.
     concurrency:
       group: gates-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
-      cancel-in-progress: false
+      queue: max
     # relay-context and derive-status read the pull request and its closing
     # issues with this job's token. Every gate mints its own [Agent] token, so
     # the App stays the single writer of checks and the board. Only the sweep
