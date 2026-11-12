@@ -1,7 +1,7 @@
-# Posts to this repository's Discord channels what a feed of the org's `.github` repository hands
+# Posts to this repository's chat channels what a feed of the org's `.github` repository hands
 # over, such as an issue's board move or a stuck pull request waiting on a review. That feed cannot
 # read this repository's secrets, so it dispatches this workflow with the posts, in order, through
-# generic-actions/discord-dispatch. A repository secret wins over the org's of the same name, so a
+# generic-actions/chat-dispatch. A repository secret wins over the org's of the same name, so a
 # repository without its own channel posts to the org's.
 name: notify-post
 
@@ -16,7 +16,7 @@ on:
       posts:
         description: >-
           JSON array of posts, each with title, url, description, color, ping and user_ids, as
-          discord-dispatch describes.
+          chat-dispatch describes.
         required: true
         type: string
 
@@ -31,7 +31,7 @@ jobs:
       deployment: false
     permissions: {}
     strategy:
-      # One post at a time keeps the channel in order and under Discord's rate limit.
+      # One post at a time keeps the channel in order and under the chat's rate limit.
       max-parallel: 1
       matrix:
         post: ${{ fromJSON(inputs.posts) }}
@@ -39,14 +39,14 @@ jobs:
       - name: Resolve the pings
         id: users
         if: matrix.post.ping && matrix.post.user_ids != ''
-        uses: a-novel-kit/workflows/generic-actions/discord-users@v1.86.0
+        uses: a-novel-kit/workflows/generic-actions/chat-users@v1.86.0
         with:
           github_user_ids: ${{ matrix.post.user_ids }}
           bws_access_token: ${{ secrets.BWS_READ_TOKEN }}
           bws_server_url: ${{ vars.BWS_SERVER_URL }}
 
       - name: Post
-        uses: a-novel-kit/workflows/generic-actions/discord-post@v1.86.0
+        uses: a-novel-kit/workflows/generic-actions/chat-post@v1.86.0
         with:
           # A post never falls back to the other channel.
           webhook: >-
@@ -56,7 +56,7 @@ jobs:
           title: ${{ matrix.post.title }}
           url: ${{ matrix.post.url }}
           description: ${{ matrix.post.description }}
-          mention_users: ${{ steps.users.outputs.discord_ids }}
+          mention_users: ${{ steps.users.outputs.chat_ids }}
           mention_roles: >-
             ${{ matrix.post.ping && matrix.post.user_ids == '' &&
-            fromJSON(vars.DISCORD_REPO_ROLES || '{}')[github.repository] || '' }}
+            fromJSON(vars.CHAT_REPO_ROLES || '{}')[github.repository] || '' }}
