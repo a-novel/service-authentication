@@ -1,5 +1,5 @@
 # Assigns a pull request to the person who opened it. A bot's pull request stays unassigned: an
-# assignee would be notified of every version bump, and a failing one reaches the Discord
+# assignee would be notified of every version bump, and a failing one reaches the chat's
 # dependencies feed instead. Skipping the job, rather than the step, spares a runner per bot PR.
 name: auto-assign author
 

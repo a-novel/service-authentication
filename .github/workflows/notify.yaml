@@ -1,4 +1,4 @@
-# Reports this repository to the org's Discord server. A failed `main` or `release` run on the
+# Reports this repository to the org's chat. A failed `main` or `release` run on the
 # default branch posts to the CI channel and pings the repository's role, and the run that turns the
 # branch green again posts without a ping. Watching `release` catches a release that fails after
 # its tag. Each published release posts to the releases channel with its notes. A person's pull
@@ -43,7 +43,7 @@ jobs:
       actions: read
     uses: a-novel-kit/workflows/.github/workflows/notify-ci-run.yaml@v1.86.0
     with:
-      roles: ${{ vars.DISCORD_REPO_ROLES }}
+      roles: ${{ vars.CHAT_REPO_ROLES }}
     secrets:
       webhook: ${{ secrets.CI_WEBHOOK }}
 
@@ -63,7 +63,7 @@ jobs:
     uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.86.0
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
-      roles: ${{ vars.DISCORD_REPO_ROLES }}
+      roles: ${{ vars.CHAT_REPO_ROLES }}
       bws_server_url: ${{ vars.BWS_SERVER_URL }}
     secrets:
       private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
