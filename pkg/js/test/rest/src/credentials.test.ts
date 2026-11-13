@@ -17,6 +17,7 @@ import {
   credentialsUpdateEmail,
   credentialsUpdatePassword,
   credentialsUpdateRole,
+  shortCodeCancelEmailUpdate,
   shortCodeCreateEmailUpdate,
   shortCodeCreatePasswordReset,
   shortCodeCreateRegister,
@@ -584,6 +585,61 @@ describe("credentialsGetSelf", () => {
     const anonToken = await tokenCreateAnon(api);
 
     await expectStatus(credentialsGetSelf(api, anonToken.accessToken), 403);
+  });
+});
+
+describe("shortCodeCancelEmailUpdate", () => {
+  it("cancels the pending email change", async () => {
+    const api = callerApi(accountPlatform);
+
+    const anonToken = await tokenCreateAnon(api);
+
+    const preRegister = await preRegisterUser(api, mailUrl);
+    const user = await registerUser(api, preRegister);
+
+    const { shortCode, target } = await requestEmailUpdate(api, user.token, user.password);
+
+    await shortCodeCancelEmailUpdate(api, user.token.accessToken);
+
+    const self = await credentialsGetSelf(api, user.token.accessToken);
+    expect(self.email).toBe(user.email);
+    expect(self.pendingEmail).toBeUndefined();
+
+    // The emailed code no longer confirms the change.
+    await expectStatus(
+      credentialsUpdateEmail(api, anonToken.accessToken, { userID: target, shortCode, lang: Lang.En }),
+      403
+    );
+
+    await expectStatus(shortCodeCancelEmailUpdate(api, user.token.accessToken), 404);
+  });
+
+  it("cancels a change to a registered address alike", async () => {
+    const api = callerApi(accountPlatform);
+
+    const preRegister = await preRegisterUser(api, mailUrl);
+    const user = await registerUser(api, preRegister);
+
+    const preRegisterOwner = await preRegisterUser(api, mailUrl);
+    const owner = await registerUser(api, preRegisterOwner);
+
+    await shortCodeCreateEmailUpdate(api, user.token.accessToken, {
+      currentPassword: user.password,
+      email: owner.email,
+      lang: Lang.En,
+    });
+
+    await shortCodeCancelEmailUpdate(api, user.token.accessToken);
+
+    const self = await credentialsGetSelf(api, user.token.accessToken);
+    expect(self.pendingEmail).toBeUndefined();
+  });
+
+  it("refuses anonymous callers", async () => {
+    const api = callerApi(accountPlatform);
+    const anonToken = await tokenCreateAnon(api);
+
+    await expectStatus(shortCodeCancelEmailUpdate(api, anonToken.accessToken), 403);
   });
 });
 

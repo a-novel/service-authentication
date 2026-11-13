@@ -1006,6 +1006,42 @@ paths:
           $ref: "#/components/responses/mailDeliveryUnavailable"
         default:
           $ref: "#/components/responses/internalError"
+    delete:
+      operationId: emailUpdateCancel
+      summary: Cancel the email update process.
+      description: |
+        Cancels the email change awaiting confirmation, which `[GET] /v2/credentials/self` returns as `pendingEmail`.
+        The account keeps its current address, and the short code mailed for the change no longer confirms it. The
+        request gives no password, since the account stays on the address it already has.
+
+        No change awaiting confirmation answers 404, and so does a change confirmed, replaced or expired during the
+        request. A change to an address already registered cancels alike, so the answer reveals nothing about that
+        address. Anonymous tokens lack the required permission, and an OAuth client's access token answers 403: only
+        the account platform manages the account.
+
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
+      tags: [shortCode]
+      security:
+        - BearerAuth: ["shortCode:email:update"]
+      responses:
+        "204":
+          description: The email change is canceled.
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
 
   /v2/short-code/update-password:
     put:
@@ -1561,8 +1597,8 @@ components:
       type: object
       description: |
         An email change requested through `[PUT] /v2/short-code/update-email` and awaiting confirmation. It lasts until
-        the user confirms it, requests another change, or lets the confirmation code expire. Absent when no change
-        awaits confirmation.
+        the user confirms it, requests another change, cancels it with `[DELETE] /v2/short-code/update-email`, or lets
+        the confirmation code expire. Absent when no change awaits confirmation.
       required: [email, expiresAt]
       additionalProperties: false
       properties:

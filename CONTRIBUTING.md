@@ -151,7 +151,7 @@ The `sessions` table gives each session a row, with the device the account platf
 | `PUT /v2/sessions/revoke-others`      | Signs out every other active session of the caller.      |
 | `DELETE /v2/sessions/{sessionID}`     | Removes a logged-out session. An active one answers 409. |
 
-Only the account platform manages devices, so an OAuth client's token gets 403 on these routes. A signed-out session keeps its access token until it expires, and these routes and `PATCH /v2/credentials/location-consent` refuse it at once with the 401 of `GET /v2/session`, so it cannot sign the account's other sessions out in turn. Each session's requests to each of these routes count against the windows of the login rate limits, per session, so no session of an account spends the budget of another.
+Only the account platform manages devices, so an OAuth client's token gets 403 on these routes. A signed-out session keeps its access token until it expires, and these routes, `PATCH /v2/credentials/location-consent` and `DELETE /v2/short-code/update-email` refuse it at once with the 401 of `GET /v2/session`, so it cannot sign the account's other sessions out in turn. Each session's requests to each of these routes count against the windows of the login rate limits, per session, so no session of an account spends the budget of another.
 
 The location consent is an account setting, off by default. While it is on, every session of the account records its IP address, region and city. `PATCH /v2/credentials/location-consent` sets it, and turning it off erases every stored location of the account at once.
 
@@ -182,7 +182,7 @@ A short code is a single-use, time-limited secret, emailed to the user. Registra
 | `validateEmail` | Email change confirmation. | `48h` |
 | `resetPassword` | Password reset.            | `2h`  |
 
-The database stores only a hash of each code. A consumed code is soft-deleted, which keeps it for the audit trail.
+The database stores only a hash of each code. A consumed or canceled code is soft-deleted, which keeps it for the audit trail. `DELETE /v2/short-code/update-email` cancels the code of a pending email change.
 
 ### Roles and permissions
 
@@ -191,7 +191,7 @@ The database stores only a hash of each code. A consumed code is soft-deleted, w
 | Role              | Priority | Adds on top of inherited                                                         |
 | ----------------- | -------- | -------------------------------------------------------------------------------- |
 | `auth:anon`       | 0        | Complete a registration or an email change, reset a password, join the waitlist. |
-| `auth:user`       | 1        | Change own password, request an email change, sign in on a client.               |
+| `auth:user`       | 1        | Change own password, request or cancel an email change, sign in on a client.     |
 | `auth:admin`      | 2        | Read, list and look up accounts.                                                 |
 | `auth:superadmin` | 3        | Change roles, invite accounts.                                                   |
 

@@ -42,8 +42,9 @@ type ShortCode struct {
 	ExpiresAt time.Time `bun:"expires_at"`
 
 	// DeletedAt marks a short code invalidated before its expiration: consumed,
-	// superseded by a newer code for the same Target / Usage pair, or manually
-	// suppressed by an admin after a leak. DeletedComment records the reason.
+	// superseded by a newer code for the same Target / Usage pair, canceled by its
+	// user, or manually suppressed by an admin after a leak. DeletedComment records
+	// the reason.
 	DeletedAt      *time.Time `bun:"deleted_at"`
 	DeletedComment *string    `bun:"deleted_comment"`
 }

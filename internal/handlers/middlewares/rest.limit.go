@@ -32,9 +32,10 @@ type RestLimits struct {
 	Mailbox func(http.Handler) http.Handler
 	// Password caps each signed-in user's password changes as Login caps logins.
 	Password func(http.Handler) http.Handler
-	// Sessions caps each session's requests to each device route and to the location consent route,
-	// over the windows of Login. It counts per session, so one session of an account cannot spend the
-	// budget of another, and an intruder cannot lock the owner out of signing them out.
+	// Sessions caps each session's requests to each device route, to the location consent route and
+	// to the email change cancellation, over the windows of Login. It counts per session, so one
+	// session of an account cannot spend the budget of another, and an intruder cannot lock the owner
+	// out of signing them out.
 	Sessions func(http.Handler) http.Handler
 	// ShortCode caps each caller's password resets and email updates as Login caps logins, and
 	// those naming one account over the longer window.

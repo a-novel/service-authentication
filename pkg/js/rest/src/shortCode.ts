@@ -58,6 +58,18 @@ export async function shortCodeCreateEmailUpdate(
   });
 }
 
+/**
+ * Cancels the email change awaiting confirmation, so the account keeps its current address and the emailed short code
+ * no longer confirms the change. Throws a 404 when no change awaits confirmation, and a 401 once the caller's own
+ * session is signed out or has ended.
+ */
+export async function shortCodeCancelEmailUpdate(api: AuthenticationApi, accessToken: string): Promise<void> {
+  return await api.fetchVoid("/v2/short-code/update-email", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    method: "DELETE",
+  });
+}
+
 /** Emails a short code that authorizes resetting the account's password. */
 export async function shortCodeCreatePasswordReset(
   api: AuthenticationApi,
