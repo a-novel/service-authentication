@@ -43,7 +43,7 @@ jobs:
         uses: a-novel-kit/workflows/publish-actions/release-core@v1.86.0
         with:
           # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
-          cli_version: "1.42.4"
+          cli_version: "1.42.5"
           dry_run: "true"
 
   # GitHub's release-notes endpoint wants contents write although it stores nothing, so this job
@@ -75,7 +75,7 @@ jobs:
       - uses: a-novel-kit/workflows/publish-actions/release-core@v1.86.0
         with:
           # renovate: datasource=go depName=github.com/a-novel-kit/stack/cli
-          cli_version: "1.42.4"
+          cli_version: "1.42.5"
           client_id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
           app_private_key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
 
