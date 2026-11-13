@@ -147,6 +147,8 @@ services:
       SMTP_SENDER_PASSWORD: noreply
       SMTP_FORCE_UNENCRYPTED: true
       TERM: xterm-color
+      # The standalone image sets it too, but a go-exec target reads only this block.
+      SERVICE_ISSUER_OPTIONAL: true
     networks:
       - api
 
