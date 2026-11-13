@@ -29,11 +29,14 @@ const (
 	// ShortCodeDeleteConsumed is the deletion comment set when the short code has been
 	// redeemed successfully.
 	ShortCodeDeleteConsumed = "key consumed"
+	// ShortCodeDeleteCanceled is the deletion comment set when the user withdraws the
+	// operation the short code awaits.
+	ShortCodeDeleteCanceled = "canceled by user"
 )
 
-// ShortCodeDeleteRequest is the input to [PgShortCodeDelete.Exec]. Comment is usually
-// [ShortCodeDeleteOverride] or [ShortCodeDeleteConsumed]; any value is accepted and
-// persisted on the deleted row for later auditing.
+// ShortCodeDeleteRequest is the input to [PgShortCodeDelete.Exec]. Comment is usually one
+// of the ShortCodeDelete constants; any value is accepted and persisted on the deleted row
+// for later auditing.
 type ShortCodeDeleteRequest struct {
 	// ID of the short code to delete.
 	ID uuid.UUID

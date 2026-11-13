@@ -144,6 +144,7 @@ func main() {
 	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
 		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
 	)
+	serviceShortCodeCancelEmailUpdate := core.NewShortCodeCancelEmailUpdate(daoShortCodeDelete, daoShortCodeSelect)
 
 	serviceCredentialsCreate := core.NewCredentialsCreate(
 		daoCredentialsInsert, daoCredentialsLocationConsent, daoSessionUpsert, daoSessionRevokeOldest, daoSessionTrim,
@@ -250,6 +251,9 @@ func main() {
 		serviceShortCodeCreatePasswordReset, cfg.Logger,
 	)
 	handlerShortCodeCreateRegister := handlers.NewRestShortCodeCreateRegister(serviceShortCodeCreateRegister, cfg.Logger)
+	handlerShortCodeCancelEmailUpdate := handlers.NewRestShortCodeCancelEmailUpdate(
+		serviceShortCodeCancelEmailUpdate, cfg.Logger,
+	)
 
 	handlerTokenCreate := handlers.NewRestTokenCreate(serviceTokenCreate, cfg.Logger)
 	handlerTokenCreateAnon := handlers.NewRestTokenCreateAnon(serviceTokenCreateAnon, cfg.Logger)
@@ -334,6 +338,8 @@ func main() {
 				Put("/register", handlerShortCodeCreateRegister.ServeHTTP)
 			withAuth(r, "shortCode:email:update").With(limit.Mail).
 				Put("/update-email", handlerShortCodeCreateEmailUpdate.ServeHTTP)
+			withAuth(r, "shortCode:email:update").With(limit.Sessions, refuseEndedSessions).
+				Delete("/update-email", handlerShortCodeCancelEmailUpdate.ServeHTTP)
 			withAuth(r, "shortCode:password:reset").With(limit.Mail).
 				Put("/update-password", handlerShortCodeCreatePasswordReset.ServeHTTP)
 		})
