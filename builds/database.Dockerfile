@@ -31,8 +31,8 @@ RUN for config in database database.builder; do \
             echo "$lock is out of date: run apko lock on $config.apko.yaml" >&2; exit 1; \
         fi; \
     done
-ARG PGBACKREST_VERSION=2.60.0
-ARG PGBACKREST_SHA256=6d3ee1b5defdadc85228969b4be804096f5e65e54707bb95c7c4c4ce41f5d007
+ARG PGBACKREST_VERSION=2.60.1
+ARG PGBACKREST_SHA256=c6d8190fee982f0febdd2ca5ca112f83b4b0905ef9949e9cf64a46a6cc138026
 RUN curl -fsSL --retry 5 --retry-all-errors -o /pgbackrest.tar.gz \
         "https://github.com/pgbackrest/pgbackrest/releases/download/release/${PGBACKREST_VERSION}/pgbackrest-${PGBACKREST_VERSION}.tar.gz" \
     && echo "${PGBACKREST_SHA256}  /pgbackrest.tar.gz" | sha256sum -c -
