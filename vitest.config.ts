@@ -6,10 +6,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    env: {
-      SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL ?? "noreply@agorastoryverse.com",
-      SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD ?? "admin",
-    },
     alias: {
       "@a-novel/service-authentication-rest": resolve("./pkg/js/rest/src/index"),
       "@a-novel/service-authentication-rest-test": resolve("./pkg/js/rest-test/src/index"),

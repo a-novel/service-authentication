@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 
 import { expectStatus } from "@a-novel-kit/nodelib-test/http";
 import {
-  type AuthenticationApi,
   Role,
   TokenRefreshRequestSchema,
   claimsGet,
@@ -13,31 +12,13 @@ import {
   tokenRefresh,
   tokenRevoke,
 } from "@a-novel/service-authentication-rest";
-import { preRegisterUser, registerUser } from "@a-novel/service-authentication-rest-test";
-
-// The managed local test rail supplies a dynamic URL; legacy CI still exports MAIL_HOST.
-const mailUrl = (() => {
-  const value = process.env.MAIL_UI_URL ?? process.env.MAIL_HOST;
-  if (!value) throw new Error("MAIL_UI_URL or MAIL_HOST must be set");
-  return value;
-})();
-
-/** Signs the configured super-admin in, opening a new session. */
-async function superAdminSession(api: AuthenticationApi) {
-  return await tokenCreate(api, {
-    email: process.env.SUPER_ADMIN_EMAIL!,
-    password: process.env.SUPER_ADMIN_PASSWORD!,
-  });
-}
+import { registerUser, superAdminCredentials } from "@a-novel/service-authentication-rest-test";
 
 describe("tokenCreate", () => {
   it("logs in with correct credentials", async () => {
     const api = callerApi(accountPlatform);
 
-    const res = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const res = await tokenCreate(api, superAdminCredentials());
 
     expect(res.accessToken).toBeTruthy();
 
@@ -56,10 +37,7 @@ describe("tokenCreate", () => {
   it("signs the session's end into the access token", async () => {
     const api = callerApi(accountPlatform);
 
-    const res = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const res = await tokenCreate(api, superAdminCredentials());
 
     // A sign-in opens its own session, which ends with its refresh token. JSON Keys must keep the claim
     // the session checks read.
@@ -69,25 +47,13 @@ describe("tokenCreate", () => {
   it("returns unauthorized when email does not exist", async () => {
     const api = callerApi(accountPlatform);
 
-    await expectStatus(
-      tokenCreate(api, {
-        email: "does-not-exist@gmail.com",
-        password: process.env.SUPER_ADMIN_PASSWORD!,
-      }),
-      401
-    );
+    await expectStatus(tokenCreate(api, { ...superAdminCredentials(), email: "does-not-exist@gmail.com" }), 401);
   });
 
   it("returns unauthorized when password is incorrect", async () => {
     const api = callerApi(accountPlatform);
 
-    await expectStatus(
-      tokenCreate(api, {
-        email: process.env.SUPER_ADMIN_EMAIL!,
-        password: "incorrect-password",
-      }),
-      401
-    );
+    await expectStatus(tokenCreate(api, { ...superAdminCredentials(), password: "incorrect-password" }), 401);
   });
 });
 
@@ -111,10 +77,7 @@ describe("tokenRefresh", () => {
   it("refreshes token once", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const token = await tokenCreate(api, superAdminCredentials());
 
     expect(token.accessToken).toBeTruthy();
     expect(token.refreshToken).toBeTruthy();
@@ -138,10 +101,7 @@ describe("tokenRefresh", () => {
   it("refreshes token twice", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const token = await tokenCreate(api, superAdminCredentials());
 
     expect(token.accessToken).toBeTruthy();
     expect(token.refreshToken).toBeTruthy();
@@ -166,10 +126,7 @@ describe("tokenRefresh", () => {
   it("validates an issued token pair with its request schema", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const token = await tokenCreate(api, superAdminCredentials());
 
     expect(TokenRefreshRequestSchema.safeParse(token).success).toBe(true);
     expect(TokenRefreshRequestSchema.safeParse({ ...token, accessToken: btoa("not a jwt") }).success).toBe(false);
@@ -178,15 +135,9 @@ describe("tokenRefresh", () => {
   it("can only use refresh token issued with original access token", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const token = await tokenCreate(api, superAdminCredentials());
 
-    const altToken = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const altToken = await tokenCreate(api, superAdminCredentials());
 
     await expectStatus(
       tokenRefresh(api, {
@@ -202,7 +153,7 @@ describe("tokenRevoke", () => {
   it("stops the refresh token from renewing the session", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
+    const token = await tokenCreate(api, superAdminCredentials());
 
     await expect(tokenRevoke(api, token.accessToken, { refreshToken: token.refreshToken })).resolves.toBeUndefined();
 
@@ -212,7 +163,7 @@ describe("tokenRevoke", () => {
   it("refuses every access token of the session", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
+    const token = await tokenCreate(api, superAdminCredentials());
     const renewed = await tokenRefresh(api, token);
 
     await tokenRevoke(api, renewed.accessToken, { refreshToken: renewed.refreshToken });
@@ -224,7 +175,7 @@ describe("tokenRevoke", () => {
   it("succeeds again on a revoked refresh token", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
+    const token = await tokenCreate(api, superAdminCredentials());
 
     await tokenRevoke(api, token.accessToken, { refreshToken: token.refreshToken });
 
@@ -234,8 +185,8 @@ describe("tokenRevoke", () => {
   it("leaves the user's other sessions untouched", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
-    const otherToken = await superAdminSession(api);
+    const token = await tokenCreate(api, superAdminCredentials());
+    const otherToken = await tokenCreate(api, superAdminCredentials());
 
     await tokenRevoke(api, token.accessToken, { refreshToken: token.refreshToken });
 
@@ -249,8 +200,8 @@ describe("tokenRevoke", () => {
   it("refuses another user's refresh token", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
-    const otherUser = await registerUser(api, await preRegisterUser(api, mailUrl));
+    const token = await tokenCreate(api, superAdminCredentials());
+    const otherUser = await registerUser(api);
 
     await expectStatus(tokenRevoke(api, token.accessToken, { refreshToken: otherUser.token.refreshToken }), 403);
 
@@ -262,7 +213,7 @@ describe("tokenRevoke", () => {
   it("returns unauthorized without an access token", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
+    const token = await tokenCreate(api, superAdminCredentials());
 
     await expectStatus(tokenRevoke(api, "", { refreshToken: token.refreshToken }), 401);
 
@@ -273,7 +224,7 @@ describe("tokenRevoke", () => {
   it("returns forbidden for an anonymous session", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
+    const token = await tokenCreate(api, superAdminCredentials());
     const anonToken = await tokenCreateAnon(api);
 
     await expectStatus(tokenRevoke(api, anonToken.accessToken, { refreshToken: token.refreshToken }), 403);
@@ -282,7 +233,7 @@ describe("tokenRevoke", () => {
   it("returns forbidden for a token that is not a refresh token", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
+    const token = await tokenCreate(api, superAdminCredentials());
 
     await expectStatus(tokenRevoke(api, token.accessToken, { refreshToken: token.accessToken }), 403);
 
@@ -293,7 +244,7 @@ describe("tokenRevoke", () => {
   it("returns unprocessable entity for a blank token", async () => {
     const api = callerApi(accountPlatform);
 
-    const token = await superAdminSession(api);
+    const token = await tokenCreate(api, superAdminCredentials());
 
     await expectStatus(tokenRevoke(api, token.accessToken, { refreshToken: "" }), 422);
   });

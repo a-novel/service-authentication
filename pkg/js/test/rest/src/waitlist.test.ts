@@ -13,7 +13,7 @@ import {
   tokenCreateAnon,
   waitlistJoin,
 } from "@a-novel/service-authentication-rest";
-import { generateRandomMail } from "@a-novel/service-authentication-rest-test";
+import { generateRandomMail, superAdminCredentials } from "@a-novel/service-authentication-rest-test";
 
 describe("waitlistJoin", () => {
   it("still exposes the duplicate warning of a service older than v2.24.0", async () => {
@@ -46,7 +46,7 @@ describe("waitlistJoin", () => {
     const api = callerApi(accountPlatform);
     const token = await tokenCreateAnon(api);
     await expect(
-      waitlistJoin(api, token.accessToken, { email: process.env.SUPER_ADMIN_EMAIL!, lang: Lang.En })
+      waitlistJoin(api, token.accessToken, { email: superAdminCredentials().email, lang: Lang.En })
     ).resolves.toBeUndefined();
   });
 
