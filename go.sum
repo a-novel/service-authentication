@@ -1,5 +1,5 @@
-github.com/a-novel-kit/golib v0.66.0 h1:maqzFx5iF7jTX0aESKEAvQFlM7KXhnG14iQXFyXW9uU=
-github.com/a-novel-kit/golib v0.66.0/go.mod h1:9HfOVU3v4X1ah51UWMTSN+LOajgyLRk044N+SBn5ph4=
+github.com/a-novel-kit/golib v0.66.1 h1:5b4ZTVucmAPkxICPZByMEDPQkATlzFXS68/fRjs/5KI=
+github.com/a-novel-kit/golib v0.66.1/go.mod h1:9HfOVU3v4X1ah51UWMTSN+LOajgyLRk044N+SBn5ph4=
 github.com/a-novel-kit/jwt/v2 v2.6.1 h1:8iQ8ZcvU4L2CKReYeCX8ctK9ABgYEvAOycrggKgl4cM=
 github.com/a-novel-kit/jwt/v2 v2.6.1/go.mod h1:pkDVhDrwshhk8U2FJiZciPHVh8zq5WYDJCMBKOmd1PQ=
 github.com/a-novel/service-json-keys/v2 v2.16.0 h1:86dYnK4OZhjWE9XziG2u+QSoqwQi1lOG02t2009/VOQ=
