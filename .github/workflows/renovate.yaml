@@ -18,7 +18,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/renovate@v1.87.0
+      - uses: a-novel-kit/workflows/generic-actions/renovate@v1.87.1
         with:
           repository_config: "true"
           # The post-upgrade commands of this repository's presets and renovate.json, and no other.
