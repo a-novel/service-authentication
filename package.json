@@ -49,6 +49,8 @@
     "@a-novel-kit/nodelib-browser": "^2.0.0",
     "@a-novel-kit/nodelib-config": "^2.0.0",
     "@a-novel-kit/nodelib-test": "^2.0.0",
+    "@a-novel/service-authentication-rest": "workspace:*",
+    "@a-novel/service-authentication-rest-test": "workspace:*",
     "@eslint/js": "^10.0.1",
     "@redocly/cli": "^2.14.5",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",

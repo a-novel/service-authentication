@@ -240,6 +240,12 @@ importers:
       '@a-novel-kit/nodelib-test':
         specifier: ^2.0.0
         version: 2.13.0(@a-novel-kit/nodelib-browser@2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7))(jsdom@31.0.1)(playwright@1.65.1)
+      '@a-novel/service-authentication-rest':
+        specifier: workspace:*
+        version: link:pkg/js/rest
+      '@a-novel/service-authentication-rest-test':
+        specifier: workspace:*
+        version: link:pkg/js/rest-test
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.15.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -343,14 +349,7 @@ importers:
         specifier: ^8.0.0
         version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
 
-  pkg/js/test/rest:
-    devDependencies:
-      '@a-novel/service-authentication-rest':
-        specifier: workspace:*
-        version: link:../../rest
-      '@a-novel/service-authentication-rest-test':
-        specifier: workspace:*
-        version: link:../../rest-test
+  pkg/js/test/rest: {}
 
 packages:
 

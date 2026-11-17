@@ -44,7 +44,7 @@ A suite that copies the sign-up helpers keeps a `token.ts` and a `setup.ts` in `
    pnpm add -D -w @a-novel/service-authentication-rest-test
    ```
 
-   It goes in the root `package.json`, beside `@a-novel/service-authentication-rest`. Renovate never reads a manifest under a `test/` directory, so the test project declares no dependency of its own.
+   It goes in the root `package.json`. Move `@a-novel/service-authentication-rest` there too if the test project declares it, with every other entry of the test project's `package.json`: Renovate never reads a manifest under a `test/` directory, so the test project declares no dependency of its own.
 
 2. Delete `pkg/js/test/rest/src/token.ts`.
 3. Replace `pkg/js/test/rest/src/setup.ts`, which `vitest.config.ts` keeps as the suite's `globalSetup`:
