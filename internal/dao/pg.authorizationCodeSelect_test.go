@@ -6,10 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/postgres/postgrestest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
@@ -21,29 +19,9 @@ func TestPgAuthorizationCodeSelect(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().UTC().Round(time.Second)
-	codeID := sha256.Sum256([]byte("code-1"))
-	otherCodeID := sha256.Sum256([]byte("code-2"))
+	otherCodeID := sha256.Sum256([]byte("other"))
 
-	account := &dao.Credentials{
-		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-		Email:     "user@example.com",
-		Role:      "auth:user",
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-
-	code := &dao.AuthorizationCode{
-		ID:                   codeID[:],
-		UserID:               account.ID,
-		ClientID:             "studio",
-		RedirectURI:          "https://studio.example.com/auth/callback",
-		RedirectURIInRequest: true,
-		CodeChallenge:        "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-		CodeChallengeMethod:  "S256",
-		SessionID:            "session-1",
-		SessionExpiresAt:     now.Add(time.Hour),
-		ExpiresAt:            now.Add(time.Minute),
-	}
+	code := newAuthorizationCode("studio", now.Add(time.Hour))
 
 	// An exchanged and expired code stays readable, so a second exchange finds it.
 	consumedCode := *code
@@ -65,7 +43,7 @@ func TestPgAuthorizationCodeSelect(t *testing.T) {
 
 			fixture: code,
 
-			request: &dao.AuthorizationCodeSelectRequest{ID: codeID[:]},
+			request: &dao.AuthorizationCodeSelectRequest{ID: code.ID},
 
 			expect: code,
 		},
@@ -74,7 +52,7 @@ func TestPgAuthorizationCodeSelect(t *testing.T) {
 
 			fixture: &consumedCode,
 
-			request: &dao.AuthorizationCodeSelectRequest{ID: codeID[:]},
+			request: &dao.AuthorizationCodeSelectRequest{ID: code.ID},
 
 			expect: &consumedCode,
 		},
@@ -98,14 +76,8 @@ func TestPgAuthorizationCodeSelect(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
-
-				_, err = db.NewInsert().Model(account).Exec(ctx)
-				require.NoError(t, err)
-
-				_, err = db.NewInsert().Model(testCase.fixture).Exec(ctx)
-				require.NoError(t, err)
+				sessionFixtures{}.insert(ctx, t)
+				insertFixtures(ctx, t, []*dao.AuthorizationCode{testCase.fixture})
 
 				res, err := daoSelect.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)

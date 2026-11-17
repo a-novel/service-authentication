@@ -2,6 +2,7 @@ package dao_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"testing"
 	"time"
 
@@ -30,42 +31,55 @@ type sessionFixtures struct {
 func (fixtures sessionFixtures) insert(ctx context.Context, t *testing.T) {
 	t.Helper()
 
-	db, err := postgres.GetContext(ctx)
-	require.NoError(t, err)
-
 	created := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
-	owners := []*dao.Credentials{
+
+	insertFixtures(ctx, t, []*dao.Credentials{
 		{ID: sessionOwnerID, Email: "owner@provider.com", Role: "auth:user", CreatedAt: created, UpdatedAt: created},
 		{ID: sessionOtherID, Email: "other@provider.com", Role: "auth:user", CreatedAt: created, UpdatedAt: created},
-	}
-
-	_, err = db.NewInsert().Model(&owners).Exec(ctx)
-	require.NoError(t, err)
-
-	// bun scans each inserted row back into its value, and parallel cases share their fixtures, so
-	// each test inserts copies of its own.
-	if len(fixtures.sessions) > 0 {
-		sessions := copies(fixtures.sessions)
-		_, err = db.NewInsert().Model(&sessions).Exec(ctx)
-		require.NoError(t, err)
-	}
-
-	if len(fixtures.revocations) > 0 {
-		revocations := copies(fixtures.revocations)
-		_, err = db.NewInsert().Model(&revocations).Exec(ctx)
-		require.NoError(t, err)
-	}
+	})
+	insertFixtures(ctx, t, fixtures.sessions)
+	insertFixtures(ctx, t, fixtures.revocations)
 }
 
-// copies returns a copy of each value, which a test may write to without touching the originals.
-func copies[T any](values []*T) []*T {
-	copied := make([]*T, len(values))
-	for index, value := range values {
-		duplicate := *value
+// insertFixtures inserts a copy of each row. bun scans each inserted row back into its value, and
+// parallel cases share their fixtures, so a test never inserts the originals.
+func insertFixtures[T any](ctx context.Context, t *testing.T, rows []*T) {
+	t.Helper()
+
+	if len(rows) == 0 {
+		return
+	}
+
+	copied := make([]*T, len(rows))
+	for index, row := range rows {
+		duplicate := *row
 		copied[index] = &duplicate
 	}
 
-	return copied
+	db, err := postgres.GetContext(ctx)
+	require.NoError(t, err)
+
+	_, err = db.NewInsert().Model(&copied).Exec(ctx)
+	require.NoError(t, err)
+}
+
+// newAuthorizationCode returns a code of the session owner for client, expiring at expiresAt. The
+// code's ID hashes client, so each client a test names holds a code of its own.
+func newAuthorizationCode(client string, expiresAt time.Time) *dao.AuthorizationCode {
+	id := sha256.Sum256([]byte(client))
+
+	return &dao.AuthorizationCode{
+		ID:                   id[:],
+		UserID:               sessionOwnerID,
+		ClientID:             client,
+		RedirectURI:          "https://studio.example.com/auth/callback",
+		RedirectURIInRequest: true,
+		CodeChallenge:        "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+		CodeChallengeMethod:  "S256",
+		SessionID:            "session-1",
+		SessionExpiresAt:     expiresAt.Add(time.Hour),
+		ExpiresAt:            expiresAt,
+	}
 }
 
 // selectSessions returns every session row, by ID.

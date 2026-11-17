@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
@@ -23,29 +22,9 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().UTC().Round(time.Second)
-	codeID := sha256.Sum256([]byte("code-1"))
-	otherCodeID := sha256.Sum256([]byte("code-2"))
+	otherCodeID := sha256.Sum256([]byte("other"))
 
-	account := &dao.Credentials{
-		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-		Email:     "user@example.com",
-		Role:      "auth:user",
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-
-	code := &dao.AuthorizationCode{
-		ID:                   codeID[:],
-		UserID:               account.ID,
-		ClientID:             "studio",
-		RedirectURI:          "https://studio.example.com/auth/callback",
-		RedirectURIInRequest: true,
-		CodeChallenge:        "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-		CodeChallengeMethod:  "S256",
-		SessionID:            "session-1",
-		SessionExpiresAt:     now.Add(time.Hour),
-		ExpiresAt:            now.Add(time.Minute),
-	}
+	code := newAuthorizationCode("studio", now.Add(time.Hour))
 
 	consumedCode := *code
 	consumedCode.ConsumedAt = new(now)
@@ -68,7 +47,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 
 			fixture: code,
 
-			request: &dao.AuthorizationCodeConsumeRequest{ID: codeID[:], Now: now},
+			request: &dao.AuthorizationCodeConsumeRequest{ID: code.ID, Now: now},
 
 			expect: &consumedCode,
 		},
@@ -78,7 +57,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 
 			fixture: &alreadyConsumedCode,
 
-			request: &dao.AuthorizationCodeConsumeRequest{ID: codeID[:], Now: now},
+			request: &dao.AuthorizationCodeConsumeRequest{ID: code.ID, Now: now},
 
 			expectErr: dao.ErrAuthorizationCodeNotFound,
 		},
@@ -102,21 +81,18 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
+				sessionFixtures{}.insert(ctx, t)
+				insertFixtures(ctx, t, []*dao.AuthorizationCode{testCase.fixture})
+
+				err := daoConsume.Exec(ctx, testCase.request)
+				require.ErrorIs(t, err, testCase.expectErr)
+
 				db, err := postgres.GetContext(ctx)
 				require.NoError(t, err)
 
-				_, err = db.NewInsert().Model(account).Exec(ctx)
-				require.NoError(t, err)
-
-				_, err = db.NewInsert().Model(testCase.fixture).Exec(ctx)
-				require.NoError(t, err)
-
-				err = daoConsume.Exec(ctx, testCase.request)
-				require.ErrorIs(t, err, testCase.expectErr)
-
 				stored := &dao.AuthorizationCode{}
 
-				err = db.NewSelect().Model(stored).Where("id = ?", codeID[:]).Scan(ctx)
+				err = db.NewSelect().Model(stored).Where("id = ?", code.ID).Scan(ctx)
 				require.NoError(t, err)
 				require.Equal(t, lo.CoalesceOrEmpty(testCase.expect, testCase.fixture), stored)
 			})
@@ -130,14 +106,8 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 			t.Helper()
 
-			db, err := postgres.GetContext(ctx)
-			require.NoError(t, err)
-
-			_, err = db.NewInsert().Model(account).Exec(ctx)
-			require.NoError(t, err)
-
-			_, err = db.NewInsert().Model(code).Exec(ctx)
-			require.NoError(t, err)
+			sessionFixtures{}.insert(ctx, t)
+			insertFixtures(ctx, t, []*dao.AuthorizationCode{code})
 
 			const attempts = 10
 
@@ -147,7 +117,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 
 			for range attempts {
 				wg.Go(func() {
-					errs <- daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: codeID[:], Now: now})
+					errs <- daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: code.ID, Now: now})
 				})
 			}
 

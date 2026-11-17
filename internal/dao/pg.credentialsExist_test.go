@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/postgres/postgrestest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
@@ -26,8 +25,7 @@ func TestPgCredentialsExist(t *testing.T) {
 
 		request *dao.CredentialsExistRequest
 
-		expect    bool
-		expectErr error
+		expect bool
 	}{
 		{
 			name: "Success",
@@ -50,7 +48,7 @@ func TestPgCredentialsExist(t *testing.T) {
 			expect: true,
 		},
 		{
-			name: "NotFound",
+			name: "Success/Missing",
 
 			request: &dao.CredentialsExistRequest{
 				Email: "user@provider.com",
@@ -69,17 +67,11 @@ func TestPgCredentialsExist(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
+				insertFixtures(ctx, t, testCase.fixtures)
+
+				exists, err := daoExist.Exec(ctx, testCase.request)
 				require.NoError(t, err)
-
-				if len(testCase.fixtures) > 0 {
-					_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
-					require.NoError(t, err)
-				}
-
-				key, err := daoExist.Exec(ctx, testCase.request)
-				require.ErrorIs(t, err, testCase.expectErr)
-				require.Equal(t, testCase.expect, key)
+				require.Equal(t, testCase.expect, exists)
 			})
 		})
 	}

@@ -103,15 +103,12 @@ func TestPgRefreshTokenRevocationInsert(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
-
-				if len(testCase.fixtures) > 0 {
-					_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
-					require.NoError(t, err)
-				}
+				insertFixtures(ctx, t, testCase.fixtures)
 
 				require.NoError(t, daoInsert.Exec(ctx, testCase.request))
+
+				db, err := postgres.GetContext(ctx)
+				require.NoError(t, err)
 
 				live := make([]*dao.RefreshTokenRevocation, 0)
 
