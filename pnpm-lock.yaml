@@ -233,7 +233,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-config':
         specifier: ^2.0.0
-        version: 2.12.0(43e7c40f134d624b663cb343166d65af)
+        version: 2.13.0(d279528f42fdbcdac899609ac9bf19dd)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.15.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -305,7 +305,7 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^2.0.0
-        version: 2.12.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)
+        version: 2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
@@ -320,10 +320,10 @@ importers:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
         specifier: ^2.0.0
-        version: 2.12.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)
+        version: 2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)
       '@a-novel-kit/nodelib-test':
         specifier: ^2.0.0
-        version: 2.12.0(@a-novel-kit/nodelib-browser@2.12.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7))(jsdom@31.0.1)(playwright@1.65.1)
+        version: 2.13.0(@a-novel-kit/nodelib-browser@2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7))(jsdom@31.0.1)(playwright@1.65.1)
       '@a-novel/service-authentication-rest':
         specifier: workspace:*
         version: link:../rest
@@ -420,38 +420,39 @@ packages:
     peerDependencies:
       zod: ^4.6.7
 
-  '@a-novel-kit/nodelib-browser@2.12.0':
-    resolution: {integrity: sha512-FQrJccPEM8/is6eH/smgzBEarJnkb5IJojkV8ptGlX8iDZ6/iDir+wyQ/l1eqyfyKd8DFk21He9lUzxgNUPVHg==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-browser/2.12.0/2df32d6c6118c02787a6b41c25639784b140a928}
+  '@a-novel-kit/nodelib-browser@2.13.0':
+    resolution: {integrity: sha512-0Me7JZTgoxuNN9sw6XLpfcRpRa+JeeBxvjaah5XVPsnnrHvhu8Ra4O0uD37UJGthU2Uk534AmPXnBSh6dVg0GA==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-browser/2.13.0/03fa0bfd05cdab96922450d853cb5709960a5e8b}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@grafana/faro-web-sdk': ^2.14.0
       '@grafana/faro-web-tracing': ^2.14.0
       zod: ^4.6.7
 
-  '@a-novel-kit/nodelib-config@2.12.0':
-    resolution: {integrity: sha512-b8m7g8w3VUHQ8XW6pM6CogPFaLXHleX2BaDXoJ5Aa86UUt/cfFJqQwJQdPOFV1nye6sJ9udLuenPicLTJWnMfQ==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/2.12.0/3c1fa97b1d9d88f3c9989823ba97f7ab186375ff}
+  '@a-novel-kit/nodelib-config@2.13.0':
+    resolution: {integrity: sha512-bL6Jghw2Dz392fz8w01NF9xoUEFIJD5pJR5BbG+4kOnyZ6h2Ns4cdI3A9LRe8Yi1LOeCfGmlhMNXo/zX/b7+zA==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-config/2.13.0/d1bdf5f0778824581c85e4336857432873413637}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     hasBin: true
     peerDependencies:
       '@eslint/compat': ^2.1.1
       '@eslint/config-helpers': ^0.7.0
       '@eslint/js': ^10.0.1
+      '@opentelemetry/api': ^1.10.0
       '@storybook/addon-vitest': ^10.6.7
       '@sveltejs/adapter-node': ^6.0.2
       '@sveltejs/kit': ^3.2.0
       '@trivago/prettier-plugin-sort-imports': ^6.0.2
       '@types/node': ^26.6.6
       '@vitest/browser-playwright': ^5.1.0
-      eslint: ^10.14.0
+      eslint: ^10.15.0
       eslint-config-prettier: ^10.1.8
       eslint-plugin-storybook: ^10.6.7
       eslint-plugin-svelte: ^3.24.1
       estree-walker: ^3.0.3
       globals: ^17.14.0
-      i18next-cli: ^1.87.0
+      i18next-cli: ^1.88.0
       i18next-cli-plugin-svelte: ^2.5.0
-      playwright: ^1.65.0
-      prettier: ^3.10.0
+      playwright: ^1.65.1
+      prettier: ^3.10.1
       prettier-plugin-css-order: ^2.2.0
       prettier-plugin-packagejson: ^2.5.20 || ^3.0.0
       prettier-plugin-sql: ^0.20.0
@@ -471,12 +472,12 @@ packages:
       jsdom: ^30.0.0
       playwright: ^1.63.0
 
-  '@a-novel-kit/nodelib-test@2.12.0':
-    resolution: {integrity: sha512-SrHT9eds1Ncdr5CkAwR29Yk+j3OKWvgyzt6iP7jLjLPV5g+QdrPnQocotkM9hMGyWFWx8mekeuVSuz+hrL93iw==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/2.12.0/98ebbd2c9ffbfaa338d5a38e493e057a1eb3fbe0}
+  '@a-novel-kit/nodelib-test@2.13.0':
+    resolution: {integrity: sha512-l4ZYYhkMGySmaK+XLf2mazqD+Blgmlss0RMuA0ZfY0XSHcKeKUfuhKdph+Npr6Z4vMlkv/hU4SmbJLsKTOWc2Q==, tarball: https://npm.pkg.github.com/download/@a-novel-kit/nodelib-test/2.13.0/2e39cad29c13ceb048420999af81d83cd00d233e}
     engines: {node: '>=24.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@a-novel-kit/nodelib-browser': '*'
-      jsdom: ^30.0.0
+      jsdom: ^30.0.0 || ^31.0.0
       playwright: ^1.63.0
 
   '@acemir/cssom@0.9.33':
@@ -4446,17 +4447,18 @@ snapshots:
     dependencies:
       zod: 4.6.7
 
-  '@a-novel-kit/nodelib-browser@2.12.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)':
+  '@a-novel-kit/nodelib-browser@2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)':
     dependencies:
       '@grafana/faro-web-sdk': 2.14.0
       '@grafana/faro-web-tracing': 2.14.0(supports-color@7.2.0)
       zod: 4.6.7
 
-  '@a-novel-kit/nodelib-config@2.12.0(43e7c40f134d624b663cb343166d65af)':
+  '@a-novel-kit/nodelib-config@2.13.0(d279528f42fdbcdac899609ac9bf19dd)':
     dependencies:
       '@eslint/compat': 2.1.1(eslint@10.15.0(jiti@2.7.0)(supports-color@7.2.0))
       '@eslint/config-helpers': 0.7.0
       '@eslint/js': 10.0.1(eslint@10.15.0(jiti@2.7.0)(supports-color@7.2.0))
+      '@opentelemetry/api': 1.10.0
       '@storybook/addon-vitest': 10.6.7(@vitest/browser-playwright@5.1.0)(@vitest/browser@5.1.0)(react@19.3.1)(storybook@10.6.7(prettier@3.10.1)(react@19.3.1))(vitest@5.1.0)
       '@sveltejs/adapter-node': 6.0.2(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)))
       '@sveltejs/kit': 3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))
@@ -4491,9 +4493,9 @@ snapshots:
       jsdom: 27.4.0(supports-color@7.2.0)
       playwright: 1.65.1
 
-  '@a-novel-kit/nodelib-test@2.12.0(@a-novel-kit/nodelib-browser@2.12.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7))(jsdom@31.0.1)(playwright@1.65.1)':
+  '@a-novel-kit/nodelib-test@2.13.0(@a-novel-kit/nodelib-browser@2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7))(jsdom@31.0.1)(playwright@1.65.1)':
     dependencies:
-      '@a-novel-kit/nodelib-browser': 2.12.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)
+      '@a-novel-kit/nodelib-browser': 2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)
       jsdom: 31.0.1
       playwright: 1.65.1
 
