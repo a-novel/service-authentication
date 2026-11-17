@@ -22,50 +22,33 @@ func TestAppPresetDefault(t *testing.T) {
 		restRateLimitStrict      string
 		serviceJSONKeysTokenPath string
 		serviceTokenPath         string
-		serviceJSONKeysTLS       string
 
 		expect    string
 		expectErr string
 	}{
-		{name: "Success/Default", expect: "15s 3/5m0s *grpcf.LocalCredentialsProvider &{}"},
+		{name: "Success/Default", expect: "15s 3/5m0s {Host:localhost Port:8080 TLS:false TokenPath:}"},
 		{
 			name:                "Success/Override",
 			restTimeoutRead:     "2s",
 			restRateLimitStrict: "2/1m",
-			expect:              "2s 2/1m0s *grpcf.LocalCredentialsProvider &{}",
+			expect:              "2s 2/1m0s {Host:localhost Port:8080 TLS:false TokenPath:}",
 		},
 		{
 			name:                     "Success/ServiceToken",
-			serviceJSONKeysTokenPath: "/var/run/secrets/tokens/json-keys",
-			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
-				"&{ServiceTokenPath:/var/run/secrets/tokens/json-keys TLS:false}",
-		},
-		{
-			name:                     "Success/ServiceTokenTLS",
-			serviceJSONKeysTokenPath: "/var/run/secrets/tokens/json-keys",
-			serviceJSONKeysTLS:       "true",
-			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
-				"&{ServiceTokenPath:/var/run/secrets/tokens/json-keys TLS:true}",
+			serviceJSONKeysTokenPath: "/tokens/json-keys",
+			expect:                   "15s 3/5m0s {Host:localhost Port:8080 TLS:false TokenPath:/tokens/json-keys}",
 		},
 		{
 			// SERVICE_TOKEN_PATH, the deprecated name, applies while the new one is unset.
 			name:             "Success/DeprecatedServiceTokenPath",
-			serviceTokenPath: "/var/run/secrets/tokens/legacy",
-			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
-				"&{ServiceTokenPath:/var/run/secrets/tokens/legacy TLS:false}",
+			serviceTokenPath: "/tokens/legacy",
+			expect:           "15s 3/5m0s {Host:localhost Port:8080 TLS:false TokenPath:/tokens/legacy}",
 		},
 		{
 			name:                     "Success/ServiceTokenPathPrecedence",
-			serviceJSONKeysTokenPath: "/var/run/secrets/tokens/json-keys",
-			serviceTokenPath:         "/var/run/secrets/tokens/legacy",
-			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
-				"&{ServiceTokenPath:/var/run/secrets/tokens/json-keys TLS:false}",
-		},
-		{
-			// A local stack has no service token, so it keeps a plaintext connection.
-			name:               "Success/TLSWithoutServiceToken",
-			serviceJSONKeysTLS: "true",
-			expect:             "15s 3/5m0s *grpcf.LocalCredentialsProvider &{}",
+			serviceJSONKeysTokenPath: "/tokens/json-keys",
+			serviceTokenPath:         "/tokens/legacy",
+			expect:                   "15s 3/5m0s {Host:localhost Port:8080 TLS:false TokenPath:/tokens/json-keys}",
 		},
 		{
 			name:            "Error/InvalidRestTimeoutRead",
@@ -93,7 +76,6 @@ func TestAppPresetDefault(t *testing.T) {
 				"AUTH_CONFIG_TEST_REST_RATE_LIMIT_STRICT="+testCase.restRateLimitStrict,
 				"AUTH_CONFIG_TEST_SERVICE_JSON_KEYS_TOKEN_PATH="+testCase.serviceJSONKeysTokenPath,
 				"AUTH_CONFIG_TEST_SERVICE_TOKEN_PATH="+testCase.serviceTokenPath,
-				"AUTH_CONFIG_TEST_SERVICE_JSON_KEYS_TLS="+testCase.serviceJSONKeysTLS,
 			)
 
 			output, err := command.CombinedOutput()

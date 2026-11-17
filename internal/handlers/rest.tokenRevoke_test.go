@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
@@ -116,7 +116,7 @@ func TestRestTokenRevoke(t *testing.T) {
 				ctx = t.Context()
 			}
 
-			handler := handlers.NewRestTokenRevoke(service, config.LoggerDev)
+			handler := handlers.NewRestTokenRevoke(service, configtest.Logger)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(
 				ctx, http.MethodPut, "/v2/session/revoke", strings.NewReader(cmp.Or(testCase.body, validBody)),

@@ -104,7 +104,7 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 			request.Now,
 			request.ExpiresAt,
 		).Scan(ctx, entity)
-		if isUniqueViolation(err) {
+		if code, _ := postgres.SQLState(err); code == pgUniqueViolation {
 			err = errors.Join(err, ErrShortCodeAlreadyExists)
 		}
 

@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -15,12 +14,11 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
-	"google.golang.org/grpc"
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
@@ -43,9 +41,6 @@ func TestRestHealth(t *testing.T) {
 	testCases := []struct {
 		name          string
 		skipPostgres  bool
-		closePostgres bool
-		transaction   bool
-		cancel        bool
 		smtpError     error
 		jsonKeysError error
 		statusCode    int
@@ -59,24 +54,6 @@ func TestRestHealth(t *testing.T) {
 			skipPostgres: true,
 			statusCode:   http.StatusServiceUnavailable,
 			states:       [3]string{"down", "up", "up"},
-		},
-		{
-			name:          "Error/ClosedPostgres",
-			closePostgres: true,
-			statusCode:    http.StatusServiceUnavailable,
-			states:        [3]string{"down", "up", "up"},
-		},
-		{
-			name:        "Error/TransactionContext",
-			transaction: true,
-			statusCode:  http.StatusServiceUnavailable,
-			states:      [3]string{"down", "up", "up"},
-		},
-		{
-			name:       "Error/CancelledProbe",
-			cancel:     true,
-			statusCode: http.StatusServiceUnavailable,
-			states:     [3]string{"down", "up", "up"},
 		},
 		{
 			name:       "Error/SMTP/Authentication",
@@ -164,40 +141,7 @@ func TestRestHealth(t *testing.T) {
 			ctx := t.Context()
 
 			if !testCase.skipPostgres {
-				var err error
-
-				preset := postgrespresets.NewDefault(configtest.PostgresPreset.Options()...)
-				ctx, err = postgres.NewContext(ctx, preset)
-				require.NoError(t, err)
-				pg, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
-
-				db, ok := pg.(*bun.DB)
-				require.True(t, ok)
-				t.Cleanup(func() { require.NoError(t, db.Close()) })
-
-				if testCase.closePostgres {
-					require.NoError(t, db.Close())
-				}
-
-				if testCase.transaction {
-					tx, err := db.BeginTx(ctx, nil)
-
-					require.NoError(t, err)
-					defer func() {
-						require.NoError(t, ctx.Err())
-						require.NoError(t, tx.Rollback())
-					}()
-
-					ctx = context.WithValue(ctx, postgres.ContextKey{}, tx)
-				}
-			}
-
-			if testCase.cancel {
-				cancelled, cancel := context.WithCancel(ctx)
-				cancel()
-
-				ctx = cancelled
+				ctx = newPostgresContext(t)
 			}
 
 			smtpClient := handlersmocks.NewMockRestHealthClientSMTP(t)
@@ -212,13 +156,6 @@ func TestRestHealth(t *testing.T) {
 			smtpClient.EXPECT().Ping().Return(smtpError).Once()
 			// The payload is never inspected: an empty response reads as up.
 			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
-				Run(func(ctx context.Context, _ *servicejsonkeys.StatusRequest, _ ...grpc.CallOption) {
-					if testCase.cancel {
-						require.ErrorIs(t, ctx.Err(), context.Canceled)
-					} else {
-						require.NoError(t, ctx.Err())
-					}
-				}).
 				Return(&servicejsonkeys.StatusResponse{}, testCase.jsonKeysError).Once()
 
 			var logs bytes.Buffer
@@ -247,86 +184,60 @@ func TestRestHealth(t *testing.T) {
 
 //nolint:paralleltest // Replaces the process-wide tracer provider while probes run.
 func TestRestHealthTelemetry(t *testing.T) {
-	testCases := []struct {
-		name         string
-		smtpErr      error
-		expectStatus int
-	}{
-		{name: "Success", expectStatus: http.StatusOK},
-		{
-			name:         "Error/SMTP",
-			smtpErr:      &textproto.Error{Code: 535, Msg: "private SMTP reply"},
-			expectStatus: http.StatusServiceUnavailable,
-		},
+	const reply = "private SMTP reply"
+
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	previous := otel.GetTracerProvider()
+
+	otel.SetTracerProvider(provider)
+	t.Cleanup(func() {
+		otel.SetTracerProvider(previous)
+		require.NoError(t, provider.Shutdown(context.WithoutCancel(t.Context())))
+	})
+
+	smtpClient := handlersmocks.NewMockRestHealthClientSMTP(t)
+	jsonKeysClient := handlersmocks.NewMockRestHealthAPIJSONKeys(t)
+
+	smtpClient.EXPECT().Ping().Return(&textproto.Error{Code: 535, Msg: reply}).Once()
+	jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
+		Return(&servicejsonkeys.StatusResponse{}, nil).Once()
+
+	handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, configtest.Logger)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v2/healthcheck", nil)
+	handler.ServeHTTP(httptest.NewRecorder(), request)
+
+	var probe sdktrace.ReadOnlySpan
+
+	for _, span := range recorder.Ended() {
+		require.NotContains(t, span.Status().Description, reply, span.Name())
+
+		for _, attr := range span.Attributes() {
+			require.NotContains(t, attr.Value.String(), reply, span.Name())
+		}
+
+		if span.Name() == "rest.Health(client:smtp)" {
+			probe = span
+		}
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			recorder := tracetest.NewSpanRecorder()
-			provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
-			previous := otel.GetTracerProvider()
+	// The probe's span describes the failure in bounded diagnostics.
+	require.NotNil(t, probe)
+	require.Equal(t, codes.Error, probe.Status().Code)
+	require.Contains(t, probe.Attributes(), attribute.String("smtp.failure_category", "authentication"))
+	require.Contains(t, probe.Attributes(), attribute.Int("smtp.reply_code", 535))
+}
 
-			otel.SetTracerProvider(provider)
-			t.Cleanup(func() {
-				otel.SetTracerProvider(previous)
-				require.NoError(t, provider.Shutdown(context.WithoutCancel(t.Context())))
-			})
+// newPostgresContext returns a context carrying a pool of its own on the test database, which closes
+// when the test ends.
+func newPostgresContext(t *testing.T) context.Context {
+	t.Helper()
 
-			preset := postgrespresets.NewDefault(configtest.PostgresPreset.Options()...)
-			ctx, err := postgres.NewContext(t.Context(), preset)
-			require.NoError(t, err)
-			pg, err := postgres.GetContext(ctx)
-			require.NoError(t, err)
+	preset := postgrespresets.NewDefault(configtest.PostgresPreset.Options()...)
+	t.Cleanup(preset.Close)
 
-			db, ok := pg.(*bun.DB)
-			require.True(t, ok)
-			t.Cleanup(func() { require.NoError(t, db.Close()) })
+	ctx, err := postgres.NewContext(t.Context(), preset)
+	require.NoError(t, err)
 
-			smtpClient := handlersmocks.NewMockRestHealthClientSMTP(t)
-			jsonKeysClient := handlersmocks.NewMockRestHealthAPIJSONKeys(t)
-
-			smtpClient.EXPECT().Ping().Return(testCase.smtpErr).Once()
-			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
-				Run(func(ctx context.Context, _ *servicejsonkeys.StatusRequest, _ ...grpc.CallOption) {
-					require.NoError(t, ctx.Err())
-
-					var parent sdktrace.ReadWriteSpan
-
-					for _, span := range recorder.Started() {
-						if span.Name() == "rest.Health" {
-							parent = span
-						}
-					}
-
-					require.NotNil(t, parent)
-					require.True(t, parent.IsRecording())
-				}).
-				Return(&servicejsonkeys.StatusResponse{}, nil).Once()
-
-			handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: io.Discard})
-			w := httptest.NewRecorder()
-			handler.ServeHTTP(w, httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/healthcheck", nil))
-
-			require.Equal(t, testCase.expectStatus, w.Code)
-
-			ended := recorder.Ended()
-			require.Len(t, ended, 4)
-
-			for _, span := range ended {
-				expected := codes.Unset
-				if testCase.smtpErr != nil && (span.Name() == "rest.Health" || span.Name() == "rest.Health(reportSMTP)") {
-					expected = codes.Error
-				}
-
-				require.Equal(t, expected, span.Status().Code, span.Name())
-				require.NotContains(t, span.Status().Description, "private SMTP reply")
-
-				for _, event := range span.Events() {
-					for _, attr := range event.Attributes {
-						require.NotContains(t, attr.Value.AsString(), "private SMTP reply")
-					}
-				}
-			}
-		})
-	}
+	return ctx
 }

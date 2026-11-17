@@ -17,8 +17,8 @@ import (
 
 	servicejsonkeys "github.com/a-novel/service-json-keys/v2/pkg/go"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 	serviceauthentication "github.com/a-novel/service-authentication/v2/pkg/go"
 )
@@ -106,12 +106,12 @@ func TestPermissionsHandler(t *testing.T) {
 			verifier := fakeVerifier{roles: []string{testCase.role}}
 
 			if testCase.expectPanic {
-				require.Panics(t, func() { serviceauthentication.NewAuthHandler(verifier, permissions, config.LoggerDev) })
+				require.Panics(t, func() { serviceauthentication.NewAuthHandler(verifier, permissions, configtest.Logger) })
 
 				return
 			}
 
-			handler := serviceauthentication.NewAuthHandler(verifier, permissions, config.LoggerDev)
+			handler := serviceauthentication.NewAuthHandler(verifier, permissions, configtest.Logger)
 
 			router := chi.NewRouter()
 			handler(router, testCase.permission).Get("/", func(w http.ResponseWriter, _ *http.Request) {

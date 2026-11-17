@@ -20,8 +20,8 @@ import (
 	"github.com/a-novel-kit/golib/servicetoken"
 	"github.com/a-novel-kit/golib/servicetoken/servicetokentest"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
@@ -424,6 +424,13 @@ func signIn(next http.Handler) http.Handler {
 	})
 }
 
+const (
+	// serviceTokenAudience is the audience the service token tests answer to.
+	serviceTokenAudience = "service-authentication"
+	// serviceTokenCaller is the one caller the service token tests allow.
+	serviceTokenCaller = "system:serviceaccount:agora:studio"
+)
+
 func TestClientVisitorKey(t *testing.T) {
 	t.Parallel()
 
@@ -455,6 +462,8 @@ func TestClientVisitorKey(t *testing.T) {
 			// A server that verifies no service token counts by visitor.
 			name: "Success/NoCaller",
 
+			tokenConfig: servicetoken.Config{IssuerOptional: true},
+
 			expect: "service::visitor:192.0.2.1",
 		},
 	}
@@ -483,8 +492,7 @@ func TestClientVisitorKey(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-			// The opt-out keeps a case without an issuer unverified, as a local stack runs.
-			withServiceToken, err := middlewares.RestServiceToken(testCase.tokenConfig, true, &http.Client{}, config.LoggerDev)
+			withServiceToken, err := httpf.ServiceTokenGate(testCase.tokenConfig, &http.Client{}, configtest.Logger)
 			require.NoError(t, err)
 			withServiceToken(middleware.ClientIPFromHeader("X-Client-Ip")(router)).ServeHTTP(w, request)
 

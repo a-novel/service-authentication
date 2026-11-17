@@ -1,7 +1,5 @@
-import type { AuthenticationApi } from "./api";
-import { EmailSchema, PasswordSchema } from "./form";
-
-import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
+import type { AuthenticationApi } from "./api.js";
+import { EmailSchema, PasswordSchema } from "./form.js";
 
 import { z } from "zod";
 
@@ -46,16 +44,14 @@ export type TokenRevokeRequest = z.infer<typeof TokenRevokeRequestSchema>;
 /** Opens an authenticated session from an email and password, returning a fresh token pair. */
 export async function tokenCreate(api: AuthenticationApi, form: TokenCreateRequest): Promise<Token> {
   return await api.fetch("/v2/session", TokenSchema, {
-    headers: HTTP_HEADERS.JSON,
     method: "PUT",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
 /** Opens an anonymous session, returning a token pair whose claims carry no user. */
 export async function tokenCreateAnon(api: AuthenticationApi): Promise<Token> {
   return await api.fetch("/v2/session/anon", TokenSchema, {
-    headers: HTTP_HEADERS.JSON,
     method: "PUT",
   });
 }
@@ -63,9 +59,8 @@ export async function tokenCreateAnon(api: AuthenticationApi): Promise<Token> {
 /** Exchanges an expiring token pair for a new one, preserving the session's claims. */
 export async function tokenRefresh(api: AuthenticationApi, form: TokenRefreshRequest): Promise<Token> {
   return await api.fetch("/v2/session", TokenSchema, {
-    headers: HTTP_HEADERS.JSON,
     method: "PATCH",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
@@ -82,8 +77,8 @@ export async function tokenRevoke(
   form: TokenRevokeRequest
 ): Promise<void> {
   return await api.fetchVoid("/v2/session/revoke", {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
-    body: JSON.stringify(form),
+    json: form,
   });
 }

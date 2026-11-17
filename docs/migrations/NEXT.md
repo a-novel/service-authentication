@@ -1,12 +1,14 @@
 # Upgrading to NEXT
 
-The Go client names its claims helpers after what they do and reads the request's user for you, and the service reads its JSON Keys token from `SERVICE_JSON_KEYS_TOKEN_PATH`. `@a-novel/service-authentication-rest-test` now holds the sign-up helpers other services' test suites need: the super-admin sign-in, invitations, user and anonymous tokens, and one MailPit poller. It no longer depends on vitest, jsdom or mailparser.
+The Go client names its claims helpers after what they do and reads the request's user for you, and the service reads its JSON Keys token from `SERVICE_JSON_KEYS_TOKEN_PATH`. `@a-novel/service-authentication-rest-test` now holds the sign-up helpers other services' test suites need: the super-admin sign-in, invitations, user and anonymous tokens, and one MailPit poller. It no longer depends on vitest, jsdom or mailparser. The JavaScript client, `@a-novel/service-authentication-rest`, now builds on nodelib-browser's `RestClient`, so it requires `@a-novel-kit/nodelib-browser` 2.13.0 or later.
 
 ## Do I need to act?
 
 **Recommended** for a Go consumer and a deployment: nothing breaks, since the old function and the old variable keep working in this release. Move them to the new helpers and the new variable before a later release removes the old names.
 
 **Required** for a suite that imports `@a-novel/service-authentication-rest-test`: `checkEmail` and `preRegisterUser` changed shape, and two helpers are gone. No repository outside service-authentication imports it today. **Recommended** for a suite that copies the sign-up helpers (service-profile and service-narrative-engine): import them instead.
+
+**Required** for a JavaScript consumer of `@a-novel/service-authentication-rest`: it needs `@a-novel-kit/nodelib-browser` 2.13.0 or later.
 
 ## Call RequireClaimsContext instead of MustGetClaimsContext
 
@@ -130,7 +132,18 @@ The package behaves differently from the copies in three ways:
 
 The super-admin defaults stay `noreply@agorastoryverse.com` and `admin`, overridden by `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD`. MailPit's address comes from `MAIL_UI_URL`.
 
+## Install nodelib-browser 2.13 with the JavaScript client
+
+`AuthenticationApi` now extends `RestClient`, which `@a-novel-kit/nodelib-browser` 2.13.0 introduced, so a consumer on an older nodelib-browser fails to build. Update nodelib-browser before the client, or in the same change:
+
+```bash
+pnpm add @a-novel-kit/nodelib-browser@^2.13.0
+```
+
+Every name and signature of the client stays. Its `fetch`, `fetchVoid` and `fetchResponse` take a `RestInit`, a `RequestInit` that also accepts `accessToken` and `json`. `fetchVoid` now releases the response body, and a request without a body no longer sends `Content-Type`.
+
 ## Notes
 
 - `NewAuthHandler` reports a role that inherits an undefined role as an unknown role at startup. It reported a circular dependency before; both stop the process.
 - The `jobs/maintenance` image records each run as a root span named after its operation, such as `job.AccountRole`, which carries the failure and its `error.type`. `account-role` now ends after 5 minutes, like the purges.
+- `/v2/healthcheck` runs its probes at once, so it answers within the slowest probe instead of their sum. Its body and status stay the same. Each probe's span takes the probe's name, such as `rest.Health(client:smtp)` instead of `rest.Health(reportSMTP)`.

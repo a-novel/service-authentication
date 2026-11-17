@@ -49,7 +49,7 @@ func (dao *PgCredentialsUpdateEmail) Exec(
 	entity := &Credentials{}
 
 	err = db.NewRaw(credentialsUpdateEmailQuery, request.Email, request.Now, request.ID).Scan(ctx, entity)
-	if isUniqueViolation(err) {
+	if code, _ := postgres.SQLState(err); code == pgUniqueViolation {
 		err = errors.Join(err, ErrCredentialsAlreadyExists)
 	}
 

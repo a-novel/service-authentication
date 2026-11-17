@@ -24,9 +24,7 @@ type Main struct {
 
 // Dependencies configures how the service reaches the backing services it calls.
 type Dependencies struct {
-	ServiceJSONKeysHost        string
-	ServiceJSONKeysPort        int
-	ServiceJSONKeysCredentials grpcf.CredentialsProvider
+	ServiceJSONKeys grpcf.ClientConfig
 }
 
 // App is the fully resolved configuration for the service, assembled at startup from the environment.
@@ -35,11 +33,8 @@ type App struct {
 	Rest   httpf.ServerConfig
 	Limits authconfig.Limits
 	// ServiceToken names the service tokens the REST server accepts. Without an issuer, the server
-	// refuses to start unless ServiceIssuerOptional is set.
+	// refuses to start unless IssuerOptional is set.
 	ServiceToken servicetoken.Config
-	// ServiceIssuerOptional lets the REST server start without a service-token issuer, and then
-	// take every request. Only a local or test stack sets it.
-	ServiceIssuerOptional bool
 
 	Dependencies Dependencies
 	Permissions  authconfig.Permissions

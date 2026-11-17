@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -107,7 +107,7 @@ func TestRestTokenCreate(t *testing.T) {
 
 			// The account platform describes its visitor in headers. The router reads the IP from the
 			// header REST_CLIENT_IP_HEADER names.
-			handler := middleware.ClientIPFromHeader("X-Client-IP")(handlers.NewRestTokenCreate(service, config.LoggerDev))
+			handler := middleware.ClientIPFromHeader("X-Client-IP")(handlers.NewRestTokenCreate(service, configtest.Logger))
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(
 				t.Context(), http.MethodPut, "/v2/session", strings.NewReader(cmp.Or(testCase.body, validBody)),

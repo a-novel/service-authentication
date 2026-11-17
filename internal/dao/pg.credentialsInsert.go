@@ -67,7 +67,7 @@ func (dao *PgCredentialsInsert) Exec(
 		request.Now,
 		request.Role,
 	).Scan(ctx, entity)
-	if isUniqueViolation(err) {
+	if code, _ := postgres.SQLState(err); code == pgUniqueViolation {
 		err = errors.Join(err, ErrCredentialsAlreadyExists)
 	}
 

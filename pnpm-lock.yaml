@@ -235,7 +235,7 @@ importers:
         specifier: ^2.0.0
         version: 2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)
       '@a-novel-kit/nodelib-config':
-        specifier: ^2.0.0
+        specifier: ^2.13.0
         version: 2.13.0(d279528f42fdbcdac899609ac9bf19dd)
       '@a-novel-kit/nodelib-test':
         specifier: ^2.0.0
@@ -319,7 +319,7 @@ importers:
   pkg/js/rest:
     devDependencies:
       '@a-novel-kit/nodelib-browser':
-        specifier: ^2.0.0
+        specifier: ^2.13.0
         version: 2.13.0(@grafana/faro-web-sdk@2.14.0)(@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0))(zod@4.6.7)
       typescript:
         specifier: ^6.0.0

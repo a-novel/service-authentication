@@ -1,13 +1,15 @@
 // Command rest runs the authentication service's HTTP API. It wires the data-access, core,
 // and handler layers together, mounts them on a chi router, and serves until an interrupt or
 // termination signal arrives, then shuts the server down gracefully.
+//
+// The server admits only the callers its service tokens allow, and refuses to start without a token
+// issuer unless SERVICE_ISSUER_OPTIONAL opts a local stack out.
 package main
 
 import (
 	"context"
-	"io"
+	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -37,7 +39,6 @@ import (
 	"github.com/a-novel/service-authentication/v2/pkg/go"
 )
 
-//nolint:maintidx // main wires the whole dependency graph as one flat list, one line per dependency.
 func main() {
 	cfg := config.AppPresetDefault
 
@@ -49,10 +50,6 @@ func main() {
 	lo.Must0(otel.Init(cfg.Otel))
 	defer cfg.Otel.Flush()
 
-	if env.OTLPEndpoint == "" {
-		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
-	}
-
 	// =================================================================================================================
 	// DEPENDENCIES
 	// =================================================================================================================
@@ -60,24 +57,13 @@ func main() {
 	// A server started during a planned downtime refuses work, so it leaves the database alone.
 	if !downtime.Started(cfg.App.DowntimeStart, time.Now()) {
 		ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
-
-		database := lo.Must(cfg.Postgres.DB(ctx))
-		defer closeDatabase(database)
+		defer cfg.Postgres.Close()
 	}
 
-	lo.Must0(cfg.OAuth.Check(cfg.ServiceToken))
+	jsonKeys := cfg.Dependencies.ServiceJSONKeys
 
-	dependencies := cfg.Dependencies
-	jsonKeysCredentials := lo.Must(dependencies.ServiceJSONKeysCredentials.Options(ctx))
-	jsonKeysAddress := net.JoinHostPort(dependencies.ServiceJSONKeysHost, strconv.Itoa(dependencies.ServiceJSONKeysPort))
-
-	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(jsonKeysAddress, jsonKeysCredentials...))
+	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(jsonKeys.Address(), jsonKeys.DialOptions()...))
 	defer jsonKeysClient.Close()
-
-	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.Claims](jsonKeysClient))
-	serviceVerifyRefreshToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient))
-	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
-	accessTokenTTL := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuth].Token.TTL
 
 	mailDelivery := core.NewMailDelivery(cfg.SMTP, env.SMTPMaxConcurrent)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
@@ -88,16 +74,58 @@ func main() {
 		log.Println("WARNING: SMTP_ADDR is not set; emails are printed to stdout by the debug sender and none are delivered")
 	}
 
+	router := lo.Must(newRouter(cfg, jsonKeysClient, mailDelivery))
+
+	lo.Must0(serve(ctx, stop, cfg.Rest, router, mailDelivery))
+}
+
+// newRouter builds the REST API on the JSON Keys client and the mail delivery main owns. Each request
+// passes the service-token gate first, but for the liveness probe. The gate refuses an empty issuer
+// unless cfg opts a local stack out, so the server never starts open by mistake.
+//
+//nolint:maintidx // newRouter wires the whole dependency graph as one flat list, one line per dependency.
+func newRouter(
+	cfg config.App, jsonKeysClient servicejsonkeys.Client, mailDelivery *core.MailDelivery,
+) (http.Handler, error) {
+	err := cfg.OAuth.Check(cfg.ServiceToken)
+	if err != nil {
+		return nil, fmt.Errorf("oauth clients: %w", err)
+	}
+
+	withServiceToken, err := httpf.ServiceTokenGate(
+		cfg.ServiceToken, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger, cfg.Rest.Liveness,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("service token gate: %w", err)
+	}
+
+	serviceVerifyAccessToken, err := servicejsonkeys.NewClaimsVerifier[session.Claims](jsonKeysClient)
+	if err != nil {
+		return nil, fmt.Errorf("access token verifier: %w", err)
+	}
+
+	serviceVerifyRefreshToken, err := servicejsonkeys.NewClaimsVerifier[session.RefreshClaims](jsonKeysClient)
+	if err != nil {
+		return nil, fmt.Errorf("refresh token verifier: %w", err)
+	}
+
+	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
+	accessTokenTTL := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuth].Token.TTL
+
 	// =================================================================================================================
 	// DAO
 	// =================================================================================================================
+
+	daoWaitlist, err := dao.NewGoogleWaitlist(cfg.Waitlist, nil)
+	if err != nil {
+		return nil, fmt.Errorf("waitlist writer: %w", err)
+	}
 
 	daoShortCodeDelete := dao.NewPgShortCodeDelete()
 	daoShortCodeInsert := dao.NewPgShortCodeInsert()
 	daoShortCodeSelect := dao.NewPgShortCodeSelect()
 
 	daoCredentialsExist := dao.NewPgCredentialsExist()
-	daoWaitlist := lo.Must(dao.NewGoogleWaitlist(cfg.Waitlist, nil))
 	daoTransactor := postgres.NewTransactor(nil)
 
 	daoCredentialsInsert := dao.NewPgCredentialsInsert()
@@ -212,16 +240,11 @@ func main() {
 	// A signed-out session keeps its access token until it expires. The routes that manage devices
 	// refuse it at once, so it cannot sign the account's other sessions out in turn.
 	refuseEndedSessions := handlers.NewRestRefuseEndedSessions(serviceClaimsGet, cfg.Logger).Middleware
-	withServiceToken := lo.Must(middlewares.RestServiceToken(
-		cfg.ServiceToken, cfg.ServiceIssuerOptional, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger,
-		cfg.Rest.Liveness,
-	))
 
 	// =================================================================================================================
 	// HANDLERS
 	// =================================================================================================================
 
-	handlerPing := handlers.NewRestPing()
 	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.SMTPPing, cfg.Logger)
 
 	handlerClaimsGet := handlers.NewRestClaimsGet(serviceClaimsGet, cfg.Logger)
@@ -275,11 +298,11 @@ func main() {
 	// ROUTER
 	// =================================================================================================================
 
-	router := httpf.NewRouter(cfg.Rest, cfg.Otel, cfg.RestLogger, cfg.App.DowntimeStart)
+	router := httpf.NewMux(cfg.Rest, cfg.RestLogger, cfg.App.DowntimeStart)
 
 	router.Route("/v2", func(api chi.Router) {
-		api.Get("/ping", handlerPing.ServeHTTP)
-		api.Get("/healthcheck", handlerHealth.ServeHTTP)
+		api.Get("/ping", httpf.Ping)
+		api.Get("/healthcheck", handlerHealth)
 
 		withAuth(api, "waitlist:join").With(limit.Waitlist).Put("/waitlist", handlerWaitlistJoin.ServeHTTP)
 
@@ -345,11 +368,7 @@ func main() {
 		})
 	})
 
-	// =================================================================================================================
-	// RUN
-	// =================================================================================================================
-
-	lo.Must0(serve(ctx, stop, cfg.Rest, withServiceToken(router), mailDelivery))
+	return withServiceToken(router), nil
 }
 
 // serve runs the shared HTTP lifecycle, then drains accepted mail inside the same shutdown budget.
@@ -396,11 +415,4 @@ func serve(
 	}
 
 	return serveErr
-}
-
-func closeDatabase(database io.Closer) {
-	err := database.Close()
-	if err != nil {
-		log.Println("Close Postgres: " + err.Error())
-	}
 }

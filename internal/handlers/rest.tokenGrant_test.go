@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -138,7 +138,7 @@ func TestRestTokenGrant(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewRestTokenGrant(service, config.LoggerDev)
+			handler := handlers.NewRestTokenGrant(service, configtest.Logger)
 			request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/v2/oauth/token", strings.NewReader(body))
 			request.Header.Set("Content-Type", cmp.Or(testCase.contentType, "application/x-www-form-urlencoded"))
 

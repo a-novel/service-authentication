@@ -1,8 +1,8 @@
-import type { AuthenticationApi } from "./api";
-import { EmailSchema, LangSchema, PasswordSchema, RoleSchema, ShortCodeSchema } from "./form";
-import { type Token, TokenSchema } from "./token";
+import type { AuthenticationApi } from "./api.js";
+import { EmailSchema, LangSchema, PasswordSchema, RoleSchema, ShortCodeSchema } from "./form.js";
+import { type Token, TokenSchema } from "./token.js";
 
-import { HTTP_HEADERS, isHttpStatusError } from "@a-novel-kit/nodelib-browser/http";
+import { isHttpStatusError } from "@a-novel-kit/nodelib-browser/http";
 
 import { z } from "zod";
 
@@ -140,7 +140,7 @@ export async function credentialsGet(
   params.set("id", form.id);
 
   return await api.fetch(`/v2/credentials?${params.toString()}`, CredentialsSchema, {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "GET",
   });
 }
@@ -151,7 +151,7 @@ export async function credentialsGet(
  */
 export async function credentialsGetSelf(api: AuthenticationApi, accessToken: string): Promise<CredentialsSelf> {
   return await api.fetch("/v2/credentials/self", CredentialsSelfSchema, {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "GET",
   });
 }
@@ -167,7 +167,7 @@ export async function credentialsExists(
 
   return await api
     .fetchVoid(`/v2/credentials?${params.toString()}`, {
-      headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+      accessToken,
       method: "HEAD",
     })
     .then(() => true)
@@ -192,7 +192,7 @@ export async function credentialsList(
   form.roles?.forEach((role) => params.append("roles", role));
 
   return await api.fetch(`/v2/credentials/all?${params.toString()}`, z.array(CredentialsSchema), {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "GET",
   });
 }
@@ -204,9 +204,9 @@ export async function credentialsCreate(
   form: CredentialsCreateRequest
 ): Promise<Token> {
   return await api.fetch("/v2/credentials", TokenSchema, {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
@@ -217,9 +217,9 @@ export async function credentialsUpdateEmail(
   form: CredentialsUpdateEmailRequest
 ): Promise<Credentials> {
   return await api.fetch("/v2/credentials/email", CredentialsSchema, {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PATCH",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
@@ -230,9 +230,9 @@ export async function credentialsUpdatePassword(
   form: CredentialsUpdatePasswordRequest
 ): Promise<Credentials> {
   return await api.fetch("/v2/credentials/password", CredentialsSchema, {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PATCH",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
@@ -243,9 +243,9 @@ export async function credentialsResetPassword(
   form: CredentialsResetPasswordRequest
 ): Promise<Credentials> {
   return await api.fetch("/v2/credentials/password", CredentialsSchema, {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
@@ -256,9 +256,9 @@ export async function credentialsUpdateRole(
   form: CredentialsUpdateRoleRequest
 ): Promise<Credentials> {
   return await api.fetch("/v2/credentials/role", CredentialsSchema, {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PATCH",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
@@ -273,8 +273,8 @@ export async function credentialsUpdateLocationConsent(
   form: CredentialsUpdateLocationConsentRequest
 ): Promise<void> {
   return await api.fetchVoid("/v2/credentials/location-consent", {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PATCH",
-    body: JSON.stringify(form),
+    json: form,
   });
 }

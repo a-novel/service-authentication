@@ -20,7 +20,7 @@ import (
 	"github.com/a-novel-kit/jwt/v2/jwp"
 	"github.com/a-novel-kit/jwt/v2/jws"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 	middlewaresmocks "github.com/a-novel/service-authentication/v2/internal/handlers/middlewares/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
@@ -377,7 +377,7 @@ func TestAuth(t *testing.T) {
 					Return(testCase.verifyClaimsMock.resp, testCase.verifyClaimsMock.err)
 			}
 
-			middleware := middlewares.NewAuth(service, testCase.permissionsByRole, config.LoggerDev)
+			middleware := middlewares.NewAuth(service, testCase.permissionsByRole, configtest.Logger)
 			w := httptest.NewRecorder()
 
 			ctxClaims := new(*session.Claims)
@@ -418,7 +418,7 @@ func TestAuth(t *testing.T) {
 		verifier, err := servicejsonkeys.NewClaimsVerifier[session.Claims](client)
 		require.NoError(t, err)
 
-		handler := middlewares.NewAuth(verifier, map[string][]string{"role1": {"read"}}, config.LoggerDev).
+		handler := middlewares.NewAuth(verifier, map[string][]string{"role1": {"read"}}, configtest.Logger).
 			Middleware([]string{"read"})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}))

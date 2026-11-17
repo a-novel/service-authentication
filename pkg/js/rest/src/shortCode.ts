@@ -1,7 +1,5 @@
-import type { AuthenticationApi } from "./api";
-import { EmailSchema, LangSchema, PasswordSchema } from "./form";
-
-import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
+import type { AuthenticationApi } from "./api.js";
+import { EmailSchema, LangSchema, PasswordSchema } from "./form.js";
 
 import { z } from "zod";
 
@@ -52,9 +50,9 @@ export async function shortCodeCreateEmailUpdate(
   form: ShortCodeCreateEmailUpdateRequest
 ): Promise<void> {
   return await api.fetchVoid("/v2/short-code/update-email", {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
@@ -65,7 +63,7 @@ export async function shortCodeCreateEmailUpdate(
  */
 export async function shortCodeCancelEmailUpdate(api: AuthenticationApi, accessToken: string): Promise<void> {
   return await api.fetchVoid("/v2/short-code/update-email", {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "DELETE",
   });
 }
@@ -77,9 +75,9 @@ export async function shortCodeCreatePasswordReset(
   form: ShortCodeCreatePasswordResetRequest
 ): Promise<void> {
   return await api.fetchVoid("/v2/short-code/update-password", {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
 
@@ -90,8 +88,8 @@ export async function shortCodeCreateRegister(
   form: ShortCodeCreateRegisterRequest
 ): Promise<void> {
   return await api.fetchVoid("/v2/short-code/register", {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
-    body: JSON.stringify(form),
+    json: form,
   });
 }
