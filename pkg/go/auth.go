@@ -85,9 +85,8 @@ func RequireClaimsContext(ctx context.Context) (*Claims, error) {
 }
 
 // MustGetClaimsContext retrieves the authenticated user's claims from the context, returning
-// an error if no claims are present.
-//
-// Deprecated: Use [RequireClaimsContext], which behaves the same.
+// an error if no claims are present. It never panics: prefer [RequireClaimsContext], which
+// behaves the same under a name that says so.
 func MustGetClaimsContext(ctx context.Context) (*Claims, error) {
 	return session.RequireClaimsContext(ctx)
 }

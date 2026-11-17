@@ -43,6 +43,9 @@ func (maintenanceCommandTestDatabase) DBSchema(context.Context, string, bool) (*
 	return nil, errMaintenanceTestDatabase
 }
 
+// Close closes nothing: the database never connected. golib v0.66.0 adds it to postgres.Config.
+func (maintenanceCommandTestDatabase) Close() {}
+
 func TestMaintenanceCommand(t *testing.T) {
 	t.Parallel()
 

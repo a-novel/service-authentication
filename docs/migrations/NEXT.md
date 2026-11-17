@@ -10,7 +10,7 @@ The Go client names its claims helpers after what they do and reads the request'
 
 ## Call RequireClaimsContext instead of MustGetClaimsContext
 
-`MustGetClaimsContext` never panicked, as its `Must` prefix suggests: it returns an error when the context carries no claims. `RequireClaimsContext` does the same under a name that says so. `MustGetClaimsContext` stays as a deprecated alias, and a later minor removes it once no consumer calls it.
+`MustGetClaimsContext` never panicked, as its `Must` prefix suggests: it returns an error when the context carries no claims. `RequireClaimsContext` does the same under a name that says so. `MustGetClaimsContext` stays as an alias, without a deprecation marker so a consumer's staticcheck stays green; prefer the new name, and a later minor removes the alias once no consumer calls it.
 
 ```diff
 -claims, err := serviceauthentication.MustGetClaimsContext(r.Context())
@@ -39,7 +39,7 @@ The Go client names its claims helpers after what they do and reads the request'
 +ownerID, err := serviceauthentication.RequestUser(r.Context())
 ```
 
-Code that checked its own anonymous sentinel with `errors.Is` checks `serviceauthentication.ErrAnonymousCaller` instead.
+Code that checked its own anonymous sentinel with `errors.Is` checks `serviceauthentication.ErrAnonymousCaller` instead, and the local sentinel goes. An error map keyed on `nil`, such as `httpf.ErrMap{nil: http.StatusForbidden}`, keeps answering 403 for both refusals: a nil key sets the status of every error the map does not name.
 
 `GetClaimsContext` keeps its signature, but its error is now always nil: only `SetClaimsContext` stores claims, so the context never holds a value of another type. A check of that error can go.
 
