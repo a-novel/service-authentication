@@ -1,4 +1,4 @@
-import type { AuthenticationApi } from "./api";
+import type { AuthenticationApi } from "./api.js";
 
 import { HttpError, type RestInit, decodeHttpResponse, handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
 

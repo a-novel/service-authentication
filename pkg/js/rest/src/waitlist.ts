@@ -1,5 +1,5 @@
-import type { AuthenticationApi } from "./api";
-import { EmailSchema, LangSchema } from "./form";
+import type { AuthenticationApi } from "./api.js";
+import { EmailSchema, LangSchema } from "./form.js";
 
 import { HttpError, handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
 

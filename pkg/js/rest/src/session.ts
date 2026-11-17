@@ -1,4 +1,4 @@
-import type { AuthenticationApi } from "./api";
+import type { AuthenticationApi } from "./api.js";
 
 import { z } from "zod";
 

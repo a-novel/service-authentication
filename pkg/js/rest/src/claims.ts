@@ -1,5 +1,5 @@
-import type { AuthenticationApi } from "./api";
-import { RoleSchema } from "./form";
+import type { AuthenticationApi } from "./api.js";
+import { RoleSchema } from "./form.js";
 
 import { z } from "zod";
 

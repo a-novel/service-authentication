@@ -1,5 +1,5 @@
-import type { AuthenticationApi } from "./api";
-import { EmailSchema, LangSchema, PasswordSchema } from "./form";
+import type { AuthenticationApi } from "./api.js";
+import { EmailSchema, LangSchema, PasswordSchema } from "./form.js";
 
 import { z } from "zod";
 

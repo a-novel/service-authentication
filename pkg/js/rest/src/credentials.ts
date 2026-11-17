@@ -1,6 +1,6 @@
-import type { AuthenticationApi } from "./api";
-import { EmailSchema, LangSchema, PasswordSchema, RoleSchema, ShortCodeSchema } from "./form";
-import { type Token, TokenSchema } from "./token";
+import type { AuthenticationApi } from "./api.js";
+import { EmailSchema, LangSchema, PasswordSchema, RoleSchema, ShortCodeSchema } from "./form.js";
+import { type Token, TokenSchema } from "./token.js";
 
 import { isHttpStatusError } from "@a-novel-kit/nodelib-browser/http";
 
