@@ -55,9 +55,12 @@ func TestRestTokenCreateAnon(t *testing.T) {
 			t.Parallel()
 
 			service := handlersmocks.NewMockRestTokenCreateAnonService(t)
-			service.EXPECT().
-				Exec(mock.Anything).
-				Return(testCase.serviceMock.resp, testCase.serviceMock.err)
+
+			if testCase.serviceMock != nil {
+				service.EXPECT().
+					Exec(mock.Anything).
+					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
+			}
 
 			handler := handlers.NewRestTokenCreateAnon(service, config.LoggerDev)
 			w := httptest.NewRecorder()

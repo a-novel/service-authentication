@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -73,15 +74,19 @@ func serveAsCaller(t *testing.T, handler http.Handler, request *http.Request, ca
 	return w.Result()
 }
 
-// requireJSONBody requires the JSON body of res to equal expect. It decodes the body into any, so
-// expect spells the wire format: an object is a map[string]any, an array a []any and a number a
-// float64.
+// requireJSONBody requires the JSON body of res to be one document equal to expect. It decodes the
+// body into any, so expect spells the wire format: an object is a map[string]any, an array a []any
+// and a number a float64.
 func requireJSONBody(t *testing.T, res *http.Response, expect any) {
 	t.Helper()
 
+	data, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
 	var body any
 
-	require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+	// Unmarshal, unlike a Decoder, refuses data after the first document.
+	require.NoError(t, json.Unmarshal(data, &body))
 	require.Equal(t, expect, body)
 }
 
