@@ -14,7 +14,7 @@ import (
 
 // RestShortCodeCreatePasswordResetService is the core operation PUT /v2/short-code/update-password delegates to.
 type RestShortCodeCreatePasswordResetService interface {
-	Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error)
+	Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) error
 }
 
 // shortCodeCreatePasswordResetErrors maps a failed password-reset code request to its status.
@@ -59,7 +59,7 @@ func (handler *RestShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter
 		Lang:  request.Lang,
 	}
 
-	_, err = handler.service.Exec(ctx, serviceRequest)
+	err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
 	if err != nil && !errors.Is(err, core.ErrCredentialsNotFound) {
 		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreatePasswordResetErrors, err)

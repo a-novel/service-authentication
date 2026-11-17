@@ -24,10 +24,10 @@ type ShortCodeCreateEmailUpdateServiceShortCodeCreate interface {
 	Exec(ctx context.Context, request *ShortCodeCreateRequest) (*ShortCode, error)
 }
 
-// ShortCodeCreateEmailUpdateDaoSelectByEmail reports whether an email address is already
+// ShortCodeCreateEmailUpdateDaoCredentialsExist reports whether an email address is already
 // registered, so no code is mailed to an address already in use.
-type ShortCodeCreateEmailUpdateDaoSelectByEmail interface {
-	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
+type ShortCodeCreateEmailUpdateDaoCredentialsExist interface {
+	Exec(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error)
 }
 
 // ShortCodeCreateEmailUpdateDaoCredentials loads the account changing its address, whose current
@@ -56,7 +56,7 @@ type ShortCodeCreateEmailUpdateRequest struct {
 // password change does: a session alone does not move the account to another address.
 type ShortCodeCreateEmailUpdate struct {
 	serviceShortCodeCreate ShortCodeCreateEmailUpdateServiceShortCodeCreate
-	daoSelectByEmail       ShortCodeCreateEmailUpdateDaoSelectByEmail
+	daoCredentialsExist    ShortCodeCreateEmailUpdateDaoCredentialsExist
 	daoCredentials         ShortCodeCreateEmailUpdateDaoCredentials
 	mailDelivery           ShortCodeCreateEmailUpdateMailDelivery
 	shortCodesConfig       authconfig.ShortCodes
@@ -67,7 +67,7 @@ type ShortCodeCreateEmailUpdate struct {
 // service, the email-existence DAO, and the delivery owner.
 func NewShortCodeCreateEmailUpdate(
 	serviceShortCodeCreate ShortCodeCreateEmailUpdateServiceShortCodeCreate,
-	daoSelectByEmail ShortCodeCreateEmailUpdateDaoSelectByEmail,
+	daoCredentialsExist ShortCodeCreateEmailUpdateDaoCredentialsExist,
 	daoCredentials ShortCodeCreateEmailUpdateDaoCredentials,
 	mailDelivery ShortCodeCreateEmailUpdateMailDelivery,
 	shortCodesConfig authconfig.ShortCodes,
@@ -75,7 +75,7 @@ func NewShortCodeCreateEmailUpdate(
 ) *ShortCodeCreateEmailUpdate {
 	return &ShortCodeCreateEmailUpdate{
 		serviceShortCodeCreate: serviceShortCodeCreate,
-		daoSelectByEmail:       daoSelectByEmail,
+		daoCredentialsExist:    daoCredentialsExist,
 		daoCredentials:         daoCredentials,
 		mailDelivery:           mailDelivery,
 		shortCodesConfig:       shortCodesConfig,
@@ -83,8 +83,7 @@ func NewShortCodeCreateEmailUpdate(
 	}
 }
 
-// Exec issues the confirmation code and schedules its delivery email, returning
-// the code immediately.
+// Exec issues the confirmation code and schedules its delivery email.
 //
 // A registered address gets the same code and result but no mail, so neither
 // this call nor the pending change it leaves reveals that the address is taken.
@@ -92,7 +91,7 @@ func NewShortCodeCreateEmailUpdate(
 // [CredentialsUpdateEmail] would reject the taken address anyway.
 func (service *ShortCodeCreateEmailUpdate) Exec(
 	ctx context.Context, request *ShortCodeCreateEmailUpdateRequest,
-) (*ShortCode, error) {
+) error {
 	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeCreateEmailUpdate")
 	defer span.End()
 
@@ -103,67 +102,64 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
 	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: request.ID})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
+		return otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
 	err = lib.CompareArgon2(request.CurrentPassword, credentials.Password)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("compare current password: %w", err))
+		return otel.ReportError(span, fmt.Errorf("compare current password: %w", err))
 	}
 
-	_, err = service.daoSelectByEmail.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
-	emailTaken := err == nil
-
-	if !emailTaken && !errors.Is(err, dao.ErrCredentialsNotFound) {
-		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
+	emailTaken, err := service.daoCredentialsExist.Exec(ctx, &dao.CredentialsExistRequest{Email: request.Email})
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
 	// A taken address reserves too, so a saturated mailer fails both cases alike. The deferred
 	// Release returns the slot when no mail goes out.
 	reservation, err := service.mailDelivery.Reserve(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
+		return otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
 	}
 	defer reservation.Release()
 
 	ttl := service.shortCodesConfig.Usages[ShortCodeUsageValidateEmail].TTL
 	createRequest := &ShortCodeCreateRequest{
-		Usage:    ShortCodeUsageValidateEmail,
-		Target:   request.ID.String(),
-		Data:     request.Email,
-		TTL:      ttl,
-		Override: true,
+		Usage:  ShortCodeUsageValidateEmail,
+		Target: request.ID.String(),
+		Data:   request.Email,
+		TTL:    ttl,
 	}
 
 	shortCode, err := service.serviceShortCodeCreate.Exec(ctx, createRequest)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
+		return otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
 	if emailTaken {
-		return shortCode, nil
+		return nil
 	}
 
 	mail := &MailDeliveryRequest{
 		To:           smtp.MailUsers{{Email: request.Email}},
 		Template:     mails.Mails.EmailUpdate,
 		TemplateName: request.Lang,
-		Data: map[string]any{
-			mails.TemplateVarShortCode: shortCode.PlainCode,
-			mails.TemplateVarTarget:    request.ID.String(),
-			mails.TemplateVarSource:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-			mails.TemplateVarURL:       service.smtpConfig.UpdateEmail,
-			mails.TemplateVarDuration:  ttl.Hours(),
+		Data: mails.Link{
+			ShortCode: shortCode.PlainCode,
+			Target:    request.ID.String(),
+			Source:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+			URL:       service.smtpConfig.UpdateEmail,
+			Duration:  ttl.Hours(),
 		},
 		Kind: mailDeliveryKindEmailUpdate,
 	}
 
 	reservation.Deliver(ctx, mail)
 
-	return shortCode, nil
+	return nil
 }

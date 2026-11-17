@@ -33,7 +33,7 @@ type CredentialsUpdatePasswordServiceShortCodeVerify interface {
 
 // CredentialsUpdatePasswordServiceShortCodeConsume retires the verified short code.
 type CredentialsUpdatePasswordServiceShortCodeConsume interface {
-	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
+	Exec(ctx context.Context, request *ShortCodeConsumeRequest) error
 }
 
 // CredentialsUpdatePasswordRequest carries the new password and one proof of ownership: the
@@ -124,7 +124,7 @@ func (service *CredentialsUpdatePassword) Exec(
 		}
 	}
 
-	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
+	encryptedPassword, err := lib.GenerateArgon2(request.Password)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
 	}
@@ -133,7 +133,7 @@ func (service *CredentialsUpdatePassword) Exec(
 	// write leaves the code usable.
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
 		if shortCode != nil {
-			_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
+			err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
 			if err != nil {
 				return fmt.Errorf("consume short code: %w", err)
 			}

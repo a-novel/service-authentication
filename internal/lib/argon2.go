@@ -36,38 +36,36 @@ const (
 	argon2HashLen = 6
 )
 
-// Default Argon2id parameters, taken from the second (lower-memory) configuration
-// recommended in RFC 9106 (https://www.rfc-editor.org/rfc/rfc9106.html#section-7.4).
-const (
-	Argon2IterationsDefault = 3
-	Argon2MemoryDefault     = 64 * 1024
-	Argon2SaltLenDefault    = 32
-	Argon2KeyLenDefault     = 32
-)
-
-// Argon2Params contains the parameters used to generate a hash using the Argon2id algorithm.
-//
-// You can use Argon2ParamsDefault unless you have specific requirements.
-type Argon2Params struct {
+// argon2Params contains the parameters of an Argon2id hash.
+type argon2Params struct {
 	// Memory is the amount of memory used by the Argon2 algorithm (in kibibytes).
 	Memory uint32
 	// Iterations is the number of passes over the memory.
 	Iterations uint32
-	// Parallelism is the number of threads (or lanes) used by the algorithm. Defaults to the host CPU count when zero.
+	// Parallelism is the number of threads (or lanes) used by the algorithm.
 	Parallelism uint8
-	// SaltLength is the length of the random salt. 16 bytes is recommended for password hashing.
+	// SaltLength is the length of the random salt.
 	SaltLength uint
-	// KeyLength is the length of the generated key (or password hash). 16 bytes or more is recommended.
+	// KeyLength is the length of the generated key (or password hash).
 	KeyLength uint32
 }
 
-// Argon2ParamsDefault is the parameter set passed to [GenerateArgon2] for password
-// hashing. Parallelism is left unset and resolved to the host CPU count at hash time.
-var Argon2ParamsDefault = Argon2Params{
-	Memory:     Argon2MemoryDefault,
-	Iterations: Argon2IterationsDefault,
-	SaltLength: Argon2SaltLenDefault,
-	KeyLength:  Argon2KeyLenDefault,
+// The second, lower-memory, Argon2id configuration RFC 9106 section 7.4 recommends: 3 passes over
+// 64 MiB, here with a 32-byte salt and key.
+const (
+	argon2Iterations = 3
+	argon2Memory     = 64 * 1024
+	argon2SaltLength = 32
+	argon2KeyLength  = 32
+)
+
+// argon2ParamsDefault hashes every password and short code. [GenerateArgon2] sets Parallelism to the
+// host CPU count at hash time.
+var argon2ParamsDefault = argon2Params{
+	Memory:     argon2Memory,
+	Iterations: argon2Iterations,
+	SaltLength: argon2SaltLength,
+	KeyLength:  argon2KeyLength,
 }
 
 // GenerateArgon2 hashes a password with Argon2id under a fresh random salt. It returns the
@@ -76,16 +74,16 @@ var Argon2ParamsDefault = Argon2Params{
 //	$argon2id$v=<version>$m=<memory>,t=<iterations>,p=<lanes>$<salt>$<hash>
 //
 // The salt and the hash use unpadded standard base64.
-func GenerateArgon2(password string, params Argon2Params) (string, error) {
+func GenerateArgon2(password string) (string, error) {
+	params := argon2ParamsDefault
+	//nolint:gosec // min bounds the CPU count to uint8's range.
+	params.Parallelism = uint8(min(runtime.NumCPU(), math.MaxUint8))
+
 	salt := make([]byte, params.SaltLength)
 
 	_, err := io.ReadFull(rand.Reader, salt)
 	if err != nil {
 		return "", fmt.Errorf("generate salt: %w", err)
-	}
-
-	if params.Parallelism == 0 {
-		params.Parallelism = uint8(min(runtime.NumCPU(), math.MaxUint8))
 	}
 
 	hash := idKey(password, salt, &params)
@@ -134,7 +132,7 @@ func LimitArgon2(maxConcurrent int) {
 
 // idKey derives the Argon2id key once a slot frees up, so a burst of logins waits instead of
 // exhausting memory.
-func idKey(password string, salt []byte, params *Argon2Params) []byte {
+func idKey(password string, salt []byte, params *argon2Params) []byte {
 	// A hash returns its slot to the gate it took it from.
 	slots := argon2Slots
 	slots <- struct{}{}
@@ -144,11 +142,11 @@ func idKey(password string, salt []byte, params *Argon2Params) []byte {
 	return argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, params.Parallelism, params.KeyLength)
 }
 
-// dummyArgon2Hash is a throwaway Argon2id hash with Argon2ParamsDefault, so verifying against it
+// dummyArgon2Hash is a throwaway Argon2id hash with the default parameters, so verifying against it
 // costs the same as a real [CompareArgon2] call. It is built on first use. A binary that never
 // compares against it, such as a consumer of the Go client, skips its 64 MiB hash.
 var dummyArgon2Hash = sync.OnceValue(func() string {
-	return lo.Must(GenerateArgon2("not-a-real-password", Argon2ParamsDefault))
+	return lo.Must(GenerateArgon2("not-a-real-password"))
 })
 
 // PrepareDummyArgon2 builds the throwaway hash [DummyCompareArgon2] verifies against. Call it at
@@ -165,7 +163,7 @@ func DummyCompareArgon2(password string) {
 	_ = CompareArgon2(password, dummyArgon2Hash())
 }
 
-func decodeHash(encodedHash string) (*Argon2Params, []byte, []byte, error) {
+func decodeHash(encodedHash string) (*argon2Params, []byte, []byte, error) {
 	values := strings.Split(encodedHash, "$")
 	if len(values) != argon2HashLen {
 		return nil, nil, nil, ErrInvalidHash
@@ -182,7 +180,7 @@ func decodeHash(encodedHash string) (*Argon2Params, []byte, []byte, error) {
 		return nil, nil, nil, ErrIncompatibleVersion
 	}
 
-	params := &Argon2Params{}
+	params := &argon2Params{}
 
 	_, err = fmt.Sscanf(values[3], "m=%d,t=%d,p=%d", &params.Memory, &params.Iterations, &params.Parallelism)
 	if err != nil {

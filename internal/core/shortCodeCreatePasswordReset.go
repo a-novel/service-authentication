@@ -68,15 +68,15 @@ func NewShortCodeCreatePasswordReset(
 	}
 }
 
-// Exec issues the reset code and schedules its delivery email, returning the code
-// immediately. It fails if no account matches the requested email.
+// Exec issues the reset code and schedules its delivery email. It fails if no account matches the
+// requested email.
 //
 // An unknown email costs what a known one does: it takes a mail slot, so a saturated mailer fails
 // both alike, and runs one Argon2id hash, the bulk of a short code's cost. The response time then
 // tells nothing about which addresses are registered.
 func (service *ShortCodeCreatePasswordReset) Exec(
 	ctx context.Context, request *ShortCodeCreatePasswordResetRequest,
-) (*ShortCode, error) {
+) error {
 	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeCreatePasswordReset")
 	defer span.End()
 
@@ -87,12 +87,12 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
 	reservation, err := service.mailDelivery.Reserve(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
+		return otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
 	}
 	defer reservation.Release()
 
@@ -102,36 +102,35 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 	}
 
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
+		return otel.ReportError(span, fmt.Errorf("check email existence: %w", err))
 	}
 
 	ttl := service.shortCodesConfig.Usages[ShortCodeUsageResetPassword].TTL
 	createRequest := &ShortCodeCreateRequest{
-		Usage:    ShortCodeUsageResetPassword,
-		Target:   credentials.ID.String(),
-		TTL:      ttl,
-		Override: true,
+		Usage:  ShortCodeUsageResetPassword,
+		Target: credentials.ID.String(),
+		TTL:    ttl,
 	}
 
 	shortCode, err := service.serviceShortCodeCreate.Exec(ctx, createRequest)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
+		return otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
 	mail := &MailDeliveryRequest{
 		To:           smtp.MailUsers{{Email: request.Email}},
 		Template:     mails.Mails.PasswordReset,
 		TemplateName: request.Lang,
-		Data: map[string]any{
-			mails.TemplateVarShortCode: shortCode.PlainCode,
-			mails.TemplateVarTarget:    credentials.ID.String(),
-			mails.TemplateVarURL:       service.smtpConfig.UpdatePassword,
-			mails.TemplateVarDuration:  ttl.Hours(),
+		Data: mails.Link{
+			ShortCode: shortCode.PlainCode,
+			Target:    credentials.ID.String(),
+			URL:       service.smtpConfig.UpdatePassword,
+			Duration:  ttl.Hours(),
 		},
 		Kind: mailDeliveryKindPasswordReset,
 	}
 
 	reservation.Deliver(ctx, mail)
 
-	return shortCode, nil
+	return nil
 }

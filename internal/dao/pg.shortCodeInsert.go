@@ -23,6 +23,9 @@ var ErrShortCodeInsertNested = errors.New("short code insert cannot run inside a
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
 
+//go:embed pg.shortCodeInsert.discardConflict.sql
+var shortCodeInsertDiscardConflictQuery string
+
 // ShortCodeInsertRequest is the input to [PgShortCodeInsert.Exec].
 type ShortCodeInsertRequest struct {
 	// See [ShortCode.ID].
@@ -39,13 +42,10 @@ type ShortCodeInsertRequest struct {
 	Now time.Time
 	// See [ShortCode.ExpiresAt].
 	ExpiresAt time.Time
-
-	// Override soft-deletes any conflicting record, with the [ShortCodeDeleteOverride] deletion
-	// comment. When false, a conflict fails the insert.
-	Override bool
 }
 
-// PgShortCodeInsert inserts a new short code in the database.
+// PgShortCodeInsert replaces the short code of a (target, usage) pair: it soft-deletes the pair's
+// live codes, with the [ShortCodeDeleteOverride] comment, then inserts the new one.
 type PgShortCodeInsert struct{}
 
 func NewPgShortCodeInsert() *PgShortCodeInsert {
@@ -60,7 +60,6 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 		attribute.String("short_code.id", request.ID.String()),
 		attribute.String("short_code.usage", request.Usage),
 		attribute.String("short_code.target", request.Target),
-		attribute.Bool("short_code.override", request.Override),
 	)
 
 	if postgres.InTx(ctx) {
@@ -69,34 +68,30 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 
 	entity := &ShortCode{}
 	// The partial unique index keeps one non-deleted code per (target, usage) pair at any
-	// isolation. Under read committed, the losing UPDATE of two concurrent overrides blocks and
+	// isolation. Under read committed, the losing UPDATE of two concurrent inserts blocks and
 	// re-evaluates, and its insert then fails on that index as an already-exists conflict.
 	// Repeatable read fails it with a serialization error instead.
 	txOptions := &sql.TxOptions{Isolation: sql.LevelReadCommitted}
 
 	err := postgres.WithinTx(ctx, txOptions, func(ctx context.Context) error {
-		var err error
-
-		if request.Override {
-			// Soft-delete every non-deleted row of the pair, expired or not, so the partial unique
-			// index is clear before the insert.
-			err = dao.discardConflicts(ctx, request)
-		} else {
-			// checkConflicts ignores expired rows, which still sit in the partial unique index
-			// and collide with the insert. Soft-delete them first.
-			err = dao.discardExpired(ctx, request)
-			if err == nil {
-				err = dao.checkConflicts(ctx, request)
-			}
-		}
-
-		if err != nil {
-			return fmt.Errorf("handle conflict: %w", err)
-		}
-
 		db, err := postgres.GetContext(ctx)
 		if err != nil {
 			return fmt.Errorf("get postgres context: %w", err)
+		}
+
+		// Soft-delete every non-deleted code of the pair, expired or not, so the partial unique index
+		// is clear before the insert. Go and Postgres can disagree on "now" by a small margin, so the
+		// deletion is backdated by a second: the row then stays in the past for predicates comparing
+		// deleted_at against CURRENT_TIMESTAMP, such as the active short-codes view.
+		_, err = db.NewRaw(
+			shortCodeInsertDiscardConflictQuery,
+			request.Now.Add(-time.Second),
+			ShortCodeDeleteOverride,
+			request.Target,
+			request.Usage,
+		).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("discard live codes: %w", err)
 		}
 
 		err = db.NewRaw(
@@ -109,8 +104,6 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 			request.Now,
 			request.ExpiresAt,
 		).Scan(ctx, entity)
-		// The partial unique index catches the conflicts the steps above miss under concurrent
-		// inserts.
 		if isUniqueViolation(err) {
 			err = errors.Join(err, ErrShortCodeAlreadyExists)
 		}
@@ -126,89 +119,4 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 	}
 
 	return entity, nil
-}
-
-//go:embed pg.shortCodeInsert.discardConflict.sql
-var shortCodeInsertDiscardConflictQuery string
-
-func (dao *PgShortCodeInsert) discardConflicts(ctx context.Context, request *ShortCodeInsertRequest) error {
-	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(discardConflicts)")
-	defer span.End()
-
-	db, err := postgres.GetContext(ctx)
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
-	}
-
-	_, err = db.NewRaw(
-		shortCodeInsertDiscardConflictQuery,
-		// Go and Postgres can disagree on "now" by a small margin, so backdate the
-		// deletion by a second: the row then stays in the past for predicates
-		// comparing deleted_at against CURRENT_TIMESTAMP, such as the active
-		// short-codes view.
-		new(request.Now.Add(-time.Second)),
-		new(ShortCodeDeleteOverride),
-		request.Target,
-		request.Usage,
-	).Exec(ctx)
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
-	}
-
-	return nil
-}
-
-//go:embed pg.shortCodeInsert.discardExpired.sql
-var shortCodeInsertDiscardExpiredQuery string
-
-func (dao *PgShortCodeInsert) discardExpired(ctx context.Context, request *ShortCodeInsertRequest) error {
-	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(discardExpired)")
-	defer span.End()
-
-	db, err := postgres.GetContext(ctx)
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
-	}
-
-	_, err = db.NewRaw(
-		shortCodeInsertDiscardExpiredQuery,
-		request.Now,
-		"expired before insert",
-		request.Target,
-		request.Usage,
-	).Exec(ctx)
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
-	}
-
-	return nil
-}
-
-//go:embed pg.shortCodeInsert.checkConflict.sql
-var shortCodeInsertCheckConflictQuery string
-
-func (dao *PgShortCodeInsert) checkConflicts(ctx context.Context, request *ShortCodeInsertRequest) error {
-	ctx, span := otel.Tracer().Start(ctx, "dao.PgShortCodeInsert(checkConflicts)")
-	defer span.End()
-
-	db, err := postgres.GetContext(ctx)
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("get postgres context: %w", err))
-	}
-
-	res, err := db.NewRaw(shortCodeInsertCheckConflictQuery, request.Target, request.Usage).Exec(ctx)
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("execute query: %w", err))
-	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return otel.ReportError(span, fmt.Errorf("get rows affected: %w", err))
-	}
-
-	if n > 0 {
-		return otel.ReportError(span, ErrShortCodeAlreadyExists)
-	}
-
-	return nil
 }

@@ -42,11 +42,10 @@ func TestShortCodeCreate(t *testing.T) {
 			name: "Success",
 
 			request: &core.ShortCodeCreateRequest{
-				Usage:    core.ShortCodeUsageValidateEmail,
-				Target:   "test-target",
-				Data:     map[string]string{"test": "data"},
-				TTL:      time.Hour,
-				Override: true,
+				Usage:  core.ShortCodeUsageValidateEmail,
+				Target: "test-target",
+				Data:   map[string]string{"test": "data"},
+				TTL:    time.Hour,
 			},
 
 			daoMock: &daoMock{
@@ -63,11 +62,10 @@ func TestShortCodeCreate(t *testing.T) {
 			name: "CreateShortCodeError",
 
 			request: &core.ShortCodeCreateRequest{
-				Usage:    core.ShortCodeUsageValidateEmail,
-				Target:   "test-target",
-				Data:     map[string]string{"test": "data"},
-				TTL:      time.Hour,
-				Override: true,
+				Usage:  core.ShortCodeUsageValidateEmail,
+				Target: "test-target",
+				Data:   map[string]string{"test": "data"},
+				TTL:    time.Hour,
 			},
 
 			daoMock: &daoMock{
@@ -102,8 +100,7 @@ func TestShortCodeCreate(t *testing.T) {
 							assert.NotEmpty(t, data.Code) &&
 							assert.Equal(t, testCase.request.Usage, data.Usage) &&
 							assert.Equal(t, testCase.request.Target, data.Target) &&
-							assert.Equal(t, testCase.request.Data, dataMap) &&
-							assert.Equal(t, testCase.request.Override, data.Override)
+							assert.Equal(t, testCase.request.Data, dataMap)
 					})).
 					RunAndReturn(func(_ context.Context, data *dao.ShortCodeInsertRequest) (*dao.ShortCode, error) {
 						encryptedShortCode = data.Code

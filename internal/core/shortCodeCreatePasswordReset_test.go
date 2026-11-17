@@ -182,10 +182,9 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 
 			if testCase.serviceCreateMock != nil {
 				shortCodeCreateRequest := &core.ShortCodeCreateRequest{
-					Usage:    core.ShortCodeUsageResetPassword,
-					Target:   testCase.daoMock.resp.ID.String(),
-					TTL:      authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL,
-					Override: true,
+					Usage:  core.ShortCodeUsageResetPassword,
+					Target: testCase.daoMock.resp.ID.String(),
+					TTL:    authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL,
 				}
 
 				serviceCreate.EXPECT().
@@ -202,11 +201,11 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}
 
 			if testCase.sendMail {
-				mailData := map[string]any{
-					"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
-					"Target":    testCase.daoMock.resp.ID.String(),
-					"URL":       smtpConfig.UpdatePassword,
-					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL.Hours(),
+				mailData := mails.Link{
+					ShortCode: testCase.serviceCreateMock.resp.PlainCode,
+					Target:    testCase.daoMock.resp.ID.String(),
+					URL:       smtpConfig.UpdatePassword,
+					Duration:  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageResetPassword].TTL.Hours(),
 				}
 
 				sendMail := smtpService.EXPECT().
@@ -230,12 +229,8 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 				serviceCreate, mockDao, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
 			)
 
-			resp, err := service.Exec(t.Context(), testCase.request)
+			err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
-
-			if err == nil {
-				require.Equal(t, testCase.serviceCreateMock.resp, resp)
-			}
 
 			waitForMailDelivery(t, mailDelivery)
 		})

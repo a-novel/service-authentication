@@ -31,6 +31,12 @@ const SessionLoggedOutKept = 100
 // handles the rest.
 const SessionTrimBatch = 1000
 
+// SessionRetention is how long a session's row stays after the session ends, the time a device that
+// ended stays listed. A device signed out earlier stays up to the refresh token TTL that JSON Keys
+// sets, 7 days, longer. The purge reads the end, which never changes, so a renewal leaves the index
+// it scans untouched.
+const SessionRetention = 30 * 24 * time.Hour
+
 // Visitor is the device a request comes from, as the account platform forwards it. Every field is
 // empty when unknown.
 type Visitor struct {
@@ -216,6 +222,35 @@ func (bounds sessionBounds) bound(ctx context.Context, userID uuid.UUID) {
 	_ = bounds.daoTrim.Exec(ctx, &dao.SessionTrimRequest{
 		UserID: userID, Keep: SessionLoggedOutKept, Limit: SessionTrimBatch,
 	})
+}
+
+// sessionOpener opens the session of a login: it signs the session's token pair, records the access
+// token on the session's row, then bounds the account's rows. Each operation that opens one builds it
+// from its own dependencies.
+type sessionOpener struct {
+	signer   tokenPairSigner
+	recorder sessionRecorder
+	bounds   sessionBounds
+}
+
+// open opens a session for credentials, on visitor's device, and returns its token pair.
+func (opener sessionOpener) open(ctx context.Context, credentials *dao.Credentials, visitor Visitor) (*Token, error) {
+	ctx, span := otel.Tracer().Start(ctx, "core.openSession")
+	defer span.End()
+
+	tokens, refreshClaims, err := signTokenPair(ctx, opener.signer, credentials, session.RefreshClaimsForm{})
+	if err != nil {
+		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
+	}
+
+	err = opener.recorder.record(ctx, credentials.ID, credentials.LocationConsent, refreshClaims, visitor)
+	if err != nil {
+		return nil, otel.ReportError(span, err)
+	}
+
+	opener.bounds.bound(ctx, credentials.ID)
+
+	return tokens, nil
 }
 
 // clipVisitorField returns the first [VisitorFieldMaxLength] characters of value. It drops the bytes

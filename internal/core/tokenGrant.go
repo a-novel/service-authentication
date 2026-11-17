@@ -358,15 +358,13 @@ func (service *TokenGrant) grantAuthorizationCode(
 		return nil, otel.ReportError(span, err)
 	}
 
-	revocationRequest := &dao.RefreshTokenRevocationExistRequest{JTIs: []string{code.SessionID}}
-
-	revoked, err := service.daoRevocationExist.Exec(ctx, revocationRequest)
+	err = checkSessionActive(ctx, service.daoRevocationExist, sessionActiveOpts{
+		jtis:   []string{code.SessionID},
+		endsAt: code.SessionExpiresAt.Unix(),
+		ended:  ErrTokenGrantSessionEnded,
+	})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check session revocation: %w", err))
-	}
-
-	if revoked {
-		return nil, otel.ReportError(span, ErrTokenGrantSessionEnded)
+		return nil, otel.ReportError(span, err)
 	}
 
 	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: code.UserID})
@@ -446,15 +444,13 @@ func (service *TokenGrant) grantRefreshToken(
 		return nil, otel.ReportError(span, ErrTokenGrantForeignRefreshToken)
 	}
 
-	revocationRequest := &dao.RefreshTokenRevocationExistRequest{JTIs: []string{claims.Jti, claims.Session()}}
-
-	revoked, err := service.daoRevocationExist.Exec(ctx, revocationRequest)
+	err = checkSessionActive(ctx, service.daoRevocationExist, sessionActiveOpts{
+		jtis:   []string{claims.Jti, claims.Session()},
+		endsAt: claims.SessionExpiry(),
+		ended:  ErrTokenGrantSessionEnded,
+	})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check session revocation: %w", err))
-	}
-
-	if revoked || time.Now().Unix() >= claims.SessionExpiry() {
-		return nil, otel.ReportError(span, ErrTokenGrantSessionEnded)
+		return nil, otel.ReportError(span, err)
 	}
 
 	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: claims.UserID})
@@ -553,13 +549,11 @@ func checkCodeBinding(code *dao.AuthorizationCode, clientID string, params url.V
 	return nil
 }
 
-// checkCodeLifetime returns the refusal of a code that expired, or whose session ended.
+// checkCodeLifetime returns the refusal of a code that expired. [checkSessionActive] checks the
+// session's end after it, so an expired code keeps its own refusal.
 func checkCodeLifetime(code *dao.AuthorizationCode, now time.Time) error {
-	switch {
-	case !now.Before(code.ExpiresAt):
+	if !now.Before(code.ExpiresAt) {
 		return ErrTokenGrantCodeExpired
-	case !now.Before(code.SessionExpiresAt):
-		return ErrTokenGrantSessionEnded
 	}
 
 	return nil

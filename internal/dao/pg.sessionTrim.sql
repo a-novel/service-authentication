@@ -1,5 +1,4 @@
--- The account keeps its logged-out sessions active last, and the others go least recent first. A
--- session is logged out once it ends or a revocation holds its ID.
+-- The account keeps its logged-out sessions active last, and the others go least recent first.
 DELETE FROM sessions
 WHERE
   id IN (
@@ -11,20 +10,10 @@ WHERE
           id,
           last_active_at
         FROM
-          sessions
+          session_states
         WHERE
           user_id = ?0
-          AND (
-            expires_at <= CURRENT_TIMESTAMP
-            OR EXISTS (
-              SELECT
-                1
-              FROM
-                refresh_token_revocations
-              WHERE
-                jti = sessions.id::text
-            )
-          )
+          AND logged_out
         ORDER BY
           last_active_at DESC,
           id DESC

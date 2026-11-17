@@ -96,12 +96,12 @@ func TestMailTemplates(t *testing.T) {
 				target    = "cmVhZGVyQGV4YW1wbGUuY29t"
 			)
 
-			data := map[string]any{
-				mails.TemplateVarURL:       baseURL,
-				mails.TemplateVarShortCode: shortCode,
-				mails.TemplateVarTarget:    target,
-				mails.TemplateVarDuration:  0.5,
-				"Source":                   testCase.source,
+			data := mails.Link{
+				URL:       baseURL,
+				ShortCode: shortCode,
+				Target:    target,
+				Duration:  0.5,
+				Source:    testCase.source,
 			}
 
 			var rendered bytes.Buffer

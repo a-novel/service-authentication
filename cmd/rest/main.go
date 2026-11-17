@@ -135,14 +135,14 @@ func main() {
 	serviceShortCodeConsume := core.NewShortCodeConsume(daoShortCodeDelete)
 	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, cfg.ShortCodes)
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, daoCredentialsSelect, mailDelivery, cfg.ShortCodes,
+		serviceShortCodeCreate, daoCredentialsExist, daoCredentialsSelect, mailDelivery, cfg.ShortCodes,
 		cfg.SMTPURLs,
 	)
 	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
 		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodes, cfg.SMTPURLs,
 	)
 	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodes, cfg.SMTPURLs,
+		serviceShortCodeCreate, daoCredentialsExist, mailDelivery, cfg.ShortCodes, cfg.SMTPURLs,
 	)
 	serviceShortCodeCancelEmailUpdate := core.NewShortCodeCancelEmailUpdate(daoShortCodeDelete, daoShortCodeSelect)
 

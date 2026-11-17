@@ -689,10 +689,8 @@ func TestTokenGrant(t *testing.T) {
 					claims.SessionExp = now.Add(-time.Second).Unix()
 				}),
 			},
-			daoRevocationExistMock: &respMock[bool]{},
 
-			expectRevocationJTIs: []string{refreshTokenID, sessionID},
-			expectErr:            core.ErrTokenGrantSessionEnded,
+			expectErr: core.ErrTokenGrantSessionEnded,
 		},
 		{
 			name: "Error/RefreshUnknownAccount",
@@ -833,7 +831,7 @@ func TestTokenGrant(t *testing.T) {
 }
 
 // authorizationCodeSecret is the code the token grant tests present.
-const authorizationCodeSecret = "SplxlOBeZQQYbYS6WxSbIA-cRM_mJ6eoJkHvd3Zm3zQ"
+const authorizationCodeSecret = "SplxlOBeZQQYbYS6WxSbIA-cRM_mJ6eoJkHvd3Zm3zQ" //nolint:gosec // RFC 6749's sample code.
 
 // codeGrantParams returns the parameters of a valid code grant from studio, changed by update when
 // it is set.

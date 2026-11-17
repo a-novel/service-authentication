@@ -1833,8 +1833,8 @@ components:
     limit:
       name: limit
       in: query
-      description: Limit the number of results.
-      required: true
+      description: Limit the number of results. Defaults to 100.
+      required: false
       schema:
         $ref: "#/components/schemas/limit"
 

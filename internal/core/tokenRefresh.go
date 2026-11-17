@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
@@ -191,20 +190,16 @@ func (service *TokenRefresh) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("client token: %w", ErrTokenRefreshInvalidRefreshToken))
 	}
 
-	revocationRequest := &dao.RefreshTokenRevocationExistRequest{
-		JTIs: []string{refreshTokenClaims.Jti, refreshTokenClaims.Session()},
-	}
-
-	revoked, err := service.daoRefreshTokenRevocationExist.Exec(ctx, revocationRequest)
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check refresh token revocation: %w", err))
-	}
-
 	// The verifier grants the refresh token a leeway past its expiry, and the session's end gets none.
 	// A logged-out session never renews, and a renewal racing a removal can bring the row back, logged
 	// out.
-	if revoked || time.Now().Unix() >= refreshTokenClaims.SessionExpiry() {
-		return nil, otel.ReportError(span, fmt.Errorf("session ended: %w", ErrTokenRefreshInvalidRefreshToken))
+	err = checkSessionActive(ctx, service.daoRefreshTokenRevocationExist, sessionActiveOpts{
+		jtis:   []string{refreshTokenClaims.Jti, refreshTokenClaims.Session()},
+		endsAt: refreshTokenClaims.SessionExpiry(),
+		ended:  ErrTokenRefreshInvalidRefreshToken,
+	})
+	if err != nil {
+		return nil, otel.ReportError(span, err)
 	}
 
 	// Reload credentials so any role change since the original sign lands in the new token.

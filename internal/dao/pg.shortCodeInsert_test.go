@@ -24,6 +24,26 @@ func TestPgShortCodeInsert(t *testing.T) {
 	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
 	hourLater := time.Now().Add(time.Hour).UTC().Round(time.Second)
 
+	// replaceRequest inserts a code for a pair the fixtures of the replacing cases already hold.
+	replaceRequest := &dao.ShortCodeInsertRequest{
+		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+		Code:      "test-code",
+		Usage:     "test-usage",
+		Target:    "test-target",
+		Data:      []byte("test-data"),
+		Now:       now,
+		ExpiresAt: hourLater,
+	}
+	replaced := &dao.ShortCode{
+		ID:        replaceRequest.ID,
+		Code:      replaceRequest.Code,
+		Usage:     replaceRequest.Usage,
+		Target:    replaceRequest.Target,
+		Data:      replaceRequest.Data,
+		CreatedAt: now,
+		ExpiresAt: hourLater,
+	}
+
 	testCases := []struct {
 		name string
 
@@ -31,8 +51,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 
 		request *dao.ShortCodeInsertRequest
 
-		expect    *dao.ShortCode
-		expectErr error
+		expect *dao.ShortCode
 	}{
 		{
 			name: "Success",
@@ -149,17 +168,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 			},
 		},
 		{
-			name: "Error/AlreadyExists",
-
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				Now:       now,
-				ExpiresAt: hourLater,
-			},
+			name: "Success/ReplacesActive",
 
 			fixtures: []*dao.ShortCode{
 				{
@@ -173,22 +182,12 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			expectErr: dao.ErrShortCodeAlreadyExists,
+			request: replaceRequest,
+			expect:  replaced,
 		},
 		{
-			// Codes whose deletion is still in the future stay active, and several of them
-			// conflict as one does.
-			name: "Error/AlreadyExists/PendingDeletions",
-
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				Now:       now,
-				ExpiresAt: hourLater,
-			},
+			// Codes whose deletion is still in the future stay active, and are replaced as one is.
+			name: "Success/ReplacesPendingDeletions",
 
 			fixtures: []*dao.ShortCode{
 				{
@@ -213,56 +212,12 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			expectErr: dao.ErrShortCodeAlreadyExists,
+			request: replaceRequest,
+			expect:  replaced,
 		},
 		{
-			name: "AlreadyExists/Override",
-
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				Now:       now,
-				ExpiresAt: hourLater,
-				Override:  true,
-			},
-
-			fixtures: []*dao.ShortCode{
-				{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Code:      "test-code",
-					Usage:     "test-usage",
-					Target:    "test-target",
-					Data:      []byte("test-data-2"),
-					CreatedAt: hourAgo,
-					ExpiresAt: hourLater,
-				},
-			},
-
-			expect: &dao.ShortCode{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				CreatedAt: now,
-				ExpiresAt: hourLater,
-			},
-		},
-		{
-			name: "AlreadyExists/AlreadyExpired",
-
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				Now:       now,
-				ExpiresAt: hourLater,
-			},
+			// An expired code still sits in the partial unique index until it is discarded.
+			name: "Success/ReplacesExpired",
 
 			fixtures: []*dao.ShortCode{
 				{
@@ -276,28 +231,11 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			expect: &dao.ShortCode{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				CreatedAt: now,
-				ExpiresAt: hourLater,
-			},
+			request: replaceRequest,
+			expect:  replaced,
 		},
 		{
-			name: "AlreadyExistsAlreadyDeleted",
-
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				Now:       now,
-				ExpiresAt: hourLater,
-			},
+			name: "Success/IgnoresDeleted",
 
 			fixtures: []*dao.ShortCode{
 				{
@@ -313,15 +251,8 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			expect: &dao.ShortCode{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				CreatedAt: now,
-				ExpiresAt: hourLater,
-			},
+			request: replaceRequest,
+			expect:  replaced,
 		},
 	}
 
@@ -343,17 +274,17 @@ func TestPgShortCodeInsert(t *testing.T) {
 				}
 
 				credentials, err := daoInsert.Exec(ctx, testCase.request)
-				require.ErrorIs(t, err, testCase.expectErr)
+				require.NoError(t, err)
 				require.Equal(t, testCase.expect, credentials)
 			})
 		})
 	}
 
-	// Two Override inserts race for one (target, usage) pair against the single active code they
-	// both contend on. The partial unique index keeps at most one active row, so on every
+	// Two inserts race for one (target, usage) pair against the single active code they both contend
+	// on. The partial unique index keeps at most one active row, so on every
 	// interleaving the loser takes the already-exists path, never a raw SQLSTATE 40001
 	// serialization failure. Several rounds run so the two transactions overlap at least once.
-	t.Run("Success/ConcurrentOverride", func(t *testing.T) {
+	t.Run("Success/ConcurrentReplace", func(t *testing.T) {
 		t.Parallel()
 
 		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
@@ -386,11 +317,11 @@ func TestPgShortCodeInsert(t *testing.T) {
 				requests := []*dao.ShortCodeInsertRequest{
 					{
 						ID: uuid.New(), Code: "override-a", Usage: "test-usage", Target: "test-target",
-						Data: []byte("data-a"), Now: now, ExpiresAt: hourLater, Override: true,
+						Data: []byte("data-a"), Now: now, ExpiresAt: hourLater,
 					},
 					{
 						ID: uuid.New(), Code: "override-b", Usage: "test-usage", Target: "test-target",
-						Data: []byte("data-b"), Now: now, ExpiresAt: hourLater, Override: true,
+						Data: []byte("data-b"), Now: now, ExpiresAt: hourLater,
 					},
 				}
 

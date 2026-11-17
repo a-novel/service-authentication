@@ -25,6 +25,8 @@ var ErrInvalidAuth = errors.New("invalid authentication")
 
 // The WWW-Authenticate challenges that refuse a bearer request (RFC 6750 §3). A 401 must carry one
 // (RFC 9110 §15.5.2), and a token that does not open the route gets one too.
+//
+//nolint:gosec // Challenge names, not credentials.
 const (
 	// BearerChallenge answers a request without a bearer token. It names no error code (RFC 6750 §3.1).
 	BearerChallenge = "Bearer"

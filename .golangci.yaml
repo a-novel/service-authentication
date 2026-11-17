@@ -52,7 +52,7 @@ linters:
     #    - gochecknoglobals
     #    - gochecknoinits
     - gochecksumtype
-    #    - gocognit
+    - gocognit
     - goconst
     - gocritic
     - gocyclo
@@ -63,7 +63,7 @@ linters:
     - gomoddirectives
     #    - gomodguard
     - goprintffuncname
-    #    - gosec
+    - gosec
     #    - gosmopolitan
     - govet
     - grouper
@@ -143,6 +143,7 @@ linters:
   exclusions:
     paths:
       - mocks
+      - protogen
     rules:
       - path: (.+)_test.go
         linters:
@@ -154,3 +155,4 @@ linters:
           - goconst
           - gocritic
           - err113
+          - prealloc

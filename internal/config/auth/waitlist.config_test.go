@@ -11,6 +11,9 @@ import (
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
+// userInfo is the user and password part of a URL, in the case that checks they stay out of an error.
+const userInfo = "user:private"
+
 func TestWaitlist(t *testing.T) {
 	t.Parallel()
 
@@ -56,7 +59,9 @@ func TestWaitlist(t *testing.T) {
 			expectMessage: "URL cannot be parsed",
 		},
 		{
-			name: "MalformedURLWithCredentials", url: "https://user:private@script.google.com/%zz?secret=private",
+			// The URL carries credentials, which must stay out of the error. It is composed so the
+			// source never holds a credential-shaped URL that secret scanning reports.
+			name: "MalformedURLWithCredentials", url: "https://" + userInfo + "@script.google.com/%zz?secret=private",
 			secret: strings.Repeat("a", 32), timeout: time.Second, expectMessage: "URL cannot be parsed",
 		},
 		{

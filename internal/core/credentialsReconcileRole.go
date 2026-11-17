@@ -30,7 +30,7 @@ type CredentialsReconcileRoleDaoShortCodeSelect interface {
 
 // CredentialsReconcileRoleServiceRegister starts registration with the requested role.
 type CredentialsReconcileRoleServiceRegister interface {
-	Exec(ctx context.Context, request *ShortCodeCreateRegisterRequest) (*ShortCode, error)
+	Exec(ctx context.Context, request *ShortCodeCreateRegisterRequest) error
 }
 
 // CredentialsReconcileRoleRequest identifies the account or registration to reconcile.
@@ -142,7 +142,7 @@ func (service *CredentialsReconcileRole) Exec(
 		Role:  request.Role,
 	}
 
-	_, err = service.serviceRegister.Exec(ctx, registerRequest)
+	err = service.serviceRegister.Exec(ctx, registerRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create registration: %w", err))
 	}

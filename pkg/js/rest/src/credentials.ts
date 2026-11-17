@@ -180,14 +180,14 @@ function falseOnNotFound(err: unknown): false {
   throw err;
 }
 
-/** Lists accounts within the request's pagination window, defaulting to the first 100. */
+/** Lists accounts within the request's pagination window. The service pages 100 accounts by default. */
 export async function credentialsList(
   api: AuthenticationApi,
   accessToken: string,
   form: CredentialsListRequest
 ): Promise<Credentials[]> {
   const params = new URLSearchParams();
-  params.set("limit", `${form.limit || 100}`);
+  if (form.limit) params.set("limit", `${form.limit}`);
   params.set("offset", `${form.offset || 0}`);
   form.roles?.forEach((role) => params.append("roles", role));
 

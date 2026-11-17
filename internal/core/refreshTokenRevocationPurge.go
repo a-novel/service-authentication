@@ -14,12 +14,6 @@ import (
 // holds its row locks briefly.
 const RefreshTokenRevocationPurgeBatch = 1000
 
-// SessionRetention is how long a session's row stays after the session ends, the time a device that
-// ended stays listed. A device signed out earlier stays up to the refresh token TTL that JSON Keys
-// sets, 7 days, longer. The purge reads the end, which never changes, so a renewal leaves the index
-// it scans untouched.
-const SessionRetention = 30 * 24 * time.Hour
-
 // RefreshTokenRevocationPurgeDao deletes one batch of expired revocations.
 type RefreshTokenRevocationPurgeDao interface {
 	Exec(
@@ -60,19 +54,21 @@ func (service *RefreshTokenRevocationPurge) Exec(ctx context.Context) (*RefreshT
 	defer span.End()
 
 	result := &RefreshTokenRevocationPurgeResult{}
+
 	revocationsRequest := &dao.RefreshTokenRevocationPurgeRequest{Limit: RefreshTokenRevocationPurgeBatch}
 
-	for {
+	var err error
+
+	result.Purged, err = purgeBatches(RefreshTokenRevocationPurgeBatch, func() (int64, error) {
 		batch, err := service.dao.Exec(ctx, revocationsRequest)
 		if err != nil {
-			return result, otel.ReportError(span, fmt.Errorf("purge revocations: %w", err))
+			return 0, err
 		}
 
-		result.Purged += batch.Purged
-
-		if batch.Purged < RefreshTokenRevocationPurgeBatch {
-			break
-		}
+		return batch.Purged, nil
+	})
+	if err != nil {
+		return result, otel.ReportError(span, fmt.Errorf("purge revocations: %w", err))
 	}
 
 	sessionsRequest := &dao.SessionPurgeRequest{
@@ -80,16 +76,17 @@ func (service *RefreshTokenRevocationPurge) Exec(ctx context.Context) (*RefreshT
 		Limit:       RefreshTokenRevocationPurgeBatch,
 	}
 
-	for {
+	result.SessionsPurged, err = purgeBatches(RefreshTokenRevocationPurgeBatch, func() (int64, error) {
 		batch, err := service.daoSessions.Exec(ctx, sessionsRequest)
 		if err != nil {
-			return result, otel.ReportError(span, fmt.Errorf("purge sessions: %w", err))
+			return 0, err
 		}
 
-		result.SessionsPurged += batch.Purged
-
-		if batch.Purged < RefreshTokenRevocationPurgeBatch {
-			return result, nil
-		}
+		return batch.Purged, nil
+	})
+	if err != nil {
+		return result, otel.ReportError(span, fmt.Errorf("purge sessions: %w", err))
 	}
+
+	return result, nil
 }

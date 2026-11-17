@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -25,9 +24,8 @@ func TestRestShortCodeCreatePasswordReset(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *core.ShortCodeCreatePasswordResetRequest
-		resp *core.ShortCode
-		err  error
+		req *core.ShortCodeCreatePasswordResetRequest
+		err error
 	}
 
 	testCases := []struct {
@@ -52,12 +50,6 @@ func TestRestShortCodeCreatePasswordReset(t *testing.T) {
 				req: &core.ShortCodeCreatePasswordResetRequest{
 					Email: "new_user@provider.com",
 					Lang:  "fr",
-				},
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-111111111111"),
-					Usage:     core.ShortCodeUsageResetPassword,
-					Target:    "00000000-0000-0000-0000-000000000001",
-					PlainCode: "abcdef",
 				},
 			},
 
@@ -129,7 +121,7 @@ func TestRestShortCodeCreatePasswordReset(t *testing.T) {
 			if testCase.serviceMock != nil {
 				service.EXPECT().
 					Exec(mock.Anything, testCase.serviceMock.req).
-					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
+					Return(testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestShortCodeCreatePasswordReset(service, config.LoggerDev)

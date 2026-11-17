@@ -37,7 +37,7 @@ type Session struct {
 	// ExpiresAt is when the session ends. It never changes.
 	ExpiresAt time.Time `bun:"expires_at"`
 
-	// LoggedOut is whether the session ended or was signed out. The queries that read sessions
-	// compute it, and no write stores it.
+	// LoggedOut is whether the session ended or was signed out. The session_states view computes it,
+	// and no write stores it.
 	LoggedOut bool `bun:"logged_out,scanonly"`
 }

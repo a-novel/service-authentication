@@ -14,11 +14,6 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
-// ErrShortCodeConsumeExpired is returned by [ShortCodeVerify.Exec] when the
-// stored code's expiry has already passed. The SQL select filters expired rows
-// too; this check covers clock skew between the database and the service.
-var ErrShortCodeConsumeExpired = errors.New("short code expired")
-
 // ShortCodeVerifyDao loads the stored short code for a (Usage, Target) pair so
 // the submitted code can be checked against it.
 type ShortCodeVerifyDao interface {
@@ -45,9 +40,8 @@ func NewShortCodeVerify(dao ShortCodeVerifyDao) *ShortCodeVerify {
 	return &ShortCodeVerify{dao: dao}
 }
 
-// Exec returns the stored [ShortCode] when the submitted code matches it. It
-// returns [ErrShortCodeConsumeInvalid] when the code does not match the stored
-// hash and [ErrShortCodeConsumeExpired] when it has lapsed.
+// Exec returns the stored [ShortCode] when the submitted code matches it. A missing, lapsed or
+// mismatched code returns [ErrShortCodeInvalid].
 func (service *ShortCodeVerify) Exec(ctx context.Context, request *ShortCodeVerifyRequest) (*ShortCode, error) {
 	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeVerify")
 	defer span.End()
@@ -69,6 +63,8 @@ func (service *ShortCodeVerify) Exec(ctx context.Context, request *ShortCodeVeri
 			// wrong one, and the latency reveals nothing about whether a code is in
 			// flight for the target.
 			lib.DummyCompareArgon2(request.Code)
+
+			err = errors.Join(err, ErrShortCodeInvalid)
 		}
 
 		return nil, otel.ReportError(span, err)
@@ -76,19 +72,18 @@ func (service *ShortCodeVerify) Exec(ctx context.Context, request *ShortCodeVeri
 
 	span.SetAttributes(attribute.String("short_code.id", entity.ID.String()))
 
+	// The select filters expired rows too; this check covers clock skew between the database and
+	// the service.
 	if entity.ExpiresAt.Before(time.Now()) {
-		return nil, otel.ReportError(span, ErrShortCodeConsumeExpired)
+		return nil, otel.ReportError(span, fmt.Errorf("short code expired: %w", ErrShortCodeInvalid))
 	}
 
 	err = lib.CompareArgon2(request.Code, entity.Code)
 	if err != nil {
 		// A mistyped or stale code yields lib.ErrInvalidPassword; a malformed stored hash
 		// yields lib.ErrInvalidHash or lib.ErrIncompatibleVersion. Both surface to the
-		// caller as ErrShortCodeConsumeInvalid.
-		return nil, otel.ReportError(span, errors.Join(
-			fmt.Errorf("compare short code: %w", err),
-			ErrShortCodeConsumeInvalid,
-		))
+		// caller as ErrShortCodeInvalid.
+		return nil, otel.ReportError(span, errors.Join(fmt.Errorf("compare short code: %w", err), ErrShortCodeInvalid))
 	}
 
 	return newShortCode(entity, request.Code), nil

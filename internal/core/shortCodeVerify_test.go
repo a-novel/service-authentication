@@ -24,7 +24,7 @@ func TestShortCodeVerify(t *testing.T) {
 	pastTime := time.Now().Add(-time.Hour).Truncate(time.Second)
 
 	shortCode := "test-code"
-	encrypted, err := lib.GenerateArgon2(shortCode, lib.Argon2ParamsDefault)
+	encrypted, err := lib.GenerateArgon2(shortCode)
 	require.NoError(t, err)
 
 	type daoSelectMock struct {
@@ -94,7 +94,7 @@ func TestShortCodeVerify(t *testing.T) {
 				},
 			},
 
-			expectErr: core.ErrShortCodeConsumeInvalid,
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "ExpiredCode",
@@ -117,7 +117,7 @@ func TestShortCodeVerify(t *testing.T) {
 				},
 			},
 
-			expectErr: core.ErrShortCodeConsumeExpired,
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "NoCode",
@@ -142,7 +142,8 @@ func TestShortCodeVerify(t *testing.T) {
 				err: dao.ErrShortCodeNotFound,
 			},
 
-			expectErr: core.ErrShortCodeNotFound,
+			// The handlers map the invalid identity; the join keeps the not-found one too.
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "SelectError",

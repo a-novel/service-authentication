@@ -21,8 +21,9 @@ func TestCredentialsList(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type daoMock struct {
-		resp []*dao.Credentials
-		err  error
+		limit int
+		resp  []*dao.Credentials
+		err   error
 	}
 
 	testCases := []struct {
@@ -45,6 +46,7 @@ func TestCredentialsList(t *testing.T) {
 			},
 
 			daoMock: &daoMock{
+				limit: 10,
 				resp: []*dao.Credentials{
 					{
 						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
@@ -104,10 +106,30 @@ func TestCredentialsList(t *testing.T) {
 			},
 
 			daoMock: &daoMock{
-				err: errFoo,
+				limit: 10,
+				err:   errFoo,
 			},
 
 			expectErr: errFoo,
+		},
+		{
+			name: "Success/DefaultLimit",
+
+			request: &core.CredentialsListRequest{},
+
+			daoMock: &daoMock{
+				limit: core.CredentialsListLimitDefault,
+				resp:  []*dao.Credentials{},
+			},
+
+			expect: []*core.Credentials{},
+		},
+		{
+			name: "Error/InvalidLimit",
+
+			request: &core.CredentialsListRequest{Limit: 101},
+
+			expectErr: core.ErrInvalidRequest,
 		},
 	}
 
@@ -121,7 +143,7 @@ func TestCredentialsList(t *testing.T) {
 
 			if testCase.daoMock != nil {
 				credentialsListRequest := &dao.CredentialsListRequest{
-					Limit:  testCase.request.Limit,
+					Limit:  testCase.daoMock.limit,
 					Offset: testCase.request.Offset,
 					Roles:  testCase.request.Roles,
 				}

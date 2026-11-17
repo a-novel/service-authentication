@@ -17,7 +17,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
-	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // ErrCredentialsCreateInvalidRegistrationData is returned when a consumed
@@ -67,7 +66,7 @@ type CredentialsCreateServiceShortCodeVerify interface {
 
 // CredentialsCreateServiceShortCodeConsume retires verified registration short codes.
 type CredentialsCreateServiceShortCodeConsume interface {
-	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
+	Exec(ctx context.Context, request *ShortCodeConsumeRequest) error
 }
 
 // CredentialsCreateServiceSignClaims provides JWT signing capabilities.
@@ -99,11 +98,9 @@ type CredentialsCreateRequest struct {
 // to the user's email address to verify ownership.
 type CredentialsCreate struct {
 	dao                     CredentialsCreateDao
-	sessions                sessionRecorder
-	bounds                  sessionBounds
+	sessions                sessionOpener
 	serviceShortCodeVerify  CredentialsCreateServiceShortCodeVerify
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume
-	serviceSignClaims       CredentialsCreateServiceSignClaims
 	transactor              transaction.Transactor
 	daoWaitlist             CredentialsCreateDaoWaitlist
 }
@@ -123,15 +120,17 @@ func NewCredentialsCreate(
 ) *CredentialsCreate {
 	return &CredentialsCreate{
 		dao: dao,
-		sessions: sessionRecorder{
-			transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
-		},
-		bounds: sessionBounds{
-			daoRevokeOldest: daoSessionRevokeOldest, daoTrim: daoSessionTrim, refreshTokenLeeway: refreshTokenLeeway,
+		sessions: sessionOpener{
+			signer: serviceSignClaims,
+			recorder: sessionRecorder{
+				transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
+			},
+			bounds: sessionBounds{
+				daoRevokeOldest: daoSessionRevokeOldest, daoTrim: daoSessionTrim, refreshTokenLeeway: refreshTokenLeeway,
+			},
 		},
 		serviceShortCodeVerify:  serviceShortCodeVerify,
 		serviceShortCodeConsume: serviceShortCodeConsume,
-		serviceSignClaims:       serviceSignClaims,
 		transactor:              transactor,
 		daoWaitlist:             daoWaitlist,
 	}
@@ -177,7 +176,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	}
 
 	// Hashing waits for the code, so a wrong one costs a single Argon2 run, as a missing one does.
-	encryptedPassword, err := lib.GenerateArgon2(request.Password, lib.Argon2ParamsDefault)
+	encryptedPassword, err := lib.GenerateArgon2(request.Password)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt password: %w", err))
 	}
@@ -185,7 +184,7 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	var credentials *dao.Credentials
 
 	err = service.transactor.WithinTx(ctx, func(ctx context.Context) error {
-		_, err := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
+		err := service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
 		if err != nil {
 			return fmt.Errorf("consume short code: %w", err)
 		}
@@ -218,17 +217,10 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 
 	cancel()
 
-	tokens, refreshClaims, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
-	}
-
-	err = service.sessions.record(ctx, credentials.ID, credentials.LocationConsent, refreshClaims, request.Visitor)
+	tokens, err := service.sessions.open(ctx, credentials, request.Visitor)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
-
-	service.bounds.bound(ctx, credentials.ID)
 
 	return tokens, nil
 }
