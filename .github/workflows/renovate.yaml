@@ -11,30 +11,24 @@ jobs:
     environment:
       name: governance
       deployment: false
+    # Renovate writes as the Dependencies App, with the token the action mints from its key. The job
+    # token only reads GitHub Packages, for Renovate and for the commands it runs, such as
+    # pnpm install.
     permissions:
-      checks: write
-      statuses: write
-      contents: write
-      issues: write
-      pull-requests: write
+      contents: read
       packages: read
-      actions: read
-      id-token: write
-      security-events: read
     steps:
       - uses: a-novel-kit/workflows/generic-actions/renovate@v1.86.0
         with:
           repository_config: "true"
+          # The post-upgrade commands of this repository's presets and renovate.json, and no other.
           allowed_commands: |
             [
-              "^pnpm format:js$", 
-              "^go mod download$", 
-              "^go mod download .*", 
-              "^rm -f .*",
-              "^rm -rf .*",
-              "^go generate .*", 
-              "^go get .*", 
-              "^go tool .*"
+              "^rm -f [a-z-]+\\.sum$",
+              "^rm -rf internal/handlers/protogen$",
+              "^go get -modfile=[a-z-]+\\.mod -tool [a-z0-9./-]+$",
+              "^go tool -modfile=[a-z-]+\\.mod [a-z./ -]+$",
+              "^pnpm format:js$"
             ]
           github_token: ${{ secrets.GITHUB_TOKEN }}
           app_private_key: ${{ secrets.DEPENDENCY_BOT_PRIVATE_KEY }}
