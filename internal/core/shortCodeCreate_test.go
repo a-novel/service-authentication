@@ -59,7 +59,14 @@ func TestShortCodeCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "CreateShortCodeError",
+			name: "Error/InvalidUsage",
+
+			request: &core.ShortCodeCreateRequest{Usage: "unknown", Target: "test-target", TTL: time.Hour},
+
+			expectErr: core.ErrInvalidRequest,
+		},
+		{
+			name: "Error/Dao",
 
 			request: &core.ShortCodeCreateRequest{
 				Usage:  core.ShortCodeUsageValidateEmail,
@@ -127,10 +134,10 @@ func TestShortCodeCreate(t *testing.T) {
 				require.NotNil(t, resp)
 				require.NotEmpty(t, encryptedShortCode)
 
-				assert.WithinRange(t, stampedNow, before, after)
+				require.WithinRange(t, stampedNow, before, after)
 				// Exact, not approximate: the service reads the clock once and derives the
 				// expiry from that read, so anything else means it read it twice.
-				assert.Equal(t, stampedNow.Add(testCase.request.TTL), stampedExpiresAt)
+				require.Equal(t, stampedNow.Add(testCase.request.TTL), stampedExpiresAt)
 
 				require.Equal(t, testCase.request.Usage, resp.Usage)
 				require.Equal(t, testCase.request.Target, resp.Target)

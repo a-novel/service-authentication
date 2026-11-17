@@ -74,7 +74,7 @@ func TestShortCodeVerify(t *testing.T) {
 			},
 		},
 		{
-			name: "WrongCode",
+			name: "Error/WrongCode",
 
 			request: &core.ShortCodeVerifyRequest{
 				Target: "test-target",
@@ -97,7 +97,7 @@ func TestShortCodeVerify(t *testing.T) {
 			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
-			name: "ExpiredCode",
+			name: "Error/ExpiredCode",
 
 			request: &core.ShortCodeVerifyRequest{
 				Target: "test-target",
@@ -120,7 +120,7 @@ func TestShortCodeVerify(t *testing.T) {
 			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
-			name: "NoCode",
+			name: "Error/NoCode",
 
 			request: &core.ShortCodeVerifyRequest{
 				Target: "test-target",
@@ -130,7 +130,7 @@ func TestShortCodeVerify(t *testing.T) {
 			expectErr: core.ErrInvalidRequest,
 		},
 		{
-			name: "NotFound",
+			name: "Error/NotFound",
 
 			request: &core.ShortCodeVerifyRequest{
 				Target: "test-target",
@@ -146,7 +146,7 @@ func TestShortCodeVerify(t *testing.T) {
 			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
-			name: "SelectError",
+			name: "Error/Select",
 
 			request: &core.ShortCodeVerifyRequest{
 				Target: "test-target",

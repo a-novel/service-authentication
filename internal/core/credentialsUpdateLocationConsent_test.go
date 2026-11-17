@@ -1,13 +1,14 @@
 package core_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
@@ -30,7 +31,8 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 
 		request *core.CredentialsUpdateLocationConsentRequest
 
-		transaction       bool
+		// transactions counts the transactions the update opens.
+		transactions      int
 		daoMock           *errMock
 		clearLocationMock *errMock
 
@@ -43,8 +45,8 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 
 			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(true)},
 
-			transaction: true,
-			daoMock:     &errMock{},
+			transactions: 1,
+			daoMock:      &errMock{},
 		},
 		{
 			// Turning it off erases every stored location of the account, in the same transaction.
@@ -52,7 +54,7 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 
 			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)},
 
-			transaction:       true,
+			transactions:      1,
 			daoMock:           &errMock{},
 			clearLocationMock: &errMock{},
 		},
@@ -68,8 +70,8 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 
 			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)},
 
-			transaction: true,
-			daoMock:     &errMock{err: dao.ErrCredentialsNotFound},
+			transactions: 1,
+			daoMock:      &errMock{err: dao.ErrCredentialsNotFound},
 
 			expectErr: core.ErrCredentialsNotFound,
 		},
@@ -79,7 +81,7 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 
 			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)},
 
-			transaction:       true,
+			transactions:      1,
 			daoMock:           &errMock{},
 			clearLocationMock: &errMock{err: errFoo},
 
@@ -93,14 +95,7 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 
 			mockDao := coremocks.NewMockCredentialsUpdateLocationConsentDao(t)
 			mockDaoClearLocations := coremocks.NewMockCredentialsUpdateLocationConsentDaoClearLocations(t)
-			transactor := coremocks.NewMockTransactor(t)
-
-			// Both writes run inside the transaction body, so a failure of either fails the whole.
-			if testCase.transaction {
-				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).
-					RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error { return fn(ctx) }).
-					Once()
-			}
+			transactor := transactiontest.NewTransactor()
 
 			if testCase.daoMock != nil {
 				request := &dao.CredentialsUpdateLocationConsentRequest{
@@ -121,6 +116,8 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 
 			err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
+			// Both writes run inside the transaction body, so a failure of either fails the whole.
+			require.Equal(t, testCase.transactions, transactor.Calls())
 		})
 	}
 }

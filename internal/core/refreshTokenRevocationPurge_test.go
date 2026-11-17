@@ -34,29 +34,14 @@ func TestRefreshTokenRevocationPurge(t *testing.T) {
 		expectErr error
 	}{
 		{
-			name: "Success/Empty",
+			// Each table is purged batch after batch, as TestAuthorizationCodePurge covers in full.
+			name: "Success",
 
-			daoMocks:      []daoMock{{purged: 0}},
-			sessionsMocks: []daoMock{{purged: 0}},
-
-			expect: &core.RefreshTokenRevocationPurgeResult{Purged: 0},
-		},
-		{
-			// A full batch may leave more expired rows, so the run continues until a short one.
-			name: "Success/SeveralBatches",
-
-			daoMocks: []daoMock{
-				{purged: core.RefreshTokenRevocationPurgeBatch},
-				{purged: core.RefreshTokenRevocationPurgeBatch},
-				{purged: 3},
-			},
-			sessionsMocks: []daoMock{
-				{purged: core.RefreshTokenRevocationPurgeBatch},
-				{purged: 5},
-			},
+			daoMocks:      []daoMock{{purged: core.RefreshTokenRevocationPurgeBatch}, {purged: 3}},
+			sessionsMocks: []daoMock{{purged: core.RefreshTokenRevocationPurgeBatch}, {purged: 5}},
 
 			expect: &core.RefreshTokenRevocationPurgeResult{
-				Purged:         2*core.RefreshTokenRevocationPurgeBatch + 3,
+				Purged:         core.RefreshTokenRevocationPurgeBatch + 3,
 				SessionsPurged: core.RefreshTokenRevocationPurgeBatch + 5,
 			},
 		},

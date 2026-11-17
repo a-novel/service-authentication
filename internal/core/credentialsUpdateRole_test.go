@@ -45,7 +45,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		expectMessage string
 	}{
 		{
-			name: "UpgradeToLowerRole",
+			name: "Success/UpgradeToLowerRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -92,7 +92,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			},
 		},
 		{
-			name: "UpgradeToSameRole",
+			name: "Success/UpgradeToSameRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -139,7 +139,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			},
 		},
 		{
-			name: "UpgradeToHigherRole",
+			name: "Error/UpgradeToHigherRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -171,7 +171,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectMessage: "upgrade from auth:user to auth:superadmin",
 		},
 		{
-			name: "DowngradeFromLowerRole",
+			name: "Success/DowngradeFromLowerRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -218,7 +218,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			},
 		},
 		{
-			name: "DowngradeFromSameRole",
+			name: "Error/DowngradeFromSameRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -249,7 +249,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectErr: core.ErrCredentialsUpdateRoleDowngradeSuperior,
 		},
 		{
-			name: "DowngradeFromHigherRole",
+			name: "Error/DowngradeFromHigherRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -282,7 +282,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		},
 
 		{
-			name: "UnknownRole",
+			name: "Error/UnknownRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -293,7 +293,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectErr: core.ErrInvalidRequest,
 		},
 		{
-			name: "SelfUpgrade",
+			name: "Error/SelfUpgrade",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -305,7 +305,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		},
 
 		{
-			name: "UpdateRoleError",
+			name: "Error/UpdateRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -340,7 +340,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectErr: errFoo,
 		},
 		{
-			name: "SelectCurrentCredentialsError",
+			name: "Error/SelectCurrentCredentials",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -365,7 +365,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectErr: errFoo,
 		},
 		{
-			name: "SelectTargetCredentialsError",
+			name: "Error/SelectTargetCredentials",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -382,7 +382,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 		{
 			// The target's stored role, 'user', names no configured role. Ranking it errors, so the
 			// hierarchy guards never compare against a rank the account does not hold.
-			name: "TargetHasUnknownStoredRole",
+			name: "Error/TargetHasUnknownStoredRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),
@@ -409,7 +409,7 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			expectErr: authconfig.ErrUnknownRole,
 		},
 		{
-			name: "CallerHasUnknownStoredRole",
+			name: "Error/CallerHasUnknownStoredRole",
 
 			request: &core.CredentialsUpdateRoleRequest{
 				TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000001"),

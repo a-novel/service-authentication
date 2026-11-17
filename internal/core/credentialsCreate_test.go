@@ -24,185 +24,141 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
+// TestCredentialsCreate keeps one success path through the session the account opens, which
+// TestTokenCreate covers in full.
 func TestCredentialsCreate(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
 
-	type daoMock struct {
-		resp *dao.Credentials
+	// A new account consents to no location, so its session records the user agent alone.
+	request := &core.CredentialsCreateRequest{
+		Email:     "user@provider.com",
+		Password:  "password-2",
+		ShortCode: "short-code",
+		Visitor:   core.Visitor{UserAgent: "Firefox", IPAddress: "192.0.2.1", Region: "FR", City: "Paris"},
+	}
+	shortCode := &core.ShortCode{ID: uuid.MustParse("00000000-0000-0000-0000-000000000010")}
+	credentials := &dao.Credentials{
+		ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+		Email: "user@provider.com",
+		Role:  authconfig.RoleUser,
+	}
+
+	type respMock[T any] struct {
+		resp T
 		err  error
 	}
 
-	type issueTokenMock struct {
-		resp *servicejsonkeys.ClaimsSignResponse
-		err  error
-	}
-
-	type serviceSignClaimsMock struct {
+	type errMock struct {
 		err error
 	}
 
-	type serviceShortCodeVerifyMock struct {
-		resp *core.ShortCode
-		err  error
-	}
-
-	type serviceShortCodeConsumeMock struct {
-		err error
-	}
-
+	// transactionMock runs the transaction's body, unless it fails to begin with beginErr. A body that
+	// succeeds then fails to commit with commitErr, or commits, and the client leaves on disconnect.
 	type transactionMock struct {
-		beginErr  error
-		commitErr error
-		// disconnect cancels the request once the transaction commits.
+		beginErr   error
+		commitErr  error
 		disconnect bool
 	}
 
-	type waitlistMock struct {
-		err error
-	}
-
-	testCases := []struct {
+	type testCase struct {
 		name string
 
 		request *core.CredentialsCreateRequest
 
-		daoMock                     *daoMock
-		issueTokenMock              *issueTokenMock
-		serviceSignClaimsMock       *serviceSignClaimsMock
-		serviceShortCodeVerifyMock  *serviceShortCodeVerifyMock
-		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
-		transactionMock             *transactionMock
-		waitlistMock                *waitlistMock
-		// sessionUpsertErr fails the session's record, which every signed pair runs.
-		sessionUpsertErr error
+		verifyMock      *respMock[*core.ShortCode]
+		transactionMock *transactionMock
+		consumeMock     *errMock
+		daoMock         *respMock[*dao.Credentials]
+		waitlistMock    *errMock
+		signRefreshMock *errMock
+		// sessionOpened signs the access token, and records and bounds the session, all successfully.
+		sessionOpened bool
 
 		expect     *core.Token
 		expectErr  error
 		expectRole string
-	}{
+	}
+
+	success := &testCase{
+		name: "Success",
+
+		request: request,
+
+		verifyMock:      &respMock[*core.ShortCode]{resp: shortCode},
+		transactionMock: &transactionMock{},
+		consumeMock:     &errMock{},
+		daoMock:         &respMock[*dao.Credentials]{resp: credentials},
+		waitlistMock:    &errMock{},
+		signRefreshMock: &errMock{},
+		sessionOpened:   true,
+
+		expect:     &core.Token{AccessToken: "access-token", RefreshToken: mockUnsignedRefreshToken},
+		expectRole: authconfig.RoleUser,
+	}
+
+	testCases := []*testCase{
+		success,
+		changed(*success, func(variant *testCase) {
+			variant.name = "Success/WaitlistUnavailable"
+			variant.waitlistMock = &errMock{err: dao.ErrWaitlistUnavailable}
+		}),
+		changed(*success, func(variant *testCase) {
+			variant.name = "Success/RegistrationRole"
+			variant.verifyMock = &respMock[*core.ShortCode]{
+				resp: changed(*shortCode, func(shortCode *core.ShortCode) { shortCode.Data = []byte(`{"role":"auth:admin"}`) }),
+			}
+			variant.daoMock = &respMock[*dao.Credentials]{
+				resp: changed(*credentials, func(credentials *dao.Credentials) { credentials.Role = authconfig.RoleAdmin }),
+			}
+			variant.expectRole = authconfig.RoleAdmin
+		}),
+		changed(*success, func(variant *testCase) {
+			variant.name = "Success/PasswordAtMinLength"
+			variant.request = changed(*request, func(request *core.CredentialsCreateRequest) { request.Password = "abcd" })
+		}),
 		{
-			name: "Success/WaitlistUnavailable",
+			name: "Error/PasswordTooShort",
 
-			// A new account consents to no location, so its session records the user agent alone.
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-				Visitor:   core.Visitor{UserAgent: "Firefox", IPAddress: "192.0.2.1", Region: "FR", City: "Paris"},
-			},
+			request: changed(*request, func(request *core.CredentialsCreateRequest) { request.Password = "abc" }),
 
-			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{},
-			waitlistMock:                &waitlistMock{err: dao.ErrWaitlistUnavailable},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Email:     "user@provider.com",
-					Password:  "password-2-hashed",
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      authconfig.RoleUser,
-				},
-			},
-
-			serviceSignClaimsMock: &serviceSignClaimsMock{},
-
-			issueTokenMock: &issueTokenMock{
-				resp: &servicejsonkeys.ClaimsSignResponse{
-					Token: "access-token",
-				},
-			},
-
-			expect: &core.Token{
-				AccessToken:  "access-token",
-				RefreshToken: mockUnsignedRefreshToken,
-			},
+			expectErr: core.ErrInvalidRequest,
 		},
 		{
-			name: "Success/RegistrationRole",
+			name: "Error/VerifyShortCode",
 
-			request: &core.CredentialsCreateRequest{
-				Email:     "admin@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
+			request: request,
 
-			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
-				resp: &core.ShortCode{Data: []byte(`{"role":"auth:admin"}`)},
-			},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{},
-			waitlistMock:                &waitlistMock{},
+			verifyMock: &respMock[*core.ShortCode]{err: errFoo},
 
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
-					Email:     "admin@provider.com",
-					Password:  "password-2-hashed",
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      authconfig.RoleAdmin,
-				},
-			},
-
-			serviceSignClaimsMock: &serviceSignClaimsMock{},
-
-			issueTokenMock: &issueTokenMock{
-				resp: &servicejsonkeys.ClaimsSignResponse{Token: "access-token"},
-			},
-
-			expect: &core.Token{
-				AccessToken:  "access-token",
-				RefreshToken: mockUnsignedRefreshToken,
-			},
-			expectRole: authconfig.RoleAdmin,
+			expectErr: errFoo,
 		},
 		{
 			name: "Error/MalformedRegistrationData",
 
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
+			request: request,
 
-			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
-				resp: &core.ShortCode{Data: []byte(`{"role":`)},
-			},
+			verifyMock: &respMock[*core.ShortCode]{resp: &core.ShortCode{Data: []byte(`{"role":`)}},
 
 			expectErr: core.ErrCredentialsCreateInvalidRegistrationData,
 		},
 		{
 			name: "Error/UnknownRegistrationRole",
 
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
+			request: request,
 
-			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
-				resp: &core.ShortCode{Data: []byte(`{"role":"auth:unknown"}`)},
-			},
+			verifyMock: &respMock[*core.ShortCode]{resp: &core.ShortCode{Data: []byte(`{"role":"auth:unknown"}`)}},
 
 			expectErr: core.ErrCredentialsCreateInvalidRegistrationData,
 		},
 		{
-			name: "Error/VerifyShortCode",
+			name: "Error/BeginTransaction",
 
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
+			request: request,
 
-			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
-				err: errFoo,
-			},
+			verifyMock:      &respMock[*core.ShortCode]{resp: shortCode},
+			transactionMock: &transactionMock{beginErr: errFoo},
 
 			expectErr: errFoo,
 		},
@@ -210,250 +166,49 @@ func TestCredentialsCreate(t *testing.T) {
 			// Another request redeemed the code while this one hashed the password.
 			name: "Error/ConsumeShortCode",
 
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
+			request: request,
 
-			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
-				err: core.ErrShortCodeInvalid,
-			},
+			verifyMock:      &respMock[*core.ShortCode]{resp: shortCode},
 			transactionMock: &transactionMock{},
+			consumeMock:     &errMock{err: core.ErrShortCodeInvalid},
 
 			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "Error/CreateCredentials",
 
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
+			request: request,
 
-			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{},
+			verifyMock:      &respMock[*core.ShortCode]{resp: shortCode},
+			transactionMock: &transactionMock{},
+			consumeMock:     &errMock{},
+			daoMock:         &respMock[*dao.Credentials]{err: errFoo},
 
-			daoMock: &daoMock{
-				err: errFoo,
-			},
-
-			expectErr: errFoo,
-		},
-		{
-			name: "Error/IssueToken",
-
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
-
-			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{},
-			waitlistMock:                &waitlistMock{},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Email:     "user@provider.com",
-					Password:  "password-2-hashed",
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      authconfig.RoleUser,
-				},
-			},
-
-			serviceSignClaimsMock: &serviceSignClaimsMock{},
-
-			issueTokenMock: &issueTokenMock{
-				err: errFoo,
-			},
-
-			expectErr: errFoo,
-		},
-		{
-			// A failed record fails the call. The account stays, and its user signs in.
-			name: "Error/SessionUpsert",
-
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
-
-			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{},
-			waitlistMock:                &waitlistMock{},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Email: "user@provider.com",
-					Role:  authconfig.RoleUser,
-				},
-			},
-
-			serviceSignClaimsMock: &serviceSignClaimsMock{},
-
-			issueTokenMock: &issueTokenMock{
-				resp: &servicejsonkeys.ClaimsSignResponse{Token: "access-token"},
-			},
-
-			sessionUpsertErr: errFoo,
-
-			expectErr: errFoo,
-		},
-		{
-			name: "Error/IssueRefreshToken",
-
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
-
-			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{},
-			waitlistMock:                &waitlistMock{},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Email:     "user@provider.com",
-					Password:  "password-2-hashed",
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      authconfig.RoleUser,
-				},
-			},
-
-			serviceSignClaimsMock: &serviceSignClaimsMock{
-				err: errFoo,
-			},
-
-			expectErr: errFoo,
-		},
-		{
-			name: "Error/PasswordTooShort",
-
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "abc", // 3 characters, minimum is 4
-				ShortCode: "short-code",
-			},
-
-			expectErr: core.ErrInvalidRequest,
-		},
-		{
-			name: "Success/PasswordAtMinLength",
-
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "abcd", // exactly 4 characters
-				ShortCode: "short-code",
-			},
-
-			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{},
-			waitlistMock:                &waitlistMock{},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Email:     "user@provider.com",
-					Password:  "abcd-hashed",
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					Role:      authconfig.RoleUser,
-				},
-			},
-
-			serviceSignClaimsMock: &serviceSignClaimsMock{},
-
-			issueTokenMock: &issueTokenMock{
-				resp: &servicejsonkeys.ClaimsSignResponse{
-					Token: "access-token",
-				},
-			},
-
-			expect: &core.Token{
-				AccessToken:  "access-token",
-				RefreshToken: mockUnsignedRefreshToken,
-			},
-		},
-		{
-			name: "Error/BeginTransaction",
-
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
-
-			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{},
-			transactionMock:            &transactionMock{beginErr: errFoo},
-
-			expectErr: errFoo,
+			expectErr:  errFoo,
+			expectRole: authconfig.RoleUser,
 		},
 		{
 			// A failed commit leaves the waitlist untouched.
 			name: "Error/CommitTransaction",
 
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
+			request: request,
 
-			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{commitErr: errFoo},
+			verifyMock:      &respMock[*core.ShortCode]{resp: shortCode},
+			transactionMock: &transactionMock{commitErr: errFoo},
+			consumeMock:     &errMock{},
+			daoMock:         &respMock[*dao.Credentials]{resp: credentials},
 
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Email: "user@provider.com",
-					Role:  authconfig.RoleUser,
-				},
-			},
-
-			expectErr: errFoo,
+			expectErr:  errFoo,
+			expectRole: authconfig.RoleUser,
 		},
-		{
+		changed(*success, func(variant *testCase) {
 			// The client leaves once the account exists, and the waitlist cleanup still runs.
-			name: "Error/DisconnectAfterCommit",
-
-			request: &core.CredentialsCreateRequest{
-				Email:     "user@provider.com",
-				Password:  "password-2",
-				ShortCode: "short-code",
-			},
-
-			serviceShortCodeVerifyMock:  &serviceShortCodeVerifyMock{},
-			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
-			transactionMock:             &transactionMock{disconnect: true},
-			waitlistMock:                &waitlistMock{},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:    uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Email: "user@provider.com",
-					Role:  authconfig.RoleUser,
-				},
-			},
-
-			serviceSignClaimsMock: &serviceSignClaimsMock{err: context.Canceled},
-
-			expectErr: context.Canceled,
-		},
+			variant.name = "Error/DisconnectAfterCommit"
+			variant.transactionMock = &transactionMock{disconnect: true}
+			variant.signRefreshMock = &errMock{err: context.Canceled}
+			variant.sessionOpened = false
+			variant.expect, variant.expectErr = nil, context.Canceled
+		}),
 	}
 
 	for _, testCase := range testCases {
@@ -467,45 +222,77 @@ func TestCredentialsCreate(t *testing.T) {
 			serviceShortCodeVerify := coremocks.NewMockCredentialsCreateServiceShortCodeVerify(t)
 			serviceShortCodeConsume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
 			serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
-			transactor := coremocks.NewMockTransactor(t)
 			waitlist := coremocks.NewMockCredentialsCreateDaoWaitlist(t)
 			daoLocationConsent := coremocks.NewMockCredentialsCreateDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
 			daoSessionRevokeOldest := coremocks.NewMockCredentialsCreateDaoSessionRevokeOldest(t)
 			daoSessionTrim := coremocks.NewMockCredentialsCreateDaoSessionTrim(t)
-			committed := false
 
-			if testCase.transactionMock != nil {
-				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).
-					RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
-						if testCase.transactionMock.beginErr != nil {
-							return testCase.transactionMock.beginErr
-						}
+			var (
+				transactions int
+				committed    bool
+			)
 
-						err := fn(ctx)
-						if err != nil {
-							return err
-						}
+			transactor := transactorFunc(func(ctx context.Context, fn func(context.Context) error) error {
+				transactions++
+				transaction := lo.FromPtr(testCase.transactionMock)
 
-						if testCase.transactionMock.commitErr != nil {
-							return testCase.transactionMock.commitErr
-						}
+				if transaction.beginErr != nil {
+					return transaction.beginErr
+				}
 
-						committed = true
+				err := fn(ctx)
+				if err != nil {
+					return err
+				}
 
-						if testCase.transactionMock.disconnect {
-							cancel()
-						}
+				if transaction.commitErr != nil {
+					return transaction.commitErr
+				}
 
-						return nil
-					}).Once()
+				committed = true
+
+				if transaction.disconnect {
+					cancel()
+				}
+
+				return nil
+			})
+
+			if testCase.verifyMock != nil {
+				shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
+					Usage:  core.ShortCodeUsageRegister,
+					Target: testCase.request.Email,
+					Code:   testCase.request.ShortCode,
+				}
+
+				serviceShortCodeVerify.EXPECT().
+					Exec(mock.Anything, shortCodeVerifyRequest).
+					Return(testCase.verifyMock.resp, testCase.verifyMock.err)
+			}
+
+			if testCase.consumeMock != nil {
+				serviceShortCodeConsume.EXPECT().
+					Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).
+					Return(testCase.consumeMock.err)
+			}
+
+			if testCase.daoMock != nil {
+				mockDao.EXPECT().
+					Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsInsertRequest) bool {
+						return assert.Equal(t, testCase.request.Email, data.Email) &&
+							assert.NotEqual(t, uuid.Nil, data.ID) &&
+							assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
+							assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
+							assert.Equal(t, testCase.expectRole, data.Role)
+					})).
+					Return(testCase.daoMock.resp, testCase.daoMock.err)
 			}
 
 			if testCase.waitlistMock != nil {
 				// The cleanup runs after the commit, on a bounded context the client cannot cancel.
-				waitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
-					Action: "remove", Email: testCase.request.Email,
-				}).
+				waitlist.EXPECT().
+					Exec(mock.Anything, &dao.WaitlistRequest{Action: "remove", Email: testCase.request.Email}).
 					Run(func(cleanupCtx context.Context, _ *dao.WaitlistRequest) {
 						require.True(t, committed, "sheet I/O must happen after commit")
 						require.NoError(t, cleanupCtx.Err(), "cleanup must survive client cancellation")
@@ -515,74 +302,24 @@ func TestCredentialsCreate(t *testing.T) {
 						require.Positive(t, time.Until(deadline))
 						require.LessOrEqual(t, time.Until(deadline), 3*time.Second)
 					}).
-					Return(&dao.WaitlistResult{}, testCase.waitlistMock.err).Once()
+					Return(&dao.WaitlistResult{}, testCase.waitlistMock.err).
+					Once()
 			}
 
-			shortCode := &core.ShortCode{ID: uuid.MustParse("00000000-0000-0000-0000-000000000010")}
-
-			if testCase.serviceShortCodeVerifyMock != nil {
-				if testCase.serviceShortCodeVerifyMock.resp != nil {
-					shortCode = testCase.serviceShortCodeVerifyMock.resp
-				}
-
-				shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
-					Usage:  core.ShortCodeUsageRegister,
-					Target: testCase.request.Email,
-					Code:   testCase.request.ShortCode,
-				}
-
-				serviceShortCodeVerify.EXPECT().
-					Exec(mock.Anything, shortCodeVerifyRequest).
-					Return(shortCode, testCase.serviceShortCodeVerifyMock.err)
-			}
-
-			if testCase.serviceShortCodeConsumeMock != nil {
-				serviceShortCodeConsume.EXPECT().
-					Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).
-					Return(testCase.serviceShortCodeConsumeMock.err)
-			}
-
-			if testCase.daoMock != nil {
-				expectRole := testCase.expectRole
-				if expectRole == "" {
-					expectRole = authconfig.RoleUser
-				}
-
-				mockDao.EXPECT().
-					Exec(mock.Anything, mock.MatchedBy(func(data *dao.CredentialsInsertRequest) bool {
-						return assert.Equal(t, testCase.request.Email, data.Email) &&
-							assert.NotEqual(t, uuid.Nil, data.ID) &&
-							assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
-							assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
-							assert.Equal(t, expectRole, data.Role)
-					})).
-					Return(
-						testCase.daoMock.resp,
-						testCase.daoMock.err,
-					)
-			}
-
-			if testCase.serviceSignClaimsMock != nil {
+			if testCase.signRefreshMock != nil {
 				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
-					Usage: servicejsonkeys.KeyUsageAuthRefresh,
-					Payload: lo.Must(grpcf.MarshalJSONAsAny(session.RefreshClaimsForm{
-						UserID: testCase.daoMock.resp.ID,
-					})),
+					Usage:   servicejsonkeys.KeyUsageAuthRefresh,
+					Payload: lo.Must(grpcf.MarshalJSONAsAny(session.RefreshClaimsForm{UserID: credentials.ID})),
 				}
 
 				serviceSignClaims.EXPECT().
 					ClaimsSign(mock.Anything, claimsSignRequest).
-					Return(
-						&servicejsonkeys.ClaimsSignResponse{
-							Token: mockUnsignedRefreshToken,
-						},
-						testCase.serviceSignClaimsMock.err,
-					)
+					Return(&servicejsonkeys.ClaimsSignResponse{Token: mockUnsignedRefreshToken}, testCase.signRefreshMock.err)
 			}
 
-			if testCase.issueTokenMock != nil {
+			if testCase.sessionOpened {
 				accessTokenClaims := session.Claims{
-					UserID:         &testCase.daoMock.resp.ID,
+					UserID:         &credentials.ID,
 					Roles:          []string{testCase.daoMock.resp.Role},
 					RefreshTokenID: mockUnsignedJTI,
 					SessionID:      mockUnsignedJTI,
@@ -591,33 +328,19 @@ func TestCredentialsCreate(t *testing.T) {
 					Usage:   servicejsonkeys.KeyUsageAuth,
 					Payload: lo.Must(grpcf.MarshalJSONAsAny(accessTokenClaims)),
 				}
-
-				serviceSignClaims.EXPECT().
-					ClaimsSign(mock.Anything, claimsSignRequest).
-					Return(testCase.issueTokenMock.resp, testCase.issueTokenMock.err)
-			}
-
-			if testCase.issueTokenMock != nil && testCase.issueTokenMock.err == nil {
 				sessionRequest := &dao.SessionUpsertRequest{
 					ID:        uuid.MustParse(mockUnsignedJTI),
-					UserID:    testCase.daoMock.resp.ID,
+					UserID:    credentials.ID,
 					UserAgent: testCase.request.Visitor.UserAgent,
 					ExpiresAt: time.Unix(0, 0),
 				}
 
-				// A new account consents to no location, so its session is written alone.
-				daoSessionUpsert.EXPECT().
-					Exec(mock.Anything, matchSessionUpsert(t, sessionRequest)).
-					Return(testCase.sessionUpsertErr)
-			}
-
-			if testCase.issueTokenMock != nil && testCase.issueTokenMock.err == nil && testCase.sessionUpsertErr == nil {
+				serviceSignClaims.EXPECT().
+					ClaimsSign(mock.Anything, claimsSignRequest).
+					Return(&servicejsonkeys.ClaimsSignResponse{Token: "access-token"}, nil)
+				daoSessionUpsert.EXPECT().Exec(mock.Anything, matchSessionUpsert(t, sessionRequest)).Return(nil)
 				daoSessionRevokeOldest.EXPECT().Exec(mock.Anything, mock.Anything).Return(nil)
-				daoSessionTrim.EXPECT().
-					Exec(mock.Anything, &dao.SessionTrimRequest{
-						UserID: testCase.daoMock.resp.ID, Keep: core.SessionLoggedOutKept, Limit: core.SessionTrimBatch,
-					}).
-					Return(nil)
+				daoSessionTrim.EXPECT().Exec(mock.Anything, mock.Anything).Return(nil)
 			}
 
 			service := core.NewCredentialsCreate(
@@ -637,6 +360,7 @@ func TestCredentialsCreate(t *testing.T) {
 			resp, err := service.Exec(ctx, testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
+			require.Equal(t, lo.Ternary(testCase.transactionMock != nil, 1, 0), transactions)
 		})
 	}
 }
@@ -679,7 +403,6 @@ func TestCredentialsCreateHashing(t *testing.T) {
 			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
 			daoSessionRevokeOldest := coremocks.NewMockCredentialsCreateDaoSessionRevokeOldest(t)
 			daoSessionTrim := coremocks.NewMockCredentialsCreateDaoSessionTrim(t)
-			transactor := coremocks.NewMockTransactor(t)
 
 			verify.EXPECT().Exec(mock.Anything, mock.Anything).
 				RunAndReturn(func(context.Context, *core.ShortCodeVerifyRequest) (*core.ShortCode, error) {
@@ -694,7 +417,6 @@ func TestCredentialsCreateHashing(t *testing.T) {
 				}).Once()
 
 			if testCase.expectErr == nil {
-				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(noHashInTx(t)).Once()
 				consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).
 					Return(nil).Once()
 				mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
@@ -708,7 +430,7 @@ func TestCredentialsCreateHashing(t *testing.T) {
 
 			service := core.NewCredentialsCreate(
 				mockDao, daoLocationConsent, daoSessionUpsert, daoSessionRevokeOldest, daoSessionTrim, verify, consume, sign,
-				transactor, waitlist, time.Minute,
+				noHashInTx(t), waitlist, time.Minute,
 			)
 			exec := func() error {
 				_, err := service.Exec(t.Context(), request)

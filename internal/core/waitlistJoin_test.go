@@ -31,28 +31,28 @@ func TestWaitlistJoin(t *testing.T) {
 		removeErr  error
 		expectErr  error
 	}{
-		{name: "NewRequest"},
+		{name: "Success"},
 		// A registered address answers like a new one, and its writer round trip adds no row.
-		{name: "ExistingAccountJoinsNothing", exists: true},
+		{name: "Success/ExistingAccount", exists: true},
 		{
-			name: "ExistingAccountWriterUnavailable", exists: true,
+			name: "Error/ExistingAccountWriterUnavailable", exists: true,
 			removeErr: dao.ErrWaitlistUnavailable, expectErr: dao.ErrWaitlistUnavailable,
 		},
-		{name: "DuplicateRequest", joinErr: dao.ErrWaitlistAlreadyJoined},
-		{name: "ConcurrentRegistrationRemovesRow", created: true},
-		{name: "ConcurrentRegistrationWithDuplicate", created: true, joinErr: dao.ErrWaitlistAlreadyJoined},
-		{name: "InvalidEmail", email: "invalid", invalid: true, expectErr: core.ErrInvalidRequest},
+		{name: "Success/Duplicate", joinErr: dao.ErrWaitlistAlreadyJoined},
+		{name: "Success/ConcurrentRegistration", created: true},
+		{name: "Success/ConcurrentRegistrationWithDuplicate", created: true, joinErr: dao.ErrWaitlistAlreadyJoined},
+		{name: "Error/InvalidEmail", email: "invalid", invalid: true, expectErr: core.ErrInvalidRequest},
 		{
-			name: "OversizedEmail", email: strings.Repeat("a", 1025) + "@example.com",
+			name: "Error/OversizedEmail", email: strings.Repeat("a", 1025) + "@example.com",
 			invalid: true, expectErr: core.ErrInvalidRequest,
 		},
-		{name: "InvalidLanguage", lang: "xx", invalid: true, expectErr: core.ErrInvalidRequest},
-		{name: "AccountLookupFails", lookupErr: errDatabase, expectErr: errDatabase},
-		{name: "WriterUnavailable", joinErr: dao.ErrWaitlistUnavailable, expectErr: dao.ErrWaitlistUnavailable},
-		{name: "WriterBusy", joinErr: dao.ErrWaitlistBusy, expectErr: dao.ErrWaitlistBusy},
-		{name: "RecheckFails", recheckErr: errDatabase, expectErr: errDatabase},
+		{name: "Error/InvalidLanguage", lang: "xx", invalid: true, expectErr: core.ErrInvalidRequest},
+		{name: "Error/AccountLookup", lookupErr: errDatabase, expectErr: errDatabase},
+		{name: "Error/WriterUnavailable", joinErr: dao.ErrWaitlistUnavailable, expectErr: dao.ErrWaitlistUnavailable},
+		{name: "Error/WriterBusy", joinErr: dao.ErrWaitlistBusy, expectErr: dao.ErrWaitlistBusy},
+		{name: "Error/Recheck", recheckErr: errDatabase, expectErr: errDatabase},
 		{
-			name: "ConcurrentCleanupFails", created: true,
+			name: "Error/ConcurrentCleanup", created: true,
 			removeErr: dao.ErrWaitlistUnavailable, expectErr: dao.ErrWaitlistUnavailable,
 		},
 	}
