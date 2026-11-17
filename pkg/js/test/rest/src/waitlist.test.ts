@@ -2,7 +2,6 @@ import { accountPlatform, callerApi } from "./caller";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
 import { expectStatus } from "@a-novel-kit/nodelib-test/http";
 import {
   AuthenticationApi,
@@ -73,9 +72,9 @@ describe("waitlistJoin", () => {
     const api = callerApi(accountPlatform);
     const token = await tokenCreateAnon(api);
     const response = await api.fetchResponse("/v2/waitlist", {
-      headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${token.accessToken}` },
+      accessToken: token.accessToken,
       method: "PUT",
-      body: JSON.stringify({ email: "invalid", lang: "xx" }),
+      json: { email: "invalid", lang: "xx" },
     });
 
     expect(response.status).toBe(422);
