@@ -9,11 +9,8 @@
   "license": "RPL-1.5",
   "type": "module",
   "devDependencies": {
-    "@a-novel-kit/nodelib-browser": "^1.3.18",
-    "@a-novel-kit/nodelib-test": "^1.3.18",
     "@a-novel/service-authentication-rest": "workspace:*",
-    "@a-novel/service-authentication-rest-test": "workspace:*",
-    "@types/node": "^24.10.0"
+    "@a-novel/service-authentication-rest-test": "workspace:*"
   },
   "engines": {
     "node": ">=23.11.0",

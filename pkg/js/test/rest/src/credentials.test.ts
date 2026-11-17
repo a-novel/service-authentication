@@ -36,13 +36,18 @@ import {
   superAdminAccessToken,
 } from "@a-novel/service-authentication-rest-test";
 
-/** Returns the short code and target of the one link an email carries, as its button and again as fallback text. */
-function mailedLink(mail: MailpitMessage) {
+/**
+ * Returns the short code and target of the one link an email carries, as its button and again as fallback text, after
+ * checking that it opens the platform page `page`.
+ */
+function mailedLink(mail: MailpitMessage, page: string) {
   const links = mailLinks(mail.HTML);
   expect(links).toHaveLength(2);
   expect(links[1]).toBe(links[0]);
 
-  const { searchParams } = new URL(links[0]);
+  const { pathname, searchParams } = new URL(links[0]);
+  expect(pathname).toBe(page);
+
   const shortCode = searchParams.get("shortCode");
   const target = searchParams.get("target");
   expect(shortCode).toBeTruthy();
@@ -58,7 +63,8 @@ describe("shortCodeCreateRegister", () => {
 
     await shortCodeCreateRegister(api, await superAdminAccessToken(api), { email, lang: Lang.En });
 
-    const { target } = mailedLink(await checkEmail(`to:"${email}" subject:"Create your Agora account"`));
+    const mail = await checkEmail(`to:"${email}" subject:"Create your Agora account"`);
+    const { target } = mailedLink(mail, "/ext/account/create");
     expect(Buffer.from(target, "base64url").toString()).toBe(email);
   });
 
@@ -130,7 +136,7 @@ async function requestEmailUpdate(
 
   const mail = await checkEmail(`to:"${newEmail}" subject:"Confirm your new Agora email address"`);
 
-  return { ...mailedLink(mail), newEmail };
+  return { ...mailedLink(mail, "/ext/email/validate"), newEmail };
 }
 
 describe("credentialsUpdateEmail", () => {
@@ -342,7 +348,9 @@ async function requestPasswordReset(api: AuthenticationApi, token: Token, email:
     lang: Lang.En,
   });
 
-  return mailedLink(await checkEmail(`to:"${email}" subject:"Reset your Agora password"`));
+  const mail = await checkEmail(`to:"${email}" subject:"Reset your Agora password"`);
+
+  return mailedLink(mail, "/ext/password/reset");
 }
 
 describe("credentialsResetPassword", () => {

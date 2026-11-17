@@ -46,10 +46,13 @@
     "test:ci": "pnpm build && pnpm i && pnpm test"
   },
   "devDependencies": {
+    "@a-novel-kit/nodelib-browser": "^2.0.0",
     "@a-novel-kit/nodelib-config": "^2.0.0",
+    "@a-novel-kit/nodelib-test": "^2.0.0",
     "@eslint/js": "^10.0.1",
     "@redocly/cli": "^2.14.5",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
+    "@types/node": "^26.0.0",
     "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
