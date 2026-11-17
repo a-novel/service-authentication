@@ -62,6 +62,11 @@ func TestTokenRefresh(t *testing.T) {
 		err       error
 	}
 
+	type sessionMock struct {
+		request *dao.SessionUpsertRequest
+		err     error
+	}
+
 	type testCase struct {
 		name string
 
@@ -73,8 +78,8 @@ func TestTokenRefresh(t *testing.T) {
 		daoMock                 *respMock[*dao.Credentials]
 		signClaimsMock          *signClaimsMock
 		// consentMock answers the locked consent read of a consenting account.
-		consentMock   *respMock[bool]
-		sessionUpsert *dao.SessionUpsertRequest
+		consentMock *respMock[bool]
+		sessionMock *sessionMock
 
 		expect    *core.Token
 		expectErr error
@@ -93,11 +98,13 @@ func TestTokenRefresh(t *testing.T) {
 		daoMock:                 &respMock[*dao.Credentials]{resp: credentials},
 		signClaimsMock:          &signClaimsMock{sessionID: refreshTokenID},
 		// Without consent, the renewal writes no location, and erases any the row holds.
-		sessionUpsert: &dao.SessionUpsertRequest{
-			ID:        uuid.MustParse(refreshTokenID),
-			UserID:    userID,
-			UserAgent: "Firefox",
-			ExpiresAt: time.Unix(hourLater, 0),
+		sessionMock: &sessionMock{
+			request: &dao.SessionUpsertRequest{
+				ID:        uuid.MustParse(refreshTokenID),
+				UserID:    userID,
+				UserAgent: "Firefox",
+				ExpiresAt: time.Unix(hourLater, 0),
+			},
 		},
 
 		// The refresh token does not change.
@@ -122,10 +129,12 @@ func TestTokenRefresh(t *testing.T) {
 			}
 			variant.signClaimsMock = &signClaimsMock{sessionID: sessionID}
 			variant.consentMock = &respMock[bool]{resp: true}
-			variant.sessionUpsert = changed(*success.sessionUpsert, func(request *dao.SessionUpsertRequest) {
-				request.ID = uuid.MustParse(sessionID)
-				request.IPAddress, request.Region, request.City = "192.0.2.1", "FR", "Paris"
-			})
+			variant.sessionMock = &sessionMock{
+				request: changed(*success.sessionMock.request, func(request *dao.SessionUpsertRequest) {
+					request.ID = uuid.MustParse(sessionID)
+					request.IPAddress, request.Region, request.City = "192.0.2.1", "FR", "Paris"
+				}),
+			}
 		}),
 		{
 			name: "Error/NoAccessToken",
@@ -240,7 +249,19 @@ func TestTokenRefresh(t *testing.T) {
 		changed(*success, func(variant *testCase) {
 			variant.name = "Error/SelectCredentials"
 			variant.daoMock = &respMock[*dao.Credentials]{err: errFoo}
-			variant.signClaimsMock, variant.sessionUpsert = nil, nil
+			variant.signClaimsMock, variant.sessionMock = nil, nil
+			variant.expect, variant.expectErr = nil, errFoo
+		}),
+		changed(*success, func(variant *testCase) {
+			variant.name = "Error/SignError"
+			variant.signClaimsMock = &signClaimsMock{sessionID: refreshTokenID, err: errFoo}
+			variant.sessionMock = nil
+			variant.expect, variant.expectErr = nil, errFoo
+		}),
+		changed(*success, func(variant *testCase) {
+			// A failed record fails the renewal.
+			variant.name = "Error/SessionUpsert"
+			variant.sessionMock = &sessionMock{request: success.sessionMock.request, err: errFoo}
 			variant.expect, variant.expectErr = nil, errFoo
 		}),
 	}
@@ -319,10 +340,10 @@ func TestTokenRefresh(t *testing.T) {
 					Return(testCase.consentMock.resp, testCase.consentMock.err)
 			}
 
-			if testCase.sessionUpsert != nil {
+			if testCase.sessionMock != nil {
 				daoSessionUpsert.EXPECT().
-					Exec(mock.Anything, matchSessionUpsert(t, testCase.sessionUpsert)).
-					Return(nil)
+					Exec(mock.Anything, matchSessionUpsert(t, testCase.sessionMock.request)).
+					Return(testCase.sessionMock.err)
 			}
 
 			service := core.NewTokenRefresh(

@@ -99,8 +99,8 @@ func TestWaitlistCleanup(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
-			credentials := coremocks.NewMockWaitlistCleanupDaoCredentialsList(t)
-			writer := coremocks.NewMockWaitlistCleanupDaoWaitlist(t)
+			daoCredentialsList := coremocks.NewMockWaitlistCleanupDaoCredentialsList(t)
+			daoWaitlist := coremocks.NewMockWaitlistCleanupDaoWaitlist(t)
 
 			var calls []*mock.Call
 
@@ -108,7 +108,7 @@ func TestWaitlistCleanup(t *testing.T) {
 			scanned := 0
 
 			for _, page := range testCase.pages {
-				calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "list", After: after}).
+				calls = append(calls, daoWaitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "list", After: after}).
 					Return(&dao.WaitlistResult{Emails: page.emails}, page.listErr).Once())
 				if page.listErr != nil || len(page.emails) == 0 || len(page.emails) > authconfig.WaitlistBatchSize ||
 					scanned+len(page.emails) > authconfig.WaitlistMaxEntries {
@@ -120,7 +120,7 @@ func TestWaitlistCleanup(t *testing.T) {
 					break
 				}
 
-				calls = append(calls, credentials.EXPECT().Exec(mock.Anything, &dao.CredentialsListRequest{
+				calls = append(calls, daoCredentialsList.EXPECT().Exec(mock.Anything, &dao.CredentialsListRequest{
 					Limit: authconfig.WaitlistBatchSize, Emails: page.emails,
 				}).Return(page.accounts, page.lookupErr).Once())
 				if testCase.apply && len(page.accounts) > 0 && page.lookupErr == nil {
@@ -129,7 +129,8 @@ func TestWaitlistCleanup(t *testing.T) {
 						emails[i] = account.Email
 					}
 
-					calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "remove", Emails: emails}).
+					calls = append(calls, daoWaitlist.EXPECT().
+						Exec(mock.Anything, &dao.WaitlistRequest{Action: "remove", Emails: emails}).
 						Return(&dao.WaitlistResult{Removed: page.removed}, page.removeErr).Once())
 				}
 
@@ -139,9 +140,9 @@ func TestWaitlistCleanup(t *testing.T) {
 
 			mock.InOrder(calls...)
 
-			result, err := core.NewWaitlistCleanup(credentials, writer).Exec(t.Context(), &core.WaitlistCleanupRequest{
-				Apply: testCase.apply,
-			})
+			service := core.NewWaitlistCleanup(daoCredentialsList, daoWaitlist)
+
+			result, err := service.Exec(t.Context(), &core.WaitlistCleanupRequest{Apply: testCase.apply})
 			require.ErrorIs(t, err, testCase.expectErr)
 
 			if testCase.expectMessage != "" {

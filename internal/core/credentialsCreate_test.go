@@ -71,7 +71,7 @@ func TestCredentialsCreate(t *testing.T) {
 		transactionMock *transactionMock
 		consumeMock     *errMock
 		daoMock         *respMock[*dao.Credentials]
-		waitlistMock    *errMock
+		daoWaitlistMock *errMock
 		signRefreshMock *errMock
 		// sessionOpened signs the access token, and records and bounds the session, all successfully.
 		sessionOpened bool
@@ -90,7 +90,7 @@ func TestCredentialsCreate(t *testing.T) {
 		transactionMock: &transactionMock{},
 		consumeMock:     &errMock{},
 		daoMock:         &respMock[*dao.Credentials]{resp: credentials},
-		waitlistMock:    &errMock{},
+		daoWaitlistMock: &errMock{},
 		signRefreshMock: &errMock{},
 		sessionOpened:   true,
 
@@ -102,7 +102,7 @@ func TestCredentialsCreate(t *testing.T) {
 		success,
 		changed(*success, func(variant *testCase) {
 			variant.name = "Success/WaitlistUnavailable"
-			variant.waitlistMock = &errMock{err: dao.ErrWaitlistUnavailable}
+			variant.daoWaitlistMock = &errMock{err: dao.ErrWaitlistUnavailable}
 		}),
 		changed(*success, func(variant *testCase) {
 			variant.name = "Success/RegistrationRole"
@@ -222,7 +222,7 @@ func TestCredentialsCreate(t *testing.T) {
 			serviceShortCodeVerify := coremocks.NewMockCredentialsCreateServiceShortCodeVerify(t)
 			serviceShortCodeConsume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
 			serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
-			waitlist := coremocks.NewMockCredentialsCreateDaoWaitlist(t)
+			daoWaitlist := coremocks.NewMockCredentialsCreateDaoWaitlist(t)
 			daoLocationConsent := coremocks.NewMockCredentialsCreateDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
 			daoSessionRevokeOldest := coremocks.NewMockCredentialsCreateDaoSessionRevokeOldest(t)
@@ -289,9 +289,9 @@ func TestCredentialsCreate(t *testing.T) {
 					Return(testCase.daoMock.resp, testCase.daoMock.err)
 			}
 
-			if testCase.waitlistMock != nil {
+			if testCase.daoWaitlistMock != nil {
 				// The cleanup runs after the commit, on a bounded context the client cannot cancel.
-				waitlist.EXPECT().
+				daoWaitlist.EXPECT().
 					Exec(mock.Anything, &dao.WaitlistRequest{Action: "remove", Email: testCase.request.Email}).
 					Run(func(cleanupCtx context.Context, _ *dao.WaitlistRequest) {
 						require.True(t, committed, "sheet I/O must happen after commit")
@@ -302,7 +302,7 @@ func TestCredentialsCreate(t *testing.T) {
 						require.Positive(t, time.Until(deadline))
 						require.LessOrEqual(t, time.Until(deadline), 3*time.Second)
 					}).
-					Return(&dao.WaitlistResult{}, testCase.waitlistMock.err).
+					Return(&dao.WaitlistResult{}, testCase.daoWaitlistMock.err).
 					Once()
 			}
 
@@ -353,7 +353,7 @@ func TestCredentialsCreate(t *testing.T) {
 				serviceShortCodeConsume,
 				serviceSignClaims,
 				transactor,
-				waitlist,
+				daoWaitlist,
 				time.Minute,
 			)
 
@@ -398,7 +398,7 @@ func TestCredentialsCreateHashing(t *testing.T) {
 			verify := coremocks.NewMockCredentialsCreateServiceShortCodeVerify(t)
 			consume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
 			sign := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
-			waitlist := coremocks.NewMockCredentialsCreateDaoWaitlist(t)
+			daoWaitlist := coremocks.NewMockCredentialsCreateDaoWaitlist(t)
 			daoLocationConsent := coremocks.NewMockCredentialsCreateDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
 			daoSessionRevokeOldest := coremocks.NewMockCredentialsCreateDaoSessionRevokeOldest(t)
@@ -420,7 +420,7 @@ func TestCredentialsCreateHashing(t *testing.T) {
 				consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).
 					Return(nil).Once()
 				mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
-				waitlist.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.WaitlistResult{}, nil).Once()
+				daoWaitlist.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.WaitlistResult{}, nil).Once()
 				sign.EXPECT().ClaimsSign(mock.Anything, mock.Anything).
 					Return(&servicejsonkeys.ClaimsSignResponse{Token: mockUnsignedRefreshToken}, nil).Twice()
 				daoSessionUpsert.EXPECT().Exec(mock.Anything, mock.Anything).Return(nil).Once()
@@ -430,7 +430,7 @@ func TestCredentialsCreateHashing(t *testing.T) {
 
 			service := core.NewCredentialsCreate(
 				mockDao, daoLocationConsent, daoSessionUpsert, daoSessionRevokeOldest, daoSessionTrim, verify, consume, sign,
-				noHashInTx(t), waitlist, time.Minute,
+				noHashInTx(t), daoWaitlist, time.Minute,
 			)
 			exec := func() error {
 				_, err := service.Exec(t.Context(), request)

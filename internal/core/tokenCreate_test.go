@@ -152,7 +152,7 @@ func TestTokenCreate(t *testing.T) {
 			expectErr: core.ErrInvalidRequest,
 		},
 		{
-			// An unknown email costs a hash, as a wrong password does.
+			// An unknown email returns the lookup's not-found error.
 			name: "Error/UnknownEmail",
 
 			request: request,

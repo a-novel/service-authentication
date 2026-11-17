@@ -66,7 +66,10 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		serviceShortCodeVerifyMock  *serviceShortCodeVerifyMock
 		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
 		daoCredentialsSelectMock    *daoCredentialsSelectMock
-		daoMock                     *daoMock
+		// transactions counts the transactions the change opens: the code's consumption and the update
+		// run in one.
+		transactions int
+		daoMock      *daoMock
 
 		expectErr error
 	}{
@@ -78,6 +81,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
+			transactions:                1,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 
 			daoMock: &daoMock{
@@ -95,6 +99,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				},
 			},
 
+			transactions: 1,
 			daoMock: &daoMock{
 				resp: &dao.Credentials{},
 			},
@@ -107,6 +112,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
+			transactions:                1,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 
 			daoMock: &daoMock{
@@ -135,6 +141,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
+			transactions: 1,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
 				err: core.ErrShortCodeInvalid,
 			},
@@ -193,6 +200,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
+			transactions:                1,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 
 			daoMock: &daoMock{
@@ -252,16 +260,14 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 					Return(testCase.daoMock.resp, testCase.daoMock.err)
 			}
 
+			transactor := transactiontest.NewTransactor()
 			service := core.NewCredentialsUpdatePassword(
-				mockDao,
-				daoCredentialsSelect,
-				serviceShortCodeVerify,
-				serviceShortCodeConsume,
-				transactiontest.NewTransactor(),
+				mockDao, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, transactor,
 			)
 
 			_, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
+			require.Equal(t, testCase.transactions, transactor.Calls())
 		})
 	}
 }

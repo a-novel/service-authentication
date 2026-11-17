@@ -576,6 +576,21 @@ func TestTokenGrant(t *testing.T) {
 			expect:               &core.TokenGrantResult{AccessToken: "access-token", ExpiresIn: accessTokenTTL},
 		},
 		{
+			name: "Error/RefreshSessionTouch",
+
+			caller: studioCaller,
+			params: refreshGrantParams(nil),
+
+			verifyRefreshMock:      &respMock[*session.RefreshClaims]{resp: &refreshTokenClaims},
+			daoRevocationExistMock: &respMock[bool]{},
+			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: credentials},
+			signAccessMock:         &errMock{},
+			daoSessionTouchErr:     errFoo,
+
+			expectRevocationJTIs: []string{refreshTokenID, sessionID},
+			expectErr:            errFoo,
+		},
+		{
 			name: "Error/NoRefreshToken",
 
 			caller: studioCaller,
@@ -665,6 +680,20 @@ func TestTokenGrant(t *testing.T) {
 
 			expectRevocationJTIs: []string{refreshTokenID, sessionID},
 			expectErr:            core.ErrTokenGrantInvalidRefreshToken,
+		},
+		{
+			name: "Error/RefreshSign",
+
+			caller: studioCaller,
+			params: refreshGrantParams(nil),
+
+			verifyRefreshMock:      &respMock[*session.RefreshClaims]{resp: &refreshTokenClaims},
+			daoRevocationExistMock: &respMock[bool]{},
+			daoCredentialsMock:     &respMock[*dao.Credentials]{resp: credentials},
+			signAccessMock:         &errMock{err: errFoo},
+
+			expectRevocationJTIs: []string{refreshTokenID, sessionID},
+			expectErr:            errFoo,
 		},
 	}
 

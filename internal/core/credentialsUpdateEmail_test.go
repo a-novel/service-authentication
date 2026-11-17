@@ -56,8 +56,11 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 
 		request *core.CredentialsUpdateEmailRequest
 
-		serviceShortCodeVerifyMock  *serviceShortCodeVerifyMock
-		closeMailDelivery           bool
+		serviceShortCodeVerifyMock *serviceShortCodeVerifyMock
+		closeMailDelivery          bool
+		// transactions counts the transactions the change opens: the account lookup, the code's
+		// consumption and the update run in one.
+		transactions                int
 		daoSelectMock               *daoMock
 		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
 		daoMock                     *daoMock
@@ -73,6 +76,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			request: validRequest,
 
 			serviceShortCodeVerifyMock:  verified,
+			transactions:                1,
 			daoSelectMock:               previous,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 			daoMock: &daoMock{
@@ -122,6 +126,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			request: validRequest,
 
 			serviceShortCodeVerifyMock: verified,
+			transactions:               1,
 			daoSelectMock:              &daoMock{err: errFoo},
 
 			expectErr: errFoo,
@@ -133,6 +138,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			request: validRequest,
 
 			serviceShortCodeVerifyMock: verified,
+			transactions:               1,
 			daoSelectMock:              previous,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
 				err: core.ErrShortCodeInvalid,
@@ -146,6 +152,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			request: validRequest,
 
 			serviceShortCodeVerifyMock:  verified,
+			transactions:                1,
 			daoSelectMock:               previous,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 			daoMock: &daoMock{
@@ -224,14 +231,15 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 					Return(nil)
 			}
 
+			transactor := transactiontest.NewTransactor()
 			service := core.NewCredentialsUpdateEmail(
-				mockDao, mockDaoSelect, serviceShortCodeVerify, serviceShortCodeConsume, mailDelivery,
-				transactiontest.NewTransactor(),
+				mockDao, mockDaoSelect, serviceShortCodeVerify, serviceShortCodeConsume, mailDelivery, transactor,
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
+			require.Equal(t, testCase.transactions, transactor.Calls())
 
 			require.NoError(t, mailDelivery.Wait(t.Context()))
 		})
