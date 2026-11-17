@@ -17,13 +17,6 @@ import {
 } from "@a-novel/service-authentication-rest";
 import { preRegisterUser, registerUser } from "@a-novel/service-authentication-rest-test";
 
-// The managed local test rail supplies a dynamic URL; legacy CI still exports MAIL_HOST.
-const mailUrl = (() => {
-  const value = process.env.MAIL_UI_URL ?? process.env.MAIL_HOST;
-  if (!value) throw new Error("MAIL_UI_URL or MAIL_HOST must be set");
-  return value;
-})();
-
 /** The visitor the account platform describes in the tests, as its gateway would. */
 const visitor = {
   "X-Client-User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0",
@@ -49,7 +42,7 @@ function visitorApi(): AuthenticationApi {
  */
 async function userWithTwoSessions() {
   const api = visitorApi();
-  const user = await registerUser(api, await preRegisterUser(callerApi(accountPlatform), mailUrl));
+  const user = await registerUser(api, await preRegisterUser(callerApi(accountPlatform)));
   const second = await tokenCreate(api, { email: user.email, password: user.password });
 
   return { api, user, first: user.token, second };

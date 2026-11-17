@@ -1,27 +1,25 @@
-import { checkEmail, getHtmlMail } from "./checkEmail";
+import { checkEmail, mailLinks } from "./mail";
+import { anonymousAccessToken, superAdminAccessToken, superAdminCredentials } from "./token";
 
-import * as crypto from "node:crypto";
+import { randomBytes } from "node:crypto";
 
-import { expect } from "vitest";
-
+import { isHttpStatusError } from "@a-novel-kit/nodelib-browser/http";
 import {
   type AuthenticationApi,
   Lang,
   claimsGet,
   credentialsCreate,
   shortCodeCreateRegister,
-  tokenCreate,
-  tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
 
 /** Returns a random email address. */
 export function generateRandomMail() {
-  return crypto.randomBytes(12).toString("hex") + "@provider.com";
+  return randomBytes(12).toString("hex") + "@provider.com";
 }
 
 /** Returns a random password the service accepts. */
 export function generateRandomPassword() {
-  return crypto.randomBytes(12).toString("hex");
+  return randomBytes(12).toString("hex");
 }
 
 /** A registration invitation: the invited address and the short code its email carries. */
@@ -30,70 +28,65 @@ export interface PreRegisterData {
   shortCode: string;
 }
 
-/** Requests a registration link as the configured super-admin and returns its email address and short code. */
+/** Invites an address as the super-admin, and returns the short code its invitation email carries. */
 export async function preRegisterUser(
   api: AuthenticationApi,
-  mailHost: string,
-  userEmail: string = generateRandomMail()
-) {
-  const superAdminToken = await tokenCreate(api, {
-    email: process.env.SUPER_ADMIN_EMAIL!,
-    password: process.env.SUPER_ADMIN_PASSWORD!,
-  });
+  email: string = generateRandomMail()
+): Promise<PreRegisterData> {
+  await shortCodeCreateRegister(api, await superAdminAccessToken(api), { email, lang: Lang.En });
 
-  await shortCodeCreateRegister(api, superAdminToken.accessToken, {
-    email: userEmail,
-    lang: Lang.En,
-  });
-
-  const mailData = await checkEmail(mailHost, `to:"${userEmail}"`);
-
-  expect(["Registration Request.", "Create your Agora Storyverse account", "Create your Agora account"]).toContain(
-    mailData.subject
-  );
-  expect(mailData.html).toBeTruthy();
-  const links = getHtmlMail(mailData.html as string, "a");
-  expect([1, 2]).toContain(links.length);
-
-  const registrationUrl = (links[0] as HTMLAnchorElement).href;
-
-  expect(registrationUrl).toBeTruthy();
-  for (const link of links) {
-    expect((link as HTMLAnchorElement).href).toBe(registrationUrl);
-  }
-
-  const parsedUrl = new URL(registrationUrl);
-  const shortCode = parsedUrl.searchParams.get("shortCode");
-  const target = parsedUrl.searchParams.get("target");
-
-  expect(shortCode).toBeTruthy();
-  expect(target).toBeTruthy();
-  expect(atob(target!)).toBe(userEmail);
-
-  return {
-    email: userEmail,
-    shortCode: shortCode as string,
-  };
+  return { email, shortCode: await invitationShortCode(email) };
 }
 
-/** Completes a registration invitation with a random password, returning the new account and its session. */
-export async function registerUser(api: AuthenticationApi, data: PreRegisterData) {
-  const userPassword = generateRandomPassword();
+/**
+ * Completes a registration invitation with a random password, and returns the new account with its first session.
+ * Without an invitation, it invites a random address first.
+ */
+export async function registerUser(api: AuthenticationApi, invitation?: PreRegisterData) {
+  const { email, shortCode } = invitation ?? (await preRegisterUser(api));
+  const password = generateRandomPassword();
 
-  const anonToken = await tokenCreateAnon(api);
-
-  const token = await credentialsCreate(api, anonToken.accessToken, {
-    email: data.email,
-    password: userPassword,
-    shortCode: data.shortCode,
-  });
-
+  const token = await credentialsCreate(api, await anonymousAccessToken(api), { email, password, shortCode });
   const claims = await claimsGet(api, token.accessToken);
 
-  return {
-    email: data.email,
-    password: userPassword,
-    claims: claims,
-    token,
-  };
+  return { email, password, claims, token };
+}
+
+/** Registers a new account, which holds the user role, and returns its access token. */
+export async function userAccessToken(api: AuthenticationApi): Promise<string> {
+  const { token } = await registerUser(api);
+  return token.accessToken;
+}
+
+/**
+ * Completes the invitation the service mails the super-admin at startup, unless the super-admin already signs in.
+ * Call it from the suite's vitest globalSetup, so every test can sign in as the super-admin.
+ */
+export async function registerSuperAdmin(api: AuthenticationApi): Promise<void> {
+  try {
+    await superAdminAccessToken(api);
+
+    return;
+  } catch (error) {
+    // A fresh database holds the invitation instead of credentials.
+    if (!isHttpStatusError(error, 401)) throw error;
+  }
+
+  const { email, password } = superAdminCredentials();
+  // A global setup runs outside the tests' timeout, so it waits as long as a loaded stack may take to send the mail.
+  const shortCode = await invitationShortCode(email, 15_000);
+  await credentialsCreate(api, await anonymousAccessToken(api), { email, password, shortCode });
+}
+
+/** Waits for the invitation mailed to an address, and returns the short code its link carries for that address. */
+async function invitationShortCode(email: string, timeout?: number): Promise<string> {
+  const [link] = mailLinks((await checkEmail(`to:"${email}"`, timeout)).HTML);
+  if (!link) throw new Error(`the invitation to ${email} carries no link`);
+
+  const { searchParams } = new URL(link);
+  const shortCode = searchParams.get("shortCode");
+  const target = Buffer.from(searchParams.get("target") ?? "", "base64url").toString();
+  if (!shortCode || target !== email) throw new Error(`the invitation link ${link} does not register ${email}`);
+
+  return shortCode;
 }

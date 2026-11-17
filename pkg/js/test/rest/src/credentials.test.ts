@@ -26,22 +26,48 @@ import {
   tokenRefresh,
 } from "@a-novel/service-authentication-rest";
 import {
+  type MailpitMessage,
   checkEmail,
   generateRandomMail,
   generateRandomPassword,
-  getHtmlMail,
+  mailLinks,
   preRegisterUser,
   registerUser,
+  superAdminAccessToken,
 } from "@a-novel/service-authentication-rest-test";
 
-// The managed local test rail supplies a dynamic URL; legacy CI still exports MAIL_HOST.
-const mailUrl = (() => {
-  const value = process.env.MAIL_UI_URL ?? process.env.MAIL_HOST;
-  if (!value) throw new Error("MAIL_UI_URL or MAIL_HOST must be set");
-  return value;
-})();
+/**
+ * Returns the short code and target of the one link an email carries, as its button and again as fallback text, after
+ * checking that it opens the platform page `page`.
+ */
+function mailedLink(mail: MailpitMessage, page: string) {
+  const links = mailLinks(mail.HTML);
+  expect(links).toHaveLength(2);
+  expect(links[1]).toBe(links[0]);
+
+  const { pathname, searchParams } = new URL(links[0]);
+  expect(pathname).toBe(page);
+
+  const shortCode = searchParams.get("shortCode");
+  const target = searchParams.get("target");
+  expect(shortCode).toBeTruthy();
+  expect(target).toBeTruthy();
+
+  return { shortCode: shortCode!, target: target! };
+}
 
 describe("shortCodeCreateRegister", () => {
+  it("mails an invitation that links to account creation for the address", async () => {
+    const api = callerApi(accountPlatform);
+    const email = generateRandomMail();
+
+    await shortCodeCreateRegister(api, await superAdminAccessToken(api), { email, lang: Lang.En });
+
+    const mail = await checkEmail(`to:"${email}" subject:"Create your Agora account"`);
+    const { target } = mailedLink(mail, "/ext/account/create");
+    expect(Buffer.from(target, "base64url").toString()).toBe(email);
+  });
+
   it("refuses anonymous callers", async () => {
     const api = callerApi(accountPlatform);
     const anonymousToken = await tokenCreateAnon(api);
@@ -60,28 +86,26 @@ describe("credentialsCreate", () => {
   it("registers the user", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    await registerUser(api, preRegister);
+    await registerUser(api);
   });
 
   it("registers an address with a plus sign", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl, `tag+${generateRandomMail()}`);
-    await registerUser(api, preRegister);
+    await registerUser(api, await preRegisterUser(api, `tag+${generateRandomMail()}`));
   });
 
   it("does not register with wrong link", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
+    const preRegister = await preRegisterUser(api);
     await expectStatus(registerUser(api, { ...preRegister, shortCode: "invalid" }), 403);
   });
 
   it("only registers once", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
+    const preRegister = await preRegisterUser(api);
     await registerUser(api, preRegister);
     await expectStatus(registerUser(api, preRegister), 403);
   });
@@ -91,8 +115,8 @@ describe("credentialsCreate", () => {
 
     const email = generateRandomMail();
 
-    const preRegister1 = await preRegisterUser(api, mailUrl, email);
-    const preRegister2 = await preRegisterUser(api, mailUrl, email);
+    const preRegister1 = await preRegisterUser(api, email);
+    const preRegister2 = await preRegisterUser(api, email);
     await expectStatus(registerUser(api, preRegister1), 403);
     await registerUser(api, preRegister2);
   });
@@ -110,27 +134,9 @@ async function requestEmailUpdate(
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(mailUrl, `to:"${newEmail}" subject:"Confirm your new Agora email address"`);
+  const mail = await checkEmail(`to:"${newEmail}" subject:"Confirm your new Agora email address"`);
 
-  expect(mailData.html).toBeTruthy();
-  const links = getHtmlMail(mailData.html as string, "a");
-  expect(links).toHaveLength(2);
-  expect(links[1].getAttribute("href")).toBe(links[0].getAttribute("href"));
-
-  const updateUrl = (links[0] as HTMLAnchorElement).href;
-
-  const parsedUrl = new URL(updateUrl);
-  const shortCode = parsedUrl.searchParams.get("shortCode");
-  const target = parsedUrl.searchParams.get("target");
-
-  expect(shortCode).toBeTruthy();
-  expect(target).toBeTruthy();
-
-  return {
-    shortCode: shortCode!,
-    target: target!,
-    newEmail,
-  };
+  return { ...mailedLink(mail, "/ext/email/validate"), newEmail };
 }
 
 describe("credentialsUpdateEmail", () => {
@@ -139,8 +145,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const userToken = await tokenCreate(api, {
       email: user.email,
@@ -158,7 +163,7 @@ describe("credentialsUpdateEmail", () => {
     expect(newCredentials.email).toBe(newEmail);
 
     // The former address learns of the change, and the sessions opened before it continue.
-    await checkEmail(mailUrl, `to:"${user.email}" subject:"Your Agora email address changed"`);
+    await checkEmail(`to:"${user.email}" subject:"Your Agora email address changed"`);
     await tokenRefresh(api, userToken);
 
     await expectStatus(
@@ -178,8 +183,7 @@ describe("credentialsUpdateEmail", () => {
   it("refuses to start a change without the current password", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     await expectStatus(
       shortCodeCreateEmailUpdate(api, user.token.accessToken, {
@@ -199,8 +203,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const userToken = await tokenCreate(api, {
       email: user.email,
@@ -246,8 +249,7 @@ describe("credentialsUpdateEmail", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const userToken = await tokenCreate(api, {
       email: user.email,
@@ -257,8 +259,7 @@ describe("credentialsUpdateEmail", () => {
     const { shortCode, target, newEmail } = await requestEmailUpdate(api, userToken, user.password);
 
     // Register a new email before updating it.
-    const preRegister2 = await preRegisterUser(api, mailUrl, newEmail);
-    await registerUser(api, preRegister2);
+    await registerUser(api, await preRegisterUser(api, newEmail));
 
     await expectStatus(
       credentialsUpdateEmail(api, anonToken.accessToken, {
@@ -275,8 +276,7 @@ describe("credentialsUpdatePassword", () => {
   it("changes the user password", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const userToken = await tokenCreate(api, {
       email: user.email,
@@ -310,8 +310,7 @@ describe("credentialsUpdatePassword", () => {
   it("refuses to update if current password is incorrect", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const userToken = await tokenCreate(api, {
       email: user.email,
@@ -349,26 +348,9 @@ async function requestPasswordReset(api: AuthenticationApi, token: Token, email:
     lang: Lang.En,
   });
 
-  const mailData = await checkEmail(mailUrl, `to:"${email}" subject:"Reset your Agora password"`);
+  const mail = await checkEmail(`to:"${email}" subject:"Reset your Agora password"`);
 
-  expect(mailData.html).toBeTruthy();
-  const links = getHtmlMail(mailData.html as string, "a");
-  expect(links).toHaveLength(2);
-  expect(links[1].getAttribute("href")).toBe(links[0].getAttribute("href"));
-
-  const updateUrl = (links[0] as HTMLAnchorElement).href;
-
-  const parsedUrl = new URL(updateUrl);
-  const shortCode = parsedUrl.searchParams.get("shortCode");
-  const target = parsedUrl.searchParams.get("target");
-
-  expect(shortCode).toBeTruthy();
-  expect(target).toBeTruthy();
-
-  return {
-    shortCode: shortCode!,
-    target: target!,
-  };
+  return mailedLink(mail, "/ext/password/reset");
 }
 
 describe("credentialsResetPassword", () => {
@@ -377,8 +359,7 @@ describe("credentialsResetPassword", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const { shortCode, target } = await requestPasswordReset(api, anonToken, user.email);
 
@@ -409,8 +390,7 @@ describe("credentialsResetPassword", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const requestPasswordReset1 = await requestPasswordReset(api, anonToken, user.email);
     const requestPasswordReset2 = await requestPasswordReset(api, anonToken, user.email);
@@ -438,17 +418,13 @@ describe("credentialsUpdateRole", () => {
   it("changes the role of a user", async () => {
     const api = callerApi(accountPlatform);
 
-    const superAdminToken = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const superAdminToken = await superAdminAccessToken(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     expect(user.claims.roles).toStrictEqual([Role.User]);
 
-    await credentialsUpdateRole(api, superAdminToken.accessToken, {
+    await credentialsUpdateRole(api, superAdminToken, {
       userID: user.claims.userID!,
       role: Role.Admin,
     });
@@ -467,8 +443,7 @@ describe("credentialsUpdateRole", () => {
   it("refuses user to change roles themselves", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const userToken = await tokenCreate(api, {
       email: user.email,
@@ -489,15 +464,11 @@ describe("credentialsGet", () => {
   it("gets existing credentials", async () => {
     const api = callerApi(accountPlatform);
 
-    const superAdminToken = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const superAdminToken = await superAdminAccessToken(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
-    const credentials = await credentialsGet(api, superAdminToken.accessToken, {
+    const credentials = await credentialsGet(api, superAdminToken, {
       id: user.claims.userID!,
     });
 
@@ -509,13 +480,10 @@ describe("credentialsGet", () => {
   it("does not get non-existing credentials", async () => {
     const api = callerApi(accountPlatform);
 
-    const superAdminToken = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const superAdminToken = await superAdminAccessToken(api);
 
     await expectStatus(
-      credentialsGet(api, superAdminToken.accessToken, {
+      credentialsGet(api, superAdminToken, {
         id: crypto.randomUUID(),
       }),
       404
@@ -527,8 +495,7 @@ describe("credentialsGetSelf", () => {
   it("gets the caller's credentials", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const credentials = await credentialsGetSelf(api, user.token.accessToken);
 
@@ -543,8 +510,7 @@ describe("credentialsGetSelf", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const { shortCode, target, newEmail } = await requestEmailUpdate(api, user.token, user.password);
 
@@ -563,11 +529,9 @@ describe("credentialsGetSelf", () => {
   it("does not reveal that the pending email is registered", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
-    const preRegisterOwner = await preRegisterUser(api, mailUrl);
-    const owner = await registerUser(api, preRegisterOwner);
+    const owner = await registerUser(api);
 
     await shortCodeCreateEmailUpdate(api, user.token.accessToken, {
       currentPassword: user.password,
@@ -594,8 +558,7 @@ describe("shortCodeCancelEmailUpdate", () => {
 
     const anonToken = await tokenCreateAnon(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
     const { shortCode, target } = await requestEmailUpdate(api, user.token, user.password);
 
@@ -617,11 +580,9 @@ describe("shortCodeCancelEmailUpdate", () => {
   it("cancels a change to a registered address alike", async () => {
     const api = callerApi(accountPlatform);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
-    const preRegisterOwner = await preRegisterUser(api, mailUrl);
-    const owner = await registerUser(api, preRegisterOwner);
+    const owner = await registerUser(api);
 
     await shortCodeCreateEmailUpdate(api, user.token.accessToken, {
       currentPassword: user.password,
@@ -647,15 +608,11 @@ describe("credentialsExists", () => {
   it("gets existing credentials", async () => {
     const api = callerApi(accountPlatform);
 
-    const superAdminToken = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const superAdminToken = await superAdminAccessToken(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
-    const exists = await credentialsExists(api, superAdminToken.accessToken, {
+    const exists = await credentialsExists(api, superAdminToken, {
       email: user.email,
     });
 
@@ -665,12 +622,9 @@ describe("credentialsExists", () => {
   it("does not get non-existing credentials", async () => {
     const api = callerApi(accountPlatform);
 
-    const superAdminToken = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const superAdminToken = await superAdminAccessToken(api);
 
-    const exists = await credentialsExists(api, superAdminToken.accessToken, {
+    const exists = await credentialsExists(api, superAdminToken, {
       email: "fake@provider.com",
     });
 
@@ -682,15 +636,11 @@ describe("credentialsList", () => {
   it("returns users", async () => {
     const api = callerApi(accountPlatform);
 
-    const superAdminToken = await tokenCreate(api, {
-      email: process.env.SUPER_ADMIN_EMAIL!,
-      password: process.env.SUPER_ADMIN_PASSWORD!,
-    });
+    const superAdminToken = await superAdminAccessToken(api);
 
-    const preRegister = await preRegisterUser(api, mailUrl);
-    const user = await registerUser(api, preRegister);
+    const user = await registerUser(api);
 
-    const credentials = await credentialsList(api, superAdminToken.accessToken, {});
+    const credentials = await credentialsList(api, superAdminToken, {});
 
     expect(credentials.length).toBeGreaterThan(0);
     expect(credentials.some((item) => item.id === user.claims.userID)).toBeTruthy();

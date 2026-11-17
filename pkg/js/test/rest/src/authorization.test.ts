@@ -17,6 +17,7 @@ import {
   tokenCreate,
   tokenCreateAnon,
 } from "@a-novel/service-authentication-rest";
+import { superAdminCredentials } from "@a-novel/service-authentication-rest-test";
 
 // The S256 challenge and the verifier of RFC 7636's appendix B.
 const codeChallenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
@@ -34,20 +35,12 @@ const authorizationRequest = new URLSearchParams({
   code_challenge_method: "S256",
 });
 
-/** Signs the configured super-admin in on the account platform, opening a new session. */
-async function superAdminSession() {
-  return await tokenCreate(callerApi(accountPlatform), {
-    email: process.env.SUPER_ADMIN_EMAIL!,
-    password: process.env.SUPER_ADMIN_PASSWORD!,
-  });
-}
-
 /**
  * Signs the super-admin in on studio as the platforms do: the account platform issues a code in a new session, and
  * studio exchanges it. Returns the session, the grant studio sent and the tokens it received.
  */
 async function signInOnStudio() {
-  const session = await superAdminSession();
+  const session = await tokenCreate(callerApi(accountPlatform), superAdminCredentials());
   const { code } = await authorizationCodeCreate(callerApi(accountPlatform), session.accessToken, authorizationRequest);
   const grant = { code, code_verifier: codeVerifier, redirect_uri: redirectURI };
   const tokens = await authorizationCodeExchange(callerApi(studioClient), grant);
@@ -86,7 +79,7 @@ describe("authorizationRequestValidate", () => {
 describe("authorizationCodeCreate", () => {
   it("issues a code for the person signed in", async () => {
     const api = callerApi(accountPlatform);
-    const session = await superAdminSession();
+    const session = await tokenCreate(callerApi(accountPlatform), superAdminCredentials());
 
     const authorization = await authorizationCodeCreate(api, session.accessToken, authorizationRequest);
 
@@ -96,7 +89,7 @@ describe("authorizationCodeCreate", () => {
 
   it("refuses a caller other than the account platform", async () => {
     const api = callerApi(studioClient);
-    const session = await superAdminSession();
+    const session = await tokenCreate(callerApi(accountPlatform), superAdminCredentials());
 
     await expectStatus(authorizationCodeCreate(api, session.accessToken, authorizationRequest), 403);
   });
@@ -130,7 +123,7 @@ describe("authorizationCodeExchange", () => {
     const { tokens } = await signInOnStudio();
 
     const credentials = await credentialsGetSelf(api, tokens.access_token);
-    expect(credentials.email).toBe(process.env.SUPER_ADMIN_EMAIL);
+    expect(credentials.email).toBe(superAdminCredentials().email);
 
     // The super-admin lists accounts and manages devices on the account platform, never through a client.
     await expectStatus(credentialsList(api, tokens.access_token, {}), 403);
