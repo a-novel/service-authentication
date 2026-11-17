@@ -3,12 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"time"
-
-	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/postgres"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
@@ -25,39 +21,18 @@ type refreshTokenPurgeOperation struct{}
 
 func refreshTokenPurgeOperationDefinition() maintenanceOperationDefinition {
 	return newMaintenanceOperationDefinition(
-		"refresh-token-purge", "",
-		"Delete refresh token revocations whose token has expired, and sessions that ended 30 days ago.",
+		maintenanceOperationDefinition{
+			name:        "refresh-token-purge",
+			description: "Delete refresh token revocations whose token has expired, and sessions that ended 30 days ago.",
+			spanName:    "job.RefreshTokenPurge",
+			timeout:     refreshTokenPurgeTimeout,
+		},
 		func(*flag.FlagSet) *refreshTokenPurgeOperation { return &refreshTokenPurgeOperation{} },
-		func(*refreshTokenPurgeOperation) error { return nil },
+		func(*refreshTokenPurgeOperation, config.App) error { return nil },
 	)
 }
 
-func (operation *refreshTokenPurgeOperation) run(ctx context.Context) error {
-	cfg := config.AppPresetDefault
-
-	otel.SetAppName(cfg.App.Name + "-maintenance")
-
-	err := otel.Init(config.OtelJobPresetDefault)
-	if err != nil {
-		return fmt.Errorf("initialize telemetry: %w", err)
-	}
-	defer config.OtelJobPresetDefault.Flush()
-
-	ctx, cancel := context.WithTimeout(ctx, refreshTokenPurgeTimeout)
-	defer cancel()
-
-	ctx, err = postgres.NewContext(ctx, cfg.Postgres)
-	if err != nil {
-		return fmt.Errorf("connect to database: %w", err)
-	}
-
-	database, err := cfg.Postgres.DB(ctx)
-	if err != nil {
-		return fmt.Errorf("open database: %w", err)
-	}
-
-	defer closeDatabase(database)
-
+func (operation *refreshTokenPurgeOperation) run(ctx context.Context, _ config.App) error {
 	purge := core.NewRefreshTokenRevocationPurge(dao.NewPgRefreshTokenRevocationPurge(), dao.NewPgSessionPurge())
 
 	result, err := purge.Exec(ctx)

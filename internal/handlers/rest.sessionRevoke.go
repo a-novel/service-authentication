@@ -40,7 +40,7 @@ func (handler *RestSessionRevoke) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.SessionRevoke")
 	defer span.End()
 
-	claims, err := session.MustGetClaimsContext(ctx)
+	claims, err := session.RequireClaimsContext(ctx)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
 

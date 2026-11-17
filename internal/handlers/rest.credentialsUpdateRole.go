@@ -61,7 +61,7 @@ func (handler *RestCredentialsUpdateRole) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	claims, err := session.MustGetClaimsContext(ctx)
+	claims, err := session.RequireClaimsContext(ctx)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, nil, err)
 

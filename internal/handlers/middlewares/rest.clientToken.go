@@ -27,14 +27,11 @@ func RestRefuseClientTokens(logger logging.Log) func(http.Handler) http.Handler 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			claims, err := session.GetClaimsContext(ctx)
-			if err == nil && claims != nil && claims.ClientID != "" {
+			claims := session.GetClaimsContext(ctx)
+			if claims != nil && claims.ClientID != "" {
 				w.Header().Set("WWW-Authenticate", BearerChallengeInsufficientScope)
 
-				err = fmt.Errorf("%w: %q", ErrClientToken, claims.ClientID)
-			}
-
-			if err != nil {
+				err := fmt.Errorf("%w: %q", ErrClientToken, claims.ClientID)
 				errMap := httpf.ErrMap{ErrClientToken: http.StatusForbidden}
 				httpf.HandleError(ctx, logger, w, trace.SpanFromContext(ctx), errMap, err)
 

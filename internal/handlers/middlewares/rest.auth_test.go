@@ -383,14 +383,7 @@ func TestAuth(t *testing.T) {
 			ctxClaims := new(*session.Claims)
 
 			callback := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				claims, err := session.GetClaimsContext(r.Context())
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-
-					return
-				}
-
-				*ctxClaims = claims
+				*ctxClaims = session.GetClaimsContext(r.Context())
 
 				w.WriteHeader(http.StatusOK)
 			})

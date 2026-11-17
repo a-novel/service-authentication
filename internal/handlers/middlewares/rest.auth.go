@@ -79,7 +79,7 @@ func NewAuth(
 // permissions is in the required set.
 //
 // Verified claims are stored on the request context for downstream handlers; use
-// [session.GetClaimsContext] or [session.MustGetClaimsContext] to retrieve them.
+// [session.GetClaimsContext] or [session.RequireClaimsContext] to retrieve them.
 func (middleware *Auth) Middleware(requiredPermissions []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

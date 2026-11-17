@@ -11,15 +11,19 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 
 	"github.com/a-novel-kit/golib/logging"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
-	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
+
+// ErrAnonymousCaller is returned by [RequestUser] when the request's claims name no user, as an
+// anonymous session's do.
+var ErrAnonymousCaller = session.ErrAnonymousCaller
 
 // Role is a named bundle of permissions assigned to a user.
 type Role = authconfig.Role
@@ -46,24 +50,11 @@ func NewAuthHandler(
 	permissions Permissions,
 	logger logging.Log,
 ) PermissionsHandler {
-	permissionsByRole := lo.Must(lib.ResolveDependants(
-		lo.MapEntries(permissions.Roles, rolePermissions),
-		lo.MapEntries(permissions.Roles, roleInherits),
-	))
-
-	middlewareAuth := middlewares.NewAuth(claimsVerifier, permissionsByRole, logger)
+	middlewareAuth := middlewares.NewAuth(claimsVerifier, lo.Must(permissions.ByRole()), logger)
 
 	return func(r chi.Router, permissions ...string) chi.Router {
 		return r.With(middlewareAuth.Middleware(permissions))
 	}
-}
-
-func rolePermissions(name string, role authconfig.Role) (string, []string) {
-	return name, role.Permissions
-}
-
-func roleInherits(name string, role authconfig.Role) (string, []string) {
-	return name, role.Inherits
 }
 
 // SetClaimsContext stores the authenticated user's claims in the context. The auth
@@ -80,15 +71,29 @@ func CallerKey(r *http.Request) (string, error) {
 }
 
 // GetClaimsContext retrieves the authenticated user's claims from the context, if any.
-// Returns (nil, nil) for unauthenticated requests on optional-auth endpoints, and an error
-// if the value stored under the claims key has an unexpected type.
+// Returns nil claims for unauthenticated requests on optional-auth endpoints. The error is
+// always nil.
 func GetClaimsContext(ctx context.Context) (*Claims, error) {
-	return session.GetClaimsContext(ctx)
+	return session.GetClaimsContext(ctx), nil
+}
+
+// RequireClaimsContext retrieves the authenticated user's claims from the context, returning
+// an error if no claims are present. Use this on endpoints that require authentication; use
+// [GetClaimsContext] on endpoints where authentication is optional.
+func RequireClaimsContext(ctx context.Context) (*Claims, error) {
+	return session.RequireClaimsContext(ctx)
 }
 
 // MustGetClaimsContext retrieves the authenticated user's claims from the context, returning
-// an error if no claims are present. Use this on endpoints that require authentication; use
-// [GetClaimsContext] on endpoints where authentication is optional.
+// an error if no claims are present. It never panics: prefer [RequireClaimsContext], which
+// behaves the same under a name that says so.
 func MustGetClaimsContext(ctx context.Context) (*Claims, error) {
-	return session.MustGetClaimsContext(ctx)
+	return session.RequireClaimsContext(ctx)
+}
+
+// RequestUser returns the ID of the user an authenticated request acts for. It returns an error
+// when no claims are present, as [RequireClaimsContext] does, and [ErrAnonymousCaller] when the
+// claims name no user.
+func RequestUser(ctx context.Context) (uuid.UUID, error) {
+	return session.RequestUser(ctx)
 }

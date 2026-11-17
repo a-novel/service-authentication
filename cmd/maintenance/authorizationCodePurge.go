@@ -3,12 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"time"
-
-	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/postgres"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
@@ -24,39 +20,18 @@ type authorizationCodePurgeOperation struct{}
 
 func authorizationCodePurgeOperationDefinition() maintenanceOperationDefinition {
 	return newMaintenanceOperationDefinition(
-		"authorization-code-purge", "",
-		"Delete authorization codes that have expired.",
+		maintenanceOperationDefinition{
+			name:        "authorization-code-purge",
+			description: "Delete authorization codes that have expired.",
+			spanName:    "job.AuthorizationCodePurge",
+			timeout:     authorizationCodePurgeTimeout,
+		},
 		func(*flag.FlagSet) *authorizationCodePurgeOperation { return &authorizationCodePurgeOperation{} },
-		func(*authorizationCodePurgeOperation) error { return nil },
+		func(*authorizationCodePurgeOperation, config.App) error { return nil },
 	)
 }
 
-func (operation *authorizationCodePurgeOperation) run(ctx context.Context) error {
-	cfg := config.AppPresetDefault
-
-	otel.SetAppName(cfg.App.Name + "-maintenance")
-
-	err := otel.Init(config.OtelJobPresetDefault)
-	if err != nil {
-		return fmt.Errorf("initialize telemetry: %w", err)
-	}
-	defer config.OtelJobPresetDefault.Flush()
-
-	ctx, cancel := context.WithTimeout(ctx, authorizationCodePurgeTimeout)
-	defer cancel()
-
-	ctx, err = postgres.NewContext(ctx, cfg.Postgres)
-	if err != nil {
-		return fmt.Errorf("connect to database: %w", err)
-	}
-
-	database, err := cfg.Postgres.DB(ctx)
-	if err != nil {
-		return fmt.Errorf("open database: %w", err)
-	}
-
-	defer closeDatabase(database)
-
+func (operation *authorizationCodePurgeOperation) run(ctx context.Context, _ config.App) error {
 	purge := core.NewAuthorizationCodePurge(dao.NewPgAuthorizationCodePurge())
 
 	result, err := purge.Exec(ctx)

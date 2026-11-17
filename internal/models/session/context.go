@@ -3,55 +3,58 @@ package session
 import (
 	"context"
 	"errors"
-	"fmt"
+
+	"github.com/google/uuid"
 )
 
 var (
-	// ErrMissingAuth is returned by [MustGetClaimsContext] when the context carries no claims.
+	// ErrMissingAuth is returned by [RequireClaimsContext] when the context carries no claims.
 	ErrMissingAuth = errors.New("missing auth")
-	// ErrUnexpectedClaims is returned when the value stored under [ClaimsContextKey] is not a
-	// [*Claims].
-	ErrUnexpectedClaims = errors.New("unexpected claims")
+	// ErrAnonymousCaller is returned by [RequestUser] when the claims name no user, as an anonymous
+	// session's do.
+	ErrAnonymousCaller = errors.New("anonymous caller names no user")
 )
 
-// ClaimsContextKey is the context key under which the auth middleware stores the verified claims.
-type ClaimsContextKey struct{}
+// claimsContextKey is the context key under which [SetClaimsContext] stores the claims.
+type claimsContextKey struct{}
 
 // SetClaimsContext returns a copy of ctx carrying claims. The auth middleware calls it once it has
 // verified a token.
 func SetClaimsContext(ctx context.Context, claims *Claims) context.Context {
-	return context.WithValue(ctx, ClaimsContextKey{}, claims)
+	return context.WithValue(ctx, claimsContextKey{}, claims)
 }
 
-// GetClaimsContext returns the claims ctx carries. It returns nil claims and no error when the
-// request carried no token, as on an optional-auth endpoint. It returns [ErrUnexpectedClaims] when
-// the value under [ClaimsContextKey] is not a [*Claims].
-func GetClaimsContext(ctx context.Context) (*Claims, error) {
-	raw := ctx.Value(ClaimsContextKey{})
-	if raw == nil {
-		return nil, nil
-	}
+// GetClaimsContext returns the claims ctx carries, and nil when the request carried no token, as on
+// an optional-auth endpoint.
+func GetClaimsContext(ctx context.Context) *Claims {
+	claims, _ := ctx.Value(claimsContextKey{}).(*Claims)
 
-	claims, ok := raw.(*Claims)
-	if !ok {
-		return nil, fmt.Errorf("%w: got type %T, expected %T", ErrUnexpectedClaims, raw, claims)
-	}
-
-	return claims, nil
+	return claims
 }
 
-// MustGetClaimsContext returns the claims ctx carries, and [ErrMissingAuth] when it carries none.
+// RequireClaimsContext returns the claims ctx carries, and [ErrMissingAuth] when it carries none.
 // Use it on endpoints that require authentication, and [GetClaimsContext] where authentication is
 // optional.
-func MustGetClaimsContext(ctx context.Context) (*Claims, error) {
-	claims, err := GetClaimsContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func RequireClaimsContext(ctx context.Context) (*Claims, error) {
+	claims := GetClaimsContext(ctx)
 	if claims == nil {
 		return nil, ErrMissingAuth
 	}
 
 	return claims, nil
+}
+
+// RequestUser returns the user an authenticated request acts for. It returns [ErrMissingAuth] when
+// ctx carries no claims, and [ErrAnonymousCaller] when the claims name no user.
+func RequestUser(ctx context.Context) (uuid.UUID, error) {
+	claims, err := RequireClaimsContext(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	if claims.UserID == nil {
+		return uuid.Nil, ErrAnonymousCaller
+	}
+
+	return *claims.UserID, nil
 }

@@ -1,10 +1,58 @@
 # Upgrading to NEXT
 
-`@a-novel/service-authentication-rest-test` now holds the sign-up helpers other services' test suites need: the super-admin sign-in, invitations, user and anonymous tokens, and one MailPit poller. It no longer depends on vitest, jsdom or mailparser.
+The Go client names its claims helpers after what they do and reads the request's user for you, and the service reads its JSON Keys token from `SERVICE_JSON_KEYS_TOKEN_PATH`. `@a-novel/service-authentication-rest-test` now holds the sign-up helpers other services' test suites need: the super-admin sign-in, invitations, user and anonymous tokens, and one MailPit poller. It no longer depends on vitest, jsdom or mailparser.
 
 ## Do I need to act?
 
+**Recommended** for a Go consumer and a deployment: nothing breaks, since the old function and the old variable keep working in this release. Move them to the new helpers and the new variable before a later release removes the old names.
+
 **Required** for a suite that imports `@a-novel/service-authentication-rest-test`: `checkEmail` and `preRegisterUser` changed shape, and two helpers are gone. No repository outside service-authentication imports it today. **Recommended** for a suite that copies the sign-up helpers (service-profile and service-narrative-engine): import them instead.
+
+## Call RequireClaimsContext instead of MustGetClaimsContext
+
+`MustGetClaimsContext` never panicked, as its `Must` prefix suggests: it returns an error when the context carries no claims. `RequireClaimsContext` does the same under a name that says so. `MustGetClaimsContext` stays as an alias, without a deprecation marker so a consumer's staticcheck stays green; prefer the new name, and a later minor removes the alias once no consumer calls it.
+
+```diff
+-claims, err := serviceauthentication.MustGetClaimsContext(r.Context())
++claims, err := serviceauthentication.RequireClaimsContext(r.Context())
+```
+
+## Read the request's user with RequestUser
+
+`RequestUser(ctx)` returns the ID of the user an authenticated request acts for. It fails as `RequireClaimsContext` does without claims, and with `ErrAnonymousCaller` when the claims name no user, as an anonymous session's do. It replaces a local helper such as this one:
+
+```diff
+-func requestOwner(r *http.Request) (uuid.UUID, error) {
+-	claims, err := serviceauthentication.MustGetClaimsContext(r.Context())
+-	if err != nil {
+-		return uuid.Nil, fmt.Errorf("get claims: %w", err)
+-	}
+-
+-	if claims.UserID == nil {
+-		return uuid.Nil, errAnonymousOwner
+-	}
+-
+-	return *claims.UserID, nil
+-}
+-
+-ownerID, err := requestOwner(r)
++ownerID, err := serviceauthentication.RequestUser(r.Context())
+```
+
+Code that checked its own anonymous sentinel with `errors.Is` checks `serviceauthentication.ErrAnonymousCaller` instead, and the local sentinel goes. An error map keyed on `nil`, such as `httpf.ErrMap{nil: http.StatusForbidden}`, keeps answering 403 for both refusals: a nil key sets the status of every error the map does not name.
+
+`GetClaimsContext` keeps its signature, but its error is now always nil: only `SetClaimsContext` stores claims, so the context never holds a value of another type. A check of that error can go.
+
+## Rename SERVICE_TOKEN_PATH to SERVICE_JSON_KEYS_TOKEN_PATH
+
+The variable names the token file for the JSON Keys audience, so it takes the name the other services use. The service reads `SERVICE_JSON_KEYS_TOKEN_PATH`, and `SERVICE_TOKEN_PATH` when the new one is unset. A later release stops reading `SERVICE_TOKEN_PATH`.
+
+```diff
+-SERVICE_TOKEN_PATH=/var/run/secrets/tokens/json-keys
++SERVICE_JSON_KEYS_TOKEN_PATH=/var/run/secrets/tokens/json-keys
+```
+
+The images `rest` and `standalone-rest` read it. When both are set, `SERVICE_JSON_KEYS_TOKEN_PATH` wins, so a deployment can set the new name before it removes the old one.
 
 ## Read MailPit's address from `MAIL_UI_URL`
 
@@ -81,3 +129,8 @@ The package behaves differently from the copies in three ways:
 - A new user gets a random `@provider.com` address and a random password, instead of an `@agorastoryverse.com` address and `integration-user`.
 
 The super-admin defaults stay `noreply@agorastoryverse.com` and `admin`, overridden by `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD`. MailPit's address comes from `MAIL_UI_URL`.
+
+## Notes
+
+- `NewAuthHandler` reports a role that inherits an undefined role as an unknown role at startup. It reported a circular dependency before; both stop the process.
+- The `jobs/maintenance` image records each run as a root span named after its operation, such as `job.AccountRole`, which carries the failure and its `error.type`. `account-role` now ends after 5 minutes, like the purges.

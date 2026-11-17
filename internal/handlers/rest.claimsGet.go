@@ -41,7 +41,7 @@ func (handler *RestClaimsGet) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.ClaimsGet")
 	defer span.End()
 
-	claims, err := session.MustGetClaimsContext(ctx)
+	claims, err := session.RequireClaimsContext(ctx)
 	if err != nil {
 		w.Header().Set("WWW-Authenticate", middlewares.BearerChallenge)
 		httpf.HandleError(ctx, handler.logger, w, span, httpf.ErrMap{nil: http.StatusUnauthorized}, err)

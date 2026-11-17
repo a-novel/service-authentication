@@ -116,13 +116,17 @@ func newOtelPreset(flushTimeout time.Duration) otel.Config {
 }
 
 // newJSONKeysCredentials authenticates the JSON Keys connection with the service token at
-// SERVICE_TOKEN_PATH, over TLS once SERVICE_JSON_KEYS_TLS is set, and sends nothing without a token.
+// SERVICE_JSON_KEYS_TOKEN_PATH, over TLS once SERVICE_JSON_KEYS_TLS is set, and sends nothing without
+// a token.
 func newJSONKeysCredentials() grpcf.CredentialsProvider {
-	if env.ServiceTokenPath == "" {
+	if env.ServiceJSONKeysTokenPath == "" {
 		return &grpcf.LocalCredentialsProvider{}
 	}
 
-	return &grpcf.ServiceTokenCredentialsProvider{ServiceTokenPath: env.ServiceTokenPath, TLS: env.ServiceJSONKeysTLS}
+	return &grpcf.ServiceTokenCredentialsProvider{
+		ServiceTokenPath: env.ServiceJSONKeysTokenPath,
+		TLS:              env.ServiceJSONKeysTLS,
+	}
 }
 
 // newSMTPSender sends through the relay SMTP_ADDR names, within timeout, or prints every mail when

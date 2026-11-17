@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/a-novel/service-authentication/v2/internal/config"
 )
 
 func TestRefreshTokenPurgeOperation(t *testing.T) {
@@ -23,7 +25,7 @@ func TestRefreshTokenPurgeOperation(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			operation, err := refreshTokenPurgeOperationDefinition().parse(testCase.args)
+			operation, err := refreshTokenPurgeOperationDefinition().parse(testCase.args, config.App{})
 			if testCase.expectErr != "" {
 				require.ErrorContains(t, err, testCase.expectErr)
 				require.Nil(t, operation)

@@ -8,15 +8,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/postgres"
-
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
+
+// accountRoleTimeout bounds one run, the registration email included.
+const accountRoleTimeout = 5 * time.Minute
 
 var (
 	errMaintenanceMissingEmail = errors.New("account-role requires --email")
@@ -31,9 +31,13 @@ type accountRoleOperation struct {
 
 func accountRoleOperationDefinition() maintenanceOperationDefinition {
 	return newMaintenanceOperationDefinition(
-		"account-role",
-		"--email EMAIL --role ROLE [--lang LANG]",
-		"Reconcile an existing account or pending registration to an exact role.",
+		maintenanceOperationDefinition{
+			name:        "account-role",
+			synopsis:    "--email EMAIL --role ROLE [--lang LANG]",
+			description: "Reconcile an existing account or pending registration to an exact role.",
+			spanName:    "job.AccountRole",
+			timeout:     accountRoleTimeout,
+		},
 		bindAccountRoleFlags,
 		validateAccountRoleOperation,
 	)
@@ -48,7 +52,7 @@ func bindAccountRoleFlags(flags *flag.FlagSet) *accountRoleOperation {
 	return operation
 }
 
-func validateAccountRoleOperation(operation *accountRoleOperation) error {
+func validateAccountRoleOperation(operation *accountRoleOperation, cfg config.App) error {
 	if operation.email == "" {
 		return errMaintenanceMissingEmail
 	}
@@ -57,44 +61,16 @@ func validateAccountRoleOperation(operation *accountRoleOperation) error {
 		return errMaintenanceMissingRole
 	}
 
-	return nil
-}
-
-func (operation *accountRoleOperation) run(ctx context.Context) error {
-	cfg := config.AppPresetDefault
-
 	_, err := cfg.Permissions.Priority(operation.role)
 	if err != nil {
 		return fmt.Errorf("invalid --role: %w", err)
 	}
 
-	otel.SetAppName(cfg.App.Name + "-maintenance")
+	return nil
+}
 
-	err = otel.Init(config.OtelJobPresetDefault)
-	if err != nil {
-		return fmt.Errorf("initialize telemetry: %w", err)
-	}
-	defer config.OtelJobPresetDefault.Flush()
-
-	if env.OTLPEndpoint == "" {
-		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
-	}
-
+func (operation *accountRoleOperation) run(ctx context.Context, cfg config.App) error {
 	startedAt := time.Now()
-
-	log.Println("connecting to database")
-
-	ctx, err = postgres.NewContext(ctx, cfg.Postgres)
-	if err != nil {
-		return fmt.Errorf("connect to database: %w", err)
-	}
-
-	database, err := cfg.Postgres.DB(ctx)
-	if err != nil {
-		return fmt.Errorf("open database: %w", err)
-	}
-
-	defer closeDatabase(database)
 
 	selectCredentials := dao.NewPgCredentialsSelectByEmail()
 	selectShortCode := dao.NewPgShortCodeSelect()

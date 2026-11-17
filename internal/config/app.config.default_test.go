@@ -12,13 +12,17 @@ import (
 func TestAppPresetDefault(t *testing.T) {
 	t.Parallel()
 
+	// The token paths name projected files, not credentials.
+	//
+	//nolint:gosec // G101 reads the "Token" field names as secrets.
 	testCases := []struct {
 		name string
 
-		restTimeoutRead     string
-		restRateLimitStrict string
-		serviceTokenPath    string
-		serviceJSONKeysTLS  string
+		restTimeoutRead          string
+		restRateLimitStrict      string
+		serviceJSONKeysTokenPath string
+		serviceTokenPath         string
+		serviceJSONKeysTLS       string
 
 		expect    string
 		expectErr string
@@ -30,18 +34,32 @@ func TestAppPresetDefault(t *testing.T) {
 			restRateLimitStrict: "2/1m",
 			expect:              "2s 2/1m0s *grpcf.LocalCredentialsProvider &{}",
 		},
-		{ //nolint:gosec // A token path, not a credential.
-			name:             "Success/ServiceToken",
-			serviceTokenPath: "/var/run/secrets/tokens/json-keys",
+		{
+			name:                     "Success/ServiceToken",
+			serviceJSONKeysTokenPath: "/var/run/secrets/tokens/json-keys",
 			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
 				"&{ServiceTokenPath:/var/run/secrets/tokens/json-keys TLS:false}",
 		},
-		{ //nolint:gosec // A token path, not a credential.
-			name:               "Success/ServiceTokenTLS",
-			serviceTokenPath:   "/var/run/secrets/tokens/json-keys",
-			serviceJSONKeysTLS: "true",
+		{
+			name:                     "Success/ServiceTokenTLS",
+			serviceJSONKeysTokenPath: "/var/run/secrets/tokens/json-keys",
+			serviceJSONKeysTLS:       "true",
 			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
 				"&{ServiceTokenPath:/var/run/secrets/tokens/json-keys TLS:true}",
+		},
+		{
+			// SERVICE_TOKEN_PATH, the deprecated name, applies while the new one is unset.
+			name:             "Success/DeprecatedServiceTokenPath",
+			serviceTokenPath: "/var/run/secrets/tokens/legacy",
+			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
+				"&{ServiceTokenPath:/var/run/secrets/tokens/legacy TLS:false}",
+		},
+		{
+			name:                     "Success/ServiceTokenPathPrecedence",
+			serviceJSONKeysTokenPath: "/var/run/secrets/tokens/json-keys",
+			serviceTokenPath:         "/var/run/secrets/tokens/legacy",
+			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
+				"&{ServiceTokenPath:/var/run/secrets/tokens/json-keys TLS:false}",
 		},
 		{
 			// A local stack has no service token, so it keeps a plaintext connection.
@@ -73,6 +91,7 @@ func TestAppPresetDefault(t *testing.T) {
 				"REST_TIMEOUT_READ=invalid",
 				"AUTH_CONFIG_TEST_REST_TIMEOUT_READ="+testCase.restTimeoutRead,
 				"AUTH_CONFIG_TEST_REST_RATE_LIMIT_STRICT="+testCase.restRateLimitStrict,
+				"AUTH_CONFIG_TEST_SERVICE_JSON_KEYS_TOKEN_PATH="+testCase.serviceJSONKeysTokenPath,
 				"AUTH_CONFIG_TEST_SERVICE_TOKEN_PATH="+testCase.serviceTokenPath,
 				"AUTH_CONFIG_TEST_SERVICE_JSON_KEYS_TLS="+testCase.serviceJSONKeysTLS,
 			)

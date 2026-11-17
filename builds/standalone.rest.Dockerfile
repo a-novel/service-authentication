@@ -1,6 +1,6 @@
-# This image serves the REST API after applying the pending migrations, so it needs a database but
-# no migrations job. It also bundles the maintenance executable. It suits local development and
-# tests: production runs the migrations job once, before its replicas start.
+# Runs the migrations, then the REST server, in one image for local development and tests. It also
+# bundles the maintenance command, which startup never runs. A production deployment runs the
+# rest.Dockerfile image after the migrations job instead.
 FROM docker.io/library/golang:1.27.4-alpine AS builder
 
 ENV CGO_ENABLED=0
@@ -11,18 +11,10 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
-COPY ./cmd/rest ./cmd/rest
-COPY ./cmd/migrations ./cmd/migrations
-COPY ./cmd/maintenance ./cmd/maintenance
-COPY ./internal/handlers ./internal/handlers
-COPY ./internal/dao ./internal/dao
-COPY ./internal/lib ./internal/lib
-COPY ./internal/core ./internal/core
-COPY ./internal/models ./internal/models
-COPY ./internal/config ./internal/config
+COPY ./cmd ./cmd
+COPY ./internal ./internal
 COPY ./pkg/go ./pkg/go
 
-# One RUN so the three binaries share a single warm module + build cache.
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -ldflags="-s -w" -trimpath -o /rest ./cmd/rest/ && \
@@ -31,22 +23,18 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 FROM docker.io/library/alpine:3.24.4
 
-WORKDIR /
-
 COPY --from=builder /rest /rest
 COPY --from=builder /migrations /migrations
 COPY --from=builder /maintenance /maintenance
 
-# Alpine ships BusyBox wget: no extra package needed for the healthcheck.
+# The healthcheck uses the wget of Alpine's BusyBox.
 HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
   CMD ["wget", "-qO", "/dev/null", "http://localhost:8080/v2/ping"]
 
-# Make sure the executable uses the default port.
 ENV REST_PORT=8080
 # A standalone stack is local or a test: it runs without service tokens unless given an issuer.
 ENV SERVICE_ISSUER_OPTIONAL=true
 
 EXPOSE 8080
 
-# Migrate, then serve. Startup never runs the maintenance executable.
 CMD ["sh", "-c", "/migrations && exec /rest"]
