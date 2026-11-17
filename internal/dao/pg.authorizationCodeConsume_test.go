@@ -81,7 +81,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				sessionFixtures{}.insert(ctx, t)
+				insertAccounts(ctx, t)
 				insertFixtures(ctx, t, []*dao.AuthorizationCode{testCase.fixture})
 
 				err := daoConsume.Exec(ctx, testCase.request)
@@ -106,7 +106,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 			t.Helper()
 
-			sessionFixtures{}.insert(ctx, t)
+			insertAccounts(ctx, t)
 			insertFixtures(ctx, t, []*dao.AuthorizationCode{code})
 
 			const attempts = 10

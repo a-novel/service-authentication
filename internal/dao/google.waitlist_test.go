@@ -30,20 +30,22 @@ func TestGoogleWaitlist(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name         string
-		status       int
-		body         string
-		redirect     string
-		transportErr bool
-		disabled     bool
-		action       string
-		expectErr    error
-		expect       *dao.WaitlistResult
+		name     string
+		status   int
+		body     string
+		redirect string
+		// followsRedirect marks a redirect the writer may follow, so the transport sees a second call.
+		followsRedirect bool
+		transportErr    bool
+		disabled        bool
+		action          string
+		expectErr       error
+		expect          *dao.WaitlistResult
 	}{
 		{name: "Success", status: http.StatusOK, body: `{"status":"accepted"}`},
 		{
 			name: "Success/ContentRedirect", status: http.StatusFound,
-			redirect: "https://script.googleusercontent.com/response",
+			redirect: "https://script.googleusercontent.com/response", followsRedirect: true,
 		},
 		{
 			name: "Error/ForeignRedirect", status: http.StatusFound, redirect: "https://example.com/leak",
@@ -152,7 +154,7 @@ func TestGoogleWaitlist(t *testing.T) {
 					}, nil
 				}
 
-				require.Equal(t, "Success/ContentRedirect", testCase.name, "unsafe redirects must not be followed")
+				require.True(t, testCase.followsRedirect, "unsafe redirects must not be followed")
 				require.Equal(t, http.MethodGet, request.Method)
 				require.Nil(t, request.Body)
 

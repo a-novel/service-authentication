@@ -55,7 +55,7 @@ func TestPgAuthorizationCodeInsert(t *testing.T) {
 			name: "Error/UnknownAccount",
 
 			request: changed(*request, func(request *dao.AuthorizationCodeInsertRequest) {
-				request.UserID = uuid.MustParse("00000000-0000-0000-0000-000000000003")
+				request.UserID = uuid.New()
 			}),
 
 			expectErr: true,
@@ -71,7 +71,7 @@ func TestPgAuthorizationCodeInsert(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				sessionFixtures{}.insert(ctx, t)
+				insertAccounts(ctx, t)
 
 				err := daoInsert.Exec(ctx, testCase.request)
 				if testCase.expectErr {

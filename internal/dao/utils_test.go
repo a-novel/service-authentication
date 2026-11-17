@@ -31,14 +31,22 @@ type sessionFixtures struct {
 func (fixtures sessionFixtures) insert(ctx context.Context, t *testing.T) {
 	t.Helper()
 
+	insertAccounts(ctx, t)
+	insertFixtures(ctx, t, fixtures.sessions)
+	insertFixtures(ctx, t, fixtures.revocations)
+}
+
+// insertAccounts writes the two accounts the session, authorization code and location consent tests
+// act for: sessionOwnerID and sessionOtherID.
+func insertAccounts(ctx context.Context, t *testing.T) {
+	t.Helper()
+
 	created := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	insertFixtures(ctx, t, []*dao.Credentials{
 		{ID: sessionOwnerID, Email: "owner@provider.com", Role: "auth:user", CreatedAt: created, UpdatedAt: created},
 		{ID: sessionOtherID, Email: "other@provider.com", Role: "auth:user", CreatedAt: created, UpdatedAt: created},
 	})
-	insertFixtures(ctx, t, fixtures.sessions)
-	insertFixtures(ctx, t, fixtures.revocations)
 }
 
 // insertFixtures inserts a copy of each row. bun scans each inserted row back into its value, and

@@ -61,7 +61,7 @@ func TestPgCredentialsLocationConsent(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				sessionFixtures{}.insert(ctx, t)
+				insertAccounts(ctx, t)
 
 				consentRequest := &dao.CredentialsUpdateLocationConsentRequest{
 					ID: sessionOwnerID, LocationConsent: testCase.consent,

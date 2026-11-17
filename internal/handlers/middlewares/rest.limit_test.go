@@ -475,7 +475,7 @@ func TestClientVisitorKey(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			request := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/session/authorization-code", nil)
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/v2/oauth/authorization-code", nil)
 			request.Header.Set("X-Client-Ip", "192.0.2.1")
 
 			if testCase.token != "" {
