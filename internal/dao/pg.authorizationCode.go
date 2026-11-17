@@ -8,7 +8,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// ErrAuthorizationCodeNotFound is returned when no unexpired, unconsumed authorization code matches the request.
+// ErrAuthorizationCodeNotFound is returned when no authorization code matches the request: the
+// select finds no code of the ID (never issued, or purged), the consume finds it already consumed.
 var ErrAuthorizationCodeNotFound = errors.New("authorization code not found")
 
 // AuthorizationCode is a one-time code the account platform obtained for one client, to sign a

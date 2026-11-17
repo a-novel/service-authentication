@@ -26,11 +26,11 @@ const (
 // Leaving both URL and Secret empty disables the integration.
 type Waitlist struct {
 	// URL is the HTTPS /exec deployment URL on script.google.com.
-	URL string `json:"url" yaml:"url"`
+	URL string `json:"url"`
 	// Secret authenticates requests and is excluded from configuration serialization.
-	Secret string `json:"-" yaml:"-"`
+	Secret string `json:"-"`
 	// Timeout bounds each Google request, including its response redirect.
-	Timeout time.Duration `json:"timeout" yaml:"timeout"`
+	Timeout time.Duration `json:"timeout"`
 }
 
 // Validate rejects partial configuration, non-Google endpoints, and unbounded requests.

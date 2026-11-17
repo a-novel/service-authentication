@@ -16,43 +16,43 @@ import (
 
 // Main holds the core identity of the service, used to tag its logs and traces.
 type Main struct {
-	Name string `json:"name" yaml:"name"`
+	Name string
 	// DowntimeStart is when a planned downtime starts; nil when none is planned. From then until
 	// it is removed, the service refuses work and leaves its database alone.
-	DowntimeStart *time.Time `json:"downtimeStart" yaml:"downtimeStart"`
+	DowntimeStart *time.Time
 }
 
 // Dependencies configures how the service reaches the backing services it calls.
 type Dependencies struct {
-	ServiceJSONKeysHost        string                    `json:"jsonKeysServiceHost" yaml:"jsonKeysServiceHost"`
-	ServiceJSONKeysPort        int                       `json:"jsonKeysServicePort" yaml:"jsonKeysServicePort"`
-	ServiceJSONKeysCredentials grpcf.CredentialsProvider `json:"-"                   yaml:"-"`
+	ServiceJSONKeysHost        string
+	ServiceJSONKeysPort        int
+	ServiceJSONKeysCredentials grpcf.CredentialsProvider
 }
 
 // App is the fully resolved configuration for the service, assembled at startup from the environment.
 type App struct {
-	App    Main               `json:"app"    yaml:"app"`
-	Rest   httpf.ServerConfig `json:"rest"   yaml:"rest"`
-	Limits authconfig.Limits  `json:"limits" yaml:"limits"`
+	App    Main
+	Rest   httpf.ServerConfig
+	Limits authconfig.Limits
 	// ServiceToken names the service tokens the REST server accepts. Without an issuer, the server
 	// refuses to start unless ServiceIssuerOptional is set.
-	ServiceToken servicetoken.Config `json:"serviceToken" yaml:"serviceToken"`
+	ServiceToken servicetoken.Config
 	// ServiceIssuerOptional lets the REST server start without a service-token issuer, and then
 	// take every request. Only a local or test stack sets it.
-	ServiceIssuerOptional bool `json:"serviceIssuerOptional" yaml:"serviceIssuerOptional"`
+	ServiceIssuerOptional bool
 
-	Dependencies Dependencies           `json:"dependencies" yaml:"dependencies"`
-	Permissions  authconfig.Permissions `json:"permissions"  yaml:"permissions"`
-	ShortCodes   authconfig.ShortCodes  `json:"shortCodes"   yaml:"shortCodes"`
-	OAuth        authconfig.OAuth       `json:"oauth"        yaml:"oauth"`
-	SMTPURLs     authconfig.SMTPURLs    `json:"smtpUrls"     yaml:"smtpUrls"`
-	Waitlist     authconfig.Waitlist    `json:"waitlist"     yaml:"waitlist"`
+	Dependencies Dependencies
+	Permissions  authconfig.Permissions
+	ShortCodes   authconfig.ShortCodes
+	OAuth        authconfig.OAuth
+	SMTPURLs     authconfig.SMTPURLs
+	Waitlist     authconfig.Waitlist
 
-	SMTP smtp.Sender `json:"smtp" yaml:"smtp"`
+	SMTP smtp.Sender
 	// SMTPPing reaches the same relay within the health check's short budget.
-	SMTPPing   smtp.Sender        `json:"smtpPing"   yaml:"smtpPing"`
-	Otel       otel.Config        `json:"otel"       yaml:"otel"`
-	Logger     logging.Log        `json:"logger"     yaml:"logger"`
-	RestLogger logging.HTTPConfig `json:"restLogger" yaml:"restLogger"`
-	Postgres   postgres.Config    `json:"postgres"   yaml:"postgres"`
+	SMTPPing   smtp.Sender
+	Otel       otel.Config
+	Logger     logging.Log
+	RestLogger logging.HTTPConfig
+	Postgres   postgres.Config
 }

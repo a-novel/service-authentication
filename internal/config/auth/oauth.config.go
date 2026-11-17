@@ -32,9 +32,9 @@ type Client struct {
 type OAuth struct {
 	// AccountPlatformCaller is the Kubernetes caller of the account platform, the only caller that
 	// validates authorization requests and issues codes.
-	AccountPlatformCaller string `json:"accountPlatformCaller" yaml:"accountPlatformCaller"`
+	AccountPlatformCaller string
 	// Clients is the client registry, keyed by client ID, such as studio.
-	Clients map[string]Client `json:"clients" yaml:"clients"`
+	Clients map[string]Client
 }
 
 // Check refuses a registry whose client shares the account platform's caller, which would let one
