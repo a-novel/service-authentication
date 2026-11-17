@@ -49,6 +49,8 @@ jobs:
 
   release:
     if: github.event_name == 'release'
+    # The engine reads the release from the event and posts through its webhook alone.
+    permissions: {}
     uses: a-novel-kit/workflows/.github/workflows/notify-release-run.yaml@v1.87.1
     secrets:
       webhook: ${{ secrets.RELEASES_WEBHOOK }}

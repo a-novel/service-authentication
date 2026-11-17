@@ -1,14 +1,4 @@
-# Restarts pull requests that GitHub leaves idle without a failure anyone sees. Two jobs:
-#
-#   requeue — the merge queue drops an entry whose required checks do not report before its
-#             timeout, and disarms its auto-merge, so a green PR waits for someone to notice.
-#             That drop measures runner capacity, not the PR, so the [Agent] App re-arms
-#             auto-merge, at most three times per PR. Other drop reasons stand.
-#
-#   rebase  — a merge can leave an open dependency PR conflicting with master, and Renovate
-#             only rebases it on its next scheduled run. When one conflicts, this dispatches
-#             that run now. A merge that conflicts nothing dispatches nothing, since every
-#             Renovate run rebases every behind PR and would rerun its CI.
+# Restarts pull requests that GitHub leaves idle without a failure anyone sees.
 name: recover stuck pull requests
 
 on:
@@ -17,6 +7,10 @@ on:
     types: [dequeued, closed]
 
 jobs:
+  # The merge queue drops an entry whose required checks do not report before its timeout, and
+  # disarms its auto-merge, so a green PR waits for someone to notice. That drop measures runner
+  # capacity, not the PR, so the [Agent] App re-arms auto-merge, at most three times per PR. Other
+  # drop reasons stand.
   requeue:
     # A run triggered by Dependabot cannot read the App secret.
     if: github.event.action == 'dequeued' && github.actor != vars.DEPENDABOT_SECURITY_LOGIN
@@ -57,6 +51,10 @@ jobs:
           dry_run: "false"
           kill_switch: ${{ vars.AGENT_KILL_SWITCH }}
 
+  # A merge can leave an open dependency PR conflicting with master, and Renovate rebases it only on
+  # its next scheduled run. When one conflicts, this job dispatches that run now. A merge that
+  # conflicts nothing dispatches nothing, since every Renovate run rebases every PR behind master
+  # and reruns its CI.
   rebase:
     if: >-
       github.event.action == 'closed' && github.event.pull_request.merged &&
