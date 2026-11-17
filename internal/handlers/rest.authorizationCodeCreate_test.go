@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
@@ -167,7 +167,7 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 				ctx = t.Context()
 			}
 
-			handler := handlers.NewRestAuthorizationCodeCreate(service, config.LoggerDev)
+			handler := handlers.NewRestAuthorizationCodeCreate(service, configtest.Logger)
 			request := httptest.NewRequestWithContext(
 				ctx, http.MethodPost, "/v2/oauth/authorization-code", strings.NewReader(body),
 			)

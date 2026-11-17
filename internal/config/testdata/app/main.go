@@ -1,5 +1,5 @@
-// This program exposes the server's read timeout and strict rate limit presets, and the credentials
-// of its JSON Keys connection, for subprocess tests.
+// This program exposes the server's read timeout and strict rate limit presets, and how it reaches
+// the JSON Keys service, for subprocess tests.
 package main
 
 import (
@@ -11,7 +11,5 @@ import (
 func main() {
 	cfg := config.AppPresetDefault
 
-	credentials := cfg.Dependencies.ServiceJSONKeysCredentials
-
-	fmt.Printf("%v %v %T %+v\n", cfg.Rest.Timeouts.Read, cfg.Limits.Strict, credentials, credentials)
+	fmt.Printf("%v %v %+v\n", cfg.Rest.Timeouts.Read, cfg.Limits.Strict, cfg.Dependencies.ServiceJSONKeys)
 }

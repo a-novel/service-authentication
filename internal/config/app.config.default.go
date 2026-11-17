@@ -1,56 +1,17 @@
 package config
 
 import (
-	"os"
 	"time"
 
-	"github.com/samber/lo"
-
-	"github.com/a-novel-kit/golib/grpcf"
-	"github.com/a-novel-kit/golib/logging"
-	loggingpresets "github.com/a-novel-kit/golib/logging/presets"
-	"github.com/a-novel-kit/golib/otel"
-	otelpresets "github.com/a-novel-kit/golib/otel/presets"
-	"github.com/a-novel-kit/golib/servicetoken"
 	"github.com/a-novel-kit/golib/smtp"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
 )
 
-// OtelFlushTimeout bounds how long the OpenTelemetry exporter waits to flush pending spans on
-// shutdown.
-const OtelFlushTimeout = 2 * time.Second
-
 // SMTPPingTimeout bounds the health check's SMTP ping. A mail can take minutes on a slow relay, and
 // the health check still answers within seconds.
 const SMTPPingTimeout = 10 * time.Second
-
-// OtelJobFlushTimeout bounds a job's wait on exit for its pending spans and logs. A job often ends
-// before the network lets its first connection out. The exporter then sends the spans, then the
-// logs, within 30 seconds each.
-const OtelJobFlushTimeout = time.Minute
-
-// OtelPresetDefault is the OpenTelemetry exporter of the servers. It exports nothing unless OTEL is
-// set, then exports over OTLP/HTTP when OTEL_EXPORTER_OTLP_ENDPOINT is set, and to standard output
-// otherwise. The liveness probe produces no span.
-var OtelPresetDefault = newOtelPreset(OtelFlushTimeout)
-
-// OtelJobPresetDefault is the OpenTelemetry exporter of the maintenance jobs. It exports as
-// [OtelPresetDefault] does, and flushes within [OtelJobFlushTimeout].
-var OtelJobPresetDefault = newOtelPreset(OtelJobFlushTimeout)
-
-// exportsOTLP reports whether the servers export over OTLP: OTEL is set, and so is the OTLP
-// endpoint. Their logs then go through the same backend, and their spans record each request.
-var exportsOTLP = env.Otel && env.OTLPEndpoint != ""
-
-// LoggerDev writes human-readable logs to stdout for local development.
-var LoggerDev = &loggingpresets.LogLocal{
-	Out: os.Stdout,
-}
-
-// LoggerProd sends application logs through the OpenTelemetry backend, linked to their trace.
-var LoggerProd = &loggingpresets.LogOTel{}
 
 // AppPresetDefault is the application configuration read from the environment, with each field falling
 // back to its documented default when the variable is unset.
@@ -70,63 +31,25 @@ var AppPresetDefault = App{
 		WaitlistMaxRequestSize: env.WaitlistMaxRequestSize,
 		Argon2MaxConcurrent:    env.Argon2MaxConcurrent,
 	},
-	ServiceToken: servicetoken.Config{
-		Issuer:   env.ServiceTokenIssuer,
-		Audience: env.ServiceTokenAudience,
-		Callers:  env.ServiceTokenCallers,
-	},
-	ServiceIssuerOptional: env.ServiceIssuerOptional,
+	ServiceToken: env.ServiceToken,
 
-	Dependencies: Dependencies{
-		ServiceJSONKeysPort:        env.ServiceJSONKeysPort,
-		ServiceJSONKeysHost:        env.ServiceJSONKeysHost,
-		ServiceJSONKeysCredentials: newJSONKeysCredentials(),
-	},
-	Permissions: authconfig.PermissionsConfigDefault,
-	Waitlist:    authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
-	ShortCodes:  authconfig.ShortCodesPresetDefault,
-	OAuth:       authconfig.OAuth{AccountPlatformCaller: env.AccountPlatformCaller, Clients: env.OAuthClients},
+	Dependencies: Dependencies{ServiceJSONKeys: env.ServiceJSONKeys},
+	Permissions:  authconfig.PermissionsConfigDefault,
+	Waitlist:     authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
+	ShortCodes:   authconfig.ShortCodesPresetDefault,
+	OAuth:        authconfig.OAuth{AccountPlatformCaller: env.AccountPlatformCaller, Clients: env.OAuthClients},
 	SMTPURLs: authconfig.SMTPURLs{
 		UpdateEmail:    env.PlatformAuthUpdateEmailURL,
 		UpdatePassword: env.PlatformAuthUpdatePasswordURL,
 		Register:       env.PlatformAuthRegisterURL,
 	},
 
-	SMTP:     newSMTPSender(env.SMTPTimeout),
-	SMTPPing: newSMTPSender(SMTPPingTimeout),
-	Otel:     OtelPresetDefault,
-	Logger:   lo.Ternary[logging.Log](!exportsOTLP, LoggerDev, LoggerProd),
-	// The server span records each request once telemetry exports over OTLP.
-	RestLogger: lo.Ternary[logging.HTTPConfig](
-		!exportsOTLP, &loggingpresets.HTTPLocal{BaseLogger: LoggerDev}, nil,
-	),
-	Postgres: PostgresPresetDefault,
-}
-
-// newOtelPreset picks the exporter [OtelPresetDefault] describes, flushing within flushTimeout.
-func newOtelPreset(flushTimeout time.Duration) otel.Config {
-	switch {
-	case !env.Otel:
-		return &otelpresets.Disabled{}
-	case env.OTLPEndpoint == "":
-		return &otelpresets.Local{FlushTimeout: flushTimeout}
-	default:
-		return &otelpresets.OTLP{UntracedPaths: []string{env.Rest.Liveness}, FlushTimeout: flushTimeout}
-	}
-}
-
-// newJSONKeysCredentials authenticates the JSON Keys connection with the service token at
-// SERVICE_JSON_KEYS_TOKEN_PATH, over TLS once SERVICE_JSON_KEYS_TLS is set, and sends nothing without
-// a token.
-func newJSONKeysCredentials() grpcf.CredentialsProvider {
-	if env.ServiceJSONKeysTokenPath == "" {
-		return &grpcf.LocalCredentialsProvider{}
-	}
-
-	return &grpcf.ServiceTokenCredentialsProvider{
-		ServiceTokenPath: env.ServiceJSONKeysTokenPath,
-		TLS:              env.ServiceJSONKeysTLS,
-	}
+	SMTP:       newSMTPSender(env.SMTPTimeout),
+	SMTPPing:   newSMTPSender(SMTPPingTimeout),
+	Otel:       env.Telemetry.Otel,
+	Logger:     env.Telemetry.Logger,
+	RestLogger: env.Telemetry.HTTPLogger,
+	Postgres:   PostgresPresetDefault,
 }
 
 // newSMTPSender sends through the relay SMTP_ADDR names, within timeout, or prints every mail when

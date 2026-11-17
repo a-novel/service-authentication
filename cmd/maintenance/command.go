@@ -6,13 +6,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
+	"github.com/a-novel-kit/golib/worker"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/config/env"
@@ -123,17 +123,15 @@ func (command *maintenanceCommand) run(ctx context.Context, args []string, outpu
 
 	otel.SetAppName(command.cfg.App.Name + "-maintenance")
 
-	err = otel.Init(config.OtelJobPresetDefault)
+	telemetry := env.JobTelemetry.Otel
+
+	err = otel.Init(telemetry)
 	if err != nil {
 		return fmt.Errorf("initialize telemetry: %w", err)
 	}
-	defer config.OtelJobPresetDefault.Flush()
+	defer telemetry.Flush()
 
-	if env.OTLPEndpoint == "" {
-		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
-	}
-
-	return runJob(ctx, definition.spanName, func(ctx context.Context) error {
+	return worker.Run(ctx, definition.spanName, func(ctx context.Context) error {
 		return command.runOnDatabase(ctx, definition.timeout, operation)
 	})
 }
@@ -150,13 +148,7 @@ func (command *maintenanceCommand) runOnDatabase(
 	if err != nil {
 		return fmt.Errorf("connect to database: %w", err)
 	}
-
-	database, err := command.cfg.Postgres.DB(ctx)
-	if err != nil {
-		return fmt.Errorf("open database: %w", err)
-	}
-
-	defer closeDatabase(database)
+	defer command.cfg.Postgres.Close()
 
 	return operation.run(ctx, command.cfg)
 }
@@ -204,28 +196,4 @@ func (command *maintenanceCommand) usage() string {
 	}
 
 	return usage.String()
-}
-
-// runJob runs work under the job's root span. The span records the failure of work and names it in
-// error.type, as a job's root span must.
-func runJob(ctx context.Context, spanName string, work func(context.Context) error) error {
-	ctx, span := otel.Tracer().Start(ctx, spanName)
-	defer span.End()
-
-	err := work(ctx)
-	if err != nil {
-		err = otel.ReportError(span, err)
-		span.SetAttributes(otel.ErrorType(err))
-
-		return err
-	}
-
-	return nil
-}
-
-func closeDatabase(database io.Closer) {
-	err := database.Close()
-	if err != nil {
-		log.Print("close database: ", err)
-	}
 }

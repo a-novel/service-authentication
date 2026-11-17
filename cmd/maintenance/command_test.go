@@ -9,12 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
-	gootel "go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/codes"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/sdk/trace/tracetest"
-
-	"github.com/a-novel-kit/golib/otel"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 )
@@ -39,11 +33,7 @@ func (maintenanceCommandTestDatabase) DB(context.Context) (*bun.DB, error) {
 	return nil, errMaintenanceTestDatabase
 }
 
-func (maintenanceCommandTestDatabase) DBSchema(context.Context, string, bool) (*bun.DB, error) {
-	return nil, errMaintenanceTestDatabase
-}
-
-// Close closes nothing: the database never connected. golib v0.66.0 adds it to postgres.Config.
+// Close closes nothing: the database never connected.
 func (maintenanceCommandTestDatabase) Close() {}
 
 func TestMaintenanceCommand(t *testing.T) {
@@ -131,64 +121,16 @@ Operations:
 			})
 		}
 	})
-}
 
-//nolint:paralleltest // Replaces the process-wide tracer provider while the job runs.
-func TestMaintenanceCommandJob(t *testing.T) {
-	errRun := errors.New("run")
-	command := newMaintenanceCommand(config.App{Postgres: maintenanceCommandTestDatabase{}})
-	unreachable := &maintenanceCommandTestOperation{}
+	// A database that fails to connect fails the run before the operation starts.
+	t.Run("RunOnDatabase", func(t *testing.T) {
+		t.Parallel()
 
-	testCases := []struct {
-		name string
-		work func(context.Context) error
+		operation := &maintenanceCommandTestOperation{}
+		command := newMaintenanceCommand(config.App{Postgres: maintenanceCommandTestDatabase{}})
 
-		expectStatus codes.Code
-		expectErr    error
-	}{
-		{name: "Success", work: func(context.Context) error { return nil }, expectStatus: codes.Unset},
-		{
-			name:         "Error/Operation",
-			work:         func(context.Context) error { return errRun },
-			expectStatus: codes.Error,
-			expectErr:    errRun,
-		},
-		{
-			// The operation never runs on a database that fails to connect.
-			name: "Error/Database",
-			work: func(ctx context.Context) error {
-				return command.runOnDatabase(ctx, time.Minute, unreachable)
-			},
-			expectStatus: codes.Error,
-			expectErr:    errMaintenanceTestDatabase,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			recorder := tracetest.NewSpanRecorder()
-			provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
-			previous := gootel.GetTracerProvider()
-
-			gootel.SetTracerProvider(provider)
-			t.Cleanup(func() {
-				gootel.SetTracerProvider(previous)
-				require.NoError(t, provider.Shutdown(context.WithoutCancel(t.Context())))
-			})
-
-			err := runJob(t.Context(), "job.Example", testCase.work)
-			require.ErrorIs(t, err, testCase.expectErr)
-
-			spans := recorder.Ended()
-			require.Len(t, spans, 1)
-			require.Equal(t, "job.Example", spans[0].Name())
-			require.Equal(t, testCase.expectStatus, spans[0].Status().Code)
-
-			if err != nil {
-				require.Contains(t, spans[0].Attributes(), otel.ErrorType(err))
-			}
-		})
-	}
-
-	require.False(t, unreachable.ran)
+		err := command.runOnDatabase(t.Context(), time.Minute, operation)
+		require.ErrorIs(t, err, errMaintenanceTestDatabase)
+		require.False(t, operation.ran)
+	})
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
@@ -95,7 +95,7 @@ func TestRestRefuseEndedSessions(t *testing.T) {
 
 			// The route answers 418, so a response tells whether the request reached it.
 			route := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
-			handler := handlers.NewRestRefuseEndedSessions(service, config.LoggerDev).Middleware(route)
+			handler := handlers.NewRestRefuseEndedSessions(service, configtest.Logger).Middleware(route)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/sessions", nil)
 

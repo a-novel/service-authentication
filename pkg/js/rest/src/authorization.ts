@@ -1,6 +1,6 @@
 import type { AuthenticationApi } from "./api";
 
-import { HttpError, decodeHttpResponse, handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
+import { HttpError, type RestInit, decodeHttpResponse, handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
 
 import { z } from "zod";
 
@@ -109,7 +109,8 @@ export async function authorizationCodeCreate(
   params: URLSearchParams
 ): Promise<AuthorizationCode> {
   return await fetchOAuth(api, "/v2/oauth/authorization-code", AuthorizationCodeSchema, {
-    headers: { ...FORM_HEADERS, Authorization: `Bearer ${accessToken}` },
+    headers: FORM_HEADERS,
+    accessToken,
     method: "POST",
     body: params,
   });
@@ -152,7 +153,7 @@ async function tokenRequest(
 }
 
 /** Sends an OAuth request, and throws an {@link OAuthError} for an OAuth 2.0 error response. */
-async function fetchOAuth<T>(api: AuthenticationApi, input: string, validator: z.ZodType<T>, init: RequestInit) {
+async function fetchOAuth<T>(api: AuthenticationApi, input: string, validator: z.ZodType<T>, init: RestInit) {
   const response = await api.fetchResponse(input, init);
 
   if (response.status === 400) {

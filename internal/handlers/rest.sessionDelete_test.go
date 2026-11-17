@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -109,7 +109,7 @@ func TestRestSessionDelete(t *testing.T) {
 
 			// The router reads the session ID from the path.
 			router := chi.NewRouter()
-			router.Delete("/v2/sessions/{sessionID}", handlers.NewRestSessionDelete(service, config.LoggerDev).ServeHTTP)
+			router.Delete("/v2/sessions/{sessionID}", handlers.NewRestSessionDelete(service, configtest.Logger).ServeHTTP)
 
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(ctx, http.MethodDelete, cmp.Or(testCase.path, validPath), nil)

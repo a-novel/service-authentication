@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -121,7 +121,7 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 				ctx = t.Context()
 			}
 
-			handler := handlers.NewRestCredentialsGetSelf(service, config.LoggerDev)
+			handler := handlers.NewRestCredentialsGetSelf(service, configtest.Logger)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/credentials/self", nil)
 

@@ -5,9 +5,7 @@ package main
 
 import (
 	"context"
-	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -49,10 +47,6 @@ func main() {
 	lo.Must0(otel.Init(cfg.Otel))
 	defer cfg.Otel.Flush()
 
-	if env.OTLPEndpoint == "" {
-		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
-	}
-
 	// =================================================================================================================
 	// DEPENDENCIES
 	// =================================================================================================================
@@ -60,18 +54,14 @@ func main() {
 	// A server started during a planned downtime refuses work, so it leaves the database alone.
 	if !downtime.Started(cfg.App.DowntimeStart, time.Now()) {
 		ctx = lo.Must(postgres.NewContext(ctx, cfg.Postgres))
-
-		database := lo.Must(cfg.Postgres.DB(ctx))
-		defer closeDatabase(database)
+		defer cfg.Postgres.Close()
 	}
 
 	lo.Must0(cfg.OAuth.Check(cfg.ServiceToken))
 
-	dependencies := cfg.Dependencies
-	jsonKeysCredentials := lo.Must(dependencies.ServiceJSONKeysCredentials.Options(ctx))
-	jsonKeysAddress := net.JoinHostPort(dependencies.ServiceJSONKeysHost, strconv.Itoa(dependencies.ServiceJSONKeysPort))
+	jsonKeys := cfg.Dependencies.ServiceJSONKeys
 
-	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(jsonKeysAddress, jsonKeysCredentials...))
+	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(jsonKeys.Address(), jsonKeys.DialOptions()...))
 	defer jsonKeysClient.Close()
 
 	serviceVerifyAccessToken := lo.Must(servicejsonkeys.NewClaimsVerifier[session.Claims](jsonKeysClient))
@@ -212,16 +202,14 @@ func main() {
 	// A signed-out session keeps its access token until it expires. The routes that manage devices
 	// refuse it at once, so it cannot sign the account's other sessions out in turn.
 	refuseEndedSessions := handlers.NewRestRefuseEndedSessions(serviceClaimsGet, cfg.Logger).Middleware
-	withServiceToken := lo.Must(middlewares.RestServiceToken(
-		cfg.ServiceToken, cfg.ServiceIssuerOptional, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger,
-		cfg.Rest.Liveness,
+	withServiceToken := lo.Must(httpf.ServiceTokenGate(
+		cfg.ServiceToken, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger, cfg.Rest.Liveness,
 	))
 
 	// =================================================================================================================
 	// HANDLERS
 	// =================================================================================================================
 
-	handlerPing := handlers.NewRestPing()
 	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.SMTPPing, cfg.Logger)
 
 	handlerClaimsGet := handlers.NewRestClaimsGet(serviceClaimsGet, cfg.Logger)
@@ -275,11 +263,11 @@ func main() {
 	// ROUTER
 	// =================================================================================================================
 
-	router := httpf.NewRouter(cfg.Rest, cfg.Otel, cfg.RestLogger, cfg.App.DowntimeStart)
+	router := httpf.NewMux(cfg.Rest, cfg.RestLogger, cfg.App.DowntimeStart)
 
 	router.Route("/v2", func(api chi.Router) {
-		api.Get("/ping", handlerPing.ServeHTTP)
-		api.Get("/healthcheck", handlerHealth.ServeHTTP)
+		api.Get("/ping", httpf.Ping)
+		api.Get("/healthcheck", handlerHealth)
 
 		withAuth(api, "waitlist:join").With(limit.Waitlist).Put("/waitlist", handlerWaitlistJoin.ServeHTTP)
 
@@ -396,11 +384,4 @@ func serve(
 	}
 
 	return serveErr
-}
-
-func closeDatabase(database io.Closer) {
-	err := database.Close()
-	if err != nil {
-		log.Println("Close Postgres: " + err.Error())
-	}
 }

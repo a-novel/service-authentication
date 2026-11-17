@@ -9,46 +9,24 @@ import (
 	"net/http"
 	"net/textproto"
 
-	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/logging"
-	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/smtp"
 )
 
-const (
-	// RestHealthStatusUp reports a dependency whose probe succeeded.
-	RestHealthStatusUp = "up"
-	// RestHealthStatusDown reports a dependency whose probe failed.
-	RestHealthStatusDown = "down"
-	// smtpAuthenticationFailed is the SMTP reply code of a rejected login.
-	smtpAuthenticationFailed = 535
-)
+// smtpAuthenticationFailed is the SMTP reply code of a rejected login.
+const smtpAuthenticationFailed = 535
 
+// errSMTPUnhealthy is the error of a failed SMTP probe. The probe's span exports it, so it never
+// wraps the server's reply text, which may contain credentials.
 var errSMTPUnhealthy = errors.New("SMTP health check failed")
-
-// RestHealthStatus is the JSON representation of a single dependency's health.
-// /v2/healthcheck is unauthenticated and public, so the response carries no error
-// message: raw errors routinely include internal hostnames, ports, or schema names.
-// SMTP diagnostics use bounded categories in the configured logger and trace,
-// never the server's reply text, which may contain credentials.
-type RestHealthStatus struct {
-	// Status is either [RestHealthStatusUp] or [RestHealthStatusDown].
-	Status string `json:"status"`
-}
-
-// NewRestHealthStatus maps nil to up and an error to down without exposing it.
-func NewRestHealthStatus(err error) *RestHealthStatus {
-	return &RestHealthStatus{
-		Status: lo.Ternary(err == nil, RestHealthStatusUp, RestHealthStatusDown),
-	}
-}
 
 // RestHealthClientSMTP is the SMTP sender whose reachability the health check probes.
 type RestHealthClientSMTP = smtp.Sender
@@ -62,131 +40,77 @@ type RestHealthAPIJSONKeys interface {
 	) (*servicejsonkeys.StatusResponse, error)
 }
 
-// RestHealth reports every dependency's public up/down state and returns HTTP 503
-// when any probe fails.
-type RestHealth struct {
-	apiJSONKeys RestHealthAPIJSONKeys
-	clientSMTP  RestHealthClientSMTP
-	logger      logging.Log
-}
-
+// NewRestHealth returns the handler of the public health route, which reports PostgreSQL, the SMTP
+// relay and the JSON Keys service as up or down, as [httpf.Health] answers.
 func NewRestHealth(
 	apiJSONKeys RestHealthAPIJSONKeys,
 	clientSMTP RestHealthClientSMTP,
 	logger logging.Log,
-) *RestHealth {
-	return &RestHealth{
-		apiJSONKeys: apiJSONKeys,
-		clientSMTP:  clientSMTP,
-		logger:      logger,
-	}
+) http.HandlerFunc {
+	return httpf.Health(map[string]func(ctx context.Context) error{
+		"client:postgres": postgres.Health,
+		"client:smtp":     newSMTPProbe(clientSMTP, logger),
+		// JSON Keys fails Status with Unavailable when one of its own dependencies is down, so its
+		// success is the whole verdict.
+		"api:jsonKeys": func(ctx context.Context) error {
+			_, err := apiJSONKeys.Status(ctx, &servicejsonkeys.StatusRequest{})
+
+			return err
+		},
+	})
 }
 
-func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer().Start(r.Context(), "rest.Health")
-	defer span.End()
+// newSMTPProbe returns the probe of the SMTP relay. A failure names its bounded diagnostics on the
+// probe's span and in a warning through logger, never the server's reply text.
+func newSMTPProbe(clientSMTP RestHealthClientSMTP, logger logging.Log) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		err := clientSMTP.Ping()
+		if err == nil {
+			return nil
+		}
 
-	statusCode := http.StatusOK
-	statusResp := map[string]any{}
-
-	err := handler.reportPostgres(ctx)
-	if err != nil {
-		_ = otel.ReportError(span, err)
-		statusCode = http.StatusServiceUnavailable
-	}
-
-	statusResp["client:postgres"] = NewRestHealthStatus(err)
-
-	err = handler.reportSMTP(ctx)
-	if err != nil {
-		_ = otel.ReportError(span, err)
-		statusCode = http.StatusServiceUnavailable
-	}
-
-	statusResp["client:smtp"] = NewRestHealthStatus(err)
-
-	err = handler.reportJSONKeys(ctx)
-	if err != nil {
-		_ = otel.ReportError(span, err)
-		statusCode = http.StatusServiceUnavailable
-	}
-
-	statusResp["api:jsonKeys"] = NewRestHealthStatus(err)
-
-	httpf.SendJSONStatus(w, span, statusCode, statusResp)
-}
-
-func (handler *RestHealth) reportPostgres(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportPostgres)")
-	defer span.End()
-
-	err := postgres.Health(ctx)
-	if err != nil {
-		return otel.ReportError(span, err)
-	}
-
-	return nil
-}
-
-func (handler *RestHealth) reportJSONKeys(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportJSONKeys)")
-	defer span.End()
-
-	// JSON Keys fails Status with Unavailable when one of its own dependencies is down,
-	// so its success is the whole verdict.
-	_, err := handler.apiJSONKeys.Status(ctx, &servicejsonkeys.StatusRequest{})
-	if err != nil {
-		return otel.ReportError(span, err)
-	}
-
-	return nil
-}
-
-func (handler *RestHealth) reportSMTP(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportSMTP)")
-	defer span.End()
-
-	err := handler.clientSMTP.Ping()
-	if err != nil {
 		category, code := smtpHealthFailure(err)
-		span.SetAttributes(attribute.String("smtp.failure_category", category), attribute.Int("smtp.reply_code", code))
-		handler.logger.Warn(ctx, fmt.Sprintf("SMTP health check failed: category=%s smtp_reply_code=%d", category, code))
+		trace.SpanFromContext(ctx).SetAttributes(
+			attribute.String("smtp.failure_category", category), attribute.Int("smtp.reply_code", code),
+		)
+		logger.Warn(ctx, fmt.Sprintf("SMTP health check failed: category=%s smtp_reply_code=%d", category, code))
 
-		// Do not wrap the original error: tracing must not export SMTP reply text.
-		return otel.ReportError(span, errSMTPUnhealthy)
+		return errSMTPUnhealthy
 	}
-
-	return nil
 }
 
 // smtpHealthFailure extracts only allowlisted diagnostics from wrapped errors.
 // An unknown failure loses its detail, which could hold a secret.
 func smtpHealthFailure(err error) (string, int) {
-	var (
-		timeout     net.Error
-		dns         *net.DNSError
-		certificate *tls.CertificateVerificationError
-		record      tls.RecordHeaderError
-		reply       *textproto.Error
-		network     *net.OpError
-	)
-
-	switch {
-	case errors.As(err, &timeout) && timeout.Timeout():
+	network, ok := errors.AsType[net.Error](err)
+	if ok && network.Timeout() {
 		return "timeout", 0
-	case errors.As(err, &dns):
-		return "dns", 0
-	case errors.As(err, &certificate), errors.As(err, &record):
-		return "tls", 0
-	case errors.As(err, &reply):
-		if reply.Code == smtpAuthenticationFailed {
-			return "authentication", reply.Code
-		}
+	}
 
-		if reply.Code >= 400 && reply.Code <= 599 {
+	if _, ok := errors.AsType[*net.DNSError](err); ok {
+		return "dns", 0
+	}
+
+	if _, ok := errors.AsType[*tls.CertificateVerificationError](err); ok {
+		return "tls", 0
+	}
+
+	if _, ok := errors.AsType[tls.RecordHeaderError](err); ok {
+		return "tls", 0
+	}
+
+	if reply, ok := errors.AsType[*textproto.Error](err); ok {
+		switch {
+		case reply.Code == smtpAuthenticationFailed:
+			return "authentication", reply.Code
+		case reply.Code >= 400 && reply.Code <= 599:
 			return "smtp_rejected", reply.Code
 		}
-	case errors.As(err, &network):
+
+		return "unknown", 0
+	}
+
+	if _, ok := errors.AsType[*net.OpError](err); ok {
 		return "connection", 0
 	}
 

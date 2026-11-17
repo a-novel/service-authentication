@@ -1,16 +1,6 @@
-import { decodeHttpResponse, handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
+import { type HealthDependency, RestClient } from "@a-novel-kit/nodelib-browser/http";
 
-import type { ZodType } from "zod";
-
-/**
- * Status of a single health-check dependency reported by the `/v2/healthcheck` endpoint. The
- * endpoint is unauthenticated, so it carries the dependency's state alone; the failure
- * itself is recorded on the server's traces.
- */
-export type HealthDependency = {
-  /** Whether the dependency is reachable. */
-  status: "up" | "down";
-};
+export type { HealthDependency };
 
 /**
  * HTTP client for the authentication REST API.
@@ -22,49 +12,10 @@ export type HealthDependency = {
  * The endpoint helpers in this package (`tokenCreate`, `claimsGet`, `credentialsGet`, ...) each
  * take an instance of this client as their first argument.
  */
-export class AuthenticationApi {
-  private readonly _baseUrl: string;
-  private readonly _fetch: typeof fetch;
-
-  /**
-   * @param baseUrl - The server's base URL.
-   * @param fetcher - Sends every request. A server-side caller wraps `fetch` to add the headers its
-   *   deployment needs, such as the visitor's IP in the header the server is configured to trust.
-   */
-  constructor(baseUrl: string, fetcher: typeof fetch = (input, init) => fetch(input, init)) {
-    this._baseUrl = baseUrl;
-    this._fetch = fetcher;
-  }
-
-  /** Sends a request without decoding it. Callers must handle non-2xx responses before consuming the body. */
-  async fetchResponse(input: string, init?: RequestInit): Promise<Response> {
-    // Called unbound: browsers reject a native fetch invoked as another object's method.
-    const fetcher = this._fetch;
-    return await fetcher(`${this._baseUrl}${input}`, init);
-  }
-
-  /**
-   * Sends a request to the given path and discards the response body.
-   * Throws if the server returns a non-2xx status.
-   */
-  async fetchVoid(input: string, init?: RequestInit): Promise<void> {
-    await this.fetchResponse(input, init).then(handleHttpResponse);
-  }
-
-  /**
-   * Sends a request to the given path and deserializes the JSON response body as `T`.
-   * When a Zod validator is supplied, the body is parsed through it; otherwise it is returned
-   * as-is. Throws if the server returns a non-2xx status or the body fails validation.
-   */
-  async fetch<T>(input: string, validator?: ZodType<T>, init?: RequestInit): Promise<T> {
-    return await this.fetchResponse(input, init)
-      .then(handleHttpResponse)
-      .then(validator ? decodeHttpResponse(validator) : (response): Promise<T> => response.json());
-  }
-
+export class AuthenticationApi extends RestClient {
   /** Checks that the server is reachable. Throws on any non-2xx response. */
   async ping(): Promise<void> {
-    await this.fetchVoid("/v2/ping", { method: "GET" });
+    await this.fetchVoid("/v2/ping");
   }
 
   /**
@@ -72,6 +23,6 @@ export class AuthenticationApi {
    * Throws on HTTP 503 when any dependency is unhealthy.
    */
   async health(): Promise<Record<string, HealthDependency>> {
-    return await this.fetch("/v2/healthcheck", undefined, { method: "GET" });
+    return await this.fetch("/v2/healthcheck");
   }
 }

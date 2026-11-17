@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -112,7 +112,7 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewRestCredentialsUpdateEmail(service, config.LoggerDev)
+			handler := handlers.NewRestCredentialsUpdateEmail(service, configtest.Logger)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(
 				t.Context(), http.MethodPatch, "/v2/credentials/email", strings.NewReader(cmp.Or(testCase.body, validBody)),

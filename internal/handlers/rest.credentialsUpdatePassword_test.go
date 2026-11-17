@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -117,7 +117,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				ctx = t.Context()
 			}
 
-			handler := handlers.NewRestCredentialsUpdatePassword(service, config.LoggerDev)
+			handler := handlers.NewRestCredentialsUpdatePassword(service, configtest.Logger)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(
 				ctx, http.MethodPatch, "/v2/credentials/password", strings.NewReader(cmp.Or(testCase.body, validBody)),

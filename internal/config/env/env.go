@@ -7,9 +7,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/a-novel-kit/golib/config"
 	"github.com/a-novel-kit/golib/downtime"
+	"github.com/a-novel-kit/golib/grpcf"
 	"github.com/a-novel-kit/golib/httpf"
+	otelpresets "github.com/a-novel-kit/golib/otel/presets"
+	postgrespresets "github.com/a-novel-kit/golib/postgres/presets"
+	"github.com/a-novel-kit/golib/servicetoken"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
@@ -57,18 +63,6 @@ const (
 	// SMTPTimeoutDefault, so a send that starts just before the signal finishes, and leaves the
 	// OpenTelemetry flush, up to 2 seconds, inside the 30 seconds before Kubernetes kills the pod.
 	TimeoutShutdownDefault = 25 * time.Second
-
-	// PostgresMaxOpenConnsDefault caps the connections one instance opens. Multiplied by the replica
-	// count, the cap stays well under PostgreSQL's default max_connections of 100. That leaves room
-	// for the migration job and a psql session. A spike waits inside the process for a free connection.
-	PostgresMaxOpenConnsDefault = 20
-	// PostgresMaxIdleConnsDefault matches the open limit, so a burst keeps the connections it is about
-	// to reuse.
-	PostgresMaxIdleConnsDefault = 20
-	// PostgresPortDefault is PostgreSQL's standard port.
-	PostgresPortDefault = 5432
-	// PostgresTLSEnabledDefault encrypts the connection unless a deployment turns it off.
-	PostgresTLSEnabledDefault = true
 )
 
 var (
@@ -77,36 +71,21 @@ var (
 	Argon2MaxConcurrentDefault = runtime.GOMAXPROCS(0)
 
 	// RestRateLimitStrictDefault caps anonymous tokens and invitation requests per caller.
-	RestRateLimitStrictDefault = config.Must(httpf.ParseRate("3/5m"))
+	RestRateLimitStrictDefault = lo.Must(httpf.ParseRate("3/5m"))
 	// RestRateLimitLoginBurstDefault leaves a forgotten password a few attempts within a minute.
-	RestRateLimitLoginBurstDefault = config.Must(httpf.ParseRate("10/1m"))
+	RestRateLimitLoginBurstDefault = lo.Must(httpf.ParseRate("10/1m"))
 	// RestRateLimitLoginDefault leaves a forgotten password a few attempts over ten minutes.
-	RestRateLimitLoginDefault = config.Must(httpf.ParseRate("30/10m"))
+	RestRateLimitLoginDefault = lo.Must(httpf.ParseRate("30/10m"))
 	// RestRateLimitMailboxDefault caps the emails one address receives from a route.
-	RestRateLimitMailboxDefault = config.Must(httpf.ParseRate("3/1h"))
+	RestRateLimitMailboxDefault = lo.Must(httpf.ParseRate("3/1h"))
 	// RestRateLimitOAuthTokenDefault lets a client sign a visitor in or refresh their session once a
 	// second, sustained.
-	RestRateLimitOAuthTokenDefault = config.Must(httpf.ParseRate("60/1m"))
+	RestRateLimitOAuthTokenDefault = lo.Must(httpf.ParseRate("60/1m"))
 )
 
 var (
-	// PostgresHost is the PostgreSQL server hostname or IP address.
-	PostgresHost = getEnv("POSTGRES_HOST")
-	// PostgresPort is the PostgreSQL server port.
-	PostgresPort = config.LoadEnv(getEnv("POSTGRES_PORT"), PostgresPortDefault, strconv.Atoi)
-	// PostgresUser is the PostgreSQL login role.
-	PostgresUser = getEnv("POSTGRES_USER")
-	// PostgresPassword is the PostgreSQL login credential.
-	PostgresPassword = getEnv("POSTGRES_PASSWORD")
-	// PostgresDatabase is the PostgreSQL database name.
-	PostgresDatabase = getEnv("POSTGRES_DATABASE")
-	// PostgresTLSEnabled controls transport encryption for the PostgreSQL connection.
-	PostgresTLSEnabled = config.LoadEnv(getEnv("POSTGRES_TLS_ENABLED"), PostgresTLSEnabledDefault, strconv.ParseBool)
-
-	// PostgresMaxOpenConns is the maximum number of open connections to the database.
-	PostgresMaxOpenConns = config.LoadEnv(getEnv("POSTGRES_MAX_OPEN_CONNS"), PostgresMaxOpenConnsDefault, strconv.Atoi)
-	// PostgresMaxIdleConns is the maximum number of connections kept open while idle.
-	PostgresMaxIdleConns = config.LoadEnv(getEnv("POSTGRES_MAX_IDLE_CONNS"), PostgresMaxIdleConnsDefault, strconv.Atoi)
+	// Postgres reaches PostgreSQL through the POSTGRES_* variables.
+	Postgres = postgrespresets.LoadConnection(getEnv, postgrespresets.ConnectionDefault)
 
 	// PlatformAuthURL is the base URL of the authentication web client, prefixed onto the
 	// links inserted in emails.
@@ -125,14 +104,14 @@ var (
 	// complete the account creation.
 	PlatformAuthRegisterURL = cmp.Or(getEnv("PLATFORM_AUTH_URL_REGISTER"), PlatformAuthURL+PlatformAccountCreateURLDefault)
 
-	// ServiceJSONKeysHost is the hostname of the JSON Keys service, without scheme or port.
-	ServiceJSONKeysHost = cmp.Or(getEnv("SERVICE_JSON_KEYS_HOST"), ServiceJSONKeysHostDefault)
-	// ServiceJSONKeysPort is the gRPC port of the JSON Keys service.
-	ServiceJSONKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJSONKeysPortDefault, strconv.Atoi)
-	// ServiceJSONKeysTLS dials the JSON Keys service over TLS, from inside the cluster, once
-	// ServiceJSONKeysTokenPath names a token. The server's certificate is verified for ServiceJSONKeysHost
-	// against the system roots, which SSL_CERT_DIR extends.
-	ServiceJSONKeysTLS = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_TLS"), false, strconv.ParseBool)
+	// ServiceJSONKeys locates the JSON Keys service through the SERVICE_JSON_KEYS_* variables.
+	// SERVICE_TOKEN_PATH, the deprecated name of SERVICE_JSON_KEYS_TOKEN_PATH, applies while the new
+	// one is unset.
+	ServiceJSONKeys = grpcf.LoadClientConfig(getEnv, "SERVICE_JSON_KEYS", grpcf.ClientConfig{
+		Host:      ServiceJSONKeysHostDefault,
+		Port:      ServiceJSONKeysPortDefault,
+		TokenPath: getEnv("SERVICE_TOKEN_PATH"),
+	})
 
 	// SMTPAddr is the SMTP server address, as domain:port.
 	SMTPAddr = getEnv("SMTP_ADDR")
@@ -200,29 +179,18 @@ var (
 
 	// AppName names the application in logs and traces.
 	AppName = cmp.Or(getEnv("APP_NAME"), AppNameDefault)
-	// Otel enables OpenTelemetry instrumentation.
-	Otel = config.LoadEnv(getEnv("OTEL"), false, strconv.ParseBool)
+	// Telemetry is the OpenTelemetry backend of the server, and the loggers that match it.
+	Telemetry = otelpresets.LoadTelemetry(getEnv, otelpresets.ServerFlushTimeout)
+	// JobTelemetry is the OpenTelemetry backend of the maintenance jobs, which wait longer on exit
+	// for their spans and logs to leave.
+	JobTelemetry = otelpresets.LoadTelemetry(getEnv, otelpresets.JobFlushTimeout)
 
 	// Rest configures the REST server from the REST_* variables.
 	Rest = httpf.LoadServerConfig(getEnv, restDefaults())
 
-	// ServiceTokenIssuer is the issuer of the service tokens the REST server accepts, as a token's
-	// "iss" claim names it. When empty, the server refuses to start unless ServiceIssuerOptional
-	// is set.
-	ServiceTokenIssuer = getEnv("SERVICE_TOKEN_ISSUER")
-	// ServiceIssuerOptional lets the REST server start without ServiceTokenIssuer, and then take
-	// every request without a service token. Only a local or test stack sets it.
-	ServiceIssuerOptional = config.LoadEnv(getEnv("SERVICE_ISSUER_OPTIONAL"), false, strconv.ParseBool)
-	// ServiceTokenAudience is the audience the REST server answers to. Each caller requests its token
-	// for it.
-	ServiceTokenAudience = getEnv("SERVICE_TOKEN_AUDIENCE")
-	// ServiceTokenCallers are the service accounts allowed to call, as a comma-separated list of
-	// system:serviceaccount:<namespace>:<name>.
-	ServiceTokenCallers = config.LoadEnv(getEnv("SERVICE_TOKEN_CALLERS"), nil, config.SliceParser(config.StringParser))
-	// ServiceJSONKeysTokenPath is the file the kubelet projects this service's own token into, for
-	// the JSON Keys audience. When set, the JSON Keys connection sends that token with every call.
-	// SERVICE_TOKEN_PATH, its deprecated name, applies when SERVICE_JSON_KEYS_TOKEN_PATH is unset.
-	ServiceJSONKeysTokenPath = cmp.Or(getEnv("SERVICE_JSON_KEYS_TOKEN_PATH"), getEnv("SERVICE_TOKEN_PATH"))
+	// ServiceToken names the service tokens the REST server accepts, through the SERVICE_TOKEN_*
+	// variables. Without an issuer, the server refuses to start unless SERVICE_ISSUER_OPTIONAL is set.
+	ServiceToken = servicetoken.LoadConfig(getEnv)
 
 	// OAuthClients is the client registry, the platforms that sign people in through the account
 	// platform, in the JSON form [auth.ParseClients] reads. Empty, no platform is a client.
@@ -230,12 +198,6 @@ var (
 	// AccountPlatformCaller is the caller of the account platform, the only one that validates
 	// authorization requests and issues codes.
 	AccountPlatformCaller = cmp.Or(getEnv("ACCOUNT_PLATFORM_CALLER"), AccountPlatformCallerDefault)
-
-	// OTLPEndpoint is the standard OTEL_EXPORTER_OTLP_ENDPOINT. When set, traces and logs export
-	// over OTLP/HTTP, which the OTEL_EXPORTER_OTLP_* variables configure. When empty, they go to
-	// standard output. The OpenTelemetry SDK reads these variables without the prefix, so this one
-	// is read without it too.
-	OTLPEndpoint = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 
 	// DowntimeStart is when a planned downtime of this service starts, in RFC 3339. From then
 	// until it is removed, the service refuses work. Nil when none is planned.

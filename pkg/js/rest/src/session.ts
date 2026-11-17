@@ -1,7 +1,5 @@
 import type { AuthenticationApi } from "./api";
 
-import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
-
 import { z } from "zod";
 
 /**
@@ -53,7 +51,7 @@ export type SessionDeleteRequest = z.infer<typeof SessionDeleteRequestSchema>;
  */
 export async function sessionList(api: AuthenticationApi, accessToken: string): Promise<Session[]> {
   return await api.fetch("/v2/sessions", z.array(SessionSchema), {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "GET",
   });
 }
@@ -69,7 +67,7 @@ export async function sessionRevoke(
   form: SessionRevokeRequest
 ): Promise<void> {
   return await api.fetchVoid(`/v2/sessions/${encodeURIComponent(form.id)}/revoke`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
   });
 }
@@ -80,7 +78,7 @@ export async function sessionRevoke(
  */
 export async function sessionRevokeOthers(api: AuthenticationApi, accessToken: string): Promise<void> {
   return await api.fetchVoid("/v2/sessions/revoke-others", {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
   });
 }
@@ -96,7 +94,7 @@ export async function sessionDelete(
   form: SessionDeleteRequest
 ): Promise<void> {
   return await api.fetchVoid(`/v2/sessions/${encodeURIComponent(form.id)}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "DELETE",
   });
 }

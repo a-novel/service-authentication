@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -86,7 +86,7 @@ func TestRestShortCodeCancelEmailUpdate(t *testing.T) {
 				ctx = t.Context()
 			}
 
-			handler := handlers.NewRestShortCodeCancelEmailUpdate(service, config.LoggerDev)
+			handler := handlers.NewRestShortCodeCancelEmailUpdate(service, configtest.Logger)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(ctx, http.MethodDelete, "/v2/short-code/update-email", nil)
 

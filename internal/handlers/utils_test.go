@@ -11,13 +11,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel-kit/golib/httpf"
 	"github.com/a-novel-kit/golib/servicetoken"
 	"github.com/a-novel-kit/golib/servicetoken/servicetokentest"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
-	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
 // serviceTokenAudience is the audience the handler tests' service tokens name.
@@ -66,7 +66,7 @@ func serveAsCaller(t *testing.T, handler http.Handler, request *http.Request, ca
 
 	request.Header.Set(servicetoken.Header, issuer.Sign(t, issuer.Claims(caller, serviceTokenAudience)))
 
-	withServiceToken, err := middlewares.RestServiceToken(tokenConfig, false, &http.Client{}, config.LoggerDev)
+	withServiceToken, err := httpf.ServiceTokenGate(tokenConfig, &http.Client{}, configtest.Logger)
 	require.NoError(t, err)
 
 	withServiceToken(handler).ServeHTTP(w, request)

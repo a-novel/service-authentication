@@ -1,7 +1,7 @@
 import type { AuthenticationApi } from "./api";
 import { EmailSchema, LangSchema } from "./form";
 
-import { HTTP_HEADERS, HttpError, handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
+import { HttpError, handleHttpResponse } from "@a-novel-kit/nodelib-browser/http";
 
 import { z } from "zod";
 
@@ -52,9 +52,9 @@ export async function waitlistJoin(
   form: WaitlistJoinRequest
 ): Promise<void> {
   const response = await api.fetchResponse("/v2/waitlist", {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "PUT",
-    body: JSON.stringify(form),
+    json: form,
   });
   if (response.status === 409) {
     const conflict = WaitlistJoinConflictSchema.parse(await response.json());

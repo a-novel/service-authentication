@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
+	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -99,7 +99,7 @@ func TestRestShortCodeCreateRegister(t *testing.T) {
 					Return(testCase.serviceMock.err)
 			}
 
-			handler := handlers.NewRestShortCodeCreateRegister(service, config.LoggerDev)
+			handler := handlers.NewRestShortCodeCreateRegister(service, configtest.Logger)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(
 				t.Context(), http.MethodPut, "/v2/short-code/register", strings.NewReader(cmp.Or(testCase.body, validBody)),

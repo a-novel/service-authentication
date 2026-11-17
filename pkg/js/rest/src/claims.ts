@@ -1,8 +1,6 @@
 import type { AuthenticationApi } from "./api";
 import { RoleSchema } from "./form";
 
-import { HTTP_HEADERS } from "@a-novel-kit/nodelib-browser/http";
-
 import { z } from "zod";
 
 /**
@@ -30,7 +28,7 @@ export type Claims = z.infer<typeof ClaimsSchema>;
  */
 export async function claimsGet(api: AuthenticationApi, accessToken: string): Promise<Claims> {
   return await api.fetch("/v2/session", ClaimsSchema, {
-    headers: { ...HTTP_HEADERS.JSON, Authorization: `Bearer ${accessToken}` },
+    accessToken,
     method: "GET",
   });
 }
