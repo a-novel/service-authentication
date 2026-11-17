@@ -253,7 +253,7 @@ func TestTokenRefresh(t *testing.T) {
 			variant.expect, variant.expectErr = nil, errFoo
 		}),
 		changed(*success, func(variant *testCase) {
-			variant.name = "Error/SignError"
+			variant.name = "Error/Sign"
 			variant.signClaimsMock = &signClaimsMock{sessionID: refreshTokenID, err: errFoo}
 			variant.sessionMock = nil
 			variant.expect, variant.expectErr = nil, errFoo
