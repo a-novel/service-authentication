@@ -55,6 +55,13 @@ func TestRestTokenRevoke(t *testing.T) {
 			expectStatus: http.StatusNoContent,
 		},
 		{
+			name: "Error/InvalidRefreshToken",
+
+			serviceMock: &serviceMock{err: core.ErrTokenRevokeInvalidRefreshToken},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
 			name: "Error/MismatchClaims",
 
 			serviceMock: &serviceMock{err: core.ErrTokenRevokeMismatchClaims},

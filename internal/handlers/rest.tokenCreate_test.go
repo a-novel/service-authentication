@@ -16,6 +16,7 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
+	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
 func TestRestTokenCreate(t *testing.T) {
@@ -59,6 +60,13 @@ func TestRestTokenCreate(t *testing.T) {
 			name: "Error/CredentialsNotFound",
 
 			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
+
+			expectStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Error/PasswordInvalid",
+
+			serviceMock: &serviceMock{err: lib.ErrInvalidPassword},
 
 			expectStatus: http.StatusUnauthorized,
 		},

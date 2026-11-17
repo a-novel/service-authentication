@@ -55,8 +55,23 @@ func TestRestAuthorizationRequestValidate(t *testing.T) {
 			expectResponse: map[string]any{"redirect_uri": redirectURI},
 		},
 		{
+			// The account platform redirects this refusal to the client.
+			name: "Error/Redirected",
+
+			serviceMock: &serviceMock{
+				err: &core.OAuthError{Code: "invalid_request", Description: "code challenge required", RedirectURI: redirectURI},
+			},
+
+			expectStatus: http.StatusBadRequest,
+			expectResponse: map[string]any{
+				"error":             "invalid_request",
+				"error_description": "code challenge required",
+				"redirect_uri":      redirectURI,
+			},
+		},
+		{
 			// The account platform shows this refusal to the person, and redirects nowhere.
-			name: "Error/OAuth",
+			name: "Error/NotRedirected",
 
 			serviceMock: &serviceMock{err: core.ErrAuthorizationRequestUnknownClient},
 

@@ -74,6 +74,20 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 			expectStatus: http.StatusForbidden,
 		},
 		{
+			name: "Error/DowngradeSuperior",
+
+			serviceMock: &serviceMock{err: core.ErrCredentialsUpdateRoleDowngradeSuperior},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
+			name: "Error/SelfUpdate",
+
+			serviceMock: &serviceMock{err: core.ErrCredentialsUpdateRoleSelfUpdate},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
 			name: "Error/InvalidRequest",
 
 			serviceMock: &serviceMock{err: core.ErrInvalidRequest},

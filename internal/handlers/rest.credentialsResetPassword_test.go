@@ -60,6 +60,13 @@ func TestRestCredentialsResetPassword(t *testing.T) {
 			expectStatus: http.StatusForbidden,
 		},
 		{
+			name: "Error/ShortCodeInvalid",
+
+			serviceMock: &serviceMock{err: core.ErrShortCodeInvalid},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
 			name: "Error/InvalidRequest",
 
 			serviceMock: &serviceMock{err: core.ErrInvalidRequest},

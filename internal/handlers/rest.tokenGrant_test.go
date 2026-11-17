@@ -74,6 +74,17 @@ func TestRestTokenGrant(t *testing.T) {
 			},
 		},
 		{
+			// Every refusal is an error response, 400 (RFC 6749 §5.2).
+			name: "Error/InvalidGrant",
+
+			serviceMock: &serviceMock{err: core.ErrTokenGrantCodeReused},
+
+			expectStatus: http.StatusBadRequest,
+			expectResponse: map[string]any{
+				"error": "invalid_grant", "error_description": core.ErrTokenGrantCodeReused.Description,
+			},
+		},
+		{
 			// The core refuses a request with no caller. Every refusal is an error response, 400, even
 			// invalid_client (RFC 6749 §5.2).
 			name: "Error/NoCaller",

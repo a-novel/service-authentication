@@ -50,9 +50,30 @@ func TestRestTokenRefresh(t *testing.T) {
 			expectResponse: tokenFixtureJSON,
 		},
 		{
+			name: "Error/InvalidAccessToken",
+
+			serviceMock: &serviceMock{err: core.ErrTokenRefreshInvalidAccessToken},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
 			name: "Error/InvalidRefreshToken",
 
 			serviceMock: &serviceMock{err: core.ErrTokenRefreshInvalidRefreshToken},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
+			name: "Error/MismatchClaims",
+
+			serviceMock: &serviceMock{err: core.ErrTokenRefreshMismatchClaims},
+
+			expectStatus: http.StatusForbidden,
+		},
+		{
+			name: "Error/MismatchSource",
+
+			serviceMock: &serviceMock{err: core.ErrTokenRefreshMismatchSource},
 
 			expectStatus: http.StatusForbidden,
 		},
