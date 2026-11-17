@@ -130,7 +130,7 @@ var (
 	// ServiceJSONKeysPort is the gRPC port of the JSON Keys service.
 	ServiceJSONKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJSONKeysPortDefault, strconv.Atoi)
 	// ServiceJSONKeysTLS dials the JSON Keys service over TLS, from inside the cluster, once
-	// ServiceTokenPath names a token. The server's certificate is verified for ServiceJSONKeysHost
+	// ServiceJSONKeysTokenPath names a token. The server's certificate is verified for ServiceJSONKeysHost
 	// against the system roots, which SSL_CERT_DIR extends.
 	ServiceJSONKeysTLS = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_TLS"), false, strconv.ParseBool)
 
@@ -219,9 +219,10 @@ var (
 	// ServiceTokenCallers are the service accounts allowed to call, as a comma-separated list of
 	// system:serviceaccount:<namespace>:<name>.
 	ServiceTokenCallers = config.LoadEnv(getEnv("SERVICE_TOKEN_CALLERS"), nil, config.SliceParser(config.StringParser))
-	// ServiceTokenPath is the file the kubelet projects this service's own token into, for the JSON
-	// Keys audience. When set, the JSON Keys connection sends that token with every call.
-	ServiceTokenPath = getEnv("SERVICE_TOKEN_PATH")
+	// ServiceJSONKeysTokenPath is the file the kubelet projects this service's own token into, for
+	// the JSON Keys audience. When set, the JSON Keys connection sends that token with every call.
+	// SERVICE_TOKEN_PATH, its deprecated name, applies when SERVICE_JSON_KEYS_TOKEN_PATH is unset.
+	ServiceJSONKeysTokenPath = cmp.Or(getEnv("SERVICE_JSON_KEYS_TOKEN_PATH"), getEnv("SERVICE_TOKEN_PATH"))
 
 	// OAuthClients is the client registry, the platforms that sign people in through the account
 	// platform, in the JSON form [auth.ParseClients] reads. Empty, no platform is a client.

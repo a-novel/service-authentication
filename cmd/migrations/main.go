@@ -1,13 +1,9 @@
-// Command migrations applies pending SQL migrations to the authentication database.
-// Run this once on first deploy and after each schema change.
+// Command migrations applies the pending database schema migrations, then exits. The cmd/rest server
+// starts once it completes.
 package main
 
 import (
 	"context"
-	"io/fs"
-	"log"
-	"strings"
-	"time"
 
 	"github.com/samber/lo"
 
@@ -18,40 +14,6 @@ import (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
-	log.SetPrefix("migrations: ")
-
-	start := time.Now()
-
-	// Inventory the .up.sql files up-front: bun's migrator exposes no count, so walking
-	// the embed.FS is how the recap knows how many exist.
-	discovered := listUpMigrations(migrations.Migrations)
-	log.Printf("discovered %d migration(s) in models/migrations", len(discovered))
-
-	for _, name := range discovered {
-		log.Printf("  · %s", name)
-	}
-
-	log.Println("connecting to database...")
-
 	ctx := lo.Must(postgres.NewContext(context.Background(), config.PostgresPresetMigrations))
-
-	log.Println("applying pending migrations...")
 	lo.Must0(postgres.RunMigrationsContext(ctx, migrations.Migrations))
-
-	log.Printf("done: %d migration(s) examined, completed in %s",
-		len(discovered), time.Since(start).Round(time.Millisecond))
-}
-
-// listUpMigrations returns the bare name of every *.up.sql in f, in lexical order, which the
-// timestamp prefix makes chronological. It feeds the start-of-run inventory log only; bun's
-// migrator decides which migrations actually apply.
-func listUpMigrations(f fs.FS) []string {
-	// Glob fails only on a malformed pattern.
-	names, _ := fs.Glob(f, "*.up.sql")
-	for i, name := range names {
-		names[i] = strings.TrimSuffix(name, ".up.sql")
-	}
-
-	return names
 }

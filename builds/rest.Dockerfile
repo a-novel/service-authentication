@@ -1,48 +1,30 @@
-# This image serves the REST API. It needs a migrated database.
+# Runs the REST server. Requires a database with migrations already applied.
 FROM docker.io/library/golang:1.27.4-alpine AS builder
 
-# Static binary: no libc dependency, so it runs on a bare alpine base.
 ENV CGO_ENABLED=0
 
 WORKDIR /app
 
-# Resolve modules off go.mod/go.sum alone, before the source, so the download
-# layer survives any source-only edit. The cache mount persists the module cache
-# across builds. Locally this is what turns a cold re-pull into a no-op; in CI
-# the gha layer cache covers cross-run reuse.
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
-COPY ./cmd/rest ./cmd/rest
-COPY ./internal/handlers ./internal/handlers
-COPY ./internal/dao ./internal/dao
-COPY ./internal/lib ./internal/lib
-COPY ./internal/core ./internal/core
-COPY ./internal/models/mails ./internal/models/mails
-COPY ./internal/models/session ./internal/models/session
-COPY ./internal/config ./internal/config
+COPY ./cmd ./cmd
+COPY ./internal ./internal
 COPY ./pkg/go ./pkg/go
 
-# Cache mounts persist the module + build cache across builds, so a rebuild after
-# a source change recompiles only the changed packages instead of the whole tree.
-# -ldflags="-s -w" strips the symbol table + DWARF (smaller binary); -trimpath
-# drops absolute build paths for a reproducible build.
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -ldflags="-s -w" -trimpath -o /rest ./cmd/rest/
 
 FROM docker.io/library/alpine:3.24.4
 
-WORKDIR /
-
 COPY --from=builder /rest /rest
 
-# Alpine ships BusyBox wget: no extra package needed for the healthcheck.
+# The healthcheck uses the wget of Alpine's BusyBox.
 HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
   CMD ["wget", "-qO", "/dev/null", "http://localhost:8080/v2/ping"]
 
-# Make sure the executable uses the default port.
 ENV REST_PORT=8080
 
 EXPOSE 8080

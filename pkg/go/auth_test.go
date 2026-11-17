@@ -193,21 +193,20 @@ replace github.com/a-novel/service-authentication/v2 => %s
 		require.NoError(t, err)
 
 		dependencies := strings.Split(strings.TrimSpace(string(output)), "\n")
-		testCases := []struct {
-			name       string
-			configPath string
-		}{
-			{name: "Authentication", configPath: "github.com/a-novel/service-authentication/v2/internal/config"},
-			{name: "JSONKeys", configPath: "github.com/a-novel/service-json-keys/v2/internal/config"},
+
+		// The client links no server configuration and no password hashing.
+		excluded := []string{
+			"github.com/a-novel/service-authentication/v2/internal/config",
+			"github.com/a-novel/service-authentication/v2/internal/config/env",
+			"github.com/a-novel/service-authentication/v2/internal/lib",
+			"github.com/a-novel/service-json-keys/v2/internal/config",
+			"github.com/a-novel/service-json-keys/v2/internal/config/env",
+			"golang.org/x/crypto/argon2",
+			"golang.org/x/crypto/blake2b",
 		}
 
-		for _, testCase := range testCases {
-			t.Run(testCase.name, func(t *testing.T) {
-				t.Parallel()
-
-				require.NotContains(t, dependencies, testCase.configPath)
-				require.NotContains(t, dependencies, testCase.configPath+"/env")
-			})
+		for _, dependency := range excluded {
+			require.NotContains(t, dependencies, dependency)
 		}
 	})
 }

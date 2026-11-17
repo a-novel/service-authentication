@@ -50,7 +50,7 @@ func (handler *RestRefuseEndedSessions) refuse(w http.ResponseWriter, r *http.Re
 	ctx, span := otel.Tracer().Start(r.Context(), "rest.RefuseEndedSessions")
 	defer span.End()
 
-	claims, err := session.MustGetClaimsContext(ctx)
+	claims, err := session.RequireClaimsContext(ctx)
 	if err == nil {
 		_, err = handler.service.Exec(ctx, &core.ClaimsGetRequest{Claims: claims})
 	}

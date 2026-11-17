@@ -24,8 +24,10 @@ func mainExitCode() int {
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
 	log.SetPrefix("maintenance: ")
 
+	cfg := config.AppPresetDefault
+
 	// Every operation works on the database, which is unavailable during a planned downtime.
-	if downtime.Started(config.AppPresetDefault.App.DowntimeStart, time.Now()) {
+	if downtime.Started(cfg.App.DowntimeStart, time.Now()) {
 		log.Print("planned downtime in progress: nothing done")
 
 		return 0
@@ -35,6 +37,7 @@ func mainExitCode() int {
 	defer stop()
 
 	command := newMaintenanceCommand(
+		cfg,
 		accountRoleOperationDefinition(), authorizationCodePurgeOperationDefinition(),
 		refreshTokenPurgeOperationDefinition(), waitlistCleanupOperationDefinition(),
 	)

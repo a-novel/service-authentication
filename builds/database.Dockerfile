@@ -69,6 +69,5 @@ STOPSIGNAL SIGINT
 # the server log a failed connection on every probe.
 HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
   CMD ["sh", "-c", "PGUSER=$POSTGRES_USER PGDATABASE=$POSTGRES_DB pg_isready"]
-COPY --chmod=755 ./builds/database.entrypoint.sh /usr/local/bin/database.entrypoint.sh
-ENTRYPOINT ["/usr/local/bin/database.entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["postgres"]

@@ -3,11 +3,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -54,10 +56,19 @@ func main() {
 		panic("optional authentication rejected an unauthenticated request")
 	}
 
-	claims := &serviceauthentication.Claims{Roles: []string{"reader"}}
+	userID := uuid.New()
+	claims := &serviceauthentication.Claims{UserID: &userID, Roles: []string{"reader"}}
 	ctx := serviceauthentication.SetClaimsContext(context.Background(), claims)
-	resolved, err := serviceauthentication.MustGetClaimsContext(ctx)
+	resolved, err := serviceauthentication.RequireClaimsContext(ctx)
 	if err != nil || resolved != claims {
 		panic("claims context round-trip failed")
+	}
+	if user, err := serviceauthentication.RequestUser(ctx); err != nil || user != userID {
+		panic("request user lost the claims' user")
+	}
+
+	anonymous := serviceauthentication.SetClaimsContext(context.Background(), &serviceauthentication.Claims{})
+	if _, err := serviceauthentication.RequestUser(anonymous); !errors.Is(err, serviceauthentication.ErrAnonymousCaller) {
+		panic("request user accepted an anonymous caller")
 	}
 }

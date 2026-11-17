@@ -3,10 +3,15 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
-// ErrUnknownRole reports a role name the permission configuration does not define.
-var ErrUnknownRole = errors.New("unknown role")
+var (
+	// ErrUnknownRole reports a role name the permission configuration does not define.
+	ErrUnknownRole = errors.New("unknown role")
+	// ErrCircularInheritance reports roles that inherit from each other.
+	ErrCircularInheritance = errors.New("circular role inheritance")
+)
 
 // A Role bundles the permissions granted to its holders. A role may inherit other
 // roles to accumulate their permissions, and its priority ranks it against the rest
@@ -49,4 +54,56 @@ func (p Permissions) Priority(role string) (int, error) {
 	}
 
 	return r.Priority, nil
+}
+
+// ByRole maps each role to every permission it grants: its own, then those of each role it
+// inherits, transitively. It returns [ErrUnknownRole] when a role inherits one the configuration
+// does not define, and [ErrCircularInheritance] when roles inherit from each other.
+func (p Permissions) ByRole() (map[string][]string, error) {
+	byRole := make(map[string][]string, len(p.Roles))
+	resolving := map[string]bool{}
+
+	for name := range p.Roles {
+		_, err := p.resolve(name, byRole, resolving)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return byRole, nil
+}
+
+// resolve returns the permissions the named role grants, and stores them in byRole. resolving holds
+// the roles whose resolution is under way, so meeting one of them again closes a cycle. The
+// recursion follows the configured inheritance, whose depth stays small.
+func (p Permissions) resolve(name string, byRole map[string][]string, resolving map[string]bool) ([]string, error) {
+	if permissions, resolved := byRole[name]; resolved {
+		return permissions, nil
+	}
+
+	role, ok := p.Roles[name]
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnknownRole, name)
+	}
+
+	if resolving[name] {
+		return nil, fmt.Errorf("%w: %q", ErrCircularInheritance, name)
+	}
+
+	resolving[name] = true
+
+	permissions := slices.Clone(role.Permissions)
+
+	for _, parent := range role.Inherits {
+		inherited, err := p.resolve(parent, byRole, resolving)
+		if err != nil {
+			return nil, err
+		}
+
+		permissions = append(permissions, inherited...)
+	}
+
+	byRole[name] = permissions
+
+	return permissions, nil
 }

@@ -4,12 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"time"
-
-	"github.com/a-novel-kit/golib/otel"
-	"github.com/a-novel-kit/golib/postgres"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
 	"github.com/a-novel/service-authentication/v2/internal/core"
@@ -26,10 +22,15 @@ type waitlistCleanupOperation struct {
 
 func waitlistCleanupOperationDefinition() maintenanceOperationDefinition {
 	return newMaintenanceOperationDefinition(
-		"waitlist-cleanup", "[--apply]",
-		"Preview registered-account entries in the waitlist; --apply removes them.",
+		maintenanceOperationDefinition{
+			name:        "waitlist-cleanup",
+			synopsis:    "[--apply]",
+			description: "Preview registered-account entries in the waitlist; --apply removes them.",
+			spanName:    "job.WaitlistCleanup",
+			timeout:     waitlistMaintenanceTimeout,
+		},
 		bindWaitlistCleanupFlags,
-		func(*waitlistCleanupOperation) error { return nil },
+		validateWaitlistCleanupOperation,
 	)
 }
 
@@ -40,10 +41,10 @@ func bindWaitlistCleanupFlags(flags *flag.FlagSet) *waitlistCleanupOperation {
 	return operation
 }
 
-func (operation *waitlistCleanupOperation) run(ctx context.Context) error {
-	cfg := config.AppPresetDefault
-
-	writer, err := dao.NewGoogleWaitlist(cfg.Waitlist, nil)
+// validateWaitlistCleanupOperation requires a configured writer: without one, the cleanup cannot read
+// the sheet.
+func validateWaitlistCleanupOperation(_ *waitlistCleanupOperation, cfg config.App) error {
+	err := cfg.Waitlist.Validate()
 	if err != nil {
 		return err
 	}
@@ -52,28 +53,14 @@ func (operation *waitlistCleanupOperation) run(ctx context.Context) error {
 		return fmt.Errorf("configure the waitlist before cleanup: %w", core.ErrWaitlistUnavailable)
 	}
 
-	otel.SetAppName(cfg.App.Name + "-maintenance")
+	return nil
+}
 
-	err = otel.Init(config.OtelJobPresetDefault)
+func (operation *waitlistCleanupOperation) run(ctx context.Context, cfg config.App) error {
+	writer, err := dao.NewGoogleWaitlist(cfg.Waitlist, nil)
 	if err != nil {
-		return fmt.Errorf("initialize telemetry: %w", err)
+		return fmt.Errorf("build waitlist writer: %w", err)
 	}
-	defer config.OtelJobPresetDefault.Flush()
-
-	ctx, cancel := context.WithTimeout(ctx, waitlistMaintenanceTimeout)
-	defer cancel()
-
-	ctx, err = postgres.NewContext(ctx, cfg.Postgres)
-	if err != nil {
-		return fmt.Errorf("connect to database: %w", err)
-	}
-
-	database, err := cfg.Postgres.DB(ctx)
-	if err != nil {
-		return fmt.Errorf("open database: %w", err)
-	}
-
-	defer closeDatabase(database)
 
 	cleanup := core.NewWaitlistCleanup(dao.NewPgCredentialsList(), writer)
 
@@ -82,11 +69,4 @@ func (operation *waitlistCleanupOperation) run(ctx context.Context) error {
 		operation.apply, result.Scanned, result.Matched, result.Removed)
 
 	return err
-}
-
-func closeDatabase(database io.Closer) {
-	err := database.Close()
-	if err != nil {
-		log.Print("close database: ", err)
-	}
 }

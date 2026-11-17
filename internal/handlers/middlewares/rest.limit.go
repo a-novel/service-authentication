@@ -102,7 +102,7 @@ func ClientVisitorKey(r *http.Request) (string, error) {
 // sessionKey keys a rate limit by the caller's session, else as [CallerKey] does. Mount the limit after
 // the auth middleware, which puts the session on the context.
 func sessionKey(r *http.Request) (string, error) {
-	claims, _ := r.Context().Value(session.ClaimsContextKey{}).(*session.Claims)
+	claims := session.GetClaimsContext(r.Context())
 	if claims != nil && claims.Session() != "" {
 		return "session:" + claims.Session(), nil
 	}
@@ -113,7 +113,7 @@ func sessionKey(r *http.Request) (string, error) {
 // CallerKey keys a rate limit by the signed-in user, else by the visitor IP. Mount the limit after
 // the auth middleware, which signs the user in.
 func CallerKey(r *http.Request) (string, error) {
-	claims, _ := r.Context().Value(session.ClaimsContextKey{}).(*session.Claims)
+	claims := session.GetClaimsContext(r.Context())
 	if claims != nil && claims.UserID != nil {
 		return "user:" + claims.UserID.String(), nil
 	}

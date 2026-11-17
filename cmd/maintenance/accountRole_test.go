@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/a-novel/service-authentication/v2/internal/config"
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
@@ -12,6 +13,7 @@ func TestAccountRoleOperation(t *testing.T) {
 	t.Parallel()
 
 	definition := accountRoleOperationDefinition()
+	cfg := config.App{Permissions: authconfig.PermissionsConfigDefault}
 
 	testCases := []struct {
 		name      string
@@ -55,6 +57,11 @@ func TestAccountRoleOperation(t *testing.T) {
 			expectErr: "requires --role",
 		},
 		{
+			name:      "Error/UnknownRole",
+			args:      []string{"--email", "operator@provider.com", "--role", "auth:unknown"},
+			expectErr: "invalid --role: unknown role",
+		},
+		{
 			name: "Error/UnexpectedParameters",
 			args: []string{
 				"--email", "operator@provider.com",
@@ -69,7 +76,7 @@ func TestAccountRoleOperation(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := definition.parse(testCase.args)
+			result, err := definition.parse(testCase.args, cfg)
 			if testCase.expectErr == "" {
 				require.NoError(t, err)
 			} else {
