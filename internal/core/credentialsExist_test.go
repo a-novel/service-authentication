@@ -46,7 +46,14 @@ func TestCredentialsExist(t *testing.T) {
 			expect: true,
 		},
 		{
-			name: "Error",
+			name: "Error/InvalidEmail",
+
+			request: &core.CredentialsExistRequest{Email: "invalid"},
+
+			expectErr: core.ErrInvalidRequest,
+		},
+		{
+			name: "Error/Dao",
 
 			request: &core.CredentialsExistRequest{
 				Email: "user@provider.com",

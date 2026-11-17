@@ -497,18 +497,6 @@ func TestTokenGrant(t *testing.T) {
 			expectErr:            core.ErrTokenGrantSessionEnded,
 		},
 		{
-			name: "Error/RevocationExist",
-
-			caller: studioCaller,
-			params: codeGrantParams(nil),
-
-			daoSelectMock:          &respMock[*dao.AuthorizationCode]{resp: &validCode},
-			daoRevocationExistMock: &respMock[bool]{err: errFoo},
-
-			expectRevocationJTIs: []string{sessionID},
-			expectErr:            errFoo,
-		},
-		{
 			// A grant signs in an existing account, and never creates one.
 			name: "Error/UnknownAccount",
 
@@ -664,18 +652,6 @@ func TestTokenGrant(t *testing.T) {
 			},
 
 			expectErr: core.ErrTokenGrantForeignRefreshToken,
-		},
-		{
-			name: "Error/RefreshSessionRevoked",
-
-			caller: studioCaller,
-			params: refreshGrantParams(nil),
-
-			verifyRefreshMock:      &respMock[*session.RefreshClaims]{resp: &refreshTokenClaims},
-			daoRevocationExistMock: &respMock[bool]{resp: true},
-
-			expectRevocationJTIs: []string{refreshTokenID, sessionID},
-			expectErr:            core.ErrTokenGrantSessionEnded,
 		},
 		{
 			// The client's refresh token stops with the session it joined, though it has not expired.

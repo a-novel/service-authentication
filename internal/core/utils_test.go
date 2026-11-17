@@ -120,9 +120,17 @@ func requireNoHash(t *testing.T, exec func() error) error {
 	}
 }
 
-// noHashInTx is a transactor mock body that runs the transaction while no hash may run, since a
-// transaction holds a pooled connection for as long as it lasts.
-func noHashInTx(t *testing.T) func(ctx context.Context, fn func(ctx context.Context) error) error {
+// transactorFunc is a transactor whose WithinTx calls the function, for a test that fails or observes
+// a transaction. Golib's transactiontest serves the tests that only need one to run.
+type transactorFunc func(ctx context.Context, fn func(ctx context.Context) error) error
+
+func (transactor transactorFunc) WithinTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	return transactor(ctx, fn)
+}
+
+// noHashInTx is a transactor that runs the transaction while no hash may run, since a transaction
+// holds a pooled connection for as long as it lasts.
+func noHashInTx(t *testing.T) transactorFunc {
 	t.Helper()
 
 	return func(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -166,9 +174,4 @@ func matchSessionTouch(t *testing.T, expect *dao.SessionTouchRequest) any {
 
 		return true
 	})
-}
-
-// passThroughTx is a transactor mock body that runs the transaction body as is.
-func passThroughTx(ctx context.Context, fn func(ctx context.Context) error) error {
-	return fn(ctx)
 }

@@ -61,7 +61,7 @@ func TestCredentialsGet(t *testing.T) {
 			},
 		},
 		{
-			name: "Error",
+			name: "Error/Dao",
 
 			request: &core.CredentialsGetRequest{
 				ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),

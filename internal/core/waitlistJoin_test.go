@@ -31,28 +31,28 @@ func TestWaitlistJoin(t *testing.T) {
 		removeErr  error
 		expectErr  error
 	}{
-		{name: "NewRequest"},
+		{name: "Success"},
 		// A registered address answers like a new one, and its writer round trip adds no row.
-		{name: "ExistingAccountJoinsNothing", exists: true},
+		{name: "Success/ExistingAccount", exists: true},
 		{
-			name: "ExistingAccountWriterUnavailable", exists: true,
+			name: "Error/ExistingAccountWriterUnavailable", exists: true,
 			removeErr: dao.ErrWaitlistUnavailable, expectErr: dao.ErrWaitlistUnavailable,
 		},
-		{name: "DuplicateRequest", joinErr: dao.ErrWaitlistAlreadyJoined},
-		{name: "ConcurrentRegistrationRemovesRow", created: true},
-		{name: "ConcurrentRegistrationWithDuplicate", created: true, joinErr: dao.ErrWaitlistAlreadyJoined},
-		{name: "InvalidEmail", email: "invalid", invalid: true, expectErr: core.ErrInvalidRequest},
+		{name: "Success/Duplicate", joinErr: dao.ErrWaitlistAlreadyJoined},
+		{name: "Success/ConcurrentRegistration", created: true},
+		{name: "Success/ConcurrentRegistrationWithDuplicate", created: true, joinErr: dao.ErrWaitlistAlreadyJoined},
+		{name: "Error/InvalidEmail", email: "invalid", invalid: true, expectErr: core.ErrInvalidRequest},
 		{
-			name: "OversizedEmail", email: strings.Repeat("a", 1025) + "@example.com",
+			name: "Error/OversizedEmail", email: strings.Repeat("a", 1025) + "@example.com",
 			invalid: true, expectErr: core.ErrInvalidRequest,
 		},
-		{name: "InvalidLanguage", lang: "xx", invalid: true, expectErr: core.ErrInvalidRequest},
-		{name: "AccountLookupFails", lookupErr: errDatabase, expectErr: errDatabase},
-		{name: "WriterUnavailable", joinErr: dao.ErrWaitlistUnavailable, expectErr: dao.ErrWaitlistUnavailable},
-		{name: "WriterBusy", joinErr: dao.ErrWaitlistBusy, expectErr: dao.ErrWaitlistBusy},
-		{name: "RecheckFails", recheckErr: errDatabase, expectErr: errDatabase},
+		{name: "Error/InvalidLanguage", lang: "xx", invalid: true, expectErr: core.ErrInvalidRequest},
+		{name: "Error/AccountLookup", lookupErr: errDatabase, expectErr: errDatabase},
+		{name: "Error/WriterUnavailable", joinErr: dao.ErrWaitlistUnavailable, expectErr: dao.ErrWaitlistUnavailable},
+		{name: "Error/WriterBusy", joinErr: dao.ErrWaitlistBusy, expectErr: dao.ErrWaitlistBusy},
+		{name: "Error/Recheck", recheckErr: errDatabase, expectErr: errDatabase},
 		{
-			name: "ConcurrentCleanupFails", created: true,
+			name: "Error/ConcurrentCleanup", created: true,
 			removeErr: dao.ErrWaitlistUnavailable, expectErr: dao.ErrWaitlistUnavailable,
 		},
 	}
@@ -69,28 +69,29 @@ func TestWaitlistJoin(t *testing.T) {
 				lang = "fr"
 			}
 
-			credentials := coremocks.NewMockWaitlistJoinDaoCredentialsExist(t)
-			writer := coremocks.NewMockWaitlistJoinDaoWaitlist(t)
+			daoCredentialsExist := coremocks.NewMockWaitlistJoinDaoCredentialsExist(t)
+			daoWaitlist := coremocks.NewMockWaitlistJoinDaoWaitlist(t)
 
 			var calls []*mock.Call
 			if !testCase.invalid {
-				calls = append(calls, credentials.EXPECT().Exec(mock.Anything, &dao.CredentialsExistRequest{Email: email}).
+				calls = append(calls, daoCredentialsExist.EXPECT().Exec(mock.Anything, &dao.CredentialsExistRequest{Email: email}).
 					Return(testCase.exists, testCase.lookupErr).Once())
 				if testCase.exists {
-					calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
+					calls = append(calls, daoWaitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 						Action: "remove", Email: email,
 					}).Return(&dao.WaitlistResult{}, testCase.removeErr).Once())
 				}
 
 				if !testCase.exists && testCase.lookupErr == nil {
-					calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
+					calls = append(calls, daoWaitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 						Action: "join", Email: email, Lang: lang,
 					}).Return(&dao.WaitlistResult{}, testCase.joinErr).Once())
 					if testCase.joinErr == nil || errors.Is(testCase.joinErr, dao.ErrWaitlistAlreadyJoined) {
-						calls = append(calls, credentials.EXPECT().Exec(mock.Anything, &dao.CredentialsExistRequest{Email: email}).
+						calls = append(calls, daoCredentialsExist.EXPECT().
+							Exec(mock.Anything, &dao.CredentialsExistRequest{Email: email}).
 							Return(testCase.created, testCase.recheckErr).Once())
 						if testCase.created && testCase.recheckErr == nil {
-							calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
+							calls = append(calls, daoWaitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{
 								Action: "remove", Email: email,
 							}).Return(&dao.WaitlistResult{}, testCase.removeErr).Once())
 						}
@@ -100,7 +101,7 @@ func TestWaitlistJoin(t *testing.T) {
 
 			mock.InOrder(calls...)
 
-			err := core.NewWaitlistJoin(credentials, writer).Exec(t.Context(), &core.WaitlistJoinRequest{
+			err := core.NewWaitlistJoin(daoCredentialsExist, daoWaitlist).Exec(t.Context(), &core.WaitlistJoinRequest{
 				Email: email, Lang: lang,
 			})
 			require.ErrorIs(t, err, testCase.expectErr)

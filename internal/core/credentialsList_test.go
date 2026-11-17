@@ -97,7 +97,7 @@ func TestCredentialsList(t *testing.T) {
 			},
 		},
 		{
-			name: "Error",
+			name: "Error/Dao",
 
 			request: &core.CredentialsListRequest{
 				Limit:  10,

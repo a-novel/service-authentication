@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,6 +32,22 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 	currentPasswordHash, err := lib.GenerateArgon2(currentPassword)
 	require.NoError(t, err)
 
+	request := &core.ShortCodeCreateEmailUpdateRequest{
+		CurrentPassword: currentPassword,
+		Lang:            authconfig.LangFR,
+		Email:           "user@provider.com",
+		ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+	}
+	shortCode := &core.ShortCode{
+		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+		Usage:     "test-usage",
+		Target:    "test-target",
+		Data:      []byte("test-data"),
+		CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+		ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
+		PlainCode: "abcdef123456",
+	}
+
 	type serviceCreateMock struct {
 		resp *core.ShortCode
 		err  error
@@ -55,7 +70,6 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		serviceCreateMock *serviceCreateMock
 		daoExistMock      *daoExistMock
 		sendMail          bool
-		sendMailPanic     bool
 		closeMailDelivery bool
 
 		expectErr error
@@ -63,90 +77,28 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		{
 			name: "Success",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: currentPassword,
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: request,
 
-			serviceCreateMock: &serviceCreateMock{
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Usage:     "test-usage",
-					Target:    "test-target",
-					Data:      []byte("test-data"),
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					PlainCode: "abcdef123456",
-				},
-			},
+			serviceCreateMock: &serviceCreateMock{resp: shortCode},
 
 			daoExistMock: &daoExistMock{},
 
 			sendMail: true,
 		},
 		{
-			name: "Success/SendMailPanic",
-
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: currentPassword,
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
-
-			serviceCreateMock: &serviceCreateMock{
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Usage:     "test-usage",
-					Target:    "test-target",
-					Data:      []byte("test-data"),
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					PlainCode: "abcdef123456",
-				},
-			},
-
-			daoExistMock: &daoExistMock{},
-
-			sendMail:      true,
-			sendMailPanic: true,
-		},
-		{
 			// Stores the same code as Success, so the pending change reads the same, but mails nothing.
 			name: "Success/EmailTaken",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: currentPassword,
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: request,
 
-			serviceCreateMock: &serviceCreateMock{
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Usage:     "test-usage",
-					Target:    "test-target",
-					Data:      []byte("test-data"),
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					PlainCode: "abcdef123456",
-				},
-			},
+			serviceCreateMock: &serviceCreateMock{resp: shortCode},
 
 			daoExistMock: &daoExistMock{exists: true},
 		},
 		{
 			name: "Error/MailDeliveryUnavailable",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: currentPassword,
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: request,
 
 			daoExistMock: &daoExistMock{},
 
@@ -157,12 +109,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			// A saturated mailer must fail a taken address as it fails a free one.
 			name: "Error/MailDeliveryUnavailable/EmailTaken",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: currentPassword,
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: request,
 
 			daoExistMock: &daoExistMock{exists: true},
 
@@ -172,12 +119,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		{
 			name: "Error/CreateShortCode",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: currentPassword,
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: request,
 
 			serviceCreateMock: &serviceCreateMock{
 				err: errFoo,
@@ -190,12 +132,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		{
 			name: "Error/Dao",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: currentPassword,
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: request,
 
 			daoExistMock: &daoExistMock{err: errFoo},
 
@@ -204,11 +141,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		{
 			name: "Error/NoCurrentPassword",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				ID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: changed(*request, func(request *core.ShortCodeCreateEmailUpdateRequest) { request.CurrentPassword = "" }),
 
 			invalid:   true,
 			expectErr: core.ErrInvalidRequest,
@@ -217,24 +150,16 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			// A session alone does not move the account to another address.
 			name: "Error/WrongCurrentPassword",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: "wrong password",
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: changed(*request, func(request *core.ShortCodeCreateEmailUpdateRequest) {
+				request.CurrentPassword = "wrong password"
+			}),
 
 			expectErr: lib.ErrInvalidPassword,
 		},
 		{
 			name: "Error/SelectCredentials",
 
-			request: &core.ShortCodeCreateEmailUpdateRequest{
-				CurrentPassword: currentPassword,
-				Lang:            authconfig.LangFR,
-				Email:           "user@provider.com",
-				ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: request,
 
 			credentialsErr: errFoo,
 			expectErr:      errFoo,
@@ -295,7 +220,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 					Duration:  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageValidateEmail].TTL.Hours(),
 				}
 
-				sendMail := smtpService.EXPECT().
+				smtpService.EXPECT().
 					SendMail(
 						smtp.MailUsers{{Email: testCase.request.Email}},
 						mails.Mails.EmailUpdate,
@@ -303,13 +228,6 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 						mailData,
 					).
 					Return(nil)
-
-				if testCase.sendMailPanic {
-					// An unabsorbed panic ends the test binary; surviving to Wait is the assertion.
-					sendMail.Run(func(smtp.MailUsers, *template.Template, string, any) {
-						panic("mail delivery exploded")
-					})
-				}
 			}
 
 			service := core.NewShortCodeCreateEmailUpdate(

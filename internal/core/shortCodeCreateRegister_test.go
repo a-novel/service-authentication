@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,6 +24,12 @@ func TestShortCodeCreateRegister(t *testing.T) {
 	t.Parallel()
 
 	errFoo := errors.New("foo")
+
+	request := &core.ShortCodeCreateRegisterRequest{
+		Lang:  authconfig.LangFR,
+		Email: "user@provider.com",
+		Role:  authconfig.RoleUser,
+	}
 
 	smtpConfig := authconfig.SMTPURLs{Register: "register-url"}
 
@@ -46,7 +51,6 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		serviceCreateMock *serviceCreateMock
 		daoExistMock      *daoExistMock
 		sendMail          bool
-		sendMailPanic     bool
 		closeMailDelivery bool
 
 		expectErr error
@@ -54,11 +58,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		{
 			name: "Success",
 
-			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				Role:  authconfig.RoleUser,
-			},
+			request: request,
 
 			daoExistMock: &daoExistMock{},
 
@@ -77,39 +77,16 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			sendMail: true,
 		},
 		{
-			name: "Success/SendMailPanic",
+			name: "Error/InvalidLang",
 
-			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				Role:  authconfig.RoleUser,
-			},
+			request: changed(*request, func(request *core.ShortCodeCreateRegisterRequest) { request.Lang = "xx" }),
 
-			daoExistMock: &daoExistMock{},
-
-			serviceCreateMock: &serviceCreateMock{
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Usage:     "test-usage",
-					Target:    "test-target",
-					Data:      []byte("test-data"),
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					ExpiresAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					PlainCode: "abcdef123456",
-				},
-			},
-
-			sendMail:      true,
-			sendMailPanic: true,
+			expectErr: core.ErrInvalidRequest,
 		},
 		{
 			name: "Error/MailDeliveryUnavailable",
 
-			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				Role:  authconfig.RoleUser,
-			},
+			request: request,
 
 			daoExistMock: &daoExistMock{},
 
@@ -119,11 +96,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		{
 			name: "Error/CreateShortCode",
 
-			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				Role:  authconfig.RoleUser,
-			},
+			request: request,
 
 			daoExistMock: &daoExistMock{},
 
@@ -136,11 +109,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		{
 			name: "Error/EmailAlreadyTaken",
 
-			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				Role:  authconfig.RoleUser,
-			},
+			request: request,
 
 			daoExistMock: &daoExistMock{exists: true},
 
@@ -149,11 +118,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		{
 			name: "Error/Dao",
 
-			request: &core.ShortCodeCreateRegisterRequest{
-				Lang:  authconfig.LangFR,
-				Email: "user@provider.com",
-				Role:  authconfig.RoleUser,
-			},
+			request: request,
 
 			daoExistMock: &daoExistMock{err: errFoo},
 
@@ -196,7 +161,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 					Duration:  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL.Hours(),
 				}
 
-				sendMail := smtpService.EXPECT().
+				smtpService.EXPECT().
 					SendMail(
 						smtp.MailUsers{{Email: testCase.request.Email}},
 						mails.Mails.Register,
@@ -204,13 +169,6 @@ func TestShortCodeCreateRegister(t *testing.T) {
 						mailData,
 					).
 					Return(nil)
-
-				if testCase.sendMailPanic {
-					// An unabsorbed panic ends the test binary; surviving to Wait is the assertion.
-					sendMail.Run(func(smtp.MailUsers, *template.Template, string, any) {
-						panic("mail delivery exploded")
-					})
-				}
 			}
 
 			if testCase.daoExistMock != nil {

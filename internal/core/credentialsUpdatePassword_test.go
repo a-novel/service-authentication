@@ -11,10 +11,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/postgres/postgrestest"
 	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
-	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -31,6 +29,15 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 	require.NoError(t, err)
 
 	shortCodeID := uuid.MustParse("00000000-0000-0000-0000-000000000010")
+	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+
+	// A password changes with a short code sent by mail, or with the current password.
+	shortCodeRequest := &core.CredentialsUpdatePasswordRequest{
+		UserID: userID, Password: "new-password", ShortCode: "short-code",
+	}
+	currentPasswordRequest := &core.CredentialsUpdatePasswordRequest{
+		UserID: userID, Password: "new-password", CurrentPassword: passwordRaw,
+	}
 
 	type serviceShortCodeVerifyMock struct {
 		resp *core.ShortCode
@@ -59,22 +66,22 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		serviceShortCodeVerifyMock  *serviceShortCodeVerifyMock
 		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
 		daoCredentialsSelectMock    *daoCredentialsSelectMock
-		daoMock                     *daoMock
+		// transactions counts the transactions the change opens: the code's consumption and the update
+		// run in one.
+		transactions int
+		daoMock      *daoMock
 
 		expectErr error
 	}{
 		{
-			name: "Success/ShorCode",
+			name: "Success/ShortCode",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:  "new-password",
-				ShortCode: "short-code",
-			},
+			request: shortCodeRequest,
 
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
+			transactions:                1,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 
 			daoMock: &daoMock{
@@ -84,11 +91,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Success/CurrentPassword",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:        "new-password",
-				CurrentPassword: passwordRaw,
-			},
+			request: currentPasswordRequest,
 
 			daoCredentialsSelectMock: &daoCredentialsSelectMock{
 				resp: &dao.Credentials{
@@ -96,22 +99,20 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				},
 			},
 
+			transactions: 1,
 			daoMock: &daoMock{
 				resp: &dao.Credentials{},
 			},
 		},
 		{
-			name: "Error/UploadCredentials",
+			name: "Error/UpdatePassword",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:  "new-password",
-				ShortCode: "short-code",
-			},
+			request: shortCodeRequest,
 
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
+			transactions:                1,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 
 			daoMock: &daoMock{
@@ -123,11 +124,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Error/VerifyShortCode",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:  "new-password",
-				ShortCode: "short-code",
-			},
+			request: shortCodeRequest,
 
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				err: errFoo,
@@ -139,15 +136,12 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 			// Another request redeemed the code while this one hashed the password.
 			name: "Error/ConsumeShortCode",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:  "new-password",
-				ShortCode: "short-code",
-			},
+			request: shortCodeRequest,
 
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
+			transactions: 1,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
 				err: core.ErrShortCodeInvalid,
 			},
@@ -157,11 +151,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Error/SelectCredentials",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:        "new-password",
-				CurrentPassword: passwordRaw,
-			},
+			request: currentPasswordRequest,
 
 			daoCredentialsSelectMock: &daoCredentialsSelectMock{
 				err: errFoo,
@@ -172,11 +162,9 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Error/WrongPassword",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:        "new-password",
-				CurrentPassword: "fake-password",
-			},
+			request: changed(*currentPasswordRequest, func(request *core.CredentialsUpdatePasswordRequest) {
+				request.CurrentPassword = "fake-password"
+			}),
 
 			daoCredentialsSelectMock: &daoCredentialsSelectMock{
 				resp: &dao.Credentials{
@@ -189,35 +177,30 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		{
 			name: "Error/MissingShortCodeAndCurrentPassword",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			},
+			request: &core.CredentialsUpdatePasswordRequest{UserID: userID},
 
 			expectErr: core.ErrInvalidRequest,
 		},
 		{
 			name: "Error/PasswordTooShort",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:  "abc", // 3 characters, minimum is 4
-				ShortCode: "short-code",
-			},
+			request: changed(*shortCodeRequest, func(request *core.CredentialsUpdatePasswordRequest) {
+				request.Password = "abc"
+			}),
 
 			expectErr: core.ErrInvalidRequest,
 		},
 		{
 			name: "Success/PasswordAtMinLength",
 
-			request: &core.CredentialsUpdatePasswordRequest{
-				UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Password:  "abcd", // exactly 4 characters
-				ShortCode: "short-code",
-			},
+			request: changed(*shortCodeRequest, func(request *core.CredentialsUpdatePasswordRequest) {
+				request.Password = "abcd"
+			}),
 
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
+			transactions:                1,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 
 			daoMock: &daoMock{
@@ -230,67 +213,61 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			postgrestest.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
-				t.Helper()
+			mockDao := coremocks.NewMockCredentialsUpdatePasswordDao(t)
+			daoCredentialsSelect := coremocks.NewMockCredentialsUpdatePasswordDaoCredentialsSelect(t)
+			serviceShortCodeVerify := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeVerify(t)
+			serviceShortCodeConsume := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeConsume(t)
 
-				mockDao := coremocks.NewMockCredentialsUpdatePasswordDao(t)
-				daoCredentialsSelect := coremocks.NewMockCredentialsUpdatePasswordDaoCredentialsSelect(t)
-				serviceShortCodeVerify := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeVerify(t)
-				serviceShortCodeConsume := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeConsume(t)
-
-				if testCase.serviceShortCodeVerifyMock != nil {
-					shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
-						Usage:  core.ShortCodeUsageResetPassword,
-						Target: testCase.request.UserID.String(),
-						Code:   testCase.request.ShortCode,
-					}
-
-					serviceShortCodeVerify.EXPECT().
-						Exec(mock.Anything, shortCodeVerifyRequest).
-						Return(testCase.serviceShortCodeVerifyMock.resp, testCase.serviceShortCodeVerifyMock.err)
+			if testCase.serviceShortCodeVerifyMock != nil {
+				shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
+					Usage:  core.ShortCodeUsageResetPassword,
+					Target: testCase.request.UserID.String(),
+					Code:   testCase.request.ShortCode,
 				}
 
-				if testCase.serviceShortCodeConsumeMock != nil {
-					serviceShortCodeConsume.EXPECT().
-						Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCodeID}).
-						Return(testCase.serviceShortCodeConsumeMock.err)
-				}
+				serviceShortCodeVerify.EXPECT().
+					Exec(mock.Anything, shortCodeVerifyRequest).
+					Return(testCase.serviceShortCodeVerifyMock.resp, testCase.serviceShortCodeVerifyMock.err)
+			}
 
-				if testCase.daoCredentialsSelectMock != nil {
-					daoCredentialsSelect.EXPECT().
-						Exec(mock.Anything, &dao.CredentialsSelectRequest{
-							ID: testCase.request.UserID,
-						}).
-						Return(
-							testCase.daoCredentialsSelectMock.resp,
-							testCase.daoCredentialsSelectMock.err,
-						)
-				}
+			if testCase.serviceShortCodeConsumeMock != nil {
+				serviceShortCodeConsume.EXPECT().
+					Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCodeID}).
+					Return(testCase.serviceShortCodeConsumeMock.err)
+			}
 
-				if testCase.daoMock != nil {
-					mockDao.EXPECT().
-						Exec(
-							mock.Anything,
-							mock.MatchedBy(func(data *dao.CredentialsUpdatePasswordRequest) bool {
-								return assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
-									assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
-									assert.Equal(t, testCase.request.UserID, data.ID)
-							}),
-						).
-						Return(testCase.daoMock.resp, testCase.daoMock.err)
-				}
+			if testCase.daoCredentialsSelectMock != nil {
+				daoCredentialsSelect.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsSelectRequest{
+						ID: testCase.request.UserID,
+					}).
+					Return(
+						testCase.daoCredentialsSelectMock.resp,
+						testCase.daoCredentialsSelectMock.err,
+					)
+			}
 
-				service := core.NewCredentialsUpdatePassword(
-					mockDao,
-					daoCredentialsSelect,
-					serviceShortCodeVerify,
-					serviceShortCodeConsume,
-					transactiontest.NewTransactor(),
-				)
+			if testCase.daoMock != nil {
+				mockDao.EXPECT().
+					Exec(
+						mock.Anything,
+						mock.MatchedBy(func(data *dao.CredentialsUpdatePasswordRequest) bool {
+							return assert.NoError(t, lib.CompareArgon2(testCase.request.Password, data.Password)) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Minute) &&
+								assert.Equal(t, testCase.request.UserID, data.ID)
+						}),
+					).
+					Return(testCase.daoMock.resp, testCase.daoMock.err)
+			}
 
-				_, err := service.Exec(ctx, testCase.request)
-				require.ErrorIs(t, err, testCase.expectErr)
-			})
+			transactor := transactiontest.NewTransactor()
+			service := core.NewCredentialsUpdatePassword(
+				mockDao, daoCredentialsSelect, serviceShortCodeVerify, serviceShortCodeConsume, transactor,
+			)
+
+			_, err := service.Exec(t.Context(), testCase.request)
+			require.ErrorIs(t, err, testCase.expectErr)
+			require.Equal(t, testCase.transactions, transactor.Calls())
 		})
 	}
 }
@@ -361,7 +338,6 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 			daoCredentialsSelect := coremocks.NewMockCredentialsUpdatePasswordDaoCredentialsSelect(t)
 			verify := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeVerify(t)
 			consume := coremocks.NewMockCredentialsUpdatePasswordServiceShortCodeConsume(t)
-			transactor := coremocks.NewMockTransactor(t)
 
 			if testCase.request.ShortCode != "" {
 				verify.EXPECT().Exec(mock.Anything, mock.Anything).
@@ -389,7 +365,6 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 			}
 
 			if testCase.expectErr == nil {
-				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(noHashInTx(t)).Once()
 				mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
 
 				if testCase.request.ShortCode != "" {
@@ -398,7 +373,7 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 				}
 			}
 
-			service := core.NewCredentialsUpdatePassword(mockDao, daoCredentialsSelect, verify, consume, transactor)
+			service := core.NewCredentialsUpdatePassword(mockDao, daoCredentialsSelect, verify, consume, noHashInTx(t))
 			exec := func() error {
 				_, err := service.Exec(t.Context(), testCase.request)
 

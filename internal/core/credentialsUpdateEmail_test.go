@@ -12,12 +12,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/postgres/postgrestest"
 	"github.com/a-novel-kit/golib/smtp"
 	"github.com/a-novel-kit/golib/transaction/transactiontest"
 
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
-	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	coremocks "github.com/a-novel/service-authentication/v2/internal/core/mocks"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
@@ -58,8 +56,11 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 
 		request *core.CredentialsUpdateEmailRequest
 
-		serviceShortCodeVerifyMock  *serviceShortCodeVerifyMock
-		closeMailDelivery           bool
+		serviceShortCodeVerifyMock *serviceShortCodeVerifyMock
+		closeMailDelivery          bool
+		// transactions counts the transactions the change opens: the account lookup, the code's
+		// consumption and the update run in one.
+		transactions                int
 		daoSelectMock               *daoMock
 		serviceShortCodeConsumeMock *serviceShortCodeConsumeMock
 		daoMock                     *daoMock
@@ -75,6 +76,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			request: validRequest,
 
 			serviceShortCodeVerifyMock:  verified,
+			transactions:                1,
 			daoSelectMock:               previous,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 			daoMock: &daoMock{
@@ -124,6 +126,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			request: validRequest,
 
 			serviceShortCodeVerifyMock: verified,
+			transactions:               1,
 			daoSelectMock:              &daoMock{err: errFoo},
 
 			expectErr: errFoo,
@@ -135,6 +138,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			request: validRequest,
 
 			serviceShortCodeVerifyMock: verified,
+			transactions:               1,
 			daoSelectMock:              previous,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
 				err: core.ErrShortCodeInvalid,
@@ -148,6 +152,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			request: validRequest,
 
 			serviceShortCodeVerifyMock:  verified,
+			transactions:                1,
 			daoSelectMock:               previous,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{},
 			daoMock: &daoMock{
@@ -162,84 +167,81 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			postgrestest.RunTransactionalTest(t, configtest.PostgresPreset, func(ctx context.Context, t *testing.T) {
-				t.Helper()
+			mockDao := coremocks.NewMockCredentialsUpdateEmailDao(t)
+			mockDaoSelect := coremocks.NewMockCredentialsUpdateEmailDaoSelect(t)
+			serviceShortCodeVerify := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeVerify(t)
+			serviceShortCodeConsume := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeConsume(t)
+			smtpService := coremocks.NewMockMailDeliverySMTP(t)
 
-				mockDao := coremocks.NewMockCredentialsUpdateEmailDao(t)
-				mockDaoSelect := coremocks.NewMockCredentialsUpdateEmailDaoSelect(t)
-				serviceShortCodeVerify := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeVerify(t)
-				serviceShortCodeConsume := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeConsume(t)
-				smtpService := coremocks.NewMockMailDeliverySMTP(t)
+			mailDelivery := core.NewMailDelivery(smtpService, 1)
+			if testCase.closeMailDelivery {
+				mailDelivery.Close()
+			}
 
-				mailDelivery := core.NewMailDelivery(smtpService, 1)
-				if testCase.closeMailDelivery {
-					mailDelivery.Close()
+			if testCase.serviceShortCodeVerifyMock != nil {
+				shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
+					Usage:  core.ShortCodeUsageValidateEmail,
+					Target: testCase.request.UserID.String(),
+					Code:   testCase.request.ShortCode,
 				}
 
-				if testCase.serviceShortCodeVerifyMock != nil {
-					shortCodeVerifyRequest := &core.ShortCodeVerifyRequest{
-						Usage:  core.ShortCodeUsageValidateEmail,
-						Target: testCase.request.UserID.String(),
-						Code:   testCase.request.ShortCode,
-					}
+				serviceShortCodeVerify.EXPECT().
+					Exec(mock.Anything, shortCodeVerifyRequest).
+					Return(testCase.serviceShortCodeVerifyMock.resp, testCase.serviceShortCodeVerifyMock.err)
+			}
 
-					serviceShortCodeVerify.EXPECT().
-						Exec(mock.Anything, shortCodeVerifyRequest).
-						Return(testCase.serviceShortCodeVerifyMock.resp, testCase.serviceShortCodeVerifyMock.err)
-				}
+			if testCase.daoSelectMock != nil {
+				mockDaoSelect.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsSelectRequest{ID: userID}).
+					Return(testCase.daoSelectMock.resp, testCase.daoSelectMock.err)
+			}
 
-				if testCase.daoSelectMock != nil {
-					mockDaoSelect.EXPECT().
-						Exec(mock.Anything, &dao.CredentialsSelectRequest{ID: userID}).
-						Return(testCase.daoSelectMock.resp, testCase.daoSelectMock.err)
-				}
+			if testCase.serviceShortCodeConsumeMock != nil {
+				serviceShortCodeConsume.EXPECT().
+					Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCodeID}).
+					Return(testCase.serviceShortCodeConsumeMock.err)
+			}
 
-				if testCase.serviceShortCodeConsumeMock != nil {
-					serviceShortCodeConsume.EXPECT().
-						Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCodeID}).
-						Return(testCase.serviceShortCodeConsumeMock.err)
-				}
+			if testCase.daoMock != nil {
+				mockDao.EXPECT().
+					Exec(
+						mock.Anything,
+						mock.MatchedBy(func(data *dao.CredentialsUpdateEmailRequest) bool {
+							var newEmail string
 
-				if testCase.daoMock != nil {
-					mockDao.EXPECT().
-						Exec(
-							mock.Anything,
-							mock.MatchedBy(func(data *dao.CredentialsUpdateEmailRequest) bool {
-								var newEmail string
+							err := json.Unmarshal(testCase.serviceShortCodeVerifyMock.resp.Data, &newEmail)
 
-								err := json.Unmarshal(testCase.serviceShortCodeVerifyMock.resp.Data, &newEmail)
+							return assert.NoError(t, err) &&
+								assert.Equal(t, newEmail, data.Email) &&
+								assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
+								assert.Equal(t, testCase.request.UserID, data.ID)
+						}),
+					).
+					Return(testCase.daoMock.resp, testCase.daoMock.err)
+			}
 
-								return assert.NoError(t, err) &&
-									assert.Equal(t, newEmail, data.Email) &&
-									assert.WithinDuration(t, time.Now(), data.Now, time.Second) &&
-									assert.Equal(t, testCase.request.UserID, data.ID)
-							}),
-						).
-						Return(testCase.daoMock.resp, testCase.daoMock.err)
-				}
+			if testCase.sendNotice {
+				smtpService.EXPECT().
+					SendMail(
+						smtp.MailUsers{{Email: "former@provider.com"}},
+						mails.Mails.EmailChanged,
+						testCase.request.Lang,
+						nil,
+					).
+					Return(nil)
+			}
 
-				if testCase.sendNotice {
-					smtpService.EXPECT().
-						SendMail(
-							smtp.MailUsers{{Email: "former@provider.com"}},
-							mails.Mails.EmailChanged,
-							testCase.request.Lang,
-							nil,
-						).
-						Return(nil)
-				}
+			transactor := transactiontest.NewTransactor()
+			service := core.NewCredentialsUpdateEmail(
+				mockDao, mockDaoSelect, serviceShortCodeVerify, serviceShortCodeConsume, mailDelivery, transactor,
+			)
 
-				service := core.NewCredentialsUpdateEmail(
-					mockDao, mockDaoSelect, serviceShortCodeVerify, serviceShortCodeConsume, mailDelivery,
-					transactiontest.NewTransactor(),
-				)
+			resp, err := service.Exec(t.Context(), testCase.request)
+			require.ErrorIs(t, err, testCase.expectErr)
+			require.Equal(t, testCase.expect, resp)
+			require.Equal(t, testCase.transactions, transactor.Calls())
 
-				resp, err := service.Exec(ctx, testCase.request)
-				require.ErrorIs(t, err, testCase.expectErr)
-				require.Equal(t, testCase.expect, resp)
-
-				require.NoError(t, mailDelivery.Wait(ctx))
-			})
+			require.NoError(t, mailDelivery.Wait(t.Context()))
 		})
 	}
 }
@@ -263,7 +265,6 @@ func TestCredentialsUpdateEmailHashing(t *testing.T) {
 	mockDaoSelect := coremocks.NewMockCredentialsUpdateEmailDaoSelect(t)
 	verify := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeVerify(t)
 	consume := coremocks.NewMockCredentialsUpdateEmailServiceShortCodeConsume(t)
-	transactor := coremocks.NewMockTransactor(t)
 	smtpService := coremocks.NewMockMailDeliverySMTP(t)
 	mailDelivery := core.NewMailDelivery(smtpService, 1)
 
@@ -274,14 +275,13 @@ func TestCredentialsUpdateEmailHashing(t *testing.T) {
 
 			return shortCode, nil
 		}).Once()
-	transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(noHashInTx(t)).Once()
 	mockDaoSelect.EXPECT().Exec(mock.Anything, mock.Anything).
 		Return(&dao.Credentials{Email: "former@provider.com"}, nil).Once()
 	consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).Return(nil).Once()
 	mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
 	smtpService.EXPECT().SendMail(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
-	service := core.NewCredentialsUpdateEmail(mockDao, mockDaoSelect, verify, consume, mailDelivery, transactor)
+	service := core.NewCredentialsUpdateEmail(mockDao, mockDaoSelect, verify, consume, mailDelivery, noHashInTx(t))
 
 	_, err := service.Exec(t.Context(), request)
 	require.NoError(t, err)

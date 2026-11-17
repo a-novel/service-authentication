@@ -3,7 +3,6 @@ package core_test
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -15,8 +14,7 @@ import (
 	"github.com/a-novel/service-json-keys/v2/pkg/go"
 
 	"github.com/a-novel-kit/golib/grpcf"
-	"github.com/a-novel-kit/jwt/v2"
-	"github.com/a-novel-kit/jwt/v2/jwp"
+	"github.com/a-novel-kit/golib/transaction/transactiontest"
 	"github.com/a-novel-kit/jwt/v2/jws"
 
 	"github.com/a-novel/service-authentication/v2/internal/core"
@@ -28,747 +26,244 @@ import (
 func TestTokenRefresh(t *testing.T) {
 	t.Parallel()
 
-	hourLater := time.Now().Add(time.Hour).Unix()
-
 	errFoo := errors.New("foo")
+
+	hourLater := time.Now().Add(time.Hour).Unix()
 
 	// Session IDs are the JTIs of the refresh tokens that open them, UUIDs.
 	refreshTokenID := "00000000-0000-0000-0000-0000000000a1"
 	sessionID := "00000000-0000-0000-0000-0000000000a2"
-	otherRefreshTokenID := "00000000-0000-0000-0000-0000000000a3"
 
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	visitor := core.Visitor{UserAgent: "Firefox", IPAddress: "192.0.2.1", Region: "FR", City: "Paris"}
+	request := &core.TokenRefreshRequest{
+		AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
+		RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+		Visitor:      visitor,
+	}
 
-	type daoMock struct {
-		resp *dao.Credentials
+	// A token without a session claim opened its own session, so its JTI stands in for it.
+	accessClaims := &session.Claims{UserID: &userID, Roles: []string{"auth:user"}, RefreshTokenID: refreshTokenID}
+	refreshClaims := &session.RefreshClaims{Jti: refreshTokenID, Exp: hourLater, UserID: userID}
+	// The renewal reloads the account, so the new token carries the role it holds now.
+	credentials := &dao.Credentials{ID: userID, Role: "auth:admin"}
+
+	type respMock[T any] struct {
+		resp T
 		err  error
 	}
 
-	type revocationExistMock struct {
+	type revocationMock struct {
 		jtis []string
-
-		resp bool
-		err  error
 	}
 
 	type signClaimsMock struct {
 		sessionID string
-
-		resp *servicejsonkeys.ClaimsSignResponse
-		err  error
+		err       error
 	}
 
-	type serviceVerifyClaimsMock struct {
-		resp *session.Claims
-		err  error
-	}
-
-	type serviceVerifyRefreshClaimsMock struct {
-		resp *session.RefreshClaims
-		err  error
-	}
-
-	// sessionUpsertMock records the session. Under the consent the renewal read, it does so in a
-	// transaction, after a locked consent read that answers consent.
-	type sessionUpsertMock struct {
-		consent bool
+	type sessionMock struct {
 		request *dao.SessionUpsertRequest
 		err     error
 	}
 
-	testCases := []struct {
+	type testCase struct {
 		name string
 
 		request *core.TokenRefreshRequest
 
-		daoMock                        *daoMock
-		revocationExistMock            *revocationExistMock
-		signClaimsMock                 *signClaimsMock
-		serviceVerifyClaimsMock        *serviceVerifyClaimsMock
-		serviceVerifyRefreshClaimsMock *serviceVerifyRefreshClaimsMock
-		sessionUpsertMock              *sessionUpsertMock
+		verifyClaimsMock        *respMock[*session.Claims]
+		verifyRefreshClaimsMock *respMock[*session.RefreshClaims]
+		revocationMock          *revocationMock
+		daoMock                 *respMock[*dao.Credentials]
+		signClaimsMock          *signClaimsMock
+		// consentMock answers the locked consent read of a consenting account.
+		consentMock *respMock[bool]
+		sessionMock *sessionMock
 
 		expect    *core.Token
 		expectErr error
 		// expectNotErr is a sentinel the returned error must not carry.
 		expectNotErr error
-	}{
-		{
-			// A token without a session claim opened its own session, so its JTI stands in for it.
-			name: "Success",
+	}
 
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-				Visitor:      visitor,
-			},
+	success := &testCase{
+		name: "Success",
 
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
+		request: request,
 
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:    refreshTokenID,
-					Exp:    hourLater,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, refreshTokenID}},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Role: "admin",
-				},
-			},
-
-			signClaimsMock: &signClaimsMock{
-				sessionID: refreshTokenID,
-				resp: &servicejsonkeys.ClaimsSignResponse{
-					Token: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				},
-			},
-
-			// Without consent, the renewal writes no location, and erases any the row holds.
-			sessionUpsertMock: &sessionUpsertMock{
-				request: &dao.SessionUpsertRequest{
-					ID:        uuid.MustParse(refreshTokenID),
-					UserID:    userID,
-					UserAgent: "Firefox",
-					ExpiresAt: time.Unix(hourLater, 0),
-				},
-			},
-
-			expect: &core.Token{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
+		verifyClaimsMock:        &respMock[*session.Claims]{resp: accessClaims},
+		verifyRefreshClaimsMock: &respMock[*session.RefreshClaims]{resp: refreshClaims},
+		revocationMock:          &revocationMock{jtis: []string{refreshTokenID, refreshTokenID}},
+		daoMock:                 &respMock[*dao.Credentials]{resp: credentials},
+		signClaimsMock:          &signClaimsMock{sessionID: refreshTokenID},
+		// Without consent, the renewal writes no location, and erases any the row holds.
+		sessionMock: &sessionMock{
+			request: &dao.SessionUpsertRequest{
+				ID:        uuid.MustParse(refreshTokenID),
+				UserID:    userID,
+				UserAgent: "Firefox",
+				ExpiresAt: time.Unix(hourLater, 0),
 			},
 		},
 
+		// The refresh token does not change.
+		expect: &core.Token{AccessToken: "new-access-token", RefreshToken: request.RefreshToken},
+	}
+
+	testCases := []*testCase{
+		success,
+		changed(*success, func(variant *testCase) {
+			// A token of a session another token opened keeps that session, and records the location
+			// under the account's consent.
+			variant.name = "Success/Session"
+			variant.verifyClaimsMock = &respMock[*session.Claims]{
+				resp: changed(*accessClaims, func(claims *session.Claims) { claims.SessionID = sessionID }),
+			}
+			variant.verifyRefreshClaimsMock = &respMock[*session.RefreshClaims]{
+				resp: changed(*refreshClaims, func(claims *session.RefreshClaims) { claims.SessionID = sessionID }),
+			}
+			variant.revocationMock = &revocationMock{jtis: []string{refreshTokenID, sessionID}}
+			variant.daoMock = &respMock[*dao.Credentials]{
+				resp: changed(*credentials, func(credentials *dao.Credentials) { credentials.LocationConsent = true }),
+			}
+			variant.signClaimsMock = &signClaimsMock{sessionID: sessionID}
+			variant.consentMock = &respMock[bool]{resp: true}
+			variant.sessionMock = &sessionMock{
+				request: changed(*success.sessionMock.request, func(request *dao.SessionUpsertRequest) {
+					request.ID = uuid.MustParse(sessionID)
+					request.IPAddress, request.Region, request.City = "192.0.2.1", "FR", "Paris"
+				}),
+			}
+		}),
 		{
-			// A token of a session another token opened keeps that session, and records the location under
-			// the account's consent.
-			name: "Success/Session",
+			name: "Error/NoAccessToken",
 
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-				Visitor:      visitor,
+			request: changed(*request, func(request *core.TokenRefreshRequest) { request.AccessToken = "" }),
+
+			expectErr: core.ErrInvalidRequest,
+		},
+		{
+			name: "Error/NoRefreshToken",
+
+			request: changed(*request, func(request *core.TokenRefreshRequest) { request.RefreshToken = "" }),
+
+			expectErr: core.ErrInvalidRequest,
+		},
+		{
+			name: "Error/InvalidAccessToken",
+
+			request: request,
+
+			verifyClaimsMock: &respMock[*session.Claims]{err: jws.ErrInvalidSignature},
+
+			expectErr: core.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			// A verifier failure that is not a rejection, such as an unreachable key source, is a fault.
+			name: "Error/VerifyAccessToken",
+
+			request: request,
+
+			verifyClaimsMock: &respMock[*session.Claims]{err: errFoo},
+
+			expectErr:    errFoo,
+			expectNotErr: core.ErrTokenRefreshInvalidAccessToken,
+		},
+		{
+			name: "Error/InvalidRefreshToken",
+
+			request: request,
+
+			verifyClaimsMock:        &respMock[*session.Claims]{resp: accessClaims},
+			verifyRefreshClaimsMock: &respMock[*session.RefreshClaims]{err: jws.ErrInvalidSignature},
+
+			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
+		},
+		{
+			name: "Error/VerifyRefreshToken",
+
+			request: request,
+
+			verifyClaimsMock:        &respMock[*session.Claims]{resp: accessClaims},
+			verifyRefreshClaimsMock: &respMock[*session.RefreshClaims]{err: errFoo},
+
+			expectErr:    errFoo,
+			expectNotErr: core.ErrTokenRefreshInvalidRefreshToken,
+		},
+		{
+			name: "Error/MismatchClaims",
+
+			request: request,
+
+			verifyClaimsMock: &respMock[*session.Claims]{resp: accessClaims},
+			verifyRefreshClaimsMock: &respMock[*session.RefreshClaims]{
+				resp: changed(*refreshClaims, func(claims *session.RefreshClaims) {
+					claims.UserID = uuid.MustParse("00000000-0000-0000-0000-000000000002")
+				}),
 			},
 
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-					SessionID:      sessionID,
-				},
+			expectErr: core.ErrTokenRefreshMismatchClaims,
+		},
+		{
+			name: "Error/MismatchSource",
+
+			request: request,
+
+			verifyClaimsMock: &respMock[*session.Claims]{resp: accessClaims},
+			verifyRefreshClaimsMock: &respMock[*session.RefreshClaims]{
+				resp: changed(*refreshClaims, func(claims *session.RefreshClaims) {
+					claims.Jti = "00000000-0000-0000-0000-0000000000a3"
+				}),
 			},
 
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:       refreshTokenID,
-					Exp:       hourLater,
-					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					SessionID: sessionID,
-				},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, sessionID}},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Role:            "admin",
-					LocationConsent: true,
-				},
-			},
-
-			signClaimsMock: &signClaimsMock{
-				sessionID: sessionID,
-				resp: &servicejsonkeys.ClaimsSignResponse{
-					Token: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				},
-			},
-
-			sessionUpsertMock: &sessionUpsertMock{
-				consent: true,
-				request: &dao.SessionUpsertRequest{
-					ID:        uuid.MustParse(sessionID),
-					UserID:    userID,
-					UserAgent: "Firefox",
-					IPAddress: "192.0.2.1",
-					Region:    "FR",
-					City:      "Paris",
-					ExpiresAt: time.Unix(hourLater, 0),
-				},
-			},
-
-			expect: &core.Token{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
+			expectErr: core.ErrTokenRefreshMismatchSource,
 		},
 		{
 			// A client's refresh token renews at the token endpoint alone, where the client
 			// authenticates (RFC 6749 §10.4).
 			name: "Error/ClientToken",
 
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
+			request: request,
 
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-					SessionID:      sessionID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:        refreshTokenID,
-					Exp:        hourLater,
-					UserID:     uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					SessionID:  sessionID,
-					SessionExp: hourLater,
-					ClientID:   "studio",
-				},
+			verifyClaimsMock: &respMock[*session.Claims]{resp: accessClaims},
+			verifyRefreshClaimsMock: &respMock[*session.RefreshClaims]{
+				resp: changed(*refreshClaims, func(claims *session.RefreshClaims) { claims.ClientID = "studio" }),
 			},
 
 			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-		{
-			// Signing out from any token of the session stops this one too.
-			name: "RevokedSession",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-					SessionID:      sessionID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:       refreshTokenID,
-					Exp:       hourLater,
-					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					SessionID: sessionID,
-				},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, sessionID}, resp: true},
-
-			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-		{
-			// A failed record fails the renewal.
-			name: "Error/SessionUpsert",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(userID),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{Jti: refreshTokenID, Exp: hourLater, UserID: userID},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, refreshTokenID}},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{ID: userID, Role: "admin"},
-			},
-
-			signClaimsMock: &signClaimsMock{
-				sessionID: refreshTokenID,
-				resp: &servicejsonkeys.ClaimsSignResponse{
-					Token: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				},
-			},
-
-			sessionUpsertMock: &sessionUpsertMock{
-				request: &dao.SessionUpsertRequest{
-					ID:        uuid.MustParse(refreshTokenID),
-					UserID:    userID,
-					ExpiresAt: time.Unix(hourLater, 0),
-				},
-				err: errFoo,
-			},
-
-			expectErr: errFoo,
 		},
 		{
 			// A session that ended renews no more, though the verifier grants its token a leeway.
 			name: "Error/SessionEnded",
 
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
+			request: request,
 
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{UserID: new(userID), Roles: []string{"admin"}, RefreshTokenID: refreshTokenID},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{Jti: refreshTokenID, Exp: time.Now().Unix(), UserID: userID},
+			verifyClaimsMock: &respMock[*session.Claims]{resp: accessClaims},
+			verifyRefreshClaimsMock: &respMock[*session.RefreshClaims]{
+				resp: changed(*refreshClaims, func(claims *session.RefreshClaims) { claims.Exp = time.Now().Unix() }),
 			},
 
 			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
 		},
-		{
-			name: "SignError",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:    refreshTokenID,
-					Exp:    hourLater,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, refreshTokenID}},
-
-			daoMock: &daoMock{
-				resp: &dao.Credentials{
-					ID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Role: "admin",
-				},
-			},
-
-			signClaimsMock: &signClaimsMock{
-				sessionID: refreshTokenID,
-				err:       errFoo,
-			},
-
-			expectErr: errFoo,
-		},
-		{
-			name: "SelectCredentialsError",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:    refreshTokenID,
-					Exp:    hourLater,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, refreshTokenID}},
-
-			daoMock: &daoMock{
-				err: errFoo,
-			},
-
-			expectErr: errFoo,
-		},
-		{
-			name: "RevokedRefreshToken",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:    refreshTokenID,
-					Exp:    hourLater,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, refreshTokenID}, resp: true},
-
-			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-		{
-			name: "RevocationExistError",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:    refreshTokenID,
-					Exp:    hourLater,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, refreshTokenID}, err: errFoo},
-
-			expectErr:    errFoo,
-			expectNotErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-		{
-			name: "VerifyRefreshTokenClaimsError",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				err: errFoo,
-			},
-
-			expectErr:    errFoo,
-			expectNotErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-		{
-			name: "VerifyClaimsError",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: errFoo,
-			},
-
-			expectErr:    errFoo,
-			expectNotErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-
-		{
-			name: "InvalidRefreshToken",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				err: jws.ErrInvalidSignature,
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-		{
-			name: "InvalidAccessToken",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: jws.ErrInvalidSignature,
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-		{
-			// Audience/issuer/subject mismatch on the access token surfaces as
-			// jwp.ErrInvalidClaims. (Expiry is ignored on the access token.)
-			name: "InvalidAccessTokenClaims",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: jwp.ErrInvalidClaims,
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-		{
-			// Refresh-token expiry, audience, issuer or subject mismatch all
-			// surface through the verifier as jwp.ErrInvalidClaims.
-			name: "InvalidRefreshTokenClaims",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				err: jwp.ErrInvalidClaims,
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-		{
-			name: "InvalidAccessToken/UnsupportedTokenFormat",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: fmt.Errorf("(HeaderDecoder.Decode) %w: expected at least 2 segments", jwt.ErrUnsupportedTokenFormat),
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-		{
-			name: "InvalidAccessToken/TokenTooLarge",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: fmt.Errorf("(Recipient.Consume) %w: 262145 bytes exceeds limit 262144", jwt.ErrTokenTooLarge),
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-		{
-			name: "InvalidAccessToken/MismatchRecipientPlugin",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: fmt.Errorf(
-					"(Recipient.Consume) %w: %w: no compatible plugin found",
-					jwt.ErrTokenRejected, jwt.ErrMismatchRecipientPlugin,
-				),
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-		{
-			name: "InvalidAccessToken/MissingCritHeader",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: fmt.Errorf("(Recipient.Consume) check crit: %w: b64", jwt.ErrMissingCritHeader),
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-		{
-			name: "InvalidAccessToken/UnsupportedCritHeader",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: fmt.Errorf(
-					"(Recipient.Consume) check crit: %w: \"b64\" is not understood by this recipient",
-					jwt.ErrUnsupportedCritHeader,
-				),
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-		{
-			name: "InvalidAccessToken/ReplicatedClaimMismatch",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				err: fmt.Errorf("(Recipient.Consume) %w: %w: iss", jwt.ErrTokenRejected, jwt.ErrReplicatedClaimMismatch),
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidAccessToken,
-		},
-		{
-			name: "InvalidRefreshToken/ReplicatedClaimMismatch",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				err: fmt.Errorf("(Recipient.Consume) %w: %w: sub", jwt.ErrTokenRejected, jwt.ErrReplicatedClaimMismatch),
-			},
-
-			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
-		},
-
-		{
-			name: "NoRefreshToken",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken: base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-			},
-
-			expectErr: core.ErrInvalidRequest,
-		},
-		{
-			name: "NoAccessToken",
-
-			request: &core.TokenRefreshRequest{
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			expectErr: core.ErrInvalidRequest,
-		},
-		{
-			name: "NotSameUser",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:    refreshTokenID,
-					Exp:    hourLater,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				},
-			},
-
-			expectErr: core.ErrTokenRefreshMismatchClaims,
-		},
-		{
-			name: "NotSameRefreshToken",
-
-			request: &core.TokenRefreshRequest{
-				AccessToken:  base64.RawURLEncoding.EncodeToString([]byte("access-token")),
-				RefreshToken: base64.RawURLEncoding.EncodeToString([]byte("refresh_token")),
-			},
-
-			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{
-					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-					Roles:          []string{"admin"},
-					RefreshTokenID: refreshTokenID,
-				},
-			},
-
-			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
-				resp: &session.RefreshClaims{
-					Jti:    otherRefreshTokenID,
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
-
-			expectErr: core.ErrTokenRefreshMismatchSource,
-		},
+		changed(*success, func(variant *testCase) {
+			variant.name = "Error/SelectCredentials"
+			variant.daoMock = &respMock[*dao.Credentials]{err: errFoo}
+			variant.signClaimsMock, variant.sessionMock = nil, nil
+			variant.expect, variant.expectErr = nil, errFoo
+		}),
+		changed(*success, func(variant *testCase) {
+			variant.name = "Error/Sign"
+			variant.signClaimsMock = &signClaimsMock{sessionID: refreshTokenID, err: errFoo}
+			variant.sessionMock = nil
+			variant.expect, variant.expectErr = nil, errFoo
+		}),
+		changed(*success, func(variant *testCase) {
+			// A failed record fails the renewal.
+			variant.name = "Error/SessionUpsert"
+			variant.sessionMock = &sessionMock{request: success.sessionMock.request, err: errFoo}
+			variant.expect, variant.expectErr = nil, errFoo
+		}),
 	}
 
 	for _, testCase := range testCases {
@@ -782,23 +277,9 @@ func TestTokenRefresh(t *testing.T) {
 			serviceVerifyRefreshClaims := coremocks.NewMockTokenRefreshServiceVerifyRefreshClaims(t)
 			daoLocationConsent := coremocks.NewMockTokenRefreshDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockTokenRefreshDaoSessionUpsert(t)
-			transactor := coremocks.NewMockTransactor(t)
 
-			// Without consent, the renewal writes the row alone, with no transaction nor consent read.
-			if testCase.sessionUpsertMock != nil && testCase.daoMock.resp.LocationConsent {
-				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(passThroughTx).Once()
-				daoLocationConsent.EXPECT().
-					Exec(mock.Anything, &dao.CredentialsLocationConsentRequest{ID: userID}).
-					Return(testCase.sessionUpsertMock.consent, nil)
-			}
-
-			if testCase.sessionUpsertMock != nil {
-				daoSessionUpsert.EXPECT().
-					Exec(mock.Anything, matchSessionUpsert(t, testCase.sessionUpsertMock.request)).
-					Return(testCase.sessionUpsertMock.err)
-			}
-
-			if testCase.serviceVerifyClaimsMock != nil {
+			// Expiry is ignored on the access token, since refresh exists to renew an expired one.
+			if testCase.verifyClaimsMock != nil {
 				verifyClaimsRequest := &servicejsonkeys.VerifyClaimsRequest{
 					Usage:       servicejsonkeys.KeyUsageAuth,
 					AccessToken: testCase.request.AccessToken,
@@ -807,10 +288,10 @@ func TestTokenRefresh(t *testing.T) {
 
 				serviceVerifyClaims.EXPECT().
 					VerifyClaims(mock.Anything, verifyClaimsRequest).
-					Return(testCase.serviceVerifyClaimsMock.resp, testCase.serviceVerifyClaimsMock.err)
+					Return(testCase.verifyClaimsMock.resp, testCase.verifyClaimsMock.err)
 			}
 
-			if testCase.serviceVerifyRefreshClaimsMock != nil {
+			if testCase.verifyRefreshClaimsMock != nil {
 				verifyClaimsRequest := &servicejsonkeys.VerifyClaimsRequest{
 					Usage:       servicejsonkeys.KeyUsageAuthRefresh,
 					AccessToken: testCase.request.RefreshToken,
@@ -818,30 +299,29 @@ func TestTokenRefresh(t *testing.T) {
 
 				serviceVerifyRefreshClaims.EXPECT().
 					VerifyClaims(mock.Anything, verifyClaimsRequest).
-					Return(testCase.serviceVerifyRefreshClaimsMock.resp, testCase.serviceVerifyRefreshClaimsMock.err)
+					Return(testCase.verifyRefreshClaimsMock.resp, testCase.verifyRefreshClaimsMock.err)
 			}
 
-			if testCase.revocationExistMock != nil {
+			if testCase.revocationMock != nil {
 				mockDaoRevocationExist.EXPECT().
-					Exec(mock.Anything, &dao.RefreshTokenRevocationExistRequest{JTIs: testCase.revocationExistMock.jtis}).
-					Return(testCase.revocationExistMock.resp, testCase.revocationExistMock.err)
+					Exec(mock.Anything, &dao.RefreshTokenRevocationExistRequest{JTIs: testCase.revocationMock.jtis}).
+					Return(false, nil)
 			}
 
 			if testCase.daoMock != nil {
 				mockDao.EXPECT().
-					Exec(mock.Anything, &dao.CredentialsSelectRequest{
-						ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					}).
+					Exec(mock.Anything, &dao.CredentialsSelectRequest{ID: userID}).
 					Return(testCase.daoMock.resp, testCase.daoMock.err)
 			}
 
 			if testCase.signClaimsMock != nil {
+				refreshTokenClaims := testCase.verifyRefreshClaimsMock.resp
 				accessTokenClaims := &session.Claims{
-					UserID:         testCase.serviceVerifyClaimsMock.resp.UserID,
+					UserID:         &userID,
 					Roles:          []string{testCase.daoMock.resp.Role},
-					RefreshTokenID: testCase.serviceVerifyRefreshClaimsMock.resp.Jti,
+					RefreshTokenID: refreshTokenClaims.Jti,
 					SessionID:      testCase.signClaimsMock.sessionID,
-					SessionExp:     testCase.serviceVerifyRefreshClaimsMock.resp.SessionExpiry(),
+					SessionExp:     refreshTokenClaims.SessionExpiry(),
 				}
 				claimsSignRequest := &servicejsonkeys.ClaimsSignRequest{
 					Usage:   servicejsonkeys.KeyUsageAuth,
@@ -850,7 +330,20 @@ func TestTokenRefresh(t *testing.T) {
 
 				serviceSignClaims.EXPECT().
 					ClaimsSign(mock.Anything, claimsSignRequest).
-					Return(testCase.signClaimsMock.resp, testCase.signClaimsMock.err)
+					Return(&servicejsonkeys.ClaimsSignResponse{Token: "new-access-token"}, testCase.signClaimsMock.err)
+			}
+
+			// Without consent, the renewal writes the row alone, with no consent read.
+			if testCase.consentMock != nil {
+				daoLocationConsent.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsLocationConsentRequest{ID: userID}).
+					Return(testCase.consentMock.resp, testCase.consentMock.err)
+			}
+
+			if testCase.sessionMock != nil {
+				daoSessionUpsert.EXPECT().
+					Exec(mock.Anything, matchSessionUpsert(t, testCase.sessionMock.request)).
+					Return(testCase.sessionMock.err)
 			}
 
 			service := core.NewTokenRefresh(
@@ -861,7 +354,7 @@ func TestTokenRefresh(t *testing.T) {
 				serviceSignClaims,
 				serviceVerifyClaims,
 				serviceVerifyRefreshClaims,
-				transactor,
+				transactiontest.NewTransactor(),
 			)
 
 			resp, err := service.Exec(t.Context(), testCase.request)

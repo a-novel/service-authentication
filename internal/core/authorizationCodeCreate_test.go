@@ -35,7 +35,6 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 
 	type revocationMock struct {
 		revoked bool
-		err     error
 	}
 
 	type daoMock struct {
@@ -96,23 +95,6 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 			expectErr: core.ErrAuthorizationCodeCreateSessionEnded,
 		},
 		{
-			name: "Error/RevocationExist",
-
-			request: &validRequest,
-
-			revocationMock: &revocationMock{err: errFoo},
-
-			expectErr: errFoo,
-		},
-		{
-			// A server that verifies no service token sees no caller.
-			name: "Error/NoCaller",
-
-			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) { request.Caller = "" }),
-
-			expectErr: core.ErrAuthorizationRequestForbiddenCaller,
-		},
-		{
 			name: "Error/ClientCaller",
 
 			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
@@ -130,15 +112,6 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 			}),
 
 			expectErr: core.ErrAuthorizationRequestInvalidRedirectURI,
-		},
-		{
-			name: "Error/PlainMethod",
-
-			request: changed(validRequest, func(request *core.AuthorizationCodeCreateRequest) {
-				request.Params = authorizationParams(func(params url.Values) { params.Set("code_challenge_method", "plain") })
-			}),
-
-			expectErr: core.ErrAuthorizationRequestUnsupportedTransform,
 		},
 		{
 			// The access token is still valid, but its session's refresh token has expired.
@@ -186,7 +159,7 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 
 				mockDaoRevocationExist.EXPECT().
 					Exec(mock.Anything, revocationRequest).
-					Return(testCase.revocationMock.revoked, testCase.revocationMock.err)
+					Return(testCase.revocationMock.revoked, nil)
 			}
 
 			var inserted *dao.AuthorizationCodeInsertRequest

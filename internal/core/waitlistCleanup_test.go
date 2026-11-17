@@ -46,14 +46,14 @@ func TestWaitlistCleanup(t *testing.T) {
 		expectErr     error
 		expectMessage string
 	}{
-		{name: "Empty", pages: []page{{}}},
+		{name: "Success/Empty", pages: []page{{}}},
 		{
-			name: "Preview", pages: []page{
+			name: "Success", pages: []page{
 				{emails: []string{"a@example.com", "b@example.com"}, accounts: []*dao.Credentials{{Email: "a@example.com"}}}, {},
 			}, expect: core.WaitlistCleanupResult{Scanned: 2, Matched: 1},
 		},
 		{
-			name: "ApplyAcrossPages", apply: true, pages: []page{
+			name: "Success/ApplyAcrossPages", apply: true, pages: []page{
 				{
 					emails:   []string{"a@example.com", "b@example.com"},
 					accounts: []*dao.Credentials{{Email: "a@example.com"}}, removed: 2,
@@ -63,33 +63,35 @@ func TestWaitlistCleanup(t *testing.T) {
 			}, expect: core.WaitlistCleanupResult{Scanned: 3, Matched: 2, Removed: 3},
 		},
 		{
-			name: "PendingInvitationsRemain", apply: true, pages: []page{{emails: []string{"a@example.com"}}, {}},
+			name: "Success/PendingInvitationsRemain", apply: true, pages: []page{{emails: []string{"a@example.com"}}, {}},
 			expect: core.WaitlistCleanupResult{Scanned: 1},
 		},
-		{name: "ListFails", pages: []page{{listErr: errFoo}}, expectErr: errFoo},
-		{name: "Cancelled", pages: []page{{listErr: context.Canceled}}, expectErr: context.Canceled},
-		{name: "LookupFails", pages: []page{{emails: []string{"a@example.com"}, lookupErr: errFoo}}, expectErr: errFoo},
+		{name: "Error/List", pages: []page{{listErr: errFoo}}, expectErr: errFoo},
+		{name: "Error/Cancelled", pages: []page{{listErr: context.Canceled}}, expectErr: context.Canceled},
+		{name: "Error/Lookup", pages: []page{{emails: []string{"a@example.com"}, lookupErr: errFoo}}, expectErr: errFoo},
 		{
-			name: "PartialFailure", apply: true, pages: []page{
+			name: "Error/PartialFailure", apply: true, pages: []page{
 				{emails: []string{"a@example.com"}, accounts: []*dao.Credentials{{Email: "a@example.com"}}, removed: 1},
 				{emails: []string{"b@example.com"}, accounts: []*dao.Credentials{{Email: "b@example.com"}}, removeErr: errFoo},
 			}, expect: core.WaitlistCleanupResult{Scanned: 2, Matched: 2, Removed: 1}, expectErr: errFoo,
 		},
 		{
-			name: "RepeatedCursor", pages: []page{{emails: []string{"a@example.com"}}, {emails: []string{"a@example.com"}}},
+			name:   "Error/RepeatedCursor",
+			pages:  []page{{emails: []string{"a@example.com"}}, {emails: []string{"a@example.com"}}},
 			expect: core.WaitlistCleanupResult{Scanned: 1}, expectErr: core.ErrWaitlistUnavailable,
 			expectMessage: "cursor did not advance; check the Apps Script list operation",
 		},
 		{
-			name: "OversizedPage", pages: []page{{emails: make([]string, authconfig.WaitlistBatchSize+1)}},
+			name: "Error/OversizedPage", pages: []page{{emails: make([]string, authconfig.WaitlistBatchSize+1)}},
 			expectErr: core.ErrWaitlistUnavailable, expectMessage: "page contains 101 entries; limit is 100",
 		},
 		{
-			name: "ScanLimitReached", pages: append(slices.Clone(fullPages), page{}),
+			name: "Success/ScanLimitReached", pages: append(slices.Clone(fullPages), page{}),
 			expect: core.WaitlistCleanupResult{Scanned: authconfig.WaitlistMaxEntries},
 		},
 		{
-			name: "ScanLimitExceeded", pages: append(slices.Clone(fullPages), page{emails: []string{"overflow@example.com"}}),
+			name:   "Error/ScanLimitExceeded",
+			pages:  append(slices.Clone(fullPages), page{emails: []string{"overflow@example.com"}}),
 			expect: core.WaitlistCleanupResult{Scanned: authconfig.WaitlistMaxEntries}, expectErr: core.ErrWaitlistUnavailable,
 			expectMessage: "cleanup would scan 10001 entries; limit is 10000",
 		},
@@ -97,8 +99,8 @@ func TestWaitlistCleanup(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
-			credentials := coremocks.NewMockWaitlistCleanupDaoCredentialsList(t)
-			writer := coremocks.NewMockWaitlistCleanupDaoWaitlist(t)
+			daoCredentialsList := coremocks.NewMockWaitlistCleanupDaoCredentialsList(t)
+			daoWaitlist := coremocks.NewMockWaitlistCleanupDaoWaitlist(t)
 
 			var calls []*mock.Call
 
@@ -106,7 +108,7 @@ func TestWaitlistCleanup(t *testing.T) {
 			scanned := 0
 
 			for _, page := range testCase.pages {
-				calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "list", After: after}).
+				calls = append(calls, daoWaitlist.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "list", After: after}).
 					Return(&dao.WaitlistResult{Emails: page.emails}, page.listErr).Once())
 				if page.listErr != nil || len(page.emails) == 0 || len(page.emails) > authconfig.WaitlistBatchSize ||
 					scanned+len(page.emails) > authconfig.WaitlistMaxEntries {
@@ -118,7 +120,7 @@ func TestWaitlistCleanup(t *testing.T) {
 					break
 				}
 
-				calls = append(calls, credentials.EXPECT().Exec(mock.Anything, &dao.CredentialsListRequest{
+				calls = append(calls, daoCredentialsList.EXPECT().Exec(mock.Anything, &dao.CredentialsListRequest{
 					Limit: authconfig.WaitlistBatchSize, Emails: page.emails,
 				}).Return(page.accounts, page.lookupErr).Once())
 				if testCase.apply && len(page.accounts) > 0 && page.lookupErr == nil {
@@ -127,7 +129,8 @@ func TestWaitlistCleanup(t *testing.T) {
 						emails[i] = account.Email
 					}
 
-					calls = append(calls, writer.EXPECT().Exec(mock.Anything, &dao.WaitlistRequest{Action: "remove", Emails: emails}).
+					calls = append(calls, daoWaitlist.EXPECT().
+						Exec(mock.Anything, &dao.WaitlistRequest{Action: "remove", Emails: emails}).
 						Return(&dao.WaitlistResult{Removed: page.removed}, page.removeErr).Once())
 				}
 
@@ -137,9 +140,9 @@ func TestWaitlistCleanup(t *testing.T) {
 
 			mock.InOrder(calls...)
 
-			result, err := core.NewWaitlistCleanup(credentials, writer).Exec(t.Context(), &core.WaitlistCleanupRequest{
-				Apply: testCase.apply,
-			})
+			service := core.NewWaitlistCleanup(daoCredentialsList, daoWaitlist)
+
+			result, err := service.Exec(t.Context(), &core.WaitlistCleanupRequest{Apply: testCase.apply})
 			require.ErrorIs(t, err, testCase.expectErr)
 
 			if testCase.expectMessage != "" {
