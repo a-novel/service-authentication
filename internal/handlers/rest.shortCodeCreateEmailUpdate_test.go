@@ -1,15 +1,13 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -26,115 +24,82 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	claims := &session.Claims{UserID: new(credentialsFixture.ID)}
+	validBody := `{"currentPassword": "current password", "email": "new_user@provider.com", "lang": "fr"}`
+	serviceRequest := &core.ShortCodeCreateEmailUpdateRequest{
+		CurrentPassword: "current password", Email: "new_user@provider.com", Lang: "fr", ID: credentialsFixture.ID,
+	}
+
 	type serviceMock struct {
-		req *core.ShortCodeCreateEmailUpdateRequest
 		err error
 	}
 
 	testCases := []struct {
 		name string
 
-		request *http.Request
-		claims  *session.Claims
+		// body replaces validBody when set.
+		body string
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
-		expectStatus   int
-		expectResponse any
+		expectStatus int
 	}{
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"currentPassword": "current password",
-				"email": "new_user@provider.com",
-				"lang": "fr"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
-
-			serviceMock: &serviceMock{
-				req: &core.ShortCodeCreateEmailUpdateRequest{
-					CurrentPassword: "current password",
-					Email:           "new_user@provider.com",
-					Lang:            "fr",
-					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-			},
+			serviceMock: &serviceMock{},
 
 			expectStatus: http.StatusAccepted,
 		},
 		{
-			name: "Error/MailDeliveryUnavailable",
+			name: "Error/CredentialsNotFound",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"currentPassword": "current password",
-				"email": "new_user@provider.com",
-				"lang": "fr"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
 
-			serviceMock: &serviceMock{
-				req: &core.ShortCodeCreateEmailUpdateRequest{
-					CurrentPassword: "current password",
-					Email:           "new_user@provider.com",
-					Lang:            "fr",
-					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: errors.Join(errFoo, core.ErrMailDeliveryUnavailable),
-			},
-
-			expectStatus: http.StatusServiceUnavailable,
+			expectStatus: http.StatusNotFound,
 		},
 		{
 			// A session alone does not move the account to another address.
 			name: "Error/WrongCurrentPassword",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"currentPassword": "wrong password",
-				"email": "new_user@provider.com",
-				"lang": "fr"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
-
-			serviceMock: &serviceMock{
-				req: &core.ShortCodeCreateEmailUpdateRequest{
-					CurrentPassword: "wrong password",
-					Email:           "new_user@provider.com",
-					Lang:            "fr",
-					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: errors.Join(errFoo, lib.ErrInvalidPassword),
-			},
+			serviceMock: &serviceMock{err: errors.Join(errFoo, lib.ErrInvalidPassword)},
 
 			expectStatus: http.StatusForbidden,
 		},
 		{
+			name: "Error/InvalidRequest",
+
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
+
+			expectStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name: "Error/MailDeliveryUnavailable",
+
+			serviceMock: &serviceMock{err: errors.Join(errFoo, core.ErrMailDeliveryUnavailable)},
+
+			expectStatus: http.StatusServiceUnavailable,
+		},
+		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"currentPassword": "current password",
-				"email": "new_user@provider.com",
-				"lang": "fr"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
-			serviceMock: &serviceMock{
-				req: &core.ShortCodeCreateEmailUpdateRequest{
-					CurrentPassword: "current password",
-					Email:           "new_user@provider.com",
-					Lang:            "fr",
-					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: errFoo,
-			},
+			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MalformedBody",
+
+			body: `{"email": `,
+
+			expectStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Error/MissingClaims",
+
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -148,30 +113,26 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.err)
+			}
+
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
 			}
 
 			handler := handlers.NewRestShortCodeCreateEmailUpdate(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				ctx, http.MethodPut, "/v2/short-code/update-email", strings.NewReader(cmp.Or(testCase.body, validBody)),
+			)
 
-			rCtx := testCase.request.Context()
-			rCtx = session.SetClaimsContext(rCtx, testCase.claims)
-
-			handler.ServeHTTP(w, testCase.request.WithContext(rCtx))
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
+			require.NoError(t, res.Body.Close())
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
-
-			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
-			}
 		})
 	}
 }

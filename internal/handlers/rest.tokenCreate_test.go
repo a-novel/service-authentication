@@ -1,9 +1,8 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,7 +16,6 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
-	"github.com/a-novel/service-authentication/v2/internal/lib"
 )
 
 func TestRestTokenCreate(t *testing.T) {
@@ -25,19 +23,14 @@ func TestRestTokenCreate(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	// The account platform describes its visitor in headers. The router reads the IP from the header
-	// REST_CLIENT_IP_HEADER names.
-	visitorRequest := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-		"email": "user@provider.com",
-		"password": "Louvre"
-	}`))
-	visitorRequest.Header.Set("X-Client-Ip", "192.0.2.1")
-	visitorRequest.Header.Set(handlers.HeaderClientUserAgent, "Firefox")
-	visitorRequest.Header.Set(handlers.HeaderClientRegion, "FR")
-	visitorRequest.Header.Set(handlers.HeaderClientCity, "Paris")
+	validBody := `{"email": "user@provider.com", "password": "Louvre"}`
+	serviceRequest := &core.TokenCreateRequest{
+		Email:    "user@provider.com",
+		Password: "Louvre",
+		Visitor:  core.Visitor{UserAgent: "Firefox", IPAddress: "192.0.2.1", Region: "FR", City: "Paris"},
+	}
 
 	type serviceMock struct {
-		req  *core.TokenCreateRequest
 		resp *core.Token
 		err  error
 	}
@@ -45,7 +38,8 @@ func TestRestTokenCreate(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *http.Request
+		// body replaces validBody when set.
+		body string
 
 		serviceMock *serviceMock
 
@@ -55,103 +49,39 @@ func TestRestTokenCreate(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre"
-			}`)),
+			serviceMock: &serviceMock{resp: tokenFixture},
 
-			serviceMock: &serviceMock{
-				req: &core.TokenCreateRequest{
-					Email:    "user@provider.com",
-					Password: "Louvre",
-				},
-				resp: &core.Token{
-					AccessToken:  "token",
-					RefreshToken: "refresh",
-				},
-			},
-
-			expectResponse: map[string]any{
-				"accessToken":  "token",
-				"refreshToken": "refresh",
-			},
-			expectStatus: http.StatusOK,
+			expectStatus:   http.StatusOK,
+			expectResponse: tokenFixtureJSON,
 		},
 		{
-			name: "Success/Visitor",
+			// An unknown email answers as a wrong password does, so a caller cannot probe accounts.
+			name: "Error/CredentialsNotFound",
 
-			request: visitorRequest,
+			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
 
-			serviceMock: &serviceMock{
-				req: &core.TokenCreateRequest{
-					Email:    "user@provider.com",
-					Password: "Louvre",
-					Visitor:  core.Visitor{UserAgent: "Firefox", IPAddress: "192.0.2.1", Region: "FR", City: "Paris"},
-				},
-				resp: &core.Token{AccessToken: "token", RefreshToken: "refresh"},
-			},
-
-			expectResponse: map[string]any{
-				"accessToken":  "token",
-				"refreshToken": "refresh",
-			},
-			expectStatus: http.StatusOK,
-		},
-		{
-			name: "Error/NotFound",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.TokenCreateRequest{
-					Email:    "user@provider.com",
-					Password: "Louvre",
-				},
-				err: core.ErrCredentialsNotFound,
-			},
-
-			// Returns 401 to prevent email enumeration.
 			expectStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "Error/PasswordInvalid",
+			name: "Error/InvalidRequest",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre"
-			}`)),
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
 
-			serviceMock: &serviceMock{
-				req: &core.TokenCreateRequest{
-					Email:    "user@provider.com",
-					Password: "Louvre",
-				},
-				err: lib.ErrInvalidPassword,
-			},
-
-			// Returns 401 to prevent email enumeration.
-			expectStatus: http.StatusUnauthorized,
+			expectStatus: http.StatusUnprocessableEntity,
 		},
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.TokenCreateRequest{
-					Email:    "user@provider.com",
-					Password: "Louvre",
-				},
-				err: errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MalformedBody",
+
+			body: `{"email": `,
+
+			expectStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -163,27 +93,32 @@ func TestRestTokenCreate(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
+			// The account platform describes its visitor in headers. The router reads the IP from the
+			// header REST_CLIENT_IP_HEADER names.
 			handler := middleware.ClientIPFromHeader("X-Client-IP")(handlers.NewRestTokenCreate(service, config.LoggerDev))
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				t.Context(), http.MethodPut, "/v2/session", strings.NewReader(cmp.Or(testCase.body, validBody)),
+			)
+			request.Header.Set("X-Client-Ip", "192.0.2.1")
+			request.Header.Set(handlers.HeaderClientUserAgent, "Firefox")
+			request.Header.Set(handlers.HeaderClientRegion, "FR")
+			request.Header.Set(handlers.HeaderClientCity, "Paris")
 
-			handler.ServeHTTP(w, testCase.request)
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

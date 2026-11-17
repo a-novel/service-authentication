@@ -1,21 +1,17 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
-	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -26,8 +22,10 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	validBody := `{"userID": "` + credentialsFixture.ID.String() + `", "shortCode": "abcdef", "lang": "fr"}`
+	serviceRequest := &core.CredentialsUpdateEmailRequest{UserID: credentialsFixture.ID, ShortCode: "abcdef", Lang: "fr"}
+
 	type serviceMock struct {
-		req  *core.CredentialsUpdateEmailRequest
 		resp *core.Credentials
 		err  error
 	}
@@ -35,7 +33,8 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *http.Request
+		// body replaces validBody when set.
+		body string
 
 		serviceMock *serviceMock
 
@@ -43,128 +42,61 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 		expectResponse any
 	}{
 		{
-			name: "Success/UserID",
+			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000001",
-				"lang": "fr"
-			}`)),
+			serviceMock: &serviceMock{resp: credentialsFixture},
 
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateEmailRequest{
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Lang:   "fr",
-				},
-				resp: &core.Credentials{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Email:     "user@provider.com",
-					Role:      authconfig.RoleUser,
-					CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
-				},
-			},
-
-			expectResponse: map[string]any{
-				"id":        "00000000-0000-0000-0000-000000000001",
-				"email":     "user@provider.com",
-				"role":      authconfig.RoleUser,
-				"createdAt": "2018-02-02T12:00:00Z",
-				"updatedAt": "2020-02-02T12:00:00Z",
-			},
-			expectStatus: http.StatusOK,
-		},
-		{
-			name: "Success/ShortCode",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"shortCode": "abcdef"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateEmailRequest{
-					ShortCode: "abcdef",
-				},
-				resp: &core.Credentials{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Email:     "user@provider.com",
-					Role:      authconfig.RoleUser,
-					CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
-				},
-			},
-
-			expectResponse: map[string]any{
-				"id":        "00000000-0000-0000-0000-000000000001",
-				"email":     "user@provider.com",
-				"role":      authconfig.RoleUser,
-				"createdAt": "2018-02-02T12:00:00Z",
-				"updatedAt": "2020-02-02T12:00:00Z",
-			},
-			expectStatus: http.StatusOK,
+			expectStatus:   http.StatusOK,
+			expectResponse: credentialsFixtureJSON,
 		},
 		{
 			name: "Error/CredentialsNotFound",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000001"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateEmailRequest{
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrCredentialsNotFound,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
 
 			expectStatus: http.StatusNotFound,
 		},
 		{
 			name: "Error/CredentialsAlreadyExists",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000001"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateEmailRequest{
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrCredentialsAlreadyExists,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsAlreadyExists},
 
 			expectStatus: http.StatusConflict,
 		},
 		{
 			name: "Error/ShortCodeInvalid",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000001"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateEmailRequest{
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrShortCodeInvalid,
-			},
+			serviceMock: &serviceMock{err: core.ErrShortCodeInvalid},
 
 			expectStatus: http.StatusForbidden,
 		},
 		{
+			name: "Error/InvalidRequest",
+
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
+
+			expectStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name: "Error/MailDeliveryUnavailable",
+
+			serviceMock: &serviceMock{err: errors.Join(errFoo, core.ErrMailDeliveryUnavailable)},
+
+			expectStatus: http.StatusServiceUnavailable,
+		},
+		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000001"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateEmailRequest{
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MalformedBody",
+
+			body: `{"userID": "user"}`,
+
+			expectStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -176,27 +108,26 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestCredentialsUpdateEmail(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				t.Context(), http.MethodPatch, "/v2/credentials/email", strings.NewReader(cmp.Or(testCase.body, validBody)),
+			)
 
-			handler.ServeHTTP(w, testCase.request)
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

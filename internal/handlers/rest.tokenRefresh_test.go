@@ -1,9 +1,8 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -23,8 +22,10 @@ func TestRestTokenRefresh(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	validBody := `{"accessToken": "access-token", "refreshToken": "refresh-token"}`
+	serviceRequest := &core.TokenRefreshRequest{AccessToken: "access-token", RefreshToken: "refresh-token"}
+
 	type serviceMock struct {
-		req  *core.TokenRefreshRequest
 		resp *core.Token
 		err  error
 	}
@@ -32,7 +33,8 @@ func TestRestTokenRefresh(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *http.Request
+		// body replaces validBody when set.
+		body string
 
 		serviceMock *serviceMock
 
@@ -42,117 +44,46 @@ func TestRestTokenRefresh(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access-token",
-				"refreshToken": "refresh_token"
-			}`)),
+			serviceMock: &serviceMock{resp: tokenFixture},
 
-			serviceMock: &serviceMock{
-				req: &core.TokenRefreshRequest{
-					AccessToken:  "access-token",
-					RefreshToken: "refresh_token",
-				},
-				resp: &core.Token{
-					AccessToken:  "new-access-token",
-					RefreshToken: "refresh_token",
-				},
-			},
-
-			expectResponse: map[string]any{
-				"accessToken":  "new-access-token",
-				"refreshToken": "refresh_token",
-			},
-			expectStatus: http.StatusOK,
-		},
-		{
-			name: "Error/InvalidAccessToken",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access-token",
-				"refreshToken": "refresh_token"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.TokenRefreshRequest{
-					AccessToken:  "access-token",
-					RefreshToken: "refresh_token",
-				},
-				err: core.ErrTokenRefreshInvalidAccessToken,
-			},
-
-			expectStatus: http.StatusForbidden,
+			expectStatus:   http.StatusOK,
+			expectResponse: tokenFixtureJSON,
 		},
 		{
 			name: "Error/InvalidRefreshToken",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access-token",
-				"refreshToken": "refresh_token"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.TokenRefreshRequest{
-					AccessToken:  "access-token",
-					RefreshToken: "refresh_token",
-				},
-				err: core.ErrTokenRefreshInvalidRefreshToken,
-			},
+			serviceMock: &serviceMock{err: core.ErrTokenRefreshInvalidRefreshToken},
 
 			expectStatus: http.StatusForbidden,
 		},
 		{
-			name: "Error/MismatchClaims",
+			// The account behind a still-valid refresh token is gone, so the caller signs in again.
+			name: "Error/CredentialsNotFound",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access-token",
-				"refreshToken": "refresh_token"
-			}`)),
+			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
 
-			serviceMock: &serviceMock{
-				req: &core.TokenRefreshRequest{
-					AccessToken:  "access-token",
-					RefreshToken: "refresh_token",
-				},
-				err: core.ErrTokenRefreshMismatchClaims,
-			},
-
-			expectStatus: http.StatusForbidden,
+			expectStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "Error/MismatchSource",
+			name: "Error/InvalidRequest",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access-token",
-				"refreshToken": "refresh_token"
-			}`)),
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
 
-			serviceMock: &serviceMock{
-				req: &core.TokenRefreshRequest{
-					AccessToken:  "access-token",
-					RefreshToken: "refresh_token",
-				},
-				err: core.ErrTokenRefreshMismatchSource,
-			},
-
-			expectStatus: http.StatusForbidden,
+			expectStatus: http.StatusUnprocessableEntity,
 		},
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"accessToken": "access-token",
-				"refreshToken": "refresh_token"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.TokenRefreshRequest{
-					AccessToken:  "access-token",
-					RefreshToken: "refresh_token",
-				},
-				err: errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MalformedBody",
+
+			body: `{"accessToken": `,
+
+			expectStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -164,27 +95,26 @@ func TestRestTokenRefresh(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestTokenRefresh(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				t.Context(), http.MethodPatch, "/v2/session", strings.NewReader(cmp.Or(testCase.body, validBody)),
+			)
 
-			handler.ServeHTTP(w, testCase.request)
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

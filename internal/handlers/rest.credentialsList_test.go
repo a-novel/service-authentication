@@ -1,15 +1,14 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -25,8 +24,18 @@ func TestRestCredentialsList(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	// A second account makes the response prove that the order holds.
+	admin := *credentialsFixture
+	admin.ID = uuid.MustParse("00000000-0000-0000-0000-000000000002")
+	admin.Role = authconfig.RoleAdmin
+	adminJSON := lo.Assign(credentialsFixtureJSON, map[string]any{
+		"id": "00000000-0000-0000-0000-000000000002", "role": authconfig.RoleAdmin,
+	})
+
+	validPath := "/v2/credentials/all?limit=10&offset=2&roles=role1&roles=role2"
+	serviceRequest := &core.CredentialsListRequest{Limit: 10, Offset: 2, Roles: []string{"role1", "role2"}}
+
 	type serviceMock struct {
-		req  *core.CredentialsListRequest
 		resp []*core.Credentials
 		err  error
 	}
@@ -34,7 +43,8 @@ func TestRestCredentialsList(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *http.Request
+		// path replaces validPath when set.
+		path string
 
 		serviceMock *serviceMock
 
@@ -44,109 +54,39 @@ func TestRestCredentialsList(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&offset=2", nil),
+			serviceMock: &serviceMock{resp: []*core.Credentials{&admin, credentialsFixture}},
 
-			serviceMock: &serviceMock{
-				req: &core.CredentialsListRequest{
-					Limit:  10,
-					Offset: 2,
-				},
-				resp: []*core.Credentials{
-					{
-						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
-						Email:     "user3@email.com",
-						Role:      authconfig.RoleUser,
-						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-						UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
-					},
-					{
-						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-						Email:     "user2@email.com",
-						Role:      authconfig.RoleAdmin,
-						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-						UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-					},
-					{
-						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-						Email:     "user1@email.com",
-						Role:      authconfig.RoleUser,
-						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-						UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					},
-				},
-			},
-
-			expectResponse: []any{
-				map[string]any{
-					"id":        "00000000-0000-0000-0000-000000000003",
-					"email":     "user3@email.com",
-					"role":      authconfig.RoleUser,
-					"createdAt": "2021-01-01T00:00:00Z",
-					"updatedAt": "2021-01-03T00:00:00Z",
-				},
-				map[string]any{
-					"id":        "00000000-0000-0000-0000-000000000002",
-					"email":     "user2@email.com",
-					"role":      authconfig.RoleAdmin,
-					"createdAt": "2021-01-01T00:00:00Z",
-					"updatedAt": "2021-01-02T00:00:00Z",
-				},
-				map[string]any{
-					"id":        "00000000-0000-0000-0000-000000000001",
-					"email":     "user1@email.com",
-					"role":      authconfig.RoleUser,
-					"createdAt": "2021-01-01T00:00:00Z",
-					"updatedAt": "2021-01-01T00:00:00Z",
-				},
-			},
-			expectStatus: http.StatusOK,
+			expectStatus:   http.StatusOK,
+			expectResponse: []any{adminJSON, credentialsFixtureJSON},
 		},
 		{
-			name: "Success/Roles",
+			name: "Success/Empty",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&roles=role1&roles=role2", nil),
+			serviceMock: &serviceMock{resp: []*core.Credentials{}},
 
-			serviceMock: &serviceMock{
-				req: &core.CredentialsListRequest{
-					Limit: 10,
-					Roles: []string{"role1", "role2"},
-				},
-				resp: []*core.Credentials{
-					{
-						ID:        uuid.MustParse("00000000-0000-0000-0000-000000000003"),
-						Email:     "user3@email.com",
-						Role:      authconfig.RoleUser,
-						CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-						UpdatedAt: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC),
-					},
-				},
-			},
+			expectStatus:   http.StatusOK,
+			expectResponse: []any{},
+		},
+		{
+			name: "Error/InvalidRequest",
 
-			expectResponse: []any{
-				map[string]any{
-					"id":        "00000000-0000-0000-0000-000000000003",
-					"email":     "user3@email.com",
-					"role":      authconfig.RoleUser,
-					"createdAt": "2021-01-01T00:00:00Z",
-					"updatedAt": "2021-01-03T00:00:00Z",
-				},
-			},
-			expectStatus: http.StatusOK,
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
+
+			expectStatus: http.StatusUnprocessableEntity,
 		},
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?limit=10&offset=2", nil),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsListRequest{
-					Limit:  10,
-					Offset: 2,
-				},
-				err: errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MalformedQuery",
+
+			path: "/v2/credentials/all?limit=ten",
+
+			expectStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -158,27 +98,24 @@ func TestRestCredentialsList(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestCredentialsList(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, cmp.Or(testCase.path, validPath), nil)
 
-			handler.ServeHTTP(w, testCase.request)
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

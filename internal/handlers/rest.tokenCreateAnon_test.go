@@ -1,9 +1,7 @@
 package handlers_test
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,8 +28,6 @@ func TestRestTokenCreateAnon(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *http.Request
-
 		serviceMock *serviceMock
 
 		expectStatus   int
@@ -40,29 +36,15 @@ func TestRestTokenCreateAnon(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
+			serviceMock: &serviceMock{resp: tokenFixture},
 
-			serviceMock: &serviceMock{
-				resp: &core.Token{
-					AccessToken:  "token",
-					RefreshToken: "refresh",
-				},
-			},
-
-			expectResponse: map[string]any{
-				"accessToken":  "token",
-				"refreshToken": "refresh",
-			},
-			expectStatus: http.StatusOK,
+			expectStatus:   http.StatusOK,
+			expectResponse: tokenFixtureJSON,
 		},
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", nil),
-
-			serviceMock: &serviceMock{
-				err: errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -73,30 +55,24 @@ func TestRestTokenCreateAnon(t *testing.T) {
 			t.Parallel()
 
 			service := handlersmocks.NewMockRestTokenCreateAnonService(t)
-
-			if testCase.serviceMock != nil {
-				service.EXPECT().
-					Exec(mock.Anything).
-					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
-			}
+			service.EXPECT().
+				Exec(mock.Anything).
+				Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 
 			handler := handlers.NewRestTokenCreateAnon(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/session/anon", nil)
 
-			handler.ServeHTTP(w, testCase.request)
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

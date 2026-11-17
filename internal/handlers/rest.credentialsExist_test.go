@@ -1,9 +1,8 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,8 +21,10 @@ func TestRestCredentialsExist(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	validPath := "/v2/credentials?email=user@provider.com"
+	serviceRequest := &core.CredentialsExistRequest{Email: "user@provider.com"}
+
 	type serviceMock struct {
-		req  *core.CredentialsExistRequest
 		resp bool
 		err  error
 	}
@@ -31,48 +32,48 @@ func TestRestCredentialsExist(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *http.Request
+		// path replaces validPath when set.
+		path string
 
 		serviceMock *serviceMock
 
-		expectStatus   int
-		expectResponse any
+		expectStatus int
 	}{
 		{
-			name: "Exists",
+			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
-
-			serviceMock: &serviceMock{
-				req:  &core.CredentialsExistRequest{Email: "user@provider.com"},
-				resp: true,
-			},
+			serviceMock: &serviceMock{resp: true},
 
 			expectStatus: http.StatusNoContent,
 		},
 		{
-			name: "NotFound",
+			name: "Success/NotFound",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
-
-			serviceMock: &serviceMock{
-				req:  &core.CredentialsExistRequest{Email: "user@provider.com"},
-				resp: false,
-			},
+			serviceMock: &serviceMock{resp: false},
 
 			expectStatus: http.StatusNotFound,
 		},
 		{
-			name: "Error",
+			name: "Error/InvalidRequest",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=user@provider.com", nil),
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
 
-			serviceMock: &serviceMock{
-				req: &core.CredentialsExistRequest{Email: "user@provider.com"},
-				err: errFoo,
-			},
+			expectStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name: "Error/Internal",
+
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			// The query decoder refuses a parameter the route does not take.
+			name: "Error/MalformedQuery",
+
+			path: "/v2/credentials?mail=user@provider.com",
+
+			expectStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -84,27 +85,19 @@ func TestRestCredentialsExist(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestCredentialsExist(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodHead, cmp.Or(testCase.path, validPath), nil)
 
-			handler.ServeHTTP(w, testCase.request)
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
+			require.NoError(t, res.Body.Close())
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
-
-			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
-			}
 		})
 	}
 }

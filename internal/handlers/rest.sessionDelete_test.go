@@ -1,7 +1,7 @@
 package handlers_test
 
 import (
-	"context"
+	"cmp"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -27,6 +27,7 @@ func TestRestSessionDelete(t *testing.T) {
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	sessionID := uuid.MustParse("00000000-0000-0000-0000-0000000000a2")
 	claims := &session.Claims{UserID: new(userID), RefreshTokenID: "00000000-0000-0000-0000-0000000000a1"}
+	validPath := "/v2/sessions/" + sessionID.String()
 
 	type serviceMock struct {
 		err error
@@ -35,8 +36,10 @@ func TestRestSessionDelete(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		claims    *session.Claims
-		sessionID string
+		// path replaces validPath when set.
+		path string
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -45,26 +48,12 @@ func TestRestSessionDelete(t *testing.T) {
 		{
 			name: "Success",
 
-			claims:    claims,
-			sessionID: sessionID.String(),
-
 			serviceMock: &serviceMock{},
 
 			expectStatus: http.StatusNoContent,
 		},
 		{
-			name: "Error/MalformedSessionID",
-
-			claims:    claims,
-			sessionID: "session",
-
-			expectStatus: http.StatusBadRequest,
-		},
-		{
 			name: "Error/NotFound",
-
-			claims:    claims,
-			sessionID: sessionID.String(),
 
 			serviceMock: &serviceMock{err: core.ErrSessionNotFound},
 
@@ -74,9 +63,6 @@ func TestRestSessionDelete(t *testing.T) {
 			// An active session is signed out first, then removed.
 			name: "Error/Active",
 
-			claims:    claims,
-			sessionID: sessionID.String(),
-
 			serviceMock: &serviceMock{err: core.ErrSessionActive},
 
 			expectStatus: http.StatusConflict,
@@ -84,17 +70,21 @@ func TestRestSessionDelete(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			claims:    claims,
-			sessionID: sessionID.String(),
-
 			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
+			name: "Error/MalformedSessionID",
+
+			path: "/v2/sessions/session",
+
+			expectStatus: http.StatusBadRequest,
+		},
+		{
 			name: "Error/MissingClaims",
 
-			sessionID: sessionID.String(),
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -112,18 +102,19 @@ func TestRestSessionDelete(t *testing.T) {
 					Return(testCase.serviceMock.err)
 			}
 
-			// The router sets the path parameter, as it would for /v2/sessions/{sessionID}.
-			routeContext := chi.NewRouteContext()
-			routeContext.URLParams.Add("sessionID", testCase.sessionID)
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
+			}
 
-			ctx := session.SetClaimsContext(t.Context(), testCase.claims)
-			ctx = context.WithValue(ctx, chi.RouteCtxKey, routeContext)
+			// The router reads the session ID from the path.
+			router := chi.NewRouter()
+			router.Delete("/v2/sessions/{sessionID}", handlers.NewRestSessionDelete(service, config.LoggerDev).ServeHTTP)
 
-			handler := handlers.NewRestSessionDelete(service, config.LoggerDev)
 			w := httptest.NewRecorder()
-			request := httptest.NewRequestWithContext(ctx, http.MethodDelete, "/v2/sessions/"+testCase.sessionID, nil)
+			request := httptest.NewRequestWithContext(ctx, http.MethodDelete, cmp.Or(testCase.path, validPath), nil)
 
-			handler.ServeHTTP(w, request)
+			router.ServeHTTP(w, request)
 
 			res := w.Result()
 			require.NoError(t, res.Body.Close())

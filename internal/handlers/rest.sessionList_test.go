@@ -1,9 +1,7 @@
 package handlers_test
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,7 +38,8 @@ func TestRestSessionList(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		claims *session.Claims
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -50,8 +49,6 @@ func TestRestSessionList(t *testing.T) {
 		{
 			// A session that recorded no location omits it.
 			name: "Success",
-
-			claims: claims,
 
 			serviceMock: &serviceMock{
 				resp: []*core.Session{
@@ -95,8 +92,6 @@ func TestRestSessionList(t *testing.T) {
 		{
 			name: "Success/Empty",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{resp: []*core.Session{}},
 
 			expectStatus:   http.StatusOK,
@@ -105,14 +100,14 @@ func TestRestSessionList(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
 			name: "Error/MissingClaims",
+
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -130,26 +125,25 @@ func TestRestSessionList(t *testing.T) {
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
+			}
+
 			handler := handlers.NewRestSessionList(service, config.LoggerDev)
 			w := httptest.NewRecorder()
-			request := httptest.NewRequestWithContext(
-				session.SetClaimsContext(t.Context(), testCase.claims), http.MethodGet, "/v2/sessions", nil,
-			)
+			request := httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/sessions", nil)
 
 			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

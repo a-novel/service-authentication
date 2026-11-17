@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"cmp"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -19,43 +20,101 @@ import (
 func TestRestWaitlistJoin(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
-		name   string
-		body   string
-		err    error
-		status int
-		retry  string
-	}{
-		{name: "Accepted", status: http.StatusAccepted},
-		{name: "MalformedJSON", body: "{", status: http.StatusBadRequest},
-		{name: "InvalidRequest", err: core.ErrInvalidRequest, status: http.StatusUnprocessableEntity},
-		{name: "Busy", err: core.ErrWaitlistBusy, status: http.StatusTooManyRequests, retry: "60"},
-		{name: "Unavailable", err: core.ErrWaitlistUnavailable, status: http.StatusServiceUnavailable, retry: "60"},
-		{name: "UnexpectedFailure", err: errors.New("database unavailable"), status: http.StatusInternalServerError},
+	errFoo := errors.New("foo")
+
+	validBody := `{"email": "member@example.com", "lang": "en"}`
+	serviceRequest := &core.WaitlistJoinRequest{Email: "member@example.com", Lang: "en"}
+
+	type serviceMock struct {
+		err error
 	}
+
+	testCases := []struct {
+		name string
+
+		// body replaces validBody when set.
+		body string
+
+		serviceMock *serviceMock
+
+		expectStatus     int
+		expectRetryAfter string
+	}{
+		{
+			name: "Success",
+
+			serviceMock: &serviceMock{},
+
+			expectStatus: http.StatusAccepted,
+		},
+		{
+			name: "Error/InvalidRequest",
+
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
+
+			expectStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name: "Error/Busy",
+
+			serviceMock: &serviceMock{err: core.ErrWaitlistBusy},
+
+			expectStatus:     http.StatusTooManyRequests,
+			expectRetryAfter: "60",
+		},
+		{
+			name: "Error/Unavailable",
+
+			serviceMock: &serviceMock{err: core.ErrWaitlistUnavailable},
+
+			expectStatus:     http.StatusServiceUnavailable,
+			expectRetryAfter: "60",
+		},
+		{
+			name: "Error/Internal",
+
+			serviceMock: &serviceMock{err: errFoo},
+
+			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MalformedBody",
+
+			body: `{"email": `,
+
+			expectStatus: http.StatusBadRequest,
+		},
+	}
+
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
 			service := handlersmocks.NewMockRestWaitlistJoinService(t)
 
-			body := testCase.body
-			if body == "" {
-				body = `{"email":"member@example.com","lang":"en"}`
-
-				service.EXPECT().Exec(mock.Anything, &core.WaitlistJoinRequest{Email: "member@example.com", Lang: "en"}).
-					Return(testCase.err).Once()
+			if testCase.serviceMock != nil {
+				service.EXPECT().
+					Exec(mock.Anything, serviceRequest).
+					Return(testCase.serviceMock.err)
 			}
 
-			request := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/waitlist", strings.NewReader(body))
-			response := httptest.NewRecorder()
-			handlers.NewRestWaitlistJoin(service, config.LoggerDev).ServeHTTP(response, request)
-			require.Equal(t, testCase.status, response.Code)
-			require.Equal(t, testCase.retry, response.Header().Get("Retry-After"))
+			handler := handlers.NewRestWaitlistJoin(service, config.LoggerDev)
+			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				t.Context(), http.MethodPut, "/v2/waitlist", strings.NewReader(cmp.Or(testCase.body, validBody)),
+			)
 
-			if testCase.status == http.StatusAccepted {
-				require.Empty(t, response.Body.String())
+			handler.ServeHTTP(w, request)
+
+			res := w.Result()
+			require.Equal(t, testCase.expectStatus, res.StatusCode)
+			require.Equal(t, testCase.expectRetryAfter, res.Header.Get("Retry-After"))
+
+			if testCase.expectStatus == http.StatusAccepted {
+				require.Empty(t, w.Body.String())
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

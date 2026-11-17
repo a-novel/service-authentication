@@ -32,7 +32,8 @@ func TestRestShortCodeCancelEmailUpdate(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		claims *session.Claims
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -41,16 +42,12 @@ func TestRestShortCodeCancelEmailUpdate(t *testing.T) {
 		{
 			name: "Success",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{},
 
 			expectStatus: http.StatusNoContent,
 		},
 		{
 			name: "Error/NotFound",
-
-			claims: claims,
 
 			serviceMock: &serviceMock{err: core.ErrShortCodeNotFound},
 
@@ -59,14 +56,14 @@ func TestRestShortCodeCancelEmailUpdate(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
 			name: "Error/MissingClaims",
+
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -84,11 +81,14 @@ func TestRestShortCodeCancelEmailUpdate(t *testing.T) {
 					Return(testCase.serviceMock.err)
 			}
 
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
+			}
+
 			handler := handlers.NewRestShortCodeCancelEmailUpdate(service, config.LoggerDev)
 			w := httptest.NewRecorder()
-			request := httptest.NewRequestWithContext(
-				session.SetClaimsContext(t.Context(), testCase.claims), http.MethodDelete, "/v2/short-code/update-email", nil,
-			)
+			request := httptest.NewRequestWithContext(ctx, http.MethodDelete, "/v2/short-code/update-email", nil)
 
 			handler.ServeHTTP(w, request)
 

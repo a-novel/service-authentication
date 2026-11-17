@@ -4,20 +4,47 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/servicetoken"
 	"github.com/a-novel-kit/golib/servicetoken/servicetokentest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
+	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers/middlewares"
 )
 
 // serviceTokenAudience is the audience the handler tests' service tokens name.
 const serviceTokenAudience = "authentication"
+
+// The account a credentials service returns, and the JSON body a handler answers it with.
+var (
+	credentialsFixture = &core.Credentials{
+		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+		Email:     "user@provider.com",
+		Role:      authconfig.RoleUser,
+		CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
+	}
+	credentialsFixtureJSON = map[string]any{
+		"id":        "00000000-0000-0000-0000-000000000001",
+		"email":     "user@provider.com",
+		"role":      authconfig.RoleUser,
+		"createdAt": "2018-02-02T12:00:00Z",
+		"updatedAt": "2020-02-02T12:00:00Z",
+	}
+)
+
+// The token pair a session service returns, and the JSON body a handler answers it with.
+var (
+	tokenFixture     = &core.Token{AccessToken: "access-token", RefreshToken: "refresh-token"}
+	tokenFixtureJSON = map[string]any{"accessToken": "access-token", "refreshToken": "refresh-token"}
+)
 
 // serveAsCaller serves request through handler, behind the service-token middleware the server
 // mounts, with a token caller holds. An empty caller sends no token to a server that verifies none,
@@ -46,14 +73,15 @@ func serveAsCaller(t *testing.T, handler http.Handler, request *http.Request, ca
 	return w.Result()
 }
 
-// requireJSONBody decodes the JSON body of res into a value of expect's type, a pointer, and
-// requires it to equal expect.
+// requireJSONBody requires the JSON body of res to equal expect. It decodes the body into any, so
+// expect spells the wire format: an object is a map[string]any, an array a []any and a number a
+// float64.
 func requireJSONBody(t *testing.T, res *http.Response, expect any) {
 	t.Helper()
 
-	body := reflect.New(reflect.TypeOf(expect).Elem()).Interface()
+	var body any
 
-	require.NoError(t, json.NewDecoder(res.Body).Decode(body))
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
 	require.Equal(t, expect, body)
 }
 

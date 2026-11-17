@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"cmp"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +25,10 @@ func TestRestTokenRevoke(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	claims := &session.Claims{UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001"))}
+	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	claims := &session.Claims{UserID: new(userID)}
+	validBody := `{"refreshToken": "refresh-token"}`
+	serviceRequest := &core.TokenRevokeRequest{UserID: userID, RefreshToken: "refresh-token"}
 
 	type serviceMock struct {
 		err error
@@ -33,8 +37,10 @@ func TestRestTokenRevoke(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		claims *session.Claims
-		body   string
+		// body replaces validBody when set.
+		body string
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -44,28 +50,19 @@ func TestRestTokenRevoke(t *testing.T) {
 		{
 			name: "Success",
 
-			claims: claims,
-			body:   `{"refreshToken": "refresh-token"}`,
-
 			serviceMock: &serviceMock{},
 
 			expectStatus: http.StatusNoContent,
 		},
 		{
-			name: "Error/InvalidRefreshToken",
+			name: "Error/MismatchClaims",
 
-			claims: claims,
-			body:   `{"refreshToken": "refresh-token"}`,
-
-			serviceMock: &serviceMock{err: core.ErrTokenRevokeInvalidRefreshToken},
+			serviceMock: &serviceMock{err: core.ErrTokenRevokeMismatchClaims},
 
 			expectStatus: http.StatusForbidden,
 		},
 		{
 			name: "Error/InvalidRequest",
-
-			claims: claims,
-			body:   `{"refreshToken": "refresh-token"}`,
 
 			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
 
@@ -74,35 +71,21 @@ func TestRestTokenRevoke(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			claims: claims,
-			body:   `{"refreshToken": "refresh-token"}`,
-
 			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
-			name: "Error/MismatchClaims",
-
-			claims: claims,
-			body:   `{"refreshToken": "refresh-token"}`,
-
-			serviceMock: &serviceMock{err: core.ErrTokenRevokeMismatchClaims},
-
-			expectStatus: http.StatusForbidden,
-		},
-		{
 			name: "Error/MalformedBody",
 
-			claims: claims,
-			body:   `{"refreshToken": `,
+			body: `{"refreshToken": `,
 
 			expectStatus: http.StatusBadRequest,
 		},
 		{
 			name: "Error/MissingClaims",
 
-			body: `{"refreshToken": "refresh-token"}`,
+			noClaims: true,
 
 			expectStatus:    http.StatusUnauthorized,
 			expectChallenge: middlewares.BearerChallenge,
@@ -117,15 +100,19 @@ func TestRestTokenRevoke(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, &core.TokenRevokeRequest{UserID: *claims.UserID, RefreshToken: "refresh-token"}).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.err)
+			}
+
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
 			}
 
 			handler := handlers.NewRestTokenRevoke(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(
-				session.SetClaimsContext(t.Context(), testCase.claims),
-				http.MethodPut, "/v2/session/revoke", strings.NewReader(testCase.body),
+				ctx, http.MethodPut, "/v2/session/revoke", strings.NewReader(cmp.Or(testCase.body, validBody)),
 			)
 
 			handler.ServeHTTP(w, request)
