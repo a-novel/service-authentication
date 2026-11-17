@@ -60,8 +60,6 @@ func main() {
 		defer cfg.Postgres.Close()
 	}
 
-	lo.Must0(cfg.OAuth.Check(cfg.ServiceToken))
-
 	jsonKeys := cfg.Dependencies.ServiceJSONKeys
 
 	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(jsonKeys.Address(), jsonKeys.DialOptions()...))
@@ -89,6 +87,11 @@ func main() {
 func newRouter(
 	cfg config.App, jsonKeysClient servicejsonkeys.Client, mailDelivery *core.MailDelivery,
 ) (http.Handler, error) {
+	err := cfg.OAuth.Check(cfg.ServiceToken)
+	if err != nil {
+		return nil, fmt.Errorf("oauth clients: %w", err)
+	}
+
 	withServiceToken, err := httpf.ServiceTokenGate(
 		cfg.ServiceToken, httpf.NewPoolClient(httpf.PoolOptions{}), cfg.Logger, cfg.Rest.Liveness,
 	)

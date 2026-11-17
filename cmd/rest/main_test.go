@@ -15,6 +15,7 @@ import (
 	"github.com/a-novel-kit/golib/servicetoken/servicetokentest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 )
@@ -47,6 +48,7 @@ func TestNewRouter(t *testing.T) {
 		name string
 
 		serviceToken servicetoken.Config
+		oauth        authconfig.OAuth
 		target       string
 		token        string
 
@@ -106,6 +108,21 @@ func TestNewRouter(t *testing.T) {
 
 			expectErr: servicetoken.ErrIssuerRequired,
 		},
+		{
+			// A client that shares the account platform's caller could both issue and exchange codes,
+			// so the server stops at startup.
+			name: "Error/ClientsConfig",
+
+			serviceToken: gate,
+			oauth: authconfig.OAuth{
+				AccountPlatformCaller: serviceTokenCaller,
+				Clients: map[string]authconfig.Client{
+					"studio": {RedirectURI: "https://studio.example.com/auth/callback", Caller: serviceTokenCaller},
+				},
+			},
+
+			expectErr: authconfig.ErrClientsConfig,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -114,6 +131,7 @@ func TestNewRouter(t *testing.T) {
 
 			cfg := config.AppPresetDefault
 			cfg.ServiceToken = testCase.serviceToken
+			cfg.OAuth = testCase.oauth
 			cfg.Logger = configtest.Logger
 
 			router, err := newRouter(cfg, jsonKeysClient, core.NewMailDelivery(cfg.SMTP, 1))
