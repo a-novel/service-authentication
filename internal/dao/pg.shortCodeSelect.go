@@ -16,10 +16,6 @@ import (
 //go:embed pg.shortCodeSelect.sql
 var shortCodeSelectQuery string
 
-// ErrShortCodeSelectNotFound is returned by [PgShortCodeSelect.Exec] when no active short code matches
-// the (Usage, Target) pair. It covers a code never issued, expired and already consumed alike.
-var ErrShortCodeSelectNotFound = errors.New("short code not found")
-
 // ShortCodeSelectRequest is the input to [PgShortCodeSelect.Exec]. A partial unique index keeps at
 // most one active row per (Usage, Target) pair.
 type ShortCodeSelectRequest struct {
@@ -54,7 +50,7 @@ func (dao *PgShortCodeSelect) Exec(ctx context.Context, request *ShortCodeSelect
 
 	err = db.NewRaw(shortCodeSelectQuery, request.Target, request.Usage).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrShortCodeSelectNotFound)
+		err = errors.Join(err, ErrShortCodeNotFound)
 	}
 
 	if err != nil {

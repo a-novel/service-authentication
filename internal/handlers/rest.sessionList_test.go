@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +28,7 @@ func TestRestSessionList(t *testing.T) {
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	// A token of a session another token opened names that session.
 	claims := &session.Claims{
-		UserID: lo.ToPtr(userID), RefreshTokenID: "refresh-token-id", SessionID: "00000000-0000-0000-0000-0000000000a1",
+		UserID: new(userID), RefreshTokenID: "refresh-token-id", SessionID: "00000000-0000-0000-0000-0000000000a1",
 	}
 	date := time.Date(2026, time.November, 3, 12, 0, 0, 0, time.UTC)
 
@@ -151,8 +150,6 @@ func TestRestSessionList(t *testing.T) {
 				require.NoError(t, json.Unmarshal(data, &jsonRes))
 				require.Equal(t, testCase.expectResponse, jsonRes)
 			}
-
-			service.AssertExpectations(t)
 		})
 	}
 }

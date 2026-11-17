@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -14,10 +13,6 @@ import (
 
 //go:embed pg.sessionDelete.sql
 var sessionDeleteQuery string
-
-// ErrSessionDeleteNotFound is returned by [PgSessionDelete.Exec] when the account holds no logged-out
-// session of the requested ID.
-var ErrSessionDeleteNotFound = errors.New("logged-out session not found")
 
 // SessionDeleteRequest is the input to [PgSessionDelete.Exec].
 type SessionDeleteRequest struct {
@@ -54,7 +49,7 @@ func (dao *PgSessionDelete) Exec(ctx context.Context, request *SessionDeleteRequ
 	}
 
 	if deleted == 0 {
-		return otel.ReportError(span, ErrSessionDeleteNotFound)
+		return otel.ReportError(span, ErrSessionNotFound)
 	}
 
 	return nil

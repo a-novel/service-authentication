@@ -97,8 +97,8 @@ func TestWaitlistCleanup(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
-			credentials := coremocks.NewMockWaitlistCleanupCredentials(t)
-			writer := coremocks.NewMockWaitlistCleanupWriter(t)
+			credentials := coremocks.NewMockWaitlistCleanupDaoCredentialsList(t)
+			writer := coremocks.NewMockWaitlistCleanupDaoWaitlist(t)
 
 			var calls []*mock.Call
 
@@ -148,8 +148,6 @@ func TestWaitlistCleanup(t *testing.T) {
 			}
 
 			require.Equal(t, &testCase.expect, result)
-			credentials.AssertExpectations(t)
-			writer.AssertExpectations(t)
 		})
 	}
 }

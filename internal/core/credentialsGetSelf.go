@@ -42,7 +42,7 @@ func NewCredentialsGetSelf(
 }
 
 // Exec returns the account with a nil [CredentialsSelf.PendingEmail] when no change awaits
-// confirmation. It returns [ErrCredentialsGetNotFound] when the account no longer exists.
+// confirmation. It returns [ErrCredentialsNotFound] when the account no longer exists.
 func (service *CredentialsGetSelf) Exec(
 	ctx context.Context, request *CredentialsGetSelfRequest,
 ) (*CredentialsSelf, error) {
@@ -64,7 +64,7 @@ func (service *CredentialsGetSelf) Exec(
 	}
 
 	shortCode, err := service.daoShortCodeSelect.Exec(ctx, shortCodeRequest)
-	if errors.Is(err, dao.ErrShortCodeSelectNotFound) {
+	if errors.Is(err, dao.ErrShortCodeNotFound) {
 		return credentials, nil
 	}
 

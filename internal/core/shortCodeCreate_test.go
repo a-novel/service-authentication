@@ -140,8 +140,6 @@ func TestShortCodeCreate(t *testing.T) {
 
 				require.NoError(t, lib.CompareArgon2(resp.PlainCode, encryptedShortCode))
 			}
-
-			mockDao.AssertExpectations(t)
 		})
 	}
 }

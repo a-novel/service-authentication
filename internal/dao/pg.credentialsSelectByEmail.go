@@ -14,10 +14,6 @@ import (
 //go:embed pg.credentialsSelectByEmail.sql
 var credentialsSelectByEmailQuery string
 
-// ErrCredentialsSelectByEmailNotFound is returned by [PgCredentialsSelectByEmail.Exec] when no row
-// matches the requested email.
-var ErrCredentialsSelectByEmailNotFound = errors.New("credentials not found")
-
 // CredentialsSelectByEmailRequest is the input to [PgCredentialsSelectByEmail.Exec].
 type CredentialsSelectByEmailRequest struct {
 	// Email of the credentials to fetch. Comparison is case-sensitive.
@@ -47,7 +43,7 @@ func (dao *PgCredentialsSelectByEmail) Exec(
 
 	err = db.NewRaw(credentialsSelectByEmailQuery, request.Email).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrCredentialsSelectByEmailNotFound)
+		err = errors.Join(err, ErrCredentialsNotFound)
 	}
 
 	if err != nil {

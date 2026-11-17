@@ -2,7 +2,7 @@
 # and an extending config REPLACES the base's allowlists rather than adding to
 # them, so a repo that needs one entry has to restate the rest.
 #
-# Every allowlist targets generic-api-key alone — the entropy heuristic. The
+# Every allowlist targets generic-api-key alone, the entropy heuristic. The
 # provider-specific rules (AWS, GitHub, Stripe, ...) stay active everywhere,
 # including in tests, where a real cloud credential is never acceptable.
 

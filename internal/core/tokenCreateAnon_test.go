@@ -84,8 +84,6 @@ func TestTokenCreateAnon(t *testing.T) {
 			resp, err := service.Exec(ctx)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
-
-			serviceSignClaims.AssertExpectations(t)
 		})
 	}
 }

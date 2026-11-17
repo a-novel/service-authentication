@@ -239,12 +239,6 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				require.Equal(t, testCase.expect, resp)
 
 				require.NoError(t, mailDelivery.Wait(ctx))
-
-				mockDao.AssertExpectations(t)
-				mockDaoSelect.AssertExpectations(t)
-				serviceShortCodeVerify.AssertExpectations(t)
-				serviceShortCodeConsume.AssertExpectations(t)
-				smtpService.AssertExpectations(t)
 			})
 		})
 	}
@@ -293,10 +287,4 @@ func TestCredentialsUpdateEmailHashing(t *testing.T) {
 	require.NoError(t, err)
 
 	waitForMailDelivery(t, mailDelivery)
-	mockDao.AssertExpectations(t)
-	mockDaoSelect.AssertExpectations(t)
-	verify.AssertExpectations(t)
-	consume.AssertExpectations(t)
-	transactor.AssertExpectations(t)
-	smtpService.AssertExpectations(t)
 }

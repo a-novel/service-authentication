@@ -532,14 +532,6 @@ func TestTokenCreate(t *testing.T) {
 			resp, err := service.Exec(ctx, testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
-
-			mockDao.AssertExpectations(t)
-			daoLocationConsent.AssertExpectations(t)
-			daoSessionUpsert.AssertExpectations(t)
-			daoSessionRevokeOldest.AssertExpectations(t)
-			daoSessionTrim.AssertExpectations(t)
-			serviceSignClaims.AssertExpectations(t)
-			transactor.AssertExpectations(t)
 		})
 	}
 }

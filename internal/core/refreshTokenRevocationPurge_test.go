@@ -129,9 +129,6 @@ func TestRefreshTokenRevocationPurge(t *testing.T) {
 			res, err := service.Exec(t.Context())
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
-
-			mockDao.AssertExpectations(t)
-			mockDaoSessions.AssertExpectations(t)
 		})
 	}
 }

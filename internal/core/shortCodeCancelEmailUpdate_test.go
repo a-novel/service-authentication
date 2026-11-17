@@ -57,7 +57,7 @@ func TestShortCodeCancelEmailUpdate(t *testing.T) {
 			// The select skips expired and retired codes, so none of them awaits confirmation.
 			name: "Error/NotFound",
 
-			daoSelectMock: &daoSelectMock{err: dao.ErrShortCodeSelectNotFound},
+			daoSelectMock: &daoSelectMock{err: dao.ErrShortCodeNotFound},
 
 			expectErr: core.ErrShortCodeNotFound,
 		},
@@ -66,7 +66,7 @@ func TestShortCodeCancelEmailUpdate(t *testing.T) {
 			name: "Error/AlreadyDeleted",
 
 			daoSelectMock: &daoSelectMock{resp: shortCode},
-			daoMock:       &daoMock{err: dao.ErrShortCodeDeleteNotFound},
+			daoMock:       &daoMock{err: dao.ErrShortCodeNotFound},
 
 			expectErr: core.ErrShortCodeNotFound,
 		},
@@ -117,9 +117,6 @@ func TestShortCodeCancelEmailUpdate(t *testing.T) {
 
 			err := service.Exec(t.Context(), &core.ShortCodeCancelEmailUpdateRequest{UserID: userID})
 			require.ErrorIs(t, err, testCase.expectErr)
-
-			mockDao.AssertExpectations(t)
-			mockDaoSelect.AssertExpectations(t)
 		})
 	}
 }

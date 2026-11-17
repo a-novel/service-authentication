@@ -71,10 +71,6 @@ func (service *SessionDelete) Exec(ctx context.Context, request *SessionDeleteRe
 	// A logged-out session never becomes active again, so the delete misses only when a concurrent
 	// request removed the row first.
 	err = service.dao.Exec(ctx, &dao.SessionDeleteRequest{ID: request.ID, UserID: request.UserID})
-	if errors.Is(err, dao.ErrSessionDeleteNotFound) {
-		err = errors.Join(err, ErrSessionNotFound)
-	}
-
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("delete session: %w", err))
 	}

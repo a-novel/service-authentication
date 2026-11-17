@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -16,7 +15,6 @@ import (
 	"github.com/a-novel-kit/golib/otel"
 	"github.com/a-novel-kit/golib/transaction"
 
-	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
 	"github.com/a-novel/service-authentication/v2/internal/models/session"
@@ -28,10 +26,6 @@ var ErrCredentialsCreateInvalidRegistrationData = errors.New("invalid registrati
 
 // waitlistCleanupTimeout limits the delay from optional Google cleanup after account creation.
 const waitlistCleanupTimeout = 3 * time.Second
-
-type credentialsCreateRegistrationData struct {
-	Role string `json:"role"`
-}
 
 // CredentialsCreateDao provides credential insertion capabilities.
 type CredentialsCreateDao interface {
@@ -61,8 +55,8 @@ type CredentialsCreateDaoSessionTrim interface {
 	Exec(ctx context.Context, request *dao.SessionTrimRequest) error
 }
 
-// CredentialsCreateWaitlist removes registered addresses after the account transaction commits.
-type CredentialsCreateWaitlist interface {
+// CredentialsCreateDaoWaitlist removes registered addresses after the account transaction commits.
+type CredentialsCreateDaoWaitlist interface {
 	Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)
 }
 
@@ -111,7 +105,7 @@ type CredentialsCreate struct {
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume
 	serviceSignClaims       CredentialsCreateServiceSignClaims
 	transactor              transaction.Transactor
-	waitlist                CredentialsCreateWaitlist
+	daoWaitlist             CredentialsCreateDaoWaitlist
 }
 
 func NewCredentialsCreate(
@@ -124,7 +118,7 @@ func NewCredentialsCreate(
 	serviceShortCodeConsume CredentialsCreateServiceShortCodeConsume,
 	serviceSignClaims CredentialsCreateServiceSignClaims,
 	transactor transaction.Transactor,
-	waitlist CredentialsCreateWaitlist,
+	daoWaitlist CredentialsCreateDaoWaitlist,
 	refreshTokenLeeway time.Duration,
 ) *CredentialsCreate {
 	return &CredentialsCreate{
@@ -139,7 +133,7 @@ func NewCredentialsCreate(
 		serviceShortCodeConsume: serviceShortCodeConsume,
 		serviceSignClaims:       serviceSignClaims,
 		transactor:              transactor,
-		waitlist:                waitlist,
+		daoWaitlist:             daoWaitlist,
 	}
 }
 
@@ -218,7 +212,9 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	// Preserve the committed account even when Google is unavailable or the client has disconnected.
 	// A failed cleanup leaves the account standing; the waitlist span records the error.
 	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), waitlistCleanupTimeout)
-	_, _ = service.waitlist.Exec(cleanupCtx, &dao.WaitlistRequest{Action: dao.WaitlistActionRemove, Email: request.Email})
+	_, _ = service.daoWaitlist.Exec(
+		cleanupCtx, &dao.WaitlistRequest{Action: dao.WaitlistActionRemove, Email: request.Email},
+	)
 
 	cancel()
 
@@ -235,24 +231,4 @@ func (service *CredentialsCreate) Exec(ctx context.Context, request *Credentials
 	service.bounds.bound(ctx, credentials.ID)
 
 	return tokens, nil
-}
-
-func computeRole(data []byte) (string, error) {
-	if len(data) == 0 {
-		return authconfig.RoleUser, nil
-	}
-
-	var registrationData credentialsCreateRegistrationData
-
-	err := json.Unmarshal(data, &registrationData)
-	if err != nil {
-		return "", fmt.Errorf("decode registration data: %w", err)
-	}
-
-	_, err = authconfig.PermissionsConfigDefault.Priority(registrationData.Role)
-	if err != nil {
-		return "", fmt.Errorf("validate registration role: %w", err)
-	}
-
-	return registrationData.Role, nil
 }

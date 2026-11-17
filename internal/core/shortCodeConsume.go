@@ -53,7 +53,7 @@ func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeCon
 
 	entity, err := service.dao.Exec(ctx, daoRequest)
 	if err != nil {
-		if errors.Is(err, dao.ErrShortCodeDeleteNotFound) {
+		if errors.Is(err, dao.ErrShortCodeNotFound) {
 			err = errors.Join(err, ErrShortCodeConsumeInvalid)
 		}
 

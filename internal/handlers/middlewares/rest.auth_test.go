@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -64,14 +63,14 @@ func TestAuth(t *testing.T) {
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
 				resp: &session.Claims{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"role1"},
 				},
 			},
 
 			expectStatus: http.StatusOK,
 			expectClaims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Roles:  []string{"role1"},
 			},
 		},
@@ -88,14 +87,14 @@ func TestAuth(t *testing.T) {
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
 				resp: &session.Claims{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"role2"},
 				},
 			},
 
 			expectStatus: http.StatusOK,
 			expectClaims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Roles:  []string{"role2"},
 			},
 		},
@@ -111,14 +110,14 @@ func TestAuth(t *testing.T) {
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
 				resp: &session.Claims{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"role1"},
 				},
 			},
 
 			expectStatus: http.StatusOK,
 			expectClaims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 				Roles:  []string{"role1"},
 			},
 		},
@@ -217,7 +216,7 @@ func TestAuth(t *testing.T) {
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
 				resp: &session.Claims{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"role2"},
 				},
 			},
@@ -241,7 +240,7 @@ func TestAuth(t *testing.T) {
 			verifyClaimsMock: &verifyClaimsMock{
 				reqToken: "token",
 				resp: &session.Claims{
-					UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:  []string{"ghost"},
 				},
 			},

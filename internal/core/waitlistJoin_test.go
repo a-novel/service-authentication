@@ -69,8 +69,8 @@ func TestWaitlistJoin(t *testing.T) {
 				lang = "fr"
 			}
 
-			credentials := coremocks.NewMockWaitlistJoinCredentials(t)
-			writer := coremocks.NewMockWaitlistJoinWriter(t)
+			credentials := coremocks.NewMockWaitlistJoinDaoCredentialsExist(t)
+			writer := coremocks.NewMockWaitlistJoinDaoWaitlist(t)
 
 			var calls []*mock.Call
 			if !testCase.invalid {
@@ -104,8 +104,6 @@ func TestWaitlistJoin(t *testing.T) {
 				Email: email, Lang: lang,
 			})
 			require.ErrorIs(t, err, testCase.expectErr)
-			credentials.AssertExpectations(t)
-			writer.AssertExpectations(t)
 		})
 	}
 }

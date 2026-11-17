@@ -1,10 +1,18 @@
 package dao
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
+)
+
+var (
+	// ErrCredentialsNotFound is returned when no credentials match the request.
+	ErrCredentialsNotFound = errors.New("credentials not found")
+	// ErrCredentialsAlreadyExists is returned when another account already holds the email.
+	ErrCredentialsAlreadyExists = errors.New("credentials already exists")
 )
 
 // Credentials hold the information used to authenticate and identify a user.

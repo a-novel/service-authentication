@@ -24,7 +24,7 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	smtpConfig := authconfig.SmtpUrls{UpdatePassword: "update-password-url"}
+	smtpConfig := authconfig.SMTPURLs{UpdatePassword: "update-password-url"}
 
 	type daoMock struct {
 		resp *dao.Credentials
@@ -126,10 +126,10 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			},
 
 			daoMock: &daoMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
-			expectErr: core.ErrCredentialsByEmailNotFound,
+			expectErr: core.ErrCredentialsNotFound,
 		},
 		{
 			name: "Error/CreateShortCode",
@@ -171,8 +171,8 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			serviceCreate := coremocks.NewMockShortCodeCreatePasswordResetService(t)
-			mockDao := coremocks.NewMockShortCodeCreatePasswordResetDao(t)
+			serviceCreate := coremocks.NewMockShortCodeCreatePasswordResetServiceShortCodeCreate(t)
+			mockDao := coremocks.NewMockShortCodeCreatePasswordResetDaoSelectByEmail(t)
 			smtpService := coremocks.NewMockMailDeliverySMTP(t)
 
 			mailDelivery := core.NewMailDelivery(smtpService, 1)
@@ -238,10 +238,6 @@ func TestShortCodeCreatePasswordReset(t *testing.T) {
 			}
 
 			waitForMailDelivery(t, mailDelivery)
-
-			serviceCreate.AssertExpectations(t)
-			mockDao.AssertExpectations(t)
-			smtpService.AssertExpectations(t)
 		})
 	}
 }

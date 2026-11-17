@@ -20,11 +20,11 @@ type RestCredentialsResetPasswordService interface {
 
 // credentialsResetPasswordErrors maps a refused password reset to its status.
 var credentialsResetPasswordErrors = httpf.ErrMap{
-	core.ErrCredentialsUpdatePasswordNotFound: http.StatusForbidden,
-	core.ErrShortCodeNotFound:                 http.StatusForbidden,
-	core.ErrShortCodeConsumeInvalid:           http.StatusForbidden,
-	core.ErrShortCodeConsumeExpired:           http.StatusForbidden,
-	core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
+	core.ErrCredentialsNotFound:     http.StatusForbidden,
+	core.ErrShortCodeNotFound:       http.StatusForbidden,
+	core.ErrShortCodeConsumeInvalid: http.StatusForbidden,
+	core.ErrShortCodeConsumeExpired: http.StatusForbidden,
+	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
 }
 
 // RestCredentialsResetPasswordRequest is the JSON body of PUT /v2/credentials/password.

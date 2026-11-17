@@ -22,8 +22,8 @@ type RestCredentialsUpdateLocationConsentService interface {
 
 // credentialsUpdateLocationConsentErrors maps a refused consent update to its status.
 var credentialsUpdateLocationConsentErrors = httpf.ErrMap{
-	core.ErrCredentialsUpdateLocationConsentNotFound: http.StatusNotFound,
-	core.ErrInvalidRequest:                           http.StatusUnprocessableEntity,
+	core.ErrCredentialsNotFound: http.StatusNotFound,
+	core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
 }
 
 // RestCredentialsUpdateLocationConsentRequest is the JSON body of PATCH /v2/credentials/location-consent.

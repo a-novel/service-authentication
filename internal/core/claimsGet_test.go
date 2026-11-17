@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +20,7 @@ func TestClaimsGet(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	userID := lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001"))
+	userID := new(uuid.MustParse("00000000-0000-0000-0000-000000000001"))
 
 	// ownSessionClaims has no session claim: the session its refresh token opened stands in for it.
 	ownSessionClaims := &session.Claims{UserID: userID, Roles: []string{"user"}, RefreshTokenID: "refresh-token-id"}
@@ -152,8 +151,6 @@ func TestClaimsGet(t *testing.T) {
 			if testCase.expectNotErr != nil {
 				require.NotErrorIs(t, err, testCase.expectNotErr)
 			}
-
-			mockDao.AssertExpectations(t)
 		})
 	}
 }

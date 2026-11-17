@@ -329,7 +329,7 @@ func (service *TokenGrant) grantAuthorizationCode(
 	id := sha256.Sum256([]byte(params.Get("code")))
 
 	code, err := service.daoSelect.Exec(ctx, &dao.AuthorizationCodeSelectRequest{ID: id[:]})
-	if errors.Is(err, dao.ErrAuthorizationCodeSelectNotFound) {
+	if errors.Is(err, dao.ErrAuthorizationCodeNotFound) {
 		return nil, otel.ReportError(span, errors.Join(err, ErrTokenGrantUnknownCode))
 	}
 
@@ -370,7 +370,7 @@ func (service *TokenGrant) grantAuthorizationCode(
 	}
 
 	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: code.UserID})
-	if errors.Is(err, dao.ErrCredentialsSelectNotFound) {
+	if errors.Is(err, dao.ErrCredentialsNotFound) {
 		return nil, otel.ReportError(span, errors.Join(err, ErrTokenGrantUnknownCode))
 	}
 
@@ -395,7 +395,7 @@ func (service *TokenGrant) grantAuthorizationCode(
 	}
 
 	err = service.daoConsume.Exec(ctx, &dao.AuthorizationCodeConsumeRequest{ID: id[:], Now: now})
-	if errors.Is(err, dao.ErrAuthorizationCodeConsumeNotFound) {
+	if errors.Is(err, dao.ErrAuthorizationCodeNotFound) {
 		// Another exchange consumed the code since it was read, so this one is a reuse, and the pair
 		// signed here is dropped.
 		return nil, otel.ReportError(span, service.refuseReuse(ctx, code, now))
@@ -458,7 +458,7 @@ func (service *TokenGrant) grantRefreshToken(
 	}
 
 	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: claims.UserID})
-	if errors.Is(err, dao.ErrCredentialsSelectNotFound) {
+	if errors.Is(err, dao.ErrCredentialsNotFound) {
 		return nil, otel.ReportError(span, errors.Join(err, ErrTokenGrantInvalidRefreshToken))
 	}
 
@@ -582,8 +582,7 @@ func verifiesChallenge(code *dao.AuthorizationCode, verifier string) bool {
 // oauth.error_description attributes, the keys the Services tab groups the core.TokenGrant spans by,
 // per client and grant type. The span of a grant reports the same refusal, as its own error.
 func reportTokenGrant(span trace.Span, err error) error {
-	var refusal *OAuthError
-	if errors.As(err, &refusal) {
+	if refusal, ok := errors.AsType[*OAuthError](err); ok {
 		span.SetAttributes(
 			attribute.String("oauth.error", refusal.Code),
 			attribute.String("oauth.error_description", refusal.Description),

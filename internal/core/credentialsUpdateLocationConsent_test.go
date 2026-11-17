@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -42,7 +41,7 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 			// next access token on.
 			name: "Success/On",
 
-			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: lo.ToPtr(true)},
+			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(true)},
 
 			transaction: true,
 			daoMock:     &errMock{},
@@ -51,7 +50,7 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 			// Turning it off erases every stored location of the account, in the same transaction.
 			name: "Success/Off",
 
-			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: lo.ToPtr(false)},
+			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)},
 
 			transaction:       true,
 			daoMock:           &errMock{},
@@ -67,18 +66,18 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 		{
 			name: "Error/NotFound",
 
-			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: lo.ToPtr(false)},
+			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)},
 
 			transaction: true,
-			daoMock:     &errMock{err: dao.ErrCredentialsUpdateLocationConsentNotFound},
+			daoMock:     &errMock{err: dao.ErrCredentialsNotFound},
 
-			expectErr: core.ErrCredentialsUpdateLocationConsentNotFound,
+			expectErr: core.ErrCredentialsNotFound,
 		},
 		{
 			// A failed erasure rolls the consent back.
 			name: "Error/ClearLocations",
 
-			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: lo.ToPtr(false)},
+			request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)},
 
 			transaction:       true,
 			daoMock:           &errMock{},
@@ -122,10 +121,6 @@ func TestCredentialsUpdateLocationConsent(t *testing.T) {
 
 			err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
-
-			mockDao.AssertExpectations(t)
-			mockDaoClearLocations.AssertExpectations(t)
-			transactor.AssertExpectations(t)
 		})
 	}
 }

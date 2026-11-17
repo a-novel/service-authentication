@@ -63,11 +63,11 @@ func TestPgCredentialsSelect(t *testing.T) {
 				ID: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 			},
 
-			expectErr: dao.ErrCredentialsSelectNotFound,
+			expectErr: dao.ErrCredentialsNotFound,
 		},
 	}
 
-	dao := dao.NewPgCredentialsSelect()
+	daoSelect := dao.NewPgCredentialsSelect()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestPgCredentialsSelect(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				key, err := dao.Exec(ctx, testCase.request)
+				key, err := daoSelect.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, key)
 			})

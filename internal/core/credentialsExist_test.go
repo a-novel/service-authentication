@@ -79,8 +79,6 @@ func TestCredentialsExist(t *testing.T) {
 			resp, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
-
-			mockDao.AssertExpectations(t)
 		})
 	}
 }

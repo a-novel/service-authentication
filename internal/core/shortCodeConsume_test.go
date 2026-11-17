@@ -65,7 +65,7 @@ func TestShortCodeConsume(t *testing.T) {
 			name: "Error/AlreadyConsumed",
 
 			daoMock: &daoMock{
-				err: dao.ErrShortCodeDeleteNotFound,
+				err: dao.ErrShortCodeNotFound,
 			},
 
 			expectErr: core.ErrShortCodeConsumeInvalid,
@@ -99,8 +99,6 @@ func TestShortCodeConsume(t *testing.T) {
 			resp, err := service.Exec(t.Context(), &core.ShortCodeConsumeRequest{ID: shortCodeID})
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
-
-			daoDelete.AssertExpectations(t)
 		})
 	}
 }

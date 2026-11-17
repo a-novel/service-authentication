@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -27,7 +26,7 @@ func TestRestSessionDelete(t *testing.T) {
 
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	sessionID := uuid.MustParse("00000000-0000-0000-0000-0000000000a2")
-	claims := &session.Claims{UserID: lo.ToPtr(userID), RefreshTokenID: "00000000-0000-0000-0000-0000000000a1"}
+	claims := &session.Claims{UserID: new(userID), RefreshTokenID: "00000000-0000-0000-0000-0000000000a1"}
 
 	type serviceMock struct {
 		err error
@@ -129,8 +128,6 @@ func TestRestSessionDelete(t *testing.T) {
 			res := w.Result()
 			require.NoError(t, res.Body.Close())
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
-
-			service.AssertExpectations(t)
 		})
 	}
 }

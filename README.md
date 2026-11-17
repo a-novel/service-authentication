@@ -33,7 +33,7 @@ The service runs as published OCI images plus a PostgreSQL database. Accounts li
 
 A running [JSON Keys service](https://github.com/a-novel/service-json-keys) is a hard dependency. Authentication reaches it over its private gRPC port, which carries sensitive key material: keep that link on an unexposed network.
 
-> **OpenTofu modules are the planned canonical deployment path.** Until they land, deploy the images with any container orchestrator — the composition below is the reference for which images to run, how they wire together, and the environment they expect.
+> **OpenTofu modules are the planned canonical deployment path.** Until they land, deploy the images with any container orchestrator: the composition below is the reference for which images to run, how they wire together, and the environment they expect.
 
 | Image                                     | Role                                                                                          |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -176,7 +176,7 @@ The service reads every variable from the process environment, prefixed with
 | `SMTP_SENDER_NAME`       | Display name on outgoing emails.                                                                               |                     |
 | `SMTP_SENDER_EMAIL`      | Sender address.                                                                                                |                     |
 | `SMTP_USERNAME`          | SMTP authentication identity; treat as protected account metadata. Unused without a password.                  | `SMTP_SENDER_EMAIL` |
-| `SMTP_SENDER_PASSWORD`   | SMTP authentication password. Sensitive — handle with care. Empty for an IP-only relay.                        |                     |
+| `SMTP_SENDER_PASSWORD`   | SMTP authentication password. Sensitive: handle with care. Empty for an IP-only relay.                         |                     |
 | `SMTP_SENDER_DOMAIN`     | Server name authentication is bound to; must match the host portion of `SMTP_ADDR`. Unused without a password. |                     |
 | `SMTP_TIMEOUT`           | Send timeout.                                                                                                  | `20s`               |
 | `SMTP_MAX_CONCURRENT`    | Maximum number of emails delivered at once; further sends wait for a free slot.                                | `16`                |

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -25,7 +24,7 @@ func TestRestTokenRevoke(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	claims := &session.Claims{UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001"))}
+	claims := &session.Claims{UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001"))}
 
 	type serviceMock struct {
 		err error
@@ -135,8 +134,6 @@ func TestRestTokenRevoke(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 			require.Equal(t, testCase.expectChallenge, res.Header.Get("WWW-Authenticate"))
-
-			service.AssertExpectations(t)
 		})
 	}
 }

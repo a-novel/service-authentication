@@ -16,10 +16,6 @@ import (
 //go:embed pg.sessionSelect.sql
 var sessionSelectQuery string
 
-// ErrSessionSelectNotFound is returned by [PgSessionSelect.Exec] when the account holds no session of
-// the requested ID.
-var ErrSessionSelectNotFound = errors.New("session not found")
-
 // SessionSelectRequest is the input to [PgSessionSelect.Exec].
 type SessionSelectRequest struct {
 	ID uuid.UUID
@@ -47,7 +43,7 @@ func (dao *PgSessionSelect) Exec(ctx context.Context, request *SessionSelectRequ
 
 	err = db.NewRaw(sessionSelectQuery, request.ID, request.UserID).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrSessionSelectNotFound)
+		err = errors.Join(err, ErrSessionNotFound)
 	}
 
 	if err != nil {

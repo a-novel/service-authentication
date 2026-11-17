@@ -14,10 +14,6 @@ import (
 //go:embed pg.authorizationCodeSelect.sql
 var authorizationCodeSelectQuery string
 
-// ErrAuthorizationCodeSelectNotFound is returned by [PgAuthorizationCodeSelect.Exec] when no code has
-// the requested ID: it was never issued, or it was purged.
-var ErrAuthorizationCodeSelectNotFound = errors.New("authorization code not found")
-
 // AuthorizationCodeSelectRequest is the input to [PgAuthorizationCodeSelect.Exec].
 type AuthorizationCodeSelectRequest struct {
 	// See [AuthorizationCode.ID].
@@ -46,7 +42,7 @@ func (dao *PgAuthorizationCodeSelect) Exec(
 
 	err = db.NewRaw(authorizationCodeSelectQuery, request.ID).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrAuthorizationCodeSelectNotFound)
+		err = errors.Join(err, ErrAuthorizationCodeNotFound)
 	}
 
 	if err != nil {

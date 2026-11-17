@@ -113,7 +113,7 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 				req: &core.CredentialsUpdateEmailRequest{
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: core.ErrCredentialsUpdateEmailNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,
@@ -129,7 +129,7 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 				req: &core.CredentialsUpdateEmailRequest{
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: core.ErrCredentialsUpdateEmailAlreadyExists,
+				err: core.ErrCredentialsAlreadyExists,
 			},
 
 			expectStatus: http.StatusConflict,

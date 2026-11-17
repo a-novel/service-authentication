@@ -20,9 +20,9 @@ type RestTokenCreateService interface {
 // tokenCreateErrors maps a refused login to its status. An unknown email and a wrong
 // password both answer 401, so a caller cannot probe which addresses are registered.
 var tokenCreateErrors = httpf.ErrMap{
-	core.ErrCredentialsByEmailNotFound: http.StatusUnauthorized,
-	lib.ErrInvalidPassword:             http.StatusUnauthorized,
-	core.ErrInvalidRequest:             http.StatusUnprocessableEntity,
+	core.ErrCredentialsNotFound: http.StatusUnauthorized,
+	lib.ErrInvalidPassword:      http.StatusUnauthorized,
+	core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
 }
 
 // RestTokenCreateRequest is the JSON body of PUT /v2/session.

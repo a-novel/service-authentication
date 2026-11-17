@@ -22,7 +22,7 @@ type RestShortCodeCreateEmailUpdateService interface {
 
 // shortCodeCreateEmailUpdateErrors maps a failed email-change code request to its status.
 var shortCodeCreateEmailUpdateErrors = httpf.ErrMap{
-	core.ErrCredentialsGetNotFound:  http.StatusNotFound,
+	core.ErrCredentialsNotFound:     http.StatusNotFound,
 	lib.ErrInvalidPassword:          http.StatusForbidden,
 	core.ErrInvalidRequest:          http.StatusUnprocessableEntity,
 	core.ErrMailDeliveryUnavailable: http.StatusServiceUnavailable,

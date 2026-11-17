@@ -491,9 +491,6 @@ func TestCredentialsUpdateRole(t *testing.T) {
 			}
 
 			require.Equal(t, testCase.expect, resp)
-
-			mockDao.AssertExpectations(t)
-			daoCredentialsSelect.AssertExpectations(t)
 		})
 	}
 }

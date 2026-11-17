@@ -63,11 +63,11 @@ func TestPgCredentialsSelectByEmail(t *testing.T) {
 				Email: "user@provider.com",
 			},
 
-			expectErr: dao.ErrCredentialsSelectByEmailNotFound,
+			expectErr: dao.ErrCredentialsNotFound,
 		},
 	}
 
-	dao := dao.NewPgCredentialsSelectByEmail()
+	daoSelectByEmail := dao.NewPgCredentialsSelectByEmail()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestPgCredentialsSelectByEmail(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				key, err := dao.Exec(ctx, testCase.request)
+				key, err := daoSelectByEmail.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, key)
 			})

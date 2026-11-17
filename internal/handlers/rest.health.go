@@ -31,7 +31,7 @@ const (
 	smtpAuthenticationFailed = 535
 )
 
-var errSmtpUnhealthy = errors.New("SMTP health check failed")
+var errSMTPUnhealthy = errors.New("SMTP health check failed")
 
 // RestHealthStatus is the JSON representation of a single dependency's health.
 // /v2/healthcheck is unauthenticated and public, so the response carries no error
@@ -50,11 +50,11 @@ func NewRestHealthStatus(err error) *RestHealthStatus {
 	}
 }
 
-// RestHealthClientSmtp is the SMTP sender whose reachability the health check probes.
-type RestHealthClientSmtp = smtp.Sender
+// RestHealthClientSMTP is the SMTP sender whose reachability the health check probes.
+type RestHealthClientSMTP = smtp.Sender
 
-// RestHealthApiJsonKeys is the JSON Keys client surface used to check its dependencies.
-type RestHealthApiJsonKeys interface {
+// RestHealthAPIJSONKeys is the JSON Keys client surface used to check its dependencies.
+type RestHealthAPIJSONKeys interface {
 	Status(
 		ctx context.Context,
 		req *servicejsonkeys.StatusRequest,
@@ -65,19 +65,19 @@ type RestHealthApiJsonKeys interface {
 // RestHealth reports every dependency's public up/down state and returns HTTP 503
 // when any probe fails.
 type RestHealth struct {
-	apiJsonKeys RestHealthApiJsonKeys
-	clientSmtp  RestHealthClientSmtp
+	apiJSONKeys RestHealthAPIJSONKeys
+	clientSMTP  RestHealthClientSMTP
 	logger      logging.Log
 }
 
 func NewRestHealth(
-	apiJsonKeys RestHealthApiJsonKeys,
-	clientSmtp RestHealthClientSmtp,
+	apiJSONKeys RestHealthAPIJSONKeys,
+	clientSMTP RestHealthClientSMTP,
 	logger logging.Log,
 ) *RestHealth {
 	return &RestHealth{
-		apiJsonKeys: apiJsonKeys,
-		clientSmtp:  clientSmtp,
+		apiJSONKeys: apiJSONKeys,
+		clientSMTP:  clientSMTP,
 		logger:      logger,
 	}
 }
@@ -97,7 +97,7 @@ func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	statusResp["client:postgres"] = NewRestHealthStatus(err)
 
-	err = handler.reportSmtp(ctx)
+	err = handler.reportSMTP(ctx)
 	if err != nil {
 		_ = otel.ReportError(span, err)
 		statusCode = http.StatusServiceUnavailable
@@ -105,7 +105,7 @@ func (handler *RestHealth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	statusResp["client:smtp"] = NewRestHealthStatus(err)
 
-	err = handler.reportJsonKeys(ctx)
+	err = handler.reportJSONKeys(ctx)
 	if err != nil {
 		_ = otel.ReportError(span, err)
 		statusCode = http.StatusServiceUnavailable
@@ -128,13 +128,13 @@ func (handler *RestHealth) reportPostgres(ctx context.Context) error {
 	return nil
 }
 
-func (handler *RestHealth) reportJsonKeys(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportJsonKeys)")
+func (handler *RestHealth) reportJSONKeys(ctx context.Context) error {
+	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportJSONKeys)")
 	defer span.End()
 
 	// JSON Keys fails Status with Unavailable when one of its own dependencies is down,
 	// so its success is the whole verdict.
-	_, err := handler.apiJsonKeys.Status(ctx, &servicejsonkeys.StatusRequest{})
+	_, err := handler.apiJSONKeys.Status(ctx, &servicejsonkeys.StatusRequest{})
 	if err != nil {
 		return otel.ReportError(span, err)
 	}
@@ -142,18 +142,18 @@ func (handler *RestHealth) reportJsonKeys(ctx context.Context) error {
 	return nil
 }
 
-func (handler *RestHealth) reportSmtp(ctx context.Context) error {
-	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportSmtp)")
+func (handler *RestHealth) reportSMTP(ctx context.Context) error {
+	ctx, span := otel.Tracer().Start(ctx, "rest.Health(reportSMTP)")
 	defer span.End()
 
-	err := handler.clientSmtp.Ping()
+	err := handler.clientSMTP.Ping()
 	if err != nil {
 		category, code := smtpHealthFailure(err)
 		span.SetAttributes(attribute.String("smtp.failure_category", category), attribute.Int("smtp.reply_code", code))
 		handler.logger.Warn(ctx, fmt.Sprintf("SMTP health check failed: category=%s smtp_reply_code=%d", category, code))
 
 		// Do not wrap the original error: tracing must not export SMTP reply text.
-		return otel.ReportError(span, errSmtpUnhealthy)
+		return otel.ReportError(span, errSMTPUnhealthy)
 	}
 
 	return nil

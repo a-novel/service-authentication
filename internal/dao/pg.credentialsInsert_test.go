@@ -89,11 +89,11 @@ func TestPgCredentialsInsert(t *testing.T) {
 				Role:     "auth:user",
 			},
 
-			expectErr: dao.ErrCredentialsInsertAlreadyExists,
+			expectErr: dao.ErrCredentialsAlreadyExists,
 		},
 	}
 
-	dao := dao.NewPgCredentialsInsert()
+	daoInsert := dao.NewPgCredentialsInsert()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestPgCredentialsInsert(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := dao.Exec(ctx, testCase.request)
+				credentials, err := daoInsert.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})

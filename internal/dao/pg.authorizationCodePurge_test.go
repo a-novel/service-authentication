@@ -34,7 +34,8 @@ func TestPgAuthorizationCodePurge(t *testing.T) {
 	fixtures := []*dao.AuthorizationCode{
 		newPurgeFixture("code-1", account.ID, now.Add(-2*time.Minute)),
 		newPurgeFixture("code-2", account.ID, now.Add(-time.Minute)),
-		newPurgeFixture("code-3", account.ID, now.Add(time.Minute)),
+		// An hour ahead: a loaded test run can take minutes to reach the purge.
+		newPurgeFixture("code-3", account.ID, now.Add(time.Hour)),
 	}
 
 	testCases := []struct {

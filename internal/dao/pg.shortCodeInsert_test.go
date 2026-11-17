@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/postgres"
@@ -174,7 +173,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			expectErr: dao.ErrShortCodeInsertAlreadyExists,
+			expectErr: dao.ErrShortCodeAlreadyExists,
 		},
 		{
 			// Codes whose deletion is still in the future stay active, and several of them
@@ -200,7 +199,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 					CreatedAt:      hourAgo,
 					ExpiresAt:      hourLater,
 					DeletedAt:      &hourLater,
-					DeletedComment: lo.ToPtr("test-comment"),
+					DeletedComment: new("test-comment"),
 				},
 				{
 					ID:             uuid.MustParse("00000000-0000-0000-0000-000000000003"),
@@ -210,11 +209,11 @@ func TestPgShortCodeInsert(t *testing.T) {
 					CreatedAt:      hourAgo,
 					ExpiresAt:      hourLater,
 					DeletedAt:      &hourLater,
-					DeletedComment: lo.ToPtr("test-comment"),
+					DeletedComment: new("test-comment"),
 				},
 			},
 
-			expectErr: dao.ErrShortCodeInsertAlreadyExists,
+			expectErr: dao.ErrShortCodeAlreadyExists,
 		},
 		{
 			name: "AlreadyExists/Override",
@@ -310,7 +309,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 					CreatedAt:      hourAgo,
 					ExpiresAt:      hourLater,
 					DeletedAt:      &hourAgo,
-					DeletedComment: lo.ToPtr("test-comment"),
+					DeletedComment: new("test-comment"),
 				},
 			},
 
@@ -326,7 +325,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 		},
 	}
 
-	shortCodeInsert := dao.NewPgShortCodeInsert()
+	daoInsert := dao.NewPgShortCodeInsert()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -343,7 +342,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := shortCodeInsert.Exec(ctx, testCase.request)
+				credentials, err := daoInsert.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})
@@ -400,22 +399,18 @@ func TestPgShortCodeInsert(t *testing.T) {
 
 				var wg sync.WaitGroup
 				for i, request := range requests {
-					wg.Add(1)
-
-					go func() {
-						defer wg.Done()
-
+					wg.Go(func() {
 						<-start
 
-						_, errs[i] = shortCodeInsert.Exec(ctx, request)
-					}()
+						_, errs[i] = daoInsert.Exec(ctx, request)
+					})
 				}
 
 				close(start)
 				wg.Wait()
 
-				// The loser never sees a raw serialization failure — only the mapped
-				// already-exists sentinel — and at least one override always lands.
+				// The loser never sees a raw serialization failure, only the mapped
+				// already-exists sentinel, and at least one override always lands.
 				successes := 0
 
 				for _, err := range errs {
@@ -425,7 +420,7 @@ func TestPgShortCodeInsert(t *testing.T) {
 						continue
 					}
 
-					require.ErrorIs(t, err, dao.ErrShortCodeInsertAlreadyExists)
+					require.ErrorIs(t, err, dao.ErrShortCodeAlreadyExists)
 				}
 
 				require.GreaterOrEqualf(t, successes, 1, "round %d: at least one override must succeed", round)

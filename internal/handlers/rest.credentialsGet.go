@@ -20,8 +20,8 @@ type RestCredentialsGetService interface {
 
 // credentialsGetErrors maps a failed account lookup to its status.
 var credentialsGetErrors = httpf.ErrMap{
-	core.ErrCredentialsGetNotFound: http.StatusNotFound,
-	core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
+	core.ErrCredentialsNotFound: http.StatusNotFound,
+	core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
 }
 
 // RestCredentialsGetRequest holds the query parameters of GET /v2/credentials.

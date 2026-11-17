@@ -44,7 +44,7 @@ func TestPgCredentialsUpdateLocationConsent(t *testing.T) {
 				ID: uuid.MustParse("00000000-0000-0000-0000-000000000003"), LocationConsent: true,
 			},
 
-			expectErr: dao.ErrCredentialsUpdateLocationConsentNotFound,
+			expectErr: dao.ErrCredentialsNotFound,
 		},
 	}
 

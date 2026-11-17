@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Resolve modules off go.mod/go.sum alone, before the source, so the download
 # layer survives any source-only edit. The cache mount persists the module cache
-# across builds — locally this is what turns a cold re-pull into a no-op; in CI
+# across builds. Locally this is what turns a cold re-pull into a no-op; in CI
 # the gha layer cache covers cross-run reuse.
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
@@ -38,7 +38,7 @@ WORKDIR /
 
 COPY --from=builder /rest /rest
 
-# Alpine ships BusyBox wget — no extra package needed for the healthcheck.
+# Alpine ships BusyBox wget: no extra package needed for the healthcheck.
 HEALTHCHECK --interval=1s --timeout=5s --retries=10 --start-period=1s \
   CMD ["wget", "-qO", "/dev/null", "http://localhost:8080/v2/ping"]
 

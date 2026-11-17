@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/postgres"
@@ -49,7 +48,7 @@ func TestPgAuthorizationCodeSelect(t *testing.T) {
 	// An exchanged and expired code stays readable, so a second exchange finds it.
 	consumedCode := *code
 	consumedCode.ExpiresAt = now.Add(-time.Minute)
-	consumedCode.ConsumedAt = lo.ToPtr(now.Add(-2 * time.Minute))
+	consumedCode.ConsumedAt = new(now.Add(-2 * time.Minute))
 
 	testCases := []struct {
 		name string
@@ -86,7 +85,7 @@ func TestPgAuthorizationCodeSelect(t *testing.T) {
 
 			request: &dao.AuthorizationCodeSelectRequest{ID: otherCodeID[:]},
 
-			expectErr: dao.ErrAuthorizationCodeSelectNotFound,
+			expectErr: dao.ErrAuthorizationCodeNotFound,
 		},
 	}
 

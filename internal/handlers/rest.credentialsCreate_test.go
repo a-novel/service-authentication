@@ -81,7 +81,7 @@ func TestRestCredentialsCreate(t *testing.T) {
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 				},
-				err: core.ErrCredentialsCreateAlreadyExists,
+				err: core.ErrCredentialsAlreadyExists,
 			},
 
 			expectStatus: http.StatusConflict,

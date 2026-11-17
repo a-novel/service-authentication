@@ -290,11 +290,6 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 
 				_, err := service.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
-
-				mockDao.AssertExpectations(t)
-				daoCredentialsSelect.AssertExpectations(t)
-				serviceShortCodeVerify.AssertExpectations(t)
-				serviceShortCodeConsume.AssertExpectations(t)
 			})
 		})
 	}
@@ -354,9 +349,9 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 				UserID: userID, Password: "new-password", CurrentPassword: "password",
 			},
 
-			selectErr: dao.ErrCredentialsSelectNotFound,
+			selectErr: dao.ErrCredentialsNotFound,
 
-			expectErr: dao.ErrCredentialsSelectNotFound,
+			expectErr: dao.ErrCredentialsNotFound,
 		},
 	}
 
@@ -419,11 +414,6 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 			}
 
 			require.ErrorIs(t, err, testCase.expectErr)
-			mockDao.AssertExpectations(t)
-			daoCredentialsSelect.AssertExpectations(t)
-			verify.AssertExpectations(t)
-			consume.AssertExpectations(t)
-			transactor.AssertExpectations(t)
 		})
 	}
 }

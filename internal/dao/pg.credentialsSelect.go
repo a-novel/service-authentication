@@ -16,10 +16,6 @@ import (
 //go:embed pg.credentialsSelect.sql
 var credentialsSelectQuery string
 
-// ErrCredentialsSelectNotFound is returned by [PgCredentialsSelect.Exec] when no row matches the
-// requested ID.
-var ErrCredentialsSelectNotFound = errors.New("credentials not found")
-
 // CredentialsSelectRequest is the input to [PgCredentialsSelect.Exec].
 type CredentialsSelectRequest struct {
 	// ID of the credentials to fetch.
@@ -49,7 +45,7 @@ func (dao *PgCredentialsSelect) Exec(
 
 	err = db.NewRaw(credentialsSelectQuery, request.ID).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrCredentialsSelectNotFound)
+		err = errors.Join(err, ErrCredentialsNotFound)
 	}
 
 	if err != nil {

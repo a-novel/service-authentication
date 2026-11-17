@@ -17,10 +17,6 @@ import (
 //go:embed pg.credentialsUpdatePassword.sql
 var credentialsUpdatePasswordQuery string
 
-// ErrCredentialsUpdatePasswordNotFound is returned by [PgCredentialsUpdatePassword.Exec] when no row
-// matches the requested ID.
-var ErrCredentialsUpdatePasswordNotFound = errors.New("credentials not found")
-
 // CredentialsUpdatePasswordRequest is the input to [PgCredentialsUpdatePassword.Exec].
 type CredentialsUpdatePasswordRequest struct {
 	// ID of the credentials to update.
@@ -55,7 +51,7 @@ func (dao *PgCredentialsUpdatePassword) Exec(
 
 	err = db.NewRaw(credentialsUpdatePasswordQuery, request.Password, request.Now, request.ID).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrCredentialsUpdatePasswordNotFound)
+		err = errors.Join(err, ErrCredentialsNotFound)
 	}
 
 	if err != nil {

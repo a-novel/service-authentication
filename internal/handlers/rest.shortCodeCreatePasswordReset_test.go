@@ -76,7 +76,7 @@ func TestRestShortCodeCreatePasswordReset(t *testing.T) {
 					Email: "nonexistent@provider.com",
 					Lang:  "fr",
 				},
-				err: core.ErrCredentialsByEmailNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			// Returns 202 to prevent email enumeration.

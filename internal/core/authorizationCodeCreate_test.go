@@ -206,9 +206,6 @@ func TestAuthorizationCodeCreate(t *testing.T) {
 			res, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 
-			mockDaoRevocationExist.AssertExpectations(t)
-			mockDao.AssertExpectations(t)
-
 			if testCase.expectErr != nil {
 				require.Nil(t, res)
 

@@ -468,7 +468,7 @@ func TestCredentialsCreate(t *testing.T) {
 			serviceShortCodeConsume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
 			serviceSignClaims := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
 			transactor := coremocks.NewMockTransactor(t)
-			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
+			waitlist := coremocks.NewMockCredentialsCreateDaoWaitlist(t)
 			daoLocationConsent := coremocks.NewMockCredentialsCreateDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
 			daoSessionRevokeOldest := coremocks.NewMockCredentialsCreateDaoSessionRevokeOldest(t)
@@ -637,17 +637,6 @@ func TestCredentialsCreate(t *testing.T) {
 			resp, err := service.Exec(ctx, testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
-
-			mockDao.AssertExpectations(t)
-			serviceShortCodeVerify.AssertExpectations(t)
-			serviceShortCodeConsume.AssertExpectations(t)
-			serviceSignClaims.AssertExpectations(t)
-			transactor.AssertExpectations(t)
-			waitlist.AssertExpectations(t)
-			daoLocationConsent.AssertExpectations(t)
-			daoSessionUpsert.AssertExpectations(t)
-			daoSessionRevokeOldest.AssertExpectations(t)
-			daoSessionTrim.AssertExpectations(t)
 		})
 	}
 }
@@ -685,7 +674,7 @@ func TestCredentialsCreateHashing(t *testing.T) {
 			verify := coremocks.NewMockCredentialsCreateServiceShortCodeVerify(t)
 			consume := coremocks.NewMockCredentialsCreateServiceShortCodeConsume(t)
 			sign := coremocks.NewMockCredentialsCreateServiceSignClaims(t)
-			waitlist := coremocks.NewMockCredentialsCreateWaitlist(t)
+			waitlist := coremocks.NewMockCredentialsCreateDaoWaitlist(t)
 			daoLocationConsent := coremocks.NewMockCredentialsCreateDaoLocationConsent(t)
 			daoSessionUpsert := coremocks.NewMockCredentialsCreateDaoSessionUpsert(t)
 			daoSessionRevokeOldest := coremocks.NewMockCredentialsCreateDaoSessionRevokeOldest(t)
@@ -736,13 +725,6 @@ func TestCredentialsCreateHashing(t *testing.T) {
 			}
 
 			require.ErrorIs(t, err, testCase.expectErr)
-			mockDao.AssertExpectations(t)
-			verify.AssertExpectations(t)
-			consume.AssertExpectations(t)
-			sign.AssertExpectations(t)
-			waitlist.AssertExpectations(t)
-			transactor.AssertExpectations(t)
-			daoSessionUpsert.AssertExpectations(t)
 		})
 	}
 }

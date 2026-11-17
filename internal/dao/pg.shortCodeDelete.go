@@ -18,10 +18,6 @@ import (
 //go:embed pg.shortCodeDelete.sql
 var shortCodeDeleteQuery string
 
-// ErrShortCodeDeleteNotFound is returned by [PgShortCodeDelete.Exec] when no active short code matches
-// the requested ID.
-var ErrShortCodeDeleteNotFound = errors.New("short code not found")
-
 const (
 	// ShortCodeDeleteOverride is the deletion comment set when a newer code supersedes
 	// an active one.
@@ -68,7 +64,7 @@ func (dao *PgShortCodeDelete) Exec(ctx context.Context, request *ShortCodeDelete
 
 	err = db.NewRaw(shortCodeDeleteQuery, request.Now, request.Comment, request.ID).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrShortCodeDeleteNotFound)
+		err = errors.Join(err, ErrShortCodeNotFound)
 	}
 
 	if err != nil {

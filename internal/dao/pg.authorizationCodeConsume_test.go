@@ -48,10 +48,10 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 	}
 
 	consumedCode := *code
-	consumedCode.ConsumedAt = lo.ToPtr(now)
+	consumedCode.ConsumedAt = new(now)
 
 	alreadyConsumedCode := *code
-	alreadyConsumedCode.ConsumedAt = lo.ToPtr(now.Add(-time.Minute))
+	alreadyConsumedCode.ConsumedAt = new(now.Add(-time.Minute))
 
 	testCases := []struct {
 		name string
@@ -80,7 +80,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 
 			request: &dao.AuthorizationCodeConsumeRequest{ID: codeID[:], Now: now},
 
-			expectErr: dao.ErrAuthorizationCodeConsumeNotFound,
+			expectErr: dao.ErrAuthorizationCodeNotFound,
 		},
 		{
 			name: "Error/NotFound",
@@ -89,7 +89,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 
 			request: &dao.AuthorizationCodeConsumeRequest{ID: otherCodeID[:], Now: now},
 
-			expectErr: dao.ErrAuthorizationCodeConsumeNotFound,
+			expectErr: dao.ErrAuthorizationCodeNotFound,
 		},
 	}
 
@@ -163,7 +163,7 @@ func TestPgAuthorizationCodeConsume(t *testing.T) {
 					continue
 				}
 
-				require.ErrorIs(t, err, dao.ErrAuthorizationCodeConsumeNotFound)
+				require.ErrorIs(t, err, dao.ErrAuthorizationCodeNotFound)
 			}
 
 			require.Equal(t, 1, consumed)

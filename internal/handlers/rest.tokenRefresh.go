@@ -23,8 +23,8 @@ var tokenRefreshErrors = httpf.ErrMap{
 	core.ErrTokenRefreshMismatchClaims:      http.StatusForbidden,
 	core.ErrTokenRefreshMismatchSource:      http.StatusForbidden,
 	// The account behind a still-valid refresh token is gone, so the caller signs in again.
-	core.ErrCredentialsGetNotFound: http.StatusUnauthorized,
-	core.ErrInvalidRequest:         http.StatusUnprocessableEntity,
+	core.ErrCredentialsNotFound: http.StatusUnauthorized,
+	core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
 }
 
 // RestTokenRefreshRequest is the JSON body of PATCH /v2/session.

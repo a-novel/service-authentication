@@ -87,7 +87,7 @@ func TestRestCredentialsGet(t *testing.T) {
 				req: &core.CredentialsGetRequest{
 					ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: core.ErrCredentialsGetNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,

@@ -26,7 +26,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	smtpConfig := authconfig.SmtpUrls{UpdateEmail: "update-email-url"}
+	smtpConfig := authconfig.SMTPURLs{UpdateEmail: "update-email-url"}
 
 	const currentPassword = "current password"
 
@@ -82,7 +82,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
 			sendMail: true,
@@ -110,7 +110,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
 			sendMail:      true,
@@ -154,7 +154,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
 			closeMailDelivery: true,
@@ -193,7 +193,7 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
 			expectErr: errFoo,
@@ -258,8 +258,8 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			serviceCreate := coremocks.NewMockShortCodeCreateEmailUpdateService(t)
-			daoSelect := coremocks.NewMockShortCodeCreateEmailUpdateDao(t)
+			serviceCreate := coremocks.NewMockShortCodeCreateEmailUpdateServiceShortCodeCreate(t)
+			daoSelect := coremocks.NewMockShortCodeCreateEmailUpdateDaoSelectByEmail(t)
 			daoCredentials := coremocks.NewMockShortCodeCreateEmailUpdateDaoCredentials(t)
 
 			if !testCase.invalid {
@@ -340,11 +340,6 @@ func TestShortCodeCreateEmailUpdate(t *testing.T) {
 			}
 
 			waitForMailDelivery(t, mailDelivery)
-
-			serviceCreate.AssertExpectations(t)
-			daoSelect.AssertExpectations(t)
-			daoCredentials.AssertExpectations(t)
-			smtpService.AssertExpectations(t)
 		})
 	}
 }

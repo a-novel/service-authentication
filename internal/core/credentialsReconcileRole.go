@@ -61,24 +61,24 @@ type CredentialsReconcileRoleResult struct {
 
 // CredentialsReconcileRole makes an account or pending registration converge on an exact role.
 type CredentialsReconcileRole struct {
-	selectCredentials CredentialsReconcileRoleDaoSelect
-	updateRole        CredentialsReconcileRoleDaoUpdate
-	selectShortCode   CredentialsReconcileRoleDaoShortCodeSelect
-	register          CredentialsReconcileRoleServiceRegister
+	daoSelect          CredentialsReconcileRoleDaoSelect
+	daoUpdate          CredentialsReconcileRoleDaoUpdate
+	daoShortCodeSelect CredentialsReconcileRoleDaoShortCodeSelect
+	serviceRegister    CredentialsReconcileRoleServiceRegister
 }
 
 // NewCredentialsReconcileRole wires account-role reconciliation to persistence and registration.
 func NewCredentialsReconcileRole(
-	selectCredentials CredentialsReconcileRoleDaoSelect,
-	updateRole CredentialsReconcileRoleDaoUpdate,
-	selectShortCode CredentialsReconcileRoleDaoShortCodeSelect,
-	register CredentialsReconcileRoleServiceRegister,
+	daoSelect CredentialsReconcileRoleDaoSelect,
+	daoUpdate CredentialsReconcileRoleDaoUpdate,
+	daoShortCodeSelect CredentialsReconcileRoleDaoShortCodeSelect,
+	serviceRegister CredentialsReconcileRoleServiceRegister,
 ) *CredentialsReconcileRole {
 	return &CredentialsReconcileRole{
-		selectCredentials: selectCredentials,
-		updateRole:        updateRole,
-		selectShortCode:   selectShortCode,
-		register:          register,
+		daoSelect:          daoSelect,
+		daoUpdate:          daoUpdate,
+		daoShortCodeSelect: daoShortCodeSelect,
+		serviceRegister:    serviceRegister,
 	}
 }
 
@@ -101,8 +101,8 @@ func (service *CredentialsReconcileRole) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	credentials, err := service.selectCredentials.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
-	if err != nil && !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+	credentials, err := service.daoSelect.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
+	if err != nil && !errors.Is(err, dao.ErrCredentialsNotFound) {
 		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
 
@@ -125,8 +125,8 @@ func (service *CredentialsReconcileRole) Exec(
 		Target: request.Email,
 	}
 
-	shortCode, err := service.selectShortCode.Exec(ctx, shortCodeRequest)
-	if err != nil && !errors.Is(err, dao.ErrShortCodeSelectNotFound) {
+	shortCode, err := service.daoShortCodeSelect.Exec(ctx, shortCodeRequest)
+	if err != nil && !errors.Is(err, dao.ErrShortCodeNotFound) {
 		return nil, otel.ReportError(span, fmt.Errorf("select registration code: %w", err))
 	}
 
@@ -142,7 +142,7 @@ func (service *CredentialsReconcileRole) Exec(
 		Role:  request.Role,
 	}
 
-	_, err = service.register.Exec(ctx, registerRequest)
+	_, err = service.serviceRegister.Exec(ctx, registerRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create registration: %w", err))
 	}
@@ -168,7 +168,7 @@ func (service *CredentialsReconcileRole) reconcileExisting(
 		Now:  time.Now(),
 	}
 
-	_, err := service.updateRole.Exec(ctx, daoRequest)
+	_, err := service.daoUpdate.Exec(ctx, daoRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("update credentials role: %w", err))
 	}

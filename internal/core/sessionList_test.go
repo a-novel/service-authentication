@@ -102,8 +102,6 @@ func TestSessionList(t *testing.T) {
 			res, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
-
-			mockDao.AssertExpectations(t)
 		})
 	}
 }

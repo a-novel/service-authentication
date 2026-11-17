@@ -147,8 +147,6 @@ func TestRestAuthorizationRequestValidate(t *testing.T) {
 			}
 
 			require.NoError(t, res.Body.Close())
-
-			service.AssertExpectations(t)
 		})
 	}
 }

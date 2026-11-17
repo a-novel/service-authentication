@@ -76,7 +76,7 @@ func TestPgRefreshTokenRevocationExist(t *testing.T) {
 		},
 	}
 
-	dao := dao.NewPgRefreshTokenRevocationExist()
+	daoExist := dao.NewPgRefreshTokenRevocationExist()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestPgRefreshTokenRevocationExist(t *testing.T) {
 				_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
 				require.NoError(t, err)
 
-				revoked, err := dao.Exec(ctx, testCase.request)
+				revoked, err := daoExist.Exec(ctx, testCase.request)
 				require.NoError(t, err)
 				require.Equal(t, testCase.expect, revoked)
 			})

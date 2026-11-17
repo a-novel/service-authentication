@@ -132,7 +132,7 @@ func TestPgCredentialsList(t *testing.T) {
 		},
 	}
 
-	listDAO := dao.NewPgCredentialsList()
+	daoList := dao.NewPgCredentialsList()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestPgCredentialsList(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := listDAO.Exec(ctx, testCase.request)
+				credentials, err := daoList.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})

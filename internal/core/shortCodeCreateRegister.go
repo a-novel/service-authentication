@@ -16,15 +16,15 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 )
 
-// ShortCodeCreateRegisterService issues the underlying short code; satisfied by
+// ShortCodeCreateRegisterServiceShortCodeCreate issues the underlying short code; satisfied by
 // [ShortCodeCreate].
-type ShortCodeCreateRegisterService interface {
+type ShortCodeCreateRegisterServiceShortCodeCreate interface {
 	Exec(ctx context.Context, request *ShortCodeCreateRequest) (*ShortCode, error)
 }
 
-// ShortCodeCreateRegisterDao reports whether an email address is already
+// ShortCodeCreateRegisterDaoSelectByEmail reports whether an email address is already
 // registered, so a duplicate sign-up can be rejected.
-type ShortCodeCreateRegisterDao interface {
+type ShortCodeCreateRegisterDaoSelectByEmail interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
@@ -45,28 +45,28 @@ type ShortCodeCreateRegisterRequest struct {
 // sign-up and emails it to the prospective address, after rejecting the sign-up if
 // that address is already registered.
 type ShortCodeCreateRegister struct {
-	service          ShortCodeCreateRegisterService
-	selectDao        ShortCodeCreateRegisterDao
-	mailDelivery     ShortCodeCreateRegisterMailDelivery
-	shortCodesConfig authconfig.ShortCodes
-	smtpConfig       authconfig.SmtpUrls
+	serviceShortCodeCreate ShortCodeCreateRegisterServiceShortCodeCreate
+	daoSelectByEmail       ShortCodeCreateRegisterDaoSelectByEmail
+	mailDelivery           ShortCodeCreateRegisterMailDelivery
+	shortCodesConfig       authconfig.ShortCodes
+	smtpConfig             authconfig.SMTPURLs
 }
 
 // NewShortCodeCreateRegister wires the registration flow to the short-code
 // service, the email-existence DAO, and the delivery owner.
 func NewShortCodeCreateRegister(
-	service ShortCodeCreateRegisterService,
-	selectDao ShortCodeCreateRegisterDao,
+	serviceShortCodeCreate ShortCodeCreateRegisterServiceShortCodeCreate,
+	daoSelectByEmail ShortCodeCreateRegisterDaoSelectByEmail,
 	mailDelivery ShortCodeCreateRegisterMailDelivery,
 	shortCodesConfig authconfig.ShortCodes,
-	smtpConfig authconfig.SmtpUrls,
+	smtpConfig authconfig.SMTPURLs,
 ) *ShortCodeCreateRegister {
 	return &ShortCodeCreateRegister{
-		service:          service,
-		selectDao:        selectDao,
-		mailDelivery:     mailDelivery,
-		shortCodesConfig: shortCodesConfig,
-		smtpConfig:       smtpConfig,
+		serviceShortCodeCreate: serviceShortCodeCreate,
+		daoSelectByEmail:       daoSelectByEmail,
+		mailDelivery:           mailDelivery,
+		shortCodesConfig:       shortCodesConfig,
+		smtpConfig:             smtpConfig,
 	}
 }
 
@@ -88,12 +88,12 @@ func (service *ShortCodeCreateRegister) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	_, err = service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
+	_, err = service.daoSelectByEmail.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
 	if err == nil {
-		return nil, otel.ReportError(span, dao.ErrCredentialsInsertAlreadyExists)
+		return nil, otel.ReportError(span, dao.ErrCredentialsAlreadyExists)
 	}
 
-	if !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+	if !errors.Is(err, dao.ErrCredentialsNotFound) {
 		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
@@ -107,12 +107,12 @@ func (service *ShortCodeCreateRegister) Exec(
 	createRequest := &ShortCodeCreateRequest{
 		Usage:    ShortCodeUsageRegister,
 		Target:   request.Email,
-		Data:     credentialsCreateRegistrationData{Role: request.Role},
+		Data:     shortCodeRegistrationData{Role: request.Role},
 		TTL:      ttl,
 		Override: true,
 	}
 
-	shortCode, err := service.service.Exec(ctx, createRequest)
+	shortCode, err := service.serviceShortCodeCreate.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}

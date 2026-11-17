@@ -106,7 +106,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -165,7 +165,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 					SessionID:      sessionID,
@@ -228,7 +228,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 					SessionID:      sessionID,
@@ -259,7 +259,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 					SessionID:      sessionID,
@@ -290,7 +290,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(userID),
+					UserID:         new(userID),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -334,7 +334,7 @@ func TestTokenRefresh(t *testing.T) {
 			},
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
-				resp: &session.Claims{UserID: lo.ToPtr(userID), Roles: []string{"admin"}, RefreshTokenID: refreshTokenID},
+				resp: &session.Claims{UserID: new(userID), Roles: []string{"admin"}, RefreshTokenID: refreshTokenID},
 			},
 
 			serviceVerifyRefreshClaimsMock: &serviceVerifyRefreshClaimsMock{
@@ -355,7 +355,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -395,7 +395,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -427,7 +427,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -455,7 +455,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -484,7 +484,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -523,7 +523,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -577,7 +577,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -689,7 +689,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -730,7 +730,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -756,7 +756,7 @@ func TestTokenRefresh(t *testing.T) {
 
 			serviceVerifyClaimsMock: &serviceVerifyClaimsMock{
 				resp: &session.Claims{
-					UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+					UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 					Roles:          []string{"admin"},
 					RefreshTokenID: refreshTokenID,
 				},
@@ -873,15 +873,6 @@ func TestTokenRefresh(t *testing.T) {
 			if testCase.expectNotErr != nil {
 				require.NotErrorIs(t, err, testCase.expectNotErr)
 			}
-
-			mockDao.AssertExpectations(t)
-			mockDaoRevocationExist.AssertExpectations(t)
-			serviceSignClaims.AssertExpectations(t)
-			serviceVerifyClaims.AssertExpectations(t)
-			serviceVerifyRefreshClaims.AssertExpectations(t)
-			daoLocationConsent.AssertExpectations(t)
-			daoSessionUpsert.AssertExpectations(t)
-			transactor.AssertExpectations(t)
 		})
 	}
 }

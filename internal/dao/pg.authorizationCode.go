@@ -1,11 +1,16 @@
 package dao
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
+
+// ErrAuthorizationCodeNotFound is returned when no authorization code matches the request: the
+// select finds no code of the ID (never issued, or purged), the consume finds it already consumed.
+var ErrAuthorizationCodeNotFound = errors.New("authorization code not found")
 
 // AuthorizationCode is a one-time code the account platform obtained for one client, to sign a
 // person in there within the account platform's session. The client trades it for a token pair in

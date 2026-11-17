@@ -226,9 +226,6 @@ func TestTokenRevoke(t *testing.T) {
 			if testCase.expectNotErr != nil {
 				require.NotErrorIs(t, err, testCase.expectNotErr)
 			}
-
-			mockDao.AssertExpectations(t)
-			serviceVerifyRefreshClaims.AssertExpectations(t)
 		})
 	}
 }

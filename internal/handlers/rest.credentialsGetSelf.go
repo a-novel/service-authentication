@@ -21,7 +21,7 @@ type RestCredentialsGetSelfService interface {
 
 // credentialsGetSelfErrors maps a failed lookup of the caller's account to its status.
 var credentialsGetSelfErrors = httpf.ErrMap{
-	core.ErrCredentialsGetNotFound: http.StatusNotFound,
+	core.ErrCredentialsNotFound: http.StatusNotFound,
 }
 
 // RestCredentialsGetSelf serves GET /v2/credentials/self, which returns the caller's own account.

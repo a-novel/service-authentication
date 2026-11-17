@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"time"
 
@@ -13,10 +12,6 @@ import (
 
 //go:embed pg.authorizationCodeConsume.sql
 var authorizationCodeConsumeQuery string
-
-// ErrAuthorizationCodeConsumeNotFound is returned by [PgAuthorizationCodeConsume.Exec] when no
-// unconsumed code has the requested ID, as when another exchange consumed it first.
-var ErrAuthorizationCodeConsumeNotFound = errors.New("authorization code not found")
 
 // AuthorizationCodeConsumeRequest is the input to [PgAuthorizationCodeConsume.Exec].
 type AuthorizationCodeConsumeRequest struct {
@@ -54,7 +49,7 @@ func (dao *PgAuthorizationCodeConsume) Exec(ctx context.Context, request *Author
 	}
 
 	if consumed == 0 {
-		return otel.ReportError(span, ErrAuthorizationCodeConsumeNotFound)
+		return otel.ReportError(span, ErrAuthorizationCodeNotFound)
 	}
 
 	return nil
