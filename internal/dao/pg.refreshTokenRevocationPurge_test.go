@@ -22,6 +22,13 @@ func TestPgRefreshTokenRevocationPurge(t *testing.T) {
 	hourAgo := now.Add(-time.Hour)
 	hourLater := now.Add(time.Hour)
 
+	// Two expired revocations, the older first, and one still live.
+	fixtures := []*dao.RefreshTokenRevocation{
+		{JTI: "refresh-token-1", ExpiresAt: hourAgo.Add(-time.Hour), CreatedAt: hourAgo.Add(-2 * time.Hour)},
+		{JTI: "refresh-token-2", ExpiresAt: hourAgo, CreatedAt: hourAgo.Add(-time.Hour)},
+		{JTI: "refresh-token-3", ExpiresAt: hourLater, CreatedAt: hourAgo},
+	}
+
 	testCases := []struct {
 		name string
 
@@ -36,12 +43,7 @@ func TestPgRefreshTokenRevocationPurge(t *testing.T) {
 		{
 			name: "Success",
 
-			// Two expired revocations, the older first, and one still live.
-			fixtures: []*dao.RefreshTokenRevocation{
-				{JTI: "refresh-token-1", ExpiresAt: hourAgo.Add(-time.Hour), CreatedAt: hourAgo.Add(-2 * time.Hour)},
-				{JTI: "refresh-token-2", ExpiresAt: hourAgo, CreatedAt: hourAgo.Add(-time.Hour)},
-				{JTI: "refresh-token-3", ExpiresAt: hourLater, CreatedAt: hourAgo},
-			},
+			fixtures: fixtures,
 
 			request: &dao.RefreshTokenRevocationPurgeRequest{Limit: 10},
 
@@ -51,12 +53,7 @@ func TestPgRefreshTokenRevocationPurge(t *testing.T) {
 		{
 			name: "Success/Limit",
 
-			// Two expired revocations, the older first, and one still live.
-			fixtures: []*dao.RefreshTokenRevocation{
-				{JTI: "refresh-token-1", ExpiresAt: hourAgo.Add(-time.Hour), CreatedAt: hourAgo.Add(-2 * time.Hour)},
-				{JTI: "refresh-token-2", ExpiresAt: hourAgo, CreatedAt: hourAgo.Add(-time.Hour)},
-				{JTI: "refresh-token-3", ExpiresAt: hourLater, CreatedAt: hourAgo},
-			},
+			fixtures: fixtures,
 
 			request: &dao.RefreshTokenRevocationPurgeRequest{Limit: 1},
 
@@ -82,17 +79,14 @@ func TestPgRefreshTokenRevocationPurge(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
-
-				if len(testCase.fixtures) > 0 {
-					_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
-					require.NoError(t, err)
-				}
+				insertFixtures(ctx, t, testCase.fixtures)
 
 				res, err := daoPurge.Exec(ctx, testCase.request)
 				require.NoError(t, err)
 				require.Equal(t, testCase.expect, res)
+
+				db, err := postgres.GetContext(ctx)
+				require.NoError(t, err)
 
 				remaining := make([]string, 0)
 

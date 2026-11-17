@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/postgres/postgrestest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
@@ -19,9 +18,9 @@ import (
 func TestPgShortCodeDelete(t *testing.T) {
 	t.Parallel()
 
-	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
 	now := time.Now().UTC().Round(time.Second)
-	hourLater := time.Now().Add(time.Hour).UTC().Round(time.Second)
+	hourAgo := now.Add(-time.Hour)
+	hourLater := now.Add(time.Hour)
 
 	testCases := []struct {
 		name string
@@ -69,7 +68,7 @@ func TestPgShortCodeDelete(t *testing.T) {
 			},
 		},
 		{
-			name: "NotFound",
+			name: "Error/NotFound",
 
 			request: &dao.ShortCodeDeleteRequest{
 				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -90,7 +89,7 @@ func TestPgShortCodeDelete(t *testing.T) {
 			expectErr: dao.ErrShortCodeNotFound,
 		},
 		{
-			name: "AlreadyExpired",
+			name: "Error/Expired",
 
 			request: &dao.ShortCodeDeleteRequest{
 				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -118,7 +117,7 @@ func TestPgShortCodeDelete(t *testing.T) {
 			expectErr: dao.ErrShortCodeNotFound,
 		},
 		{
-			name: "DeleteMultipleTimes",
+			name: "Error/AlreadyDeleted",
 
 			request: &dao.ShortCodeDeleteRequest{
 				ID:      uuid.MustParse("00000000-0000-0000-0000-000000000002"),
@@ -158,17 +157,11 @@ func TestPgShortCodeDelete(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
+				insertFixtures(ctx, t, testCase.fixtures)
 
-				if len(testCase.fixtures) > 0 {
-					_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
-					require.NoError(t, err)
-				}
-
-				key, err := daoDelete.Exec(ctx, testCase.request)
+				shortCode, err := daoDelete.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
-				require.Equal(t, testCase.expect, key)
+				require.Equal(t, testCase.expect, shortCode)
 			})
 		})
 	}

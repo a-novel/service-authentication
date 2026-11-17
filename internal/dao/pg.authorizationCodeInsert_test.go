@@ -2,7 +2,6 @@ package dao_test
 
 import (
 	"context"
-	"crypto/sha256"
 	"testing"
 	"time"
 
@@ -20,15 +19,20 @@ import (
 func TestPgAuthorizationCodeInsert(t *testing.T) {
 	t.Parallel()
 
-	now := time.Now().UTC().Round(time.Second)
-	codeID := sha256.Sum256([]byte("code-1"))
+	hourLater := time.Now().UTC().Round(time.Second).Add(time.Hour)
+	code := newAuthorizationCode("studio", hourLater)
 
-	account := &dao.Credentials{
-		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-		Email:     "user@example.com",
-		Role:      "auth:user",
-		CreatedAt: now,
-		UpdatedAt: now,
+	request := &dao.AuthorizationCodeInsertRequest{
+		ID:                   code.ID,
+		UserID:               code.UserID,
+		ClientID:             code.ClientID,
+		RedirectURI:          code.RedirectURI,
+		RedirectURIInRequest: code.RedirectURIInRequest,
+		CodeChallenge:        code.CodeChallenge,
+		CodeChallengeMethod:  code.CodeChallengeMethod,
+		SessionID:            code.SessionID,
+		SessionExpiresAt:     code.SessionExpiresAt,
+		ExpiresAt:            code.ExpiresAt,
 	}
 
 	testCases := []struct {
@@ -42,48 +46,17 @@ func TestPgAuthorizationCodeInsert(t *testing.T) {
 		{
 			name: "Success",
 
-			request: &dao.AuthorizationCodeInsertRequest{
-				ID:                   codeID[:],
-				UserID:               account.ID,
-				ClientID:             "studio",
-				RedirectURI:          "https://studio.example.com/auth/callback",
-				RedirectURIInRequest: true,
-				CodeChallenge:        "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-				CodeChallengeMethod:  "S256",
-				SessionID:            "session-1",
-				SessionExpiresAt:     now.Add(time.Hour),
-				ExpiresAt:            now.Add(time.Minute),
-			},
+			request: request,
 
-			expect: &dao.AuthorizationCode{
-				ID:                   codeID[:],
-				UserID:               account.ID,
-				ClientID:             "studio",
-				RedirectURI:          "https://studio.example.com/auth/callback",
-				RedirectURIInRequest: true,
-				CodeChallenge:        "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-				CodeChallengeMethod:  "S256",
-				SessionID:            "session-1",
-				SessionExpiresAt:     now.Add(time.Hour),
-				ExpiresAt:            now.Add(time.Minute),
-			},
+			expect: code,
 		},
 		{
 			// A code signs in an account that exists.
 			name: "Error/UnknownAccount",
 
-			request: &dao.AuthorizationCodeInsertRequest{
-				ID:                   codeID[:],
-				UserID:               uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				ClientID:             "studio",
-				RedirectURI:          "https://studio.example.com/auth/callback",
-				RedirectURIInRequest: true,
-				CodeChallenge:        "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-				CodeChallengeMethod:  "S256",
-				SessionID:            "session-1",
-				SessionExpiresAt:     now.Add(time.Hour),
-				ExpiresAt:            now.Add(time.Minute),
-			},
+			request: changed(*request, func(request *dao.AuthorizationCodeInsertRequest) {
+				request.UserID = uuid.New()
+			}),
 
 			expectErr: true,
 		},
@@ -98,19 +71,18 @@ func TestPgAuthorizationCodeInsert(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
+				insertAccounts(ctx, t)
 
-				_, err = db.NewInsert().Model(account).Exec(ctx)
-				require.NoError(t, err)
-
-				err = daoInsert.Exec(ctx, testCase.request)
+				err := daoInsert.Exec(ctx, testCase.request)
 				if testCase.expectErr {
 					require.Error(t, err)
 
 					return
 				}
 
+				require.NoError(t, err)
+
+				db, err := postgres.GetContext(ctx)
 				require.NoError(t, err)
 
 				stored := &dao.AuthorizationCode{}

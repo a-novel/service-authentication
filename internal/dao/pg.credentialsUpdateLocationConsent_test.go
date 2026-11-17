@@ -57,7 +57,7 @@ func TestPgCredentialsUpdateLocationConsent(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				sessionFixtures{}.insert(ctx, t)
+				insertAccounts(ctx, t)
 
 				credentials, err := daoUpdate.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)

@@ -30,56 +30,62 @@ func TestGoogleWaitlist(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name         string
-		status       int
-		body         string
-		redirect     string
-		transportErr bool
-		disabled     bool
-		action       string
-		expectErr    error
-		expect       *dao.WaitlistResult
+		name     string
+		status   int
+		body     string
+		redirect string
+		// followsRedirect marks a redirect the writer may follow, so the transport sees a second call.
+		followsRedirect bool
+		transportErr    bool
+		disabled        bool
+		action          string
+		expectErr       error
+		expect          *dao.WaitlistResult
 	}{
-		{name: "SignedJoin", status: http.StatusOK, body: `{"status":"accepted"}`},
-		{name: "ContentRedirect", status: http.StatusFound, redirect: "https://script.googleusercontent.com/response"},
+		{name: "Success", status: http.StatusOK, body: `{"status":"accepted"}`},
 		{
-			name: "RejectForeignRedirect", status: http.StatusFound, redirect: "https://example.com/leak",
+			name: "Success/ContentRedirect", status: http.StatusFound,
+			redirect: "https://script.googleusercontent.com/response", followsRedirect: true,
+		},
+		{
+			name: "Error/ForeignRedirect", status: http.StatusFound, redirect: "https://example.com/leak",
 			expectErr: dao.ErrWaitlistUnavailable,
 		},
 		{
-			name: "RejectPostReplay", status: http.StatusTemporaryRedirect,
+			name: "Error/PostReplay", status: http.StatusTemporaryRedirect,
 			redirect: "https://script.googleusercontent.com/response", expectErr: dao.ErrWaitlistUnavailable,
 		},
-		{name: "Busy", status: http.StatusOK, body: `{"status":"busy"}`, expectErr: dao.ErrWaitlistBusy},
+		{name: "Error/Busy", status: http.StatusOK, body: `{"status":"busy"}`, expectErr: dao.ErrWaitlistBusy},
 		{
-			name: "Duplicate", status: http.StatusOK, body: `{"status":"already_waitlisted"}`,
+			name: "Error/Duplicate", status: http.StatusOK, body: `{"status":"already_waitlisted"}`,
 			expectErr: dao.ErrWaitlistAlreadyJoined,
 		},
 		{
-			name: "List", action: "list", status: http.StatusOK, body: `{"status":"accepted","emails":["a@example.com"]}`,
+			name: "Success/List", action: "list",
+			status: http.StatusOK, body: `{"status":"accepted","emails":["a@example.com"]}`,
 			expect: &dao.WaitlistResult{Emails: []string{"a@example.com"}},
 		},
 		{
-			name: "Remove", action: "remove", status: http.StatusOK, body: `{"status":"accepted","removed":2}`,
+			name: "Success/Remove", action: "remove", status: http.StatusOK, body: `{"status":"accepted","removed":2}`,
 			expect: &dao.WaitlistResult{Removed: 2},
 		},
 		{
-			name: "BadSignature", status: http.StatusOK, body: `{"status":"unauthorized"}`,
+			name: "Error/BadSignature", status: http.StatusOK, body: `{"status":"unauthorized"}`,
 			expectErr: dao.ErrWaitlistUnavailable,
 		},
 		{
-			name: "HTTPError", status: http.StatusServiceUnavailable, body: `{"status":"accepted"}`,
+			name: "Error/HTTPStatus", status: http.StatusServiceUnavailable, body: `{"status":"accepted"}`,
 			expectErr: dao.ErrWaitlistUnavailable,
 		},
-		{name: "Malformed", status: http.StatusOK, body: `{`, expectErr: dao.ErrWaitlistUnavailable},
+		{name: "Error/Malformed", status: http.StatusOK, body: `{`, expectErr: dao.ErrWaitlistUnavailable},
 		{
-			name: "Oversized", status: http.StatusOK, body: strings.Repeat(" ", 1<<20) + `{"status":"accepted"}`,
+			name: "Error/Oversized", status: http.StatusOK, body: strings.Repeat(" ", 1<<20) + `{"status":"accepted"}`,
 			expectErr: dao.ErrWaitlistUnavailable,
 		},
-		{name: "NetworkErrorSanitized", transportErr: true, expectErr: dao.ErrWaitlistUnavailable},
-		{name: "DisabledJoin", disabled: true, expectErr: dao.ErrWaitlistUnavailable},
-		{name: "DisabledCleanup", disabled: true, action: "remove"},
-		{name: "DisabledList", disabled: true, action: "list", expectErr: dao.ErrWaitlistUnavailable},
+		{name: "Error/Network", transportErr: true, expectErr: dao.ErrWaitlistUnavailable},
+		{name: "Error/DisabledJoin", disabled: true, expectErr: dao.ErrWaitlistUnavailable},
+		{name: "Success/DisabledRemove", disabled: true, action: "remove"},
+		{name: "Error/DisabledList", disabled: true, action: "list", expectErr: dao.ErrWaitlistUnavailable},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -94,7 +100,8 @@ func TestGoogleWaitlist(t *testing.T) {
 				cfg = authconfig.Waitlist{}
 			}
 
-			calls := 0
+			var calls int
+
 			start := time.Now()
 
 			action := testCase.action
@@ -147,7 +154,7 @@ func TestGoogleWaitlist(t *testing.T) {
 					}, nil
 				}
 
-				require.Equal(t, "ContentRedirect", testCase.name, "unsafe redirects must not be followed")
+				require.True(t, testCase.followsRedirect, "unsafe redirects must not be followed")
 				require.Equal(t, http.MethodGet, request.Method)
 				require.Nil(t, request.Body)
 
@@ -173,9 +180,6 @@ func TestGoogleWaitlist(t *testing.T) {
 				require.Equal(t, expect, result)
 			} else {
 				require.Nil(t, result)
-			}
-
-			if testCase.expectErr != nil {
 				require.EqualError(t, err, testCase.expectErr.Error(), "Google details must stay out of errors and traces")
 			}
 
@@ -185,7 +189,7 @@ func TestGoogleWaitlist(t *testing.T) {
 		})
 	}
 
-	t.Run("Cancelled", func(t *testing.T) {
+	t.Run("Error/Cancelled", func(t *testing.T) {
 		t.Parallel()
 		ctx, cancel := context.WithCancel(t.Context())
 		cancel()

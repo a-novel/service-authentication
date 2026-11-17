@@ -21,11 +21,12 @@ func TestPgShortCodeInsert(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().UTC().Round(time.Second)
-	hourAgo := time.Now().Add(-time.Hour).UTC().Round(time.Second)
-	hourLater := time.Now().Add(time.Hour).UTC().Round(time.Second)
+	hourAgo := now.Add(-time.Hour)
+	hourLater := now.Add(time.Hour)
 
-	// replaceRequest inserts a code for a pair the fixtures of the replacing cases already hold.
-	replaceRequest := &dao.ShortCodeInsertRequest{
+	// Every case inserts request and reads back inserted, NoData without its data. The fixtures of the
+	// replacing cases already hold its pair.
+	request := &dao.ShortCodeInsertRequest{
 		ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 		Code:      "test-code",
 		Usage:     "test-usage",
@@ -34,12 +35,12 @@ func TestPgShortCodeInsert(t *testing.T) {
 		Now:       now,
 		ExpiresAt: hourLater,
 	}
-	replaced := &dao.ShortCode{
-		ID:        replaceRequest.ID,
-		Code:      replaceRequest.Code,
-		Usage:     replaceRequest.Usage,
-		Target:    replaceRequest.Target,
-		Data:      replaceRequest.Data,
+	inserted := &dao.ShortCode{
+		ID:        request.ID,
+		Code:      request.Code,
+		Usage:     request.Usage,
+		Target:    request.Target,
+		Data:      request.Data,
 		CreatedAt: now,
 		ExpiresAt: hourLater,
 	}
@@ -56,59 +57,17 @@ func TestPgShortCodeInsert(t *testing.T) {
 		{
 			name: "Success",
 
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				Now:       now,
-				ExpiresAt: hourLater,
-			},
-
-			expect: &dao.ShortCode{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				CreatedAt: now,
-				ExpiresAt: hourLater,
-			},
+			request: request,
+			expect:  inserted,
 		},
 		{
 			name: "Success/NoData",
 
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Now:       now,
-				ExpiresAt: hourLater,
-			},
-
-			expect: &dao.ShortCode{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				CreatedAt: now,
-				ExpiresAt: hourLater,
-			},
+			request: changed(*request, func(request *dao.ShortCodeInsertRequest) { request.Data = nil }),
+			expect:  changed(*inserted, func(shortCode *dao.ShortCode) { shortCode.Data = nil }),
 		},
 		{
-			name: "SameTargetDifferentUsage",
-
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				Now:       now,
-				ExpiresAt: hourLater,
-			},
+			name: "Success/SameTargetDifferentUsage",
 
 			fixtures: []*dao.ShortCode{
 				{
@@ -122,28 +81,11 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			expect: &dao.ShortCode{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				CreatedAt: now,
-				ExpiresAt: hourLater,
-			},
+			request: request,
+			expect:  inserted,
 		},
 		{
-			name: "SameUsageDifferentTarget",
-
-			request: &dao.ShortCodeInsertRequest{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				Now:       now,
-				ExpiresAt: hourLater,
-			},
+			name: "Success/SameUsageDifferentTarget",
 
 			fixtures: []*dao.ShortCode{
 				{
@@ -157,15 +99,8 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			expect: &dao.ShortCode{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				Code:      "test-code",
-				Usage:     "test-usage",
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				CreatedAt: now,
-				ExpiresAt: hourLater,
-			},
+			request: request,
+			expect:  inserted,
 		},
 		{
 			name: "Success/ReplacesActive",
@@ -182,8 +117,8 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			request: replaceRequest,
-			expect:  replaced,
+			request: request,
+			expect:  inserted,
 		},
 		{
 			// Codes whose deletion is still in the future stay active, and are replaced as one is.
@@ -212,8 +147,8 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			request: replaceRequest,
-			expect:  replaced,
+			request: request,
+			expect:  inserted,
 		},
 		{
 			// An expired code still sits in the partial unique index until it is discarded.
@@ -231,8 +166,8 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			request: replaceRequest,
-			expect:  replaced,
+			request: request,
+			expect:  inserted,
 		},
 		{
 			name: "Success/IgnoresDeleted",
@@ -251,8 +186,8 @@ func TestPgShortCodeInsert(t *testing.T) {
 				},
 			},
 
-			request: replaceRequest,
-			expect:  replaced,
+			request: request,
+			expect:  inserted,
 		},
 	}
 
@@ -265,17 +200,11 @@ func TestPgShortCodeInsert(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
+				insertFixtures(ctx, t, testCase.fixtures)
 
-				if len(testCase.fixtures) > 0 {
-					_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
-					require.NoError(t, err)
-				}
-
-				credentials, err := daoInsert.Exec(ctx, testCase.request)
+				shortCode, err := daoInsert.Exec(ctx, testCase.request)
 				require.NoError(t, err)
-				require.Equal(t, testCase.expect, credentials)
+				require.Equal(t, testCase.expect, shortCode)
 			})
 		})
 	}
@@ -290,12 +219,9 @@ func TestPgShortCodeInsert(t *testing.T) {
 		postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 			t.Helper()
 
-			db, err := postgres.GetContext(ctx)
-			require.NoError(t, err)
-
 			// Seed the single active code the first round's overrides contend on. Every
 			// later round contends on the previous round's surviving row.
-			seed := []*dao.ShortCode{
+			insertFixtures(ctx, t, []*dao.ShortCode{
 				{
 					ID:        uuid.New(),
 					Code:      "seed-code",
@@ -305,8 +231,9 @@ func TestPgShortCodeInsert(t *testing.T) {
 					CreatedAt: hourAgo,
 					ExpiresAt: hourLater,
 				},
-			}
-			_, err = db.NewInsert().Model(&seed).Exec(ctx)
+			})
+
+			db, err := postgres.GetContext(ctx)
 			require.NoError(t, err)
 
 			const rounds = 10

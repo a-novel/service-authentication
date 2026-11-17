@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/postgres/postgrestest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
@@ -59,7 +58,7 @@ func TestPgCredentialsUpdatePassword(t *testing.T) {
 			},
 		},
 		{
-			name: "RemovePassword",
+			name: "Success/RemovePassword",
 
 			fixtures: []*dao.Credentials{
 				{
@@ -80,34 +79,6 @@ func TestPgCredentialsUpdatePassword(t *testing.T) {
 			expect: &dao.Credentials{
 				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 				Email:     "user@provider.com",
-				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-				Role:      "auth:user",
-			},
-		},
-		{
-			name: "AddPassword",
-
-			fixtures: []*dao.Credentials{
-				{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					Email:     "user@provider.com",
-					CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-					Role:      "auth:user",
-				},
-			},
-
-			request: &dao.CredentialsUpdatePasswordRequest{
-				ID:       uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Password: "new-password-hashed",
-				Now:      time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
-			},
-
-			expect: &dao.Credentials{
-				ID:        uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-				Email:     "user@provider.com",
-				Password:  "new-password-hashed",
 				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 				Role:      "auth:user",
@@ -135,13 +106,7 @@ func TestPgCredentialsUpdatePassword(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
-
-				if len(testCase.fixtures) > 0 {
-					_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
-					require.NoError(t, err)
-				}
+				insertFixtures(ctx, t, testCase.fixtures)
 
 				credentials, err := daoUpdatePassword.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)

@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/a-novel-kit/golib/postgres"
 	"github.com/a-novel-kit/golib/postgres/postgrestest"
 
 	"github.com/a-novel/service-authentication/v2/internal/config/configtest"
@@ -110,13 +109,7 @@ func TestPgCredentialsUpdateEmail(t *testing.T) {
 			postgrestest.RunDBTest(t, configtest.PostgresPreset, migrations.Migrations, func(ctx context.Context, t *testing.T) {
 				t.Helper()
 
-				db, err := postgres.GetContext(ctx)
-				require.NoError(t, err)
-
-				if len(testCase.fixtures) > 0 {
-					_, err = db.NewInsert().Model(&testCase.fixtures).Exec(ctx)
-					require.NoError(t, err)
-				}
+				insertFixtures(ctx, t, testCase.fixtures)
 
 				credentials, err := daoUpdateEmail.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)

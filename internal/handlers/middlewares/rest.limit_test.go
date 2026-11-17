@@ -1,16 +1,13 @@
 package middlewares_test
 
 import (
-	"context"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
 	"os"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -353,17 +350,16 @@ func TestRestLimits(t *testing.T) {
 		})
 	}
 
-	// The test env runs the counter store on VALKEY_PORT, with the limiter's production ACL.
+	// The test env runs the counter store on VALKEY_PORT, with the limiter's production ACL. golib tests
+	// the shared budget and its fallback; this case proves the ACL admits the limiter.
 	t.Run("Success/Store", func(t *testing.T) {
 		t.Parallel()
 
 		port := os.Getenv("VALKEY_PORT")
 		require.NotEmpty(t, port, "VALKEY_PORT names the test env's Valkey")
 
-		proxy := newStoreProxy(t, "localhost:"+port)
-
 		server := httpf.ServerConfigDefault
-		server.RateLimitStore = httpf.RateLimitStore{Addr: proxy.addr(), Username: "limiter", Password: "limiter"}
+		server.RateLimitStore = httpf.RateLimitStore{Addr: "localhost:" + port, Username: "limiter", Password: "limiter"}
 
 		// Two instances, each with the limits cmd/rest builds as it starts.
 		instances := []http.Handler{
@@ -391,24 +387,11 @@ func TestRestLimits(t *testing.T) {
 		// A store that answers after 100 ms sends an instance to its own counters, which a loaded runner
 		// can cause, so the test retries. Each attempt takes a visitor and an email no earlier attempt or
 		// run counted. A store the instances cannot use fails every attempt.
-		var req request
-
 		require.Eventually(t, func() bool {
-			req = request{visitor: netip.AddrFrom16(uuid.New()).String(), email: uuid.NewString() + "@example.com"}
-
-			return spendsOneBudget(req)
+			return spendsOneBudget(request{
+				visitor: netip.AddrFrom16(uuid.New()).String(), email: uuid.NewString() + "@example.com",
+			})
 		}, 10*time.Second, 300*time.Millisecond)
-
-		// Once the store stops, each instance counts the budget again, on its own.
-		proxy.stop()
-
-		for _, instance := range instances {
-			for range 10 {
-				require.Equal(t, http.StatusOK, send(t, instance, req).Code)
-			}
-
-			require.Equal(t, http.StatusTooManyRequests, send(t, instance, req).Code)
-		}
 	})
 }
 
@@ -439,92 +422,6 @@ func signIn(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-// storeProxy forwards connections to a counter store until it stops. Stopping closes the proxy and
-// every connection open through it, which the instances see as the store stopping.
-type storeProxy struct {
-	listener net.Listener
-	store    string
-
-	mu      sync.Mutex
-	stopped bool
-	conns   []net.Conn
-}
-
-// newStoreProxy forwards connections to the store at addr until the test ends.
-func newStoreProxy(t *testing.T, addr string) *storeProxy {
-	t.Helper()
-
-	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-
-	proxy := &storeProxy{listener: listener, store: addr}
-	t.Cleanup(proxy.stop)
-
-	go proxy.serve(t.Context())
-
-	return proxy
-}
-
-// addr is the address the instances reach the store through.
-func (proxy *storeProxy) addr() string {
-	return proxy.listener.Addr().String()
-}
-
-// serve pipes each connection the proxy accepts to the store, until the proxy stops.
-func (proxy *storeProxy) serve(ctx context.Context) {
-	for {
-		client, err := proxy.listener.Accept()
-		if err != nil {
-			return
-		}
-
-		store, err := (&net.Dialer{}).DialContext(ctx, "tcp", proxy.store)
-		if err != nil {
-			_ = client.Close()
-
-			continue
-		}
-
-		if proxy.track(client, store) {
-			go func() { _, _ = io.Copy(store, client) }()
-			go func() { _, _ = io.Copy(client, store) }()
-		}
-	}
-}
-
-// track keeps conns for stop to close, and reports whether the proxy still runs. Once it stopped,
-// track closes them instead.
-func (proxy *storeProxy) track(conns ...net.Conn) bool {
-	proxy.mu.Lock()
-	defer proxy.mu.Unlock()
-
-	if proxy.stopped {
-		for _, conn := range conns {
-			_ = conn.Close()
-		}
-
-		return false
-	}
-
-	proxy.conns = append(proxy.conns, conns...)
-
-	return true
-}
-
-// stop closes the proxy and every connection open through it.
-func (proxy *storeProxy) stop() {
-	_ = proxy.listener.Close()
-
-	proxy.mu.Lock()
-	defer proxy.mu.Unlock()
-
-	proxy.stopped = true
-
-	for _, conn := range proxy.conns {
-		_ = conn.Close()
-	}
 }
 
 func TestClientVisitorKey(t *testing.T) {
@@ -578,7 +475,7 @@ func TestClientVisitorKey(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			request := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/session/authorization-code", nil)
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/v2/oauth/authorization-code", nil)
 			request.Header.Set("X-Client-Ip", "192.0.2.1")
 
 			if testCase.token != "" {
