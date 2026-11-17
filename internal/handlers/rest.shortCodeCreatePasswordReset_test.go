@@ -1,9 +1,8 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -23,92 +22,65 @@ func TestRestShortCodeCreatePasswordReset(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	validBody := `{"email": "user@provider.com", "lang": "fr"}`
+	serviceRequest := &core.ShortCodeCreatePasswordResetRequest{Email: "user@provider.com", Lang: "fr"}
+
 	type serviceMock struct {
-		req *core.ShortCodeCreatePasswordResetRequest
 		err error
 	}
 
 	testCases := []struct {
 		name string
 
-		request *http.Request
+		// body replaces validBody when set.
+		body string
 
 		serviceMock *serviceMock
 
-		expectStatus   int
-		expectResponse any
+		expectStatus int
 	}{
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "new_user@provider.com",
-				"lang": "fr"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.ShortCodeCreatePasswordResetRequest{
-					Email: "new_user@provider.com",
-					Lang:  "fr",
-				},
-			},
+			serviceMock: &serviceMock{},
 
 			expectStatus: http.StatusAccepted,
 		},
 		{
+			// An unknown email answers as a known one does, so a caller cannot probe accounts.
 			name: "Success/EmailNotFound",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "nonexistent@provider.com",
-				"lang": "fr"
-			}`)),
+			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
 
-			serviceMock: &serviceMock{
-				req: &core.ShortCodeCreatePasswordResetRequest{
-					Email: "nonexistent@provider.com",
-					Lang:  "fr",
-				},
-				err: core.ErrCredentialsNotFound,
-			},
-
-			// Returns 202 to prevent email enumeration.
 			expectStatus: http.StatusAccepted,
+		},
+		{
+			name: "Error/InvalidRequest",
+
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
+
+			expectStatus: http.StatusUnprocessableEntity,
 		},
 		{
 			name: "Error/MailDeliveryUnavailable",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "new_user@provider.com",
-				"lang": "fr"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.ShortCodeCreatePasswordResetRequest{
-					Email: "new_user@provider.com",
-					Lang:  "fr",
-				},
-				err: errors.Join(errFoo, core.ErrMailDeliveryUnavailable),
-			},
+			serviceMock: &serviceMock{err: errors.Join(errFoo, core.ErrMailDeliveryUnavailable)},
 
 			expectStatus: http.StatusServiceUnavailable,
 		},
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "new_user@provider.com",
-				"lang": "fr"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.ShortCodeCreatePasswordResetRequest{
-					Email: "new_user@provider.com",
-					Lang:  "fr",
-				},
-				err: errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MalformedBody",
+
+			body: `{"email": `,
+
+			expectStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -120,27 +92,21 @@ func TestRestShortCodeCreatePasswordReset(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestShortCodeCreatePasswordReset(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				t.Context(), http.MethodPut, "/v2/short-code/update-password", strings.NewReader(cmp.Or(testCase.body, validBody)),
+			)
 
-			handler.ServeHTTP(w, testCase.request)
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
+			require.NoError(t, res.Body.Close())
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
-
-			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
-			}
 		})
 	}
 }

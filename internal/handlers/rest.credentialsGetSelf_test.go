@@ -1,21 +1,17 @@
 package handlers_test
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel/service-authentication/v2/internal/config"
-	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/core"
 	"github.com/a-novel/service-authentication/v2/internal/handlers"
 	handlersmocks "github.com/a-novel/service-authentication/v2/internal/handlers/mocks"
@@ -27,24 +23,8 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
-
-	credentials := core.Credentials{
-		ID:        userID,
-		Email:     "user@provider.com",
-		Role:      authconfig.RoleUser,
-		CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
-		UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
-	}
-
-	credentialsResponse := map[string]any{
-		"id":              "00000000-0000-0000-0000-000000000001",
-		"email":           "user@provider.com",
-		"role":            authconfig.RoleUser,
-		"createdAt":       "2018-02-02T12:00:00Z",
-		"updatedAt":       "2020-02-02T12:00:00Z",
-		"locationConsent": false,
-	}
+	claims := &session.Claims{UserID: new(credentialsFixture.ID)}
+	credentialsSelfJSON := lo.Assign(credentialsFixtureJSON, map[string]any{"locationConsent": false})
 
 	type serviceMock struct {
 		resp *core.CredentialsSelf
@@ -54,7 +34,8 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		claims *session.Claims
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -64,23 +45,17 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 		{
 			name: "Success",
 
-			claims: &session.Claims{UserID: new(userID)},
+			serviceMock: &serviceMock{resp: &core.CredentialsSelf{Credentials: *credentialsFixture}},
 
-			serviceMock: &serviceMock{
-				resp: &core.CredentialsSelf{Credentials: credentials},
-			},
-
-			expectResponse: credentialsResponse,
 			expectStatus:   http.StatusOK,
+			expectResponse: credentialsSelfJSON,
 		},
 		{
 			name: "Success/PendingEmail",
 
-			claims: &session.Claims{UserID: new(userID)},
-
 			serviceMock: &serviceMock{
 				resp: &core.CredentialsSelf{
-					Credentials: credentials,
+					Credentials: *credentialsFixture,
 					PendingEmail: &core.PendingEmail{
 						Email:     "user-new@provider.com",
 						ExpiresAt: time.Date(2020, time.February, 4, 12, 0, 0, 0, time.UTC),
@@ -88,50 +63,42 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 				},
 			},
 
-			expectResponse: lo.Assign(credentialsResponse, map[string]any{
+			expectStatus: http.StatusOK,
+			expectResponse: lo.Assign(credentialsSelfJSON, map[string]any{
 				"pendingEmail": map[string]any{
 					"email":     "user-new@provider.com",
 					"expiresAt": "2020-02-04T12:00:00Z",
 				},
 			}),
-			expectStatus: http.StatusOK,
 		},
 		{
 			name: "Success/LocationConsent",
 
-			claims: &session.Claims{UserID: new(userID)},
-
 			serviceMock: &serviceMock{
-				resp: &core.CredentialsSelf{Credentials: credentials, LocationConsent: true},
+				resp: &core.CredentialsSelf{Credentials: *credentialsFixture, LocationConsent: true},
 			},
 
-			expectResponse: lo.Assign(credentialsResponse, map[string]any{"locationConsent": true}),
 			expectStatus:   http.StatusOK,
+			expectResponse: lo.Assign(credentialsSelfJSON, map[string]any{"locationConsent": true}),
 		},
 		{
 			name: "Error/NotFound",
 
-			claims: &session.Claims{UserID: new(userID)},
-
-			serviceMock: &serviceMock{
-				err: core.ErrCredentialsNotFound,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
 
 			expectStatus: http.StatusNotFound,
 		},
 		{
 			name: "Error/Internal",
 
-			claims: &session.Claims{UserID: new(userID)},
-
-			serviceMock: &serviceMock{
-				err: errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
 			name: "Error/MissingClaims",
+
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -145,30 +112,29 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, &core.CredentialsGetSelfRequest{ID: userID}).
+					Exec(mock.Anything, &core.CredentialsGetSelfRequest{ID: credentialsFixture.ID}).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
+			}
+
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
 			}
 
 			handler := handlers.NewRestCredentialsGetSelf(service, config.LoggerDev)
 			w := httptest.NewRecorder()
-
-			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
-			request = request.WithContext(session.SetClaimsContext(request.Context(), testCase.claims))
+			request := httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/credentials/self", nil)
 
 			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

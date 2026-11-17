@@ -33,7 +33,8 @@ func TestRestSessionRevokeOthers(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		claims *session.Claims
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -42,8 +43,6 @@ func TestRestSessionRevokeOthers(t *testing.T) {
 		{
 			name: "Success",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{},
 
 			expectStatus: http.StatusNoContent,
@@ -51,14 +50,14 @@ func TestRestSessionRevokeOthers(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
 			name: "Error/MissingClaims",
+
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -76,11 +75,14 @@ func TestRestSessionRevokeOthers(t *testing.T) {
 					Return(testCase.serviceMock.err)
 			}
 
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
+			}
+
 			handler := handlers.NewRestSessionRevokeOthers(service, config.LoggerDev)
 			w := httptest.NewRecorder()
-			request := httptest.NewRequestWithContext(
-				session.SetClaimsContext(t.Context(), testCase.claims), http.MethodPut, "/v2/sessions/revoke-others", nil,
-			)
+			request := httptest.NewRequestWithContext(ctx, http.MethodPut, "/v2/sessions/revoke-others", nil)
 
 			handler.ServeHTTP(w, request)
 

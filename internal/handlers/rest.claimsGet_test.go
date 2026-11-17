@@ -1,9 +1,8 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -42,7 +41,9 @@ func TestRestClaimsGet(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		claims *session.Claims
+		// claims replaces the shared claims when set; noClaims sends the request without any.
+		claims   *session.Claims
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -53,10 +54,9 @@ func TestRestClaimsGet(t *testing.T) {
 		{
 			name: "Success",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{resp: claims},
 
+			expectStatus: http.StatusOK,
 			expectResponse: map[string]any{
 				"userID":         "00000000-0000-0000-0000-000000000001",
 				"roles":          []any{"user"},
@@ -65,7 +65,6 @@ func TestRestClaimsGet(t *testing.T) {
 				"sessionExp":     float64(1900000000),
 				"clientID":       "studio",
 			},
-			expectStatus: http.StatusOK,
 		},
 		{
 			// A token without a session claim answers the session its refresh token opened.
@@ -75,23 +74,15 @@ func TestRestClaimsGet(t *testing.T) {
 
 			serviceMock: &serviceMock{resp: &session.Claims{Roles: []string{"user"}, RefreshTokenID: "refreshToken"}},
 
+			expectStatus: http.StatusOK,
 			expectResponse: map[string]any{
 				"roles":          []any{"user"},
 				"refreshTokenID": "refreshToken",
 				"sessionID":      "refreshToken",
 			},
-			expectStatus: http.StatusOK,
-		},
-		{
-			name: "Error/NoClaims",
-
-			expectStatus:    http.StatusUnauthorized,
-			expectChallenge: middlewares.BearerChallenge,
 		},
 		{
 			name: "Error/Revoked",
-
-			claims: claims,
 
 			serviceMock: &serviceMock{err: core.ErrClaimsGetRevoked},
 
@@ -101,11 +92,17 @@ func TestRestClaimsGet(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MissingClaims",
+
+			noClaims: true,
+
+			expectStatus:    http.StatusUnauthorized,
+			expectChallenge: middlewares.BearerChallenge,
 		},
 	}
 
@@ -113,35 +110,35 @@ func TestRestClaimsGet(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
+			requestClaims := cmp.Or(testCase.claims, claims)
 			service := handlersmocks.NewMockRestClaimsGetService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, &core.ClaimsGetRequest{Claims: testCase.claims}).
+					Exec(mock.Anything, &core.ClaimsGetRequest{Claims: requestClaims}).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
+			}
+
+			ctx := session.SetClaimsContext(t.Context(), requestClaims)
+			if testCase.noClaims {
+				ctx = t.Context()
 			}
 
 			handler := handlers.NewRestClaimsGet(service, config.LoggerDev)
 			w := httptest.NewRecorder()
-			request := httptest.NewRequestWithContext(
-				session.SetClaimsContext(t.Context(), testCase.claims), http.MethodGet, "/v2/session", nil,
-			)
+			request := httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/session", nil)
 
 			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 			require.Equal(t, testCase.expectChallenge, res.Header.Get("WWW-Authenticate"))
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"cmp"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -29,103 +30,91 @@ func TestRestTokenGrant(t *testing.T) {
 	)
 
 	type serviceMock struct {
-		caller string
-		resp   *core.TokenGrantResult
-		err    error
+		resp *core.TokenGrantResult
+		err  error
 	}
 
 	testCases := []struct {
 		name string
 
-		caller      string
+		// contentType replaces the form media type when set.
 		contentType string
+		// noCaller sends the request without a service token, as to a server that verifies none.
+		noCaller bool
 
 		serviceMock *serviceMock
 
-		expect       any
-		expectStatus int
+		expectStatus   int
+		expectResponse any
 	}{
 		{
 			name: "Success",
 
-			caller:      studioCaller,
-			contentType: "application/x-www-form-urlencoded",
-
 			serviceMock: &serviceMock{
-				caller: studioCaller,
-				resp: &core.TokenGrantResult{
-					AccessToken: "access-token", ExpiresIn: time.Hour, RefreshToken: "refresh-token",
-				},
+				resp: &core.TokenGrantResult{AccessToken: "access-token", ExpiresIn: time.Hour, RefreshToken: "refresh-token"},
 			},
 
-			expect: &handlers.RestTokenResponse{
-				AccessToken: "access-token", TokenType: "Bearer", ExpiresIn: 3600, RefreshToken: "refresh-token",
-			},
 			expectStatus: http.StatusOK,
+			expectResponse: map[string]any{
+				"access_token":  "access-token",
+				"token_type":    "Bearer",
+				"expires_in":    float64(3600),
+				"refresh_token": "refresh-token",
+			},
 		},
 		{
 			// A refresh issues no refresh token, and the response omits the member.
 			name: "Success/Refresh",
 
-			caller:      studioCaller,
-			contentType: "application/x-www-form-urlencoded",
+			serviceMock: &serviceMock{resp: &core.TokenGrantResult{AccessToken: "access-token", ExpiresIn: time.Hour}},
 
-			serviceMock: &serviceMock{
-				caller: studioCaller,
-				resp:   &core.TokenGrantResult{AccessToken: "access-token", ExpiresIn: time.Hour},
-			},
-
-			expect:       &handlers.RestTokenResponse{AccessToken: "access-token", TokenType: "Bearer", ExpiresIn: 3600},
 			expectStatus: http.StatusOK,
+			expectResponse: map[string]any{
+				"access_token": "access-token", "token_type": "Bearer", "expires_in": float64(3600),
+			},
 		},
 		{
 			// Every refusal is an error response, 400 (RFC 6749 §5.2).
 			name: "Error/InvalidGrant",
 
-			caller:      studioCaller,
-			contentType: "application/x-www-form-urlencoded",
+			serviceMock: &serviceMock{err: core.ErrTokenGrantCodeReused},
 
-			serviceMock: &serviceMock{caller: studioCaller, err: core.ErrTokenGrantCodeReused},
-
-			expect: &handlers.RestOAuthError{
-				Error: "invalid_grant", ErrorDescription: core.ErrTokenGrantCodeReused.Description,
-			},
 			expectStatus: http.StatusBadRequest,
+			expectResponse: map[string]any{
+				"error": "invalid_grant", "error_description": core.ErrTokenGrantCodeReused.Description,
+			},
 		},
 		{
-			// The core refuses a request with no caller, as on a server that verifies none.
-			name: "Error/InvalidClient",
+			// The core refuses a request with no caller. Every refusal is an error response, 400, even
+			// invalid_client (RFC 6749 §5.2).
+			name: "Error/NoCaller",
 
-			contentType: "application/x-www-form-urlencoded",
+			noCaller: true,
 
 			serviceMock: &serviceMock{err: core.ErrTokenGrantInvalidClient},
 
-			expect: &handlers.RestOAuthError{
-				Error: "invalid_client", ErrorDescription: core.ErrTokenGrantInvalidClient.Description,
-			},
 			expectStatus: http.StatusBadRequest,
+			expectResponse: map[string]any{
+				"error": "invalid_client", "error_description": core.ErrTokenGrantInvalidClient.Description,
+			},
 		},
 		{
 			name: "Error/Internal",
 
-			caller:      studioCaller,
-			contentType: "application/x-www-form-urlencoded",
-
-			serviceMock: &serviceMock{caller: studioCaller, err: errFoo},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
 			// A token request is form-encoded (RFC 6749 §4.1.3).
-			name: "Error/JSONBody",
+			name: "Error/MalformedBody",
 
-			caller:      studioCaller,
 			contentType: "application/json",
 
-			expect: &handlers.RestOAuthError{
-				Error: "invalid_request", ErrorDescription: core.ErrOAuthMalformedRequest.Description,
-			},
 			expectStatus: http.StatusBadRequest,
+			expectResponse: map[string]any{
+				"error": "invalid_request", "error_description": core.ErrOAuthMalformedRequest.Description,
+			},
 		},
 	}
 
@@ -133,29 +122,32 @@ func TestRestTokenGrant(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
+			caller := studioCaller
+			if testCase.noCaller {
+				caller = ""
+			}
+
 			service := handlersmocks.NewMockRestTokenGrantService(t)
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
 					Exec(mock.Anything, &core.TokenGrantRequest{
-						Caller: testCase.serviceMock.caller,
+						Caller: caller,
 						Params: url.Values{"grant_type": {"authorization_code"}, "code": {"code"}},
 					}).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestTokenGrant(service, config.LoggerDev)
-			request := httptest.NewRequestWithContext(
-				t.Context(), http.MethodPost, "/v2/oauth/token", strings.NewReader(body),
-			)
-			request.Header.Set("Content-Type", testCase.contentType)
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/v2/oauth/token", strings.NewReader(body))
+			request.Header.Set("Content-Type", cmp.Or(testCase.contentType, "application/x-www-form-urlencoded"))
 
-			res := serveAsCaller(t, handler, request, testCase.caller)
+			res := serveAsCaller(t, handler, request, caller)
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
-			if testCase.expect != nil {
+			if testCase.expectResponse != nil {
 				requireNoStore(t, res)
-				requireJSONBody(t, res, testCase.expect)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
 
 			require.NoError(t, res.Body.Close())

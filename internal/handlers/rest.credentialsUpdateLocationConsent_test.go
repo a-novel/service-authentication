@@ -1,13 +1,13 @@
 package handlers_test
 
 import (
+	"cmp"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -23,19 +23,25 @@ func TestRestCredentialsUpdateLocationConsent(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	userID := credentialsFixture.ID
 	claims := &session.Claims{UserID: new(userID)}
+	// The core receives a refusal as a choice, unlike a body that omits the field.
+	validBody := `{"enabled": false}`
+	serviceRequest := &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)}
 
 	type serviceMock struct {
-		request *core.CredentialsUpdateLocationConsentRequest
-		err     error
+		// req replaces serviceRequest when set.
+		req *core.CredentialsUpdateLocationConsentRequest
+		err error
 	}
 
 	testCases := []struct {
 		name string
 
-		claims *session.Claims
-		body   string
+		// body replaces validBody when set.
+		body string
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -44,67 +50,48 @@ func TestRestCredentialsUpdateLocationConsent(t *testing.T) {
 		{
 			name: "Success",
 
-			claims: claims,
-			body:   `{"enabled": false}`,
-
-			serviceMock: &serviceMock{
-				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)},
-			},
+			serviceMock: &serviceMock{},
 
 			expectStatus: http.StatusNoContent,
 		},
 		{
 			// The core refuses a body without the choice.
-			name: "Error/MissingEnabled",
+			name: "Error/InvalidRequest",
 
-			claims: claims,
-			body:   `{}`,
+			body: `{}`,
 
 			serviceMock: &serviceMock{
-				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID},
-				err:     core.ErrInvalidRequest,
+				req: &core.CredentialsUpdateLocationConsentRequest{UserID: userID},
+				err: core.ErrInvalidRequest,
 			},
 
 			expectStatus: http.StatusUnprocessableEntity,
 		},
 		{
-			name: "Error/MalformedBody",
-
-			claims: claims,
-			body:   `{"enabled": "yes"}`,
-
-			expectStatus: http.StatusBadRequest,
-		},
-		{
 			name: "Error/NotFound",
 
-			claims: claims,
-			body:   `{"enabled": true}`,
-
-			serviceMock: &serviceMock{
-				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(true)},
-				err:     core.ErrCredentialsNotFound,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
 
 			expectStatus: http.StatusNotFound,
 		},
 		{
 			name: "Error/Internal",
 
-			claims: claims,
-			body:   `{"enabled": true}`,
-
-			serviceMock: &serviceMock{
-				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(true)},
-				err:     errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
+			name: "Error/MalformedBody",
+
+			body: `{"enabled": "yes"}`,
+
+			expectStatus: http.StatusBadRequest,
+		},
+		{
 			name: "Error/MissingClaims",
 
-			body: `{"enabled": true}`,
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -118,15 +105,19 @@ func TestRestCredentialsUpdateLocationConsent(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.request).
+					Exec(mock.Anything, cmp.Or(testCase.serviceMock.req, serviceRequest)).
 					Return(testCase.serviceMock.err)
+			}
+
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
 			}
 
 			handler := handlers.NewRestCredentialsUpdateLocationConsent(service, config.LoggerDev)
 			w := httptest.NewRecorder()
 			request := httptest.NewRequestWithContext(
-				session.SetClaimsContext(t.Context(), testCase.claims),
-				http.MethodPatch, "/v2/credentials/location-consent", strings.NewReader(testCase.body),
+				ctx, http.MethodPatch, "/v2/credentials/location-consent", strings.NewReader(cmp.Or(testCase.body, validBody)),
 			)
 
 			handler.ServeHTTP(w, request)

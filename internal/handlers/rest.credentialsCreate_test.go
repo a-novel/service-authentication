@@ -1,9 +1,8 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -23,8 +22,10 @@ func TestRestCredentialsCreate(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	validBody := `{"email": "user@provider.com", "password": "Louvre", "shortCode": "abcdef"}`
+	serviceRequest := &core.CredentialsCreateRequest{Email: "user@provider.com", Password: "Louvre", ShortCode: "abcdef"}
+
 	type serviceMock struct {
-		req  *core.CredentialsCreateRequest
 		resp *core.Token
 		err  error
 	}
@@ -32,7 +33,8 @@ func TestRestCredentialsCreate(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *http.Request
+		// body replaces validBody when set.
+		body string
 
 		serviceMock *serviceMock
 
@@ -42,94 +44,43 @@ func TestRestCredentialsCreate(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre",
-				"shortCode": "abcdef"
-			}`)),
+			serviceMock: &serviceMock{resp: tokenFixture},
 
-			serviceMock: &serviceMock{
-				req: &core.CredentialsCreateRequest{
-					Email:     "user@provider.com",
-					Password:  "Louvre",
-					ShortCode: "abcdef",
-				},
-				resp: &core.Token{
-					AccessToken:  "token",
-					RefreshToken: "refresh",
-				},
-			},
-
-			expectResponse: map[string]any{
-				"accessToken":  "token",
-				"refreshToken": "refresh",
-			},
-			expectStatus: http.StatusOK,
+			expectStatus:   http.StatusOK,
+			expectResponse: tokenFixtureJSON,
 		},
 		{
 			name: "Error/CredentialsAlreadyExists",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre",
-				"shortCode": "abcdef"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsCreateRequest{
-					Email:     "user@provider.com",
-					Password:  "Louvre",
-					ShortCode: "abcdef",
-				},
-				err: core.ErrCredentialsAlreadyExists,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsAlreadyExists},
 
 			expectStatus: http.StatusConflict,
 		},
 		{
 			name: "Error/ShortCodeInvalid",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre",
-				"shortCode": "abcdef"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsCreateRequest{
-					Email:     "user@provider.com",
-					Password:  "Louvre",
-					ShortCode: "abcdef",
-				},
-				err: core.ErrShortCodeInvalid,
-			},
+			serviceMock: &serviceMock{err: core.ErrShortCodeInvalid},
 
 			expectStatus: http.StatusForbidden,
 		},
 		{
+			name: "Error/InvalidRequest",
+
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
+
+			expectStatus: http.StatusUnprocessableEntity,
+		},
+		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre",
-				"shortCode": "abcdef"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsCreateRequest{
-					Email:     "user@provider.com",
-					Password:  "Louvre",
-					ShortCode: "abcdef",
-				},
-				err: errFoo,
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
-			name: "Error/InvalidBody",
+			name: "Error/MalformedBody",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`not json`)),
+			body: `{"email": `,
 
 			expectStatus: http.StatusBadRequest,
 		},
@@ -143,27 +94,26 @@ func TestRestCredentialsCreate(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestCredentialsCreate(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				t.Context(), http.MethodPut, "/v2/credentials", strings.NewReader(cmp.Or(testCase.body, validBody)),
+			)
 
-			handler.ServeHTTP(w, testCase.request)
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

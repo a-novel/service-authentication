@@ -35,7 +35,8 @@ func TestRestRefuseEndedSessions(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		claims *session.Claims
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -46,8 +47,6 @@ func TestRestRefuseEndedSessions(t *testing.T) {
 			// A caller whose session lasts reaches the route.
 			name: "Success",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{},
 
 			expectStatus: http.StatusTeapot,
@@ -55,8 +54,6 @@ func TestRestRefuseEndedSessions(t *testing.T) {
 		{
 			// A signed-out session answers as GET /v2/session answers it.
 			name: "Error/Revoked",
-
-			claims: claims,
 
 			serviceMock: &serviceMock{err: core.ErrClaimsGetRevoked},
 
@@ -66,14 +63,14 @@ func TestRestRefuseEndedSessions(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			claims: claims,
-
 			serviceMock: &serviceMock{err: errFoo},
 
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
 			name: "Error/MissingClaims",
+
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -91,14 +88,16 @@ func TestRestRefuseEndedSessions(t *testing.T) {
 					Return(claims, testCase.serviceMock.err)
 			}
 
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
+			}
+
 			// The route answers 418, so a response tells whether the request reached it.
 			route := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 			handler := handlers.NewRestRefuseEndedSessions(service, config.LoggerDev).Middleware(route)
-
 			w := httptest.NewRecorder()
-			request := httptest.NewRequestWithContext(
-				session.SetClaimsContext(t.Context(), testCase.claims), http.MethodGet, "/v2/sessions", nil,
-			)
+			request := httptest.NewRequestWithContext(ctx, http.MethodGet, "/v2/sessions", nil)
 
 			handler.ServeHTTP(w, request)
 

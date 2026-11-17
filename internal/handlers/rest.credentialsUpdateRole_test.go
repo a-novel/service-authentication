@@ -1,14 +1,12 @@
 package handlers_test
 
 import (
-	"encoding/json"
+	"cmp"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -27,8 +25,14 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
+	currentUserID := uuid.MustParse("00000000-0000-0000-0000-000000000002")
+	claims := &session.Claims{UserID: new(currentUserID)}
+	validBody := `{"userID": "` + credentialsFixture.ID.String() + `", "role": "auth:admin"}`
+	serviceRequest := &core.CredentialsUpdateRoleRequest{
+		TargetUserID: credentialsFixture.ID, CurrentUserID: currentUserID, Role: authconfig.RoleAdmin,
+	}
+
 	type serviceMock struct {
-		req  *core.CredentialsUpdateRoleRequest
 		resp *core.Credentials
 		err  error
 	}
@@ -36,8 +40,10 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		request *http.Request
-		claims  *session.Claims
+		// body replaces validBody when set.
+		body string
+		// noClaims sends the request without the claims the auth middleware sets.
+		noClaims bool
 
 		serviceMock *serviceMock
 
@@ -47,168 +53,65 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 		{
 			name: "Success",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000002",
-				"role": "auth:admin"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
+			serviceMock: &serviceMock{resp: credentialsFixture},
 
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateRoleRequest{
-					Role:          authconfig.RoleAdmin,
-					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				resp: &core.Credentials{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					Email:     "user@provider.com",
-					Role:      authconfig.RoleAdmin,
-					CreatedAt: time.Date(2018, time.February, 2, 12, 0, 0, 0, time.UTC),
-					UpdatedAt: time.Date(2020, time.February, 2, 12, 0, 0, 0, time.UTC),
-				},
-			},
-
-			expectResponse: map[string]any{
-				"id":        "00000000-0000-0000-0000-000000000001",
-				"email":     "user@provider.com",
-				"role":      authconfig.RoleAdmin,
-				"createdAt": "2018-02-02T12:00:00Z",
-				"updatedAt": "2020-02-02T12:00:00Z",
-			},
-			expectStatus: http.StatusOK,
+			expectStatus:   http.StatusOK,
+			expectResponse: credentialsFixtureJSON,
 		},
 		{
+			// The target or the current user is missing.
 			name: "Error/CredentialsNotFound",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000002",
-				"role": "auth:admin"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateRoleRequest{
-					Role:          authconfig.RoleAdmin,
-					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrCredentialsNotFound,
-			},
-
-			expectStatus: http.StatusNotFound,
-		},
-		{
-			name: "Error/TargetNotFound",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000002",
-				"role": "auth:admin"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateRoleRequest{
-					Role:          authconfig.RoleAdmin,
-					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				// A missing target user is surfaced by the credentials select, not the update.
-				err: core.ErrCredentialsNotFound,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsNotFound},
 
 			expectStatus: http.StatusNotFound,
 		},
 		{
 			name: "Error/RoleToHigher",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000002",
-				"role": "auth:admin"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateRoleRequest{
-					Role:          authconfig.RoleAdmin,
-					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrCredentialsUpdateRoleToHigher,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsUpdateRoleToHigher},
 
 			expectStatus: http.StatusForbidden,
 		},
 		{
 			name: "Error/DowngradeSuperior",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000002",
-				"role": "auth:admin"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateRoleRequest{
-					Role:          authconfig.RoleAdmin,
-					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrCredentialsUpdateRoleDowngradeSuperior,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsUpdateRoleDowngradeSuperior},
 
 			expectStatus: http.StatusForbidden,
 		},
 		{
-			name: "Error/UpdateSelf",
+			name: "Error/SelfUpdate",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000002",
-				"role": "auth:admin"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateRoleRequest{
-					Role:          authconfig.RoleAdmin,
-					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrCredentialsUpdateRoleSelfUpdate,
-			},
+			serviceMock: &serviceMock{err: core.ErrCredentialsUpdateRoleSelfUpdate},
 
 			expectStatus: http.StatusForbidden,
+		},
+		{
+			name: "Error/InvalidRequest",
+
+			serviceMock: &serviceMock{err: core.ErrInvalidRequest},
+
+			expectStatus: http.StatusUnprocessableEntity,
 		},
 		{
 			name: "Error/Internal",
 
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000002",
-				"role": "auth:admin"
-			}`)),
-			claims: &session.Claims{
-				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
-			},
+			serviceMock: &serviceMock{err: errFoo},
 
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateRoleRequest{
-					Role:          authconfig.RoleAdmin,
-					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
-					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: errFoo,
-			},
+			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Error/MalformedBody",
+
+			body: `{"userID": "user"}`,
+
+			expectStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Error/MissingClaims",
+
+			noClaims: true,
 
 			expectStatus: http.StatusInternalServerError,
 		},
@@ -222,30 +125,31 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 
 			if testCase.serviceMock != nil {
 				service.EXPECT().
-					Exec(mock.Anything, testCase.serviceMock.req).
+					Exec(mock.Anything, serviceRequest).
 					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
+			}
+
+			ctx := session.SetClaimsContext(t.Context(), claims)
+			if testCase.noClaims {
+				ctx = t.Context()
 			}
 
 			handler := handlers.NewRestCredentialsUpdateRole(service, config.LoggerDev)
 			w := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(
+				ctx, http.MethodPatch, "/v2/credentials/role", strings.NewReader(cmp.Or(testCase.body, validBody)),
+			)
 
-			rCtx := testCase.request.Context()
-			rCtx = session.SetClaimsContext(rCtx, testCase.claims)
-
-			handler.ServeHTTP(w, testCase.request.WithContext(rCtx))
+			handler.ServeHTTP(w, request)
 
 			res := w.Result()
-
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 
 			if testCase.expectResponse != nil {
-				data, err := io.ReadAll(res.Body)
-				require.NoError(t, errors.Join(err, res.Body.Close()))
-
-				var jsonRes any
-				require.NoError(t, json.Unmarshal(data, &jsonRes))
-				require.Equal(t, testCase.expectResponse, jsonRes)
+				requireJSONBody(t, res, testCase.expectResponse)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
