@@ -1,10 +1,19 @@
 package dao
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
+)
+
+var (
+	// ErrShortCodeNotFound is returned when no active short code matches the request.
+	ErrShortCodeNotFound = errors.New("short code not found")
+	// ErrShortCodeAlreadyExists is returned when a concurrent insert for the same (target, usage) pair
+	// commits first: the partial unique index refuses the second.
+	ErrShortCodeAlreadyExists = errors.New("short code already exists")
 )
 
 // ShortCode is a randomly generated, temporary password authorizing a task that must

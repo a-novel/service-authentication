@@ -122,11 +122,11 @@ func TestPgCredentialsUpdatePassword(t *testing.T) {
 				Now:      time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 			},
 
-			expectErr: dao.ErrCredentialsUpdatePasswordNotFound,
+			expectErr: dao.ErrCredentialsNotFound,
 		},
 	}
 
-	dao := dao.NewPgCredentialsUpdatePassword()
+	daoUpdatePassword := dao.NewPgCredentialsUpdatePassword()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestPgCredentialsUpdatePassword(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := dao.Exec(ctx, testCase.request)
+				credentials, err := daoUpdatePassword.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})

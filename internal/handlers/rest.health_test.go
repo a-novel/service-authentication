@@ -79,70 +79,70 @@ func TestRestHealth(t *testing.T) {
 			states:     [3]string{"down", "up", "up"},
 		},
 		{
-			name:       "Error/Smtp/Authentication",
+			name:       "Error/SMTP/Authentication",
 			smtpError:  &textproto.Error{Code: 535, Msg: privateDetail},
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=authentication smtp_reply_code=535",
 		},
 		{
-			name:       "Error/Smtp/Rejected",
+			name:       "Error/SMTP/Rejected",
 			smtpError:  &textproto.Error{Code: 454, Msg: privateDetail},
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=smtp_rejected smtp_reply_code=454",
 		},
 		{
-			name:       "Error/Smtp/InvalidReplyCode",
+			name:       "Error/SMTP/InvalidReplyCode",
 			smtpError:  &textproto.Error{Code: 123456789, Msg: privateDetail},
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=unknown smtp_reply_code=0",
 		},
 		{
-			name:       "Error/Smtp/Timeout",
+			name:       "Error/SMTP/Timeout",
 			smtpError:  &net.DNSError{Err: privateDetail, IsTimeout: true},
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=timeout smtp_reply_code=0",
 		},
 		{
-			name:       "Error/Smtp/DNS",
+			name:       "Error/SMTP/DNS",
 			smtpError:  &net.DNSError{Err: privateDetail, Name: privateDetail},
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=dns smtp_reply_code=0",
 		},
 		{
-			name:       "Error/Smtp/Certificate",
+			name:       "Error/SMTP/Certificate",
 			smtpError:  &tls.CertificateVerificationError{Err: dependencyErr},
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=tls smtp_reply_code=0",
 		},
 		{
-			name:       "Error/Smtp/TLSRecord",
+			name:       "Error/SMTP/TLSRecord",
 			smtpError:  tls.RecordHeaderError{Msg: privateDetail},
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=tls smtp_reply_code=0",
 		},
 		{
-			name:       "Error/Smtp/Connection",
+			name:       "Error/SMTP/Connection",
 			smtpError:  &net.OpError{Op: "dial", Err: dependencyErr},
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=connection smtp_reply_code=0",
 		},
 		{
-			name:       "Error/Smtp/Unknown",
+			name:       "Error/SMTP/Unknown",
 			smtpError:  dependencyErr,
 			statusCode: http.StatusServiceUnavailable,
 			states:     [3]string{"up", "down", "up"},
 			smtpLog:    "SMTP health check failed: category=unknown smtp_reply_code=0",
 		},
 		{
-			name:          "Error/JsonKeys",
+			name:          "Error/JSONKeys",
 			jsonKeysError: dependencyErr,
 			statusCode:    http.StatusServiceUnavailable,
 			states:        [3]string{"up", "up", "down"},
@@ -200,8 +200,8 @@ func TestRestHealth(t *testing.T) {
 				ctx = cancelled
 			}
 
-			smtpClient := handlersmocks.NewMockRestHealthClientSmtp(t)
-			jsonKeysClient := handlersmocks.NewMockRestHealthApiJsonKeys(t)
+			smtpClient := handlersmocks.NewMockRestHealthClientSMTP(t)
+			jsonKeysClient := handlersmocks.NewMockRestHealthAPIJSONKeys(t)
 
 			smtpError := testCase.smtpError
 			if smtpError != nil {
@@ -241,8 +241,6 @@ func TestRestHealth(t *testing.T) {
 
 			require.NotContains(t, logs.String(), privateDetail)
 			require.NotContains(t, w.Body.String(), privateDetail)
-			smtpClient.AssertExpectations(t)
-			jsonKeysClient.AssertExpectations(t)
 		})
 	}
 }
@@ -256,7 +254,7 @@ func TestRestHealthTelemetry(t *testing.T) {
 	}{
 		{name: "Success", expectStatus: http.StatusOK},
 		{
-			name:         "Error/Smtp",
+			name:         "Error/SMTP",
 			smtpErr:      &textproto.Error{Code: 535, Msg: "private SMTP reply"},
 			expectStatus: http.StatusServiceUnavailable,
 		},
@@ -284,8 +282,8 @@ func TestRestHealthTelemetry(t *testing.T) {
 			require.True(t, ok)
 			t.Cleanup(func() { require.NoError(t, db.Close()) })
 
-			smtpClient := handlersmocks.NewMockRestHealthClientSmtp(t)
-			jsonKeysClient := handlersmocks.NewMockRestHealthApiJsonKeys(t)
+			smtpClient := handlersmocks.NewMockRestHealthClientSMTP(t)
+			jsonKeysClient := handlersmocks.NewMockRestHealthAPIJSONKeys(t)
 
 			smtpClient.EXPECT().Ping().Return(testCase.smtpErr).Once()
 			jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
@@ -316,7 +314,7 @@ func TestRestHealthTelemetry(t *testing.T) {
 
 			for _, span := range ended {
 				expected := codes.Unset
-				if testCase.smtpErr != nil && (span.Name() == "rest.Health" || span.Name() == "rest.Health(reportSmtp)") {
+				if testCase.smtpErr != nil && (span.Name() == "rest.Health" || span.Name() == "rest.Health(reportSMTP)") {
 					expected = codes.Error
 				}
 
@@ -329,9 +327,6 @@ func TestRestHealthTelemetry(t *testing.T) {
 					}
 				}
 			}
-
-			smtpClient.AssertExpectations(t)
-			jsonKeysClient.AssertExpectations(t)
 		})
 	}
 }

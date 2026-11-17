@@ -17,10 +17,6 @@ import (
 //go:embed pg.credentialsInsert.sql
 var credentialsInsertQuery string
 
-// ErrCredentialsInsertAlreadyExists is returned by [PgCredentialsInsert.Exec] when the email is
-// already registered.
-var ErrCredentialsInsertAlreadyExists = errors.New("credentials already exists")
-
 // CredentialsInsertRequest is the input to [PgCredentialsInsert.Exec].
 type CredentialsInsertRequest struct {
 	// See [Credentials.ID].
@@ -36,7 +32,7 @@ type CredentialsInsertRequest struct {
 }
 
 // PgCredentialsInsert inserts a new set of credentials into the database. The email
-// must be unique; a duplicate returns [ErrCredentialsInsertAlreadyExists].
+// must be unique; a duplicate returns [ErrCredentialsAlreadyExists].
 type PgCredentialsInsert struct{}
 
 func NewPgCredentialsInsert() *PgCredentialsInsert {
@@ -72,7 +68,7 @@ func (dao *PgCredentialsInsert) Exec(
 		request.Role,
 	).Scan(ctx, entity)
 	if isUniqueViolation(err) {
-		err = errors.Join(err, ErrCredentialsInsertAlreadyExists)
+		err = errors.Join(err, ErrCredentialsAlreadyExists)
 	}
 
 	if err != nil {

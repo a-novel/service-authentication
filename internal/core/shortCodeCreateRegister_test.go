@@ -26,7 +26,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 
 	errFoo := errors.New("foo")
 
-	smtpConfig := authconfig.SmtpUrls{Register: "register-url"}
+	smtpConfig := authconfig.SMTPURLs{Register: "register-url"}
 
 	type serviceCreateMock struct {
 		resp *core.ShortCode
@@ -60,7 +60,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
 			serviceCreateMock: &serviceCreateMock{
@@ -87,7 +87,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
 			serviceCreateMock: &serviceCreateMock{
@@ -115,7 +115,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
 			closeMailDelivery: true,
@@ -131,7 +131,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
 			serviceCreateMock: &serviceCreateMock{
@@ -153,7 +153,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				err: nil,
 			},
 
-			expectErr: dao.ErrCredentialsInsertAlreadyExists,
+			expectErr: dao.ErrCredentialsAlreadyExists,
 		},
 		{
 			name: "Error/Dao",
@@ -176,8 +176,8 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			serviceCreate := coremocks.NewMockShortCodeCreateRegisterService(t)
-			daoSelect := coremocks.NewMockShortCodeCreateRegisterDao(t)
+			serviceCreate := coremocks.NewMockShortCodeCreateRegisterServiceShortCodeCreate(t)
+			daoSelect := coremocks.NewMockShortCodeCreateRegisterDaoSelectByEmail(t)
 			smtpService := coremocks.NewMockMailDeliverySMTP(t)
 
 			mailDelivery := core.NewMailDelivery(smtpService, 1)
@@ -245,10 +245,6 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			}
 
 			waitForMailDelivery(t, mailDelivery)
-
-			serviceCreate.AssertExpectations(t)
-			daoSelect.AssertExpectations(t)
-			smtpService.AssertExpectations(t)
 		})
 	}
 }

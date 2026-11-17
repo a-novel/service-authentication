@@ -10,13 +10,13 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
-// WaitlistJoinCredentials checks the authoritative account store before and after a sheet write.
-type WaitlistJoinCredentials interface {
+// WaitlistJoinDaoCredentialsExist checks the authoritative account store before and after a sheet write.
+type WaitlistJoinDaoCredentialsExist interface {
 	Exec(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error)
 }
 
-// WaitlistJoinWriter adds or removes rows through the serialized sheet writer.
-type WaitlistJoinWriter interface {
+// WaitlistJoinDaoWaitlist adds or removes rows through the serialized sheet writer.
+type WaitlistJoinDaoWaitlist interface {
 	Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)
 }
 
@@ -30,13 +30,15 @@ type WaitlistJoinRequest struct {
 // succeeds alike and changes nothing, so the answer tells no caller which addresses are known. No
 // path sends mail.
 type WaitlistJoin struct {
-	credentials WaitlistJoinCredentials
-	writer      WaitlistJoinWriter
+	daoCredentialsExist WaitlistJoinDaoCredentialsExist
+	daoWaitlist         WaitlistJoinDaoWaitlist
 }
 
 // NewWaitlistJoin injects account lookup and sheet storage; no Google credentials enter the core.
-func NewWaitlistJoin(credentials WaitlistJoinCredentials, writer WaitlistJoinWriter) *WaitlistJoin {
-	return &WaitlistJoin{credentials: credentials, writer: writer}
+func NewWaitlistJoin(
+	daoCredentialsExist WaitlistJoinDaoCredentialsExist, daoWaitlist WaitlistJoinDaoWaitlist,
+) *WaitlistJoin {
+	return &WaitlistJoin{daoCredentialsExist: daoCredentialsExist, daoWaitlist: daoWaitlist}
 }
 
 // Exec keeps the sheet free of registered accounts, including a concurrent registration.
@@ -51,7 +53,7 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 
 	lookup := &dao.CredentialsExistRequest{Email: request.Email}
 
-	exists, err := service.credentials.Exec(ctx, lookup)
+	exists, err := service.daoCredentialsExist.Exec(ctx, lookup)
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("check account: %w", err))
 	}
@@ -60,7 +62,7 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 	// that keeps the sheet free of registered accounts, as a concurrent registration below does. A
 	// deployment without a writer refuses a join and accepts this removal, but serves no list at all.
 	if exists {
-		_, err = service.writer.Exec(ctx, &dao.WaitlistRequest{Action: dao.WaitlistActionRemove, Email: request.Email})
+		_, err = service.daoWaitlist.Exec(ctx, &dao.WaitlistRequest{Action: dao.WaitlistActionRemove, Email: request.Email})
 		if err != nil {
 			return otel.ReportError(span, fmt.Errorf("keep registered account off waitlist: %w", err))
 		}
@@ -68,7 +70,7 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 		return nil
 	}
 
-	_, err = service.writer.Exec(ctx, &dao.WaitlistRequest{
+	_, err = service.daoWaitlist.Exec(ctx, &dao.WaitlistRequest{
 		Action: dao.WaitlistActionJoin, Email: request.Email, Lang: request.Lang,
 	})
 	// An address already listed stays as it is, and answers like a new one.
@@ -78,13 +80,13 @@ func (service *WaitlistJoin) Exec(ctx context.Context, request *WaitlistJoinRequ
 
 	// A concurrently committed account may have removed its row before this join acquired the sheet lock.
 	// Only registered accounts are removed; pending invitations have no unsubscribe operation.
-	exists, err = service.credentials.Exec(ctx, lookup)
+	exists, err = service.daoCredentialsExist.Exec(ctx, lookup)
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("recheck account: %w", err))
 	}
 
 	if exists {
-		_, err = service.writer.Exec(ctx, &dao.WaitlistRequest{Action: dao.WaitlistActionRemove, Email: request.Email})
+		_, err = service.daoWaitlist.Exec(ctx, &dao.WaitlistRequest{Action: dao.WaitlistActionRemove, Email: request.Email})
 		if err != nil {
 			return otel.ReportError(span, fmt.Errorf("remove registered account from waitlist: %w", err))
 		}

@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -25,7 +24,7 @@ func TestRestRefuseEndedSessions(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	claims := &session.Claims{
-		UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+		UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 		RefreshTokenID: "00000000-0000-0000-0000-0000000000a1",
 	}
 
@@ -107,8 +106,6 @@ func TestRestRefuseEndedSessions(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
 			require.Equal(t, testCase.expectChallenge, res.Header.Get("WWW-Authenticate"))
-
-			service.AssertExpectations(t)
 		})
 	}
 }

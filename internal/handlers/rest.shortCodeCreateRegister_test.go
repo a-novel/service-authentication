@@ -79,7 +79,7 @@ func TestRestShortCodeCreateRegister(t *testing.T) {
 					Lang:  "fr",
 					Role:  authconfig.RoleUser,
 				},
-				err: core.ErrCredentialsCreateAlreadyExists,
+				err: core.ErrCredentialsAlreadyExists,
 			},
 
 			// Returns 202 to prevent email enumeration.

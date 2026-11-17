@@ -1,12 +1,15 @@
 package core
 
 import (
+	"encoding/json"
+	"fmt"
 	"slices"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
+	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
@@ -75,4 +78,32 @@ func newShortCode(entity *dao.ShortCode, plainCode string) *ShortCode {
 		ExpiresAt: entity.ExpiresAt,
 		PlainCode: plainCode,
 	}
+}
+
+// shortCodeRegistrationData is the payload a registration code carries: the role the new account
+// takes.
+type shortCodeRegistrationData struct {
+	Role string `json:"role"`
+}
+
+// computeRole returns the role a consumed registration code grants. A code without data registers
+// a user; a role the permissions do not know is refused.
+func computeRole(data []byte) (string, error) {
+	if len(data) == 0 {
+		return authconfig.RoleUser, nil
+	}
+
+	var registrationData shortCodeRegistrationData
+
+	err := json.Unmarshal(data, &registrationData)
+	if err != nil {
+		return "", fmt.Errorf("decode registration data: %w", err)
+	}
+
+	_, err = authconfig.PermissionsConfigDefault.Priority(registrationData.Role)
+	if err != nil {
+		return "", fmt.Errorf("validate registration role: %w", err)
+	}
+
+	return registrationData.Role, nil
 }

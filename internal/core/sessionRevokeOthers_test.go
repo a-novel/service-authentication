@@ -86,8 +86,6 @@ func TestSessionRevokeOthers(t *testing.T) {
 			if testCase.daoMock != nil && testCase.daoMock.err != nil {
 				require.ErrorIs(t, err, testCase.daoMock.err)
 			}
-
-			mockDao.AssertExpectations(t)
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package env
 
 import (
+	"cmp"
 	"os"
 	"runtime"
 	"strconv"
@@ -23,10 +24,10 @@ func getEnv(name string) string {
 }
 
 const (
-	// SmtpTimeoutDefault bounds one email send.
-	SmtpTimeoutDefault = 20 * time.Second
-	// SmtpMaxConcurrentDefault bounds the SMTP connections a burst or a stalled server can hold open.
-	SmtpMaxConcurrentDefault = 16
+	// SMTPTimeoutDefault bounds one email send.
+	SMTPTimeoutDefault = 20 * time.Second
+	// SMTPMaxConcurrentDefault bounds the SMTP connections a burst or a stalled server can hold open.
+	SMTPMaxConcurrentDefault = 16
 	// WaitlistTimeoutDefault bounds one request to the optional Google sheet writer.
 	WaitlistTimeoutDefault = 10 * time.Second
 	// WaitlistMaxConcurrentDefault keeps optional Google calls from exhausting REST capacity.
@@ -44,16 +45,16 @@ const (
 	// AppNameDefault names the application in logs and traces when APP_NAME is unset.
 	AppNameDefault = "service-authentication"
 
-	// ServiceJsonKeysHostDefault reaches a JSON Keys service on the same host.
-	ServiceJsonKeysHostDefault = "localhost"
-	// ServiceJsonKeysPortDefault is the JSON Keys service's default gRPC port.
-	ServiceJsonKeysPortDefault = 8080
+	// ServiceJSONKeysHostDefault reaches a JSON Keys service on the same host.
+	ServiceJSONKeysHostDefault = "localhost"
+	// ServiceJSONKeysPortDefault is the JSON Keys service's default gRPC port.
+	ServiceJSONKeysPortDefault = 8080
 
 	// AccountPlatformCallerDefault is the caller of the account platform in the cluster.
 	AccountPlatformCallerDefault = "system:serviceaccount:account:web"
 
 	// TimeoutShutdownDefault ends a server's drain 25 seconds after SIGTERM. That outlasts
-	// SmtpTimeoutDefault, so a send that starts just before the signal finishes, and leaves the
+	// SMTPTimeoutDefault, so a send that starts just before the signal finishes, and leaves the
 	// OpenTelemetry flush, up to 2 seconds, inside the 30 seconds before Kubernetes kills the pod.
 	TimeoutShutdownDefault = 25 * time.Second
 
@@ -112,56 +113,54 @@ var (
 	PlatformAuthURL = getEnv("PLATFORM_AUTH_URL")
 	// PlatformAuthUpdateEmailURL is the web client page linked from update emails to
 	// complete the email update.
-	PlatformAuthUpdateEmailURL = config.LoadEnv(
-		getEnv("PLATFORM_AUTH_URL_UPDATE_EMAIL"), PlatformAuthURL+PlatformEmailUpdateURLDefault, config.StringParser,
+	PlatformAuthUpdateEmailURL = cmp.Or(
+		getEnv("PLATFORM_AUTH_URL_UPDATE_EMAIL"), PlatformAuthURL+PlatformEmailUpdateURLDefault,
 	)
 	// PlatformAuthUpdatePasswordURL is the web client page linked from reset emails to
 	// complete the password reset.
-	PlatformAuthUpdatePasswordURL = config.LoadEnv(
-		getEnv("PLATFORM_AUTH_URL_UPDATE_PASSWORD"), PlatformAuthURL+PlatformPasswordResetURLDefault, config.StringParser,
+	PlatformAuthUpdatePasswordURL = cmp.Or(
+		getEnv("PLATFORM_AUTH_URL_UPDATE_PASSWORD"), PlatformAuthURL+PlatformPasswordResetURLDefault,
 	)
 	// PlatformAuthRegisterURL is the web client page linked from registration emails to
 	// complete the account creation.
-	PlatformAuthRegisterURL = config.LoadEnv(
-		getEnv("PLATFORM_AUTH_URL_REGISTER"), PlatformAuthURL+PlatformAccountCreateURLDefault, config.StringParser,
-	)
+	PlatformAuthRegisterURL = cmp.Or(getEnv("PLATFORM_AUTH_URL_REGISTER"), PlatformAuthURL+PlatformAccountCreateURLDefault)
 
-	// ServiceJsonKeysHost is the hostname of the JSON Keys service, without scheme or port.
-	ServiceJsonKeysHost = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_HOST"), ServiceJsonKeysHostDefault, config.StringParser)
-	// ServiceJsonKeysPort is the gRPC port of the JSON Keys service.
-	ServiceJsonKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJsonKeysPortDefault, strconv.Atoi)
-	// ServiceJsonKeysTLS dials the JSON Keys service over TLS, from inside the cluster, once
-	// ServiceTokenPath names a token. The server's certificate is verified for ServiceJsonKeysHost
+	// ServiceJSONKeysHost is the hostname of the JSON Keys service, without scheme or port.
+	ServiceJSONKeysHost = cmp.Or(getEnv("SERVICE_JSON_KEYS_HOST"), ServiceJSONKeysHostDefault)
+	// ServiceJSONKeysPort is the gRPC port of the JSON Keys service.
+	ServiceJSONKeysPort = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_PORT"), ServiceJSONKeysPortDefault, strconv.Atoi)
+	// ServiceJSONKeysTLS dials the JSON Keys service over TLS, from inside the cluster, once
+	// ServiceTokenPath names a token. The server's certificate is verified for ServiceJSONKeysHost
 	// against the system roots, which SSL_CERT_DIR extends.
-	ServiceJsonKeysTLS = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_TLS"), false, strconv.ParseBool)
+	ServiceJSONKeysTLS = config.LoadEnv(getEnv("SERVICE_JSON_KEYS_TLS"), false, strconv.ParseBool)
 
-	// SmtpAddr is the SMTP server address, as domain:port.
-	SmtpAddr = getEnv("SMTP_ADDR")
-	// SmtpSenderName is the display name that appears as the sender on outgoing emails.
-	SmtpSenderName = getEnv("SMTP_SENDER_NAME")
-	// SmtpSenderEmail is the address outgoing emails are sent from.
-	SmtpSenderEmail = getEnv("SMTP_SENDER_EMAIL")
-	// SmtpUsername is the identity used for SMTP authentication. An empty value lets the sender
-	// reuse SmtpSenderEmail. It is unused without SmtpSenderPassword.
-	SmtpUsername = getEnv("SMTP_USERNAME")
-	// SmtpSenderPassword is the SMTP authentication password. An empty value sends without
+	// SMTPAddr is the SMTP server address, as domain:port.
+	SMTPAddr = getEnv("SMTP_ADDR")
+	// SMTPSenderName is the display name that appears as the sender on outgoing emails.
+	SMTPSenderName = getEnv("SMTP_SENDER_NAME")
+	// SMTPSenderEmail is the address outgoing emails are sent from.
+	SMTPSenderEmail = getEnv("SMTP_SENDER_EMAIL")
+	// SMTPUsername is the identity used for SMTP authentication. An empty value lets the sender
+	// reuse SMTPSenderEmail. It is unused without SMTPSenderPassword.
+	SMTPUsername = getEnv("SMTP_USERNAME")
+	// SMTPSenderPassword is the SMTP authentication password. An empty value sends without
 	// authentication, to a relay that admits the service by its IP address. The connection must
 	// then upgrade with STARTTLS.
-	SmtpSenderPassword = getEnv("SMTP_SENDER_PASSWORD")
-	// SmtpSenderDomain is the server name authentication is bound to. It should match the host of
-	// SmtpAddr, and it is unused without SmtpSenderPassword.
-	SmtpSenderDomain = getEnv("SMTP_SENDER_DOMAIN")
-	// SmtpTimeout bounds how long a single email send may take.
-	SmtpTimeout = config.LoadEnv(getEnv("SMTP_TIMEOUT"), SmtpTimeoutDefault, time.ParseDuration)
-	// SmtpMaxConcurrent caps concurrent email deliveries; excess sends wait for a slot.
-	SmtpMaxConcurrent = config.LoadEnv(getEnv("SMTP_MAX_CONCURRENT"), SmtpMaxConcurrentDefault, strconv.Atoi)
-	// SmtpForceUnencrypted lets the SMTP client talk over a non-TLS connection. With a password, it
+	SMTPSenderPassword = getEnv("SMTP_SENDER_PASSWORD")
+	// SMTPSenderDomain is the server name authentication is bound to. It should match the host of
+	// SMTPAddr, and it is unused without SMTPSenderPassword.
+	SMTPSenderDomain = getEnv("SMTP_SENDER_DOMAIN")
+	// SMTPTimeout bounds how long a single email send may take.
+	SMTPTimeout = config.LoadEnv(getEnv("SMTP_TIMEOUT"), SMTPTimeoutDefault, time.ParseDuration)
+	// SMTPMaxConcurrent caps concurrent email deliveries; excess sends wait for a slot.
+	SMTPMaxConcurrent = config.LoadEnv(getEnv("SMTP_MAX_CONCURRENT"), SMTPMaxConcurrentDefault, strconv.Atoi)
+	// SMTPForceUnencrypted lets the SMTP client talk over a non-TLS connection. With a password, it
 	// sends the credentials in the clear, which Go otherwise permits only towards localhost. Without
 	// one, it lifts the STARTTLS requirement. Local runs under Docker need it because the mail host
 	// offers no TLS and answers to another name.
 	//
 	// It must never be set in production.
-	SmtpForceUnencrypted = config.LoadEnv(getEnv("SMTP_FORCE_UNENCRYPTED"), false, strconv.ParseBool)
+	SMTPForceUnencrypted = config.LoadEnv(getEnv("SMTP_FORCE_UNENCRYPTED"), false, strconv.ParseBool)
 
 	// WaitlistURL is the Google Apps Script /exec deployment URL; empty disables the integration.
 	WaitlistURL = getEnv("WAITLIST_URL")
@@ -200,7 +199,7 @@ var (
 	)
 
 	// AppName names the application in logs and traces.
-	AppName = config.LoadEnv(getEnv("APP_NAME"), AppNameDefault, config.StringParser)
+	AppName = cmp.Or(getEnv("APP_NAME"), AppNameDefault)
 	// Otel enables OpenTelemetry instrumentation.
 	Otel = config.LoadEnv(getEnv("OTEL"), false, strconv.ParseBool)
 
@@ -229,9 +228,7 @@ var (
 	OAuthClients = config.LoadEnv(getEnv("OAUTH_CLIENTS"), nil, auth.ParseClients)
 	// AccountPlatformCaller is the caller of the account platform, the only one that validates
 	// authorization requests and issues codes.
-	AccountPlatformCaller = config.LoadEnv(
-		getEnv("ACCOUNT_PLATFORM_CALLER"), AccountPlatformCallerDefault, config.StringParser,
-	)
+	AccountPlatformCaller = cmp.Or(getEnv("ACCOUNT_PLATFORM_CALLER"), AccountPlatformCallerDefault)
 
 	// OTLPEndpoint is the standard OTEL_EXPORTER_OTLP_ENDPOINT. When set, traces and logs export
 	// over OTLP/HTTP, which the OTEL_EXPORTER_OTLP_* variables configure. When empty, they go to

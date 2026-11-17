@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -54,7 +53,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"currentPassword": "abcdef"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -89,7 +88,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"currentPassword": "abcdef"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -98,7 +97,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 					CurrentPassword: "abcdef",
 					UserID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: core.ErrCredentialsUpdatePasswordNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,
@@ -111,7 +110,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"currentPassword": "abcdef"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -133,7 +132,7 @@ func TestRestCredentialsUpdatePassword(t *testing.T) {
 				"currentPassword": "abcdef"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{

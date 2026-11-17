@@ -61,7 +61,7 @@ func (handler *RestShortCodeCreatePasswordReset) ServeHTTP(w http.ResponseWriter
 
 	_, err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email is unknown, so a caller cannot probe which addresses are registered.
-	if err != nil && !errors.Is(err, core.ErrCredentialsByEmailNotFound) {
+	if err != nil && !errors.Is(err, core.ErrCredentialsNotFound) {
 		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreatePasswordResetErrors, err)
 
 		return

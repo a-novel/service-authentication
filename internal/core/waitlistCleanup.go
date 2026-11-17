@@ -12,13 +12,13 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 )
 
-// WaitlistCleanupCredentials finds registered accounts within a page of pending addresses.
-type WaitlistCleanupCredentials interface {
+// WaitlistCleanupDaoCredentialsList finds registered accounts within a page of pending addresses.
+type WaitlistCleanupDaoCredentialsList interface {
 	Exec(ctx context.Context, request *dao.CredentialsListRequest) ([]*dao.Credentials, error)
 }
 
-// WaitlistCleanupWriter reads and removes bounded pages through the signed sheet endpoint.
-type WaitlistCleanupWriter interface {
+// WaitlistCleanupDaoWaitlist reads and removes bounded pages through the signed sheet endpoint.
+type WaitlistCleanupDaoWaitlist interface {
 	Exec(ctx context.Context, request *dao.WaitlistRequest) (*dao.WaitlistResult, error)
 }
 
@@ -40,13 +40,15 @@ type WaitlistCleanupResult struct {
 
 // WaitlistCleanup reconciles stale sheet entries against PostgreSQL without sending invitations.
 type WaitlistCleanup struct {
-	credentials WaitlistCleanupCredentials
-	writer      WaitlistCleanupWriter
+	daoCredentialsList WaitlistCleanupDaoCredentialsList
+	daoWaitlist        WaitlistCleanupDaoWaitlist
 }
 
 // NewWaitlistCleanup injects account lookup and private sheet access.
-func NewWaitlistCleanup(credentials WaitlistCleanupCredentials, writer WaitlistCleanupWriter) *WaitlistCleanup {
-	return &WaitlistCleanup{credentials: credentials, writer: writer}
+func NewWaitlistCleanup(
+	daoCredentialsList WaitlistCleanupDaoCredentialsList, daoWaitlist WaitlistCleanupDaoWaitlist,
+) *WaitlistCleanup {
+	return &WaitlistCleanup{daoCredentialsList: daoCredentialsList, daoWaitlist: daoWaitlist}
 }
 
 // Exec returns progress even on failure. Re-running safely rechecks the remaining rows.
@@ -61,7 +63,7 @@ func (service *WaitlistCleanup) Exec(
 
 	after := ""
 	for {
-		page, err := service.writer.Exec(ctx, &dao.WaitlistRequest{Action: dao.WaitlistActionList, After: after})
+		page, err := service.daoWaitlist.Exec(ctx, &dao.WaitlistRequest{Action: dao.WaitlistActionList, After: after})
 		if err != nil {
 			return result, otel.ReportError(span, fmt.Errorf("list waitlist: %w", err))
 		}
@@ -75,7 +77,7 @@ func (service *WaitlistCleanup) Exec(
 			return result, otel.ReportError(span, err)
 		}
 
-		accounts, err := service.credentials.Exec(ctx, &dao.CredentialsListRequest{
+		accounts, err := service.daoCredentialsList.Exec(ctx, &dao.CredentialsListRequest{
 			Limit: authconfig.WaitlistBatchSize, Emails: page.Emails,
 		})
 		if err != nil {
@@ -89,7 +91,7 @@ func (service *WaitlistCleanup) Exec(
 		if request.Apply && len(accounts) > 0 {
 			emails := lo.Map(accounts, func(credentials *dao.Credentials, _ int) string { return credentials.Email })
 
-			removed, removeErr := service.writer.Exec(ctx, &dao.WaitlistRequest{
+			removed, removeErr := service.daoWaitlist.Exec(ctx, &dao.WaitlistRequest{
 				Action: dao.WaitlistActionRemove, Emails: emails,
 			})
 			if removeErr != nil {

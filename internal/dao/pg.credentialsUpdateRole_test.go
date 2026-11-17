@@ -67,11 +67,11 @@ func TestPgCredentialsUpdateRole(t *testing.T) {
 				Now:  time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 			},
 
-			expectErr: dao.ErrCredentialsUpdateRoleNotFound,
+			expectErr: dao.ErrCredentialsNotFound,
 		},
 	}
 
-	dao := dao.NewPgCredentialsUpdateRole()
+	daoUpdateRole := dao.NewPgCredentialsUpdateRole()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -88,7 +88,7 @@ func TestPgCredentialsUpdateRole(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := dao.Exec(ctx, testCase.request)
+				credentials, err := daoUpdateRole.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})

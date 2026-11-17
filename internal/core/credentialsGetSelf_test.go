@@ -64,7 +64,7 @@ func TestCredentialsGetSelf(t *testing.T) {
 				resp: credentialsEntity,
 			},
 			daoShortCodeSelectMock: &daoShortCodeSelectMock{
-				err: dao.ErrShortCodeSelectNotFound,
+				err: dao.ErrShortCodeNotFound,
 			},
 
 			expect: &core.CredentialsSelf{Credentials: credentials},
@@ -76,7 +76,7 @@ func TestCredentialsGetSelf(t *testing.T) {
 				resp: changed(*credentialsEntity, func(entity *dao.Credentials) { entity.LocationConsent = true }),
 			},
 			daoShortCodeSelectMock: &daoShortCodeSelectMock{
-				err: dao.ErrShortCodeSelectNotFound,
+				err: dao.ErrShortCodeNotFound,
 			},
 
 			expect: &core.CredentialsSelf{Credentials: credentials, LocationConsent: true},
@@ -108,10 +108,10 @@ func TestCredentialsGetSelf(t *testing.T) {
 			name: "Error/NotFound",
 
 			daoMock: &daoMock{
-				err: dao.ErrCredentialsSelectNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 
-			expectErr: core.ErrCredentialsGetNotFound,
+			expectErr: core.ErrCredentialsNotFound,
 		},
 		{
 			name: "Error/Credentials",
@@ -167,9 +167,6 @@ func TestCredentialsGetSelf(t *testing.T) {
 			resp, err := service.Exec(ctx, &core.CredentialsGetSelfRequest{ID: userID})
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
-
-			mockDao.AssertExpectations(t)
-			mockDaoShortCodeSelect.AssertExpectations(t)
 		})
 	}
 }

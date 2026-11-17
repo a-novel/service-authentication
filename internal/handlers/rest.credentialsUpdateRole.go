@@ -22,9 +22,8 @@ type RestCredentialsUpdateRoleService interface {
 
 // credentialsUpdateRoleErrors maps a refused role change to its status.
 var credentialsUpdateRoleErrors = httpf.ErrMap{
-	core.ErrCredentialsUpdateRoleNotFound: http.StatusNotFound,
-	// The select raises this when the target or actor credentials are missing.
-	core.ErrCredentialsGetNotFound:                 http.StatusNotFound,
+	// The select or the update raises this when the target or actor credentials are missing.
+	core.ErrCredentialsNotFound:                    http.StatusNotFound,
 	core.ErrCredentialsUpdateRoleToHigher:          http.StatusForbidden,
 	core.ErrCredentialsUpdateRoleDowngradeSuperior: http.StatusForbidden,
 	core.ErrCredentialsUpdateRoleSelfUpdate:        http.StatusForbidden,

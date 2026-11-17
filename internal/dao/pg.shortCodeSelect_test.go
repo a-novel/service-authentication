@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/postgres"
@@ -71,7 +70,7 @@ func TestPgShortCodeSelect(t *testing.T) {
 				Usage:  "test-usage",
 			},
 
-			expectErr: dao.ErrShortCodeSelectNotFound,
+			expectErr: dao.ErrShortCodeNotFound,
 		},
 		{
 			name: "IgnoreExpired",
@@ -93,7 +92,7 @@ func TestPgShortCodeSelect(t *testing.T) {
 				Usage:  "test-usage",
 			},
 
-			expectErr: dao.ErrShortCodeSelectNotFound,
+			expectErr: dao.ErrShortCodeNotFound,
 		},
 		{
 			name: "IgnoreDeleted",
@@ -108,7 +107,7 @@ func TestPgShortCodeSelect(t *testing.T) {
 					CreatedAt:      hourAgo,
 					ExpiresAt:      hourLater,
 					DeletedAt:      &hourAgo,
-					DeletedComment: lo.ToPtr("test-comment"),
+					DeletedComment: new("test-comment"),
 				},
 			},
 
@@ -117,11 +116,11 @@ func TestPgShortCodeSelect(t *testing.T) {
 				Usage:  "test-usage",
 			},
 
-			expectErr: dao.ErrShortCodeSelectNotFound,
+			expectErr: dao.ErrShortCodeNotFound,
 		},
 	}
 
-	dao := dao.NewPgShortCodeSelect()
+	daoSelect := dao.NewPgShortCodeSelect()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -138,7 +137,7 @@ func TestPgShortCodeSelect(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := dao.Exec(ctx, testCase.request)
+				credentials, err := daoSelect.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})

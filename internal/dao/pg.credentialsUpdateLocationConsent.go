@@ -16,10 +16,6 @@ import (
 //go:embed pg.credentialsUpdateLocationConsent.sql
 var credentialsUpdateLocationConsentQuery string
 
-// ErrCredentialsUpdateLocationConsentNotFound is returned by [PgCredentialsUpdateLocationConsent.Exec]
-// when no row matches the requested ID.
-var ErrCredentialsUpdateLocationConsentNotFound = errors.New("credentials not found")
-
 // CredentialsUpdateLocationConsentRequest is the input to [PgCredentialsUpdateLocationConsent.Exec].
 type CredentialsUpdateLocationConsentRequest struct {
 	// ID of the credentials to update.
@@ -50,7 +46,7 @@ func (dao *PgCredentialsUpdateLocationConsent) Exec(
 
 	err = db.NewRaw(credentialsUpdateLocationConsentQuery, request.LocationConsent, request.ID).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrCredentialsUpdateLocationConsentNotFound)
+		err = errors.Join(err, ErrCredentialsNotFound)
 	}
 
 	if err != nil {

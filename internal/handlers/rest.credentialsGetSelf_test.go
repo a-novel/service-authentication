@@ -64,7 +64,7 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 		{
 			name: "Success",
 
-			claims: &session.Claims{UserID: lo.ToPtr(userID)},
+			claims: &session.Claims{UserID: new(userID)},
 
 			serviceMock: &serviceMock{
 				resp: &core.CredentialsSelf{Credentials: credentials},
@@ -76,7 +76,7 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 		{
 			name: "Success/PendingEmail",
 
-			claims: &session.Claims{UserID: lo.ToPtr(userID)},
+			claims: &session.Claims{UserID: new(userID)},
 
 			serviceMock: &serviceMock{
 				resp: &core.CredentialsSelf{
@@ -99,7 +99,7 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 		{
 			name: "Success/LocationConsent",
 
-			claims: &session.Claims{UserID: lo.ToPtr(userID)},
+			claims: &session.Claims{UserID: new(userID)},
 
 			serviceMock: &serviceMock{
 				resp: &core.CredentialsSelf{Credentials: credentials, LocationConsent: true},
@@ -111,10 +111,10 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 		{
 			name: "Error/NotFound",
 
-			claims: &session.Claims{UserID: lo.ToPtr(userID)},
+			claims: &session.Claims{UserID: new(userID)},
 
 			serviceMock: &serviceMock{
-				err: core.ErrCredentialsGetNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,
@@ -122,7 +122,7 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 		{
 			name: "Error/Internal",
 
-			claims: &session.Claims{UserID: lo.ToPtr(userID)},
+			claims: &session.Claims{UserID: new(userID)},
 
 			serviceMock: &serviceMock{
 				err: errFoo,
@@ -169,8 +169,6 @@ func TestRestCredentialsGetSelf(t *testing.T) {
 				require.NoError(t, json.Unmarshal(data, &jsonRes))
 				require.Equal(t, testCase.expectResponse, jsonRes)
 			}
-
-			service.AssertExpectations(t)
 		})
 	}
 }

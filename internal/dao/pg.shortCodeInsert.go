@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/a-novel-kit/golib/otel"
@@ -23,11 +22,6 @@ var ErrShortCodeInsertNested = errors.New("short code insert cannot run inside a
 
 //go:embed pg.shortCodeInsert.sql
 var shortCodeInsertQuery string
-
-// ErrShortCodeInsertAlreadyExists is returned by [PgShortCodeInsert.Exec] when an active short code
-// already covers the same (target, usage) pair. The conflict check of a request without Override
-// finds it, and the partial unique index catches a concurrent insert.
-var ErrShortCodeInsertAlreadyExists = errors.New("short code already exists")
 
 // ShortCodeInsertRequest is the input to [PgShortCodeInsert.Exec].
 type ShortCodeInsertRequest struct {
@@ -118,7 +112,7 @@ func (dao *PgShortCodeInsert) Exec(ctx context.Context, request *ShortCodeInsert
 		// The partial unique index catches the conflicts the steps above miss under concurrent
 		// inserts.
 		if isUniqueViolation(err) {
-			err = errors.Join(err, ErrShortCodeInsertAlreadyExists)
+			err = errors.Join(err, ErrShortCodeAlreadyExists)
 		}
 
 		if err != nil {
@@ -152,8 +146,8 @@ func (dao *PgShortCodeInsert) discardConflicts(ctx context.Context, request *Sho
 		// deletion by a second: the row then stays in the past for predicates
 		// comparing deleted_at against CURRENT_TIMESTAMP, such as the active
 		// short-codes view.
-		lo.ToPtr(request.Now.Add(-time.Second)),
-		lo.ToPtr(ShortCodeDeleteOverride),
+		new(request.Now.Add(-time.Second)),
+		new(ShortCodeDeleteOverride),
 		request.Target,
 		request.Usage,
 	).Exec(ctx)
@@ -213,7 +207,7 @@ func (dao *PgShortCodeInsert) checkConflicts(ctx context.Context, request *Short
 	}
 
 	if n > 0 {
-		return otel.ReportError(span, ErrShortCodeInsertAlreadyExists)
+		return otel.ReportError(span, ErrShortCodeAlreadyExists)
 	}
 
 	return nil

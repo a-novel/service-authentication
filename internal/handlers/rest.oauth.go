@@ -35,8 +35,8 @@ type RestOAuthError struct {
 // another header. A 401 would also need a WWW-Authenticate challenge (RFC 9110 §15.5.2) for a scheme
 // no registry names.
 func sendOAuthError(w http.ResponseWriter, span trace.Span, err error) bool {
-	var refusal *core.OAuthError
-	if !errors.As(err, &refusal) {
+	refusal, ok := errors.AsType[*core.OAuthError](err)
+	if !ok {
 		return false
 	}
 

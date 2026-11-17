@@ -49,7 +49,7 @@ func NewCredentialsUpdateLocationConsent(
 	return &CredentialsUpdateLocationConsent{dao: dao, daoClearLocations: daoClearLocations, transactor: transactor}
 }
 
-// Exec returns [ErrCredentialsUpdateLocationConsentNotFound] when the account no longer exists.
+// Exec returns [ErrCredentialsNotFound] when the account no longer exists.
 func (service *CredentialsUpdateLocationConsent) Exec(
 	ctx context.Context, request *CredentialsUpdateLocationConsentRequest,
 ) error {

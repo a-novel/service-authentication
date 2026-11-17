@@ -106,7 +106,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			request: request,
 
 			selectCredentialsMock: &selectCredentialsMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 			selectShortCodeMock: &selectShortCodeMock{
 				resp: &dao.ShortCode{Data: []byte(`{"role":"auth:admin"}`)},
@@ -121,10 +121,10 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			request: request,
 
 			selectCredentialsMock: &selectCredentialsMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 			selectShortCodeMock: &selectShortCodeMock{
-				err: dao.ErrShortCodeSelectNotFound,
+				err: dao.ErrShortCodeNotFound,
 			},
 			registerMock: &registerMock{
 				resp: &core.ShortCode{},
@@ -139,7 +139,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			request: request,
 
 			selectCredentialsMock: &selectCredentialsMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 			selectShortCodeMock: &selectShortCodeMock{
 				resp: &dao.ShortCode{Data: []byte(`{"role":"auth:user"}`)},
@@ -157,7 +157,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			request: request,
 
 			selectCredentialsMock: &selectCredentialsMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 			selectShortCodeMock: &selectShortCodeMock{
 				resp: &dao.ShortCode{Data: []byte(`{"role":`)},
@@ -207,7 +207,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			request: request,
 
 			selectCredentialsMock: &selectCredentialsMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 			selectShortCodeMock: &selectShortCodeMock{
 				err: errFoo,
@@ -220,10 +220,10 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			request: request,
 
 			selectCredentialsMock: &selectCredentialsMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 			selectShortCodeMock: &selectShortCodeMock{
-				err: dao.ErrShortCodeSelectNotFound,
+				err: dao.ErrShortCodeNotFound,
 			},
 			registerMock: &registerMock{
 				err: errFoo,
@@ -236,16 +236,16 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			request: request,
 
 			selectCredentialsMock: &selectCredentialsMock{
-				err: dao.ErrCredentialsSelectByEmailNotFound,
+				err: dao.ErrCredentialsNotFound,
 			},
 			selectShortCodeMock: &selectShortCodeMock{
-				err: dao.ErrShortCodeSelectNotFound,
+				err: dao.ErrShortCodeNotFound,
 			},
 			registerMock: &registerMock{
-				err: core.ErrCredentialsCreateAlreadyExists,
+				err: core.ErrCredentialsAlreadyExists,
 			},
 
-			expectErr: core.ErrCredentialsCreateAlreadyExists,
+			expectErr: core.ErrCredentialsAlreadyExists,
 		},
 	}
 
@@ -315,11 +315,6 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			result, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, result)
-
-			selectCredentials.AssertExpectations(t)
-			updateRole.AssertExpectations(t)
-			selectShortCode.AssertExpectations(t)
-			register.AssertExpectations(t)
 		})
 	}
 }

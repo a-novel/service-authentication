@@ -22,9 +22,9 @@ type RestCredentialsUpdatePasswordService interface {
 
 // credentialsUpdatePasswordErrors maps a refused password change to its status.
 var credentialsUpdatePasswordErrors = httpf.ErrMap{
-	core.ErrCredentialsUpdatePasswordNotFound: http.StatusNotFound,
-	lib.ErrInvalidPassword:                    http.StatusForbidden,
-	core.ErrInvalidRequest:                    http.StatusUnprocessableEntity,
+	core.ErrCredentialsNotFound: http.StatusNotFound,
+	lib.ErrInvalidPassword:      http.StatusForbidden,
+	core.ErrInvalidRequest:      http.StatusUnprocessableEntity,
 }
 
 // RestCredentialsUpdatePasswordRequest is the JSON body of PATCH /v2/credentials/password.

@@ -82,6 +82,7 @@ linters:
     - mirror
     - misspell
     - mnd
+    - modernize
     - musttag
     - nakedret
     #    - nestif
@@ -130,6 +131,9 @@ linters:
     - zerologlint
 
   settings:
+    staticcheck:
+      # golangci-lint's default set, plus ST1003: initialisms keep Go's casing (write-go).
+      checks: ["all", "-ST1000", "-ST1016", "-ST1020", "-ST1021", "-ST1022"]
     tagliatelle:
       case:
         rules:

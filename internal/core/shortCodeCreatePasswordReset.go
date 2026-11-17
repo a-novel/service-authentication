@@ -16,15 +16,15 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 )
 
-// ShortCodeCreatePasswordResetService issues the underlying short code; satisfied
+// ShortCodeCreatePasswordResetServiceShortCodeCreate issues the underlying short code; satisfied
 // by [ShortCodeCreate].
-type ShortCodeCreatePasswordResetService interface {
+type ShortCodeCreatePasswordResetServiceShortCodeCreate interface {
 	Exec(ctx context.Context, request *ShortCodeCreateRequest) (*ShortCode, error)
 }
 
-// ShortCodeCreatePasswordResetDao looks up the credentials for an email address,
+// ShortCodeCreatePasswordResetDaoSelectByEmail looks up the credentials for an email address,
 // which both confirms the account exists and yields the user ID to bind the code to.
-type ShortCodeCreatePasswordResetDao interface {
+type ShortCodeCreatePasswordResetDaoSelectByEmail interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
@@ -43,28 +43,28 @@ type ShortCodeCreatePasswordResetRequest struct {
 // ShortCodeCreatePasswordReset issues a [ShortCodeUsageResetPassword] code for an
 // existing account and emails it to the account's current address.
 type ShortCodeCreatePasswordReset struct {
-	service          ShortCodeCreatePasswordResetService
-	selectDao        ShortCodeCreatePasswordResetDao
-	mailDelivery     ShortCodeCreatePasswordResetMailDelivery
-	shortCodesConfig authconfig.ShortCodes
-	smtpConfig       authconfig.SmtpUrls
+	serviceShortCodeCreate ShortCodeCreatePasswordResetServiceShortCodeCreate
+	daoSelectByEmail       ShortCodeCreatePasswordResetDaoSelectByEmail
+	mailDelivery           ShortCodeCreatePasswordResetMailDelivery
+	shortCodesConfig       authconfig.ShortCodes
+	smtpConfig             authconfig.SMTPURLs
 }
 
 // NewShortCodeCreatePasswordReset wires the password-reset flow to the short-code
 // service, the credentials lookup DAO, and the delivery owner.
 func NewShortCodeCreatePasswordReset(
-	service ShortCodeCreatePasswordResetService,
-	selectDao ShortCodeCreatePasswordResetDao,
+	serviceShortCodeCreate ShortCodeCreatePasswordResetServiceShortCodeCreate,
+	daoSelectByEmail ShortCodeCreatePasswordResetDaoSelectByEmail,
 	mailDelivery ShortCodeCreatePasswordResetMailDelivery,
 	shortCodesConfig authconfig.ShortCodes,
-	smtpConfig authconfig.SmtpUrls,
+	smtpConfig authconfig.SMTPURLs,
 ) *ShortCodeCreatePasswordReset {
 	return &ShortCodeCreatePasswordReset{
-		service:          service,
-		selectDao:        selectDao,
-		mailDelivery:     mailDelivery,
-		shortCodesConfig: shortCodesConfig,
-		smtpConfig:       smtpConfig,
+		serviceShortCodeCreate: serviceShortCodeCreate,
+		daoSelectByEmail:       daoSelectByEmail,
+		mailDelivery:           mailDelivery,
+		shortCodesConfig:       shortCodesConfig,
+		smtpConfig:             smtpConfig,
 	}
 }
 
@@ -96,8 +96,8 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 	}
 	defer reservation.Release()
 
-	credentials, err := service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
-	if errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+	credentials, err := service.daoSelectByEmail.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
+	if errors.Is(err, dao.ErrCredentialsNotFound) {
 		lib.DummyCompareArgon2(request.Email)
 	}
 
@@ -113,7 +113,7 @@ func (service *ShortCodeCreatePasswordReset) Exec(
 		Override: true,
 	}
 
-	shortCode, err := service.service.Exec(ctx, createRequest)
+	shortCode, err := service.serviceShortCodeCreate.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}

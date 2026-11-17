@@ -139,7 +139,7 @@ func TestShortCodeVerify(t *testing.T) {
 			},
 
 			daoSelectMock: &daoSelectMock{
-				err: dao.ErrShortCodeSelectNotFound,
+				err: dao.ErrShortCodeNotFound,
 			},
 
 			expectErr: core.ErrShortCodeNotFound,
@@ -183,8 +183,6 @@ func TestShortCodeVerify(t *testing.T) {
 			resp, err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
-
-			daoSelect.AssertExpectations(t)
 		})
 	}
 }

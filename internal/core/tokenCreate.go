@@ -101,7 +101,7 @@ func NewTokenCreate(
 // logged-out sessions active last.
 //
 // It returns lib.ErrInvalidPassword when the password does not match and
-// [ErrCredentialsByEmailNotFound] when the email is not registered.
+// [ErrCredentialsNotFound] when the email is not registered.
 func (service *TokenCreate) Exec(
 	ctx context.Context, request *TokenCreateRequest,
 ) (*Token, error) {
@@ -115,7 +115,7 @@ func (service *TokenCreate) Exec(
 
 	credentials, err := service.dao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
 	if err != nil {
-		if errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+		if errors.Is(err, dao.ErrCredentialsNotFound) {
 			// Burn an Argon2id verification so an unknown email costs the same as a
 			// wrong password, and the latency reveals nothing about whether the email
 			// is registered. Both outcomes map to 401 downstream.

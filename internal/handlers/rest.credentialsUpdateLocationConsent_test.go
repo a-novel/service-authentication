@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -25,7 +24,7 @@ func TestRestCredentialsUpdateLocationConsent(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
-	claims := &session.Claims{UserID: lo.ToPtr(userID)}
+	claims := &session.Claims{UserID: new(userID)}
 
 	type serviceMock struct {
 		request *core.CredentialsUpdateLocationConsentRequest
@@ -49,7 +48,7 @@ func TestRestCredentialsUpdateLocationConsent(t *testing.T) {
 			body:   `{"enabled": false}`,
 
 			serviceMock: &serviceMock{
-				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: lo.ToPtr(false)},
+				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(false)},
 			},
 
 			expectStatus: http.StatusNoContent,
@@ -83,8 +82,8 @@ func TestRestCredentialsUpdateLocationConsent(t *testing.T) {
 			body:   `{"enabled": true}`,
 
 			serviceMock: &serviceMock{
-				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: lo.ToPtr(true)},
-				err:     core.ErrCredentialsUpdateLocationConsentNotFound,
+				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(true)},
+				err:     core.ErrCredentialsNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,
@@ -96,7 +95,7 @@ func TestRestCredentialsUpdateLocationConsent(t *testing.T) {
 			body:   `{"enabled": true}`,
 
 			serviceMock: &serviceMock{
-				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: lo.ToPtr(true)},
+				request: &core.CredentialsUpdateLocationConsentRequest{UserID: userID, Enabled: new(true)},
 				err:     errFoo,
 			},
 
@@ -135,8 +134,6 @@ func TestRestCredentialsUpdateLocationConsent(t *testing.T) {
 			res := w.Result()
 			require.NoError(t, res.Body.Close())
 			require.Equal(t, testCase.expectStatus, res.StatusCode)
-
-			service.AssertExpectations(t)
 		})
 	}
 }

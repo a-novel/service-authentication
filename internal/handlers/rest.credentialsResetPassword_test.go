@@ -90,7 +90,7 @@ func TestRestCredentialsResetPassword(t *testing.T) {
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: core.ErrCredentialsUpdatePasswordNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			expectStatus: http.StatusForbidden,

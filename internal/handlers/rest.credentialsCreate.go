@@ -18,11 +18,11 @@ type RestCredentialsCreateService interface {
 
 // credentialsCreateErrors maps a refused registration to its status.
 var credentialsCreateErrors = httpf.ErrMap{
-	core.ErrCredentialsCreateAlreadyExists: http.StatusConflict,
-	core.ErrShortCodeNotFound:              http.StatusForbidden,
-	core.ErrShortCodeConsumeInvalid:        http.StatusForbidden,
-	core.ErrShortCodeConsumeExpired:        http.StatusForbidden,
-	core.ErrInvalidRequest:                 http.StatusUnprocessableEntity,
+	core.ErrCredentialsAlreadyExists: http.StatusConflict,
+	core.ErrShortCodeNotFound:        http.StatusForbidden,
+	core.ErrShortCodeConsumeInvalid:  http.StatusForbidden,
+	core.ErrShortCodeConsumeExpired:  http.StatusForbidden,
+	core.ErrInvalidRequest:           http.StatusUnprocessableEntity,
 }
 
 // RestCredentialsCreateRequest is the JSON body of PUT /v2/credentials.

@@ -292,8 +292,7 @@ func TestAuthorizationRequestValidate(t *testing.T) {
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, res)
 
-			var refusal *core.OAuthError
-			if errors.As(err, &refusal) {
+			if refusal, ok := errors.AsType[*core.OAuthError](err); ok {
 				require.Equal(t, testCase.expectRedirectURI, refusal.RedirectURI)
 			}
 		})

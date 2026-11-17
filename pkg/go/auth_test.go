@@ -198,7 +198,7 @@ replace github.com/a-novel/service-authentication/v2 => %s
 			configPath string
 		}{
 			{name: "Authentication", configPath: "github.com/a-novel/service-authentication/v2/internal/config"},
-			{name: "JsonKeys", configPath: "github.com/a-novel/service-json-keys/v2/internal/config"},
+			{name: "JSONKeys", configPath: "github.com/a-novel/service-json-keys/v2/internal/config"},
 		}
 
 		for _, testCase := range testCases {

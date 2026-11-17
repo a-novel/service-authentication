@@ -67,9 +67,9 @@ func main() {
 
 	lo.Must0(cfg.OAuth.Check(cfg.ServiceToken))
 
-	dependencies := cfg.DependenciesConfig
-	jsonKeysCredentials := lo.Must(dependencies.ServiceJsonKeysCredentials.Options(ctx))
-	jsonKeysAddress := net.JoinHostPort(dependencies.ServiceJsonKeysHost, strconv.Itoa(dependencies.ServiceJsonKeysPort))
+	dependencies := cfg.Dependencies
+	jsonKeysCredentials := lo.Must(dependencies.ServiceJSONKeysCredentials.Options(ctx))
+	jsonKeysAddress := net.JoinHostPort(dependencies.ServiceJSONKeysHost, strconv.Itoa(dependencies.ServiceJSONKeysPort))
 
 	jsonKeysClient := lo.Must(servicejsonkeys.NewClient(jsonKeysAddress, jsonKeysCredentials...))
 	defer jsonKeysClient.Close()
@@ -79,12 +79,12 @@ func main() {
 	refreshTokenLeeway := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuthRefresh].Token.Leeway
 	accessTokenTTL := jsonKeysClient.Keys()[servicejsonkeys.KeyUsageAuth].Token.TTL
 
-	mailDelivery := core.NewMailDelivery(cfg.Smtp, env.SmtpMaxConcurrent)
+	mailDelivery := core.NewMailDelivery(cfg.SMTP, env.SMTPMaxConcurrent)
 	lib.LimitArgon2(cfg.Limits.Argon2MaxConcurrent)
 	lib.PrepareDummyArgon2()
 
 	// Missing SMTP_ADDR looks like healthy mail loss: 202 answered, mail rendered to stdout.
-	if _, debug := cfg.Smtp.(*smtp.DebugSender); debug {
+	if _, debug := cfg.SMTP.(*smtp.DebugSender); debug {
 		log.Println("WARNING: SMTP_ADDR is not set; emails are printed to stdout by the debug sender and none are delivered")
 	}
 
@@ -133,16 +133,16 @@ func main() {
 
 	serviceShortCodeVerify := core.NewShortCodeVerify(daoShortCodeSelect)
 	serviceShortCodeConsume := core.NewShortCodeConsume(daoShortCodeDelete)
-	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, cfg.ShortCodesConfig)
+	serviceShortCodeCreate := core.NewShortCodeCreate(daoShortCodeInsert, cfg.ShortCodes)
 	serviceShortCodeCreateEmailUpdate := core.NewShortCodeCreateEmailUpdate(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, daoCredentialsSelect, mailDelivery, cfg.ShortCodesConfig,
-		cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, daoCredentialsSelect, mailDelivery, cfg.ShortCodes,
+		cfg.SMTPURLs,
 	)
 	serviceShortCodeCreatePasswordReset := core.NewShortCodeCreatePasswordReset(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodes, cfg.SMTPURLs,
 	)
 	serviceShortCodeCreateRegister := core.NewShortCodeCreateRegister(
-		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodesConfig, cfg.SmtpUrlsConfig,
+		serviceShortCodeCreate, daoCredentialsSelectByEmail, mailDelivery, cfg.ShortCodes, cfg.SMTPURLs,
 	)
 	serviceShortCodeCancelEmailUpdate := core.NewShortCodeCancelEmailUpdate(daoShortCodeDelete, daoShortCodeSelect)
 
@@ -222,7 +222,7 @@ func main() {
 	// =================================================================================================================
 
 	handlerPing := handlers.NewRestPing()
-	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.SmtpPing, cfg.Logger)
+	handlerHealth := handlers.NewRestHealth(jsonKeysClient, cfg.SMTPPing, cfg.Logger)
 
 	handlerClaimsGet := handlers.NewRestClaimsGet(serviceClaimsGet, cfg.Logger)
 
@@ -275,7 +275,7 @@ func main() {
 	// ROUTER
 	// =================================================================================================================
 
-	router := httpf.NewRouter(cfg.Rest, cfg.Otel, cfg.HttpLogger, cfg.App.DowntimeStart)
+	router := httpf.NewRouter(cfg.Rest, cfg.Otel, cfg.RestLogger, cfg.App.DowntimeStart)
 
 	router.Route("/v2", func(api chi.Router) {
 		api.Get("/ping", handlerPing.ServeHTTP)

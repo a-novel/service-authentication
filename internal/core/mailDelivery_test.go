@@ -83,7 +83,6 @@ func TestMailDelivery(t *testing.T) {
 				release <- struct{}{}
 
 				waitForMailDelivery(t, delivery)
-				smtpService.AssertExpectations(t)
 			},
 		},
 		{
@@ -130,7 +129,6 @@ func TestMailDelivery(t *testing.T) {
 				release <- struct{}{}
 
 				waitForMailDelivery(t, delivery)
-				smtpService.AssertExpectations(t)
 			},
 		},
 		{
@@ -162,7 +160,6 @@ func TestMailDelivery(t *testing.T) {
 
 				require.NoError(t, awaitMailDeliveryError(t, waitErrs))
 				require.NoError(t, awaitMailDeliveryError(t, waitErrs))
-				smtpService.AssertExpectations(t)
 			},
 		},
 		{
@@ -186,7 +183,6 @@ func TestMailDelivery(t *testing.T) {
 				reservation.Release()
 
 				waitForMailDelivery(t, delivery)
-				smtpService.AssertExpectations(t)
 			},
 		},
 		{
@@ -206,7 +202,6 @@ func TestMailDelivery(t *testing.T) {
 
 				err := delivery.Wait(t.Context())
 				require.ErrorIs(t, err, errFoo)
-				smtpService.AssertExpectations(t)
 			},
 		},
 	}
@@ -230,7 +225,7 @@ func TestMailDeliveryTelemetry(t *testing.T) {
 	}{
 		{name: "Success", expectStatus: codes.Unset},
 		{
-			name:            "Error/Smtp",
+			name:            "Error/SMTP",
 			smtpErr:         fmt.Errorf("send mail: %w", &textproto.Error{Code: 451, Msg: "try again later"}),
 			expectStatus:    codes.Error,
 			expectErrorType: "*textproto.Error",
@@ -262,7 +257,6 @@ func TestMailDeliveryTelemetry(t *testing.T) {
 			request.End()
 
 			require.ErrorIs(t, delivery.Wait(t.Context()), testCase.smtpErr)
-			smtpService.AssertExpectations(t)
 
 			spans := make(map[string]sdktrace.ReadOnlySpan)
 			for _, span := range recorder.Ended() {

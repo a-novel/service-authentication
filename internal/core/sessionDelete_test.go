@@ -56,7 +56,7 @@ func TestSessionDelete(t *testing.T) {
 			// The lookup matches the caller too, so another account's session answers as an unknown one.
 			name: "Error/NotFound",
 
-			daoSelectMock: &daoSelectMock{err: dao.ErrSessionSelectNotFound},
+			daoSelectMock: &daoSelectMock{err: dao.ErrSessionNotFound},
 
 			expectErr: core.ErrSessionNotFound,
 		},
@@ -65,7 +65,7 @@ func TestSessionDelete(t *testing.T) {
 			name: "Error/AlreadyDeleted",
 
 			daoSelectMock: &daoSelectMock{resp: &dao.Session{ID: sessionID, UserID: userID, LoggedOut: true}},
-			daoMock:       &daoMock{err: dao.ErrSessionDeleteNotFound},
+			daoMock:       &daoMock{err: dao.ErrSessionNotFound},
 
 			expectErr: core.ErrSessionNotFound,
 		},
@@ -100,9 +100,6 @@ func TestSessionDelete(t *testing.T) {
 
 			err := service.Exec(t.Context(), &core.SessionDeleteRequest{UserID: userID, ID: sessionID})
 			require.ErrorIs(t, err, testCase.expectErr)
-
-			mockDao.AssertExpectations(t)
-			mockDaoSelect.AssertExpectations(t)
 		})
 	}
 }

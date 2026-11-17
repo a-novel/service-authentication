@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestApp(t *testing.T) {
+func TestAppPresetDefault(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -18,7 +18,7 @@ func TestApp(t *testing.T) {
 		restTimeoutRead     string
 		restRateLimitStrict string
 		serviceTokenPath    string
-		serviceJsonKeysTLS  string
+		serviceJSONKeysTLS  string
 
 		expect    string
 		expectErr string
@@ -39,14 +39,14 @@ func TestApp(t *testing.T) {
 		{
 			name:               "Success/ServiceTokenTLS",
 			serviceTokenPath:   "/var/run/secrets/tokens/json-keys",
-			serviceJsonKeysTLS: "true",
+			serviceJSONKeysTLS: "true",
 			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
 				"&{ServiceTokenPath:/var/run/secrets/tokens/json-keys TLS:true}",
 		},
 		{
 			// A local stack has no service token, so it keeps a plaintext connection.
 			name:               "Success/TLSWithoutServiceToken",
-			serviceJsonKeysTLS: "true",
+			serviceJSONKeysTLS: "true",
 			expect:             "15s 3/5m0s *grpcf.LocalCredentialsProvider &{}",
 		},
 		{
@@ -74,7 +74,7 @@ func TestApp(t *testing.T) {
 				"AUTH_CONFIG_TEST_REST_TIMEOUT_READ="+testCase.restTimeoutRead,
 				"AUTH_CONFIG_TEST_REST_RATE_LIMIT_STRICT="+testCase.restRateLimitStrict,
 				"AUTH_CONFIG_TEST_SERVICE_TOKEN_PATH="+testCase.serviceTokenPath,
-				"AUTH_CONFIG_TEST_SERVICE_JSON_KEYS_TLS="+testCase.serviceJsonKeysTLS,
+				"AUTH_CONFIG_TEST_SERVICE_JSON_KEYS_TLS="+testCase.serviceJSONKeysTLS,
 			)
 
 			output, err := command.CombinedOutput()

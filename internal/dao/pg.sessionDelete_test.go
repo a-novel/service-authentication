@@ -76,7 +76,7 @@ func TestPgSessionDelete(t *testing.T) {
 
 			request: &dao.SessionDeleteRequest{ID: active.ID, UserID: sessionOwnerID},
 
-			expectErr:  dao.ErrSessionDeleteNotFound,
+			expectErr:  dao.ErrSessionNotFound,
 			expectLeft: []*dao.Session{active, revoked, ended, foreign},
 		},
 		{
@@ -84,7 +84,7 @@ func TestPgSessionDelete(t *testing.T) {
 
 			request: &dao.SessionDeleteRequest{ID: foreign.ID, UserID: sessionOwnerID},
 
-			expectErr:  dao.ErrSessionDeleteNotFound,
+			expectErr:  dao.ErrSessionNotFound,
 			expectLeft: []*dao.Session{active, revoked, ended, foreign},
 		},
 	}

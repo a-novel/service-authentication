@@ -1,4 +1,4 @@
-package authentication
+package serviceauthentication
 
 // Generate mocks.
 //go:generate go tool -modfile=mockery.mod mockery

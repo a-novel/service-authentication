@@ -22,9 +22,9 @@ import (
 // shutdown.
 const OtelFlushTimeout = 2 * time.Second
 
-// SmtpPingTimeout bounds the health check's SMTP ping. A mail can take minutes on a slow relay, and
+// SMTPPingTimeout bounds the health check's SMTP ping. A mail can take minutes on a slow relay, and
 // the health check still answers within seconds.
-const SmtpPingTimeout = 10 * time.Second
+const SMTPPingTimeout = 10 * time.Second
 
 // OtelJobFlushTimeout bounds a job's wait on exit for its pending spans and logs. A job often ends
 // before the network lets its first connection out. The exporter then sends the spans, then the
@@ -77,27 +77,27 @@ var AppPresetDefault = App{
 	},
 	ServiceIssuerOptional: env.ServiceIssuerOptional,
 
-	DependenciesConfig: Dependencies{
-		ServiceJsonKeysPort:        env.ServiceJsonKeysPort,
-		ServiceJsonKeysHost:        env.ServiceJsonKeysHost,
-		ServiceJsonKeysCredentials: newJsonKeysCredentials(),
+	Dependencies: Dependencies{
+		ServiceJSONKeysPort:        env.ServiceJSONKeysPort,
+		ServiceJSONKeysHost:        env.ServiceJSONKeysHost,
+		ServiceJSONKeysCredentials: newJSONKeysCredentials(),
 	},
-	Permissions:      authconfig.PermissionsConfigDefault,
-	Waitlist:         authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
-	ShortCodesConfig: authconfig.ShortCodesPresetDefault,
-	OAuth:            authconfig.OAuth{AccountPlatformCaller: env.AccountPlatformCaller, Clients: env.OAuthClients},
-	SmtpUrlsConfig: authconfig.SmtpUrls{
+	Permissions: authconfig.PermissionsConfigDefault,
+	Waitlist:    authconfig.Waitlist{URL: env.WaitlistURL, Secret: env.WaitlistSecret, Timeout: env.WaitlistTimeout},
+	ShortCodes:  authconfig.ShortCodesPresetDefault,
+	OAuth:       authconfig.OAuth{AccountPlatformCaller: env.AccountPlatformCaller, Clients: env.OAuthClients},
+	SMTPURLs: authconfig.SMTPURLs{
 		UpdateEmail:    env.PlatformAuthUpdateEmailURL,
 		UpdatePassword: env.PlatformAuthUpdatePasswordURL,
 		Register:       env.PlatformAuthRegisterURL,
 	},
 
-	Smtp:     newSmtpSender(env.SmtpTimeout),
-	SmtpPing: newSmtpSender(SmtpPingTimeout),
+	SMTP:     newSMTPSender(env.SMTPTimeout),
+	SMTPPing: newSMTPSender(SMTPPingTimeout),
 	Otel:     OtelPresetDefault,
 	Logger:   lo.Ternary[logging.Log](!exportsOTLP, LoggerDev, LoggerProd),
 	// The server span records each request once telemetry exports over OTLP.
-	HttpLogger: lo.Ternary[logging.HTTPConfig](
+	RestLogger: lo.Ternary[logging.HTTPConfig](
 		!exportsOTLP, &loggingpresets.HTTPLocal{BaseLogger: LoggerDev}, nil,
 	),
 	Postgres: PostgresPresetDefault,
@@ -115,31 +115,31 @@ func newOtelPreset(flushTimeout time.Duration) otel.Config {
 	}
 }
 
-// newJsonKeysCredentials authenticates the JSON Keys connection with the service token at
+// newJSONKeysCredentials authenticates the JSON Keys connection with the service token at
 // SERVICE_TOKEN_PATH, over TLS once SERVICE_JSON_KEYS_TLS is set, and sends nothing without a token.
-func newJsonKeysCredentials() grpcf.CredentialsProvider {
+func newJSONKeysCredentials() grpcf.CredentialsProvider {
 	if env.ServiceTokenPath == "" {
 		return &grpcf.LocalCredentialsProvider{}
 	}
 
-	return &grpcf.ServiceTokenCredentialsProvider{ServiceTokenPath: env.ServiceTokenPath, TLS: env.ServiceJsonKeysTLS}
+	return &grpcf.ServiceTokenCredentialsProvider{ServiceTokenPath: env.ServiceTokenPath, TLS: env.ServiceJSONKeysTLS}
 }
 
-// newSmtpSender sends through the relay SMTP_ADDR names, within timeout, or prints every mail when
+// newSMTPSender sends through the relay SMTP_ADDR names, within timeout, or prints every mail when
 // SMTP_ADDR is unset.
-func newSmtpSender(timeout time.Duration) smtp.Sender {
-	if env.SmtpAddr == "" {
+func newSMTPSender(timeout time.Duration) smtp.Sender {
+	if env.SMTPAddr == "" {
 		return smtp.NewDebugSender(nil)
 	}
 
 	return &smtp.ProdSender{
-		Addr:                env.SmtpAddr,
-		Name:                env.SmtpSenderName,
-		Email:               env.SmtpSenderEmail,
-		Username:            env.SmtpUsername,
-		Password:            env.SmtpSenderPassword,
-		Domain:              env.SmtpSenderDomain,
-		ForceUnencryptedTLS: env.SmtpForceUnencrypted,
+		Addr:                env.SMTPAddr,
+		Name:                env.SMTPSenderName,
+		Email:               env.SMTPSenderEmail,
+		Username:            env.SMTPUsername,
+		Password:            env.SMTPSenderPassword,
+		Domain:              env.SMTPSenderDomain,
+		ForceUnencryptedTLS: env.SMTPForceUnencrypted,
 		Timeout:             timeout,
 	}
 }

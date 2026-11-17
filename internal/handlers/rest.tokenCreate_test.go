@@ -110,7 +110,7 @@ func TestRestTokenCreate(t *testing.T) {
 					Email:    "user@provider.com",
 					Password: "Louvre",
 				},
-				err: core.ErrCredentialsByEmailNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			// Returns 401 to prevent email enumeration.

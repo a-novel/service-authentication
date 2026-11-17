@@ -63,7 +63,7 @@ func (handler *RestShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *
 
 	_, err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
-	if err != nil && !errors.Is(err, core.ErrCredentialsCreateAlreadyExists) {
+	if err != nil && !errors.Is(err, core.ErrCredentialsAlreadyExists) {
 		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreateRegisterErrors, err)
 
 		return

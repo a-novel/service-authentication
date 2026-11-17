@@ -56,8 +56,6 @@ func TestRestWaitlistJoin(t *testing.T) {
 			if testCase.status == http.StatusAccepted {
 				require.Empty(t, response.Body.String())
 			}
-
-			service.AssertExpectations(t)
 		})
 	}
 }

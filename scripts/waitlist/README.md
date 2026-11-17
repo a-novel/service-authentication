@@ -49,7 +49,7 @@ environment. Two script projects cannot share the lock that deduplicates request
 ### 1. Create the spreadsheet
 
 1. Sign in with the organization-controlled account that will own the deployment.
-2. Create a blank spreadsheet, for example **Invitation list — staging**. The script ignores the
+2. Create a blank spreadsheet, for example **Invitation list (staging)**. The script ignores the
    title.
 3. Open **Share** and keep general access **Restricted**. Give access only to the operators who need
    it. Keep link sharing and publishing to the web off.
@@ -79,7 +79,7 @@ a separate copy, and never connect that copy to another live writer for the same
 ### 2. Install both script files
 
 1. From the spreadsheet, open **Extensions → Apps Script**. Name the project after its purpose and
-   environment, for example **Invitation list — staging**.
+   environment, for example **Invitation list (staging)**.
 2. Open the default `Code.gs`, remove the sample function, and paste all of [Code.js](./Code.js). Keep
    the editor filename `Code.gs`, the extension Apps Script uses for JavaScript. Paste the code alone,
    without Markdown fences, and keep no second copy of the functions in another file.

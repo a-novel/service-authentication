@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -19,7 +18,7 @@ func TestGetClaimsContext(t *testing.T) {
 	t.Run("Success/NoClaimsSet", func(t *testing.T) {
 		t.Parallel()
 
-		// No value stored under ClaimsContextKey — optional-auth path: returns
+		// No value stored under ClaimsContextKey (optional-auth path): returns
 		// (nil, nil) so endpoints that allow unauthenticated access can keep working.
 		claims, err := session.GetClaimsContext(t.Context())
 		require.NoError(t, err)
@@ -30,7 +29,7 @@ func TestGetClaimsContext(t *testing.T) {
 		t.Parallel()
 
 		want := &session.Claims{
-			UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+			UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			Roles:  []string{"user"},
 		}
 		ctx := session.SetClaimsContext(t.Context(), want)

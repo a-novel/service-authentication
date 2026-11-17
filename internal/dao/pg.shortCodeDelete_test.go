@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/a-novel-kit/golib/postgres"
@@ -66,7 +65,7 @@ func TestPgShortCodeDelete(t *testing.T) {
 				CreatedAt:      hourAgo,
 				ExpiresAt:      hourLater,
 				DeletedAt:      &now,
-				DeletedComment: lo.ToPtr("foo"),
+				DeletedComment: new("foo"),
 			},
 		},
 		{
@@ -88,7 +87,7 @@ func TestPgShortCodeDelete(t *testing.T) {
 				},
 			},
 
-			expectErr: dao.ErrShortCodeDeleteNotFound,
+			expectErr: dao.ErrShortCodeNotFound,
 		},
 		{
 			name: "AlreadyExpired",
@@ -116,7 +115,7 @@ func TestPgShortCodeDelete(t *testing.T) {
 				},
 			},
 
-			expectErr: dao.ErrShortCodeDeleteNotFound,
+			expectErr: dao.ErrShortCodeNotFound,
 		},
 		{
 			name: "DeleteMultipleTimes",
@@ -141,16 +140,16 @@ func TestPgShortCodeDelete(t *testing.T) {
 					Target:         "test-target-2",
 					CreatedAt:      hourAgo,
 					ExpiresAt:      hourLater,
-					DeletedAt:      lo.ToPtr(now.Add(-30 * time.Minute)),
-					DeletedComment: lo.ToPtr("bar"),
+					DeletedAt:      new(now.Add(-30 * time.Minute)),
+					DeletedComment: new("bar"),
 				},
 			},
 
-			expectErr: dao.ErrShortCodeDeleteNotFound,
+			expectErr: dao.ErrShortCodeNotFound,
 		},
 	}
 
-	dao := dao.NewPgShortCodeDelete()
+	daoDelete := dao.NewPgShortCodeDelete()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -167,7 +166,7 @@ func TestPgShortCodeDelete(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				key, err := dao.Exec(ctx, testCase.request)
+				key, err := daoDelete.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, key)
 			})

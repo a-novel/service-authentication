@@ -17,15 +17,6 @@ import (
 //go:embed pg.credentialsUpdateEmail.sql
 var credentialsUpdateEmailQuery string
 
-var (
-	// ErrCredentialsUpdateEmailAlreadyExists is returned by [PgCredentialsUpdateEmail.Exec] when another
-	// account registered the new email between the short code's issuance and its consumption.
-	ErrCredentialsUpdateEmailAlreadyExists = errors.New("credentials already exists")
-	// ErrCredentialsUpdateEmailNotFound is returned by [PgCredentialsUpdateEmail.Exec] when no row
-	// matches the requested ID.
-	ErrCredentialsUpdateEmailNotFound = errors.New("credentials not found")
-)
-
 // CredentialsUpdateEmailRequest is the input to [PgCredentialsUpdateEmail.Exec].
 type CredentialsUpdateEmailRequest struct {
 	// ID of the credentials to update.
@@ -59,11 +50,11 @@ func (dao *PgCredentialsUpdateEmail) Exec(
 
 	err = db.NewRaw(credentialsUpdateEmailQuery, request.Email, request.Now, request.ID).Scan(ctx, entity)
 	if isUniqueViolation(err) {
-		err = errors.Join(err, ErrCredentialsUpdateEmailAlreadyExists)
+		err = errors.Join(err, ErrCredentialsAlreadyExists)
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrCredentialsUpdateEmailNotFound)
+		err = errors.Join(err, ErrCredentialsNotFound)
 	}
 
 	if err != nil {

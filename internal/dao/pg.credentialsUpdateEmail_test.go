@@ -67,7 +67,7 @@ func TestPgCredentialsUpdateEmail(t *testing.T) {
 				Now:   time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 			},
 
-			expectErr: dao.ErrCredentialsUpdateEmailNotFound,
+			expectErr: dao.ErrCredentialsNotFound,
 		},
 		{
 			name: "Error/EmailTaken",
@@ -97,11 +97,11 @@ func TestPgCredentialsUpdateEmail(t *testing.T) {
 				Now:   time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC),
 			},
 
-			expectErr: dao.ErrCredentialsUpdateEmailAlreadyExists,
+			expectErr: dao.ErrCredentialsAlreadyExists,
 		},
 	}
 
-	dao := dao.NewPgCredentialsUpdateEmail()
+	daoUpdateEmail := dao.NewPgCredentialsUpdateEmail()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -118,7 +118,7 @@ func TestPgCredentialsUpdateEmail(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				credentials, err := dao.Exec(ctx, testCase.request)
+				credentials, err := daoUpdateEmail.Exec(ctx, testCase.request)
 				require.ErrorIs(t, err, testCase.expectErr)
 				require.Equal(t, testCase.expect, credentials)
 			})

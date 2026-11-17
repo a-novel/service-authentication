@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -73,10 +72,6 @@ func (service *ShortCodeCancelEmailUpdate) Exec(ctx context.Context, request *Sh
 	// The delete misses when a concurrent request confirmed or replaced the change, or the code
 	// expired, since the select.
 	_, err = service.dao.Exec(ctx, deleteRequest)
-	if errors.Is(err, dao.ErrShortCodeDeleteNotFound) {
-		err = errors.Join(err, ErrShortCodeNotFound)
-	}
-
 	if err != nil {
 		return otel.ReportError(span, fmt.Errorf("delete email update short code: %w", err))
 	}

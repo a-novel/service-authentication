@@ -64,7 +64,7 @@ func (service *ShortCodeVerify) Exec(ctx context.Context, request *ShortCodeVeri
 
 	entity, err := service.dao.Exec(ctx, daoRequest)
 	if err != nil {
-		if errors.Is(err, dao.ErrShortCodeSelectNotFound) {
+		if errors.Is(err, dao.ErrShortCodeNotFound) {
 			// Burn an Argon2id verification so a missing code costs the same as a
 			// wrong one, and the latency reveals nothing about whether a code is in
 			// flight for the target.

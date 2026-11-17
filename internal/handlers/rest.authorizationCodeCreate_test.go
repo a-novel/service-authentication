@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -33,7 +32,7 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 	)
 
 	claims := &session.Claims{
-		UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+		UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 		RefreshTokenID: "refresh-token-id",
 		SessionID:      "session-id",
 		SessionExp:     1_900_000_000,
@@ -199,8 +198,6 @@ func TestRestAuthorizationCodeCreate(t *testing.T) {
 			}
 
 			require.NoError(t, res.Body.Close())
-
-			service.AssertExpectations(t)
 		})
 	}
 }

@@ -1,11 +1,15 @@
 package dao
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
+
+// ErrSessionNotFound is returned when the account holds no session matching the request.
+var ErrSessionNotFound = errors.New("session not found")
 
 // Session is one login on the account platform, joined by the OAuth clients that sign in through it.
 // A session is active while [Session.ExpiresAt] is ahead and no [RefreshTokenRevocation] holds its

@@ -18,10 +18,6 @@ import (
 //go:embed pg.credentialsUpdateRole.sql
 var credentialsUpdateRoleQuery string
 
-// ErrCredentialsUpdateRoleNotFound is returned by [PgCredentialsUpdateRole.Exec] when no row matches
-// the requested ID.
-var ErrCredentialsUpdateRoleNotFound = errors.New("credentials not found")
-
 // CredentialsUpdateRoleRequest is the input to [PgCredentialsUpdateRole.Exec].
 type CredentialsUpdateRoleRequest struct {
 	// ID of the credentials to update.
@@ -57,7 +53,7 @@ func (dao *PgCredentialsUpdateRole) Exec(
 
 	err = db.NewRaw(credentialsUpdateRoleQuery, request.Role, request.Now, request.ID).Scan(ctx, entity)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.Join(err, ErrCredentialsUpdateRoleNotFound)
+		err = errors.Join(err, ErrCredentialsNotFound)
 	}
 
 	if err != nil {

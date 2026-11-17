@@ -136,8 +136,6 @@ func TestCredentialsList(t *testing.T) {
 			resp, err := service.Exec(ctx, testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
 			require.Equal(t, testCase.expect, resp)
-
-			mockDao.AssertExpectations(t)
 		})
 	}
 }

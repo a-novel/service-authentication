@@ -20,13 +20,13 @@ type RestCredentialsUpdateEmailService interface {
 
 // credentialsUpdateEmailErrors maps a refused email change to its status.
 var credentialsUpdateEmailErrors = httpf.ErrMap{
-	core.ErrCredentialsUpdateEmailNotFound:      http.StatusNotFound,
-	core.ErrCredentialsUpdateEmailAlreadyExists: http.StatusConflict,
-	core.ErrShortCodeNotFound:                   http.StatusForbidden,
-	core.ErrShortCodeConsumeInvalid:             http.StatusForbidden,
-	core.ErrShortCodeConsumeExpired:             http.StatusForbidden,
-	core.ErrInvalidRequest:                      http.StatusUnprocessableEntity,
-	core.ErrMailDeliveryUnavailable:             http.StatusServiceUnavailable,
+	core.ErrCredentialsNotFound:      http.StatusNotFound,
+	core.ErrCredentialsAlreadyExists: http.StatusConflict,
+	core.ErrShortCodeNotFound:        http.StatusForbidden,
+	core.ErrShortCodeConsumeInvalid:  http.StatusForbidden,
+	core.ErrShortCodeConsumeExpired:  http.StatusForbidden,
+	core.ErrInvalidRequest:           http.StatusUnprocessableEntity,
+	core.ErrMailDeliveryUnavailable:  http.StatusServiceUnavailable,
 }
 
 // RestCredentialsUpdateEmailRequest is the JSON body of PATCH /v2/credentials/email.

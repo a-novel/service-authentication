@@ -24,9 +24,9 @@ type Main struct {
 
 // Dependencies configures how the service reaches the backing services it calls.
 type Dependencies struct {
-	ServiceJsonKeysHost        string                    `json:"jsonKeysServiceHost" yaml:"jsonKeysServiceHost"`
-	ServiceJsonKeysPort        int                       `json:"jsonKeysServicePort" yaml:"jsonKeysServicePort"`
-	ServiceJsonKeysCredentials grpcf.CredentialsProvider `json:"-"                   yaml:"-"`
+	ServiceJSONKeysHost        string                    `json:"jsonKeysServiceHost" yaml:"jsonKeysServiceHost"`
+	ServiceJSONKeysPort        int                       `json:"jsonKeysServicePort" yaml:"jsonKeysServicePort"`
+	ServiceJSONKeysCredentials grpcf.CredentialsProvider `json:"-"                   yaml:"-"`
 }
 
 // App is the fully resolved configuration for the service, assembled at startup from the environment.
@@ -41,18 +41,18 @@ type App struct {
 	// take every request. Only a local or test stack sets it.
 	ServiceIssuerOptional bool `json:"serviceIssuerOptional" yaml:"serviceIssuerOptional"`
 
-	DependenciesConfig Dependencies           `json:"dependencies" yaml:"dependencies"`
-	Permissions        authconfig.Permissions `json:"permissions"  yaml:"permissions"`
-	ShortCodesConfig   authconfig.ShortCodes  `json:"shortCodes"   yaml:"shortCodes"`
-	OAuth              authconfig.OAuth       `json:"oauth"        yaml:"oauth"`
-	SmtpUrlsConfig     authconfig.SmtpUrls    `json:"smtpUrls"     yaml:"smtpUrls"`
-	Waitlist           authconfig.Waitlist    `json:"waitlist"     yaml:"waitlist"`
+	Dependencies Dependencies           `json:"dependencies" yaml:"dependencies"`
+	Permissions  authconfig.Permissions `json:"permissions"  yaml:"permissions"`
+	ShortCodes   authconfig.ShortCodes  `json:"shortCodes"   yaml:"shortCodes"`
+	OAuth        authconfig.OAuth       `json:"oauth"        yaml:"oauth"`
+	SMTPURLs     authconfig.SMTPURLs    `json:"smtpUrls"     yaml:"smtpUrls"`
+	Waitlist     authconfig.Waitlist    `json:"waitlist"     yaml:"waitlist"`
 
-	Smtp smtp.Sender `json:"smtp" yaml:"smtp"`
-	// SmtpPing reaches the same relay within the health check's short budget.
-	SmtpPing   smtp.Sender        `json:"smtpPing"   yaml:"smtpPing"`
+	SMTP smtp.Sender `json:"smtp" yaml:"smtp"`
+	// SMTPPing reaches the same relay within the health check's short budget.
+	SMTPPing   smtp.Sender        `json:"smtpPing"   yaml:"smtpPing"`
 	Otel       otel.Config        `json:"otel"       yaml:"otel"`
 	Logger     logging.Log        `json:"logger"     yaml:"logger"`
-	HttpLogger logging.HTTPConfig `json:"httplogger" yaml:"httplogger"`
+	RestLogger logging.HTTPConfig `json:"restLogger" yaml:"restLogger"`
 	Postgres   postgres.Config    `json:"postgres"   yaml:"postgres"`
 }

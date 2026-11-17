@@ -87,7 +87,7 @@ func TestPgSessionSelect(t *testing.T) {
 				ID: uuid.MustParse("00000000-0000-0000-0000-0000000000b1"), UserID: sessionOwnerID,
 			},
 
-			expectErr: dao.ErrSessionSelectNotFound,
+			expectErr: dao.ErrSessionNotFound,
 		},
 		{
 			name: "Error/Unknown",
@@ -96,7 +96,7 @@ func TestPgSessionSelect(t *testing.T) {
 				ID: uuid.MustParse("00000000-0000-0000-0000-0000000000ff"), UserID: sessionOwnerID,
 			},
 
-			expectErr: dao.ErrSessionSelectNotFound,
+			expectErr: dao.ErrSessionNotFound,
 		},
 	}
 

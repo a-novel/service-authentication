@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -27,7 +26,7 @@ func TestRestClaimsGet(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	claims := &session.Claims{
-		UserID:         lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+		UserID:         new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 		Roles:          []string{"user"},
 		RefreshTokenID: "refreshToken",
 		SessionID:      "session",
@@ -143,8 +142,6 @@ func TestRestClaimsGet(t *testing.T) {
 				require.NoError(t, json.Unmarshal(data, &jsonRes))
 				require.Equal(t, testCase.expectResponse, jsonRes)
 			}
-
-			service.AssertExpectations(t)
 		})
 	}
 }

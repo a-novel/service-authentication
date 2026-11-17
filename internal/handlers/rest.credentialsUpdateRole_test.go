@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -53,7 +52,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 				"role": "auth:admin"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -88,7 +87,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 				"role": "auth:admin"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -97,7 +96,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 					TargetUserID:  uuid.MustParse("00000000-0000-0000-0000-000000000002"),
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: core.ErrCredentialsUpdateRoleNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,
@@ -110,7 +109,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 				"role": "auth:admin"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -120,7 +119,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 					CurrentUserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
 				// A missing target user is surfaced by the credentials select, not the update.
-				err: core.ErrCredentialsGetNotFound,
+				err: core.ErrCredentialsNotFound,
 			},
 
 			expectStatus: http.StatusNotFound,
@@ -133,7 +132,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 				"role": "auth:admin"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -155,7 +154,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 				"role": "auth:admin"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -177,7 +176,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 				"role": "auth:admin"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -199,7 +198,7 @@ func TestRestCredentialsUpdateRole(t *testing.T) {
 				"role": "auth:admin"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{

@@ -18,15 +18,15 @@ import (
 	"github.com/a-novel/service-authentication/v2/internal/models/mails"
 )
 
-// ShortCodeCreateEmailUpdateService issues the underlying short code; satisfied
+// ShortCodeCreateEmailUpdateServiceShortCodeCreate issues the underlying short code; satisfied
 // by [ShortCodeCreate].
-type ShortCodeCreateEmailUpdateService interface {
+type ShortCodeCreateEmailUpdateServiceShortCodeCreate interface {
 	Exec(ctx context.Context, request *ShortCodeCreateRequest) (*ShortCode, error)
 }
 
-// ShortCodeCreateEmailUpdateDao reports whether an email address is already
+// ShortCodeCreateEmailUpdateDaoSelectByEmail reports whether an email address is already
 // registered, so no code is mailed to an address already in use.
-type ShortCodeCreateEmailUpdateDao interface {
+type ShortCodeCreateEmailUpdateDaoSelectByEmail interface {
 	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
 }
 
@@ -55,31 +55,31 @@ type ShortCodeCreateEmailUpdateRequest struct {
 // that address is already registered. The request gives the account's current password, as a
 // password change does: a session alone does not move the account to another address.
 type ShortCodeCreateEmailUpdate struct {
-	service          ShortCodeCreateEmailUpdateService
-	selectDao        ShortCodeCreateEmailUpdateDao
-	credentialsDao   ShortCodeCreateEmailUpdateDaoCredentials
-	mailDelivery     ShortCodeCreateEmailUpdateMailDelivery
-	shortCodesConfig authconfig.ShortCodes
-	smtpConfig       authconfig.SmtpUrls
+	serviceShortCodeCreate ShortCodeCreateEmailUpdateServiceShortCodeCreate
+	daoSelectByEmail       ShortCodeCreateEmailUpdateDaoSelectByEmail
+	daoCredentials         ShortCodeCreateEmailUpdateDaoCredentials
+	mailDelivery           ShortCodeCreateEmailUpdateMailDelivery
+	shortCodesConfig       authconfig.ShortCodes
+	smtpConfig             authconfig.SMTPURLs
 }
 
 // NewShortCodeCreateEmailUpdate wires the email-change flow to the short-code
 // service, the email-existence DAO, and the delivery owner.
 func NewShortCodeCreateEmailUpdate(
-	service ShortCodeCreateEmailUpdateService,
-	selectDao ShortCodeCreateEmailUpdateDao,
-	credentialsDao ShortCodeCreateEmailUpdateDaoCredentials,
+	serviceShortCodeCreate ShortCodeCreateEmailUpdateServiceShortCodeCreate,
+	daoSelectByEmail ShortCodeCreateEmailUpdateDaoSelectByEmail,
+	daoCredentials ShortCodeCreateEmailUpdateDaoCredentials,
 	mailDelivery ShortCodeCreateEmailUpdateMailDelivery,
 	shortCodesConfig authconfig.ShortCodes,
-	smtpConfig authconfig.SmtpUrls,
+	smtpConfig authconfig.SMTPURLs,
 ) *ShortCodeCreateEmailUpdate {
 	return &ShortCodeCreateEmailUpdate{
-		service:          service,
-		selectDao:        selectDao,
-		credentialsDao:   credentialsDao,
-		mailDelivery:     mailDelivery,
-		shortCodesConfig: shortCodesConfig,
-		smtpConfig:       smtpConfig,
+		serviceShortCodeCreate: serviceShortCodeCreate,
+		daoSelectByEmail:       daoSelectByEmail,
+		daoCredentials:         daoCredentials,
+		mailDelivery:           mailDelivery,
+		shortCodesConfig:       shortCodesConfig,
+		smtpConfig:             smtpConfig,
 	}
 }
 
@@ -106,7 +106,7 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	credentials, err := service.credentialsDao.Exec(ctx, &dao.CredentialsSelectRequest{ID: request.ID})
+	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: request.ID})
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("select credentials: %w", err))
 	}
@@ -116,10 +116,10 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("compare current password: %w", err))
 	}
 
-	_, err = service.selectDao.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
+	_, err = service.daoSelectByEmail.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
 	emailTaken := err == nil
 
-	if !emailTaken && !errors.Is(err, dao.ErrCredentialsSelectByEmailNotFound) {
+	if !emailTaken && !errors.Is(err, dao.ErrCredentialsNotFound) {
 		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
@@ -140,7 +140,7 @@ func (service *ShortCodeCreateEmailUpdate) Exec(
 		Override: true,
 	}
 
-	shortCode, err := service.service.Exec(ctx, createRequest)
+	shortCode, err := service.serviceShortCodeCreate.Exec(ctx, createRequest)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}

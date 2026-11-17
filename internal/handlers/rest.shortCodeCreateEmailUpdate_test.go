@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -53,7 +52,7 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 				"lang": "fr"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -82,7 +81,7 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 				"lang": "fr"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -107,7 +106,7 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 				"lang": "fr"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
@@ -131,7 +130,7 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 				"lang": "fr"
 			}`)),
 			claims: &session.Claims{
-				UserID: lo.ToPtr(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
+				UserID: new(uuid.MustParse("00000000-0000-0000-0000-000000000001")),
 			},
 
 			serviceMock: &serviceMock{
