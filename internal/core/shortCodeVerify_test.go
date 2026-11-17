@@ -142,7 +142,8 @@ func TestShortCodeVerify(t *testing.T) {
 				err: dao.ErrShortCodeNotFound,
 			},
 
-			expectErr: core.ErrShortCodeNotFound,
+			// The handlers map the invalid identity; the join keeps the not-found one too.
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "SelectError",

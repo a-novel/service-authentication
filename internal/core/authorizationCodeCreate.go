@@ -118,18 +118,14 @@ func (service *AuthorizationCodeCreate) Exec(
 		return nil, otel.ReportError(span, err)
 	}
 
-	now := time.Now()
-	sessionExpiresAt := time.Unix(request.SessionExp, 0)
-
-	// A token without a user, a session or the session's end has no session to sign in from.
-	if request.UserID == uuid.Nil || request.SessionID == "" || request.SessionExp == 0 ||
-		!now.Before(sessionExpiresAt) {
+	// A token without a user or a session has no session to sign in from.
+	if request.UserID == uuid.Nil || request.SessionID == "" {
 		return nil, otel.ReportError(span, ErrAuthorizationCodeCreateSessionEnded)
 	}
 
 	// The auth middleware verifies the access token offline, so only this lookup sees a sign-out. The
 	// person then signs in again on the account platform.
-	err = checkSessionLasts(ctx, service.daoRevocationExist, sessionLastsOpts{
+	err = checkSessionActive(ctx, service.daoRevocationExist, sessionActiveOpts{
 		jtis:   []string{request.RefreshTokenID, request.SessionID},
 		endsAt: request.SessionExp,
 		ended:  ErrAuthorizationCodeCreateSessionEnded,
@@ -154,8 +150,8 @@ func (service *AuthorizationCodeCreate) Exec(
 		CodeChallenge:        authorization.CodeChallenge,
 		CodeChallengeMethod:  authorization.CodeChallengeMethod,
 		SessionID:            request.SessionID,
-		SessionExpiresAt:     sessionExpiresAt,
-		ExpiresAt:            now.Add(AuthorizationCodeTTL),
+		SessionExpiresAt:     time.Unix(request.SessionExp, 0),
+		ExpiresAt:            time.Now().Add(AuthorizationCodeTTL),
 	}
 
 	err = service.daoInsert.Exec(ctx, insertRequest)

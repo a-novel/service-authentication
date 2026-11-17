@@ -193,7 +193,7 @@ func (service *TokenRefresh) Exec(
 	// The verifier grants the refresh token a leeway past its expiry, and the session's end gets none.
 	// A logged-out session never renews, and a renewal racing a removal can bring the row back, logged
 	// out.
-	err = checkSessionLasts(ctx, service.daoRefreshTokenRevocationExist, sessionLastsOpts{
+	err = checkSessionActive(ctx, service.daoRefreshTokenRevocationExist, sessionActiveOpts{
 		jtis:   []string{refreshTokenClaims.Jti, refreshTokenClaims.Session()},
 		endsAt: refreshTokenClaims.SessionExpiry(),
 		ended:  ErrTokenRefreshInvalidRefreshToken,

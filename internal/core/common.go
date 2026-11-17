@@ -35,23 +35,24 @@ type sessionRevocationDao interface {
 	Exec(ctx context.Context, request *dao.RefreshTokenRevocationExistRequest) (bool, error)
 }
 
-// sessionLastsOpts names the session [checkSessionLasts] checks.
-type sessionLastsOpts struct {
+// sessionActiveOpts names the session [checkSessionActive] checks.
+type sessionActiveOpts struct {
 	// jtis are the IDs a sign-out revokes: the refresh token, the session, or both.
 	jtis []string
-	// endsAt is when the session ends, as a Unix timestamp in seconds. Zero bounds nothing.
+	// endsAt is when the session ends, as a Unix timestamp in seconds. A zero end has passed, so a
+	// token that carries no end is refused.
 	endsAt int64
 	// ended is the caller's sentinel for a session that ended or was signed out.
 	ended error
 }
 
-// checkSessionLasts returns opts.ended when the session reached its end or was signed out. The end
-// is checked first, so an ended session costs no lookup.
-func checkSessionLasts(ctx context.Context, daoRevocation sessionRevocationDao, opts sessionLastsOpts) error {
-	ctx, span := otel.Tracer().Start(ctx, "core.checkSessionLasts")
+// checkSessionActive returns opts.ended when the session is logged out: it reached its end, or was
+// signed out. The end is checked first, so an ended session costs no lookup.
+func checkSessionActive(ctx context.Context, daoRevocation sessionRevocationDao, opts sessionActiveOpts) error {
+	ctx, span := otel.Tracer().Start(ctx, "core.checkSessionActive")
 	defer span.End()
 
-	if opts.endsAt != 0 && time.Now().Unix() >= opts.endsAt {
+	if time.Now().Unix() >= opts.endsAt {
 		return otel.ReportError(span, fmt.Errorf("session ended: %w", opts.ended))
 	}
 

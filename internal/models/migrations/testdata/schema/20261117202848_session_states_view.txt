@@ -1,4 +1,4 @@
-migration-history	sha256:9167f0b10a0dbeb94262cfe1bfb89243ca1500596133be4c04acee9fbea14486
+migration-history	sha256:ba56bf49381e565f647737adeea2d71736cc6d5eb34f924e40d84518803ee741
 column	authorization_codes.client_id	text NOT NULL
 column	authorization_codes.code_challenge	text NOT NULL
 column	authorization_codes.code_challenge_method	text NOT NULL

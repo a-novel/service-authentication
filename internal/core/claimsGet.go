@@ -1,8 +1,10 @@
 package core
 
 import (
+	"cmp"
 	"context"
 	"errors"
+	"math"
 
 	"go.opentelemetry.io/otel/attribute"
 
@@ -56,9 +58,10 @@ func (service *ClaimsGet) Exec(ctx context.Context, request *ClaimsGetRequest) (
 		attribute.String("session.id", claims.Session()),
 	)
 
-	err = checkSessionLasts(ctx, service.dao, sessionLastsOpts{
-		jtis:   []string{claims.RefreshTokenID, claims.Session()},
-		endsAt: claims.SessionExp,
+	err = checkSessionActive(ctx, service.dao, sessionActiveOpts{
+		jtis: []string{claims.RefreshTokenID, claims.Session()},
+		// An access token signed before sessions carried their end is bounded by the revocation alone.
+		endsAt: cmp.Or(claims.SessionExp, math.MaxInt64),
 		ended:  ErrClaimsGetRevoked,
 	})
 	if err != nil {

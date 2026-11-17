@@ -1,5 +1,5 @@
--- One definition of a logged-out session for every query that reads or deletes sessions: it ended,
--- or a revocation holds its ID, which a sign-out writes. The view selects sessions.* as the table
+-- One definition of a logged-out session for every query that asks whether a session is logged
+-- out: it ended, or a revocation holds its ID, which a sign-out writes. The view selects sessions.* as the table
 -- stands, so a migration that adds a session column recreates it.
 CREATE VIEW session_states AS
 SELECT
