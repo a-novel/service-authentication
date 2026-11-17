@@ -22,10 +22,10 @@ type ShortCodeCreateRegisterServiceShortCodeCreate interface {
 	Exec(ctx context.Context, request *ShortCodeCreateRequest) (*ShortCode, error)
 }
 
-// ShortCodeCreateRegisterDaoSelectByEmail reports whether an email address is already
+// ShortCodeCreateRegisterDaoCredentialsExist reports whether an email address is already
 // registered, so a duplicate sign-up can be rejected.
-type ShortCodeCreateRegisterDaoSelectByEmail interface {
-	Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)
+type ShortCodeCreateRegisterDaoCredentialsExist interface {
+	Exec(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error)
 }
 
 // ShortCodeCreateRegisterMailDelivery reserves bounded delivery capacity for the registration mail.
@@ -46,7 +46,7 @@ type ShortCodeCreateRegisterRequest struct {
 // that address is already registered.
 type ShortCodeCreateRegister struct {
 	serviceShortCodeCreate ShortCodeCreateRegisterServiceShortCodeCreate
-	daoSelectByEmail       ShortCodeCreateRegisterDaoSelectByEmail
+	daoCredentialsExist    ShortCodeCreateRegisterDaoCredentialsExist
 	mailDelivery           ShortCodeCreateRegisterMailDelivery
 	shortCodesConfig       authconfig.ShortCodes
 	smtpConfig             authconfig.SMTPURLs
@@ -56,25 +56,25 @@ type ShortCodeCreateRegister struct {
 // service, the email-existence DAO, and the delivery owner.
 func NewShortCodeCreateRegister(
 	serviceShortCodeCreate ShortCodeCreateRegisterServiceShortCodeCreate,
-	daoSelectByEmail ShortCodeCreateRegisterDaoSelectByEmail,
+	daoCredentialsExist ShortCodeCreateRegisterDaoCredentialsExist,
 	mailDelivery ShortCodeCreateRegisterMailDelivery,
 	shortCodesConfig authconfig.ShortCodes,
 	smtpConfig authconfig.SMTPURLs,
 ) *ShortCodeCreateRegister {
 	return &ShortCodeCreateRegister{
 		serviceShortCodeCreate: serviceShortCodeCreate,
-		daoSelectByEmail:       daoSelectByEmail,
+		daoCredentialsExist:    daoCredentialsExist,
 		mailDelivery:           mailDelivery,
 		shortCodesConfig:       shortCodesConfig,
 		smtpConfig:             smtpConfig,
 	}
 }
 
-// Exec issues the registration code and schedules its delivery email, returning
-// the code immediately. It fails if the address is already registered.
+// Exec issues the registration code and schedules its delivery email. It fails if the address is
+// already registered.
 func (service *ShortCodeCreateRegister) Exec(
 	ctx context.Context, request *ShortCodeCreateRegisterRequest,
-) (*ShortCode, error) {
+) error {
 	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeCreateRegister")
 	defer span.End()
 
@@ -85,52 +85,51 @@ func (service *ShortCodeCreateRegister) Exec(
 
 	err := validate.Struct(request)
 	if err != nil {
-		return nil, otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
+		return otel.ReportError(span, errors.Join(err, ErrInvalidRequest))
 	}
 
-	_, err = service.daoSelectByEmail.Exec(ctx, &dao.CredentialsSelectByEmailRequest{Email: request.Email})
-	if err == nil {
-		return nil, otel.ReportError(span, dao.ErrCredentialsAlreadyExists)
+	exists, err := service.daoCredentialsExist.Exec(ctx, &dao.CredentialsExistRequest{Email: request.Email})
+	if err != nil {
+		return otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
 	}
 
-	if !errors.Is(err, dao.ErrCredentialsNotFound) {
-		return nil, otel.ReportError(span, fmt.Errorf("check existing email: %w", err))
+	if exists {
+		return otel.ReportError(span, ErrCredentialsAlreadyExists)
 	}
 
 	reservation, err := service.mailDelivery.Reserve(ctx)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
+		return otel.ReportError(span, fmt.Errorf("reserve mail delivery: %w", err))
 	}
 	defer reservation.Release()
 
 	ttl := service.shortCodesConfig.Usages[ShortCodeUsageRegister].TTL
 	createRequest := &ShortCodeCreateRequest{
-		Usage:    ShortCodeUsageRegister,
-		Target:   request.Email,
-		Data:     shortCodeRegistrationData{Role: request.Role},
-		TTL:      ttl,
-		Override: true,
+		Usage:  ShortCodeUsageRegister,
+		Target: request.Email,
+		Data:   shortCodeRegistrationData{Role: request.Role},
+		TTL:    ttl,
 	}
 
 	shortCode, err := service.serviceShortCodeCreate.Exec(ctx, createRequest)
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("create short code: %w", err))
+		return otel.ReportError(span, fmt.Errorf("create short code: %w", err))
 	}
 
 	mail := &MailDeliveryRequest{
 		To:           smtp.MailUsers{{Email: request.Email}},
 		Template:     mails.Mails.Register,
 		TemplateName: request.Lang,
-		Data: map[string]any{
-			mails.TemplateVarShortCode: shortCode.PlainCode,
-			mails.TemplateVarTarget:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
-			mails.TemplateVarURL:       service.smtpConfig.Register,
-			mails.TemplateVarDuration:  ttl.Hours(),
+		Data: mails.Link{
+			ShortCode: shortCode.PlainCode,
+			Target:    base64.RawURLEncoding.EncodeToString([]byte(request.Email)),
+			URL:       service.smtpConfig.Register,
+			Duration:  ttl.Hours(),
 		},
 		Kind: mailDeliveryKindRegister,
 	}
 
 	reservation.Deliver(ctx, mail)
 
-	return shortCode, nil
+	return nil
 }

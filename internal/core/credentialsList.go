@@ -1,6 +1,7 @@
 package core
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -17,9 +18,13 @@ type CredentialsListDao interface {
 	Exec(ctx context.Context, request *dao.CredentialsListRequest) ([]*dao.Credentials, error)
 }
 
-// CredentialsListRequest selects a page of accounts, and the roles to narrow it to.
+// CredentialsListLimitDefault is the page size of a request that sets no limit.
+const CredentialsListLimitDefault = 100
+
+// CredentialsListRequest selects a page of accounts, and the roles to narrow it to. A zero Limit
+// takes [CredentialsListLimitDefault].
 type CredentialsListRequest struct {
-	Limit  int      `validate:"required,min=1,max=100"`
+	Limit  int      `validate:"omitempty,min=1,max=100"`
 	Offset int      `validate:"min=0"`
 	Roles  []string `validate:"min=0,max=10,dive,role"`
 }
@@ -46,7 +51,7 @@ func (service *CredentialsList) Exec(
 	}
 
 	daoRequest := &dao.CredentialsListRequest{
-		Limit:  request.Limit,
+		Limit:  cmp.Or(request.Limit, CredentialsListLimitDefault),
 		Offset: request.Offset,
 		Roles:  request.Roles,
 	}

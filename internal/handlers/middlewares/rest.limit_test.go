@@ -571,7 +571,7 @@ func TestClientVisitorKey(t *testing.T) {
 			return
 		}
 
-		_, _ = io.WriteString(w, key)
+		_, _ = io.WriteString(w, key) //nolint:gosec // The test reads back the key it chose.
 	})
 
 	for _, testCase := range testCases {

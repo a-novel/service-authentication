@@ -13,18 +13,10 @@ FROM
       expires_at,
       last_active_at
     FROM
-      sessions
+      session_states
     WHERE
       user_id = ?0
-      AND expires_at > CURRENT_TIMESTAMP
-      AND NOT EXISTS (
-        SELECT
-          1
-        FROM
-          refresh_token_revocations
-        WHERE
-          jti = sessions.id::text
-      )
+      AND NOT logged_out
     ORDER BY
       last_active_at DESC,
       id DESC

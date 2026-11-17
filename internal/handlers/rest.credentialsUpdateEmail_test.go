@@ -135,22 +135,6 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 			expectStatus: http.StatusConflict,
 		},
 		{
-			name: "Error/ShortCodeNotFound",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000001"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateEmailRequest{
-					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrShortCodeNotFound,
-			},
-
-			expectStatus: http.StatusForbidden,
-		},
-		{
 			name: "Error/ShortCodeInvalid",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
@@ -161,25 +145,7 @@ func TestRestCredentialsUpdateEmail(t *testing.T) {
 				req: &core.CredentialsUpdateEmailRequest{
 					UserID: uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: core.ErrShortCodeConsumeInvalid,
-			},
-
-			expectStatus: http.StatusForbidden,
-		},
-		{
-			name: "Error/ShortCodeExpired",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPatch, "/v2/credentials/email", strings.NewReader(`{
-				"userID": "00000000-0000-0000-0000-000000000001",
-				"shortCode": "abcdef"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdateEmailRequest{
-					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-					ShortCode: "abcdef",
-				},
-				err: errors.Join(errFoo, core.ErrShortCodeConsumeExpired),
+				err: core.ErrShortCodeInvalid,
 			},
 
 			expectStatus: http.StatusForbidden,

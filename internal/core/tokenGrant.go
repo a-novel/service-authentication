@@ -358,15 +358,12 @@ func (service *TokenGrant) grantAuthorizationCode(
 		return nil, otel.ReportError(span, err)
 	}
 
-	revocationRequest := &dao.RefreshTokenRevocationExistRequest{JTIs: []string{code.SessionID}}
-
-	revoked, err := service.daoRevocationExist.Exec(ctx, revocationRequest)
+	err = checkSessionLasts(ctx, service.daoRevocationExist, sessionLastsOpts{
+		jtis:  []string{code.SessionID},
+		ended: ErrTokenGrantSessionEnded,
+	})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check session revocation: %w", err))
-	}
-
-	if revoked {
-		return nil, otel.ReportError(span, ErrTokenGrantSessionEnded)
+		return nil, otel.ReportError(span, err)
 	}
 
 	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: code.UserID})
@@ -446,15 +443,13 @@ func (service *TokenGrant) grantRefreshToken(
 		return nil, otel.ReportError(span, ErrTokenGrantForeignRefreshToken)
 	}
 
-	revocationRequest := &dao.RefreshTokenRevocationExistRequest{JTIs: []string{claims.Jti, claims.Session()}}
-
-	revoked, err := service.daoRevocationExist.Exec(ctx, revocationRequest)
+	err = checkSessionLasts(ctx, service.daoRevocationExist, sessionLastsOpts{
+		jtis:   []string{claims.Jti, claims.Session()},
+		endsAt: claims.SessionExpiry(),
+		ended:  ErrTokenGrantSessionEnded,
+	})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check session revocation: %w", err))
-	}
-
-	if revoked || time.Now().Unix() >= claims.SessionExpiry() {
-		return nil, otel.ReportError(span, ErrTokenGrantSessionEnded)
+		return nil, otel.ReportError(span, err)
 	}
 
 	credentials, err := service.daoCredentials.Exec(ctx, &dao.CredentialsSelectRequest{ID: claims.UserID})

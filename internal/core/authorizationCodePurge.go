@@ -40,19 +40,21 @@ func (service *AuthorizationCodePurge) Exec(ctx context.Context) (*Authorization
 	ctx, span := otel.Tracer().Start(ctx, "core.AuthorizationCodePurge")
 	defer span.End()
 
-	result := &AuthorizationCodePurgeResult{}
 	request := &dao.AuthorizationCodePurgeRequest{Limit: AuthorizationCodePurgeBatch}
 
-	for {
+	purged, err := purgeBatches(AuthorizationCodePurgeBatch, func() (int64, error) {
 		batch, err := service.dao.Exec(ctx, request)
 		if err != nil {
-			return result, otel.ReportError(span, fmt.Errorf("purge authorization codes: %w", err))
+			return 0, err
 		}
 
-		result.Purged += batch.Purged
+		return batch.Purged, nil
+	})
 
-		if batch.Purged < AuthorizationCodePurgeBatch {
-			return result, nil
-		}
+	result := &AuthorizationCodePurgeResult{Purged: purged}
+	if err != nil {
+		return result, otel.ReportError(span, fmt.Errorf("purge authorization codes: %w", err))
 	}
+
+	return result, nil
 }

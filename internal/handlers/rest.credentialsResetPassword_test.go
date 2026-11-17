@@ -96,26 +96,6 @@ func TestRestCredentialsResetPassword(t *testing.T) {
 			expectStatus: http.StatusForbidden,
 		},
 		{
-			name: "Error/ShortCodeNotFound",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"password": "Louvre",
-				"shortCode": "abcdef",
-				"userID": "00000000-0000-0000-0000-000000000001"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsUpdatePasswordRequest{
-					Password:  "Louvre",
-					ShortCode: "abcdef",
-					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				err: core.ErrShortCodeNotFound,
-			},
-
-			expectStatus: http.StatusForbidden,
-		},
-		{
 			name: "Error/ShortCodeInvalid",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
@@ -130,7 +110,7 @@ func TestRestCredentialsResetPassword(t *testing.T) {
 					ShortCode: "abcdef",
 					UserID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				},
-				err: core.ErrShortCodeConsumeInvalid,
+				err: core.ErrShortCodeInvalid,
 			},
 
 			expectStatus: http.StatusForbidden,

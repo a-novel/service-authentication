@@ -55,7 +55,7 @@ func TestWaitlist(t *testing.T) {
 			name: "MalformedURL", url: ":%", secret: strings.Repeat("a", 32), timeout: time.Second,
 			expectMessage: "URL cannot be parsed",
 		},
-		{
+		{ //nolint:gosec // The case checks that a URL with credentials stays out of the error.
 			name: "MalformedURLWithCredentials", url: "https://user:private@script.google.com/%zz?secret=private",
 			secret: strings.Repeat("a", 32), timeout: time.Second, expectMessage: "URL cannot be parsed",
 		},

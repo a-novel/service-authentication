@@ -17,7 +17,7 @@ import (
 
 // RestShortCodeCreateEmailUpdateService is the core operation PUT /v2/short-code/update-email delegates to.
 type RestShortCodeCreateEmailUpdateService interface {
-	Exec(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) (*core.ShortCode, error)
+	Exec(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) error
 }
 
 // shortCodeCreateEmailUpdateErrors maps a failed email-change code request to its status.
@@ -74,7 +74,7 @@ func (handler *RestShortCodeCreateEmailUpdate) ServeHTTP(w http.ResponseWriter, 
 		ID:              lo.FromPtr(claims.UserID),
 	}
 
-	_, err = handler.service.Exec(ctx, serviceRequest)
+	err = handler.service.Exec(ctx, serviceRequest)
 	if err != nil {
 		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreateEmailUpdateErrors, err)
 

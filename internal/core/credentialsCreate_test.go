@@ -218,11 +218,11 @@ func TestCredentialsCreate(t *testing.T) {
 
 			serviceShortCodeVerifyMock: &serviceShortCodeVerifyMock{},
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
-				err: core.ErrShortCodeConsumeInvalid,
+				err: core.ErrShortCodeInvalid,
 			},
 			transactionMock: &transactionMock{},
 
-			expectErr: core.ErrShortCodeConsumeInvalid,
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "Error/CreateCredentials",
@@ -539,7 +539,7 @@ func TestCredentialsCreate(t *testing.T) {
 			if testCase.serviceShortCodeConsumeMock != nil {
 				serviceShortCodeConsume.EXPECT().
 					Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).
-					Return(shortCode, testCase.serviceShortCodeConsumeMock.err)
+					Return(testCase.serviceShortCodeConsumeMock.err)
 			}
 
 			if testCase.daoMock != nil {
@@ -662,9 +662,9 @@ func TestCredentialsCreateHashing(t *testing.T) {
 		{
 			name: "Error/VerifyShortCode",
 
-			verifyErr: core.ErrShortCodeConsumeInvalid,
+			verifyErr: core.ErrShortCodeInvalid,
 
-			expectErr: core.ErrShortCodeConsumeInvalid,
+			expectErr: core.ErrShortCodeInvalid,
 		},
 	}
 
@@ -696,7 +696,7 @@ func TestCredentialsCreateHashing(t *testing.T) {
 			if testCase.expectErr == nil {
 				transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(noHashInTx(t)).Once()
 				consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).
-					Return(shortCode, nil).Once()
+					Return(nil).Once()
 				mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
 				waitlist.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.WaitlistResult{}, nil).Once()
 				sign.EXPECT().ClaimsSign(mock.Anything, mock.Anything).

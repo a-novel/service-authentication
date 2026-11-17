@@ -15,7 +15,7 @@ func TestArgon2(t *testing.T) {
 
 	password := "password"
 
-	encrypted, err := lib.GenerateArgon2(password, lib.Argon2ParamsDefault)
+	encrypted, err := lib.GenerateArgon2(password)
 	require.NoError(t, err)
 	require.NotEmpty(t, encrypted)
 
@@ -70,7 +70,7 @@ func TestLimitArgon2(t *testing.T) {
 	hashes := make(chan error, 3)
 	for range cap(hashes) {
 		go func() {
-			_, err := lib.GenerateArgon2("password", lib.Argon2ParamsDefault)
+			_, err := lib.GenerateArgon2("password")
 			hashes <- err
 		}()
 	}

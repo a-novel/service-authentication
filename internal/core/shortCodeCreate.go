@@ -28,10 +28,6 @@ type ShortCodeCreateRequest struct {
 	Target string `validate:"required,max=1024"`
 	Data   any
 	TTL    time.Duration `validate:"required"`
-
-	// Override expires and replaces any existing code for the same target and usage.
-	// When false, a duplicate fails the request.
-	Override bool
 }
 
 // ShortCodeCreate issues a short code: it generates a random plaintext code,
@@ -66,7 +62,7 @@ func (service *ShortCodeCreate) Exec(
 	}
 
 	// Store only the Argon2id hash; the plaintext code never reaches the database.
-	encrypted, err := lib.GenerateArgon2(plainCode, lib.Argon2ParamsDefault)
+	encrypted, err := lib.GenerateArgon2(plainCode)
 	if err != nil {
 		return nil, otel.ReportError(span, fmt.Errorf("encrypt short code: %w", err))
 	}
@@ -88,7 +84,6 @@ func (service *ShortCodeCreate) Exec(
 		Data:      serializedData,
 		Now:       now,
 		ExpiresAt: now.Add(request.TTL),
-		Override:  request.Override,
 	}
 
 	entity, err := service.dao.Exec(ctx, daoRequest)

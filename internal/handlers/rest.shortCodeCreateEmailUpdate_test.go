@@ -27,9 +27,8 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	type serviceMock struct {
-		req  *core.ShortCodeCreateEmailUpdateRequest
-		resp *core.ShortCode
-		err  error
+		req *core.ShortCodeCreateEmailUpdateRequest
+		err error
 	}
 
 	testCases := []struct {
@@ -61,12 +60,6 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 					Email:           "new_user@provider.com",
 					Lang:            "fr",
 					ID:              uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-				},
-				resp: &core.ShortCode{
-					ID:        uuid.MustParse("00000000-0000-0000-0000-111111111111"),
-					Usage:     core.ShortCodeUsageValidateEmail,
-					Target:    "00000000-0000-0000-0000-000000000001",
-					PlainCode: "abcdef",
 				},
 			},
 
@@ -156,7 +149,7 @@ func TestRestShortCodeCreateEmailUpdate(t *testing.T) {
 			if testCase.serviceMock != nil {
 				service.EXPECT().
 					Exec(mock.Anything, testCase.serviceMock.req).
-					Return(testCase.serviceMock.resp, testCase.serviceMock.err)
+					Return(testCase.serviceMock.err)
 			}
 
 			handler := handlers.NewRestShortCodeCreateEmailUpdate(service, config.LoggerDev)

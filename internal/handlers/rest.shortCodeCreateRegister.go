@@ -15,7 +15,7 @@ import (
 
 // RestShortCodeCreateRegisterService is the core operation PUT /v2/short-code/register delegates to.
 type RestShortCodeCreateRegisterService interface {
-	Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)
+	Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) error
 }
 
 // shortCodeCreateRegisterErrors maps a failed invitation to its status.
@@ -61,7 +61,7 @@ func (handler *RestShortCodeCreateRegister) ServeHTTP(w http.ResponseWriter, r *
 		Role:  authconfig.RoleUser,
 	}
 
-	_, err = handler.service.Exec(ctx, serviceRequest)
+	err = handler.service.Exec(ctx, serviceRequest)
 	// Silently succeed when the email already exists, so a caller cannot probe which addresses are registered.
 	if err != nil && !errors.Is(err, core.ErrCredentialsAlreadyExists) {
 		httpf.HandleError(ctx, handler.logger, w, span, shortCodeCreateRegisterErrors, err)

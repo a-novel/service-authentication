@@ -30,13 +30,13 @@ func TestAppPresetDefault(t *testing.T) {
 			restRateLimitStrict: "2/1m",
 			expect:              "2s 2/1m0s *grpcf.LocalCredentialsProvider &{}",
 		},
-		{
+		{ //nolint:gosec // A token path, not a credential.
 			name:             "Success/ServiceToken",
 			serviceTokenPath: "/var/run/secrets/tokens/json-keys",
 			expect: "15s 3/5m0s *grpcf.ServiceTokenCredentialsProvider " +
 				"&{ServiceTokenPath:/var/run/secrets/tokens/json-keys TLS:false}",
 		},
-		{
+		{ //nolint:gosec // A token path, not a credential.
 			name:               "Success/ServiceTokenTLS",
 			serviceTokenPath:   "/var/run/secrets/tokens/json-keys",
 			serviceJSONKeysTLS: "true",

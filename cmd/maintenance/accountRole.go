@@ -102,7 +102,7 @@ func (operation *accountRoleOperation) run(ctx context.Context) error {
 	createShortCode := core.NewShortCodeCreate(dao.NewPgShortCodeInsert(), cfg.ShortCodes)
 	mailDelivery := core.NewMailDelivery(cfg.SMTP, env.SMTPMaxConcurrent)
 	register := core.NewShortCodeCreateRegister(
-		createShortCode, selectCredentials, mailDelivery, cfg.ShortCodes, cfg.SMTPURLs,
+		createShortCode, dao.NewPgCredentialsExist(), mailDelivery, cfg.ShortCodes, cfg.SMTPURLs,
 	)
 	reconcileRole := core.NewCredentialsReconcileRole(selectCredentials, updateRole, selectShortCode, register)
 

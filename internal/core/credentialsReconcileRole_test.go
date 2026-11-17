@@ -45,8 +45,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 	}
 
 	type registerMock struct {
-		resp *core.ShortCode
-		err  error
+		err error
 	}
 
 	testCases := []struct {
@@ -126,9 +125,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			selectShortCodeMock: &selectShortCodeMock{
 				err: dao.ErrShortCodeNotFound,
 			},
-			registerMock: &registerMock{
-				resp: &core.ShortCode{},
-			},
+			registerMock: &registerMock{},
 
 			expect: &core.CredentialsReconcileRoleResult{
 				Outcome: core.CredentialsReconcileRoleRegistrationCreated,
@@ -144,9 +141,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			selectShortCodeMock: &selectShortCodeMock{
 				resp: &dao.ShortCode{Data: []byte(`{"role":"auth:user"}`)},
 			},
-			registerMock: &registerMock{
-				resp: &core.ShortCode{},
-			},
+			registerMock: &registerMock{},
 
 			expect: &core.CredentialsReconcileRoleResult{
 				Outcome: core.CredentialsReconcileRoleRegistrationCreated,
@@ -162,9 +157,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 			selectShortCodeMock: &selectShortCodeMock{
 				resp: &dao.ShortCode{Data: []byte(`{"role":`)},
 			},
-			registerMock: &registerMock{
-				resp: &core.ShortCode{},
-			},
+			registerMock: &registerMock{},
 
 			expect: &core.CredentialsReconcileRoleResult{
 				Outcome: core.CredentialsReconcileRoleRegistrationCreated,
@@ -302,7 +295,7 @@ func TestCredentialsReconcileRole(t *testing.T) {
 
 				register.EXPECT().
 					Exec(mock.Anything, shortCodeCreateRegisterRequest).
-					Return(testCase.registerMock.resp, testCase.registerMock.err)
+					Return(testCase.registerMock.err)
 			}
 
 			service := core.NewCredentialsReconcileRole(

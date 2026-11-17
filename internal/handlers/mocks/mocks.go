@@ -2240,31 +2240,20 @@ func (_m *MockRestShortCodeCreateEmailUpdateService) EXPECT() *MockRestShortCode
 }
 
 // Exec provides a mock function for the type MockRestShortCodeCreateEmailUpdateService
-func (_mock *MockRestShortCodeCreateEmailUpdateService) Exec(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) (*core.ShortCode, error) {
+func (_mock *MockRestShortCodeCreateEmailUpdateService) Exec(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.ShortCode
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateEmailUpdateRequest) (*core.ShortCode, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateEmailUpdateRequest) *core.ShortCode); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateEmailUpdateRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.ShortCode)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.ShortCodeCreateEmailUpdateRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockRestShortCodeCreateEmailUpdateService_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -2297,12 +2286,12 @@ func (_c *MockRestShortCodeCreateEmailUpdateService_Exec_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockRestShortCodeCreateEmailUpdateService_Exec_Call) Return(shortCode *core.ShortCode, err error) *MockRestShortCodeCreateEmailUpdateService_Exec_Call {
-	_c.Call.Return(shortCode, err)
+func (_c *MockRestShortCodeCreateEmailUpdateService_Exec_Call) Return(err error) *MockRestShortCodeCreateEmailUpdateService_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockRestShortCodeCreateEmailUpdateService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) (*core.ShortCode, error)) *MockRestShortCodeCreateEmailUpdateService_Exec_Call {
+func (_c *MockRestShortCodeCreateEmailUpdateService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeCreateEmailUpdateRequest) error) *MockRestShortCodeCreateEmailUpdateService_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2344,31 +2333,20 @@ func (_m *MockRestShortCodeCreatePasswordResetService) EXPECT() *MockRestShortCo
 }
 
 // Exec provides a mock function for the type MockRestShortCodeCreatePasswordResetService
-func (_mock *MockRestShortCodeCreatePasswordResetService) Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error) {
+func (_mock *MockRestShortCodeCreatePasswordResetService) Exec(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.ShortCode
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreatePasswordResetRequest) *core.ShortCode); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreatePasswordResetRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.ShortCode)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.ShortCodeCreatePasswordResetRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockRestShortCodeCreatePasswordResetService_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -2401,12 +2379,12 @@ func (_c *MockRestShortCodeCreatePasswordResetService_Exec_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockRestShortCodeCreatePasswordResetService_Exec_Call) Return(shortCode *core.ShortCode, err error) *MockRestShortCodeCreatePasswordResetService_Exec_Call {
-	_c.Call.Return(shortCode, err)
+func (_c *MockRestShortCodeCreatePasswordResetService_Exec_Call) Return(err error) *MockRestShortCodeCreatePasswordResetService_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockRestShortCodeCreatePasswordResetService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) (*core.ShortCode, error)) *MockRestShortCodeCreatePasswordResetService_Exec_Call {
+func (_c *MockRestShortCodeCreatePasswordResetService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeCreatePasswordResetRequest) error) *MockRestShortCodeCreatePasswordResetService_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2448,31 +2426,20 @@ func (_m *MockRestShortCodeCreateRegisterService) EXPECT() *MockRestShortCodeCre
 }
 
 // Exec provides a mock function for the type MockRestShortCodeCreateRegisterService
-func (_mock *MockRestShortCodeCreateRegisterService) Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error) {
+func (_mock *MockRestShortCodeCreateRegisterService) Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.ShortCode
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateRegisterRequest) *core.ShortCode); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateRegisterRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.ShortCode)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.ShortCodeCreateRegisterRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockRestShortCodeCreateRegisterService_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -2505,12 +2472,12 @@ func (_c *MockRestShortCodeCreateRegisterService_Exec_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockRestShortCodeCreateRegisterService_Exec_Call) Return(shortCode *core.ShortCode, err error) *MockRestShortCodeCreateRegisterService_Exec_Call {
-	_c.Call.Return(shortCode, err)
+func (_c *MockRestShortCodeCreateRegisterService_Exec_Call) Return(err error) *MockRestShortCodeCreateRegisterService_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockRestShortCodeCreateRegisterService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)) *MockRestShortCodeCreateRegisterService_Exec_Call {
+func (_c *MockRestShortCodeCreateRegisterService_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) error) *MockRestShortCodeCreateRegisterService_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }

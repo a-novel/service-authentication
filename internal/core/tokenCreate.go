@@ -16,7 +16,6 @@ import (
 
 	"github.com/a-novel/service-authentication/v2/internal/dao"
 	"github.com/a-novel/service-authentication/v2/internal/lib"
-	"github.com/a-novel/service-authentication/v2/internal/models/session"
 )
 
 // TokenCreateDao provides access to credentials lookup by email.
@@ -66,10 +65,8 @@ type TokenCreateRequest struct {
 // TokenCreate authenticates a user by email and password and issues a fresh
 // access/refresh token pair, in a session of its own that it records.
 type TokenCreate struct {
-	dao               TokenCreateDao
-	serviceSignClaims TokenCreateServiceSignClaims
-	sessions          sessionRecorder
-	bounds            sessionBounds
+	dao      TokenCreateDao
+	sessions sessionOpener
 }
 
 func NewTokenCreate(
@@ -83,13 +80,15 @@ func NewTokenCreate(
 	refreshTokenLeeway time.Duration,
 ) *TokenCreate {
 	return &TokenCreate{
-		dao:               dao,
-		serviceSignClaims: serviceSignClaims,
-		sessions: sessionRecorder{
-			transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
-		},
-		bounds: sessionBounds{
-			daoRevokeOldest: daoSessionRevokeOldest, daoTrim: daoSessionTrim, refreshTokenLeeway: refreshTokenLeeway,
+		dao: dao,
+		sessions: sessionOpener{
+			signer: serviceSignClaims,
+			recorder: sessionRecorder{
+				transactor: transactor, daoConsent: daoLocationConsent, daoUpsert: daoSessionUpsert,
+			},
+			bounds: sessionBounds{
+				daoRevokeOldest: daoSessionRevokeOldest, daoTrim: daoSessionTrim, refreshTokenLeeway: refreshTokenLeeway,
+			},
 		},
 	}
 }
@@ -138,17 +137,10 @@ func (service *TokenCreate) Exec(
 		return nil, otel.ReportError(span, fmt.Errorf("compare password: %w", err))
 	}
 
-	tokens, refreshClaims, err := signTokenPair(ctx, service.serviceSignClaims, credentials, session.RefreshClaimsForm{})
-	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("sign token pair: %w", err))
-	}
-
-	err = service.sessions.record(ctx, credentials.ID, credentials.LocationConsent, refreshClaims, request.Visitor)
+	tokens, err := service.sessions.open(ctx, credentials, request.Visitor)
 	if err != nil {
 		return nil, otel.ReportError(span, err)
 	}
-
-	service.bounds.bound(ctx, credentials.ID)
 
 	return tokens, nil
 }

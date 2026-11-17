@@ -4,7 +4,7 @@
 package mails
 
 import (
-	_ "embed"
+	"embed"
 	"encoding/base64"
 	"mime"
 	"slices"
@@ -14,27 +14,10 @@ import (
 	authconfig "github.com/a-novel/service-authentication/v2/internal/config/auth"
 )
 
-var (
-	//go:embed fr/email-changed.html
-	emailChangedFr string
-	//go:embed fr/email-update.html
-	emailUpdateFr string
-	//go:embed fr/password-reset.html
-	passwordResetFr string
-	//go:embed fr/register.html
-	registerFr string
-)
-
-var (
-	//go:embed en/email-changed.html
-	emailChangedEn string
-	//go:embed en/email-update.html
-	emailUpdateEn string
-	//go:embed en/password-reset.html
-	passwordResetEn string
-	//go:embed en/register.html
-	registerEn string
-)
+// templates holds every email, one HTML file per language directory.
+//
+//go:embed */*.html
+var templates embed.FS
 
 // The banners are the 80h Agora exports of @a-novel-kit/ui-images, shown 40 pixels tall: the dark
 // one by default, the light one when the mail client reports a light color scheme.
@@ -58,19 +41,19 @@ var imageParts = imagePart("agora-banner@agorastoryverse.com", banner) +
 	imagePart("agora-banner-light@agorastoryverse.com", bannerLight) +
 	"\n--" + boundary + "--\n"
 
-// The templates read their values from a data map keyed by these names.
-const (
-	// TemplateVarShortCode is the plaintext short code the link carries.
-	TemplateVarShortCode = "ShortCode"
-	// TemplateVarTarget identifies the subject the short code is bound to, in the link.
-	TemplateVarTarget = "Target"
-	// TemplateVarSource is the new address of an email change, base64url-encoded in the link.
-	TemplateVarSource = "Source"
-	// TemplateVarURL is the platform page the link opens.
-	TemplateVarURL = "URL"
-	// TemplateVarDuration is the short code's lifetime, in hours.
-	TemplateVarDuration = "Duration"
-)
+// Link is the data the templates carrying a short-code link read.
+type Link struct {
+	// ShortCode is the plaintext short code the link carries.
+	ShortCode string
+	// Target identifies the subject the short code is bound to, in the link.
+	Target string
+	// Source is the new address of an email change, base64url-encoded in the link.
+	Source string
+	// URL is the platform page the link opens.
+	URL string
+	// Duration is the short code's lifetime, in hours.
+	Duration float64
+}
 
 // funcs are the functions the templates call. headerText writes a header value as RFC 2047
 // encoded-words when it holds non-ASCII text: a header field body is ASCII (RFC 5322 §2.2) unless the
@@ -92,21 +75,29 @@ type MailTemplates struct {
 // Mails holds the ready-to-render email templates, parsed once at package
 // initialization. A malformed template panics at startup.
 var Mails = MailTemplates{
-	EmailChanged:  template.Must(template.New(authconfig.LangEN).Funcs(funcs).Parse(emailChangedEn + imageParts)),
-	EmailUpdate:   template.Must(template.New(authconfig.LangEN).Funcs(funcs).Parse(emailUpdateEn + imageParts)),
-	PasswordReset: template.Must(template.New(authconfig.LangEN).Funcs(funcs).Parse(passwordResetEn + imageParts)),
-	Register:      template.Must(template.New(authconfig.LangEN).Funcs(funcs).Parse(registerEn + imageParts)),
+	EmailChanged:  parse("email-changed"),
+	EmailUpdate:   parse("email-update"),
+	PasswordReset: parse("password-reset"),
+	Register:      parse("register"),
 }
 
-// Attach the French variant to each template as an associated sub-template, so one
-// MailTemplates field can render either language. Only registering the variant matters,
-// so the results are discarded.
-var (
-	_ = template.Must(Mails.EmailChanged.New(authconfig.LangFR).Parse(emailChangedFr + imageParts))
-	_ = template.Must(Mails.EmailUpdate.New(authconfig.LangFR).Parse(emailUpdateFr + imageParts))
-	_ = template.Must(Mails.PasswordReset.New(authconfig.LangFR).Parse(passwordResetFr + imageParts))
-	_ = template.Must(Mails.Register.New(authconfig.LangFR).Parse(registerFr + imageParts))
-)
+// parse reads every language variant of one email into a template set, each variant a
+// sub-template named after its language, so a new language touches only the known languages and
+// the template sources.
+func parse(name string) *template.Template {
+	set := template.New(name).Funcs(funcs)
+
+	for _, lang := range authconfig.KnownLangs {
+		source, err := templates.ReadFile(lang + "/" + name + ".html")
+		if err != nil {
+			panic(err)
+		}
+
+		template.Must(set.New(lang).Parse(string(source) + imageParts))
+	}
+
+	return set
+}
 
 // imagePart encodes a PNG as an inline MIME part named contentID.
 func imagePart(contentID string, png []byte) string {

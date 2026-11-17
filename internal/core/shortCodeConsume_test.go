@@ -33,7 +33,6 @@ func TestShortCodeConsume(t *testing.T) {
 
 		daoMock *daoMock
 
-		expect    *core.ShortCode
 		expectErr error
 	}{
 		{
@@ -50,15 +49,6 @@ func TestShortCodeConsume(t *testing.T) {
 					ExpiresAt: futureTime,
 				},
 			},
-
-			expect: &core.ShortCode{
-				ID:        shortCodeID,
-				Usage:     core.ShortCodeUsageValidateEmail,
-				Target:    "test-target",
-				Data:      []byte("test-data"),
-				CreatedAt: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
-				ExpiresAt: futureTime,
-			},
 		},
 		{
 			// Another request retired the code after this one verified it.
@@ -68,7 +58,7 @@ func TestShortCodeConsume(t *testing.T) {
 				err: dao.ErrShortCodeNotFound,
 			},
 
-			expectErr: core.ErrShortCodeConsumeInvalid,
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "Error/Delete",
@@ -96,9 +86,8 @@ func TestShortCodeConsume(t *testing.T) {
 
 			service := core.NewShortCodeConsume(daoDelete)
 
-			resp, err := service.Exec(t.Context(), &core.ShortCodeConsumeRequest{ID: shortCodeID})
+			err := service.Exec(t.Context(), &core.ShortCodeConsumeRequest{ID: shortCodeID})
 			require.ErrorIs(t, err, testCase.expectErr)
-			require.Equal(t, testCase.expect, resp)
 		})
 	}
 }

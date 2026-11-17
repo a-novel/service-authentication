@@ -341,8 +341,6 @@ func TestTokenRefresh(t *testing.T) {
 				resp: &session.RefreshClaims{Jti: refreshTokenID, Exp: time.Now().Unix(), UserID: userID},
 			},
 
-			revocationExistMock: &revocationExistMock{jtis: []string{refreshTokenID, refreshTokenID}},
-
 			expectErr: core.ErrTokenRefreshInvalidRefreshToken,
 		},
 		{

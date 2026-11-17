@@ -137,10 +137,10 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 			serviceShortCodeVerifyMock: verified,
 			daoSelectMock:              previous,
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
-				err: core.ErrShortCodeConsumeInvalid,
+				err: core.ErrShortCodeInvalid,
 			},
 
-			expectErr: core.ErrShortCodeConsumeInvalid,
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "Error/UpdateCredentialsEmail",
@@ -197,7 +197,7 @@ func TestCredentialsUpdateEmail(t *testing.T) {
 				if testCase.serviceShortCodeConsumeMock != nil {
 					serviceShortCodeConsume.EXPECT().
 						Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCodeID}).
-						Return(&core.ShortCode{ID: shortCodeID}, testCase.serviceShortCodeConsumeMock.err)
+						Return(testCase.serviceShortCodeConsumeMock.err)
 				}
 
 				if testCase.daoMock != nil {
@@ -277,7 +277,7 @@ func TestCredentialsUpdateEmailHashing(t *testing.T) {
 	transactor.EXPECT().WithinTx(mock.Anything, mock.Anything).RunAndReturn(noHashInTx(t)).Once()
 	mockDaoSelect.EXPECT().Exec(mock.Anything, mock.Anything).
 		Return(&dao.Credentials{Email: "former@provider.com"}, nil).Once()
-	consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).Return(shortCode, nil).Once()
+	consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).Return(nil).Once()
 	mockDao.EXPECT().Exec(mock.Anything, mock.Anything).Return(&dao.Credentials{}, nil).Once()
 	smtpService.EXPECT().SendMail(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 

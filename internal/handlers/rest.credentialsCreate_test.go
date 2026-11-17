@@ -87,26 +87,6 @@ func TestRestCredentialsCreate(t *testing.T) {
 			expectStatus: http.StatusConflict,
 		},
 		{
-			name: "Error/ShortCodeNotFound",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre",
-				"shortCode": "abcdef"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsCreateRequest{
-					Email:     "user@provider.com",
-					Password:  "Louvre",
-					ShortCode: "abcdef",
-				},
-				err: core.ErrShortCodeNotFound,
-			},
-
-			expectStatus: http.StatusForbidden,
-		},
-		{
 			name: "Error/ShortCodeInvalid",
 
 			request: httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/", strings.NewReader(`{
@@ -121,27 +101,7 @@ func TestRestCredentialsCreate(t *testing.T) {
 					Password:  "Louvre",
 					ShortCode: "abcdef",
 				},
-				err: core.ErrShortCodeConsumeInvalid,
-			},
-
-			expectStatus: http.StatusForbidden,
-		},
-		{
-			name: "Error/ShortCodeExpired",
-
-			request: httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/v2/credentials", strings.NewReader(`{
-				"email": "user@provider.com",
-				"password": "Louvre",
-				"shortCode": "abcdef"
-			}`)),
-
-			serviceMock: &serviceMock{
-				req: &core.CredentialsCreateRequest{
-					Email:     "user@provider.com",
-					Password:  "Louvre",
-					ShortCode: "abcdef",
-				},
-				err: errors.Join(errFoo, core.ErrShortCodeConsumeExpired),
+				err: core.ErrShortCodeInvalid,
 			},
 
 			expectStatus: http.StatusForbidden,

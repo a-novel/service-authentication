@@ -131,8 +131,8 @@ func (delivery *MailDelivery) Close() {
 	}()
 }
 
-// Wait closes admission and waits for accepted work to finish within ctx. It returns any SMTP
-// delivery failures collected while draining and is safe to call repeatedly and concurrently.
+// Wait closes admission and waits for accepted work to finish within ctx. It returns the first SMTP
+// delivery failure, every one being on its own span, and is safe to call repeatedly and concurrently.
 func (delivery *MailDelivery) Wait(ctx context.Context) error {
 	ctx, span := otel.Tracer().Start(ctx, "core.MailDelivery(wait)")
 	defer span.End()

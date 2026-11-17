@@ -129,17 +129,13 @@ func (service *AuthorizationCodeCreate) Exec(
 
 	// The auth middleware verifies the access token offline, so only this lookup sees a sign-out. The
 	// person then signs in again on the account platform.
-	revocationRequest := &dao.RefreshTokenRevocationExistRequest{
-		JTIs: []string{request.RefreshTokenID, request.SessionID},
-	}
-
-	revoked, err := service.daoRevocationExist.Exec(ctx, revocationRequest)
+	err = checkSessionLasts(ctx, service.daoRevocationExist, sessionLastsOpts{
+		jtis:   []string{request.RefreshTokenID, request.SessionID},
+		endsAt: request.SessionExp,
+		ended:  ErrAuthorizationCodeCreateSessionEnded,
+	})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check session revocation: %w", err))
-	}
-
-	if revoked {
-		return nil, otel.ReportError(span, fmt.Errorf("signed out: %w", ErrAuthorizationCodeCreateSessionEnded))
+		return nil, otel.ReportError(span, err)
 	}
 
 	secret := make([]byte, AuthorizationCodeSize)

@@ -3,8 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"fmt"
-	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 
@@ -58,21 +56,13 @@ func (service *ClaimsGet) Exec(ctx context.Context, request *ClaimsGetRequest) (
 		attribute.String("session.id", claims.Session()),
 	)
 
-	if claims.SessionExp != 0 && time.Now().Unix() >= claims.SessionExp {
-		return nil, otel.ReportError(span, fmt.Errorf("session ended: %w", ErrClaimsGetRevoked))
-	}
-
-	revocationRequest := &dao.RefreshTokenRevocationExistRequest{
-		JTIs: []string{claims.RefreshTokenID, claims.Session()},
-	}
-
-	revoked, err := service.dao.Exec(ctx, revocationRequest)
+	err = checkSessionLasts(ctx, service.dao, sessionLastsOpts{
+		jtis:   []string{claims.RefreshTokenID, claims.Session()},
+		endsAt: claims.SessionExp,
+		ended:  ErrClaimsGetRevoked,
+	})
 	if err != nil {
-		return nil, otel.ReportError(span, fmt.Errorf("check session revocation: %w", err))
-	}
-
-	if revoked {
-		return nil, otel.ReportError(span, ErrClaimsGetRevoked)
+		return nil, otel.ReportError(span, err)
 	}
 
 	return claims, nil

@@ -35,7 +35,7 @@ type CredentialsUpdateEmailServiceShortCodeVerify interface {
 
 // CredentialsUpdateEmailServiceShortCodeConsume retires the verified short code.
 type CredentialsUpdateEmailServiceShortCodeConsume interface {
-	Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error)
+	Exec(ctx context.Context, request *ShortCodeConsumeRequest) error
 }
 
 // CredentialsUpdateEmailMailDelivery reserves bounded capacity for the notice to the former address.
@@ -132,7 +132,7 @@ func (service *CredentialsUpdateEmail) Exec(
 			return fmt.Errorf("select credentials: %w", err)
 		}
 
-		_, err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
+		err = service.serviceShortCodeConsume.Exec(ctx, &ShortCodeConsumeRequest{ID: shortCode.ID})
 		if err != nil {
 			return fmt.Errorf("consume short code: %w", err)
 		}

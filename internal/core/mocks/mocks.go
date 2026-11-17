@@ -1148,31 +1148,20 @@ func (_m *MockCredentialsCreateServiceShortCodeConsume) EXPECT() *MockCredential
 }
 
 // Exec provides a mock function for the type MockCredentialsCreateServiceShortCodeConsume
-func (_mock *MockCredentialsCreateServiceShortCodeConsume) Exec(ctx context.Context, request *core.ShortCodeConsumeRequest) (*core.ShortCode, error) {
+func (_mock *MockCredentialsCreateServiceShortCodeConsume) Exec(ctx context.Context, request *core.ShortCodeConsumeRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.ShortCode
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) (*core.ShortCode, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) *core.ShortCode); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.ShortCode)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.ShortCodeConsumeRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockCredentialsCreateServiceShortCodeConsume_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -1205,12 +1194,12 @@ func (_c *MockCredentialsCreateServiceShortCodeConsume_Exec_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockCredentialsCreateServiceShortCodeConsume_Exec_Call) Return(shortCode *core.ShortCode, err error) *MockCredentialsCreateServiceShortCodeConsume_Exec_Call {
-	_c.Call.Return(shortCode, err)
+func (_c *MockCredentialsCreateServiceShortCodeConsume_Exec_Call) Return(err error) *MockCredentialsCreateServiceShortCodeConsume_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockCredentialsCreateServiceShortCodeConsume_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeConsumeRequest) (*core.ShortCode, error)) *MockCredentialsCreateServiceShortCodeConsume_Exec_Call {
+func (_c *MockCredentialsCreateServiceShortCodeConsume_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeConsumeRequest) error) *MockCredentialsCreateServiceShortCodeConsume_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2201,31 +2190,20 @@ func (_m *MockCredentialsReconcileRoleServiceRegister) EXPECT() *MockCredentials
 }
 
 // Exec provides a mock function for the type MockCredentialsReconcileRoleServiceRegister
-func (_mock *MockCredentialsReconcileRoleServiceRegister) Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error) {
+func (_mock *MockCredentialsReconcileRoleServiceRegister) Exec(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.ShortCode
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateRegisterRequest) *core.ShortCode); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeCreateRegisterRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.ShortCode)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.ShortCodeCreateRegisterRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockCredentialsReconcileRoleServiceRegister_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -2258,12 +2236,12 @@ func (_c *MockCredentialsReconcileRoleServiceRegister_Exec_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockCredentialsReconcileRoleServiceRegister_Exec_Call) Return(shortCode *core.ShortCode, err error) *MockCredentialsReconcileRoleServiceRegister_Exec_Call {
-	_c.Call.Return(shortCode, err)
+func (_c *MockCredentialsReconcileRoleServiceRegister_Exec_Call) Return(err error) *MockCredentialsReconcileRoleServiceRegister_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockCredentialsReconcileRoleServiceRegister_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) (*core.ShortCode, error)) *MockCredentialsReconcileRoleServiceRegister_Exec_Call {
+func (_c *MockCredentialsReconcileRoleServiceRegister_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeCreateRegisterRequest) error) *MockCredentialsReconcileRoleServiceRegister_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2617,31 +2595,20 @@ func (_m *MockCredentialsUpdateEmailServiceShortCodeConsume) EXPECT() *MockCrede
 }
 
 // Exec provides a mock function for the type MockCredentialsUpdateEmailServiceShortCodeConsume
-func (_mock *MockCredentialsUpdateEmailServiceShortCodeConsume) Exec(ctx context.Context, request *core.ShortCodeConsumeRequest) (*core.ShortCode, error) {
+func (_mock *MockCredentialsUpdateEmailServiceShortCodeConsume) Exec(ctx context.Context, request *core.ShortCodeConsumeRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.ShortCode
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) (*core.ShortCode, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) *core.ShortCode); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.ShortCode)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.ShortCodeConsumeRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -2674,12 +2641,12 @@ func (_c *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call) Run(run f
 	return _c
 }
 
-func (_c *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call) Return(shortCode *core.ShortCode, err error) *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call {
-	_c.Call.Return(shortCode, err)
+func (_c *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call) Return(err error) *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeConsumeRequest) (*core.ShortCode, error)) *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call {
+func (_c *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeConsumeRequest) error) *MockCredentialsUpdateEmailServiceShortCodeConsume_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3328,31 +3295,20 @@ func (_m *MockCredentialsUpdatePasswordServiceShortCodeConsume) EXPECT() *MockCr
 }
 
 // Exec provides a mock function for the type MockCredentialsUpdatePasswordServiceShortCodeConsume
-func (_mock *MockCredentialsUpdatePasswordServiceShortCodeConsume) Exec(ctx context.Context, request *core.ShortCodeConsumeRequest) (*core.ShortCode, error) {
+func (_mock *MockCredentialsUpdatePasswordServiceShortCodeConsume) Exec(ctx context.Context, request *core.ShortCodeConsumeRequest) error {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *core.ShortCode
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) (*core.ShortCode, error)); ok {
-		return returnFunc(ctx, request)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) *core.ShortCode); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *core.ShortCodeConsumeRequest) error); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*core.ShortCode)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *core.ShortCodeConsumeRequest) error); ok {
-		r1 = returnFunc(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
@@ -3385,12 +3341,12 @@ func (_c *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call) Run(ru
 	return _c
 }
 
-func (_c *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call) Return(shortCode *core.ShortCode, err error) *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call {
-	_c.Call.Return(shortCode, err)
+func (_c *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call) Return(err error) *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeConsumeRequest) (*core.ShortCode, error)) *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call {
+func (_c *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call) RunAndReturn(run func(ctx context.Context, request *core.ShortCodeConsumeRequest) error) *MockCredentialsUpdatePasswordServiceShortCodeConsume_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -5523,17 +5479,17 @@ func (_c *MockShortCodeCreateEmailUpdateServiceShortCodeCreate_Exec_Call) RunAnd
 	return _c
 }
 
-// NewMockShortCodeCreateEmailUpdateDaoSelectByEmail creates a new instance of MockShortCodeCreateEmailUpdateDaoSelectByEmail. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// NewMockShortCodeCreateEmailUpdateDaoCredentialsExist creates a new instance of MockShortCodeCreateEmailUpdateDaoCredentialsExist. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
-func NewMockShortCodeCreateEmailUpdateDaoSelectByEmail(t interface {
+func NewMockShortCodeCreateEmailUpdateDaoCredentialsExist(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockShortCodeCreateEmailUpdateDaoSelectByEmail {
+}) *MockShortCodeCreateEmailUpdateDaoCredentialsExist {
 	if helper, ok := t.(interface{ Helper() }); ok {
 		helper.Helper()
 	}
 
-	mock := &MockShortCodeCreateEmailUpdateDaoSelectByEmail{}
+	mock := &MockShortCodeCreateEmailUpdateDaoCredentialsExist{}
 	mock.Mock.Test(t)
 
 	t.Cleanup(func() {
@@ -5546,40 +5502,38 @@ func NewMockShortCodeCreateEmailUpdateDaoSelectByEmail(t interface {
 	return mock
 }
 
-// MockShortCodeCreateEmailUpdateDaoSelectByEmail is an autogenerated mock type for the ShortCodeCreateEmailUpdateDaoSelectByEmail type
-type MockShortCodeCreateEmailUpdateDaoSelectByEmail struct {
+// MockShortCodeCreateEmailUpdateDaoCredentialsExist is an autogenerated mock type for the ShortCodeCreateEmailUpdateDaoCredentialsExist type
+type MockShortCodeCreateEmailUpdateDaoCredentialsExist struct {
 	mock.Mock
 }
 
-type MockShortCodeCreateEmailUpdateDaoSelectByEmail_Expecter struct {
+type MockShortCodeCreateEmailUpdateDaoCredentialsExist_Expecter struct {
 	mock *mock.Mock
 }
 
-func (_m *MockShortCodeCreateEmailUpdateDaoSelectByEmail) EXPECT() *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Expecter {
-	return &MockShortCodeCreateEmailUpdateDaoSelectByEmail_Expecter{mock: &_m.Mock}
+func (_m *MockShortCodeCreateEmailUpdateDaoCredentialsExist) EXPECT() *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Expecter {
+	return &MockShortCodeCreateEmailUpdateDaoCredentialsExist_Expecter{mock: &_m.Mock}
 }
 
-// Exec provides a mock function for the type MockShortCodeCreateEmailUpdateDaoSelectByEmail
-func (_mock *MockShortCodeCreateEmailUpdateDaoSelectByEmail) Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error) {
+// Exec provides a mock function for the type MockShortCodeCreateEmailUpdateDaoCredentialsExist
+func (_mock *MockShortCodeCreateEmailUpdateDaoCredentialsExist) Exec(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *dao.Credentials
+	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.CredentialsExistRequest) (bool, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.CredentialsSelectByEmailRequest) *dao.Credentials); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.CredentialsExistRequest) bool); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dao.Credentials)
-		}
+		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dao.CredentialsSelectByEmailRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *dao.CredentialsExistRequest) error); ok {
 		r1 = returnFunc(ctx, request)
 	} else {
 		r1 = ret.Error(1)
@@ -5587,27 +5541,27 @@ func (_mock *MockShortCodeCreateEmailUpdateDaoSelectByEmail) Exec(ctx context.Co
 	return r0, r1
 }
 
-// MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
-type MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call struct {
+// MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
+type MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call struct {
 	*mock.Call
 }
 
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
-//   - request *dao.CredentialsSelectByEmailRequest
-func (_e *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Expecter) Exec(ctx any, request any) *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call {
-	return &MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
+//   - request *dao.CredentialsExistRequest
+func (_e *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Expecter) Exec(ctx any, request any) *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call {
+	return &MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
-func (_c *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call) Run(run func(ctx context.Context, request *dao.CredentialsSelectByEmailRequest)) *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call {
+func (_c *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call) Run(run func(ctx context.Context, request *dao.CredentialsExistRequest)) *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dao.CredentialsSelectByEmailRequest
+		var arg1 *dao.CredentialsExistRequest
 		if args[1] != nil {
-			arg1 = args[1].(*dao.CredentialsSelectByEmailRequest)
+			arg1 = args[1].(*dao.CredentialsExistRequest)
 		}
 		run(
 			arg0,
@@ -5617,12 +5571,12 @@ func (_c *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call) Run(run func
 	return _c
 }
 
-func (_c *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call) Return(credentials *dao.Credentials, err error) *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call {
-	_c.Call.Return(credentials, err)
+func (_c *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call) Return(b bool, err error) *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call {
+	_c.Call.Return(b, err)
 	return _c
 }
 
-func (_c *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)) *MockShortCodeCreateEmailUpdateDaoSelectByEmail_Exec_Call {
+func (_c *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error)) *MockShortCodeCreateEmailUpdateDaoCredentialsExist_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -6239,17 +6193,17 @@ func (_c *MockShortCodeCreateRegisterServiceShortCodeCreate_Exec_Call) RunAndRet
 	return _c
 }
 
-// NewMockShortCodeCreateRegisterDaoSelectByEmail creates a new instance of MockShortCodeCreateRegisterDaoSelectByEmail. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// NewMockShortCodeCreateRegisterDaoCredentialsExist creates a new instance of MockShortCodeCreateRegisterDaoCredentialsExist. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
-func NewMockShortCodeCreateRegisterDaoSelectByEmail(t interface {
+func NewMockShortCodeCreateRegisterDaoCredentialsExist(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockShortCodeCreateRegisterDaoSelectByEmail {
+}) *MockShortCodeCreateRegisterDaoCredentialsExist {
 	if helper, ok := t.(interface{ Helper() }); ok {
 		helper.Helper()
 	}
 
-	mock := &MockShortCodeCreateRegisterDaoSelectByEmail{}
+	mock := &MockShortCodeCreateRegisterDaoCredentialsExist{}
 	mock.Mock.Test(t)
 
 	t.Cleanup(func() {
@@ -6262,40 +6216,38 @@ func NewMockShortCodeCreateRegisterDaoSelectByEmail(t interface {
 	return mock
 }
 
-// MockShortCodeCreateRegisterDaoSelectByEmail is an autogenerated mock type for the ShortCodeCreateRegisterDaoSelectByEmail type
-type MockShortCodeCreateRegisterDaoSelectByEmail struct {
+// MockShortCodeCreateRegisterDaoCredentialsExist is an autogenerated mock type for the ShortCodeCreateRegisterDaoCredentialsExist type
+type MockShortCodeCreateRegisterDaoCredentialsExist struct {
 	mock.Mock
 }
 
-type MockShortCodeCreateRegisterDaoSelectByEmail_Expecter struct {
+type MockShortCodeCreateRegisterDaoCredentialsExist_Expecter struct {
 	mock *mock.Mock
 }
 
-func (_m *MockShortCodeCreateRegisterDaoSelectByEmail) EXPECT() *MockShortCodeCreateRegisterDaoSelectByEmail_Expecter {
-	return &MockShortCodeCreateRegisterDaoSelectByEmail_Expecter{mock: &_m.Mock}
+func (_m *MockShortCodeCreateRegisterDaoCredentialsExist) EXPECT() *MockShortCodeCreateRegisterDaoCredentialsExist_Expecter {
+	return &MockShortCodeCreateRegisterDaoCredentialsExist_Expecter{mock: &_m.Mock}
 }
 
-// Exec provides a mock function for the type MockShortCodeCreateRegisterDaoSelectByEmail
-func (_mock *MockShortCodeCreateRegisterDaoSelectByEmail) Exec(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error) {
+// Exec provides a mock function for the type MockShortCodeCreateRegisterDaoCredentialsExist
+func (_mock *MockShortCodeCreateRegisterDaoCredentialsExist) Exec(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error) {
 	ret := _mock.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exec")
 	}
 
-	var r0 *dao.Credentials
+	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.CredentialsExistRequest) (bool, error)); ok {
 		return returnFunc(ctx, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.CredentialsSelectByEmailRequest) *dao.Credentials); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dao.CredentialsExistRequest) bool); ok {
 		r0 = returnFunc(ctx, request)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dao.Credentials)
-		}
+		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dao.CredentialsSelectByEmailRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *dao.CredentialsExistRequest) error); ok {
 		r1 = returnFunc(ctx, request)
 	} else {
 		r1 = ret.Error(1)
@@ -6303,27 +6255,27 @@ func (_mock *MockShortCodeCreateRegisterDaoSelectByEmail) Exec(ctx context.Conte
 	return r0, r1
 }
 
-// MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
-type MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call struct {
+// MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exec'
+type MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call struct {
 	*mock.Call
 }
 
 // Exec is a helper method to define mock.On call
 //   - ctx context.Context
-//   - request *dao.CredentialsSelectByEmailRequest
-func (_e *MockShortCodeCreateRegisterDaoSelectByEmail_Expecter) Exec(ctx any, request any) *MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call {
-	return &MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
+//   - request *dao.CredentialsExistRequest
+func (_e *MockShortCodeCreateRegisterDaoCredentialsExist_Expecter) Exec(ctx any, request any) *MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call {
+	return &MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call{Call: _e.mock.On("Exec", ctx, request)}
 }
 
-func (_c *MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call) Run(run func(ctx context.Context, request *dao.CredentialsSelectByEmailRequest)) *MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call {
+func (_c *MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call) Run(run func(ctx context.Context, request *dao.CredentialsExistRequest)) *MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dao.CredentialsSelectByEmailRequest
+		var arg1 *dao.CredentialsExistRequest
 		if args[1] != nil {
-			arg1 = args[1].(*dao.CredentialsSelectByEmailRequest)
+			arg1 = args[1].(*dao.CredentialsExistRequest)
 		}
 		run(
 			arg0,
@@ -6333,12 +6285,12 @@ func (_c *MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call) Return(credentials *dao.Credentials, err error) *MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call {
-	_c.Call.Return(credentials, err)
+func (_c *MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call) Return(b bool, err error) *MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call {
+	_c.Call.Return(b, err)
 	return _c
 }
 
-func (_c *MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.CredentialsSelectByEmailRequest) (*dao.Credentials, error)) *MockShortCodeCreateRegisterDaoSelectByEmail_Exec_Call {
+func (_c *MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call) RunAndReturn(run func(ctx context.Context, request *dao.CredentialsExistRequest) (bool, error)) *MockShortCodeCreateRegisterDaoCredentialsExist_Exec_Call {
 	_c.Call.Return(run)
 	return _c
 }

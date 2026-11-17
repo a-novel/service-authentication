@@ -33,8 +33,9 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		err  error
 	}
 
-	type daoSelectMock struct {
-		err error
+	type daoExistMock struct {
+		exists bool
+		err    error
 	}
 
 	testCases := []struct {
@@ -43,7 +44,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 		request *core.ShortCodeCreateRegisterRequest
 
 		serviceCreateMock *serviceCreateMock
-		daoSelectMock     *daoSelectMock
+		daoExistMock      *daoExistMock
 		sendMail          bool
 		sendMailPanic     bool
 		closeMailDelivery bool
@@ -59,9 +60,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				Role:  authconfig.RoleUser,
 			},
 
-			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsNotFound,
-			},
+			daoExistMock: &daoExistMock{},
 
 			serviceCreateMock: &serviceCreateMock{
 				resp: &core.ShortCode{
@@ -86,9 +85,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				Role:  authconfig.RoleUser,
 			},
 
-			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsNotFound,
-			},
+			daoExistMock: &daoExistMock{},
 
 			serviceCreateMock: &serviceCreateMock{
 				resp: &core.ShortCode{
@@ -114,9 +111,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				Role:  authconfig.RoleUser,
 			},
 
-			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsNotFound,
-			},
+			daoExistMock: &daoExistMock{},
 
 			closeMailDelivery: true,
 			expectErr:         core.ErrMailDeliveryUnavailable,
@@ -130,9 +125,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				Role:  authconfig.RoleUser,
 			},
 
-			daoSelectMock: &daoSelectMock{
-				err: dao.ErrCredentialsNotFound,
-			},
+			daoExistMock: &daoExistMock{},
 
 			serviceCreateMock: &serviceCreateMock{
 				err: errFoo,
@@ -149,11 +142,9 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				Role:  authconfig.RoleUser,
 			},
 
-			daoSelectMock: &daoSelectMock{
-				err: nil,
-			},
+			daoExistMock: &daoExistMock{exists: true},
 
-			expectErr: dao.ErrCredentialsAlreadyExists,
+			expectErr: core.ErrCredentialsAlreadyExists,
 		},
 		{
 			name: "Error/Dao",
@@ -164,9 +155,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				Role:  authconfig.RoleUser,
 			},
 
-			daoSelectMock: &daoSelectMock{
-				err: errFoo,
-			},
+			daoExistMock: &daoExistMock{err: errFoo},
 
 			expectErr: errFoo,
 		},
@@ -177,7 +166,7 @@ func TestShortCodeCreateRegister(t *testing.T) {
 			t.Parallel()
 
 			serviceCreate := coremocks.NewMockShortCodeCreateRegisterServiceShortCodeCreate(t)
-			daoSelect := coremocks.NewMockShortCodeCreateRegisterDaoSelectByEmail(t)
+			daoExist := coremocks.NewMockShortCodeCreateRegisterDaoCredentialsExist(t)
 			smtpService := coremocks.NewMockMailDeliverySMTP(t)
 
 			mailDelivery := core.NewMailDelivery(smtpService, 1)
@@ -194,18 +183,17 @@ func TestShortCodeCreateRegister(t *testing.T) {
 							request.Usage == core.ShortCodeUsageRegister &&
 							request.Target == testCase.request.Email &&
 							request.TTL == authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL &&
-							request.Override &&
 							string(data) == `{"role":"`+testCase.request.Role+`"}`
 					})).
 					Return(testCase.serviceCreateMock.resp, testCase.serviceCreateMock.err)
 			}
 
 			if testCase.sendMail {
-				mailData := map[string]any{
-					"ShortCode": testCase.serviceCreateMock.resp.PlainCode,
-					"Target":    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
-					"URL":       smtpConfig.Register,
-					"Duration":  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL.Hours(),
+				mailData := mails.Link{
+					ShortCode: testCase.serviceCreateMock.resp.PlainCode,
+					Target:    base64.RawURLEncoding.EncodeToString([]byte(testCase.request.Email)),
+					URL:       smtpConfig.Register,
+					Duration:  authconfig.ShortCodesPresetDefault.Usages[core.ShortCodeUsageRegister].TTL.Hours(),
 				}
 
 				sendMail := smtpService.EXPECT().
@@ -225,24 +213,18 @@ func TestShortCodeCreateRegister(t *testing.T) {
 				}
 			}
 
-			if testCase.daoSelectMock != nil {
-				daoSelect.EXPECT().
-					Exec(mock.Anything, &dao.CredentialsSelectByEmailRequest{
-						Email: testCase.request.Email,
-					}).
-					Return(nil, testCase.daoSelectMock.err)
+			if testCase.daoExistMock != nil {
+				daoExist.EXPECT().
+					Exec(mock.Anything, &dao.CredentialsExistRequest{Email: testCase.request.Email}).
+					Return(testCase.daoExistMock.exists, testCase.daoExistMock.err)
 			}
 
 			service := core.NewShortCodeCreateRegister(
-				serviceCreate, daoSelect, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
+				serviceCreate, daoExist, mailDelivery, authconfig.ShortCodesPresetDefault, smtpConfig,
 			)
 
-			resp, err := service.Exec(t.Context(), testCase.request)
+			err := service.Exec(t.Context(), testCase.request)
 			require.ErrorIs(t, err, testCase.expectErr)
-
-			if err == nil {
-				require.Equal(t, testCase.serviceCreateMock.resp, resp)
-			}
 
 			waitForMailDelivery(t, mailDelivery)
 		})

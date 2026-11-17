@@ -36,10 +36,10 @@ func NewShortCodeConsume(dao ShortCodeConsumeDao) *ShortCodeConsume {
 	return &ShortCodeConsume{dao: dao}
 }
 
-// Exec retires the code and returns it. It returns [ErrShortCodeConsumeInvalid]
+// Exec retires the code. It returns [ErrShortCodeInvalid]
 // when the code was retired or expired since it was verified, so only one of
 // two concurrent redemptions succeeds.
-func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeConsumeRequest) (*ShortCode, error) {
+func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeConsumeRequest) error {
 	ctx, span := otel.Tracer().Start(ctx, "core.ShortCodeConsume")
 	defer span.End()
 
@@ -51,14 +51,14 @@ func (service *ShortCodeConsume) Exec(ctx context.Context, request *ShortCodeCon
 		Comment: dao.ShortCodeDeleteConsumed,
 	}
 
-	entity, err := service.dao.Exec(ctx, daoRequest)
+	_, err := service.dao.Exec(ctx, daoRequest)
 	if err != nil {
 		if errors.Is(err, dao.ErrShortCodeNotFound) {
-			err = errors.Join(err, ErrShortCodeConsumeInvalid)
+			err = errors.Join(err, ErrShortCodeInvalid)
 		}
 
-		return nil, otel.ReportError(span, err)
+		return otel.ReportError(span, err)
 	}
 
-	return newShortCode(entity, ""), nil
+	return nil
 }

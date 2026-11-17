@@ -29,7 +29,7 @@ func TestTokenCreate(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	passwordRaw := "password"
-	passwordArgon2ed, err := lib.GenerateArgon2(passwordRaw, lib.Argon2ParamsDefault)
+	passwordArgon2ed, err := lib.GenerateArgon2(passwordRaw)
 	require.NoError(t, err)
 
 	type daoMock struct {

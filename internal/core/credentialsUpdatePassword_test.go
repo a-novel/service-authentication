@@ -27,7 +27,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 	errFoo := errors.New("foo")
 
 	passwordRaw := "password"
-	passwordArgon2ed, err := lib.GenerateArgon2(passwordRaw, lib.Argon2ParamsDefault)
+	passwordArgon2ed, err := lib.GenerateArgon2(passwordRaw)
 	require.NoError(t, err)
 
 	shortCodeID := uuid.MustParse("00000000-0000-0000-0000-000000000010")
@@ -149,10 +149,10 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				resp: &core.ShortCode{ID: shortCodeID},
 			},
 			serviceShortCodeConsumeMock: &serviceShortCodeConsumeMock{
-				err: core.ErrShortCodeConsumeInvalid,
+				err: core.ErrShortCodeInvalid,
 			},
 
-			expectErr: core.ErrShortCodeConsumeInvalid,
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			name: "Error/SelectCredentials",
@@ -253,7 +253,7 @@ func TestCredentialsUpdatePassword(t *testing.T) {
 				if testCase.serviceShortCodeConsumeMock != nil {
 					serviceShortCodeConsume.EXPECT().
 						Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCodeID}).
-						Return(&core.ShortCode{ID: shortCodeID}, testCase.serviceShortCodeConsumeMock.err)
+						Return(testCase.serviceShortCodeConsumeMock.err)
 				}
 
 				if testCase.daoCredentialsSelectMock != nil {
@@ -303,7 +303,7 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 	userID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	shortCode := &core.ShortCode{ID: uuid.MustParse("00000000-0000-0000-0000-000000000010")}
 
-	currentPassword, err := lib.GenerateArgon2("password", lib.Argon2ParamsDefault)
+	currentPassword, err := lib.GenerateArgon2("password")
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -337,9 +337,9 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 				UserID: userID, Password: "new-password", ShortCode: "short-code",
 			},
 
-			verifyErr: core.ErrShortCodeConsumeInvalid,
+			verifyErr: core.ErrShortCodeInvalid,
 
-			expectErr: core.ErrShortCodeConsumeInvalid,
+			expectErr: core.ErrShortCodeInvalid,
 		},
 		{
 			// Checking the current password hashes too, so the case stops at the lookup before it.
@@ -394,7 +394,7 @@ func TestCredentialsUpdatePasswordHashing(t *testing.T) {
 
 				if testCase.request.ShortCode != "" {
 					consume.EXPECT().Exec(mock.Anything, &core.ShortCodeConsumeRequest{ID: shortCode.ID}).
-						Return(shortCode, nil).Once()
+						Return(nil).Once()
 				}
 			}
 
