@@ -17,5 +17,7 @@ func main() {
 	ctx := context.Background()
 
 	db := lo.Must(config.PostgresPresetMigrations.DB(ctx))
+	defer config.PostgresPresetMigrations.Close()
+
 	lo.Must0(postgres.RunMigrations(ctx, db, migrations.Migrations))
 }

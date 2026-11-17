@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -204,7 +203,7 @@ func TestRestHealthTelemetry(t *testing.T) {
 	jsonKeysClient.EXPECT().Status(mock.Anything, &servicejsonkeys.StatusRequest{}).
 		Return(&servicejsonkeys.StatusResponse{}, nil).Once()
 
-	handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, &loggingpresets.LogLocal{Out: io.Discard})
+	handler := handlers.NewRestHealth(jsonKeysClient, smtpClient, configtest.Logger)
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v2/healthcheck", nil)
 	handler.ServeHTTP(httptest.NewRecorder(), request)
 

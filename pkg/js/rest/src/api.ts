@@ -1,6 +1,6 @@
 import { type HealthDependency, RestClient } from "@a-novel-kit/nodelib-browser/http";
 
-export type { HealthDependency };
+export type { HealthDependency } from "@a-novel-kit/nodelib-browser/http";
 
 /**
  * HTTP client for the authentication REST API.
