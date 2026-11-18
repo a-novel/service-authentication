@@ -2,8 +2,8 @@ github.com/a-novel-kit/golib v0.66.1 h1:5b4ZTVucmAPkxICPZByMEDPQkATlzFXS68/fRjs/
 github.com/a-novel-kit/golib v0.66.1/go.mod h1:9HfOVU3v4X1ah51UWMTSN+LOajgyLRk044N+SBn5ph4=
 github.com/a-novel-kit/jwt/v2 v2.6.1 h1:8iQ8ZcvU4L2CKReYeCX8ctK9ABgYEvAOycrggKgl4cM=
 github.com/a-novel-kit/jwt/v2 v2.6.1/go.mod h1:pkDVhDrwshhk8U2FJiZciPHVh8zq5WYDJCMBKOmd1PQ=
-github.com/a-novel/service-json-keys/v2 v2.16.0 h1:86dYnK4OZhjWE9XziG2u+QSoqwQi1lOG02t2009/VOQ=
-github.com/a-novel/service-json-keys/v2 v2.16.0/go.mod h1:qXF7mhvE6510d6Sk2v94D1wIICgtt+gtj9ptAlpNT9s=
+github.com/a-novel/service-json-keys/v2 v2.17.0 h1:GzVsQFh5Y7BPNKwHh+T8OJ1YzJEeaghqczTn41Vyz5c=
+github.com/a-novel/service-json-keys/v2 v2.17.0/go.mod h1:hkMBwyyIG7+pS1jBd5HccjDI4b6mf9V9grTdcvUVdxc=
 github.com/alicebob/miniredis/v2 v2.40.0 h1:6IgTQbvm2JiMYZ8yur/acNJzVjtSOWCelxXbk/LUBXc=
 github.com/alicebob/miniredis/v2 v2.40.0/go.mod h1:TcL7YfarKPGDAthEtl5NBeHZfeUQj6OXMm/+iu5cLMM=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
