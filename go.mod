@@ -4,7 +4,7 @@ go 1.27.4
 
 require (
 	github.com/a-novel-kit/golib v0.66.1
-	github.com/a-novel-kit/jwt/v2 v2.6.1
+	github.com/a-novel-kit/jwt/v2 v2.7.0
 	github.com/a-novel/service-json-keys/v2 v2.17.0
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-playground/validator/v10 v10.30.6
