@@ -1,3 +1,3 @@
-export * from "./mail";
-export * from "./register";
-export * from "./token";
+export * from "./mail.js";
+export * from "./register.js";
+export * from "./token.js";

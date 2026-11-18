@@ -1,5 +1,5 @@
-import { checkEmail, mailLinks } from "./mail";
-import { anonymousAccessToken, superAdminAccessToken, superAdminCredentials } from "./token";
+import { checkEmail, mailLinks } from "./mail.js";
+import { anonymousAccessToken, superAdminAccessToken, superAdminCredentials } from "./token.js";
 
 import { randomBytes } from "node:crypto";
 
