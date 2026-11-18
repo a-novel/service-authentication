@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       line:
-        description: 'X.Y line to patch (e.g. "1.4") — its release line branches from the latest vX.Y.* tag'
+        description: 'X.Y line to patch, such as "1.4"; its release line branches from the latest vX.Y.* tag'
         required: true
         type: string
       fix_refs:
@@ -64,7 +64,6 @@ jobs:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       release_client_id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
       dependency_client_id: ${{ vars.DEPENDENCY_BOT_CLIENT_ID }}
-      project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
       mention: ${{ vars.SEV1_MENTION }}
     secrets:
       app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}
@@ -91,7 +90,6 @@ jobs:
       branch: ${{ github.event.pull_request.base.ref }}
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       release_client_id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
-      project_id: ${{ github.repository_owner == 'a-novel' && 'PVT_kwDOB9MxdM4BMh8r' || 'PVT_kwDOCy-nAM4BbtKH' }}
       mention: ${{ vars.SEV1_MENTION }}
     secrets:
       app_private_key: ${{ secrets.AGENT_BOT_PRIVATE_KEY }}

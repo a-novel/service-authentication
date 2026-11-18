@@ -10,6 +10,12 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   merge_group:
 
+# A newer push to a pull request cancels its older run, freeing the shared runners. Each label
+# event, which GitHub can admit out of order, and every non-PR run gets a group of its own.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}${{ endsWith(github.event.action, 'labeled') && format('-{0}', github.run_id) || '' }}
+  cancel-in-progress: true
+
 jobs:
   check-migration-snapshots:
     if: github.event_name == 'pull_request'
@@ -57,7 +63,7 @@ jobs:
         uses: $/.github/actions/start-ci-services
         with:
           services: postgres
-          database_image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
+          database_image: ghcr.io/${{ github.repository }}/database@${{ needs.build-database.outputs.digest }}
           registry_login: "true"
       - uses: a-novel-kit/workflows/go-actions/generate-go@v1.87.1
 
@@ -101,14 +107,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.87.1
         with:
-          # renovate: datasource=custom.shellcheck depName=koalaman/shellcheck
-          version: "0.11.0"
-          sha256: "8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198"
           run_steps: .github/actions/*/action.yml .github/workflows/*.yaml
 
   lint-dockerfile:
@@ -116,14 +116,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.87.1
-        with:
-          # renovate: datasource=custom.hadolint depName=hadolint/hadolint
-          version: "2.15.1"
-          sha256: "c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507"
 
   # Structural conventions golangci-lint cannot express.
   lint-semgrep:
@@ -131,41 +124,25 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/lint-semgrep@v1.87.1
         with:
           ruleset: service
-          # renovate: datasource=docker depName=semgrep/semgrep
-          version: "1.186.0@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1"
 
   scan-secrets:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.87.1
         with:
-          config: .gitleaks.toml
-          # renovate: datasource=github-releases depName=gitleaks/gitleaks
-          version: "8.30.1"
+          extra_config: .gitleaks.toml
 
   lint-workflows:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.87.1
-        with:
-          # renovate: datasource=docker depName=ghcr.io/zizmorcore/zizmor
-          version: "1.32.0@sha256:3014cc8f68f663935f69b3c3e0e41f5ce102b268d97db13db0f62208747f860d"
 
   test-go:
     needs: [build-database]
@@ -173,8 +150,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-    outputs:
-      artifact-id: ${{ steps.test.outputs.artifact-id }}
     env:
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
@@ -191,7 +166,7 @@ jobs:
       - uses: $/.github/actions/start-ci-services
         with:
           services: postgres valkey
-          database_image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
+          database_image: ghcr.io/${{ github.repository }}/database@${{ needs.build-database.outputs.digest }}
           registry_login: "true"
       - uses: $/.github/actions/run-migrations
       # Exercises the real command wiring. The second run finds the matching active registration
@@ -202,7 +177,6 @@ jobs:
           go run ./cmd/maintenance account-role --email noreply@agorastoryverse.com --role auth:superadmin --lang en
           go run ./cmd/maintenance account-role --email noreply@agorastoryverse.com --role auth:superadmin --lang en
       - uses: a-novel-kit/workflows/go-actions/test-go@v1.87.1
-        id: test
         with:
           include: /internal|/cmd
           skip_setup: true
@@ -218,11 +192,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      artifact-id: ${{ steps.test.outputs.artifact-id }}
     steps:
       - uses: a-novel-kit/workflows/go-actions/test-go@v1.87.1
-        id: test
         with:
           include: /pkg
           test_artifact: gotestpkg
@@ -237,8 +208,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-    outputs:
-      artifact-id: ${{ steps.test.outputs.artifact-id }}
     env:
       REST_URL: http://0.0.0.0:4000
       SUPER_ADMIN_EMAIL: noreply@agorastoryverse.com
@@ -252,11 +221,10 @@ jobs:
       - uses: $/.github/actions/start-ci-services
         with:
           services: standalone-rest
-          database_image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
-          standalone_rest_image: ghcr.io/a-novel/service-authentication/standalone-rest@${{ needs.build-standalone-rest.outputs.digest }}
+          database_image: ghcr.io/${{ github.repository }}/database@${{ needs.build-database.outputs.digest }}
+          standalone_rest_image: ghcr.io/${{ github.repository }}/standalone-rest@${{ needs.build-standalone-rest.outputs.digest }}
           registry_login: "true"
       - uses: a-novel-kit/workflows/node-actions/test-node@v1.87.1
-        id: test
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           coverage_artifact: jscover
@@ -281,39 +249,13 @@ jobs:
           run_args: -e POSTGRES_PASSWORD=postgres
 
   # Infra tells a real database change from a version bump by digest alone, so the image must
-  # rebuild to the same digest. The two builds run at once, each on its own fresh builder, so both
-  # start cold, as a release does.
+  # rebuild to the same digest.
   test-reproducible-database:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Build the database image twice
-        shell: bash
-        env:
-          SOURCE_DATE_EPOCH: "0"
-        run: |
-          set -euo pipefail
-          build() {
-            docker buildx create --name "$1" --driver docker-container --bootstrap >/dev/null
-            docker buildx build --builder "$1" --provenance=false --file builds/database.Dockerfile \
-              --output "type=oci,dest=$RUNNER_TEMP/$1.tar,rewrite-timestamp=true" \
-              --metadata-file "$RUNNER_TEMP/$1.json" . 2>&1 | sed -u "s/^/[$1] /"
-          }
-          build first &
-          pid=$!
-          build second
-          wait "$pid"
-          first="$(jq -r '."containerimage.digest"' "$RUNNER_TEMP/first.json")"
-          second="$(jq -r '."containerimage.digest"' "$RUNNER_TEMP/second.json")"
-          if [ "$first" != "$second" ]; then
-            echo "::error::The database image rebuilt to $second instead of $first."
-            exit 1
-          fi
-          echo "The database image reproduces as $first." >>"$GITHUB_STEP_SUMMARY"
+      - uses: a-novel-kit/workflows/build-actions/check-reproducible@v1.87.1
 
   build-migrations:
     runs-on: ubuntu-latest
@@ -389,7 +331,7 @@ jobs:
       - uses: $/.github/actions/start-ci-services
         with:
           services: postgres service-json-keys
-          database_image: ghcr.io/a-novel/service-authentication/database@${{ needs.build-database.outputs.digest }}
+          database_image: ghcr.io/${{ github.repository }}/database@${{ needs.build-database.outputs.digest }}
           registry_login: "true"
       - uses: $/.github/actions/run-migrations
       - uses: a-novel-kit/workflows/build-actions/docker@v1.87.1
@@ -465,8 +407,6 @@ jobs:
       - uses: a-novel-kit/workflows/generic-actions/codecov@v1.87.1
         with:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
-          coverage_files: coverage.txt,coverage_pkg.txt,coverage/*
-          coverage_artifact_ids: ${{ needs.test-go.outputs.artifact-id }},${{ needs.test-pkg.outputs.artifact-id }},${{ needs.test-pkg-js.outputs.artifact-id }}
 
   publish-docs:
     runs-on: ubuntu-latest
@@ -482,14 +422,4 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - run: |
-          mkdir _site
-          mv openapi.html _site/index.html
-          mv openapi.yaml _site/openapi.yaml
-      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
-      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-      - id: deployment
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      - uses: a-novel-kit/workflows/github-pages-actions/publish-api-docs@v1.87.1
