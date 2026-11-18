@@ -21,7 +21,6 @@ func TestAppPresetDefault(t *testing.T) {
 		restTimeoutRead          string
 		restRateLimitStrict      string
 		serviceJSONKeysTokenPath string
-		serviceTokenPath         string
 
 		expect    string
 		expectErr string
@@ -36,18 +35,6 @@ func TestAppPresetDefault(t *testing.T) {
 		{
 			name:                     "Success/ServiceToken",
 			serviceJSONKeysTokenPath: "/tokens/json-keys",
-			expect:                   "15s 3/5m0s {Host:localhost Port:8080 TLS:false TokenPath:/tokens/json-keys}",
-		},
-		{
-			// SERVICE_TOKEN_PATH, the deprecated name, applies while the new one is unset.
-			name:             "Success/DeprecatedServiceTokenPath",
-			serviceTokenPath: "/tokens/legacy",
-			expect:           "15s 3/5m0s {Host:localhost Port:8080 TLS:false TokenPath:/tokens/legacy}",
-		},
-		{
-			name:                     "Success/ServiceTokenPathPrecedence",
-			serviceJSONKeysTokenPath: "/tokens/json-keys",
-			serviceTokenPath:         "/tokens/legacy",
 			expect:                   "15s 3/5m0s {Host:localhost Port:8080 TLS:false TokenPath:/tokens/json-keys}",
 		},
 		{
@@ -75,7 +62,6 @@ func TestAppPresetDefault(t *testing.T) {
 				"AUTH_CONFIG_TEST_REST_TIMEOUT_READ="+testCase.restTimeoutRead,
 				"AUTH_CONFIG_TEST_REST_RATE_LIMIT_STRICT="+testCase.restRateLimitStrict,
 				"AUTH_CONFIG_TEST_SERVICE_JSON_KEYS_TOKEN_PATH="+testCase.serviceJSONKeysTokenPath,
-				"AUTH_CONFIG_TEST_SERVICE_TOKEN_PATH="+testCase.serviceTokenPath,
 			)
 
 			output, err := command.CombinedOutput()

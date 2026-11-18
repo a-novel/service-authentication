@@ -105,12 +105,9 @@ var (
 	PlatformAuthRegisterURL = cmp.Or(getEnv("PLATFORM_AUTH_URL_REGISTER"), PlatformAuthURL+PlatformAccountCreateURLDefault)
 
 	// ServiceJSONKeys locates the JSON Keys service through the SERVICE_JSON_KEYS_* variables.
-	// SERVICE_TOKEN_PATH, the deprecated name of SERVICE_JSON_KEYS_TOKEN_PATH, applies while the new
-	// one is unset.
 	ServiceJSONKeys = grpcf.LoadClientConfig(getEnv, "SERVICE_JSON_KEYS", grpcf.ClientConfig{
-		Host:      ServiceJSONKeysHostDefault,
-		Port:      ServiceJSONKeysPortDefault,
-		TokenPath: getEnv("SERVICE_TOKEN_PATH"),
+		Host: ServiceJSONKeysHostDefault,
+		Port: ServiceJSONKeysPortDefault,
 	})
 
 	// SMTPAddr is the SMTP server address, as domain:port.
