@@ -17,7 +17,7 @@ services:
   # The rate-limit counter store, with the ACL production gives the limiter: its commands on
   # httprate's keys, and no default user.
   valkey:
-    image: docker.io/valkey/valkey:9.1.4-alpine
+    image: docker.io/valkey/valkey:9.2.0-alpine
     ports:
       - "${VALKEY_PORT}:6379"
     networks:
