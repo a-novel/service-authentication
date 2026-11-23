@@ -7,8 +7,8 @@ RUN apk add --no-cache curl jq
 # One pinned checksum list verifies the apko release archive of every architecture. GitHub's release
 # downloads answer 5xx now and then, so each download retries; the checksums still decide what is used.
 ARG TARGETARCH
-ARG APKO_VERSION=1.5.2
-ARG APKO_CHECKSUMS_SHA256=b040d9ba5ae8f2169ef576d8a48921069f8c7dff15ea1b025025c6248e68d615
+ARG APKO_VERSION=1.5.3
+ARG APKO_CHECKSUMS_SHA256=8d23c16a75617b00295906f7aaa6f8f2e89a7c36eb3f16b504b1325350e1e274
 WORKDIR /tmp
 RUN archive="apko_${APKO_VERSION}_linux_${TARGETARCH}" \
     && curl -fsSL --retry 5 --retry-all-errors \
