@@ -98,3 +98,15 @@ export async function sessionDelete(
     method: "DELETE",
   });
 }
+
+/**
+ * Removes every logged-out session of the caller from their devices, at once. The active sessions stay listed, and
+ * the removed ones stay signed out. Resolves too when the caller has no logged-out session. Throws a 401 once the
+ * caller's own session is signed out or has ended.
+ */
+export async function sessionDeleteLoggedOut(api: AuthenticationApi, accessToken: string): Promise<void> {
+  return await api.fetchVoid("/v2/sessions/logged-out", {
+    accessToken,
+    method: "DELETE",
+  });
+}
