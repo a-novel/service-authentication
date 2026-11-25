@@ -9,6 +9,7 @@ import {
   credentialsGetSelf,
   credentialsUpdateLocationConsent,
   sessionDelete,
+  sessionDeleteLoggedOut,
   sessionList,
   sessionRevoke,
   sessionRevokeOthers,
@@ -167,6 +168,55 @@ describe("sessionDelete", () => {
   });
 });
 
+describe("sessionDeleteLoggedOut", () => {
+  it("removes every logged-out device, which stay signed out, and keeps the active ones", async () => {
+    const { api, user, first, second } = await userWithTwoSessions();
+    const third = await tokenCreate(api, { email: user.email, password: user.password });
+    const fourth = await tokenCreate(api, { email: user.email, password: user.password });
+
+    const firstClaims = await claimsGet(api, first.accessToken);
+    const secondClaims = await claimsGet(api, second.accessToken);
+    const thirdClaims = await claimsGet(api, third.accessToken);
+    const fourthClaims = await claimsGet(api, fourth.accessToken);
+
+    await sessionRevoke(api, fourth.accessToken, { id: firstClaims.sessionID! });
+    await sessionRevoke(api, fourth.accessToken, { id: secondClaims.sessionID! });
+
+    await sessionDeleteLoggedOut(api, fourth.accessToken);
+
+    const sessions = await sessionList(api, fourth.accessToken);
+    expect(sessions.map((session) => session.id).sort()).toStrictEqual(
+      [thirdClaims.sessionID, fourthClaims.sessionID].sort()
+    );
+    expect(sessions.every((session) => !session.loggedOut)).toBe(true);
+
+    await expectStatus(claimsGet(api, first.accessToken), 401);
+    await expectStatus(claimsGet(api, second.accessToken), 401);
+    await claimsGet(api, third.accessToken);
+  });
+
+  it("succeeds with no logged-out device to remove", async () => {
+    const { api, second } = await userWithTwoSessions();
+
+    await sessionDeleteLoggedOut(api, second.accessToken);
+
+    expect(await sessionList(api, second.accessToken)).toHaveLength(2);
+  });
+
+  it("does not reach another account's devices", async () => {
+    const { api, first } = await userWithTwoSessions();
+    const other = await userWithTwoSessions();
+    const otherClaims = await claimsGet(api, other.first.accessToken);
+
+    await sessionRevoke(api, other.second.accessToken, { id: otherClaims.sessionID! });
+
+    await sessionDeleteLoggedOut(api, first.accessToken);
+
+    const otherSessions = await sessionList(api, other.second.accessToken);
+    expect(otherSessions.map((session) => session.id)).toContain(otherClaims.sessionID);
+  });
+});
+
 describe("signed-out caller", () => {
   it("manages no device once its own session is signed out, before its token expires", async () => {
     const { api, first, second } = await userWithTwoSessions();
@@ -179,6 +229,7 @@ describe("signed-out caller", () => {
     await expectStatus(sessionRevoke(api, second.accessToken, { id: firstClaims.sessionID! }), 401);
     await expectStatus(sessionRevokeOthers(api, second.accessToken), 401);
     await expectStatus(sessionDelete(api, second.accessToken, { id: secondClaims.sessionID! }), 401);
+    await expectStatus(sessionDeleteLoggedOut(api, second.accessToken), 401);
     await expectStatus(credentialsUpdateLocationConsent(api, second.accessToken, { enabled: true }), 401);
 
     // The live session still manages the account's devices.

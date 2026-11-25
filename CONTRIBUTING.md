@@ -150,6 +150,7 @@ The `sessions` table gives each session a row, with the device the account platf
 | `PUT /v2/sessions/{sessionID}/revoke` | Signs one session out, the caller's own included.        |
 | `PUT /v2/sessions/revoke-others`      | Signs out every other active session of the caller.      |
 | `DELETE /v2/sessions/{sessionID}`     | Removes a logged-out session. An active one answers 409. |
+| `DELETE /v2/sessions/logged-out`      | Removes every logged-out session of the caller.          |
 
 Only the account platform manages devices, so an OAuth client's token gets 403 on these routes. A signed-out session keeps its access token until it expires, and these routes, `PATCH /v2/credentials/location-consent` and `DELETE /v2/short-code/update-email` refuse it at once with the 401 of `GET /v2/session`, so it cannot sign the account's other sessions out in turn. Each session's requests to each of these routes count against the windows of the login rate limits, per session, so no session of an account spends the budget of another.
 

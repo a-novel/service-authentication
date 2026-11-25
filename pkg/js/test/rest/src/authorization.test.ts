@@ -12,6 +12,7 @@ import {
   credentialsGetSelf,
   credentialsList,
   refreshTokenGrant,
+  sessionDeleteLoggedOut,
   sessionList,
   sessionRevokeOthers,
   tokenCreate,
@@ -129,6 +130,7 @@ describe("authorizationCodeExchange", () => {
     await expectStatus(credentialsList(api, tokens.access_token, {}), 403);
     await expectStatus(sessionList(api, tokens.access_token), 403);
     await expectStatus(sessionRevokeOthers(api, tokens.access_token), 403);
+    await expectStatus(sessionDeleteLoggedOut(api, tokens.access_token), 403);
   });
 
   it("ends the session when the code is exchanged twice", async () => {

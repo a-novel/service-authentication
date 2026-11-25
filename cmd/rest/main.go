@@ -143,6 +143,7 @@ func newRouter(
 
 	daoSessionClearLocations := dao.NewPgSessionClearLocations()
 	daoSessionDelete := dao.NewPgSessionDelete()
+	daoSessionDeleteLoggedOut := dao.NewPgSessionDeleteLoggedOut()
 	daoSessionList := dao.NewPgSessionList()
 	daoSessionRevokeOthers := dao.NewPgSessionRevokeOthers()
 	daoSessionSelect := dao.NewPgSessionSelect()
@@ -214,6 +215,7 @@ func newRouter(
 	serviceSessionRevoke := core.NewSessionRevoke(daoSessionSelect, daoRefreshTokenRevocationInsert, refreshTokenLeeway)
 	serviceSessionRevokeOthers := core.NewSessionRevokeOthers(daoSessionRevokeOthers, refreshTokenLeeway)
 	serviceSessionDelete := core.NewSessionDelete(daoSessionDelete, daoSessionSelect)
+	serviceSessionDeleteLoggedOut := core.NewSessionDeleteLoggedOut(daoSessionDeleteLoggedOut)
 
 	serviceAuthorizationRequestValidate := core.NewAuthorizationRequestValidate(cfg.OAuth)
 	serviceAuthorizationCodeCreate := core.NewAuthorizationCodeCreate(
@@ -287,6 +289,7 @@ func newRouter(
 	handlerSessionRevoke := handlers.NewRestSessionRevoke(serviceSessionRevoke, cfg.Logger)
 	handlerSessionRevokeOthers := handlers.NewRestSessionRevokeOthers(serviceSessionRevokeOthers, cfg.Logger)
 	handlerSessionDelete := handlers.NewRestSessionDelete(serviceSessionDelete, cfg.Logger)
+	handlerSessionDeleteLoggedOut := handlers.NewRestSessionDeleteLoggedOut(serviceSessionDeleteLoggedOut, cfg.Logger)
 
 	handlerAuthorizationRequestValidate := handlers.NewRestAuthorizationRequestValidate(
 		serviceAuthorizationRequestValidate, cfg.Logger,
@@ -325,6 +328,7 @@ func newRouter(
 			withSessions("session:list").Get("/", handlerSessionList.ServeHTTP)
 			withSessions("session:revoke").Put("/revoke-others", handlerSessionRevokeOthers.ServeHTTP)
 			withSessions("session:revoke").Put("/{sessionID}/revoke", handlerSessionRevoke.ServeHTTP)
+			withSessions("session:delete").Delete("/logged-out", handlerSessionDeleteLoggedOut.ServeHTTP)
 			withSessions("session:delete").Delete("/{sessionID}", handlerSessionDelete.ServeHTTP)
 		})
 

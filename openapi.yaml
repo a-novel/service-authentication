@@ -262,10 +262,10 @@ paths:
         the caller's own.
 
         A session is active until it ends or is signed out, then `loggedOut` until the user removes it with
-        `[DELETE] /v2/sessions/{sessionID}`, or 30 days after it ends, when the service removes it. Each sign-in keeps
-        the account's 100 active sessions active last and signs out the others, then removes its logged-out sessions
-        past the 100 active last, so the list shows every active session. The active sessions come first, then the
-        logged-out ones, each latest activity first.
+        `[DELETE] /v2/sessions/{sessionID}` or `[DELETE] /v2/sessions/logged-out`, or 30 days after it ends, when the
+        service removes it. Each sign-in keeps the account's 100 active sessions active last and signs out the others,
+        then removes its logged-out sessions past the 100 active last, so the list shows every active session. The
+        active sessions come first, then the logged-out ones, each latest activity first.
 
         The location fields are present only for a session that recorded them, while the account consents to
         locations. Anonymous tokens lack the required permission, and an OAuth client's access token answers 403: only
@@ -315,6 +315,39 @@ paths:
       responses:
         "204":
           description: Every other session of the caller is signed out.
+        "401":
+          $ref: "#/components/responses/invalidToken"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "429":
+          $ref: "#/components/responses/tooManyRequests"
+        "503":
+          $ref: "#/components/responses/plannedDowntime"
+        default:
+          $ref: "#/components/responses/internalError"
+
+  /v2/sessions/logged-out:
+    delete:
+      operationId: sessionDeleteLoggedOut
+      summary: Remove every logged-out device.
+      description: |
+        Removes every logged-out session of the caller from their devices, at once. Active sessions stay listed, the
+        caller's own included. The removed sessions stay signed out.
+
+        A caller without a logged-out session answers 204 too, so a retry never fails. An OAuth client's access token
+        answers 403: only the account platform manages devices.
+
+        A token whose session was signed out or has ended answers 401, as `GET /v2/session` does, even before the
+        token expires.
+
+        By default, each session may send 10 requests per minute and 30 per 10 minutes to this route. Every session
+        of the account counts apart, so none spends the budget of another.
+      tags: [session]
+      security:
+        - BearerAuth: ["session:delete"]
+      responses:
+        "204":
+          description: Every logged-out session of the caller is removed, or the caller had none.
         "401":
           $ref: "#/components/responses/invalidToken"
         "403":
