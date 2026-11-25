@@ -41,7 +41,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: a-novel-kit/workflows/build-actions/compose-up@v1.87.1
+    - uses: a-novel-kit/workflows/build-actions/compose-up@v1.87.2
       env:
         DATABASE_IMAGE: ${{ inputs.database_image }}
         STANDALONE_REST_IMAGE: ${{ inputs.standalone_rest_image }}

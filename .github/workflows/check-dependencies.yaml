@@ -22,7 +22,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/check-dependencies@v1.87.1
+      - uses: a-novel-kit/workflows/generic-actions/check-dependencies@v1.87.2
         with:
           github_token: ${{ github.token }}
 
@@ -32,4 +32,4 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/revoke-labels@v1.87.1
+      - uses: a-novel-kit/workflows/generic-actions/revoke-labels@v1.87.2
