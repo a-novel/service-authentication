@@ -30,13 +30,13 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Check schema snapshots
-        uses: a-novel-kit/workflows/generic-actions/check-append-only@v1.87.1
+        uses: a-novel-kit/workflows/generic-actions/check-append-only@v1.87.2
         with:
           path: internal/models/migrations/testdata/schema
           base: ${{ github.event.pull_request.base.sha }}
           github_token: ${{ github.token }}
       - name: Check migration SQL
-        uses: a-novel-kit/workflows/generic-actions/check-append-only@v1.87.1
+        uses: a-novel-kit/workflows/generic-actions/check-append-only@v1.87.2
         with:
           path: ":(glob)internal/models/migrations/*.sql"
           base: ${{ github.event.pull_request.base.sha }}
@@ -65,7 +65,7 @@ jobs:
           services: postgres
           database_image: ghcr.io/${{ github.repository }}/database@${{ needs.build-database.outputs.digest }}
           registry_login: "true"
-      - uses: a-novel-kit/workflows/go-actions/generate-go@v1.87.1
+      - uses: a-novel-kit/workflows/go-actions/generate-go@v1.87.2
 
   generated-pnpm:
     runs-on: ubuntu-latest
@@ -73,14 +73,14 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/setup-node@v1.87.1
+      - uses: a-novel-kit/workflows/node-actions/setup-node@v1.87.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       # generate:mjml alone: the generate:go leg belongs to generated-go, which sets up Go.
       - name: pnpm generate:mjml
         shell: bash
         run: pnpm generate:mjml
-      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.87.1
+      - uses: a-novel-kit/workflows/generic-actions/check-changes@v1.87.2
         with:
           fail_message: mail templates are not up-to-date, please run 'pnpm generate' and commit the changes
 
@@ -89,7 +89,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/go-actions/lint-go@v1.87.1
+      - uses: a-novel-kit/workflows/go-actions/lint-go@v1.87.2
 
   lint-js:
     runs-on: ubuntu-latest
@@ -97,7 +97,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/lint-node@v1.87.1
+      - uses: a-novel-kit/workflows/node-actions/lint-node@v1.87.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           lint_action: "lint:ci"
@@ -107,7 +107,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.87.1
+      - uses: a-novel-kit/workflows/generic-actions/lint-shell@v1.87.2
         with:
           run_steps: .github/actions/*/action.yml .github/workflows/*.yaml
 
@@ -116,7 +116,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.87.1
+      - uses: a-novel-kit/workflows/generic-actions/lint-dockerfile@v1.87.2
 
   # Structural conventions golangci-lint cannot express.
   lint-semgrep:
@@ -124,7 +124,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/security-actions/lint-semgrep@v1.87.1
+      - uses: a-novel-kit/workflows/security-actions/lint-semgrep@v1.87.2
         with:
           ruleset: service
 
@@ -133,7 +133,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.87.1
+      - uses: a-novel-kit/workflows/security-actions/scan-secrets@v1.87.2
         with:
           extra_config: .gitleaks.toml
 
@@ -142,7 +142,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.87.1
+      - uses: a-novel-kit/workflows/security-actions/lint-workflows@v1.87.2
 
   test-go:
     needs: [build-database]
@@ -176,7 +176,7 @@ jobs:
         run: |
           go run ./cmd/maintenance account-role --email noreply@agorastoryverse.com --role auth:superadmin --lang en
           go run ./cmd/maintenance account-role --email noreply@agorastoryverse.com --role auth:superadmin --lang en
-      - uses: a-novel-kit/workflows/go-actions/test-go@v1.87.1
+      - uses: a-novel-kit/workflows/go-actions/test-go@v1.87.2
         with:
           include: /internal|/cmd
           skip_setup: true
@@ -193,7 +193,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/go-actions/test-go@v1.87.1
+      - uses: a-novel-kit/workflows/go-actions/test-go@v1.87.2
         with:
           include: /pkg
           test_artifact: gotestpkg
@@ -224,7 +224,7 @@ jobs:
           database_image: ghcr.io/${{ github.repository }}/database@${{ needs.build-database.outputs.digest }}
           standalone_rest_image: ghcr.io/${{ github.repository }}/standalone-rest@${{ needs.build-standalone-rest.outputs.digest }}
           registry_login: "true"
-      - uses: a-novel-kit/workflows/node-actions/test-node@v1.87.1
+      - uses: a-novel-kit/workflows/node-actions/test-node@v1.87.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           coverage_artifact: jscover
@@ -240,7 +240,7 @@ jobs:
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.2
         id: build
         with:
           file: builds/database.Dockerfile
@@ -255,7 +255,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/build-actions/check-reproducible@v1.87.1
+      - uses: a-novel-kit/workflows/build-actions/check-reproducible@v1.87.2
 
   build-migrations:
     runs-on: ubuntu-latest
@@ -277,7 +277,7 @@ jobs:
         with:
           persist-credentials: false
       - *start-local-database
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.2
         with:
           mode: job
           file: builds/migrations.Dockerfile
@@ -299,7 +299,7 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.2
         with:
           mode: job
           file: builds/maintenance.Dockerfile
@@ -334,7 +334,7 @@ jobs:
           database_image: ghcr.io/${{ github.repository }}/database@${{ needs.build-database.outputs.digest }}
           registry_login: "true"
       - uses: $/.github/actions/run-migrations
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.2
         with:
           file: builds/rest.Dockerfile
           image_name: ${{ github.repository }}/rest
@@ -364,7 +364,7 @@ jobs:
     # test-pkg-js boots and exercises this image, so this job only builds and pushes it, without a
     # smoke run.
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.2
         id: build
         with:
           file: builds/standalone.rest.Dockerfile
@@ -380,7 +380,7 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.1
+      - uses: a-novel-kit/workflows/build-actions/docker@v1.87.2
         with:
           file: builds/service-token-issuer.Dockerfile
           image_name: ${{ github.repository }}/service-token-issuer
@@ -393,7 +393,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: a-novel-kit/workflows/node-actions/build-node@v1.87.1
+      - uses: a-novel-kit/workflows/node-actions/build-node@v1.87.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           build_action: "build:rest"
@@ -404,7 +404,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: a-novel-kit/workflows/generic-actions/codecov@v1.87.1
+      - uses: a-novel-kit/workflows/generic-actions/codecov@v1.87.2
         with:
           codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -422,4 +422,4 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: a-novel-kit/workflows/github-pages-actions/publish-api-docs@v1.87.1
+      - uses: a-novel-kit/workflows/github-pages-actions/publish-api-docs@v1.87.2

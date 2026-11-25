@@ -30,7 +30,7 @@ jobs:
       contents: read
       pull-requests: read
       issues: read
-    uses: a-novel-kit/workflows/.github/workflows/gates-run.yaml@v1.87.1
+    uses: a-novel-kit/workflows/.github/workflows/gates-run.yaml@v1.87.2
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       dependabot_security_login: ${{ vars.DEPENDABOT_SECURITY_LOGIN }}
@@ -44,7 +44,7 @@ jobs:
     # The engine lists a bot pull request's CI runs; the pull request itself it reads through the App.
     permissions:
       actions: read
-    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.87.1
+    uses: a-novel-kit/workflows/.github/workflows/notify-pr-run.yaml@v1.87.2
     with:
       client_id: ${{ vars.AGENT_BOT_CLIENT_ID }}
       roles: ${{ vars.CHAT_REPO_ROLES }}
