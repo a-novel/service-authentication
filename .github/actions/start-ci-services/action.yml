@@ -31,7 +31,7 @@ inputs:
     description: Mailpit image reference.
   valkey_image:
     required: false
-    default: docker.io/valkey/valkey:9.2.0-alpine
+    default: docker.io/valkey/valkey:9.2.1-alpine
     description: Valkey image reference, the version production runs.
   registry_login:
     required: false
